@@ -1,2 +1,2 @@
 # vanguardmmo
-Website &amp; Discord Bot (non fonctionnel)
+Website &amp; Discord Bot

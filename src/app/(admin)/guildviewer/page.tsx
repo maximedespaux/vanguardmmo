@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 
-type Gear = { id: string; name: string; mode: string; weaponRarity?: string };
+type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number };
 type Spec = { id: string; type: string; score: number };
 type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; gearProfiles: Gear[]; specializations: Spec[] };
 type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; _count: { transactions: number; absences: number } };
@@ -18,6 +18,8 @@ const ROLE_META: Record<string, { emoji: string; label: string; color: string }>
   RECRUE: { emoji: "🌱", label: "Recrue", color: "var(--text-muted)" },
 };
 const modeColor = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)");
+const RARITY_FR: Record<string, string> = { COMMUN: "Commun", RARE: "Rare", EPIQUE: "Épique", LEGENDAIRE: "Légendaire", PREMYTHIQUE: "Pré-myth.", MYTHIQUE: "Mythique" };
+const kfmt = (n?: number) => { const v = n || 0; return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "k" : String(v); };
 const SPEC_FR: Record<string, string> = { PVE: "PvE", PVP_BOSS: "PvP/Boss", CHAMBRES_SECRETES: "Chambres S." };
 
 export default function GuildViewerPage() {
@@ -113,10 +115,15 @@ export default function GuildViewerPage() {
                       <ClassLogo name={c.class} size={24} />
                       <span style={{ fontSize: 13, fontWeight: 600, minWidth: 120 }}>{c.name} {c.isMain && <span style={{ color: "var(--gold)", fontSize: 10 }}>★</span>}</span>
                       <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Niv {c.level} · P{c.prestige}</span>
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
                         {c.gearProfiles.length === 0
                           ? <span style={{ fontSize: 11, color: "var(--red)" }}>aucun build</span>
-                          : c.gearProfiles.map((g) => <span key={g.id} style={{ fontSize: 10, padding: "2px 7px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, color: modeColor(g.mode) }}>{g.mode}</span>)}
+                          : c.gearProfiles.map((g) => (
+                              <span key={g.id} title={`${g.name} — ❤️ ${kfmt(g.hp)} · ⚔️ ${kfmt(g.attack)} · 🛡️ ${kfmt(g.defense)} · 💥 ${g.critRate ?? 0}%`} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, color: modeColor(g.mode), whiteSpace: "nowrap" }}>
+                                {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
+                              </span>
+                            ))}
+                        {(() => { const g = c.gearProfiles.find((x) => (x.hp || 0) > 0); return g ? <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace", whiteSpace: "nowrap" }}>❤️{kfmt(g.hp)} ⚔️{kfmt(g.attack)} 🛡️{kfmt(g.defense)}</span> : null; })()}
                       </div>
                       {c.specializations.length > 0 && (
                         <span style={{ fontSize: 10, color: "var(--purple)" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>

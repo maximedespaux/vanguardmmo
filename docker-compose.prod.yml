@@ -1,0 +1,53 @@
+# Déploiement prod — PostgreSQL + migrations + site Next.js + bot Discord.
+# Lancement : docker compose -f docker-compose.prod.yml up -d --build
+# Le site écoute sur le port 3000 (à router via Nginx Proxy Manager + SSL).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - vanguard_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  # One-shot : crée/maj les tables avant de lancer le site et le bot.
+  migrate:
+    build: .
+    image: vanguard-app:latest
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma db push --skip-generate"
+    restart: "no"
+
+  web:
+    image: vanguard-app:latest
+    env_file: .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: npm start
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  bot:
+    image: vanguard-app:latest
+    env_file: .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: npx tsx bot/index.ts
+    restart: unless-stopped
+
+volumes:
+  vanguard_db:

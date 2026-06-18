@@ -25,6 +25,7 @@ const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocale
 export default function BanquePage() {
   const [reqs, setReqs] = useState<Req[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
+  const [payAmt, setPayAmt] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [kind, setKind] = useState("OBJET_IG");
   const [item, setItem] = useState(""); const [qty, setQty] = useState(1); const [reason, setReason] = useState("");
@@ -48,10 +49,10 @@ export default function BanquePage() {
     if (r.ok) { setItem(""); setQty(1); setReason(""); flash("Requête envoyée ✓ — le staff va décider (achat −20 % ou dette)."); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || `Erreur ${r.status}.`); }
   };
-  const pay = async (id: string) => {
-    const a = prompt("Montant remboursé (périn) ?"); if (a === null) return;
-    const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: Number(a) || 0 }) });
-    if (r.ok) load(); else flash("Erreur");
+  const pay = async (id: string, amount: number) => {
+    if (!amount || amount <= 0) return flash("Entre un montant à rembourser (> 0).");
+    const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) });
+    if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré ✓"); load(); } else flash("Erreur");
   };
 
   return (
@@ -116,7 +117,13 @@ export default function BanquePage() {
                       </div>
                       {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
                       {paid > 0 && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 5 }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</div>}
-                      {d.status === "ACCEPTED" && <button onClick={() => pay(d.id)} style={{ marginTop: 10, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>💰 Proposer un remboursement</button>}
+                      {d.status === "ACCEPTED" && (() => { const reste = Math.max(0, d.amount - paid); return (
+                        <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
+                          <input type="number" min={1} max={reste} placeholder="Montant à rembourser…" value={payAmt[d.id] ?? ""} onChange={e => setPayAmt(p => ({ ...p, [d.id]: e.target.value }))} style={{ width: 150, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
+                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>💰 Rembourser</button>
+                          <button onClick={() => setPayAmt(p => ({ ...p, [d.id]: String(reste) }))} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>Tout ({fmt(reste)})</button>
+                        </div>
+                      ); })()}
                     </div>
                   );
                 })}

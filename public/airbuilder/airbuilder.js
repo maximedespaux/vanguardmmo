@@ -104,14 +104,15 @@ function switchChar(i){state.cur=i;render();}
 function switchStuff(i){C().curStuff=i;render();}
 function setLvl(v){C().lvl=Math.min(200,Math.max(1,Math.round(+v||1)));save();render();}
 function addStuff(){const dn='Stuff '+((C().stuffs||[]).length+1);const n=prompt('Nom du nouveau stuff ?',dn);if(n===null)return;C().stuffs.push(newStuff(n.trim()||dn));C().curStuff=C().stuffs.length-1;render();}
-function delStuff(i){if(C().stuffs.length<=1)return;if(confirm('Supprimer ce stuff ?')){C().stuffs.splice(i,1);if(C().curStuff>=C().stuffs.length)C().curStuff=C().stuffs.length-1;render();}}
+function agConfirm(msg,onYes){window.__agYes=onYes;openSheet('<div style="padding:22px;max-width:430px"><div style="font-size:14px;line-height:1.55;margin-bottom:20px;white-space:pre-line">'+msg+'</div><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn ghost" onclick="closeSheet()">Annuler</button><button class="btn" onclick="var f=window.__agYes;window.__agYes=null;closeSheet();if(f)f();">Confirmer</button></div></div>');}
+function delStuff(i){if(C().stuffs.length<=1)return;agConfirm('Supprimer ce stuff ?',function(){C().stuffs.splice(i,1);if(C().curStuff>=C().stuffs.length)C().curStuff=C().stuffs.length-1;render();});}
 function addChar(){state.chars.push(newChar());state.cur=state.chars.length-1;render();}
-function delChar(i){if(state.chars.length<=1)return;if(confirm('Supprimer ?')){state.chars.splice(i,1);state.cur=0;render();}}
-function setCls(v){if(C().cls===v)return;const hasGear=(C().stuffs||[]).some(s=>s.eq&&Object.keys(s.eq).length);if(hasGear&&!confirm('⚠️ Changer de classe va vider tout l\'équipement de ce personnage (sur tous ses stuffs). Cette action est irréversible.\n\nContinuer ?'))return;C().cls=v;(C().stuffs||[]).forEach(s=>s.eq={});render();}
+function delChar(i){if(state.chars.length<=1)return;agConfirm('Supprimer ce personnage ?',function(){state.chars.splice(i,1);state.cur=0;render();});}
+function setCls(v){if(C().cls===v)return;const hasGear=(C().stuffs||[]).some(s=>s.eq&&Object.keys(s.eq).length);const apply=function(){C().cls=v;(C().stuffs||[]).forEach(s=>s.eq={});render();};if(hasGear)agConfirm('⚠️ Changer de classe va vider tout l\'équipement de ce personnage (sur tous ses stuffs).\n\nCette action est irréversible. Continuer ?',apply);else apply();}
 function toggleCarnet(i){const c=C();c.carnets=c.carnets||[];c.carnetsFull=c.carnetsFull||[];const k=c.carnets.indexOf(i);if(k>=0){c.carnets.splice(k,1);const f=c.carnetsFull.indexOf(i);if(f>=0)c.carnetsFull.splice(f,1);}else c.carnets.push(i);render();}
 function toggleFull(i){const c=C();c.carnetsFull=c.carnetsFull||[];const k=c.carnetsFull.indexOf(i);if(k>=0)c.carnetsFull.splice(k,1);else c.carnetsFull.push(i);render();}
 function setMode(i,full){const c=C();c.carnetsFull=c.carnetsFull||[];const k=c.carnetsFull.indexOf(i);if(full&&k<0)c.carnetsFull.push(i);if(!full&&k>=0)c.carnetsFull.splice(k,1);render();}
-function resetChar(){if(confirm('Vider l\'équipement de ce stuff ? (les carnets du personnage sont conservés)')){const s=ST();s.eq={};render();}}
+function resetChar(){agConfirm('Vider l\'équipement de ce stuff ? (les carnets du personnage sont conservés)',function(){const s=ST();s.eq={};render();});}
 
 let pickSlot=null;
 function openPick(s){pickSlot=s;drawPick('');}

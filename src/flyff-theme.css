@@ -1,0 +1,36 @@
+/* ════════════════════════════════════════════════════════════
+   VANGUARD — thème "Flyff" (optionnel)
+   Importe-le dans src/app/globals.css :  @import "../flyff-theme.css";
+   (ou colle son contenu à la fin de globals.css)
+   ════════════════════════════════════════════════════════════ */
+
+/* Fond : légère grille + halo orange en haut (ambiance Madrigal) */
+body {
+  background-image:
+    radial-gradient(ellipse 70% 38% at 50% -6%, rgba(255,140,26,0.10), transparent 62%),
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size: auto, 44px 44px, 44px 44px;
+}
+
+/* Cartes : lueur orange douce au survol */
+.glass-card { transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.glass-card:hover { border-color: rgba(255,140,26,0.55); box-shadow: 0 0 22px rgba(255,140,26,0.10); transform: translateY(-1px); }
+
+/* Titres : petit trait orangé sous les h1 (façon bannière de quête) */
+h1.font-heading { position: relative; padding-bottom: 8px; }
+h1.font-heading::after { content: ""; position: absolute; left: 0; bottom: 0; width: 64px; height: 3px;
+  background: linear-gradient(90deg, var(--orange), transparent); border-radius: 2px; }
+
+/* Scrollbar sombre orangée */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2c2c34; border-radius: 6px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,140,26,0.6); }
+
+/* Boutons primaires : glow */
+button[style*="var(--orange)"], .btn-primary { box-shadow: 0 0 14px rgba(255,140,26,0.25); }
+
+/* Badges de classes (utilise /classes/*.png déjà présents dans public/) :
+   <img src="/classes/Templar.png" className="class-badge" />            */
+.class-badge { width: 28px; height: 28px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(255,140,26,0.35)); vertical-align: middle; }

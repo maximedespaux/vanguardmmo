@@ -1,0 +1,578 @@
+// ════════════════════════════════════════════════════════════
+//  SCHÉMA PRISMA — VANGUARD CONTROL CENTER
+//  Toutes les données sont reliées à User.id (lui-même lié au Discord ID).
+// ════════════════════════════════════════════════════════════
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ──────────────────────────────────────────────────
+enum Role {
+  RECRUE      // non-membre / public
+  GUARD
+  VETERAN
+  OFFICIER
+  GENERAL
+  VANGUARD
+  DIRECTION
+}
+enum CharacterClass {
+  SPADASSIN
+  TEMPLIER
+  ARCANISTE
+  ENVOUTEUR
+  ARBALETRIER
+  SYLPHIDE
+  PRIMAT
+  CHANOINE
+}
+enum BuildMode {
+  DPS
+  TANK
+  HYBRIDE
+}
+enum Rarity {
+  COMMUN
+  RARE
+  EPIQUE
+  LEGENDAIRE
+  PREMYTHIQUE
+  MYTHIQUE
+}
+enum SpecType {
+  PVE
+  PVP_BOSS
+  CHAMBRES_SECRETES
+}
+enum AbsenceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+enum TransactionType {
+  DETTE
+  REMBOURSEMENT
+  ACHAT
+  VENTE
+}
+enum TransactionStatus {
+  PENDING
+  NEGOTIATION
+  ACCEPTED
+  REPAID
+  REJECTED
+}
+enum CoffreCategory {
+  STUFF_YGGDRASIL
+  ARMES_YGGDRASIL
+  STUFF_ETERNEL
+  ARMES_ETERNEL
+  BIJOUX
+  EVEIL_R1
+  EVEIL_R2
+  RESSOURCE
+}
+
+// ─── UTILISATEUR (1 compte Discord = 1 User) ────────────────
+model User {
+  id            String   @id @default(cuid())
+  discordId     String   @unique          // identité partagée avec le bot
+  username      String                     // pseudo Discord
+  avatar        String?                    // hash avatar Discord
+  role          Role     @default(RECRUE)  // plus haut rôle, synchronisé depuis Discord à la connexion
+  discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  characters    Character[]
+  absences      Absence[]
+  transactions  BankTransaction[]
+  debts         Debt[]
+}
+
+// ─── PERSONNAGE (appartient à un User) ──────────────────────
+model Character {
+  id             String          @id @default(cuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  class          CharacterClass
+  level          Int             @default(200)
+  prestige       Int             @default(1)
+  isMain         Boolean         @default(false)
+  specialization SpecType?       // spécialité principale (optionnelle)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  gearProfiles    GearProfile[]
+  specializations Specialization[]
+
+  @@index([userId])
+}
+
+// ─── STUFF / BUILD (plusieurs par personnage : DPS, TANK, HYBRIDE) ──
+model GearProfile {
+  id               String     @id @default(cuid())
+  characterId      String
+  character        Character  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  name             String     @default("Stuff 1")
+  mode             BuildMode  @default(DPS)
+  weaponRarity     Rarity     @default(COMMUN)
+  weapon           Json?      // { main, off, forge, etoiles, eveil, carte }
+  armor            Json?      // { casque, armure, gants, bottes, set, eveil, carte }
+  jewelry          Json?      // { anneaux, boucles, collier }
+  pets             Json?      // { familier, ramasseur }
+  cards            Json?      // cartes additionnelles
+  hp               Int        @default(0)
+  attack           Int        @default(0)
+  defense          Int        @default(0)
+  critRate         Int        @default(0)
+  critDamage       Int        @default(0)
+  damageReduction  Int        @default(0)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([characterId])
+}
+
+// ─── SPÉCIALISATION NOTÉE (par personnage) ──────────────────
+model Specialization {
+  id           String     @id @default(cuid())
+  characterId  String
+  character    Character  @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  type         SpecType
+  score        Int        @default(0)   // 0-100 : niveau d'optimisation pour cette spé
+
+  @@unique([characterId, type])
+  @@index([characterId])
+}
+
+// ─── ABSENCE (appartient à un User) ─────────────────────────
+model Absence {
+  id         String        @id @default(cuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  status     AbsenceStatus @default(PENDING)
+  createdAt  DateTime      @default(now())
+
+  @@index([userId])
+}
+
+// ─── TRANSACTION / DETTE (système coffre & entraide) ────────
+model BankTransaction {
+  id           String            @id @default(cuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         TransactionType   @default(DETTE)
+  item         String?           // objet demandé
+  amount       BigInt            @default(0)   // périn
+  description  String?
+  status       TransactionStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+// ─── COFFRE DE GUILDE (stock commun) ────────────────────────
+model CoffreItem {
+  id           String          @id @default(cuid())
+  itemId       Int?            @unique         // id catalogue (icône/nom) — coffre v2
+  category     String?         // catégorie libre (type d'objet)
+  job          String?         // classe concernée
+  status       String          @default("farm") // "stock" | "farm"
+  assignedTo   String?         // membre responsable du farm (pseudo)
+  priority     Boolean         @default(false)  // épinglé en priorité dans le plan de farm
+  categorie    CoffreCategory? // legacy (optionnel)
+  classe       String?
+  item         String
+  stockTotal   Int             @default(0)
+  target       Int             @default(10)   // quantité cible (seuil OK)
+  prixBoutique BigInt          @default(0)
+  prixRemise   BigInt          @default(0)
+  updatedAt    DateTime        @updatedAt
+}
+
+// Journal des mouvements du coffre (crédits / débits) — qui, combien, quand.
+model CoffreMouvement {
+  id        String   @id @default(cuid())
+  itemId    Int?
+  item      String
+  delta     Int      // quantité signée : + crédit / − débit
+  type      String   // "credit" | "debit"
+  reason    String?  // motif (ajout manuel, dette de X, vente banque…)
+  byUser    String?  // qui (pseudo)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// État complet de l'AirGuild (app d'iBeats) — un seul blob JSON partagé par toute la guilde.
+model AirGuildState {
+  id        String   @id @default("main")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+// ─── ÉVÉNEMENTS DU JEU (éditables sur le site, lus par le bot) ──
+model GameEvent {
+  id           String   @id @default(cuid())
+  name         String
+  day          String   // lundi..dimanche | tous
+  time         String   // "HH:MM" (heure de Paris)
+  remindBefore Int      @default(0) // minutes de rappel avant (0 = aucun)
+  channelId    String?  // vide = CHANNEL_EVENTS
+  mention      String   @default("") // "@here" | "@everyone" | "<@&id>" | ""
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+// ─── ENUM & CANDIDATURE (Phase 2) ───────────────────────────
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WAITING
+  INTERVIEW
+}
+
+model Application {
+  id          String            @id @default(cuid())
+  discordId   String            // candidat (pas forcément encore un User)
+  username    String
+  avatar      String?
+  chars       Json?             // [{ name, cls, prestige }]
+  specs       String[]          @default([])
+  csChars     Int?              // nb de persos jouables en Chambres Secrètes
+  favClasses  String[]          @default([])
+  interests   String?
+  motivation  String?
+  experience  String?
+  quizScore   Int?
+  quizTotal   Int?
+  status      ApplicationStatus @default(PENDING)
+  adminNote   String?           // note laissée par l'admin lors de la décision
+  decidedBy   String?           // pseudo de l'admin qui a décidé
+  decidedAt   DateTime?
+  remindedAt  DateTime?         // dernière relance postée par le bot
+  channelId   String?           // salon/thread de l'embed « Décision » posté par le bot
+  messageId   String?           // message de l'embed « Décision » (pour le ré-éditer)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([status])
+}
+
+// ─── DETTES v2 (Phase 3) ────────────────────────────────────
+enum DebtType {
+  PENYA
+  ITEM
+  RESSOURCE
+  SERVICE
+}
+
+enum DebtStatus {
+  REQUESTED
+  PENDING_VALIDATION
+  ACCEPTED
+  REFUSED
+  REPAID
+  CANCELLED
+}
+
+model Debt {
+  id            String       @id @default(cuid())
+  userId        String       // débiteur
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditor      String?      // créancier (pseudo) — souvent la guilde
+  characterName String?
+  type          DebtType     @default(PENYA)
+  amount        BigInt       @default(0)
+  item          String?
+  reason        String?
+  dueDate       DateTime?
+  status        DebtStatus   @default(REQUESTED)
+  adminNote     String?
+  decidedBy     String?
+  channelId     String?      // salon/thread de l'embed « Décision » (posté par le bot)
+  messageId     String?      // message de l'embed « Décision » (pour le ré-éditer)
+  remindedAt    DateTime?    // dernier rappel d'échéance envoyé (anti-spam)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  payments      DebtPayment[]
+  @@index([userId])
+  @@index([status])
+}
+
+model DebtPayment {
+  id        String   @id @default(cuid())
+  debtId    String
+  debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  amount    BigInt   @default(0)
+  note      String?
+  createdAt DateTime @default(now())
+  @@index([debtId])
+}
+
+// ─── WORLD BOSS (Phase 4) ───────────────────────────────────
+enum EventStatus {
+  PLANNED
+  ONGOING
+  DONE
+  CANCELLED
+}
+
+enum ParticipationStatus {
+  CONFIRMED
+  DECLINED
+}
+
+model WorldBoss {
+  id               String   @id @default(cuid())
+  name             String
+  zone             String?
+  icon             String?
+  recommendedLevel Int?
+  spawnInfo        String?  // fréquence / heure (texte libre)
+  rewards          String?
+  strategy         String?
+  createdAt        DateTime @default(now())
+  events           WorldBossEvent[]
+}
+
+model WorldBossEvent {
+  id           String   @id @default(cuid())
+  bossId       String
+  boss         WorldBoss @relation(fields: [bossId], references: [id], onDelete: Cascade)
+  startAt      DateTime
+  status       EventStatus @default(PLANNED)
+  channelId    String?
+  note         String?
+  remind1hSent Boolean  @default(false)
+  remind30Sent Boolean  @default(false)
+  remind10Sent Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  participants EventParticipant[]
+  @@index([status])
+  @@index([startAt])
+}
+
+model EventParticipant {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     WorldBossEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  discordId String
+  username  String
+  status    ParticipationStatus @default(CONFIRMED)
+  createdAt DateTime @default(now())
+  @@unique([eventId, discordId])
+}
+
+// ─── JOURNAL D'AUDIT (Phase 6, amorce) ──────────────────────
+model AuditLog {
+  id        String   @id @default(cuid())
+  actor     String   // pseudo de l'admin
+  action    String   // ex: "candidature.ACCEPTED", "dette.REPAID"
+  target    String?  // id de l'objet concerné
+  detail    String?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+}
+
+
+/// Dette entre deux membres Discord (débiteur → créancier).
+/// Gérée par le bot via /dette, boutons et messages privés.
+model GuildDebt {
+  id            String          @id @default(cuid())
+  guildId       String
+  debtorId      String          // ID Discord du débiteur (celui qui DOIT)
+  debtorName    String
+  creditorId    String          // ID Discord du créancier (celui à qui on doit)
+  creditorName  String
+  itemRef       String          // ID ou nom de l'objet dû
+  itemName      String?         // nom lisible (résolu depuis la base d'objets)
+  quantity      Int             @default(1)
+  note          String?
+  status        GuildDebtStatus @default(OPEN)
+  channelId     String?         // salon où l'embed public a été posté
+  messageId     String?         // message de l'embed (pour le mettre à jour)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  settledAt     DateTime?
+
+  @@index([debtorId])
+  @@index([creditorId])
+  @@index([status])
+}
+
+enum GuildDebtStatus {
+  OPEN             // dette en cours
+  PENDING_CONFIRM  // le débiteur a déclaré avoir réglé, en attente du créancier
+  SETTLED          // réglée (confirmée par le créancier)
+  CANCELLED        // annulée
+}
+
+/// Message de rôle-réaction (façon MEE6) : un emoji = un rôle.
+model ReactionRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String
+  emoji     String   // unicode "✨" ou custom "<:nom:id>" / "nom:id"
+  roleId    String
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, emoji])
+  @@index([messageId])
+}
+
+/// Rôle par BOUTON (façon MEE6, version boutons cliquables) : un bouton = un rôle (toggle).
+model ButtonRole {
+  id        String   @id @default(cuid())
+  guildId   String
+  channelId String
+  messageId String
+  customId  String   // identifiant unique du bouton sur ce message
+  roleId    String
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@unique([messageId, customId])
+  @@index([messageId])
+}
+
+/// Modèle d'embed réutilisable, créé/édité via l'Embed Builder.
+model EmbedTemplate {
+  id        String   @id @default(cuid())
+  guildId   String
+  name      String
+  data      Json     // { title, description, color, image, thumbnail, footer, author, url }
+  createdBy String   // ID Discord de l'auteur
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guildId, name])
+}
+
+/// Giveaway (concours) : tirage au sort parmi les participants.
+enum GiveawayStatus {
+  RUNNING    // en cours
+  ENDED      // terminé (gagnants tirés)
+  CANCELLED  // annulé
+}
+
+model Giveaway {
+  id           String          @id @default(cuid())
+  guildId      String
+  channelId    String
+  messageId    String?
+  prize        String
+  description  String?
+  winnersCount Int             @default(1)
+  endsAt       DateTime
+  status       GiveawayStatus  @default(RUNNING)
+  hostId       String          // organisateur
+  winners      String[]        @default([])  // IDs Discord tirés
+  createdAt    DateTime        @default(now())
+  entries      GiveawayEntry[]
+
+  @@index([status])
+  @@index([endsAt])
+}
+
+model GiveawayEntry {
+  id         String   @id @default(cuid())
+  giveawayId String
+  giveaway   Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  discordId  String
+  username   String
+  createdAt  DateTime @default(now())
+
+  @@unique([giveawayId, discordId])
+  @@index([giveawayId])
+}
+
+// ─── Pilotage du bot depuis le site (page « Discord ») ──────
+//  Le site enfile une commande ; le bot la consomme (polling) et l'exécute.
+enum BotCommandStatus {
+  PENDING
+  DONE
+  FAILED
+}
+
+model BotCommand {
+  id          String           @id @default(cuid())
+  type        String           // "post_embed" | "create_giveaway" | "post_class_panel"
+  payload     Json             // paramètres de la commande
+  status      BotCommandStatus @default(PENDING)
+  result      String?          // id du message créé, ou message d'erreur
+  createdBy   String           // pseudo de l'admin
+  createdAt   DateTime         @default(now())
+  processedAt DateTime?
+
+  @@index([status])
+}
+
+// ─── Cache des salons du serveur (rempli par le bot, lu par le site) ──
+model GuildChannel {
+  id        String   @id          // ID du salon Discord
+  guildId   String
+  name      String
+  type      String   // "text" | "announcement" | "forum" | "voice" | "category"
+  position  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+// ─── BANQUE — requête d'objet (Phase 3) ─────────────────────
+//  Le membre demande un objet IG / des Items / des Périns. L'admin décide à
+//  l'acceptation : achat (−20 % du prix public) OU dette (prix public complet).
+enum BankRequestKind {
+  OBJET_IG
+  ITEM
+  PERINS
+}
+
+enum BankRequestStatus {
+  PENDING
+  ACCEPTE_ACHAT
+  ACCEPTE_DETTE
+  REFUSE
+  ANNULE
+}
+
+model BankRequest {
+  id          String            @id @default(cuid())
+  userId      String            // demandeur (User.id)
+  username    String
+  discordId   String            // pour le MP du bot
+  characterName String?
+  kind        BankRequestKind   @default(OBJET_IG)
+  item        String?           // nom de l'objet / des items
+  quantity    Int               @default(1)
+  reason      String?
+  status      BankRequestStatus @default(PENDING)
+  prixPublic  BigInt?           // fixé par l'admin à l'acceptation
+  prixFinal   BigInt?           // achat = prixPublic×0,8 ; dette = prixPublic
+  debtId      String?           // dette créée si issue = dette
+  decidedBy   String?
+  adminNote   String?
+  channelId   String?           // embed « Décision »
+  messageId   String?
+  remindedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

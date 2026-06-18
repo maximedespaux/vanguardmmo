@@ -1,0 +1,4496 @@
+{
+ "classes": [
+  "Spadassin",
+  "Templier",
+  "Arcaniste",
+  "Envouteur",
+  "Arbaletrier",
+  "Sylphide",
+  "Primat",
+  "Chanoine"
+ ],
+ "weaponTiers": [
+  "Ancestral",
+  "Yggdrasil",
+  "Éternel"
+ ],
+ "armorTiers": [
+  "Shaïtan",
+  "Dryade",
+  "Yggdrasil",
+  "Éternel"
+ ],
+ "rarities": [
+  "Commun",
+  "Rare",
+  "Épique",
+  "Légendaire",
+  "Pré-mythique",
+  "Mythique"
+ ],
+ "weapons": [
+  {
+   "id": "af_22500",
+   "gameId": 22500,
+   "name": "Epée éternelle",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "epee",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 543,
+   "maxAttack": 604,
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/weapons/eternel/spada/Itm_WeaAxeDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22501",
+   "gameId": 22501,
+   "name": "Glaive éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "glaive",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 725,
+   "maxAttack": 805,
+   "baseStats": {
+    "critRate": 20,
+    "critDamage": 80
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     20
+    ],
+    [
+     "Attaque %",
+     20
+    ],
+    [
+     "Vitesse d'attaque",
+     400
+    ],
+    [
+     "Dégâts critiques",
+     80
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/templier/Itm_WeaAxtDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22502",
+   "gameId": 22502,
+   "name": "Hache éternelle",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "hache",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 474,
+   "maxAttack": 676,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     30
+    ],
+    [
+     "PV max %",
+     20
+    ],
+    [
+     "Blocage distance",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/spada/Itm_WeaAxeDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22503",
+   "gameId": 22503,
+   "name": "Doloire éternelle",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "doloire",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 633,
+   "maxAttack": 891,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/templier/Itm_WeaAxtDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22504",
+   "gameId": 22504,
+   "name": "Poing éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "poing",
+   "classes": [
+    "Chanoine"
+   ],
+   "minAttack": 575,
+   "maxAttack": 713,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/chanoine/Itm_WeaKnuDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22505",
+   "gameId": 22505,
+   "name": "Sceptre éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "sceptre",
+   "classes": [
+    "Primat"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Intelligence",
+     200
+    ],
+    [
+     "Dégâts magiques %",
+     100
+    ],
+    [
+     "Heal Rate",
+     300
+    ],
+    [
+     "Vitesse",
+     50
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/primat/Itm_WeaCheDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22506",
+   "gameId": 22506,
+   "name": "Baguette éternelle",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "baguette",
+   "classes": [
+    "Envouteur"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/envouteur/Itm_WeaShiDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22507",
+   "gameId": 22507,
+   "name": "Bâton éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "baton",
+   "classes": [
+    "Arcaniste"
+   ],
+   "minAttack": 587,
+   "maxAttack": 702,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/arcaniste/Itm_WeaShiDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22509",
+   "gameId": 22509,
+   "name": "Arc éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "arbalete",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "minAttack": 575,
+   "maxAttack": 638,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/arbaletrier/Itm_WeaBowDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_22508",
+   "gameId": 22508,
+   "name": "Yo-yo éternel",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "yoyo",
+   "classes": [
+    "Sylphide"
+   ],
+   "minAttack": 518,
+   "maxAttack": 564,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     70
+    ],
+    [
+     "Blocage distance",
+     6
+    ],
+    [
+     "Blocage mêlée",
+     6
+    ],
+    [
+     "Endurance",
+     70
+    ],
+    [
+     "Endurance %",
+     10
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/sylphide/Itm_WeaYoyDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_25257",
+   "gameId": 25257,
+   "name": "Epée à Une Main en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "epee",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 543,
+   "maxAttack": 604,
+   "baseStats": {
+    "critDamage": 120,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     20
+    ],
+    [
+     "Dégâts critiques",
+     120
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     10
+    ],
+    [
+     "Attaque %",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/spada/Item_WeaAxeBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25258",
+   "gameId": 25258,
+   "name": "Glaive en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "glaive",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 725,
+   "maxAttack": 805,
+   "baseStats": {
+    "critDamage": 200,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     30
+    ],
+    [
+     "Dégâts critiques",
+     200
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ],
+    [
+     "Attaque %",
+     25
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/templier/Item_WeaShiBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25259",
+   "gameId": 25259,
+   "name": "Epée en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "glaive",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 807,
+   "maxAttack": 892,
+   "baseStats": {
+    "critDamage": 200,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     30
+    ],
+    [
+     "Dégâts critiques",
+     200
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ],
+    [
+     "Attaque %",
+     25
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/templier/Item_WeaShiBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25260",
+   "gameId": 25260,
+   "name": "Hache en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "hache",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 474,
+   "maxAttack": 676,
+   "baseStats": {
+    "critDamage": 120,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     20
+    ],
+    [
+     "Dégâts critiques",
+     120
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     10
+    ],
+    [
+     "Attaque %",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/spada/Item_WeaAxeBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25261",
+   "gameId": 25261,
+   "name": "Hache à Deux Mains en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "doloire",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 633,
+   "maxAttack": 891,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     40
+    ],
+    [
+     "Blocage distance",
+     15
+    ],
+    [
+     "Blocage mêlée",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/templier/Item_WeaShiBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25263",
+   "gameId": 25263,
+   "name": "Poing en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "poing",
+   "classes": [
+    "Chanoine"
+   ],
+   "minAttack": 575,
+   "maxAttack": 713,
+   "baseStats": {
+    "critDamage": 200,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     40
+    ],
+    [
+     "Dégâts critiques",
+     200
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ],
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "MP max",
+     2000
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/chanoine/itm_weabokbaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25264",
+   "gameId": 25264,
+   "name": "Sceptre en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "sceptre",
+   "classes": [
+    "Primat"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Int Percent",
+     20
+    ],
+    [
+     "Attaque %",
+     40
+    ],
+    [
+     "Dégâts magiques %",
+     40
+    ],
+    [
+     "Intelligence",
+     120
+    ],
+    [
+     "Dégâts magiques",
+     1500
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/primat/Item_WeaCheBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25265",
+   "gameId": 25265,
+   "name": "Baguette en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "baguette",
+   "classes": [
+    "Envouteur"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Int Percent",
+     20
+    ],
+    [
+     "Attaque %",
+     40
+    ],
+    [
+     "Dégâts magiques %",
+     45
+    ],
+    [
+     "Intelligence",
+     120
+    ],
+    [
+     "Dégâts magiques",
+     1500
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/envouteur/Item_WeaWanBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25266",
+   "gameId": 25266,
+   "name": "Bâton en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "baton",
+   "classes": [
+    "Arcaniste"
+   ],
+   "minAttack": 587,
+   "maxAttack": 702,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Int Percent",
+     20
+    ],
+    [
+     "Attaque %",
+     40
+    ],
+    [
+     "Dégâts magiques %",
+     35
+    ],
+    [
+     "Intelligence",
+     120
+    ],
+    [
+     "Dégâts magiques",
+     1500
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/arcaniste/Item_WeaStaBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25267",
+   "gameId": 25267,
+   "name": "Arbalète en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "arbalete",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "minAttack": 575,
+   "maxAttack": 638,
+   "baseStats": {
+    "critDamage": 240,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     40
+    ],
+    [
+     "Dégâts critiques",
+     240
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ],
+    [
+     "Attaque %",
+     40
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/arbaletrier/Item_WeaBowBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_25268",
+   "gameId": 25268,
+   "name": "Yo-yo en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "yoyo",
+   "classes": [
+    "Sylphide"
+   ],
+   "minAttack": 518,
+   "maxAttack": 564,
+   "baseStats": {
+    "critDamage": 220,
+    "critRate": 70
+   },
+   "bonuses": [
+    [
+     "Précision",
+     40
+    ],
+    [
+     "Dégâts critiques",
+     220
+    ],
+    [
+     "Taux critique",
+     70
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ],
+    [
+     "Attaque %",
+     40
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/sylphide/Item_WeaYoyBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57724",
+   "gameId": 57724,
+   "name": "Super Epée Ancestrale",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "epee",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 543,
+   "maxAttack": 604,
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/weapons/eternel/spada/Itm_WeaAxeDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57725",
+   "gameId": 57725,
+   "name": "Super Glaive Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "glaive",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 725,
+   "maxAttack": 805,
+   "baseStats": {
+    "critRate": 25,
+    "critDamage": 90
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     25
+    ],
+    [
+     "Attaque %",
+     25
+    ],
+    [
+     "Vitesse d'attaque",
+     400
+    ],
+    [
+     "Dégâts critiques",
+     90
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/templier/Itm_WeaAxtDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57726",
+   "gameId": 57726,
+   "name": "Super Hache Ancestrale",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "hache",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 474,
+   "maxAttack": 676,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     40
+    ],
+    [
+     "PV max %",
+     25
+    ],
+    [
+     "Blocage distance",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/spada/Itm_WeaAxeDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57727",
+   "gameId": 57727,
+   "name": "Super Doloire Ancestrale",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "doloire",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 633,
+   "maxAttack": 891,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     45
+    ],
+    [
+     "Blocage mêlée",
+     20
+    ],
+    [
+     "Blocage distance",
+     20
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/templier/Itm_WeaAxtDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57728",
+   "gameId": 57728,
+   "name": "Super Poing Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "poing",
+   "classes": [
+    "Chanoine"
+   ],
+   "minAttack": 575,
+   "maxAttack": 713,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     40
+    ],
+    [
+     "PV max %",
+     25
+    ],
+    [
+     "Blocage mêlée",
+     17
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/chanoine/Itm_WeaKnuDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57729",
+   "gameId": 57729,
+   "name": "Super Sceptre Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "sceptre",
+   "classes": [
+    "Primat"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     25
+    ],
+    [
+     "Blocage mêlée",
+     17
+    ],
+    [
+     "Blocage distance",
+     17
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/primat/Itm_WeaCheDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57730",
+   "gameId": 57730,
+   "name": "Super Baguette Ancestrale",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "baguette",
+   "classes": [
+    "Envouteur"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     60
+    ],
+    [
+     "PV max %",
+     35
+    ],
+    [
+     "Blocage distance",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/envouteur/Itm_WeaShiDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57731",
+   "gameId": 57731,
+   "name": "Super Bâton Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "baton",
+   "classes": [
+    "Arcaniste"
+   ],
+   "minAttack": 587,
+   "maxAttack": 702,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Attaque %",
+     40
+    ],
+    [
+     "Intelligence",
+     60
+    ],
+    [
+     "Dégâts magiques %",
+     25
+    ],
+    [
+     "Dégâts vs monstres",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/arcaniste/Itm_WeaShiDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57733",
+   "gameId": 57733,
+   "name": "Super Arc Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "arbalete",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "minAttack": 575,
+   "maxAttack": 638,
+   "baseStats": {
+    "critRate": 30,
+    "critDamage": 90
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     30
+    ],
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "Dégâts critiques",
+     90
+    ],
+    [
+     "Dextérité",
+     30
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/arbaletrier/Itm_WeaBowDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57732",
+   "gameId": 57732,
+   "name": "Super Yo-yo Ancestral",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "eternel",
+   "weaponSubtype": "yoyo",
+   "classes": [
+    "Sylphide"
+   ],
+   "minAttack": 518,
+   "maxAttack": 564,
+   "baseStats": {
+    "critRate": 30,
+    "critDamage": 90
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     30
+    ],
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "Dégâts critiques",
+     90
+    ],
+    [
+     "Force",
+     30
+    ]
+   ],
+   "icon": "/assets/items/weapons/eternel/sylphide/Itm_WeaYoyDarkSkull.png",
+   "prestigeMin": 10
+  },
+  {
+   "id": "af_57734",
+   "gameId": 57734,
+   "name": "Super Epée à Une Main en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "epee",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 543,
+   "maxAttack": 604,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     40
+    ],
+    [
+     "PV max %",
+     25
+    ],
+    [
+     "Blocage mêlée",
+     17
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/spada/Item_WeaAxeBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57735",
+   "gameId": 57735,
+   "name": "Super Glaive en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "glaive",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 725,
+   "maxAttack": 805,
+   "baseStats": {
+    "critRate": 40,
+    "critDamage": 90
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     40
+    ],
+    [
+     "Attaque %",
+     25
+    ],
+    [
+     "Vitesse d'attaque",
+     400
+    ],
+    [
+     "Dégâts critiques",
+     90
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/templier/Item_WeaShiBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57736",
+   "gameId": 57736,
+   "name": "Super Hache en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "hache",
+   "classes": [
+    "Spadassin"
+   ],
+   "minAttack": 474,
+   "maxAttack": 676,
+   "baseStats": {
+    "critRate": 35,
+    "critDamage": 45
+   },
+   "bonuses": [
+    [
+     "Taux critique",
+     35
+    ],
+    [
+     "Dégâts critiques",
+     45
+    ],
+    [
+     "Attaque %",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/spada/Item_WeaAxeBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57737",
+   "gameId": 57737,
+   "name": "Super Hache à Deux Mains en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "doloire",
+   "classes": [
+    "Templier"
+   ],
+   "minAttack": 633,
+   "maxAttack": 891,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "PV max %",
+     45
+    ],
+    [
+     "Blocage distance",
+     20
+    ],
+    [
+     "Blocage mêlée",
+     20
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/templier/Item_WeaShiBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57738",
+   "gameId": 57738,
+   "name": "Super Poing en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "poing",
+   "classes": [
+    "Chanoine"
+   ],
+   "minAttack": 575,
+   "maxAttack": 713,
+   "baseStats": {
+    "critDamage": 90,
+    "critRate": 45
+   },
+   "bonuses": [
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "Dégâts critiques",
+     90
+    ],
+    [
+     "Taux critique",
+     45
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/chanoine/itm_weabokbaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57739",
+   "gameId": 57739,
+   "name": "Super Sceptre en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "sceptre",
+   "classes": [
+    "Primat"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "Dégâts magiques %",
+     35
+    ],
+    [
+     "Intelligence",
+     60
+    ],
+    [
+     "Dégâts vs monstres",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/primat/Item_WeaCheBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57740",
+   "gameId": 57740,
+   "name": "Super Baguette en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "baguette",
+   "classes": [
+    "Envouteur"
+   ],
+   "minAttack": 633,
+   "maxAttack": 656,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Attaque %",
+     30
+    ],
+    [
+     "Intelligence",
+     50
+    ],
+    [
+     "Dégâts magiques %",
+     20
+    ],
+    [
+     "Dégâts vs monstres",
+     20
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/envouteur/Item_WeaWanBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57741",
+   "gameId": 57741,
+   "name": "Super Bâton en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "baton",
+   "classes": [
+    "Arcaniste"
+   ],
+   "minAttack": 587,
+   "maxAttack": 702,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     60
+    ],
+    [
+     "PV max %",
+     35
+    ],
+    [
+     "Blocage distance",
+     20
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/arcaniste/Item_WeaStaBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57742",
+   "gameId": 57742,
+   "name": "Super Arbalète en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "arbalete",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "minAttack": 575,
+   "maxAttack": 638,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     60
+    ],
+    [
+     "PV max %",
+     30
+    ],
+    [
+     "Blocage distance",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/arbaletrier/Item_WeaBowBaruweapon.png",
+   "prestigeMin": 3
+  },
+  {
+   "id": "af_57743",
+   "gameId": 57743,
+   "name": "Super Yo-yo en Yggdrasil Purifié",
+   "category": "weapon",
+   "slot": "arme",
+   "tier": "yggdrasil",
+   "weaponSubtype": "yoyo",
+   "classes": [
+    "Sylphide"
+   ],
+   "minAttack": 518,
+   "maxAttack": 564,
+   "baseStats": {},
+   "bonuses": [
+    [
+     "Endurance",
+     60
+    ],
+    [
+     "PV max %",
+     25
+    ],
+    [
+     "Blocage distance",
+     15
+    ]
+   ],
+   "icon": "/assets/items/weapons/ygg/sylphide/Item_WeaYoyBaruweapon.png",
+   "prestigeMin": 3
+  }
+ ],
+ "armor": [
+  {
+   "id": "af_22536",
+   "gameId": 22536,
+   "name": "Grèves des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22536.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22540",
+   "gameId": 22540,
+   "name": "Grèves des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/templier/Itm_fKinSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22544",
+   "gameId": 22544,
+   "name": "Solerets des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22544.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22548",
+   "gameId": 22548,
+   "name": "Solerets des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/spada/Itm_fBlaSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22552",
+   "gameId": 22552,
+   "name": "Souliers des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22552.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22556",
+   "gameId": 22556,
+   "name": "Souliers des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/sylphide/Itm_fJstSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22560",
+   "gameId": 22560,
+   "name": "Bottes des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22560.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22564",
+   "gameId": 22564,
+   "name": "Bottes des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arbaletrier/Itm_fRagSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22568",
+   "gameId": 22568,
+   "name": "Mules des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22568.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22572",
+   "gameId": 22572,
+   "name": "Mules des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/primat/Itm_fRinSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22576",
+   "gameId": 22576,
+   "name": "Chaussures des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22576.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22580",
+   "gameId": 22580,
+   "name": "Chaussures des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/chanoine/Itm_fBilSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22584",
+   "gameId": 22584,
+   "name": "Chausses des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22584.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22588",
+   "gameId": 22588,
+   "name": "Chausses des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/envouteur/Itm_fPsySet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22592",
+   "gameId": 22592,
+   "name": "Bottines des Dryades (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22592.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22596",
+   "gameId": 22596,
+   "name": "Bottines des Dryades (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arcaniste/Itm_fEleSet06Foot.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22535",
+   "gameId": 22535,
+   "name": "Gantelets des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22535.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22539",
+   "gameId": 22539,
+   "name": "Gantelets des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/templier/Itm_fKinSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22543",
+   "gameId": 22543,
+   "name": "Griffes des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22543.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22547",
+   "gameId": 22547,
+   "name": "Griffes des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/spada/Itm_fBlaSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22551",
+   "gameId": 22551,
+   "name": "Manicles des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22551.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22555",
+   "gameId": 22555,
+   "name": "Manicles des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/sylphide/Itm_fJstSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22559",
+   "gameId": 22559,
+   "name": "Gants Cloutés des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22559.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22563",
+   "gameId": 22563,
+   "name": "Gants Cloutés des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arbaletrier/Itm_fRagSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22567",
+   "gameId": 22567,
+   "name": "Gants des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22567.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22571",
+   "gameId": 22571,
+   "name": "Gants des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/primat/Itm_fRinSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22575",
+   "gameId": 22575,
+   "name": "Garde-mains des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22575.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22579",
+   "gameId": 22579,
+   "name": "Garde-mains des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/chanoine/Itm_fBilSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22583",
+   "gameId": 22583,
+   "name": "Poignes des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22583.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22587",
+   "gameId": 22587,
+   "name": "Poignes des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/envouteur/Itm_fPsySet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22591",
+   "gameId": 22591,
+   "name": "Torsades des Dryades (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22591.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22595",
+   "gameId": 22595,
+   "name": "Torsades des Dryades (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arcaniste/Itm_fEleSet06Hand.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22533",
+   "gameId": 22533,
+   "name": "Heaume des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22533.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22537",
+   "gameId": 22537,
+   "name": "Heaume des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/templier/Itm_fKinSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22541",
+   "gameId": 22541,
+   "name": "Masque des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22541.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22545",
+   "gameId": 22545,
+   "name": "Masque des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/spada/Itm_fBlaSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22549",
+   "gameId": 22549,
+   "name": "Camail des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22549.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22553",
+   "gameId": 22553,
+   "name": "Camail des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/sylphide/Itm_fJstSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22557",
+   "gameId": 22557,
+   "name": "Casque des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22557.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22561",
+   "gameId": 22561,
+   "name": "Casque des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arbaletrier/Itm_fRagSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22565",
+   "gameId": 22565,
+   "name": "Couronne des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22565.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22569",
+   "gameId": 22569,
+   "name": "Couronne des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/primat/Itm_fRinSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22573",
+   "gameId": 22573,
+   "name": "Coiffe des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22573.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22577",
+   "gameId": 22577,
+   "name": "Coiffe des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/chanoine/Itm_fBilSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22581",
+   "gameId": 22581,
+   "name": "Chapeau des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22581.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22585",
+   "gameId": 22585,
+   "name": "Chapeau des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/envouteur/Itm_fPsySet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22589",
+   "gameId": 22589,
+   "name": "Couvre-chef des Dryades (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22589.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22593",
+   "gameId": 22593,
+   "name": "Couvre-chef des Dryades (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arcaniste/Itm_fEleSet06Cap.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22534",
+   "gameId": 22534,
+   "name": "Haubert des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22534.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22538",
+   "gameId": 22538,
+   "name": "Haubert des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/templier/Itm_fKinSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22542",
+   "gameId": 22542,
+   "name": "Cuirasse des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22542.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22546",
+   "gameId": 22546,
+   "name": "Cuirasse des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/spada/Itm_fBlaSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22550",
+   "gameId": 22550,
+   "name": "Tunique des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22550.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22554",
+   "gameId": 22554,
+   "name": "Tunique des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/sylphide/Itm_fJstSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22558",
+   "gameId": 22558,
+   "name": "Plastron des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22558.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22562",
+   "gameId": 22562,
+   "name": "Plastron des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arbaletrier/Itm_fRagSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22566",
+   "gameId": 22566,
+   "name": "Robe des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22566.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22570",
+   "gameId": 22570,
+   "name": "Robe des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/primat/Itm_fRinSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22574",
+   "gameId": 22574,
+   "name": "Pectoral des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22574.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22578",
+   "gameId": 22578,
+   "name": "Pectoral des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/chanoine/Itm_fBilSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22582",
+   "gameId": 22582,
+   "name": "Pourpoint des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22582.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22586",
+   "gameId": 22586,
+   "name": "Pourpoint des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/envouteur/Itm_fPsySet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22590",
+   "gameId": 22590,
+   "name": "Grande Tenue des Dryades (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/22590.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_22594",
+   "gameId": 22594,
+   "name": "Grande Tenue des Dryades (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "dryades",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/dryade/arcaniste/Itm_fEleSet06Upper.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20833",
+   "gameId": 20833,
+   "name": "Heaume de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20833.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20834",
+   "gameId": 20834,
+   "name": "Heaume de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/templier/Itm_FLordkSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20835",
+   "gameId": 20835,
+   "name": "Masque de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20835.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20836",
+   "gameId": 20836,
+   "name": "Masque de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/spada/Itm_FStormbSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20837",
+   "gameId": 20837,
+   "name": "Camail de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20837.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20838",
+   "gameId": 20838,
+   "name": "Camail de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/sylphide/Itm_FWindlSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20839",
+   "gameId": 20839,
+   "name": "Casque de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20839.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20840",
+   "gameId": 20840,
+   "name": "Casque de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arbaletrier/Itm_FCracksSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20841",
+   "gameId": 20841,
+   "name": "Couronne de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20841.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20842",
+   "gameId": 20842,
+   "name": "Couronne de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/primat/Itm_FFlorSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20843",
+   "gameId": 20843,
+   "name": "Coiffe de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20843.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20844",
+   "gameId": 20844,
+   "name": "Coiffe de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/chanoine/Itm_FForcemSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20845",
+   "gameId": 20845,
+   "name": "Chapeau de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20845.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20846",
+   "gameId": 20846,
+   "name": "Chapeau de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/envouteur/Itm_FMentSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20847",
+   "gameId": 20847,
+   "name": "Couvre-chef de Shaitan (G)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20847.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20848",
+   "gameId": 20848,
+   "name": "Couvre-chef de Shaitan (F)",
+   "category": "helmet",
+   "slot": "casque",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arcaniste/Itm_FElelSet01Cap-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20849",
+   "gameId": 20849,
+   "name": "Haubert de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20849.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20850",
+   "gameId": 20850,
+   "name": "Haubert de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/templier/Itm_FLordkSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20851",
+   "gameId": 20851,
+   "name": "Cuirasse de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20851.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20852",
+   "gameId": 20852,
+   "name": "Cuirasse de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/spada/Itm_FStormbSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20853",
+   "gameId": 20853,
+   "name": "Tunique de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20853.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20854",
+   "gameId": 20854,
+   "name": "Tunique de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/sylphide/Itm_FWindlSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20855",
+   "gameId": 20855,
+   "name": "Plastron de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20855.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20856",
+   "gameId": 20856,
+   "name": "Plastron de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arbaletrier/Itm_FCracksSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20857",
+   "gameId": 20857,
+   "name": "Robe de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20857.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20858",
+   "gameId": 20858,
+   "name": "Robe de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/primat/Itm_FFlorSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20859",
+   "gameId": 20859,
+   "name": "Pectoral de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20859.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20860",
+   "gameId": 20860,
+   "name": "Pectoral de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/chanoine/Itm_FForcemSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20861",
+   "gameId": 20861,
+   "name": "Pourpoint de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20861.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20862",
+   "gameId": 20862,
+   "name": "Pourpoint de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/envouteur/Itm_FMentSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20863",
+   "gameId": 20863,
+   "name": "Grande Tenue de Shaitan (G)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20863.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20864",
+   "gameId": 20864,
+   "name": "Grande Tenue de Shaitan (F)",
+   "category": "armor",
+   "slot": "armure",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arcaniste/Itm_FElelSet01Upper-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20865",
+   "gameId": 20865,
+   "name": "Gantelets de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20865.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20866",
+   "gameId": 20866,
+   "name": "Gantelets de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/templier/Itm_FLordkSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20867",
+   "gameId": 20867,
+   "name": "Griffes de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20867.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20868",
+   "gameId": 20868,
+   "name": "Griffes de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/spada/Itm_FStormbSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20869",
+   "gameId": 20869,
+   "name": "Manicles de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20869.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20870",
+   "gameId": 20870,
+   "name": "Manicles de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/sylphide/Itm_FWindlSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20871",
+   "gameId": 20871,
+   "name": "Gants Cloutés de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20871.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20872",
+   "gameId": 20872,
+   "name": "Gants Cloutés de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arbaletrier/Itm_FCracksSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20873",
+   "gameId": 20873,
+   "name": "Gants de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20873.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20874",
+   "gameId": 20874,
+   "name": "Gants de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/primat/Itm_FFlorSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20875",
+   "gameId": 20875,
+   "name": "Garde-mains de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20875.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20876",
+   "gameId": 20876,
+   "name": "Garde-mains de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/chanoine/Itm_FForcemSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20877",
+   "gameId": 20877,
+   "name": "Poignes de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20877.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20878",
+   "gameId": 20878,
+   "name": "Poignes de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/envouteur/Itm_FMentSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20879",
+   "gameId": 20879,
+   "name": "Torsades de Shaitan (G)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20879.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20880",
+   "gameId": 20880,
+   "name": "Torsades de Shaitan (F)",
+   "category": "gloves",
+   "slot": "gants",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arcaniste/Itm_FElelSet01Hand-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20881",
+   "gameId": 20881,
+   "name": "Grèves de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20881.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20882",
+   "gameId": 20882,
+   "name": "Grèves de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Templier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/templier/Itm_FLordkSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20883",
+   "gameId": 20883,
+   "name": "Solerets de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20883.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20884",
+   "gameId": 20884,
+   "name": "Solerets de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Spadassin"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/spada/Itm_FStormbSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20885",
+   "gameId": 20885,
+   "name": "Souliers de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20885.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20886",
+   "gameId": 20886,
+   "name": "Souliers de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Sylphide"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/sylphide/Itm_FWindlSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20887",
+   "gameId": 20887,
+   "name": "Bottes de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20887.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20888",
+   "gameId": 20888,
+   "name": "Bottes de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arbaletrier"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arbaletrier/Itm_FCracksSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20889",
+   "gameId": 20889,
+   "name": "Mules de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20889.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20890",
+   "gameId": 20890,
+   "name": "Mules de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Primat"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/primat/Itm_FFlorSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20891",
+   "gameId": 20891,
+   "name": "Chaussures de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20891.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20892",
+   "gameId": 20892,
+   "name": "Chaussures de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Chanoine"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/chanoine/Itm_FForcemSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20893",
+   "gameId": 20893,
+   "name": "Chausses de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20893.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20894",
+   "gameId": 20894,
+   "name": "Chausses de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Envouteur"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/envouteur/Itm_FMentSet01Foot-32.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20895",
+   "gameId": 20895,
+   "name": "Bottines de Shaitan (G)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "M",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/builder/20895.png",
+   "prestigeMin": 0
+  },
+  {
+   "id": "af_20896",
+   "gameId": 20896,
+   "name": "Bottines de Shaitan (F)",
+   "category": "boots",
+   "slot": "bottes",
+   "tier": "shaitan",
+   "sex": "F",
+   "classes": [
+    "Arcaniste"
+   ],
+   "baseStats": {},
+   "bonuses": [],
+   "icon": "/assets/items/armures/f/shaitan/arcaniste/Itm_FElelSet01Foot-32.png",
+   "prestigeMin": 0
+  }
+ ],
+ "runes": [
+  {
+   "id": 40134,
+   "name": "Rune de force",
+   "icon": "/assets/items/builder/40134.png",
+   "stats": [
+    [
+     "Force",
+     10
+    ],
+    [
+     "Dégâts critiques",
+     4
+    ],
+    [
+     "Attaque %",
+     1
+    ]
+   ]
+  },
+  {
+   "id": 40135,
+   "name": "Rune d'endurance",
+   "icon": "/assets/items/builder/40135.png",
+   "stats": [
+    [
+     "Endurance",
+     10
+    ],
+    [
+     "PV max %",
+     2
+    ]
+   ]
+  },
+  {
+   "id": 40136,
+   "name": "Rune d'intelligence",
+   "icon": "/assets/items/builder/40136.png",
+   "stats": [
+    [
+     "Intelligence",
+     10
+    ],
+    [
+     "Dégâts magiques %",
+     2
+    ],
+    [
+     "Attaque %",
+     1
+    ]
+   ]
+  },
+  {
+   "id": 40137,
+   "name": "Rune de dexterité",
+   "icon": "/assets/items/builder/40137.png",
+   "stats": [
+    [
+     "Dextérité",
+     10
+    ],
+    [
+     "Dégâts critiques",
+     4
+    ],
+    [
+     "Attaque %",
+     1
+    ]
+   ]
+  }
+ ],
+ "costumeGems": [
+  {
+   "stat": "Force",
+   "levels": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Endurance",
+   "levels": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Dextérité",
+   "levels": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Intelligence",
+   "levels": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Attaque",
+   "levels": [
+    400,
+    800,
+    1400,
+    2100
+   ]
+  },
+  {
+   "stat": "Dégâts magiques",
+   "levels": [
+    800,
+    1600,
+    2800,
+    4200
+   ]
+  },
+  {
+   "stat": "Dégâts critiques",
+   "levels": [
+    8,
+    16,
+    32,
+    65
+   ]
+  },
+  {
+   "stat": "Dégâts magiques %",
+   "levels": [
+    3,
+    7,
+    12,
+    32
+   ]
+  },
+  {
+   "stat": "Soin %",
+   "levels": [
+    10,
+    20,
+    40,
+    75
+   ]
+  },
+  {
+   "stat": "PV max",
+   "levels": [
+    2276,
+    4552,
+    11380,
+    28500
+   ]
+  },
+  {
+   "stat": "Soin %",
+   "levels": [
+    10,
+    20,
+    40,
+    75
+   ]
+  },
+  {
+   "stat": "Défense",
+   "levels": [
+    200,
+    400,
+    700,
+    900
+   ]
+  }
+ ],
+ "bijoux": [
+  {
+   "id": 25177,
+   "name": "Anneau Ailé",
+   "icon": "/assets/items/builder/25177.png",
+   "stats": [
+    [
+     "Int Percent",
+     10
+    ],
+    [
+     "Str Percent",
+     10
+    ],
+    [
+     "Dex Percent",
+     10
+    ]
+   ],
+   "levelMax": 20,
+   "perLevel": null
+  },
+  {
+   "id": 25184,
+   "name": "Anneau Ailé Pur",
+   "icon": "/assets/items/builder/25184.png",
+   "stats": [
+    [
+     "PV max %",
+     5
+    ],
+    [
+     "Endurance",
+     50
+    ]
+   ],
+   "levelMax": 20,
+   "perLevel": null
+  }
+ ],
+ "fashions": [
+  {
+   "key": "immortel",
+   "name": "Immortel",
+   "icon": null
+  },
+  {
+   "key": "intouchable",
+   "name": "Intouchable",
+   "icon": null
+  },
+  {
+   "key": "fulgurant",
+   "name": "Fulgurant",
+   "icon": null
+  }
+ ],
+ "capes": [
+  {
+   "key": "donjon",
+   "name": "Donjon",
+   "icon": null
+  },
+  {
+   "key": "or massif farmeur",
+   "name": "Or Massif Farmeur",
+   "icon": null
+  },
+  {
+   "key": "fulgurant",
+   "name": "Fulgurant",
+   "icon": null
+  },
+  {
+   "key": "fulgurant immortel",
+   "name": "Fulgurant Immortel",
+   "icon": null
+  },
+  {
+   "key": "donjon dore",
+   "name": "Donjon Dore",
+   "icon": null
+  },
+  {
+   "key": "farmeur dore",
+   "name": "Farmeur Dore",
+   "icon": null
+  }
+ ],
+ "fees": [
+  {
+   "id": 30035,
+   "name": "Elerina, Esprit de la vigueur et de la magie",
+   "icon": "/assets/items/builder/30035.png",
+   "levelMax": 50,
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 30036,
+   "name": "Lyrina, Esprit de l'attaque et des coups critiques",
+   "icon": "/assets/items/builder/30036.png",
+   "levelMax": 50,
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 30037,
+   "name": "Elowen, Esprit de l'intelligence et de la guérison",
+   "icon": "/assets/items/builder/30037.png",
+   "levelMax": 50,
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 30038,
+   "name": "Veloria, Esprit de l'endurance et de la vitalité",
+   "icon": "/assets/items/builder/30038.png",
+   "levelMax": 50,
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 59882,
+   "name": "Goldea",
+   "icon": "/assets/items/builder/59882.png",
+   "levelMax": 50,
+   "stats": [],
+   "todo": true
+  }
+ ],
+ "familiers": [
+  {
+   "id": 57749,
+   "name": "Angry Licorne",
+   "icon": null,
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21039,
+   "name": "Smilodon",
+   "icon": "/assets/items/builder/21039.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21040,
+   "name": "Leonis",
+   "icon": "/assets/items/builder/21040.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21041,
+   "name": "Caerbannog",
+   "icon": "/assets/items/builder/21041.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21042,
+   "name": "Bahamut",
+   "icon": "/assets/items/builder/21042.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21043,
+   "name": "Licorne",
+   "icon": "/assets/items/builder/21043.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21044,
+   "name": "Kitsune",
+   "icon": "/assets/items/builder/21044.png",
+   "stats": [],
+   "todo": true
+  },
+  {
+   "id": 21045,
+   "name": "Hippogryphe",
+   "icon": "/assets/items/builder/21045.png",
+   "stats": [],
+   "todo": true
+  }
+ ],
+ "ramasseurs": [
+  {
+   "id": 58016,
+   "name": "Ramasseur 58016",
+   "icon": "/assets/items/builder/58016.png",
+   "stats": [
+    [
+     "Endurance %",
+     10
+    ],
+    [
+     "Dégâts JcJ %",
+     10
+    ]
+   ]
+  },
+  {
+   "id": 58427,
+   "name": "Ramasseur 58427",
+   "icon": "/assets/items/builder/58427.png",
+   "stats": [
+    [
+     "Dex Percent",
+     10
+    ],
+    [
+     "Dégâts vs monstres",
+     10
+    ]
+   ]
+  },
+  {
+   "id": 58428,
+   "name": "Ramasseur 58428",
+   "icon": "/assets/items/builder/58428.png",
+   "stats": [
+    [
+     "Int Percent",
+     5
+    ],
+    [
+     "Dégâts vs monstres",
+     10
+    ]
+   ]
+  },
+  {
+   "id": 58429,
+   "name": "Ramasseur 58429",
+   "icon": "/assets/items/builder/58429.png",
+   "stats": [
+    [
+     "Endurance %",
+     10
+    ],
+    [
+     "PV max %",
+     5
+    ]
+   ]
+  }
+ ],
+ "setBonus": {
+  "Shaïtan": {
+   "Templier": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 149
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 304
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Spadassin": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 60
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 243
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Sylphide": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 60
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 264
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Arbaletrier": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 60
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 264
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Primat": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 87
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 296
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Chanoine": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 87
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 296
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Envouteur": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 87
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 296
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ],
+   "Arcaniste": [
+    {
+     "pieces": 4,
+     "stat": "PV max %",
+     "value": 87
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage distance",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Blocage mêlée",
+     "value": 5
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance",
+     "value": 296
+    },
+    {
+     "pieces": 4,
+     "stat": "Endurance %",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ %",
+     "value": -200
+    }
+   ]
+  },
+  "Dryade": {
+   "Templier": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts critiques",
+     "value": 120
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 30
+    },
+    {
+     "pieces": 4,
+     "stat": "Précision",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Taux critique",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Spadassin": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts critiques",
+     "value": 120
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 30
+    },
+    {
+     "pieces": 4,
+     "stat": "Précision",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Taux critique",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Sylphide": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts critiques",
+     "value": 120
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 30
+    },
+    {
+     "pieces": 4,
+     "stat": "Précision",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Taux critique",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Arbaletrier": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts critiques",
+     "value": 120
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 30
+    },
+    {
+     "pieces": 4,
+     "stat": "Précision",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Taux critique",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Primat": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 50
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 35
+    },
+    {
+     "pieces": 4,
+     "stat": "Intelligence",
+     "value": 80
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    },
+    {
+     "pieces": 4,
+     "stat": "Heal Rate",
+     "value": 200
+    }
+   ],
+   "Chanoine": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts critiques",
+     "value": 120
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 30
+    },
+    {
+     "pieces": 4,
+     "stat": "Précision",
+     "value": 25
+    },
+    {
+     "pieces": 4,
+     "stat": "Taux critique",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Envouteur": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 50
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 35
+    },
+    {
+     "pieces": 4,
+     "stat": "Intelligence",
+     "value": 80
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ],
+   "Arcaniste": [
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 50
+    },
+    {
+     "pieces": 4,
+     "stat": "Attaque %",
+     "value": 40
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts magiques %",
+     "value": 35
+    },
+    {
+     "pieces": 4,
+     "stat": "Intelligence",
+     "value": 80
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts vs monstres",
+     "value": 20
+    },
+    {
+     "pieces": 4,
+     "stat": "Dégâts JcJ",
+     "value": -300
+    }
+   ]
+  }
+ }
+}

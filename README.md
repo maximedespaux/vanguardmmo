@@ -30,7 +30,7 @@ Connexion **Discord OAuth**, accès **par rôle** (Public / Membre / Staff), le 
 - **Banque (gestion)**, **Candidatures**, **World Boss**, **Annonces**
 - **Discord** — pilotage du bot (embeds, giveaways, panneau de classes) + **Événements** (édités sur le site, lus par le bot)
 
-### 🤖 Le bot Discord
+### 💬 Le bot Discord
 14 commandes slash, salon **#decisions** (validation candidatures/dettes/banque en 1 clic + MP au membre), relais automatiques site → Discord, rappels (candidatures, dettes, **événements de jeu**), giveaways avec tirage auto, auto-attribution des rôles de classe.
 👉 Détails dans [`bot/README.md`](bot/README.md).
 

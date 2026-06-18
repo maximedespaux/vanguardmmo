@@ -183,7 +183,7 @@ function setRank(r){const e=E('familier');if(e){e.rank=r;render();drawPick('');}
 function famRune(v){const e=E('familier');if(e){e.rune=v;render();drawPick('');}}
 function removeItem(){delete ST().eq[pickSlot];render();closePick();}
 function exportBuild(){const c=C();const st=ST();const data={name:c.name,stuff:st.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,equipped:Object.fromEntries(Object.entries(st.eq).map(([k,e])=>[k,{name:e.item.n,id:e.item.id,rank:e.rank}])),carnets:(c.carnets||[]).map(i=>CARNETS[i].nom),stats:totals()};
-  const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(c.name||'build')+'_'+(st.name||'stuff')+'.json';a.click();alert('Build exporté ✓');}
+  try{localStorage.setItem('vg_build_export',JSON.stringify(data));}catch(e){}if(window.__embed){try{window.parent&&window.parent.postMessage({type:'vg_build',data:data},'*');}catch(e){}alert('Build validé ✓ — reviens à ta candidature.');return;}const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(c.name||'build')+'_'+(st.name||'stuff')+'.json';a.click();alert('Build exporté ✓');}
 
 /* ===================== VOLETS DE MÉCANIQUES ===================== */
 let _scroll=0;

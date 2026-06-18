@@ -25,6 +25,12 @@ export default function CandidaturePage() {
   useEffect(() => {
     try { setBuildExport(JSON.parse(localStorage.getItem("vg_build_export") || "null")); } catch { /* ignore */ }
   }, [showBuilder]);
+  // Capture instantanée du build validé depuis l'iframe AirBuilder (postMessage).
+  useEffect(() => {
+    const h = (e: MessageEvent) => { if (e.data && e.data.type === "vg_build" && e.data.data) setBuildExport(e.data.data); };
+    window.addEventListener("message", h);
+    return () => window.removeEventListener("message", h);
+  }, []);
   // Quiz — doit être 100% juste
   const [qa, setQa] = useState<(number | null)[]>(Array(QUIZ.length).fill(null));
   const [qFeedback, setQFeedback] = useState<string | null>(null);

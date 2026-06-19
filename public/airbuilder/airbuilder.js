@@ -22,8 +22,8 @@ function pool(s){if(s==='weapon2')return 'weapon';if(SLOTS[s]&&SLOTS[s].pool)ret
 function newStuff(n){return {name:n||'Stuff',eq:{}};}
 function newChar(n){return {name:n||'Perso '+(state.chars.length+1),cls:'Arcaniste',sex:'G',lvl:200,prestige:3,carnets:[],carnetsFull:[],stuffs:[newStuff('DPS'),newStuff('Tank'),newStuff('Hybride')],curStuff:0};}
 const state={chars:[],cur:0};
-(function(){try{const s=JSON.parse(localStorage.getItem('vg_air_e1')||'null');if(s&&s.chars&&s.chars.length)Object.assign(state,s);}catch(e){}if(!state.chars.length)state.chars=[newChar('Daiisuke')];})();
-const C=()=>state.chars[state.cur];
+(function(){try{const s=JSON.parse(localStorage.getItem('vg_air_e1')||'null');if(s&&s.chars&&s.chars.length)Object.assign(state,s);}catch(e){}if(!state.chars||!state.chars.length)state.chars=[newChar('Daiisuke')];state.chars.forEach(function(c){if(!c||typeof c!=='object')return;if(!c.cls||CLASSES.indexOf(c.cls)<0)c.cls='Arcaniste';if(c.sex!=='F')c.sex='G';if(!c.name)c.name='Perso';if(c.lvl==null)c.lvl=200;if(c.prestige==null)c.prestige=1;});state.chars=state.chars.filter(function(c){return c&&typeof c==='object';});if(!state.chars.length)state.chars=[newChar('Daiisuke')];if(!(state.cur>=0&&state.cur<state.chars.length))state.cur=0;})();
+const C=()=>{if(!(state.cur>=0&&state.cur<state.chars.length))state.cur=0;return state.chars[state.cur];};
 function ST(){const c=C();
   if(!c.stuffs){c.carnets=c.carnets||[];c.carnetsFull=c.carnetsFull||[];c.stuffs=[{name:'DPS',eq:c.eq||{}},newStuff('Tank'),newStuff('Hybride')];c.curStuff=0;delete c.eq;}
   // migration: si d'anciens carnets sont stockés dans un stuff, les remonter au personnage
@@ -55,7 +55,8 @@ function slotHTML(slot){const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const small=
   return `<div class="slot ${small?'small':''}" onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}
 
 function render(){
-  document.getElementById('ptabs').innerHTML=state.chars.map((c,i)=>`<div class="ptab ${i===state.cur?'on':''}" onclick="switchChar(${i})">${IC['class_'+c.cls.toLowerCase()]?`<img src="${IC['class_'+c.cls.toLowerCase()]}">`:(SIL[c.cls]||'🧍')} ${esc(c.name)} ${state.chars.length>1?`<span class="x" onclick="event.stopPropagation();delChar(${i})">✕</span>`:''}</div>`).join('')+`<div class="addp" onclick="addChar()">+ Perso</div>`;
+  var _pt=document.getElementById('ptabs');if(!_pt){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;
+  _pt.innerHTML=state.chars.map((c,i)=>`<div class="ptab ${i===state.cur?'on':''}" onclick="switchChar(${i})">${IC['class_'+c.cls.toLowerCase()]?`<img src="${IC['class_'+c.cls.toLowerCase()]}">`:(SIL[c.cls]||'🧍')} ${esc(c.name)} ${state.chars.length>1?`<span class="x" onclick="event.stopPropagation();delChar(${i})">✕</span>`:''}</div>`).join('')+`<div class="addp" onclick="addChar()">+ Perso</div>`;
   const c=C();
   document.getElementById('setup').innerHTML=`
    <div class="f"><label>Nom</label><input value="${esc(c.name)}" style="width:130px" onchange="C().name=this.value;render()"></div>

@@ -21,7 +21,7 @@ type Run = { dungeonId: number; dungeonName: string; icon: string; date: string;
 
 export default function DonjonsPage() {
   const dungeons = dungeonsData as Dungeon[];
-  const [tab, setTab] = useState<"suivi" | "rapport" | "wiki">("suivi");
+  const [tab, setTab] = useState<"suivi" | "rapport" | "wiki">("wiki");
 
   // ── Suivi quotidien ──
   const [logs, setLogs] = useState<Record<string, Record<string, number>>>({});
@@ -67,11 +67,9 @@ export default function DonjonsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-pve.png" icon="🗺️" title="Chambres & Donjons" subtitle={`Ton suivi quotidien, le rapport des butins par instance, et le wiki des ${dungeons.length} donjons.`} />
+      <PageHeader banner="/assets/site/banners/banner-pve.png" icon="🗺️" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
       <div className="vg-subtabs">
-        <TabBtn k="suivi" label="📅 Suivi quotidien" />
-        <TabBtn k="rapport" label="📊 Rapport d'instances" />
         <TabBtn k="wiki" label="📖 Wiki des donjons" />
       </div>
 

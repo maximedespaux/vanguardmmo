@@ -1,7 +1,7 @@
 import "./globals.css";
 import { Providers } from "./providers";
 
-export const metadata = { title: "Vanguard Control Center", description: "Gestion de la guilde Vanguard — AirFlyff" };
+export const metadata = { title: "Vanguard Hub", description: 'Gestion de la Guilde "Vanguard"' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

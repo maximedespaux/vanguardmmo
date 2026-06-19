@@ -55,7 +55,7 @@ function Hub({ icon, title, metric, href, cta }: { icon: string; title: string; 
     <div className="dash-card dash-hub" style={{ padding: 17, display: "flex", flexDirection: "column", gap: 5 }}>
       <div className="font-heading" style={{ fontSize: 17, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 9 }}><span>{icon}</span>{title}</div>
       <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{metric}</div>
-      <Link href={href} className="dash-hub-cta" style={{ marginTop: 10, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 15px", borderRadius: 9, border: "1px solid var(--orange)", color: "var(--orange)", fontFamily: "Rajdhani,sans-serif", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.5, textDecoration: "none" }}>{cta} <span className="dash-hub-arrow">→</span></Link>
+      <Link href={href} className="dash-hub-cta" style={{ marginTop: 10, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 17px", borderRadius: 9, fontFamily: "Rajdhani,sans-serif", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8, textDecoration: "none" }}>{cta} <span className="dash-hub-arrow">→</span></Link>
     </div>
   );
 }

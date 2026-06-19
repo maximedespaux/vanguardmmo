@@ -20,6 +20,8 @@ function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 window.addEventListener('beforeunload',save);
 
 function applyOv(it){const o=S.overrides[it.id];return o?Object.assign({},it,o):it;}
+function agConfirm(msg,onYes){window.__agY=onYes;openSheet('<div style="padding:4px 2px"><div style="font-size:14px;line-height:1.55;margin-bottom:18px;white-space:pre-line">'+(msg||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="var f=window.__agY;window.__agY=null;closeSheet();if(f)f();">Confirmer</button></div></div>');}
+function agToast(msg,ok){var t=document.createElement('div');t.textContent=msg;t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:99999;background:#16161c;color:#E8E8EC;border:1px solid '+(ok===false?'#F87171':'#FF8C1A')+';border-radius:10px;padding:11px 18px;font:600 13px/1.4 Inter,system-ui,sans-serif;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.55);opacity:0;transition:opacity .25s,transform .25s';document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity="1";t.style.transform="translateX(-50%) translateY(0)";});setTimeout(function(){t.style.opacity="0";t.style.transform="translateX(-50%) translateY(8px)";setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);}
 function catalog(){const hid=new Set(S.hidden||[]);return D.bankItems.concat(S.custom||[]).map(applyOv).filter(i=>!hid.has(i.id));}
 function catIcon(cat){const c=cat.trim();if(c.startsWith('Stuff'))return c.includes('Éternel')?'🟠':c.includes('Shaitan')?'🟥':c.includes('Dryades')?'🟩':'🟣';if(c.startsWith('Armes'))return '⚔️';if(c==='Bijoux')return'💍';if(c==='R1')return'🔵';if(c==='R2')return'🟡';if(c==='Ressource')return'⛏️';if(c.startsWith('Carte'))return'🃏';if(c.startsWith('Butin'))return'🎁';return'📦';}
 function qty(m,id){return(S.inv[m]&&S.inv[m][id])||0;}
@@ -72,7 +74,7 @@ function adj(id,d){const it=catalog().find(x=>x.id===id);setQty(S.cur,id,qty(S.c
 function setQ(id,v){const it=catalog().find(x=>x.id===id);setQty(S.cur,id,v,it?it.item:id);paintBank();}
 function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
-function delM(m){if(!confirm('Supprimer le coffre de '+m+' ?'))return;S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='Commun';save();render();}
+function delM(m){agConfirm('Supprimer le coffre de '+m+' ?',function(){S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='Commun';save();render();});}
 function addItem(){openSheet(`<h3>Ajouter un objet au coffre</h3>
   <div class="field"><label>Catégorie</label><select class="inp" id="ic">${D.bankCats.map(c=>`<option>${esc(c)}</option>`).join('')}<option>Autre</option></select></div>
   <div class="field"><label>Classe (optionnel)</label><input class="inp" id="icl" placeholder="ex. Arcaniste — ou vide"></div>
@@ -86,7 +88,7 @@ function doAddItem(){const cat=$('#ic').value,cl=$('#icl').value.trim(),it=$('#i
   if(f){const r=new FileReader();r.onload=()=>fin(r.result);r.readAsDataURL(f);}else fin('');}
 function rmItem(id,custom){if(custom)S.custom=(S.custom||[]).filter(c=>c.id!==id);else{S.hidden=S.hidden||[];if(!S.hidden.includes(id))S.hidden.push(id);}save();render();}
 function openJournal(){const l=S.log||[];openSheet(`<h3>🧾 Journal des mouvements</h3><div style="max-height:50vh;overflow:auto">${l.length?l.map(e=>`<div class="jrow"><span class="mut" style="width:92px;flex:none;font-size:11px">${new Date(e.ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})} ${new Date(e.ts).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span><span style="flex:1;min-width:0"><b>${esc(e.label)}</b> <span class="mut">· ${esc(e.member)}</span></span><span class="jdelta ${e.delta>=0?'pos':'neg'}">${e.delta>=0?'+':''}${e.delta}</span></div>`).join(''):'<div class="empty">Aucun mouvement.</div>'}</div><div class="toolbar" style="justify-content:space-between;margin:12px 0 0"><button class="btn danger" onclick="clearLog()">Vider</button><button class="btn o" onclick="closeSheet()">Fermer</button></div>`);}
-function clearLog(){if(confirm('Vider le journal ?')){S.log=[];save();openJournal();}}
+function clearLog(){agConfirm('Vider le journal ?',function(){S.log=[];save();openJournal();});}
 
 /* ============ DONJONS ============ */
 let sel=D.dungeons[0].id,djType='Tous',q='';
@@ -112,7 +114,7 @@ function detail(d){const pr=d.prestige?`<span class="pill pr">Prestige ${d.prest
 }
 function farmAdd(name,ic,dj,cat){const f=S.farm[name];if(f)f.target++;else S.farm[name]={n:name,ic,dj,cat:cat||'Butin',target:1,have:0};save();render();}
 function farmBar(){const keys=Object.keys(S.farm);if(!keys.length)return '';
-  return `<div class="farmbar"><span style="font-family:Rajdhani;font-weight:700;color:var(--orange)">🎯 ${keys.length} objectif(s) de farm</span><span class="spacer"></span><button class="btn sm" onclick="openFarm()">Voir / verser au coffre</button><button class="btn sm danger" onclick="if(confirm('Vider les objectifs ?')){S.farm={};save();render();}">Vider</button></div>`;}
+  return `<div class="farmbar"><span style="font-family:Rajdhani;font-weight:700;color:var(--orange)">🎯 ${keys.length} objectif(s) de farm</span><span class="spacer"></span><button class="btn sm" onclick="openFarm()">Voir / verser au coffre</button><button class="btn sm danger" onclick="agConfirm('Vider les objectifs ?',function(){S.farm={};save();render();})">Vider</button></div>`;}
 function openFarm(){const keys=Object.keys(S.farm);openSheet(`<h3>🎯 Objectifs de farm</h3><div class="hint">« Possédé » se verse au coffre commun puis se remet à 0.</div>${keys.length?keys.map(k=>{const f=S.farm[k];const dj=D.dungeons.find(x=>x.id===f.dj);const pc=f.target?Math.min(100,f.have/f.target*100):0;
    return `<div class="fitem">${img(f.ic)||'<span class="x" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#ffffff08;border-radius:8px">📦</span>'}<div class="fn"><div class="a">${esc(f.n)}</div><div class="b">${dj?dj.icon+' '+esc(dj.name):''}</div><div class="prog"><i style="width:${pc}%"></i></div></div>
      <div style="text-align:center"><div class="mut" style="font-size:10px">possédé</div><div class="step"><button onclick="farmHave('${sq(k)}',-1)">−</button><input value="${f.have}" onchange="farmSet('${sq(k)}','have',this.value)"><button onclick="farmHave('${sq(k)}',1)">＋</button></div></div>
@@ -203,7 +205,7 @@ function debtsPanel(){if(!S.debts.length)return '';
   return `<div class="card" style="margin-top:14px"><div class="sec-h">📒 Dettes en cours <span class="n">${S.debts.length}</span></div>
    ${S.debts.map((d,i)=>`<div class="debt"><span class="dm">${esc(d.member)}</span><span class="badgeo">${fmt(d.total)} périns</span><span class="mut" style="flex:1;font-size:11.5px">${d.items.map(l=>esc(l.name)+'×'+l.qty).join(', ')}</span><span class="mut" style="font-size:11px">${new Date(d.ts).toLocaleDateString('fr-FR')}</span><button class="btn g sm" onclick="settleDebt(${i})">Réglée</button><button class="btn sm danger" onclick="cancelDebt(${i})">Annuler</button></div>`).join('')}</div>`;}
 function settleDebt(i){S.debts.splice(i,1);save();render();}
-function cancelDebt(i){const d=S.debts[i];if(!confirm('Annuler la dette et remettre les objets au coffre commun ?'))return;d.items.forEach(l=>setQty('Commun',l.id,qty('Commun',l.id)+l.qty,'Annul. dette '+l.name));S.debts.splice(i,1);save();render();}
+function cancelDebt(i){const d=S.debts[i];agConfirm('Annuler la dette et remettre les objets au coffre commun ?',function(){d.items.forEach(l=>setQty('Commun',l.id,qty('Commun',l.id)+l.qty,'Annul. dette '+l.name));S.debts.splice(i,1);save();render();});}
 
 /* ============ PARAMÈTRES (base de données) ============ */
 let cfgQ='';
@@ -229,7 +231,7 @@ function editItem(id){const it=catalog().find(x=>x.id===id);if(!it)return;
    <div class="field"><label>Unité</label><select class="inp" id="eU"><option value="unitaire" ${it.unit!=='slot'?'selected':''}>Unitaire</option><option value="slot" ${it.unit==='slot'?'selected':''}>Slot (×9 999)</option></select></div>
    <div class="field"><label>Prix boutique (périns)</label><input class="inp" id="eP" type="number" value="${it.prix||0}"></div>
    <div class="field"><label>Changer l'asset (image)</label><input class="inp" id="eImg" type="file" accept="image/*"><div class="mut" style="font-size:10.5px;margin-top:4px"><label><input type="checkbox" id="eClr"> Retirer l'asset (revenir au logo de classe)</label></div></div>
-   <div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger" onclick="if(confirm('Supprimer cet objet ?')){rmItem('${esc(id)}',${(S.custom||[]).some(c=>c.id===id)});closeSheet();render();}">Supprimer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveItem('${esc(id)}')">Enregistrer</button></div></div>`);}
+   <div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger" onclick="agConfirm('Supprimer cet objet ?',function(){rmItem('${esc(id)}',${(S.custom||[]).some(c=>c.id===id)});closeSheet();render();})">Supprimer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveItem('${esc(id)}')">Enregistrer</button></div></div>`);}
 function saveItem(id){const item=$('#eN').value.trim();if(!item)return;const cat=$('#eC').value,classe=$('#eCl').value.trim(),unit=$('#eU').value,prix=Math.max(0,Math.round(+$('#eP').value||0));
   const fin=icData=>{const cust=(S.custom||[]).find(c=>c.id===id);
     if(cust){Object.assign(cust,{item,cat,classe,unit,prix});if($('#eClr').checked)cust.icData='';else if(icData)cust.icData=icData;delete S.overrides[id];}
@@ -238,7 +240,7 @@ function saveItem(id){const item=$('#eN').value.trim();if(!item)return;const cat
   const f=$('#eImg').files[0];
   if(f){const r=new FileReader();r.onload=()=>fin(r.result);r.readAsDataURL(f);}else fin('');}
 function exportData(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='airguild-coffre.json';a.click();}
-function importData(){const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&d.members){S=d;S.overrides=S.overrides||{};S.recipes=S.recipes||{};S.prices=S.prices||{};S.debts=S.debts||[];save();renderTabs();render();}else alert('Fichier invalide.');}catch(e){alert('Fichier illisible.');}};r.readAsText(f);};inp.click();}
+function importData(){const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&d.members){S=d;S.overrides=S.overrides||{};S.recipes=S.recipes||{};S.prices=S.prices||{};S.debts=S.debts||[];save();renderTabs();render();}else agToast('Fichier invalide.',false);}catch(e){agToast('Fichier illisible.',false);}};r.readAsText(f);};inp.click();}
 
 function openSheet(html){$('#sheet').innerHTML=html;$('#modal').classList.add('on');}
 function closeSheet(){$('#modal').classList.remove('on');}

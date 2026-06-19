@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
+import { vgPrompt, vgToast } from "@/components/Dialogs";
 
 type App = {
   id: string; discordId: string; username: string; avatar: string | null;
@@ -35,9 +36,9 @@ export default function CandidaturesAdminPage() {
   useEffect(() => { load(); }, [filter]);
 
   const decide = async (id: string, status: string) => {
-    const note = prompt("Note admin (optionnelle) ?") ?? undefined;
+    const note = (await vgPrompt("Note admin (optionnelle) ?")) ?? undefined;
     const r = await fetch("/api/admin/candidatures", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status, note }) });
-    if (r.ok) load(); else alert("Erreur");
+    if (r.ok) load(); else vgToast("Erreur", false);
   };
 
   return (

@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect } from "react";
 import dungeonsData from "@/data/dungeons.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
+import { vgToast } from "@/components/Dialogs";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -44,7 +45,7 @@ export default function DonjonsPage() {
   const cur = dungeons.find(d => d.id === curId);
   const toggleDrop = (i: number) => setReceived(r => { const n = { ...r }; if (n[i]) delete n[i]; else n[i] = { qty: 1, rarity: null, trash: false }; return n; });
   const logRun = () => {
-    if (!cur || !Object.keys(received).length) { alert("Sélectionne au moins un objet reçu."); return; }
+    if (!cur || !Object.keys(received).length) { vgToast("Sélectionne au moins un objet reçu.", false); return; }
     const items = Object.entries(received).map(([i, v]) => ({ name: cur.drops[+i], ...v }));
     setRuns([...runs, { dungeonId: cur.id, dungeonName: cur.name, icon: cur.icon, date: new Date().toISOString(), items }]);
     setReceived({}); setBonuses({}); setCurId("");

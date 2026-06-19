@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { vgPrompt } from "@/components/Dialogs";
 
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; decidedBy: string | null; createdAt: string; user: { username: string }; payments: { amount: number }[] };
 type Req = { id: string; username: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; createdAt: string };
@@ -41,13 +42,13 @@ export default function BanqueAdminPage() {
   const decideReq = async (id: string, action: "achat" | "dette" | "refuse") => {
     const prixPublic = action === "refuse" ? undefined : Number(prices[id] || 0);
     if (action !== "refuse" && (!prixPublic || prixPublic <= 0)) return flash("Fixe un prix public (> 0) avant d'accepter.");
-    const adminNote = action === "refuse" ? (prompt("Raison du refus ? (optionnel)") ?? undefined) : undefined;
+    const adminNote = action === "refuse" ? ((await vgPrompt("Raison du refus ? (optionnel)")) ?? undefined) : undefined;
     const r = await fetch(`/api/admin/bank-request/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, prixPublic, adminNote }) });
     if (r.ok) { flash(action === "achat" ? "Achat −20 % accepté ✓" : action === "dette" ? "Dette accordée ✓" : "Requête refusée."); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur"); }
   };
   const decideDebt = async (id: string, status: string) => {
-    const note = status === "REFUSED" ? (prompt("Raison du refus ?") ?? undefined) : undefined;
+    const note = status === "REFUSED" ? ((await vgPrompt("Raison du refus ?")) ?? undefined) : undefined;
     const r = await fetch("/api/admin/debts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status, note }) });
     if (r.ok) load(); else flash("Erreur");
   };

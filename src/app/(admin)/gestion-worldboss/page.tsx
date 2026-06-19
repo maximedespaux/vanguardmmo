@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { vgConfirm, vgToast } from "@/components/Dialogs";
 
 type Boss = { id: string; name: string; zone: string | null; recommendedLevel: number | null; rewards: string | null; strategy: string | null };
 type Ev = { id: string; bossId: string; boss: Boss; startAt: string; status: string; note: string | null; participants: { status: string }[] };
@@ -20,9 +21,9 @@ export default function WorldBossAdminPage() {
 
   const post = (body: any) => fetch("/api/admin/worldboss", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const createBoss = async () => { if (!bn.trim()) return; const r = await post({ action: "createBoss", name: bn, zone: bz, recommendedLevel: Number(bl) || null, strategy: bs, rewards: br }); if (r.ok) { setBn(""); setBz(""); setBl(""); setBs(""); setBr(""); load(); } };
-  const createEvent = async () => { if (!evBoss || !evDate) return alert("Choisis un boss et une date."); const r = await post({ action: "createEvent", bossId: evBoss, startAt: evDate, note: evNote }); if (r.ok) { setEvDate(""); setEvNote(""); load(); } };
+  const createEvent = async () => { if (!evBoss || !evDate) { vgToast("Choisis un boss et une date.", false); return; } const r = await post({ action: "createEvent", bossId: evBoss, startAt: evDate, note: evNote }); if (r.ok) { setEvDate(""); setEvNote(""); load(); } };
   const setStatus = async (id: string, status: string) => { const r = await post({ action: "setStatus", id, status }); if (r.ok) load(); };
-  const del = async (id: string) => { if (!confirm("Supprimer cet événement ?")) return; const r = await post({ action: "deleteEvent", id }); if (r.ok) load(); };
+  const del = async (id: string) => { if (!(await vgConfirm("Supprimer cet événement ?"))) return; const r = await post({ action: "deleteEvent", id }); if (r.ok) load(); };
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>

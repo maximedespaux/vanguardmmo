@@ -17,11 +17,26 @@ body { background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sa
   background-image:radial-gradient(circle at 15% 10%, rgba(255,140,26,0.05), transparent 35%); }
 .font-heading { font-family:'Cherry Bomb One','Rajdhani','Inter',sans-serif; }
 p { font-family:'Story Script','Inter',system-ui,sans-serif; letter-spacing:.2px; }
-.glass-card { background:linear-gradient(180deg, rgba(26,26,33,.82), rgba(15,15,19,.88)); border:1px solid var(--border); border-radius:14px; box-shadow:0 2px 14px rgba(0,0,0,.3); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:border-color .18s, box-shadow .18s; }
-.glass-card:hover { border-color:rgba(255,140,26,.28); box-shadow:0 4px 20px rgba(0,0,0,.38); }
+.glass-card { background:linear-gradient(180deg, rgba(26,26,33,.82), rgba(15,15,19,.88)); border:1px solid var(--border); border-radius:14px; box-shadow:0 2px 14px rgba(0,0,0,.3); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:border-color .2s, box-shadow .2s, transform .2s; }
+.glass-card:hover { border-color:rgba(255,140,26,.32); box-shadow:0 9px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,140,26,.07); transform:translateY(-3px); }
 .vg-btn { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:10px; border:none; cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-size:13px; color:#2a1400; background:linear-gradient(180deg,#FFC061,#FF8C1A); box-shadow:0 4px 16px rgba(255,140,26,.32); transition:transform .12s, box-shadow .12s; text-decoration:none; }
 .vg-btn:hover { transform:translateY(-2px); box-shadow:0 7px 24px rgba(255,140,26,.5); }
-::-webkit-scrollbar { width:8px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#3a3a46; border-radius:4px; } ::-webkit-scrollbar-thumb:hover { background:var(--orange-dark); }
+.vg-btn:active { transform:translateY(0) scale(.97); }
+/* ── Scrollbars maison (vertical + horizontal + Firefox) + défilement doux ── */
+html { scroll-behavior:smooth; }
+* { scrollbar-width:thin; scrollbar-color:#46464f transparent; }
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:linear-gradient(180deg,#41414c,#2c2c35); border-radius:6px; border:2px solid transparent; background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover { background:linear-gradient(180deg,var(--orange),var(--orange-dark)); background-clip:padding-box; }
+::-webkit-scrollbar-corner { background:transparent; }
+/* ── Micro-interactions globales (réaction au survol / au clic) ── */
+button, a, .vg-select, [onclick] { transition:transform .12s ease, box-shadow .15s ease, filter .15s ease, background .15s ease, color .15s ease, border-color .15s ease; }
+button:active:not(:disabled) { transform:scale(.96); }
+[onclick] { cursor:pointer; }
+[onclick]:hover { filter:brightness(1.08); }
+img { transition:filter .2s ease, transform .2s ease; }
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto} button:active:not(:disabled){transform:none} }
 /* Menus déroulants thémés (le natif reste sombre grâce à color-scheme + option) */
 input, select, textarea { color-scheme: dark; }
 .vg-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--bg-3); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23FF8C1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:11px; border:1px solid var(--border); border-radius:9px; padding:9px 32px 9px 12px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; transition:border-color .15s, box-shadow .15s; }

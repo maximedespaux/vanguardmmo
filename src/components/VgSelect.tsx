@@ -46,10 +46,9 @@ export function VgSelect({ value, onChange, options, style, minWidth, placeholde
     if (!open) return;
     const h = (e: MouseEvent) => { const t = e.target as Node; if (!ref.current?.contains(t) && !listRef.current?.contains(t)) setOpen(false); };
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    const close = () => setOpen(false);
     document.addEventListener("mousedown", h); document.addEventListener("keydown", k);
-    window.addEventListener("scroll", close, true); window.addEventListener("resize", close);
-    return () => { document.removeEventListener("mousedown", h); document.removeEventListener("keydown", k); window.removeEventListener("scroll", close, true); window.removeEventListener("resize", close); };
+    window.addEventListener("scroll", place, true); window.addEventListener("resize", place);
+    return () => { document.removeEventListener("mousedown", h); document.removeEventListener("keydown", k); window.removeEventListener("scroll", place, true); window.removeEventListener("resize", place); };
   }, [open]);
 
   return (

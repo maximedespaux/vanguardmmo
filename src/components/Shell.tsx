@@ -100,9 +100,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span style={{ fontSize: 12, color: "var(--orange)", whiteSpace: "nowrap" }}>{role.emoji} {role.label}</span>
               {session && <button onClick={() => signOut()} title="Déconnexion" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16 }}>⏻</button>}
             </>
-          ) : (
+          ) : pathname !== "/histoire" ? (
             <Link href="/login" style={{ padding: "8px 16px", background: "#5865F2", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }} className="font-heading">Se connecter</Link>
-          )}
+          ) : null}
         </div>
       </header>
 

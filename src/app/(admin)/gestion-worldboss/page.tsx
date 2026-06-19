@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { vgConfirm, vgToast } from "@/components/Dialogs";
+import { VgSelect } from "@/components/VgSelect";
 
 type Boss = { id: string; name: string; zone: string | null; recommendedLevel: number | null; rewards: string | null; strategy: string | null };
 type Ev = { id: string; bossId: string; boss: Boss; startAt: string; status: string; note: string | null; participants: { status: string }[] };
@@ -44,7 +45,7 @@ export default function WorldBossAdminPage() {
         <div className="glass-card" style={{ padding: 16 }}>
           <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Programmer un événement</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <select value={evBoss} onChange={e => setEvBoss(e.target.value)} className="vg-select">{bosses.length === 0 ? <option value="">— crée un boss d'abord —</option> : bosses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>
+            <VgSelect full value={evBoss} onChange={setEvBoss} options={bosses.length === 0 ? [{ value: "", label: "— crée un boss d'abord —" }] : bosses.map(b => ({ value: b.id, label: b.name }))} />
             <input type="datetime-local" value={evDate} onChange={e => setEvDate(e.target.value)} style={inp} />
             <input placeholder="Note (optionnelle)" value={evNote} onChange={e => setEvNote(e.target.value)} style={inp} />
             <button onClick={createEvent} className="vg-btn">Programmer</button>

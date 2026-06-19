@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { VgSelect } from "@/components/VgSelect";
 
 type Ev = { id: string; name: string; day: string; time: string; remindBefore: number; channelId: string | null; mention: string; enabled: boolean };
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "tous"];
@@ -37,10 +38,10 @@ export default function EventsPage() {
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>➕ Nouvel événement</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10, alignItems: "end" }}>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Nom</label><input style={{ ...inp, width: "100%" }} placeholder="Ex : Chambres Secrètes" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div><label style={lab}>Jour</label><select style={{ ...inp, width: "100%" }} value={f.day} onChange={(e) => setF({ ...f, day: e.target.value })}>{DAYS.map((d) => <option key={d} value={d}>{d === "tous" ? "Tous les jours" : cap(d)}</option>)}</select></div>
+          <div><label style={lab}>Jour</label><VgSelect full value={f.day} onChange={v => setF({ ...f, day: v })} options={DAYS.map((d) => ({ value: d, label: d === "tous" ? "Tous les jours" : cap(d) }))} /></div>
           <div><label style={lab}>Heure</label><input style={{ ...inp, width: "100%" }} type="time" value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} /></div>
           <div><label style={lab}>Rappel (min avant)</label><input style={{ ...inp, width: "100%" }} type="number" min={0} value={f.remindBefore} onChange={(e) => setF({ ...f, remindBefore: Math.max(0, Number(e.target.value) || 0) })} /></div>
-          <div><label style={lab}>Ping</label><select style={{ ...inp, width: "100%" }} value={f.mention} onChange={(e) => setF({ ...f, mention: e.target.value })}>{MENTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></div>
+          <div><label style={lab}>Ping</label><VgSelect full value={f.mention} onChange={v => setF({ ...f, mention: v })} options={MENTIONS.map(([v, l]) => ({ value: v, label: l }))} /></div>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Salon (ID — vide = salon d'annonces par défaut)</label><input style={{ ...inp, width: "100%" }} placeholder="optionnel" value={f.channelId} onChange={(e) => setF({ ...f, channelId: e.target.value })} /></div>
         </div>
         <button className="vg-btn" style={{ marginTop: 14 }} onClick={add}>Ajouter l&apos;événement</button>

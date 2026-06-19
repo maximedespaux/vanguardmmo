@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
+import { VgSelect } from "@/components/VgSelect";
 
 type Channel = { id: string; name: string; type: string };
 type Cmd = { id: string; type: string; status: string; result: string | null; createdBy: string; createdAt: string; payload: any };
@@ -56,10 +57,7 @@ export default function DiscordPage() {
   const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 14, width: "100%" };
   const lab: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4, marginTop: 10 };
   const ChannelSelect = ({ v, set }: { v: string; set: (s: string) => void }) => (
-    <select className="vg-select" value={v} onChange={(e) => set(e.target.value)}>
-      {postable.length === 0 && <option value="">(salons en cours de synchro…)</option>}
-      {postable.map((c) => <option key={c.id} value={c.id}>#{c.name}{c.type === "announcement" ? " 📢" : ""}</option>)}
-    </select>
+    <VgSelect full value={v} onChange={set} options={postable.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : postable.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " 📢" : ""}` }))} />
   );
 
   return (

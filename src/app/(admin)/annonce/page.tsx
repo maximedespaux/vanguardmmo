@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
+import { VgSelect } from "@/components/VgSelect";
 
 type Channel = { id: string; name: string; type: string };
 
@@ -49,10 +50,7 @@ export default function AnnoncePage() {
       {toast && <div style={{ ...card, padding: "10px 14px", color: toast.startsWith("✅") ? "var(--green)" : "var(--red)", fontSize: 14 }}>{toast}</div>}
       <div style={card}>
         <label style={lab}>Salon</label>
-        <select className="vg-select" value={ch} onChange={(e) => setCh(e.target.value)}>
-          {channels.length === 0 && <option value="">(salons en cours de synchro…)</option>}
-          {channels.map((c) => <option key={c.id} value={c.id}>#{c.name}{c.type === "announcement" ? " 📢" : ""}</option>)}
-        </select>
+        <VgSelect full value={ch} onChange={setCh} options={channels.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : channels.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " 📢" : ""}` }))} />
         <label style={lab}>Titre</label>
         <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de l'annonce" />
         <label style={lab}>Message (utilise \n pour un saut de ligne)</label>

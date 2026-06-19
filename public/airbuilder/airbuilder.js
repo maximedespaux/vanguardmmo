@@ -343,3 +343,5 @@ render();
 window.addEventListener('beforeunload',function(){try{save();}catch(e){}});
 ;
 window.__APP='airbuilder';
+// Auto-réparation : si le conteneur AirBuilder est recréé vide (re-clic sur le lien nav / navigation vers la même route), on relance render() automatiquement.
+(function(){try{var _heal=new MutationObserver(function(muts){for(var i=0;i<muts.length;i++){var ns=muts[i].addedNodes;for(var j=0;j<ns.length;j++){var n=ns[j];if(n.nodeType!==1)continue;var s=(n.id==='setup')?n:(n.querySelector?n.querySelector('#setup'):null);if(s&&!s.innerHTML.trim()){try{render();}catch(e){}return;}}}});_heal.observe(document.body,{childList:true,subtree:true});}catch(e){}})();

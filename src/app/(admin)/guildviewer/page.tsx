@@ -53,8 +53,14 @@ export default function GuildViewerPage() {
     return m;
   }, [members, q, onlyNoBuild]);
 
-  const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 14 };
-  const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 14 };
+  const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "10px 13px", color: "var(--text)", fontSize: 14 };
+
+  const miniStat = (ic: string, n: number, l: string, c: string) => (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 50, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "5px 9px" }}>
+      <span className="font-heading" style={{ fontSize: 15, fontWeight: 700, color: c, lineHeight: 1 }}>{n}</span>
+      <span style={{ fontSize: 9.5, color: "var(--text-muted)", marginTop: 2, whiteSpace: "nowrap" }}>{ic} {l}</span>
+    </div>
+  );
 
   if (err) return <div style={{ padding: 40, color: "var(--red)" }}>Accès refusé ou erreur de chargement (réservé au staff).</div>;
   if (!members) return <div style={{ padding: 40, color: "var(--text-muted)" }}>Chargement du GuildViewer…</div>;
@@ -64,79 +70,98 @@ export default function GuildViewerPage() {
       <PageHeader banner="/assets/site/banners/banner-guildviewer.png" icon="👁️" title="GuildViewer" subtitle="Suivi complet des membres : personnages, classes, builds et activité. Repère qui accompagner en priorité." />
 
       {/* Stats globales */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(158px, 1fr))", gap: 12, marginBottom: 22 }}>
         {[
-          { v: stats.members, l: "membres", c: "var(--text)" },
-          { v: stats.active, l: "actifs", c: "var(--green)" },
-          { v: stats.chars, l: "personnages", c: "var(--text)" },
-          { v: stats.builds, l: "builds", c: "var(--blue)" },
-          { v: stats.charsNoBuild, l: "persos sans build", c: stats.charsNoBuild ? "var(--red)" : "var(--green)" },
-          { v: stats.membersNoChar, l: "membres sans perso", c: stats.membersNoChar ? "var(--gold)" : "var(--green)" },
+          { v: stats.members, l: "membres", c: "var(--text)", ic: "👥" },
+          { v: stats.active, l: "actifs", c: "var(--green)", ic: "🟢" },
+          { v: stats.chars, l: "personnages", c: "var(--orange)", ic: "🧙" },
+          { v: stats.builds, l: "builds", c: "var(--blue)", ic: "⚔️" },
+          { v: stats.charsNoBuild, l: "persos sans build", c: stats.charsNoBuild ? "var(--red)" : "var(--green)", ic: "🛠️" },
+          { v: stats.membersNoChar, l: "membres sans perso", c: stats.membersNoChar ? "var(--gold)" : "var(--green)", ic: "👤" },
         ].map((s) => (
-          <div key={s.l} className="glass-card" style={{ padding: 14 }}>
-            <div className="font-heading" style={{ fontSize: 26, fontWeight: 700, color: s.c, lineHeight: 1 }}>{s.v}</div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{s.l}</div>
+          <div key={s.l} className="gv-stat glass-card" style={{ padding: "15px 17px", position: "relative", overflow: "hidden" }}>
+            <span style={{ position: "absolute", right: -10, top: -14, fontSize: 50, opacity: 0.07, pointerEvents: "none" }}>{s.ic}</span>
+            <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: s.c }} />
+            <div className="font-heading" style={{ fontSize: 30, fontWeight: 700, color: s.c, lineHeight: 1 }}>{s.v}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 }}>{s.l}</div>
           </div>
         ))}
       </div>
 
       {/* Filtres */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
-        <input style={{ ...inp, flex: 1, minWidth: 220 }} placeholder="Rechercher un membre, un perso, une classe…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <label style={{ display: "flex", gap: 7, alignItems: "center", fontSize: 13, color: "var(--text-muted)", cursor: "pointer" }}>
-          <input type="checkbox" checked={onlyNoBuild} onChange={(e) => setOnlyNoBuild(e.target.checked)} /> À accompagner (sans build)
+        <input style={{ ...inp, flex: 1, minWidth: 220 }} placeholder="🔍 Rechercher un membre, un perso, une classe…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: onlyNoBuild ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", background: "var(--bg-3)", border: `1px solid ${onlyNoBuild ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "9px 14px", transition: "border-color .15s, color .15s" }}>
+          <input type="checkbox" checked={onlyNoBuild} onChange={(e) => setOnlyNoBuild(e.target.checked)} /> ⚠️ À accompagner (sans build)
         </label>
       </div>
 
       {/* Membres */}
-      {filtered.length === 0 ? <div style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun membre ne correspond.</div> :
+      {filtered.length === 0 ? <div className="glass-card" style={{ padding: 28, textAlign: "center", color: "var(--text-muted)" }}>Aucun membre ne correspond.</div> :
         filtered.map((u) => {
           const r = ROLE_META[u.role] ?? ROLE_META.RECRUE;
+          const noChar = u.characters.length === 0;
           return (
-            <div key={u.id} style={card}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: u.characters.length ? 12 : 0, flexWrap: "wrap" }}>
+            <div key={u.id} className="gv-member glass-card" style={{ padding: 0, marginBottom: 13, overflow: "hidden", borderLeft: `3px solid ${r.color}` }}>
+              {/* En-tête membre */}
+              <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 17px", flexWrap: "wrap", background: `linear-gradient(90deg, color-mix(in srgb, ${r.color} 9%, transparent), transparent 55%)` }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/assets/site/ranks/${RANK_BADGE[u.role] ?? "public"}.png`} alt={r.label} title={r.label} style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
+                <img src={`/assets/site/ranks/${RANK_BADGE[u.role] ?? "public"}.png`} alt={r.label} title={r.label} style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 7px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
                 <div style={{ flex: 1, minWidth: 150 }}>
-                  <div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{u.username} {!u.isActive && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>· inactif</span>}</div>
-                  <div style={{ fontSize: 12, color: r.color }}>{r.label}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                    <span className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{u.username}</span>
+                    <span title={u.isActive ? "Actif" : "Inactif"} style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: u.isActive ? "var(--green)" : "var(--text-muted)", boxShadow: u.isActive ? "0 0 7px var(--green)" : "none" }} />
+                  </div>
+                  <span style={{ display: "inline-block", marginTop: 5, fontSize: 10.5, fontWeight: 700, color: r.color, background: `color-mix(in srgb, ${r.color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${r.color} 40%, transparent)`, borderRadius: 20, padding: "2px 11px", textTransform: "uppercase", letterSpacing: 0.6 }}>{r.emoji} {r.label}</span>
                 </div>
-                <div style={{ display: "flex", gap: 14, fontSize: 12, color: "var(--text-muted)" }}>
-                  <span>{u.characters.length} perso(s)</span>
-                  <span>{u._count.transactions} dette(s)</span>
-                  <span>{u._count.absences} absence(s)</span>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {miniStat("🧙", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
+                  {miniStat("💸", u._count.transactions, "dette", u._count.transactions ? "var(--red)" : "var(--text-muted)")}
+                  {miniStat("🚫", u._count.absences, "abs.", u._count.absences ? "var(--gold)" : "var(--text-muted)")}
                 </div>
               </div>
 
-              {u.characters.length === 0 ? (
-                <div style={{ fontSize: 12, color: "var(--gold)" }}>⚠️ Aucun personnage déclaré.</div>
+              {/* Personnages */}
+              {noChar ? (
+                <div style={{ margin: "0 17px 15px", padding: "11px 14px", background: "rgba(255,210,74,.06)", border: "1px dashed var(--gold)", borderRadius: 10, fontSize: 12.5, color: "var(--gold)" }}>⚠️ Aucun personnage déclaré — à inviter à compléter son profil via le Builder.</div>
               ) : (
-                <div style={{ display: "grid", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-                  {u.characters.map((c) => (
-                    <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <ClassLogo name={c.class} size={24} />
-                      <span style={{ fontSize: 13, fontWeight: 600, minWidth: 120 }}>{c.name} {c.isMain && <span style={{ color: "var(--gold)", fontSize: 10 }}>★</span>}</span>
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Niv {c.level} · P{c.prestige}</span>
-                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
-                        {c.gearProfiles.length === 0
-                          ? <span style={{ fontSize: 11, color: "var(--red)" }}>aucun build</span>
-                          : c.gearProfiles.map((g) => (
-                              <span key={g.id} title={`${g.name} — ❤️ ${kfmt(g.hp)} · ⚔️ ${kfmt(g.attack)} · 🛡️ ${kfmt(g.defense)} · 💥 ${g.critRate ?? 0}%`} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, color: modeColor(g.mode), whiteSpace: "nowrap" }}>
-                                {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
-                              </span>
-                            ))}
-                        {(() => { const g = c.gearProfiles.find((x) => (x.hp || 0) > 0); return g ? <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace", whiteSpace: "nowrap" }}>❤️{kfmt(g.hp)} ⚔️{kfmt(g.attack)} 🛡️{kfmt(g.defense)}</span> : null; })()}
+                <div style={{ display: "grid", gap: 7, padding: "0 17px 15px" }}>
+                  {u.characters.map((c) => {
+                    const recap = c.gearProfiles.find((x) => (x.hp || 0) > 0);
+                    return (
+                      <div key={c.id} className="gv-char" style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: "9px 13px" }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--bg-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1px solid var(--border)" }}><ClassLogo name={c.class} size={23} /></div>
+                        <div style={{ minWidth: 130 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 600 }}>{c.name} {c.isMain && <span title="Personnage principal" style={{ color: "var(--gold)", fontSize: 11 }}>★</span>}</div>
+                          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{c.class} · Niv {c.level} · P{c.prestige}</div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginLeft: "auto" }}>
+                          {c.gearProfiles.length === 0
+                            ? <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--red)", background: "rgba(248,113,113,.1)", border: "1px solid var(--red)", borderRadius: 6, padding: "2px 9px" }}>aucun build</span>
+                            : c.gearProfiles.map((g) => (
+                                <span key={g.id} title={`${g.name} — ❤️ ${kfmt(g.hp)} · ⚔️ ${kfmt(g.attack)} · 🛡️ ${kfmt(g.defense)} · 💥 ${g.critRate ?? 0}%`} style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, background: `color-mix(in srgb, ${modeColor(g.mode)} 13%, transparent)`, color: modeColor(g.mode), whiteSpace: "nowrap" }}>
+                                  {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
+                                </span>
+                              ))}
+                          {recap && <span style={{ fontSize: 10.5, color: "var(--text-muted)", fontFamily: "'Rajdhani',monospace", whiteSpace: "nowrap", background: "var(--bg-2)", borderRadius: 6, padding: "3px 9px" }}>❤️{kfmt(recap.hp)} ⚔️{kfmt(recap.attack)} 🛡️{kfmt(recap.defense)}</span>}
+                          {c.specializations.length > 0 && (
+                            <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--purple)", background: "rgba(199,125,255,.1)", border: "1px solid color-mix(in srgb, var(--purple) 45%, transparent)", borderRadius: 6, padding: "3px 9px", whiteSpace: "nowrap" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>
+                          )}
+                        </div>
                       </div>
-                      {c.specializations.length > 0 && (
-                        <span style={{ fontSize: 10, color: "var(--purple)" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           );
         })}
+
+      <style>{`
+        .gv-stat{transition:transform .18s, box-shadow .18s}
+        .gv-char{transition:border-color .15s, transform .12s, background .15s}
+        .gv-char:hover{border-color:var(--orange);transform:translateX(2px);background:var(--bg-4)}
+      `}</style>
     </div>
   );
 }

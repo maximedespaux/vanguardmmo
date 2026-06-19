@@ -64,7 +64,7 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-main[data-bg="sup4"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup4.png')}
 .vg-main[data-bg="sup5"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup5.png')}
 .vg-main[data-bg="sup6"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup6.png')}
-.vg-main[data-bg="sup7"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup7.png')}
+.vg-main[data-bg="sup7"]{background-image:linear-gradient(rgba(10,10,12,.7),rgba(10,10,12,.8)),url('/assets/site/bg/sup7.png');background-size:cover;background-position:center}
 .vg-main[data-bg="sup8"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup8.png')}
 .vg-main[data-bg="sup9"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup9.png')}
 .vg-main[data-bg="sup10"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup10.png')}

@@ -1,7 +1,7 @@
 
 :root{--bg:#0e0e12;--bg2:#16161d;--bg3:#1e1e27;--border:#2c2c36;--text:#e8e8ee;--mut:#9a9aa8;--orange:#FF8C1A;--gold:#FFD24A;--green:#4ADE80;--blue:#4EA8FF;--purple:#C77DFF;--red:#F87171;}
 .abx *{box-sizing:border-box}
-.abx{margin:0;background:radial-gradient(ellipse 80% 40% at 50% -5%,rgba(255,140,26,.10),transparent 60%),linear-gradient(180deg,#12121a,#0b0b10);color:var(--text);font-family:Inter,sans-serif;min-height:100vh}
+.abx{margin:0;background:radial-gradient(ellipse 90% 52% at 50% -8%,rgba(255,140,26,.17),transparent 62%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.09),transparent 46%),radial-gradient(circle at 10% 18%,rgba(78,168,255,.06),transparent 42%),linear-gradient(180deg,#12121a,#0b0b10);color:var(--text);font-family:Inter,sans-serif;padding-bottom:34px}
 .wrap{max-width:1280px;margin:0 auto;padding:14px}
 .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .brand{font-family:Rajdhani;font-weight:700;font-size:22px;color:var(--orange);letter-spacing:1px}

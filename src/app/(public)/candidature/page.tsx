@@ -73,7 +73,7 @@ export default function CandidaturePage() {
     }
   }
 
-  const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22 };
+  const card: React.CSSProperties = { background: "linear-gradient(180deg, rgba(28,28,36,.92), rgba(16,16,22,.94))", border: "1px solid var(--border)", borderRadius: 16, padding: 24, boxShadow: "0 12px 36px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.03)" };
   const btnG: React.CSSProperties = { padding: "11px 22px", borderRadius: 8, background: "var(--bg-3)", color: "var(--text)", border: "1px solid var(--border)", fontWeight: 600, cursor: "pointer" };
   const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 13px", color: "var(--text)", width: "100%" };
   const canNext = (s: number) => s === 1 ? chars.every(c => c.name.trim()) : s === 2 ? specs.length > 0 && interests.trim() && motivation.trim() && experience.trim() && (!specs.includes("CS") || favClasses.length > 0) : s === 3 ? stuffOk : s === 4 ? quizOk : true;
@@ -93,10 +93,23 @@ export default function CandidaturePage() {
   return (
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="📋" title="Candidature" subtitle="Tout est obligatoire. Ta candidature sera transmise au staff sur Discord avec ton profil, ton stuff et tes objectifs." />
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
-        {STEP_NAMES.map((n, i) => (
-          <div key={n} style={{ flex: 1, textAlign: "center", padding: "9px 8px", borderRadius: 9, fontFamily: "'Rajdhani',sans-serif", fontSize: 12.5, fontWeight: 700, letterSpacing: ".5px", textTransform: "uppercase", border: `1px solid ${step === i + 1 ? "var(--orange)" : "var(--border)"}`, background: step === i + 1 ? "rgba(255,140,26,0.12)" : "var(--bg-3)", color: step > i + 1 ? "var(--green)" : step === i + 1 ? "var(--orange)" : "var(--text-muted)" }}>{step > i + 1 ? "✓ " : ""}{i + 1}. {n}</div>
-        ))}
+      <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 24 }}>
+        {STEP_NAMES.map((n, i) => {
+          const num = i + 1; const done = step > num; const cur = step === num;
+          return (
+            <div key={n} style={{ flex: 1, display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, flexShrink: 0, minWidth: 56 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, fontFamily: "'Rajdhani',sans-serif", transition: "all .22s",
+                  background: done ? "var(--green)" : cur ? "linear-gradient(180deg,#FFB552,#FF8C1A)" : "var(--bg-3)",
+                  color: done || cur ? "#0A0A0C" : "var(--text-muted)",
+                  border: `2px solid ${done ? "var(--green)" : cur ? "var(--orange)" : "var(--border)"}`,
+                  boxShadow: cur ? "0 0 16px rgba(255,140,26,.55)" : done ? "0 0 10px rgba(74,222,128,.35)" : "none" }}>{done ? "✓" : num}</div>
+                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", fontFamily: "'Rajdhani',sans-serif", color: cur ? "var(--orange)" : done ? "var(--green)" : "var(--text-muted)", textAlign: "center" }}>{n}</span>
+              </div>
+              {i < STEP_NAMES.length - 1 && <div style={{ flex: 1, height: 3, borderRadius: 2, margin: "0 6px", marginBottom: 20, background: done ? "var(--green)" : "var(--border)", boxShadow: done ? "0 0 8px rgba(74,222,128,.4)" : "none", transition: "background .35s, box-shadow .35s" }} />}
+            </div>
+          );
+        })}
       </div>
 
       {step === 1 && (

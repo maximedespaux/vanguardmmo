@@ -85,7 +85,7 @@ function guessType(name){const n=(name||'').toLowerCase();
 function renderCarnets(){const c=C();ST();
   document.getElementById('carnetsPanel').innerHTML=`<h3>📖 Carnets des Arcanes — ${esc(c.name)} <span style="color:var(--mut);font-weight:400;font-size:11px;text-transform:none">(liés au personnage · partagés entre tous ses stuffs · ★ complet = toutes les pages · ☆ base = 1 carte de chaque · Étui gris/bleu/rouge = Commun/Rare/Épique-Lég.)</span></h3>
    <div class="carnets">${CARNETS.map((cn,i)=>{const on=(c.carnets||[]).includes(i);const full=(c.carnetsFull||[]).includes(i);const bonus=full?cn.complet:cn.base;
-     return `<div class="carn ${on?'on':''}" style="${on?'border-color:'+cn.col:''}">
+     return `<div class="carn ${on?'on':''}" style="border-left:3px solid ${cn.col};box-shadow:inset 14px 0 22px -16px ${cn.col}">
          <div class="cn" onclick="toggleCarnet(${i})"><span class="dot" style="background:${cn.col}" title="Étui ${esc(cn.etui_couleur)}"></span>${esc(cn.nom)}</div>
          <div style="font-size:9px;color:var(--mut);margin-bottom:4px">Étui ${esc(cn.etui_couleur)} · ${esc(cn.rarete)} · ${cn.tier===1?'1 carte de chaque (set complet)':cn.copies+' carte(s) de chaque'}</div>
          <div class="cc-cards">${cn.cartes.map(ca=>`<span class="cc-card r-${(ca.rarete||'').toLowerCase()}">${esc(ca.nom)}</span>`).join('')}</div>

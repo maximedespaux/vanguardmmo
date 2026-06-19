@@ -7,7 +7,9 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
   && rm -rf /var/lib/apt/lists/*
 
 # Dépendances (couche cachée tant que package.json ne change pas)
+# Le schéma Prisma est copié AVANT `npm ci` car le postinstall lance `prisma generate`.
 COPY package.json package-lock.json* ./
+COPY prisma ./prisma
 RUN npm ci
 
 # Source + génération Prisma + build Next

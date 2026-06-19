@@ -42,7 +42,7 @@ function listFor(slot){const c=C();const ck=CKEY[c.cls];
   const arr=ITEMS[pool(slot)]||[];
   return arr.filter(it=>{if(it.classes&&it.classes.length){if(!it.classes.includes(ck))return false;}else if(it.cls&&it.cls!==ck)return false;if(it.sex&&c.sex&&it.sex!==c.sex)return false;return true;});}
 
-function slotHTML(slot){const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const small=LAYOUT.top.includes(slot)||LAYOUT.bottom.includes(slot);
+function slotHTML(slot){try{const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const small=LAYOUT.top.includes(slot)||LAYOUT.bottom.includes(slot);
   let empty=SLOTIC[slot]?`<img class="phimg" src="${SLOTIC[slot]}" width="${small?30:38}" height="${small?30:38}">`:`<span class="ico">${cfg.ico}</span>`;
   let inner=e?(e.item.ic&&IC[e.item.ic]?imgT(e.item.ic,small?34:42):empty):empty;
   let badge='';const cf=e&&e.cfg;
@@ -52,7 +52,7 @@ function slotHTML(slot){const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const small=
   else if(slot==='fairy'&&cf&&cf.lvl)rk=`<span class="rk">${cf.lvl}</span>`;
   else if(cf&&cf.rune)rk=`<span class="rk" style="background:var(--green)" title="Rune ${cf.rune}">R</span>`;
   else if((slot==='mantra'||slot==='masque')&&e&&e.item.cat)rk=`<span class="rk" style="background:var(--blue);color:#001">${e.item.cat[0]}</span>`;
-  return `<div class="slot ${small?'small':''}" onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}
+  return `<div class="slot ${small?'small':''}" onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" title="${esc(cf2.lbl)}"><span class="ico">⚠️</span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
 
 function render(){
   var _pt=document.getElementById('ptabs');if(!_pt){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;
@@ -65,6 +65,7 @@ function render(){
    <div class="f"><label>Niveau</label><span style="display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg3)"><button type="button" onclick="setLvl(C().lvl-1)" style="width:26px;height:32px;border:none;background:var(--bg2);color:var(--mut);cursor:pointer;font-size:15px">−</button><input type="text" inputmode="numeric" value="${c.lvl}" onchange="setLvl(this.value)" style="width:48px;height:32px;border:none;background:transparent;color:var(--text);text-align:center;font-size:14px;outline:none"><button type="button" onclick="setLvl(C().lvl+1)" style="width:26px;height:32px;border:none;background:var(--bg2);color:var(--mut);cursor:pointer;font-size:15px">＋</button></span></div>
    <div class="f"><label>Prestige</label><select onchange="C().prestige=+this.value;render()">${[1,2,3,4,5,6,7,8,9,10].map(p=>`<option ${p===c.prestige?'selected':''}>${p}</option>`).join('')}</select></div>`;
   document.getElementById('stuffbar').innerHTML='<span class="slabel">Stuffs :</span>'+(C().stuffs||[]).map((s,i)=>`<div class="stab ${i===C().curStuff?'on':''}" onclick="switchStuff(${i})">${esc(s.name)}${(C().stuffs.length>1)?` <span class="x" onclick="event.stopPropagation();delStuff(${i})">✕</span>`:''}</div>`).join('')+'<div class="saddp" onclick="addStuff()">+ Stuff</div>';
+  try{
   document.getElementById('rowT').innerHTML=LAYOUT.top.map(slotHTML).join('');
   document.getElementById('colL').innerHTML=leftCol().map(slotHTML).join('');
   document.getElementById('colR').innerHTML=LAYOUT.right.map(slotHTML).join('');
@@ -72,7 +73,9 @@ function render(){
   document.getElementById('petbar').innerHTML=LAYOUT.pets.map(slotHTML).join('');
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${c.cls} · Niv ${c.lvl} · P${c.prestige}`;
-  renderFamNote();renderCarnets();save();vgDD();
+  renderFamNote();renderCarnets();
+  }catch(err){console.error('[AirBuilder] rendu partiel ignoré (donnée corrompue)',err);}
+  save();vgDD();
 }
 function renderFamNote(){const e=E('familier');const n=document.getElementById('famnote');
   if(!e){n.style.display='none';return;}

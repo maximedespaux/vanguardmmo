@@ -23,7 +23,7 @@ const MARKUP = `<div class="wrap">
   <div class="note" id="famnote" style="display:none"></div>
   <div class="stats" id="stats"></div>
   <div class="panel" id="carnetsPanel"></div>
-  <div class="actions"><button class="btn ghost" onclick="resetChar()">↺ Vider ce perso</button><button class="btn" onclick="exportBuild()">💾 Exporter</button></div>
+  <div class="actions"><button class="btn ghost" onclick="resetChar()">↺ Vider ce stuff</button><button class="btn" onclick="vgSavePersos()">💾 Sauvegarder mes persos</button></div>
 </div>
 <div id="modalRoot"></div>`;
 

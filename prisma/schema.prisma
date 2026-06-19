@@ -129,6 +129,7 @@ model GearProfile {
   jewelry          Json?      // { anneaux, boucles, collier }
   pets             Json?      // { familier, ramasseur }
   cards            Json?      // cartes additionnelles
+  stats            Json?      // stats brutes calculées par le builder (totals)
   hp               Int        @default(0)
   attack           Int        @default(0)
   defense          Int        @default(0)

@@ -27,7 +27,7 @@ export default function CandidaturePage() {
   }, [showBuilder]);
   // Capture instantanée du build validé depuis l'iframe AirBuilder (postMessage).
   useEffect(() => {
-    const h = (e: MessageEvent) => { if (e.data && e.data.type === "vg_build" && e.data.data) setBuildExport(e.data.data); };
+    const h = (e: MessageEvent) => { if (e.data && e.data.type === "vg_build" && e.data.data) { setBuildExport(e.data.data); setShowBuilder(false); } };
     window.addEventListener("message", h);
     return () => window.removeEventListener("message", h);
   }, []);
@@ -46,7 +46,7 @@ export default function CandidaturePage() {
   const valid = chars.every(c => c.name.trim()) && specs.length > 0 && interests.trim() && motivation.trim() && experience.trim() && stuffOk && quizOk;
 
   const toggleSpec = (k: string) => setSpecs(s => s.includes(k) ? s.filter(x => x !== k) : [...s, k]);
-  const toggleFav = (c: string) => setFavClasses(s => s.includes(c) ? s.filter(x => x !== c) : [...s, c]);
+  const toggleFav = (c: string) => setFavClasses(s => s.includes(c) ? s.filter(x => x !== c) : s.length >= csChars ? s : [...s, c]);
 
   function validateQuiz() {
     if (qa.includes(null)) { setQFeedback("⚠️ Réponds à toutes les questions."); return; }
@@ -126,13 +126,13 @@ export default function CandidaturePage() {
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Combien de personnages souhaites-tu jouer en Chambre Secrète ?</label>
                 <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  {[1, 2].map(n => <button key={n} onClick={() => setCsChars(n)} style={{ padding: "8px 20px", borderRadius: 8, cursor: "pointer", border: `1px solid ${csChars === n ? "var(--orange)" : "var(--border)"}`, background: csChars === n ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: csChars === n ? "var(--orange)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>)}
+                  {[1, 2].map(n => <button key={n} onClick={() => { setCsChars(n); setFavClasses(f => f.slice(0, n)); }} style={{ padding: "8px 20px", borderRadius: 8, cursor: "pointer", border: `1px solid ${csChars === n ? "var(--orange)" : "var(--border)"}`, background: csChars === n ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: csChars === n ? "var(--orange)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>)}
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600 }}>Quelles classes veux-tu mettre en avant ?</label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>Quelles classes veux-tu mettre en avant ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars} — autant que de persos)</span></label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                  {CLASSES.map(c => { const sel = favClasses.includes(c); return <button key={c} onClick={() => toggleFav(c)} style={{ padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 12, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}>{c}</button>; })}
+                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} style={{ padding: "6px 12px", borderRadius: 7, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}>{c}</button>; })}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}>ℹ️ Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>
@@ -222,8 +222,8 @@ export default function CandidaturePage() {
           <div onClick={e => e.stopPropagation()} style={{ flex: 1, background: "var(--bg-2)", border: "1px solid var(--orange)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
               <span className="font-heading" style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)" }}>⚔️ Stuff Builder</span>
-              <button onClick={() => setShowBuilder(false)} className="vg-btn" style={{ marginLeft: "auto" }}>✓ J'ai exporté</button>
-              <button onClick={() => setShowBuilder(false)} style={{ marginLeft: 8, background: "none", border: "none", color: "var(--text-muted)", fontSize: 22, cursor: "pointer" }}>✕</button>
+              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>Configure ton build, puis clique <b style={{ color: "var(--green)" }}>« ✅ Valider ce build »</b> en bas ↓ (ça se ferme tout seul)</span>
+              <button onClick={() => setShowBuilder(false)} style={{ marginLeft: 12, background: "none", border: "none", color: "var(--text-muted)", fontSize: 22, cursor: "pointer" }}>✕</button>
             </div>
             <iframe src="/builder.html" style={{ flex: 1, border: "none", width: "100%" }} title="Stuff Builder" />
           </div>

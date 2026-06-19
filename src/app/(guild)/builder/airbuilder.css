@@ -104,6 +104,19 @@
 .seg2 .s2.on{background:var(--orange);color:#000;font-weight:700}
 .lvl{display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px}.lvl input[type=range]{width:100%}
 .note{max-width:1080px;margin:14px auto 0;background:#1a1410;border:1px solid #3a2c16;border-radius:10px;padding:10px 14px;font-size:12px;color:#d8c5a8}
+/* ── Dropdown maison (vgDD) ── */
+.vgdd{position:relative;display:inline-block;vertical-align:bottom}
+.vgdd-b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 11px;font:600 13px Rajdhani,sans-serif;cursor:pointer;transition:border-color .14s,box-shadow .14s}
+.vgdd-b:hover{border-color:#FF8C1A88}
+.vgdd.open .vgdd-b{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,140,26,.16)}
+.vgdd-b i{color:var(--orange);font-style:normal;font-size:10px;transition:transform .16s}
+.vgdd.open .vgdd-b i{transform:rotate(180deg)}
+.vgdd-l{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;z-index:300;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);padding:5px;max-height:240px;overflow-y:auto}
+.vgdd.open .vgdd-l{display:block;animation:vgddin .14s ease}
+.vgdd-o{padding:7px 12px;border-radius:7px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text);transition:background .12s}
+.vgdd-o:hover{background:rgba(255,255,255,.07)}
+.vgdd-o.on{background:rgba(255,140,26,.14);color:var(--orange);font-weight:700}
+@keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .itip{position:fixed;z-index:9999;width:290px;background:linear-gradient(180deg,#17171e,#0d0d12);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:0 14px 36px #000d;pointer-events:none;font-size:11.5px;line-height:1.55;display:none}
 .itip .t{font-family:Rajdhani;font-weight:700;font-size:14.5px;letter-spacing:.4px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .itip .t img{width:26px;height:26px;object-fit:contain;flex:none}

@@ -32,6 +32,8 @@ function ST(){const c=C();
   if(c.curStuff==null||c.curStuff>=c.stuffs.length)c.curStuff=0;return c.stuffs[c.curStuff];}
 const E=s=>ST().eq[s];
 function save(){try{localStorage.setItem('vg_air_e1',JSON.stringify(state));}catch(e){}}
+// ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
+function vgDD(){document.querySelectorAll('.abx select:not([data-dd])').forEach(function(sel){sel.setAttribute('data-dd','1');var wrap=document.createElement('span');wrap.className='vgdd';sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);sel.style.display='none';var btn=document.createElement('button');btn.type='button';btn.className='vgdd-b';wrap.appendChild(btn);var list=document.createElement('div');list.className='vgdd-l';wrap.appendChild(list);function sync(){btn.innerHTML='';var o=sel.options[sel.selectedIndex];var t=document.createElement('span');t.textContent=(o&&o.textContent)||'';var a=document.createElement('i');a.textContent='▾';btn.appendChild(t);btn.appendChild(a);}function close(){wrap.classList.remove('open');document.removeEventListener('mousedown',onOut);}function onOut(e){if(!wrap.contains(e.target))close();}function openList(){list.innerHTML='';Array.prototype.forEach.call(sel.options,function(o){var d=document.createElement('div');d.className='vgdd-o'+(o.selected?' on':'');d.textContent=o.textContent;d.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();sel.value=o.value;sync();sel.dispatchEvent(new Event('change',{bubbles:true}));close();});list.appendChild(d);});wrap.classList.add('open');setTimeout(function(){document.addEventListener('mousedown',onOut);},0);}btn.addEventListener('click',function(e){e.stopPropagation();wrap.classList.contains('open')?close():openList();});sync();});}
 function listFor(slot){const c=C();const ck=CKEY[c.cls];
   if(['fhead','ftop','fhand','ffoot'].includes(slot)){return (ITEMS.fashion||[]).filter(it=>it.piece===slot&&(!it.sex||it.sex===c.sex));}
   if(slot==='mantra')return ITEMS.mantra||[];
@@ -69,7 +71,7 @@ function render(){
   document.getElementById('petbar').innerHTML=LAYOUT.pets.map(slotHTML).join('');
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${c.cls} · Niv ${c.lvl} · P${c.prestige}`;
-  renderFamNote();renderCarnets();save();
+  renderFamNote();renderCarnets();save();vgDD();
 }
 function renderFamNote(){const e=E('familier');const n=document.getElementById('famnote');
   if(!e){n.style.display='none';return;}

@@ -30,6 +30,20 @@ const NAV: Item[] = [
   ] },
 ];
 
+// Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.png
+const PAGE_BG: Record<string, string> = {
+  "/coffre": "airguild", "/dettes": "banque", "/gestion-dettes": "banque", "/guildviewer": "guildviewer",
+  "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
+  "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
+  "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
+  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild",
+};
+// Badge de rang par rôle (assets fournis par iBeats).
+const RANK_BADGE: Record<string, string> = {
+  DIRECTION: "fondateur", VANGUARD: "fondateur", GENERAL: "brasdroit", OFFICIER: "brasdroit",
+  VETERAN: "guilde", GUARD: "guilde", RECRUE: "public",
+};
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -42,6 +56,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
     VETERAN: { emoji: "📋", label: "Vétéran" }, GUARD: { emoji: "⚔️", label: "Guard" }, RECRUE: { emoji: "🌱", label: "Recrue" },
   };
   const role = DEV_ALL ? { emoji: "👑", label: "Vanguard (dev)" } : (ROLE_META[userRole] ?? ROLE_META.RECRUE);
+  const badge = DEV_ALL ? "fondateur" : (RANK_BADGE[userRole] ?? "public");
+  const bgKey = PAGE_BG[pathname] ?? "";
   const has = (a: string) => (DEV_ALL ? true : a === "public" ? true : a === "guild" ? canAccessGuild(userRole) : canAccessAdmin(userRole));
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
   const items = NAV.filter((it) => has(it.access));
@@ -79,7 +95,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="vg-top-user">
           {(session || DEV_ALL) ? (
             <>
-              <span className="vg-user-av" style={{ width: 30, height: 30, fontSize: 15 }}>🦉</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/assets/site/ranks/${badge}.png`} alt={role.label} title={role.label} style={{ height: 34, width: "auto", objectFit: "contain", filter: "drop-shadow(0 0 6px rgba(255,140,26,.45))" }} />
               <span style={{ fontSize: 12, color: "var(--orange)", whiteSpace: "nowrap" }}>{role.emoji} {role.label}</span>
               {session && <button onClick={() => signOut()} title="Déconnexion" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 16 }}>⏻</button>}
             </>
@@ -89,7 +106,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="vg-main"><div key={pathname} className="vg-page">{children}</div></main>
+      <main className="vg-main" data-bg={bgKey}><div key={pathname} className="vg-page">{children}</div></main>
     </div>
   );
 }

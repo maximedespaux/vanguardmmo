@@ -34,6 +34,21 @@ input, select, textarea { color-scheme: dark; }
 .vg-shell { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
 .vg-sidebar { width:252px; flex-shrink:0; background:linear-gradient(180deg,#15151b,#0e0e12); border-right:1px solid #24242e; display:flex; flex-direction:column; position:relative; z-index:10; }
 .vg-main { flex:1; overflow-y:auto; background:linear-gradient(rgba(10,10,12,.88), rgba(10,10,12,.93)), url('/assets/site/new/guild.png') center top / cover no-repeat; }
+/* Fonds par page (fournis par iBeats) — surcharge l'image, garde le voile sombre. */
+.vg-main[data-bg="airguild"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/airguild.png')}
+.vg-main[data-bg="banque"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/banque.png')}
+.vg-main[data-bg="guildviewer"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/guildviewer.png')}
+.vg-main[data-bg="sup1"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup1.png')}
+.vg-main[data-bg="sup2"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup2.png')}
+.vg-main[data-bg="sup3"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup3.png')}
+.vg-main[data-bg="sup4"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup4.png')}
+.vg-main[data-bg="sup5"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup5.png')}
+.vg-main[data-bg="sup6"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup6.png')}
+.vg-main[data-bg="sup7"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup7.png')}
+.vg-main[data-bg="sup8"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup8.png')}
+.vg-main[data-bg="sup9"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup9.png')}
+.vg-main[data-bg="sup10"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup10.png')}
+.vg-main[data-bg="sup11"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup11.png')}
 .vg-burger { display:none; }
 .vg-overlay { display:none; }
 @media (max-width: 768px) {

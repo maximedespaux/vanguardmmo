@@ -31,13 +31,18 @@ services:
 
   web:
     image: vanguard-app:latest
+    container_name: vanguard-web
     env_file: .env
     depends_on:
       migrate:
         condition: service_completed_successfully
     command: npm start
+    # 3000 lié à localhost (debug SSH) ; le trafic public passe par NPM via le réseau interne.
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
+    networks:
+      - default
+      - npm
     restart: unless-stopped
 
   bot:
@@ -51,3 +56,10 @@ services:
 
 volumes:
   vanguard_db:
+
+# Réseau du Nginx Proxy Manager (déjà présent sur le VPS) : permet à NPM de
+# router vanguardhub.fr → conteneur "vanguard-web" (port 3000) en interne.
+networks:
+  npm:
+    name: nginx-proxy-manager_default
+    external: true

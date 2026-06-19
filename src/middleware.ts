@@ -5,7 +5,7 @@ import { DEV_ALL } from "@/lib/devAccess";
 
 // Routes par niveau d'accès (doivent rester alignées avec la nav de Shell.tsx).
 const GUILD_PREFIXES = ["/dashboard", "/personnages", "/builder", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/dettes", "/echanges", "/parametres"];
-const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/gestion-dettes", "/gestion-worldboss", "/coffre"];
+const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/gestion-dettes", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
@@ -30,6 +30,6 @@ export const config = {
     "/dashboard/:path*", "/personnages/:path*", "/builder/:path*", "/prestige/:path*",
     "/donjons/:path*", "/astuces/:path*", "/compositions/:path*", "/worldboss/:path*",
     "/dettes/:path*", "/echanges/:path*", "/parametres/:path*",
-    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/gestion-dettes/:path*", "/gestion-worldboss/:path*", "/coffre/:path*",
+    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/gestion-dettes/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
   ],
 };

@@ -104,9 +104,9 @@ export function validateItem(it: Item): string[] {
   return errs;
 }
 
-// ─── Catalogue (à remplir : seed API + objets AirFlyff custom) ──
-// Voir scripts/seed-items.ts pour aspirer la base depuis api.flyff.com,
-// puis ajouter ici les objets AirFlyff (Yggdrasil/Éternel) à la main.
+// ─── Catalogue de repli ──
+// Le vrai catalogue (10k+ objets) est public/data/items.json, chargé plus bas.
+// ITEMS sert de fallback typé si le fetch du JSON échoue (rendu serveur / fichier absent).
 export const ITEMS: Item[] = [];
 
 let _cache: Item[] | null = null;

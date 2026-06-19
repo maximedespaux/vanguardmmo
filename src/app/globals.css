@@ -53,6 +53,14 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 @keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .vg-dd-opt:hover{background:rgba(255,255,255,.07) !important}
 @media (prefers-reduced-motion:reduce){.vg-dd-list{animation:none !important}}
+/* Dashboard — cartes outils réactives */
+.dash-hub{transition:transform .16s,border-color .16s,box-shadow .16s}
+.dash-hub:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--orange) 45%,var(--border));box-shadow:0 10px 28px rgba(0,0,0,.35)}
+.dash-hub-cta{transition:background .16s,color .16s,box-shadow .16s,transform .12s}
+.dash-hub-cta:hover{background:var(--orange);color:#1a1206;box-shadow:0 7px 20px rgba(255,140,26,.42)}
+.dash-hub-cta:hover .dash-hub-arrow{transform:translateX(4px)}
+.dash-hub-cta:active{transform:scale(.96)}
+.dash-hub-arrow{display:inline-block;transition:transform .16s}
 
 /* ── Shell responsive (nav repliable sur mobile) ── */
 .vg-shell { display:flex; flex-direction:column; height:100vh; overflow:hidden; }

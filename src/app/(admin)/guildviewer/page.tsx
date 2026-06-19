@@ -143,7 +143,7 @@ export default function GuildViewerPage() {
                                   {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
                                 </span>
                               ))}
-                          {recap && <span style={{ fontSize: 10.5, color: "var(--text-muted)", fontFamily: "'Rajdhani',monospace", whiteSpace: "nowrap", background: "var(--bg-2)", borderRadius: 6, padding: "3px 9px" }}>❤️{kfmt(recap.hp)} ⚔️{kfmt(recap.attack)} 🛡️{kfmt(recap.defense)}</span>}
+                          {recap && <span style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 12.5, fontWeight: 700, fontFamily: "'Rajdhani',sans-serif", whiteSpace: "nowrap", background: "var(--bg-2)", borderRadius: 8, padding: "5px 12px", border: "1px solid var(--border)" }}><span style={{ color: "#ff7d7d" }} title="Points de vie">❤️ {kfmt(recap.hp)}</span><span style={{ color: "var(--orange)" }} title="Attaque">⚔️ {kfmt(recap.attack)}</span><span style={{ color: "#6fb4ff" }} title="Défense">🛡️ {kfmt(recap.defense)}</span></span>}
                           {c.specializations.length > 0 && (
                             <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--purple)", background: "rgba(199,125,255,.1)", border: "1px solid color-mix(in srgb, var(--purple) 45%, transparent)", borderRadius: 6, padding: "3px 9px", whiteSpace: "nowrap" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>
                           )}

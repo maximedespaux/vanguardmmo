@@ -17,6 +17,7 @@ const ROLE_META: Record<string, { emoji: string; label: string; color: string }>
   GUARD: { emoji: "⚔️", label: "Guard", color: "var(--blue)" },
   RECRUE: { emoji: "🌱", label: "Recrue", color: "var(--text-muted)" },
 };
+const RANK_BADGE: Record<string, string> = { DIRECTION: "fondateur", VANGUARD: "fondateur", GENERAL: "brasdroit", OFFICIER: "brasdroit", VETERAN: "guilde", GUARD: "guilde", RECRUE: "public" };
 const modeColor = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)");
 const RARITY_FR: Record<string, string> = { COMMUN: "Commun", RARE: "Rare", EPIQUE: "Épique", LEGENDAIRE: "Légendaire", PREMYTHIQUE: "Pré-myth.", MYTHIQUE: "Mythique" };
 const kfmt = (n?: number) => { const v = n || 0; return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "k" : String(v); };
@@ -94,7 +95,8 @@ export default function GuildViewerPage() {
           return (
             <div key={u.id} style={card}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: u.characters.length ? 12 : 0, flexWrap: "wrap" }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--bg-3)", border: `1px solid ${r.color}`, display: "flex", alignItems: "center", justifyContent: "center" }}>{r.emoji}</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/assets/site/ranks/${RANK_BADGE[u.role] ?? "public"}.png`} alt={r.label} title={r.label} style={{ width: 42, height: 42, objectFit: "contain", flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 150 }}>
                   <div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{u.username} {!u.isActive && <span style={{ fontSize: 11, color: "var(--text-muted)" }}>· inactif</span>}</div>
                   <div style={{ fontSize: 12, color: r.color }}>{r.label}</div>

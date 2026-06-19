@@ -28,6 +28,7 @@ export async function execute(i: ChatInputCommandInteraction) {
   if (debtor.id === creditor.id) { await i.reply({ content: "Le débiteur et le créancier ne peuvent pas être la même personne.", ephemeral: true }); return; }
   if (debtor.bot) { await i.reply({ content: "Impossible d'enregistrer une dette sur un bot.", ephemeral: true }); return; }
 
+  await i.deferReply();
   const itemName = await resolveItemName(itemRef);
 
   const debt = await prisma.guildDebt.create({
@@ -40,7 +41,7 @@ export async function execute(i: ChatInputCommandInteraction) {
     },
   });
 
-  const reply = await i.reply({ embeds: [debtEmbed(debt)], components: debtButtons(debt) as any, fetchReply: true });
+  const reply = await i.editReply({ embeds: [debtEmbed(debt)], components: debtButtons(debt) as any });
   await prisma.guildDebt.update({ where: { id: debt.id }, data: { messageId: reply.id } });
 
   // Prévenir le débiteur en MP

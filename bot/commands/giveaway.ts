@@ -42,43 +42,44 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(i: ChatInputCommandInteraction) {
   const sub = i.options.getSubcommand();
+  await i.deferReply({ ephemeral: true });
 
   if (sub === "creer") {
     const prize = i.options.getString("lot", true);
     const durStr = i.options.getString("duree", true);
     const ms = parseDuration(durStr);
-    if (!ms) { await i.reply({ content: "Durée invalide. Exemples : `30m`, `2h`, `1d`.", ephemeral: true }); return; }
+    if (!ms) { await i.editReply({ content: "Durée invalide. Exemples : `30m`, `2h`, `1d`." }); return; }
     const winnersCount = i.options.getInteger("gagnants") ?? 1;
     const description = i.options.getString("description") ?? null;
     const channel = (i.options.getChannel("salon") as TextChannel) ?? (i.channel as TextChannel);
     const me = await i.guild!.members.fetchMe();
-    if (!botCanPost(channel, me)) { await i.reply({ content: NO_ACCESS_MSG, ephemeral: true }); return; }
+    if (!botCanPost(channel, me)) { await i.editReply({ content: NO_ACCESS_MSG }); return; }
 
     await createGiveaway(i.client, { channelId: channel.id, prize, description, winnersCount, durationMs: ms, hostId: i.user.id });
-    await i.reply({ content: `✅ Giveaway lancé dans ${channel} !`, ephemeral: true });
+    await i.editReply({ content: `✅ Giveaway lancé dans ${channel} !` });
     return;
   }
 
   // les autres sous-commandes ciblent un giveaway par l'ID de son message
   const messageId = i.options.getString("message_id", true);
   const g = await prisma.giveaway.findFirst({ where: { messageId } });
-  if (!g) { await i.reply({ content: "Aucun giveaway lié à ce message.", ephemeral: true }); return; }
+  if (!g) { await i.editReply({ content: "Aucun giveaway lié à ce message." }); return; }
 
   if (sub === "terminer") {
-    if (g.status !== "RUNNING") { await i.reply({ content: "Ce giveaway est déjà terminé ou annulé.", ephemeral: true }); return; }
+    if (g.status !== "RUNNING") { await i.editReply({ content: "Ce giveaway est déjà terminé ou annulé." }); return; }
     await endGiveaway(i.client, g.id);
-    await i.reply({ content: "✅ Giveaway terminé, gagnant(s) tiré(s).", ephemeral: true });
+    await i.editReply({ content: "✅ Giveaway terminé, gagnant(s) tiré(s)." });
     return;
   }
   if (sub === "reroll") {
-    if (g.status !== "ENDED") { await i.reply({ content: "Le giveaway doit d'abord être **terminé** (`/giveaway terminer`) avant de pouvoir relancer un tirage.", ephemeral: true }); return; }
+    if (g.status !== "ENDED") { await i.editReply({ content: "Le giveaway doit d'abord être **terminé** (`/giveaway terminer`) avant de pouvoir relancer un tirage." }); return; }
     const r = await rerollGiveaway(i.client, g.id);
-    await i.reply({ content: r ? "🔄 Reroll effectué, nouveau(x) gagnant(s) tiré(s)." : "Reroll impossible.", ephemeral: true });
+    await i.editReply({ content: r ? "🔄 Reroll effectué, nouveau(x) gagnant(s) tiré(s)." : "Reroll impossible." });
     return;
   }
   if (sub === "participants") {
     const count = await prisma.giveawayEntry.count({ where: { giveawayId: g.id } });
-    await i.reply({ content: `👥 **${count}** participant(s) pour **${g.prize}**.`, ephemeral: true });
+    await i.editReply({ content: `👥 **${count}** participant(s) pour **${g.prize}**.` });
     return;
   }
 }

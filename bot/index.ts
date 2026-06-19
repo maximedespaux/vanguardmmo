@@ -31,7 +31,7 @@ const client = new Client({
 const registry = new Collection<string, (typeof commands)[number]>();
 for (const c of commands) registry.set(c.data.name, c);
 
-client.once("ready", () => {
+client.once(Events.ClientReady, () => {
   console.log(`🦉 Bot connecté : ${client.user?.tag}`);
   startScheduler(client);
   registerReactionRoles(client);

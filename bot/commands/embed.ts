@@ -84,17 +84,18 @@ export const data = new SlashCommandBuilder()
 export async function execute(i: ChatInputCommandInteraction) {
   const sub = i.options.getSubcommand();
   const here = i.channel as TextChannel;
+  await i.deferReply({ ephemeral: true });
 
   if (sub === "creer") {
     const d = readData(i);
     if (!d.title && !d.description && !d.image) {
-      await i.reply({ content: "Donne au moins un **titre**, une **description** ou une **image**.", ephemeral: true }); return;
+      await i.editReply({ content: "Donne au moins un **titre**, une **description** ou une **image**." }); return;
     }
     const target = (i.options.getChannel("salon") as TextChannel) ?? here;
     const me = await i.guild!.members.fetchMe();
-    if (!botCanPost(target, me)) { await i.reply({ content: NO_ACCESS_MSG, ephemeral: true }); return; }
+    if (!botCanPost(target, me)) { await i.editReply({ content: NO_ACCESS_MSG }); return; }
     try { await target.send({ embeds: [buildEmbed(d)] }); }
-    catch { await i.reply({ content: "Impossible de poster (URL d'image invalide ? permissions ?).", ephemeral: true }); return; }
+    catch { await i.editReply({ content: "Impossible de poster (URL d'image invalide ? permissions ?)." }); return; }
 
     const saveName = i.options.getString("sauver_nom");
     if (saveName) {
@@ -104,19 +105,19 @@ export async function execute(i: ChatInputCommandInteraction) {
         update: { data: d as any },
       });
     }
-    await i.reply({ content: `✅ Embed posté dans ${target}.${saveName ? ` Modèle **${saveName}** sauvegardé.` : ""}`, ephemeral: true });
+    await i.editReply({ content: `✅ Embed posté dans ${target}.${saveName ? ` Modèle **${saveName}** sauvegardé.` : ""}` });
     return;
   }
 
   if (sub === "poster") {
     const name = i.options.getString("nom", true);
     const tpl = await prisma.embedTemplate.findUnique({ where: { guildId_name: { guildId: i.guildId!, name } } });
-    if (!tpl) { await i.reply({ content: `Aucun modèle nommé **${name}**.`, ephemeral: true }); return; }
+    if (!tpl) { await i.editReply({ content: `Aucun modèle nommé **${name}**.` }); return; }
     const target = (i.options.getChannel("salon") as TextChannel) ?? here;
     const me = await i.guild!.members.fetchMe();
-    if (!botCanPost(target, me)) { await i.reply({ content: NO_ACCESS_MSG, ephemeral: true }); return; }
+    if (!botCanPost(target, me)) { await i.editReply({ content: NO_ACCESS_MSG }); return; }
     await target.send({ embeds: [buildEmbed(tpl.data as EmbedData)] });
-    await i.reply({ content: `✅ Modèle **${name}** posté dans ${target}.`, ephemeral: true });
+    await i.editReply({ content: `✅ Modèle **${name}** posté dans ${target}.` });
     return;
   }
 
@@ -124,18 +125,18 @@ export async function execute(i: ChatInputCommandInteraction) {
     const messageId = i.options.getString("message_id", true);
     let msg;
     try { msg = await here.messages.fetch(messageId); }
-    catch { await i.reply({ content: "Message introuvable dans ce salon.", ephemeral: true }); return; }
-    if (msg.author.id !== i.client.user!.id) { await i.reply({ content: "Je ne peux modifier que MES propres messages.", ephemeral: true }); return; }
+    catch { await i.editReply({ content: "Message introuvable dans ce salon." }); return; }
+    if (msg.author.id !== i.client.user!.id) { await i.editReply({ content: "Je ne peux modifier que MES propres messages." }); return; }
     const d = readData(i);
     await msg.edit({ embeds: [buildEmbed(d)] });
-    await i.reply({ content: "✅ Embed mis à jour.", ephemeral: true });
+    await i.editReply({ content: "✅ Embed mis à jour." });
     return;
   }
 
   if (sub === "modeles") {
     const tpls = await prisma.embedTemplate.findMany({ where: { guildId: i.guildId! }, orderBy: { name: "asc" } });
-    if (!tpls.length) { await i.reply({ content: "Aucun modèle sauvegardé. Crée-en un avec `/embed creer … sauver_nom:`.", ephemeral: true }); return; }
-    await i.reply({ content: `📑 Modèles : ${tpls.map((t) => `\`${t.name}\``).join(", ")}`, ephemeral: true });
+    if (!tpls.length) { await i.editReply({ content: "Aucun modèle sauvegardé. Crée-en un avec `/embed creer … sauver_nom:`." }); return; }
+    await i.editReply({ content: `📑 Modèles : ${tpls.map((t) => `\`${t.name}\``).join(", ")}` });
     return;
   }
 }

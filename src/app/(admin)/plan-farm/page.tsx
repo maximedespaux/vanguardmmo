@@ -4,6 +4,7 @@ import Link from "next/link";
 import { loadItems, iconUrl, type Item } from "@/data/items";
 import { type CoffreEntry } from "@/data/coffre";
 import { PageHeader } from "@/components/PageHeader";
+import { VgSelect } from "@/components/VgSelect";
 
 const CLASS_FR: Record<string, { fr: string; emoji: string }> = {
   SPADASSIN: { fr: "Spadassin", emoji: "🗡️" }, TEMPLIER: { fr: "Templier", emoji: "🛡️" },
@@ -134,11 +135,7 @@ export default function PlanFarmPage() {
                         <div style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it?.name || `Objet #${d.id}`}</div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.job ? `${d.job} · ` : ""}stock {d.stock}/{d.target}</div>
                       </div>
-                      <select value={d.assignedTo || ""} onChange={(e) => patch(d.id, { assignedTo: e.target.value })} style={{ ...sel, borderColor: d.assignedTo ? "var(--green)" : "var(--border)" }} title="Assigner le farm à un membre">
-                        <option value="">— assigner —</option>
-                        {memberNames.map((n) => <option key={n} value={n}>{n}</option>)}
-                        {d.assignedTo && !memberNames.includes(d.assignedTo) && <option value={d.assignedTo}>{d.assignedTo}</option>}
-                      </select>
+                      <VgSelect value={d.assignedTo || ""} onChange={(v) => patch(d.id, { assignedTo: v })} minWidth={140} options={[{ value: "", label: "— assigner —" }, ...memberNames.map((n) => ({ value: n, label: n })), ...(d.assignedTo && !memberNames.includes(d.assignedTo) ? [{ value: d.assignedTo, label: d.assignedTo }] : [])]} />
                       <span title="à farmer" style={{ fontFamily: "Rajdhani,sans-serif", fontWeight: 700, fontSize: 16, color: "var(--red)", minWidth: 38, textAlign: "right" }}>−{d.manque}</span>
                     </div>
                   );

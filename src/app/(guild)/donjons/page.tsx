@@ -4,6 +4,7 @@ import dungeonsData from "@/data/dungeons.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { vgToast } from "@/components/Dialogs";
+import { VgSelect } from "@/components/VgSelect";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -108,10 +109,7 @@ export default function DonjonsPage() {
       {tab === "rapport" && (<>
         <div style={card}>
           <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>1️⃣ Choisis le donjon</h2>
-          <select value={curId} onChange={e => { setCurId(e.target.value ? +e.target.value : ""); setReceived({}); }} className="vg-select" style={{ width: "100%" }}>
-            <option value="">— Sélectionner parmi les {dungeons.length} donjons —</option>
-            {dungeons.map(d => <option key={d.id} value={d.id}>{d.icon} {d.name}{d.prestige ? ` (P${d.prestige})` : ""}</option>)}
-          </select>
+          <VgSelect full value={curId} onChange={v => { setCurId(v ? +v : ""); setReceived({}); }} options={[{ value: "", label: `— Sélectionner parmi les ${dungeons.length} donjons —` }, ...dungeons.map(d => ({ value: String(d.id), label: `${d.icon} ${d.name}${d.prestige ? ` (P${d.prestige})` : ""}` }))]} />
           {cur && <div style={{ marginTop: 14 }}><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Bonus actifs (drop +)</div><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{BONUSES.map(b => { const on = bonuses[b]; return <button key={b} onClick={() => setBonuses({ ...bonuses, [b]: !on })} style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`, background: on ? "rgba(255,140,26,0.12)" : "var(--bg-3)", color: on ? "var(--orange)" : "var(--text-muted)" }}>{b}</button>; })}</div></div>}
         </div>
         {cur && <div style={card}>

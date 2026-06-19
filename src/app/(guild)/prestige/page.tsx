@@ -3,6 +3,7 @@ import { useState } from "react";
 import { PRESTIGE_COSTS, PRESTIGE_KEYS, prestigeNeed } from "@/data/prestige";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
+import { VgSelect } from "@/components/VgSelect";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 function emojiFor(k: string): string {
@@ -41,16 +42,12 @@ export default function PrestigePage() {
       <div className="glass-card" style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end", padding: 18, marginBottom: 16 }}>
         <label style={{ flex: 1, minWidth: 150 }}>
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige actuel</div>
-          <select value={cur} onChange={(e) => { const v = +e.target.value; setCur(v); if (v >= tgt) setTgt(Math.min(10, v + 1)); }} className="vg-select" style={{ width: "100%" }}>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => <option key={p} value={p}>Prestige {p}</option>)}
-          </select>
+          <VgSelect full value={cur} onChange={(val) => { const v = +val; setCur(v); if (v >= tgt) setTgt(Math.min(10, v + 1)); }} options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
         </label>
         <div style={{ display: "flex", alignItems: "center", paddingBottom: 8, color: "var(--orange)", fontSize: 22 }}>→</div>
         <label style={{ flex: 1, minWidth: 150 }}>
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige cible</div>
-          <select value={tgt} onChange={(e) => setTgt(+e.target.value)} className="vg-select" style={{ width: "100%" }}>
-            {[2, 3, 4, 5, 6, 7, 8, 9, 10].filter((p) => p > cur).map((p) => <option key={p} value={p}>Prestige {p}</option>)}
-          </select>
+          <VgSelect full value={tgt} onChange={(v) => setTgt(+v)} options={[2, 3, 4, 5, 6, 7, 8, 9, 10].filter((p) => p > cur).map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
         </label>
       </div>
 

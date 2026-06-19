@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
+import { VgSelect } from "@/components/VgSelect";
 
 const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
 const MODES = ["DPS","TANK","HYBRIDE"];
@@ -47,8 +48,8 @@ export default function PersonnagesPage() {
         <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>➕ Créer un personnage</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <input placeholder="Nom du personnage" value={name} onChange={e => setName(e.target.value)} style={{ ...inp, flex: 1, minWidth: 150 }} />
-          <select value={cls} onChange={e => setCls(e.target.value)} className="vg-select" style={{ minWidth: 140 }}>{CLASS_ENUM.map(c => <option key={c} value={c}>{c}</option>)}</select>
-          <select value={prestige} onChange={e => setPrestige(+e.target.value)} className="vg-select" style={{ width: 100 }}>{[1,2,3,4,5,6,7,8,9,10].map(p => <option key={p} value={p}>P{p}</option>)}</select>
+          <VgSelect value={cls} onChange={setCls} options={CLASS_ENUM} minWidth={140} />
+          <VgSelect value={prestige} onChange={v => setPrestige(+v)} options={[1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 100 }} />
           <input type="number" value={level} onChange={e => setLevel(+e.target.value)} style={{ ...inp, width: 90 }} title="Niveau" />
           <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13, color: "var(--text-muted)" }}><input type="checkbox" checked={isMain} onChange={e => setIsMain(e.target.checked)} /> Principal</label>
           <button onClick={createChar} className="vg-btn">Créer</button>

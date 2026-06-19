@@ -49,6 +49,10 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px rgba(255,140,26,.18); }
 .vg-select option { background:#16161c; color:var(--text); font-weight:500; }
 .vg-select option:checked { background:var(--orange-dark); color:#fff; }
+/* Dropdown maison (VgSelect) */
+@keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.vg-dd-opt:hover{background:rgba(255,255,255,.07) !important}
+@media (prefers-reduced-motion:reduce){.vg-dd-list{animation:none !important}}
 
 /* ── Shell responsive (nav repliable sur mobile) ── */
 .vg-shell { display:flex; flex-direction:column; height:100vh; overflow:hidden; }

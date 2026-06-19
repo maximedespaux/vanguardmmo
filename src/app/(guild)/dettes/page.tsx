@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { VgSelect } from "@/components/VgSelect";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
@@ -83,8 +84,8 @@ export default function BanquePage() {
       <div className="glass-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>🛒 Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-          <select value={catF} onChange={e => setCatF(e.target.value)} className="vg-select"><option value="">Toutes catégories</option>{cats.map(c => <option key={c} value={c}>{c}</option>)}</select>
-          <select value={clsF} onChange={e => setClsF(e.target.value)} className="vg-select"><option value="">Toutes classes</option>{CLASSES.map(c => <option key={c} value={c}>{c}</option>)}</select>
+          <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
+          <VgSelect value={clsF} onChange={setClsF} options={[{ value: "", label: "Toutes classes" }, ...CLASSES.map(c => ({ value: c, label: c }))]} minWidth={150} />
           <input placeholder="🔍 Rechercher un article…" value={q} onChange={e => setQ(e.target.value)} style={{ ...inp, flex: 1, minWidth: 160 }} />
         </div>
         <div className="shop-layout" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>

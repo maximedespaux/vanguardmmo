@@ -51,7 +51,7 @@ function LoginCard() {
         .lg-card{position:relative;z-index:1;width:100%;max-width:430px;padding:42px 34px 30px;text-align:center;
           background:linear-gradient(180deg,rgba(25,25,31,.88),rgba(13,13,18,.93));border:1px solid var(--border);border-radius:20px;
           box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-        .lg-logo{width:76px;height:76px;object-fit:contain;margin-bottom:14px;filter:drop-shadow(0 0 20px rgba(255,140,26,.55))}
+        .lg-logo{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 14px;filter:drop-shadow(0 0 20px rgba(255,140,26,.55))}
         .lg-title{font-size:24px;font-weight:400;text-transform:uppercase;letter-spacing:1px;line-height:1.05;color:#fff;margin:0}
         .lg-title span{display:block;font-size:13px;letter-spacing:5px;color:var(--orange);margin-top:5px}
         .lg-sub{font-family:'Inter',sans-serif;color:var(--text-muted);font-size:13.5px;margin:14px 4px 26px;line-height:1.55}

@@ -120,7 +120,7 @@ export default function CandidaturePage() {
             <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
               <input placeholder="Nom du perso" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
               <VgSelect value={c.cls} onChange={v => { const n = [...chars]; n[i].cls = v; setChars(n); }} options={CLASSES} style={{ flex: 1 }} />
-              <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
+              <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
               {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 18 }}>✕</button>}
             </div>
           ))}

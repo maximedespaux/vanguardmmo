@@ -14,6 +14,8 @@ export const data = new SlashCommandBuilder()
   .addUserOption((o) => o.setName("membre").setDescription("Filtrer sur un membre"));
 
 export async function execute(i: ChatInputCommandInteraction) {
+  await i.deferReply({ ephemeral: true });
+  const clamp = (s: string, n: number) => (s && s.length > n ? s.slice(0, n - 1) + "…" : s || "_aucune_");
   const u = i.options.getUser("membre");
   const active = { in: ["OPEN", "PENDING_CONFIRM"] as any };
 
@@ -22,15 +24,15 @@ export async function execute(i: ChatInputCommandInteraction) {
     const owed = await prisma.guildDebt.findMany({ where: { creditorId: u.id, status: active }, orderBy: { createdAt: "asc" } });
     const fmt = (arr: any[]) => arr.length ? arr.map((d) => `• **${d.itemName || d.itemRef} ×${d.quantity}** ${STATUS_FR[d.status]} — ${d.debtorId === u.id ? "à <@" + d.creditorId + ">" : "de <@" + d.debtorId + ">"}`).join("\n") : "_aucune_";
     const e = new EmbedBuilder().setColor(ORANGE).setTitle(`💰 Dettes de ${u.username}`)
-      .addFields({ name: `Doit (${owes.length})`, value: fmt(owes) }, { name: `On lui doit (${owed.length})`, value: fmt(owed) });
-    await i.reply({ embeds: [e], ephemeral: true });
+      .addFields({ name: `Doit (${owes.length})`, value: clamp(fmt(owes), 1024) }, { name: `On lui doit (${owed.length})`, value: clamp(fmt(owed), 1024) });
+    await i.editReply({ embeds: [e] });
     return;
   }
 
   const all = await prisma.guildDebt.findMany({ where: { status: active }, orderBy: { createdAt: "asc" } });
-  if (all.length === 0) { await i.reply({ content: "✅ Aucune dette en cours dans la guilde.", ephemeral: true }); return; }
+  if (all.length === 0) { await i.editReply({ content: "✅ Aucune dette en cours dans la guilde." }); return; }
   const lines = all.slice(0, 40).map((d) => `• <@${d.debtorId}> → <@${d.creditorId}> : **${d.itemName || d.itemRef} ×${d.quantity}** ${STATUS_FR[d.status]}`);
-  const e = new EmbedBuilder().setColor(ORANGE).setTitle(`💰 Dettes en cours — ${all.length}`).setDescription(lines.join("\n"))
+  const e = new EmbedBuilder().setColor(ORANGE).setTitle(`💰 Dettes en cours — ${all.length}`).setDescription(clamp(lines.join("\n"), 4096))
     .setFooter({ text: "Détail d'un membre : /dettes membre:@pseudo" });
-  await i.reply({ embeds: [e], ephemeral: true });
+  await i.editReply({ embeds: [e] });
 }

@@ -37,6 +37,7 @@ export default function BanquePage() {
   const [catF, setCatF] = useState(""); const [clsF, setClsF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
+  const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
 
   const load = async () => {
     setLoading(true);
@@ -80,8 +81,14 @@ export default function BanquePage() {
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
+      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+        {([["boutique", "🛒 Boutique"], ["requetes", `📋 Requêtes${reqs.length ? ` (${reqs.length})` : ""}`], ["dettes", `💰 Dettes${debts.filter(d => d.status !== "REPAID").length ? ` (${debts.filter(d => d.status !== "REPAID").length})` : ""}`], ["rembourse", `✅ Remboursé${debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}`]] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setTab(k)} style={{ padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rajdhani',sans-serif", border: `1px solid ${tab === k ? "var(--orange)" : "var(--border)"}`, background: tab === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: tab === k ? "var(--orange)" : "var(--text-muted)" }}>{l}</button>
+        ))}
+      </div>
+
       {/* ── BOUTIQUE ── */}
-      <div className="glass-card" style={{ padding: 18, marginBottom: 16 }}>
+      {tab === "boutique" && <div className="glass-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>🛒 Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
@@ -132,13 +139,14 @@ export default function BanquePage() {
             <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}>ℹ️ Ta demande part au staff qui valide (achat −20 % ou dette). Profil avec personnage requis.</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div> : (
         <>
-          {reqs.length > 0 && (
+          {tab === "requetes" && (
             <section style={{ marginBottom: 22 }}>
               <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes requêtes</h2>
+              {reqs.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune requête en cours.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {reqs.map(r => {
                   const st = REQ_STATUS[r.status] ?? REQ_STATUS.PENDING;
@@ -157,14 +165,16 @@ export default function BanquePage() {
                   );
                 })}
               </div>
+              )}
             </section>
           )}
 
+          {(tab === "dettes" || tab === "rembourse") && (() => { const list = debts.filter(d => tab === "rembourse" ? d.status === "REPAID" : d.status !== "REPAID"); return (
           <section>
-            <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes dettes</h2>
-            {debts.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune dette en cours. 🎉</div> : (
+            <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{tab === "rembourse" ? "Dettes remboursées" : "Mes dettes"}</h2>
+            {list.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours. 🎉"}</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {debts.map(d => {
+                {list.map(d => {
                   const st = DEBT_STATUS[d.status] ?? DEBT_STATUS.REQUESTED;
                   const paid = d.payments.reduce((s, p) => s + p.amount, 0);
                   return (
@@ -189,6 +199,7 @@ export default function BanquePage() {
               </div>
             )}
           </section>
+          ); })()}
         </>
       )}
       <style>{`@media(max-width:760px){.shop-layout{grid-template-columns:1fr !important}}`}</style>

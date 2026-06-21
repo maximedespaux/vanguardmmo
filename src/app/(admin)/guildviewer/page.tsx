@@ -81,6 +81,13 @@ export default function GuildViewerPage() {
     <div style={{ padding: "28px 32px", maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-guildviewer.png" icon="👁️" title="GuildViewer" subtitle="Suivi complet des membres : personnages, classes, builds et activité. Repère qui accompagner en priorité." />
 
+      {/* Hub admin — tout relié depuis le GuildViewer (#26) */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
+        {([["/coffre", "🧰 AirGuild (coffre)"], ["/gestion-dettes", "🏦 Banque (gestion)"], ["/plan-farm", "🌾 Plan de farm"], ["/candidatures", "📋 Candidatures"], ["/gestion-worldboss", "🐉 World Boss"]] as const).map(([href, label]) => (
+          <a key={href} href={href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, fontSize: 13, fontWeight: 600, fontFamily: "'Rajdhani',sans-serif", textDecoration: "none", color: "var(--text)", background: "var(--bg-3)", border: "1px solid var(--border)" }} className="gv-hublink">{label}</a>
+        ))}
+      </div>
+
       {/* Stats globales */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(158px, 1fr))", gap: 12, marginBottom: 22 }}>
         {[

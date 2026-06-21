@@ -184,7 +184,7 @@ export default function DashboardPage() {
             <Stat value={d.absences.active} label="en cours" color="var(--purple)" />
             <Stat value={d.absences.pending} label="à valider" color={d.absences.pending ? "var(--gold)" : "var(--text-muted)"} />
           </div>}>
-          <GoLink href="/personnages" label="Personnages" />
+          <GoLink href="/absences" label="Faire une demande" />
         </ExpandCard>
 
         {isAdmin && <ExpandCard icon="📋" title="Candidatures" summary={

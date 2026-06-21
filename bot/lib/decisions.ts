@@ -260,10 +260,49 @@ export async function postBankRequestDecision(client: Client, r: any) {
   return res;
 }
 
-/** Refus rapide d'une requête Banque depuis Discord (l'acceptation se fait sur le site). */
-export async function applyBankRefuse(client: Client, id: string, actor: string) {
-  const r = await prisma.bankRequest.update({ where: { id }, data: { status: "REFUSE", decidedBy: actor } });
-  await prisma.auditLog.create({ data: { actor, action: "banque.REFUSE", target: id, detail: `${r.item ?? r.kind} ×${r.quantity}` } }).catch(() => {});
-  await editDecision(client, r.channelId, r.messageId, bankRequestEmbed(r), bankRequestButtons(r));
-  return r;
+/** Embed consolidé d'un panier (plusieurs articles d'une même transaction). */
+export function bankBatchEmbed(reqs: any[]): EmbedBuilder {
+  const first = reqs[0] || {};
+  const st = BANK_STATUS[first.status] ?? { fr: first.status, color: GREY };
+  const allRefused = reqs.length > 0 && reqs.every((r) => r.status === "REFUSE");
+  const total = reqs.reduce((s, r) => s + (Number(r.priceEach) || 0) * (r.quantity || 1), 0);
+  const lines = reqs.map((r) => `• **${r.item ?? "?"}** ×${r.quantity}${r.cat ? ` · _${r.cat}_` : ""}${r.priceEach ? ` · ~${(Number(r.priceEach) * (r.quantity || 1)).toLocaleString("fr-FR")} périns` : ""}`).join("\n").slice(0, 1024);
+  const e = new EmbedBuilder()
+    .setColor(allRefused ? RED : st.color)
+    .setTitle(`🏦 Requête Banque — ${first.username}`)
+    .setDescription(lines || "_(vide)_")
+    .addFields(
+      { name: "Articles", value: String(reqs.length), inline: true },
+      { name: "Total estimé", value: `~${total.toLocaleString("fr-FR")} périns`, inline: true },
+      { name: "Statut", value: allRefused ? "⚫ Refusée" : st.fr, inline: true },
+    );
+  if (first.decidedBy) e.addFields({ name: "Décision", value: `par **${first.decidedBy}**` });
+  e.setFooter({ text: `Acceptation (prix) sur le site → Banque (gestion) · réf. ${String(first.batchId || first.id).slice(-6)}` }).setTimestamp(new Date(first.updatedAt || first.createdAt));
+  return e;
+}
+
+/** Poste UNE requête Banque consolidée (panier entier) dans le salon Décision. */
+export async function postBankBatchDecision(client: Client, reqs: any[]) {
+  if (!reqs.length) return null;
+  const first = reqs[0];
+  const refuseId = first.batchId || first.id;
+  const buttons = first.status === "PENDING"
+    ? [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId(`bank:refuse:${refuseId}`).setLabel("Refuser la requête").setEmoji("❌").setStyle(ButtonStyle.Danger))]
+    : [];
+  const res = await postToDecision(client, `Requête Banque — ${first.username}`, bankBatchEmbed(reqs), buttons, "dette");
+  if (res) await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { channelId: res.channelId, messageId: res.messageId } });
+  return res;
+}
+
+/** Refus rapide d'une requête Banque depuis Discord. `idOrBatch` = id d'une requête simple OU batchId d'un panier (on refuse alors tout le lot). */
+export async function applyBankRefuse(client: Client, idOrBatch: string, actor: string) {
+  const reqs = await prisma.bankRequest.findMany({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }], status: "PENDING" } });
+  if (!reqs.length) return prisma.bankRequest.findFirst({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }] } });
+  await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { status: "REFUSE", decidedBy: actor } });
+  await prisma.auditLog.create({ data: { actor, action: "banque.REFUSE", target: idOrBatch, detail: `${reqs.length} article(s)` } }).catch(() => {});
+  const refreshed = await prisma.bankRequest.findMany({ where: { id: { in: reqs.map((r) => r.id) } } });
+  const first = refreshed[0];
+  if (first?.batchId || refreshed.length > 1) await editDecision(client, first.channelId, first.messageId, bankBatchEmbed(refreshed), []);
+  else await editDecision(client, first.channelId, first.messageId, bankRequestEmbed(first), bankRequestButtons(first));
+  return first;
 }

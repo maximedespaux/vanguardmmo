@@ -8,7 +8,7 @@ import { Client, EmbedBuilder, TextChannel } from "discord.js";
 import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
-import { postApplicationDecision, postDebtDecision, postBankRequestDecision } from "./lib/decisions.js";
+import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision } from "./lib/decisions.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
 import { dm } from "./lib/debts.js";
@@ -118,9 +118,19 @@ async function relayBankRequests(client: Client) {
   const fresh = await prisma.bankRequest.findMany({
     where: { status: "PENDING", messageId: null },
     orderBy: { createdAt: "asc" },
-    take: 10,
+    take: 60,
   });
-  for (const r of fresh) await postBankRequestDecision(client, r).catch((e) => console.error("relay banque:", e));
+  // Regroupe par panier (batchId) → 1 seul message Discord par transaction (anti-spam)
+  const batches = new Map<string, typeof fresh>();
+  for (const r of fresh) {
+    const key = r.batchId || `single:${r.id}`;
+    if (!batches.has(key)) batches.set(key, []);
+    batches.get(key)!.push(r);
+  }
+  for (const reqs of batches.values()) {
+    if (reqs[0].batchId) await postBankBatchDecision(client, reqs).catch((e) => console.error("relay banque batch:", e));
+    else await postBankRequestDecision(client, reqs[0]).catch((e) => console.error("relay banque:", e));
+  }
 }
 
 // ─── Rappel d'échéance des dettes acceptées ─────────────────

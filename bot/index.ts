@@ -146,12 +146,12 @@ async function handleBankDecision(interaction: any) {
   const member = interaction.member as GuildMember | null;
   if (!isStaff(member)) { await interaction.reply({ content: "⛔ Réservé au staff (bras droits / owners).", ephemeral: true }); return; }
   if (action !== "refuse") { await interaction.reply({ content: "L'acceptation (avec prix) se fait sur le site → **Banque (gestion)**.", ephemeral: true }); return; }
-  const r = await prisma.bankRequest.findUnique({ where: { id } });
+  const r = await prisma.bankRequest.findFirst({ where: { OR: [{ id }, { batchId: id }] } });
   if (!r) { await interaction.reply({ content: "Cette requête n'existe plus.", ephemeral: true }); return; }
   if (r.status !== "PENDING") { await interaction.reply({ content: "Requête déjà traitée.", ephemeral: true }); return; }
   const updated = await applyBankRefuse(interaction.client, id, interaction.user.username);
-  await dm(interaction.client, updated.discordId, { content: `❌ Ta requête Banque (**${updated.item ?? updated.kind} ×${updated.quantity}**) à **Vanguard** a été refusée.` });
-  await interaction.reply({ content: `✅ Requête de **${updated.username}** refusée.`, ephemeral: true });
+  if (updated) await dm(interaction.client, updated.discordId, { content: `❌ Ta requête Banque à **Vanguard** a été refusée.` });
+  await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** refusée.`, ephemeral: true });
 }
 
 // ─── Bouton « Participer » d'un giveaway (toggle) ───

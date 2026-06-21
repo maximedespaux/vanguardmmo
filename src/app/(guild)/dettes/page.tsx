@@ -66,7 +66,7 @@ export default function BanquePage() {
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; return { name: it.item, quantity: cart[id], price: it.price }; });
+    const items = cartIds.map(id => { const it = byId(id)!; return { name: it.item, quantity: cart[id], price: it.price, cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }

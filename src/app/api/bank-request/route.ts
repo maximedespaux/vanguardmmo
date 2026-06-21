@@ -22,6 +22,8 @@ export async function POST(req: Request) {
   // ── Panier boutique : plusieurs articles d'un coup (souhait achat ou dette) ──
   if (Array.isArray(b.items) && b.items.length) {
     const mode = b.mode === "dette" ? "dette" : "achat";
+    // Un panier = une transaction → même batchId pour tous les articles (récap consolidé + 1 seul message Discord)
+    const batchId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `b${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
     let count = 0;
     for (const it of b.items.slice(0, 40)) {
       const name = (it?.name ?? "").toString().slice(0, 200).trim();
@@ -30,12 +32,15 @@ export async function POST(req: Request) {
         data: {
           userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
           kind: "ITEM", item: name, quantity: Math.max(1, Math.floor(Number(it.quantity) || 1)),
-          reason: `🛒 Boutique · ~${Math.round(Number(it.price) || 0)} périns/u · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
+          cat: (it?.cat ?? "").toString().slice(0, 60).trim() || null,
+          priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
+          batchId,
+          reason: `🛒 Boutique · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
         },
       });
       count++;
     }
-    return NextResponse.json({ ok: true, count }, { status: 201 });
+    return NextResponse.json({ ok: true, count, batchId }, { status: 201 });
   }
 
   const kind = ["OBJET_IG", "ITEM", "PERINS"].includes(b.kind) ? b.kind : "OBJET_IG";

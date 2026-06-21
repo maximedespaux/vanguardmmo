@@ -10,25 +10,33 @@ export function BuilderRunner() {
     if (w.__APP && w.__APP !== "airbuilder") { window.location.reload(); return; }
 
     let cancelled = false;
-    fetch("/airbuilder/data.json")
-      .then((r) => r.text())
-      .then((txt) => {
-        if (cancelled) return;
-        if (!document.getElementById("DATA")) {
-          const d = document.createElement("script");
-          d.id = "DATA";
-          d.type = "application/json";
-          d.textContent = txt;
-          document.body.appendChild(d);
+    (async () => {
+      // Sync cross-device : on charge le build sauvegardé en base s'il est plus récent que le local.
+      try {
+        const r = await fetch("/api/builder-state");
+        if (r.ok) {
+          const j = await r.json();
+          if (j && j.blob) {
+            let localTs = 0;
+            try { localTs = JSON.parse(localStorage.getItem("vg_air_e1") || "{}")._ts || 0; } catch { /* noop */ }
+            if ((j.blob._ts || 0) > localTs) { try { localStorage.setItem("vg_air_e1", JSON.stringify(j.blob)); } catch { /* noop */ } }
+          }
         }
-        if (!document.getElementById("__ab_js")) {
-          const s = document.createElement("script");
-          s.id = "__ab_js";
-          s.src = "/airbuilder/airbuilder.js";
-          document.body.appendChild(s);
-        }
-      })
-      .catch(() => {});
+      } catch { /* non connecté / hors-ligne : on garde le build local */ }
+      if (cancelled) return;
+      const txt = await fetch("/airbuilder/data.json").then((r) => r.text()).catch(() => null);
+      if (cancelled || txt === null) return;
+      if (!document.getElementById("DATA")) {
+        const d = document.createElement("script");
+        d.id = "DATA"; d.type = "application/json"; d.textContent = txt;
+        document.body.appendChild(d);
+      }
+      if (!document.getElementById("__ab_js")) {
+        const s = document.createElement("script");
+        s.id = "__ab_js"; s.src = "/airbuilder/airbuilder.js";
+        document.body.appendChild(s);
+      }
+    })();
     return () => { cancelled = true; };
   }, []);
   return null;

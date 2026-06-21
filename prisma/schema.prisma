@@ -87,6 +87,7 @@ model User {
   role          Role     @default(RECRUE)  // plus haut rôle, synchronisé depuis Discord à la connexion
   discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
   isActive      Boolean  @default(true)
+  builderBlob   Json?                       // état complet du Stuff Builder (sync cross-device)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

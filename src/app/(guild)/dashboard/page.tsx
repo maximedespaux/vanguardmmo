@@ -94,8 +94,8 @@ export default function DashboardPage() {
         <span className="font-heading" style={{ color: "var(--orange)", fontWeight: 700, whiteSpace: "nowrap" }}>Ouvrir AirBuilder →</span>
       </Link>
 
-      {/* ── Priorités ── */}
-      <div className="dash-card dash-prio" style={{ marginBottom: 24 }}>
+      {/* ── Priorités (staff seulement) ── */}
+      {isAdmin && <div className="dash-card dash-prio" style={{ marginBottom: 24 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 14 }}>⚡ Priorités du jour</div>
         {d.priorities.length === 0 ? (
           <div style={{ color: "var(--green)", fontSize: 14 }}>✅ Rien à signaler — tout est à jour.</div>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* ── Cartes chiffres (dépliables) ── */}
       <div className="dash-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginBottom: 24 }}>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
           <GoLink href="/guildviewer" label="GuildViewer" show={isAdmin} />
         </ExpandCard>
 
-        <ExpandCard icon="⚔️" title="Personnages" summary={
+        {isAdmin && <ExpandCard icon="⚔️" title="Personnages" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.characters.total} label="total" />
             <Stat value={d.characters.mains} label="principaux" color="var(--gold)" />
@@ -137,16 +137,16 @@ export default function DashboardPage() {
           </div>}>
           <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.characters.withoutBuild > 0 ? `${d.characters.withoutBuild} perso(s) sans build à accompagner.` : "Tous les persos ont un build ✓"}</div>
           <GoLink href="/guildviewer" label="GuildViewer" show={isAdmin} />
-        </ExpandCard>
+        </ExpandCard>}
 
-        <ExpandCard icon="🛠️" title="Builds" summary={
+        {isAdmin && <ExpandCard icon="🛠️" title="Builds" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.builds.total} label="enregistrés" color="var(--blue)" />
             <Stat value={d.builds.withoutBuild} label="sans build" color={d.builds.withoutBuild ? "var(--red)" : "var(--green)"} />
           </div>}>
           <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.builds.withoutBuild > 0 ? `${d.builds.withoutBuild} personnage(s) à équiper.` : "Tout le monde est équipé ✓"}</div>
           <GoLink href="/builder" label="AirBuilder" />
-        </ExpandCard>
+        </ExpandCard>}
 
         <ExpandCard icon="🧰" title="Coffre de guilde" summary={
           <div style={{ display: "flex", gap: 22 }}>
@@ -162,6 +162,7 @@ export default function DashboardPage() {
               <span style={{ fontFamily: "Rajdhani,sans-serif", fontWeight: 700, color: "var(--red)" }}>−{x.manque}</span>
             </div>
           ))}
+          <GoLink href="/dettes" label="Banque" show={!isAdmin} />
           <GoLink href="/plan-farm" label="Plan de farm" show={isAdmin} />
         </ExpandCard>
 
@@ -174,6 +175,7 @@ export default function DashboardPage() {
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{d.debts.ongoingAmount.toLocaleString("fr-FR")} périn en circulation</div>
           </>}>
           <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.debts.toValidate > 0 ? `${d.debts.toValidate} à valider.` : "Aucune à valider."}</div>
+          <GoLink href="/dettes" label="Mes dettes" show={!isAdmin} />
           <GoLink href="/gestion-dettes" label="Banque (gestion)" show={isAdmin} />
         </ExpandCard>
 
@@ -185,21 +187,20 @@ export default function DashboardPage() {
           <GoLink href="/personnages" label="Personnages" />
         </ExpandCard>
 
-        <ExpandCard icon="📋" title="Candidatures" summary={
+        {isAdmin && <ExpandCard icon="📋" title="Candidatures" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.candidatures.pending} label="en attente" color={d.candidatures.pending ? "var(--gold)" : "var(--green)"} />
             <Stat value={d.candidatures.waiting} label="en suivi" color="var(--blue)" />
           </div>}>
           <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.candidatures.total} candidature(s) au total.</div>
           <GoLink href="/candidatures" label="Candidatures" show={isAdmin} />
-        </ExpandCard>
+        </ExpandCard>}
 
         <ExpandCard icon="🐉" title="World Boss" summary={
           <>
             <Stat value={d.worldboss.upcoming} label="à venir" color={d.worldboss.upcoming ? "var(--red)" : "var(--text-muted)"} />
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{wbNext ? `Prochain : ${wbNext}` : "Aucun programmé"}</div>
           </>}>
-          <GoLink href="/worldboss" label="World Boss" />
         </ExpandCard>
       </div>
 

@@ -1,10 +1,14 @@
 "use client";
 import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 // Charge l'app AirGuild d'iBeats (vanilla JS) et branche son stockage sur la base
 // (state partagé via /api/admin/airguild). Recharge proprement si une autre app
 // (AirBuilder) tenait les globals.
 export function AirGuildRunner() {
+  const { data: session } = useSession();
+  // Expose le staff connecté à l'app pour tracer qui dépose/retire dans le journal (#29)
+  useEffect(() => { (window as unknown as { __agUser?: string }).__agUser = ((session?.user as { username?: string; name?: string } | undefined)?.username) || (session?.user?.name ?? "") || ""; }, [session]);
   useEffect(() => {
     const w = window as unknown as { __APP?: string; render?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
     if (w.__APP === "airguild" && typeof w.render === "function") { try { w.render(); } catch { /* noop */ } return; }

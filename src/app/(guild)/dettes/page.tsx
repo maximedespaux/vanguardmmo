@@ -5,7 +5,7 @@ import { VgSelect } from "@/components/VgSelect";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
-type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string };
+type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null };
 type Shop = { id: string; item: string; cat: string; classe: string; price: number; stock: number; unit: string; icon: string | null };
 
 const DEBT_STATUS: Record<string, { l: string; c: string }> = {
@@ -74,6 +74,8 @@ export default function BanquePage() {
   };
 
   const filtered = shop.filter(s => (!catF || s.cat === catF) && (!clsF || s.classe === clsF || !s.classe) && (!q || s.item.toLowerCase().includes(q.toLowerCase())));
+  // Regroupe les requêtes par panier (batchId) → 1 carte par transaction
+  const reqGroups = reqs.reduce<{ key: string; items: Req[] }[]>((acc, r) => { const k = r.batchId || r.id; let g = acc.find(x => x.key === k); if (!g) { g = { key: k, items: [] }; acc.push(g); } g.items.push(r); return acc; }, []);
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
@@ -148,19 +150,32 @@ export default function BanquePage() {
               <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes requêtes</h2>
               {reqs.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune requête en cours.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {reqs.map(r => {
-                  const st = REQ_STATUS[r.status] ?? REQ_STATUS.PENDING;
+                {reqGroups.map(g => {
+                  const first = g.items[0];
+                  const st = REQ_STATUS[first.status] ?? REQ_STATUS.PENDING;
+                  const total = g.items.reduce((s, r) => s + (r.priceEach || 0) * r.quantity, 0);
+                  const multi = g.items.length > 1;
                   return (
-                    <div key={r.id} className="glass-card" style={{ padding: 14 }}>
+                    <div key={g.key} className="glass-card" style={{ padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>{KIND_LABEL[r.kind] ?? r.kind}</span>
-                        <span className="font-heading" style={{ fontWeight: 700 }}>{r.item ?? "Périns"} {r.quantity > 1 && <span style={{ color: "var(--text-muted)" }}>×{r.quantity}</span>}</span>
+                        <span className="font-heading" style={{ fontWeight: 700 }}>{multi ? `🧺 Panier — ${g.items.length} articles` : (first.item ?? "Périns")}{!multi && first.quantity > 1 ? <span style={{ color: "var(--text-muted)" }}> ×{first.quantity}</span> : null}</span>
+                        {total > 0 && <span style={{ color: "var(--gold)", fontSize: 13 }}>~{fmt(total)} périns</span>}
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
                       </div>
-                      {r.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{r.reason}</div>}
-                      {r.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(r.prixFinal)}</b> périn <span style={{ color: "var(--text-muted)" }}>(public {fmt(r.prixPublic)} −20 %)</span></div>}
-                      {r.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(r.prixPublic)}</b> périn — voir « Mes dettes » ci-dessous.</div>}
-                      {r.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {r.adminNote}</div>}
+                      {multi && (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, color: "var(--text-muted)", borderTop: "1px solid var(--border)", paddingTop: 8, marginTop: 8 }}>
+                          {g.items.map(it => (
+                            <div key={it.id} style={{ display: "flex", gap: 8 }}>
+                              <span style={{ flex: 1, minWidth: 0 }}>{it.cat ? <span style={{ opacity: .65 }}>[{it.cat}] </span> : null}{it.item} ×{it.quantity}</span>
+                              {it.priceEach ? <span style={{ color: "var(--gold)" }}>~{fmt(it.priceEach * it.quantity)}</span> : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {!multi && first.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{first.reason}</div>}
+                      {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn <span style={{ color: "var(--text-muted)" }}>(public {fmt(first.prixPublic)} −20 %)</span></div>}
+                      {first.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(first.prixPublic)}</b> périn — voir l'onglet « Dettes ».</div>}
+                      {first.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {first.adminNote}</div>}
                     </div>
                   );
                 })}

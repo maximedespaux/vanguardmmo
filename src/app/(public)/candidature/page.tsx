@@ -183,7 +183,7 @@ export default function CandidaturePage() {
           <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>⚔️ Construis ton build</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 18, lineHeight: 1.6 }}>Ouvre le Stuff Builder, configure ton équipement (arme, armures, bijoux, éveil, cartes…), puis clique « Exporter » dans le builder — ton build sera repris ici automatiquement.</p>
           <div style={{ textAlign: "center", padding: "10px 0 20px" }}>
-            <button onClick={() => setShowBuilder(true)} className="vg-btn">⚔️ Ouvrir le Stuff Builder</button>
+            <button onClick={() => { try { localStorage.setItem("vg_air_seed", JSON.stringify(chars.map((c) => ({ name: c.name, cls: c.cls, prestige: c.prestige })))); } catch {} setShowBuilder(true); }} className="vg-btn">⚔️ Ouvrir le Stuff Builder</button>
           </div>
           {buildExport && (
             <div style={{ padding: 12, background: "rgba(74,222,128,0.08)", border: "1px solid var(--green)", borderRadius: 10, fontSize: 13, marginBottom: 10 }}>

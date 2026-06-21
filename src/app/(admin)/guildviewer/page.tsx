@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/PageHeader";
 type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number; weapon?: any; armor?: any; jewelry?: any; pets?: any; cards?: any };
 type Spec = { id: string; type: string; score: number };
 type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; gearProfiles: Gear[]; specializations: Spec[] };
-type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; _count: { transactions: number; absences: number } };
+type DebtLite = { id: string; item: string | null; amount: number; status: string };
+type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; debts: DebtLite[]; _count: { transactions: number; absences: number } };
 
 const ROLE_META: Record<string, { emoji: string; label: string; color: string }> = {
   DIRECTION: { emoji: "🛡️", label: "Direction", color: "var(--red)" },
@@ -127,7 +128,7 @@ export default function GuildViewerPage() {
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {miniStat("🧙", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
-                  {miniStat("💸", u._count.transactions, "dette", u._count.transactions ? "var(--red)" : "var(--text-muted)")}
+                  {miniStat("💰", u.debts.length, "dette", u.debts.length ? "var(--red)" : "var(--text-muted)")}
                   {miniStat("🚫", u._count.absences, "abs.", u._count.absences ? "var(--gold)" : "var(--text-muted)")}
                 </div>
               </div>
@@ -185,6 +186,11 @@ export default function GuildViewerPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+              {u.debts.length > 0 && (
+                <div style={{ margin: "0 17px 15px", padding: "9px 13px", background: "rgba(248,113,113,.07)", border: "1px solid color-mix(in srgb, var(--red) 35%, transparent)", borderRadius: 10, fontSize: 12, color: "var(--text-muted)" }}>
+                  <b style={{ color: "var(--red)" }}>💰 Dettes :</b> {u.debts.map((d) => `${d.item || "objet"} (${d.amount.toLocaleString("fr-FR")} périn)`).join(" · ")}
                 </div>
               )}
             </div>

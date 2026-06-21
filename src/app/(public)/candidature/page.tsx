@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { QUIZ } from "@/data/quiz";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
+import { useSession } from "next-auth/react";
+import { canAccessGuild } from "@/config/roles";
 
 const CLASSES = ["Spadassin","Templier","Arcaniste","Envouteur","Arbalétrier","Sylphide","Primat","Chanoine"];
 const SPECS = [{k:"PVE",l:"🌾 PvE / Farm"},{k:"PVP",l:"🏆 PvP & Boss"},{k:"CS",l:"🗝️ Chambres Secrètes"}];
@@ -12,6 +14,7 @@ const WIKI_URL = "https://wiki.airflyff.com"; // ⚠️ à remplacer par le vrai
 type Char = { name: string; cls: string; prestige: number };
 
 export default function CandidaturePage() {
+  const { data: session } = useSession();
   const [step, setStep] = useState(1);
   const [chars, setChars] = useState<Char[]>([{ name: "", cls: "Spadassin", prestige: 3 }]);
   const [specs, setSpecs] = useState<string[]>([]);
@@ -87,6 +90,19 @@ export default function CandidaturePage() {
       <div className="glass-card" style={{ padding: 28, marginTop: 20 }}>
         <p style={{ color: "var(--text)", marginBottom: 18 }}>Connecte-toi avec Discord pour postuler — c'est la première étape.</p>
         <a href="/login" className="vg-btn">Se connecter avec Discord</a>
+      </div>
+    </div>
+  );
+
+  // Déjà membre de la guilde → pas de candidature, petit message clin d'œil.
+  if (canAccessGuild(((session?.user as any)?.role) ?? "RECRUE")) return (
+    <div style={{ padding: 40, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="📋" title="Candidature" subtitle="" />
+      <div className="glass-card" style={{ padding: 32, marginTop: 20 }}>
+        <div style={{ fontSize: 46, marginBottom: 10 }}>🛡️</div>
+        <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres 🙂</h2>
+        <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour ou jeter un œil au dashboard.</p>
+        <a href="/dashboard" className="vg-btn" style={{ textDecoration: "none" }}>→ Aller au Dashboard</a>
       </div>
     </div>
   );

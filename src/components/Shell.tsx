@@ -60,7 +60,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const bgKey = PAGE_BG[pathname] ?? "";
   const has = (a: string) => (DEV_ALL ? true : a === "public" ? true : a === "guild" ? canAccessGuild(userRole) : canAccessAdmin(userRole));
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
-  const items = NAV.filter((it) => has(it.access));
+  const items = NAV.filter((it) => has(it.access) && !(it.href === "/candidature" && canAccessGuild(userRole)));
 
   return (
     <div className="vg-shell">

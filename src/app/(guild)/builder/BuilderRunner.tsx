@@ -5,8 +5,11 @@ import { useEffect } from "react";
 // Recharge proprement si une autre app (AirGuild) tenait les globals (isolation SPA).
 export function BuilderRunner() {
   useEffect(() => {
-    const w = window as unknown as { __APP?: string; render?: () => void };
-    if (w.__APP === "airbuilder" && typeof w.render === "function") { try { w.render(); } catch { /* noop */ } return; }
+    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean };
+    if (w.__APP === "airbuilder" && typeof w.render === "function") {
+      if (w.__VIEW) { window.location.reload(); return; } // on revient d'une vue lecture seule → reboot propre sur mon build
+      try { w.render(); } catch { /* noop */ } return;
+    }
     if (w.__APP && w.__APP !== "airbuilder") { window.location.reload(); return; }
 
     let cancelled = false;

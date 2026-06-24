@@ -188,6 +188,7 @@ export default function GuildViewerPage() {
                                 </div>
                               );
                             })}
+                            <a href={`/builder/${u.id}`} target="_blank" rel="noopener noreferrer" style={{ alignSelf: "flex-start", fontSize: 11, fontWeight: 700, color: "var(--orange)", background: "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 7, padding: "6px 13px", textDecoration: "none", whiteSpace: "nowrap" }}>⚔️ Ouvrir dans AirBuilder ↗</a>
                           </div>
                         )}
                       </div>

@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
+import { canAccessAdmin } from "@/config/roles";
 
 // État complet du Stuff Builder, stocké par compte → sync cross-device.
 // (Séparé de /api/characters/sync qui, lui, normalise vers GearProfile pour le GuildViewer.)
 
-// GET — récupère le build sauvegardé du joueur
-export async function GET() {
+// GET — build du joueur connecté. ?user=<id|discordId> → build d'un membre (staff only, pour /builder/<user>).
+export async function GET(req: Request) {
   const a = await apiAuth();
   if ("error" in a) return a.error;
+  const target = new URL(req.url).searchParams.get("user");
+  if (target && target !== a.user.id) {
+    if (!canAccessAdmin(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+    const u = await prisma.user.findFirst({ where: { OR: [{ id: target }, { discordId: target }] }, select: { builderBlob: true, username: true } });
+    if (!u) return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
+    return NextResponse.json({ blob: u.builderBlob ?? null, username: u.username });
+  }
   const u = await prisma.user.findUnique({ where: { id: a.user.id }, select: { builderBlob: true } });
   return NextResponse.json({ blob: u?.builderBlob ?? null });
 }

@@ -48,7 +48,7 @@ export async function GET() {
         price: prices[it.id] != null ? prices[it.id] : (it.prix ?? 0),
         stock,
         unit: it.unit ?? "",
-        icon: it.ic && icons[it.ic] ? icons[it.ic] : (it.icData ?? null),
+        icon: it.icData ? it.icData : (it.ic && icons[it.ic] ? icons[it.ic] : null), // icData (asset perso édité) prioritaire, comme dans l'AirGuild (itemAsset)
       };
     })
     .filter(Boolean);

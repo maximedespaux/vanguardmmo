@@ -37,6 +37,7 @@ export default function BanquePage() {
   const [cats, setCats] = useState<string[]>([]);
   const [catF, setCatF] = useState(""); const [clsF, setClsF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
+  const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence ♂/♀ par Stuff
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
   const { data: session } = useSession();
@@ -74,11 +75,13 @@ export default function BanquePage() {
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? it.price * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
+    const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
+    if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; return { name: it.item, quantity: cart[id], price: it.price, cat: it.cat }; });
+    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: it.price, cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
-    if (r.ok) { setCart({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
+    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
@@ -132,12 +135,22 @@ export default function BanquePage() {
             <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>🧺 Ton panier</div>
             {cartIds.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: "14px 0", textAlign: "center" }}>Panier vide.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 4, maxHeight: 240, overflowY: "auto" }}>
-                {cartIds.map(id => { const it = byId(id); if (!it) return null; return (
-                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
-                    <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
-                    <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
-                    <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(it.price * cart[id])}</span>
-                    <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
+                {cartIds.map(id => { const it = byId(id); if (!it) return null; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return (
+                  <div key={id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+                      <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
+                      <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
+                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(it.price * cart[id])}</span>
+                      <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
+                    </div>
+                    {isStuff && (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2 }}>
+                        <span style={{ fontSize: 10.5, color: stuffSex[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: stuffSex[id] ? 400 : 700 }}>Sexe du Stuff :</span>
+                        {(["G", "F"] as const).map(sx => (
+                          <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}>{sx === "G" ? "♂ Garçon" : "♀ Fille"}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ); })}
               </div>

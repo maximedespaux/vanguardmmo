@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 
@@ -38,6 +39,8 @@ export default function BanquePage() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
+  const { data: session } = useSession();
+  const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
 
   const load = async () => {
     setLoading(true);
@@ -56,6 +59,12 @@ export default function BanquePage() {
     if (!amount || amount <= 0) return flash("Entre un montant à rembourser (> 0).");
     const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) });
     if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré ✓"); load(); } else flash("Erreur");
+  };
+
+  const deleteDebt = async (id: string) => {
+    if (!window.confirm("Supprimer définitivement cette dette de l'historique ?\nCette action est irréversible.")) return;
+    const r = await fetch(`/api/debts/${id}`, { method: "DELETE" });
+    if (r.ok) { flash("Dette supprimée ✓"); load(); } else flash("Erreur — suppression refusée.");
   };
 
   // ── Panier ──
@@ -198,6 +207,7 @@ export default function BanquePage() {
                         <span className="font-heading" style={{ fontWeight: 700 }}>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}</span>
                         {d.item && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>· {d.item}</span>}
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
+                        {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🗑️</button>}
                       </div>
                       {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
                       {paid > 0 && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 5 }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</div>}

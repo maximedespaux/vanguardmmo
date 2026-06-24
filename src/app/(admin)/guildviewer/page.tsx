@@ -23,23 +23,11 @@ const modeColor = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE"
 const RARITY_FR: Record<string, string> = { COMMUN: "Commun", RARE: "Rare", EPIQUE: "Épique", LEGENDAIRE: "Légendaire", PREMYTHIQUE: "Pré-myth.", MYTHIQUE: "Mythique" };
 const kfmt = (n?: number) => { const v = n || 0; return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "k" : String(v); };
 const SPEC_FR: Record<string, string> = { PVE: "PvE", PVP_BOSS: "PvP/Boss", CHAMBRES_SECRETES: "Chambres S." };
-const SLOT_FR: Record<string, string> = { weapon: "Arme", weapon2: "Arme 2", shield: "Bouclier", helmet: "Casque", suit: "Tenue", gauntlet: "Gants", boots: "Bottes", ring1: "Anneau 1", ring2: "Anneau 2", earring1: "Boucle 1", earring2: "Boucle 2", necklace: "Collier", mantra: "Mantra", cape: "Cape", masque: "Masque", fhead: "Tête (F)", ftop: "Haut (F)", fhand: "Gants (F)", ffoot: "Bottes (F)", ramasseur: "Ramasseur", familier: "Familier", fairy: "Fée" };
-function gearItems(g: Gear): { slot: string; name: string; rank?: string }[] {
-  const out: { slot: string; name: string; rank?: string }[] = [];
-  for (const blob of [g.weapon, g.armor, g.jewelry, g.cards, g.pets]) {
-    if (blob && typeof blob === "object") for (const [slot, it] of Object.entries(blob as Record<string, any>)) {
-      if (it && (it as any).name) out.push({ slot: SLOT_FR[slot] || slot, name: String((it as any).name), rank: (it as any).rank });
-    }
-  }
-  return out;
-}
-
 export default function GuildViewerPage() {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
   const [onlyNoBuild, setOnlyNoBuild] = useState(false);
-  const [openBuild, setOpenBuild] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -146,7 +134,6 @@ export default function GuildViewerPage() {
               ) : (
                 <div style={{ display: "grid", gap: 7, padding: "0 17px 15px" }}>
                   {u.characters.map((c) => {
-                    const recap = c.gearProfiles.find((x) => (x.hp || 0) > 0);
                     return (
                       <div key={c.id} className="gv-char" style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: "9px 13px" }}>
                         <div style={{ width: 34, height: 34, borderRadius: 9, background: "var(--bg-2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, border: "1px solid var(--border)" }}><ClassLogo name={c.class} size={23} /></div>
@@ -162,35 +149,11 @@ export default function GuildViewerPage() {
                                   {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
                                 </span>
                               ))}
-                          {recap && <span style={{ display: "inline-flex", alignItems: "center", gap: 11, fontSize: 12.5, fontWeight: 700, fontFamily: "'Rajdhani',sans-serif", whiteSpace: "nowrap", background: "var(--bg-2)", borderRadius: 8, padding: "5px 12px", border: "1px solid var(--border)" }}><span style={{ color: "#ff7d7d" }} title="Points de vie">❤️ {kfmt(recap.hp)}</span><span style={{ color: "var(--orange)" }} title="Attaque">⚔️ {kfmt(recap.attack)}</span><span style={{ color: "#6fb4ff" }} title="Défense">🛡️ {kfmt(recap.defense)}</span></span>}
                           {c.specializations.length > 0 && (
                             <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--purple)", background: "rgba(199,125,255,.1)", border: "1px solid color-mix(in srgb, var(--purple) 45%, transparent)", borderRadius: 6, padding: "3px 9px", whiteSpace: "nowrap" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>
                           )}
-                          {c.gearProfiles.length > 0 && <button onClick={() => setOpenBuild(openBuild === c.id ? null : c.id)} style={{ fontSize: 10.5, fontWeight: 700, cursor: "pointer", color: openBuild === c.id ? "#000" : "var(--orange)", background: openBuild === c.id ? "var(--orange)" : "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 6, padding: "3px 9px", whiteSpace: "nowrap" }}>{openBuild === c.id ? "▲ Stuff" : "👁️ Stuff"}</button>}
+                          {c.gearProfiles.length > 0 && <a href={`/builder/${u.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)", background: "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 6, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap" }}>⚔️ AirBuilder ↗</a>}
                         </div>
-                        {openBuild === c.id && (
-                          <div style={{ flexBasis: "100%", marginTop: 8, paddingTop: 10, borderTop: "1px dashed var(--border)", display: "flex", flexDirection: "column", gap: 10 }}>
-                            {c.gearProfiles.map((g) => {
-                              const items = gearItems(g);
-                              return (
-                                <div key={g.id}>
-                                  <div style={{ fontSize: 11, fontWeight: 700, color: modeColor(g.mode), textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 5 }}>{g.name} · {g.mode}</div>
-                                  {items.length === 0 ? <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Aucun item équipé.</div> : (
-                                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))", gap: 5 }}>
-                                      {items.map((it, k) => (
-                                        <div key={k} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 7, padding: "4px 9px" }}>
-                                          <span style={{ color: "var(--text-muted)", minWidth: 54, fontSize: 10.5 }}>{it.slot}</span>
-                                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.name}{it.rank ? ` (${it.rank})` : ""}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                            <a href={`/builder/${u.id}`} target="_blank" rel="noopener noreferrer" style={{ alignSelf: "flex-start", fontSize: 11, fontWeight: 700, color: "var(--orange)", background: "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 7, padding: "6px 13px", textDecoration: "none", whiteSpace: "nowrap" }}>⚔️ Ouvrir dans AirBuilder ↗</a>
-                          </div>
-                        )}
                       </div>
                     );
                   })}

@@ -254,9 +254,56 @@ export function bankRequestButtons(r: any): ActionRowBuilder<ButtonBuilder>[] {
 }
 
 /** Poste une requête Banque dans le salon Décision (tag « Dettes »). */
+// ════ #Phase D — ping des vendeurs (membres dont le coffre perso contient l'item demandé) ════
+async function findSellers(itemNames: string[]): Promise<Map<string, { items: Set<string>; qty: number }>> {
+  const out = new Map<string, { items: Set<string>; qty: number }>();
+  const needles = itemNames.map((n) => (n || "").toLowerCase().trim()).filter(Boolean);
+  if (!needles.length) return out;
+  const row = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
+  const S = (row?.data ?? {}) as { inv?: Record<string, Record<string, number>>; members?: string[] };
+  const inv = S.inv ?? {};
+  const members = (Array.isArray(S.members) ? S.members : Object.keys(inv)).filter((m) => m && m !== "Commun");
+  for (const m of members) {
+    const minv = inv[m] || {};
+    for (const id of Object.keys(minv)) {
+      const qty = Number(minv[id]) || 0;
+      if (qty <= 0) continue;
+      const nom = (id.split("|").pop() || "").toLowerCase().trim();
+      if (nom && needles.some((nd) => nd.includes(nom) || nom.includes(nd))) {
+        if (!out.has(m)) out.set(m, { items: new Set<string>(), qty: 0 });
+        const e = out.get(m)!;
+        e.items.add((id.split("|").pop() || "").trim());
+        e.qty += qty;
+      }
+    }
+  }
+  return out;
+}
+async function sellerMention(memberName: string): Promise<string> {
+  const u = await prisma.user.findFirst({ where: { username: { equals: memberName, mode: "insensitive" } }, select: { discordId: true } }).catch(() => null);
+  return u?.discordId ? `<@${u.discordId}>` : `**${memberName}**`;
+}
+/** Poste, sous la requête banque, la mention des membres détenteurs (vendeurs à contacter pour la transaction). */
+export async function postSellerPing(client: Client, channelId: string | null, reqs: any[]) {
+  if (!channelId) return;
+  const itemNames = [...new Set(reqs.map((r) => String(r?.item || "")).filter(Boolean))];
+  const sellers = await findSellers(itemNames);
+  if (!sellers.size) return;
+  const lines: string[] = [];
+  for (const [member, info] of sellers) lines.push(`• ${await sellerMention(member)} — possède : ${[...info.items].join(", ")} (${info.qty} en coffre)`);
+  const content = `🛒 **Vendeurs qui ont les ressources demandées** (à contacter pour la transaction) :\n${lines.join("\n")}`.slice(0, 1900);
+  try {
+    const ch: any = await client.channels.fetch(channelId);
+    if (ch && ch.isTextBased?.() && ch.send) await ch.send({ content });
+  } catch { /* salon supprimé : on ignore */ }
+}
+
 export async function postBankRequestDecision(client: Client, r: any) {
   const res = await postToDecision(client, `Requête Banque — ${r.username}`, bankRequestEmbed(r), bankRequestButtons(r), "dette");
-  if (res) await prisma.bankRequest.update({ where: { id: r.id }, data: { channelId: res.channelId, messageId: res.messageId } });
+  if (res) {
+    await prisma.bankRequest.update({ where: { id: r.id }, data: { channelId: res.channelId, messageId: res.messageId } });
+    await postSellerPing(client, res.channelId, [r]).catch(() => {});
+  }
   return res;
 }
 
@@ -290,7 +337,10 @@ export async function postBankBatchDecision(client: Client, reqs: any[]) {
     ? [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId(`bank:refuse:${refuseId}`).setLabel("Refuser la requête").setEmoji("❌").setStyle(ButtonStyle.Danger))]
     : [];
   const res = await postToDecision(client, `Requête Banque — ${first.username}`, bankBatchEmbed(reqs), buttons, "dette");
-  if (res) await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { channelId: res.channelId, messageId: res.messageId } });
+  if (res) {
+    await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { channelId: res.channelId, messageId: res.messageId } });
+    await postSellerPing(client, res.channelId, reqs).catch(() => {});
+  }
   return res;
 }
 

@@ -32,7 +32,7 @@ function catIcon(cat){const c=cat.trim();if(c.startsWith('Stuff'))return c.inclu
 function qty(m,id){return(S.inv[m]&&S.inv[m][id])||0;}
 function totalGuild(id){let t=0;S.members.forEach(m=>t+=qty(m,id));return t;}
 function setQty(m,id,v,label){v=Math.max(0,Math.round(+v||0));if(!S.inv[m])S.inv[m]={};const old=qty(m,id);if(v===old)return;S.inv[m][id]=v;S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:label||id,delta:v-old});if(S.log.length>200)S.log.length=200;save();}
-function health(q,cat,unit){const c=cat.trim();if(unit==='slot'){if(q>=2)return'ok';if(q>=1)return'mid';return'low';}if(c==='Ressource'||c==='R1'||c==='R2'||c.startsWith('Carte')){if(q>=20)return'ok';if(q>=8)return'mid';return'low';}if(q>=10)return'ok';if(q>=6)return'mid';return'low';}
+function health(q,cat,unit,id){var t=id&&S.thresh&&S.thresh[id];if(t){var ok=+t.ok||0,mid=+t.mid||0;if(ok>0||mid>0){if(ok>0&&q>=ok)return'ok';if(mid>0&&q>=mid)return'mid';return'low';}}const c=cat.trim();if(unit==='slot'){if(q>=2)return'ok';if(q>=1)return'mid';return'low';}if(c==='Ressource'||c==='R1'||c==='R2'||c.startsWith('Carte')){if(q>=20)return'ok';if(q>=8)return'mid';return'low';}if(q>=10)return'ok';if(q>=6)return'mid';return'low';}
 function itemAsset(it){if(it.icData)return `<img src="${it.icData}" alt="">`;if(it.ic&&ICOIDX[it.ic]!=null)return `<span class="climg bic-${ICOIDX[it.ic]}"></span>`;return classLogo(it.classe)||`<span>${catIcon(it.cat)}</span>`;}
 function priceOf(id){return S.prices[id]!=null?S.prices[id]:(catalog().find(x=>x.id===id)||{}).prix||0;}
 
@@ -63,7 +63,7 @@ function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__t
     body+=`<div class="catblk ${closed}"><div class="cathead" onclick="togC('${esc(cat)}')"><span class="ci">${catIcon(cat)}</span><span class="ct">${esc(cat.trim())}</span><span class="meta"><span class="pill">${list.length}</span><span class="pill">${fmt(sums)} u.</span><span class="chev">▾</span></span></div><div class="catbody">${list.map(it=>itemRow(it,isTotal)).join('')}</div></div>`;});
   return body||'<div class="empty">Aucun objet.</div>';
 }
-function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);const h=health(v,it.cat,it.unit);const isSlot=it.unit==='slot';
+function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);const h=health(v,it.cat,it.unit,it.id);const isSlot=it.unit==='slot';
   const unitTag=isSlot?'<span class="utag">slot</span>':'';
   const ctrl=isTotal?`<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right">${fmt(v)}</div>`:`<div class="step"><button onclick="adj('${esc(it.id)}',-1)">−</button><input value="${v}" onchange="setQ('${esc(it.id)}',this.value)"><button onclick="adj('${esc(it.id)}',1)">＋</button></div>`;
   const custom=(S.custom||[]).some(c=>c.id===it.id);
@@ -239,9 +239,10 @@ function editItem(id){const it=catalog().find(x=>x.id===id);if(!it)return;
    <div class="field"><label>Classe (optionnel)</label><input class="inp" id="eCl" value="${esc(it.classe||'')}"></div>
    <div class="field"><label>Unité</label><select class="inp" id="eU"><option value="unitaire" ${it.unit!=='slot'?'selected':''}>Unitaire</option><option value="slot" ${it.unit==='slot'?'selected':''}>Slot (×9 999)</option></select></div>
    <div class="field"><label>Prix boutique (périns)</label><input class="inp" id="eP" type="number" value="${it.prix||0}"></div>
+   <div class="field"><label>Seuils de couleur du stock <span class="mut" style="font-size:10px">(laisse vide = seuils par défaut)</span></label><div style="display:flex;gap:8px"><input class="inp" id="eTmid" type="number" min="0" placeholder="🟠 orange à partir de…" value="${(S.thresh&&S.thresh[id]&&S.thresh[id].mid)||''}"><input class="inp" id="eTok" type="number" min="0" placeholder="🟢 vert à partir de…" value="${(S.thresh&&S.thresh[id]&&S.thresh[id].ok)||''}"></div></div>
    <div class="field"><label>Changer l'asset (image)</label><input class="inp" id="eImg" type="file" accept="image/*"><div class="mut" style="font-size:10.5px;margin-top:4px"><label><input type="checkbox" id="eClr"> Retirer l'asset (revenir au logo de classe)</label></div></div>
    <div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger" onclick="agConfirm('Supprimer cet objet ?',function(){rmItem('${esc(id)}',${(S.custom||[]).some(c=>c.id===id)});closeSheet();render();})">Supprimer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveItem('${esc(id)}')">Enregistrer</button></div></div>`);}
-function saveItem(id){const item=$('#eN').value.trim();if(!item)return;const cat=$('#eC').value,classe=$('#eCl').value.trim(),unit=$('#eU').value,prix=Math.max(0,Math.round(+$('#eP').value||0));
+function saveItem(id){const item=$('#eN').value.trim();if(!item)return;const cat=$('#eC').value,classe=$('#eCl').value.trim(),unit=$('#eU').value,prix=Math.max(0,Math.round(+$('#eP').value||0));const tmid=Math.max(0,parseInt($('#eTmid').value,10)||0),tok=Math.max(0,parseInt($('#eTok').value,10)||0);S.thresh=S.thresh||{};if(tmid>0||tok>0){S.thresh[id]={mid:tmid,ok:tok};}else{delete S.thresh[id];}
   const fin=icData=>{const cust=(S.custom||[]).find(c=>c.id===id);
     if(cust){Object.assign(cust,{item,cat,classe,unit,prix});if($('#eClr').checked)cust.icData='';else if(icData)cust.icData=icData;delete S.overrides[id];}
     else{const ov=Object.assign({},S.overrides[id]||{},{item,cat,classe,unit,prix});if($('#eClr').checked)ov.icData='';else if(icData)ov.icData=icData;S.overrides[id]=ov;}

@@ -7,8 +7,13 @@ import { useSession } from "next-auth/react";
 // (AirBuilder) tenait les globals.
 export function AirGuildRunner() {
   const { data: session } = useSession();
-  // Expose le staff connecté à l'app pour tracer qui dépose/retire dans le journal (#29)
-  useEffect(() => { (window as unknown as { __agUser?: string }).__agUser = ((session?.user as { username?: string; name?: string } | undefined)?.username) || (session?.user?.name ?? "") || ""; }, [session]);
+  // Expose le staff connecté (pseudo + rôle) : tracer qui dépose (#29) + gating édition réservée Vanguard.
+  useEffect(() => {
+    const w = window as unknown as { __agUser?: string; __agRole?: string };
+    const u = session?.user as { username?: string; name?: string; role?: string } | undefined;
+    w.__agUser = (u?.username) || (session?.user?.name ?? "") || "";
+    w.__agRole = u?.role || (process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1" ? "DIRECTION" : "");
+  }, [session]);
   useEffect(() => {
     const w = window as unknown as { __APP?: string; render?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
     if (w.__APP === "airguild" && typeof w.render === "function") { try { w.render(); } catch { /* noop */ } return; }

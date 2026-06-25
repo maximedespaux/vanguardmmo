@@ -14,6 +14,7 @@ function classLogo(cl){return cl&&LOGOIDX[cl]!=null?`<span class="climg cl-${LOG
 
 const KEY='vg_airguild_u2';
 let S=load();
+function canEdit(){return ['VANGUARD','DIRECTION'].indexOf(window.__agRole||'')>=0;} // édition du catalogue réservée Vanguard/Direction (les dépôts de quantité restent ouverts à tous les contributeurs)
 function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
   return{members:['Commun'],cur:'Commun',inv:{Commun:{}},custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
@@ -50,7 +51,7 @@ function viewBank(){
     S.members.filter(m=>m!=='Commun').map(m=>`<div class="mtab ${S.cur===m?'on':''}" onclick="selM('${esc(m)}')">${esc(m)} <span class="x" onclick="event.stopPropagation();delM('${esc(m)}')">✕</span></div>`).join('')+
     `<div class="mtab ${isTotal?'on':''}" onclick="selM('__total__')" style="border-style:dashed">Σ Total guilde</div><button class="btn sm" onclick="addMember()">＋ Membre</button>`;
   return `<div class="card"><div class="sec-h">🏦 Coffres <span class="n">commun + individuels</span></div><div class="mtabs">${mtabs}</div></div>
-   <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px"><button class="btn o" onclick="addItem()">＋ Objet</button><button class="btn" onclick="openJournal()">🧾 Journal</button></div>
+   <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()">＋ Objet</button>':''}<button class="btn" onclick="openJournal()">🧾 Journal</button></div>
    <div id="bankbody">${bankBody()}</div>`;
 }
 function sortByOrder(arr){const o=S.order||[];return arr.slice().sort(function(a,b){var ia=o.indexOf(a.id),ib=o.indexOf(b.id);return (ia<0?1e9:ia)-(ib<0?1e9:ib);});}
@@ -83,7 +84,7 @@ function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="fie
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
 function delM(m){agConfirm('Supprimer le coffre de '+m+' ?',function(){S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='Commun';save();render();});}
 function allCats(){return [...new Set(D.bankCats.concat((catalog()||[]).map(function(x){return (x.cat||'').trim();}).filter(Boolean)))];}
-function addItem(){openSheet(`<h3>Ajouter un objet au coffre</h3>
+function addItem(){if(!canEdit())return agToast('Ajout réservé au rôle Vanguard.',false);openSheet(`<h3>Ajouter un objet au coffre</h3>
   <div class="field"><label>Catégorie</label><input class="inp" id="ic" list="catlist" placeholder="Catégorie existante ou nouvelle…"><datalist id="catlist">${allCats().map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div>
   <div class="field"><label>Classe (optionnel)</label><input class="inp" id="icl" placeholder="ex. Arcaniste — ou vide"></div>
   <div class="field"><label>Nom de l'objet</label><input class="inp" id="ii" placeholder="ex. Cristal féerique"></div>
@@ -222,15 +223,13 @@ function viewSettings(){const cats=sortByOrder(catalog());
   const rows=cats.map(it=>{const ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();const custom=(S.custom||[]).some(c=>c.id===it.id);const ov=!!S.overrides[it.id];
     return `<div class="it" data-s="${esc(ds)}"><div class="logo">${itemAsset(it)}</div>
       <div class="nm"><div class="a">${esc(it.item)} ${ov?'<span class="utag" style="color:var(--gold);border-color:#ffd24a55;background:#ffd24a14">modifié</span>':''}${custom?'<span class="utag" style="color:var(--blue);border-color:#4ea8ff55;background:#4ea8ff14">perso</span>':''}</div><div class="b">${esc(it.cat.trim())}${it.classe?' · '+esc(it.classe):''} · ${it.unit==='slot'?'slot':'unitaire'}${it.prix?' · '+fmt(it.prix)+' périns':''}</div></div>
-      <button class="btn sm" onclick="moveItem('${esc(it.id)}',-1)" title="Monter dans la catégorie">↑</button><button class="btn sm" onclick="moveItem('${esc(it.id)}',1)" title="Descendre dans la catégorie">↓</button>
-      <button class="btn sm" onclick="editItem('${esc(it.id)}')">✎ Éditer</button>
-      <span class="rm" onclick="rmItem('${esc(it.id)}',${custom});render()">🗑</span></div>`;}).join('');
+      ${canEdit()?`<button class="btn sm" onclick="moveItem('${esc(it.id)}',-1)" title="Monter dans la catégorie">↑</button><button class="btn sm" onclick="moveItem('${esc(it.id)}',1)" title="Descendre dans la catégorie">↓</button><button class="btn sm" onclick="editItem('${esc(it.id)}')">✎ Éditer</button><span class="rm" onclick="rmItem('${esc(it.id)}',${custom});render()">🗑</span>`:'<span class="mut" style="font-size:10px">🔒 lecture seule</span>'}</div>`;}).join('');
   return `<div class="card" style="margin-bottom:14px"><div class="sec-h">⚙️ Base de données du coffre <span class="n">${cats.length} objets</span></div>
-     <div class="toolbar" style="margin:0"><input class="inp" placeholder="Rechercher…" value="${esc(cfgQ)}" oninput="cfgQ=this.value;filterSet(this.value)" style="flex:1;min-width:160px"><button class="btn o" onclick="addItem()">＋ Ajouter</button><button class="btn" onclick="exportData()">⬇️ Exporter</button><button class="btn" onclick="importData()">⬆️ Importer</button></div>
+     <div class="toolbar" style="margin:0"><input class="inp" placeholder="Rechercher…" value="${esc(cfgQ)}" oninput="cfgQ=this.value;filterSet(this.value)" style="flex:1;min-width:160px">${canEdit()?'<button class="btn o" onclick="addItem()">＋ Ajouter</button>':''}<button class="btn" onclick="exportData()">⬇️ Exporter</button>${canEdit()?'<button class="btn" onclick="importData()">⬆️ Importer</button>':''}</div>
      <div class="hint">Édite n'importe quel objet (nom, catégorie, classe, unité unitaire/slot, asset, prix) ou ajoute-en. Tout est sauvegardé localement.</div></div>
    <div class="card" id="setbody" style="padding:8px 12px">${rows||'<div class="empty">Aucun objet.</div>'}</div>`;
 }
-function editItem(id){const it=catalog().find(x=>x.id===id);if(!it)return;
+function editItem(id){if(!canEdit())return agToast('Édition réservée au rôle Vanguard.',false);const it=catalog().find(x=>x.id===id);if(!it)return;
   const opts=D.bankCats.concat(['Butin de donjon','Autre']).filter((v,i,a)=>a.indexOf(v)===i);
   openSheet(`<h3>✎ Éditer l'objet</h3>
    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="logo" style="width:54px;height:54px">${itemAsset(it)}</div><div class="mut" style="font-size:11px">Asset actuel</div></div>

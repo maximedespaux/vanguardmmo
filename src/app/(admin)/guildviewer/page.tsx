@@ -28,6 +28,15 @@ export default function GuildViewerPage() {
   const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
   const [onlyNoBuild, setOnlyNoBuild] = useState(false);
+  const [histUser, setHistUser] = useState<string | null>(null);
+  const [hist, setHist] = useState<{ id: string; createdAt: string }[]>([]);
+  const [histLoading, setHistLoading] = useState(false);
+  const openHist = async (uid: string) => {
+    if (histUser === uid) { setHistUser(null); return; }
+    setHistUser(uid); setHist([]); setHistLoading(true);
+    try { const r = await fetch(`/api/builder-state?user=${uid}&list=1`); if (r.ok) { const j = await r.json(); setHist(j.snapshots || []); } } catch { /* noop */ }
+    setHistLoading(false);
+  };
 
   useEffect(() => {
     (async () => {
@@ -121,12 +130,23 @@ export default function GuildViewerPage() {
                   </div>
                   <span style={{ display: "inline-block", marginTop: 5, fontSize: 10.5, fontWeight: 700, color: r.color, background: `color-mix(in srgb, ${r.color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${r.color} 40%, transparent)`, borderRadius: 20, padding: "2px 11px", textTransform: "uppercase", letterSpacing: 0.6 }}>{r.emoji} {r.label}</span>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {miniStat("🧙", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
                   {miniStat("💰", u.debts.length, "dette", u.debts.length ? "var(--red)" : "var(--text-muted)")}
                   {miniStat("🚫", u._count.absences, "abs.", u._count.absences ? "var(--gold)" : "var(--text-muted)")}
+                  <button onClick={() => openHist(u.id)} title="Historique des builds — 10 dernières versions sauvegardées" style={{ fontSize: 11, fontWeight: 700, cursor: "pointer", color: histUser === u.id ? "#000" : "var(--text-muted)", background: histUser === u.id ? "var(--orange)" : "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 11px", whiteSpace: "nowrap" }}>🕘 Versions{histUser === u.id ? " ▲" : ""}</button>
                 </div>
               </div>
+              {histUser === u.id && (
+                <div style={{ margin: "0 17px 13px", padding: "11px 13px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10 }}>
+                  <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", marginBottom: 8 }}>🕘 Historique des builds</div>
+                  {histLoading ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Chargement…</div>
+                    : hist.length === 0 ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Aucune version archivée — le membre doit cliquer « 💾 Sauvegarder mes persos » dans l&apos;AirBuilder.</div>
+                    : <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>{hist.map((s, i) => (
+                        <a key={s.id} href={`/builder/${u.id}?v=${s.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11.5, fontWeight: 600, color: i === 0 ? "var(--orange)" : "var(--text)", background: "var(--bg-2)", border: `1px solid ${i === 0 ? "var(--orange)" : "var(--border)"}`, borderRadius: 7, padding: "5px 11px", textDecoration: "none", whiteSpace: "nowrap" }}>{i === 0 ? "● Actuel · " : ""}{new Date(s.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</a>
+                      ))}</div>}
+                </div>
+              )}
 
               {/* Personnages */}
               {noChar ? (

@@ -95,6 +95,18 @@ model User {
   absences      Absence[]
   transactions  BankTransaction[]
   debts         Debt[]
+  snapshots     BuildSnapshot[]
+}
+
+// ─── HISTORIQUE DES BUILDS (10 dernières versions par membre, pour le GuildViewer) ───
+model BuildSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blob      Json
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 // ─── PERSONNAGE (appartient à un User) ──────────────────────

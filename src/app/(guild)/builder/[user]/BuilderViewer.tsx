@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { BUILDER_MARKUP } from "../markup";
 
 // Vue lecture seule du build d'un membre (pour le staff, depuis le GuildViewer).
-// Charge le builderBlob du membre dans window.__VIEW_BLOB ; airbuilder.js bloque toute
-// sauvegarde quand window.__VIEW est vrai (le build perso de l'admin n'est jamais touché).
-export function BuilderViewer({ user }: { user: string }) {
+// version → ouvre un snapshot archivé (#7) au lieu du build courant.
+// airbuilder.js bloque toute sauvegarde quand window.__VIEW est vrai (le build perso de l'admin n'est jamais touché).
+export function BuilderViewer({ user, version }: { user: string; version?: string }) {
   const [err, setErr] = useState<string | null>(null);
   const [who, setWho] = useState("");
   const [ready, setReady] = useState(false);
@@ -18,7 +18,7 @@ export function BuilderViewer({ user }: { user: string }) {
       let blob: { chars?: unknown[] } | null = null;
       let username = "";
       try {
-        const r = await fetch(`/api/builder-state?user=${encodeURIComponent(user)}`);
+        const r = await fetch(`/api/builder-state?user=${encodeURIComponent(user)}${version ? `&v=${encodeURIComponent(version)}` : ""}`);
         if (r.status === 403) { setErr("Accès réservé au staff."); return; }
         if (r.status === 401) { setErr("Connecte-toi pour consulter ce build."); return; }
         if (r.status === 404) { setErr("Membre introuvable."); return; }
@@ -28,14 +28,14 @@ export function BuilderViewer({ user }: { user: string }) {
       } catch { setErr("Erreur de chargement du build."); return; }
       if (cancelled) return;
       if (!blob || !Array.isArray(blob.chars) || !blob.chars.length) {
-        setErr(`${username || "Ce membre"} n'a pas encore enregistré de build dans l'AirBuilder.`);
+        setErr(version ? "Version introuvable ou expirée." : `${username || "Ce membre"} n'a pas encore enregistré de build dans l'AirBuilder.`);
         return;
       }
       w.__VIEW = true; w.__VIEW_BLOB = blob; w.__viewUser = username;
       setWho(username); setReady(true);
     })();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, version]);
 
   // Une fois le markup monté (ready), on injecte les données + le moteur.
   useEffect(() => {
@@ -64,7 +64,7 @@ export function BuilderViewer({ user }: { user: string }) {
     <>
       <style>{`.builder-readonly .actions{display:none}`}</style>
       <div style={{ margin: "0 0 12px", padding: "9px 14px", borderRadius: 10, background: "rgba(255,140,26,.10)", border: "1px solid rgba(255,140,26,.35)", color: "var(--orange)", fontSize: 13, fontWeight: 600 }}>
-        👁️ Mode lecture — build de <b>{who || "ce membre"}</b> (consultation, non modifiable).
+        {version ? "🕘 Ancienne version" : "👁️ Mode lecture"} — build de <b>{who || "ce membre"}</b> (consultation, non modifiable).
       </div>
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
     </>

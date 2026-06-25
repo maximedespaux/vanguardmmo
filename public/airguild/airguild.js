@@ -14,7 +14,7 @@ function classLogo(cl){return cl&&LOGOIDX[cl]!=null?`<span class="climg cl-${LOG
 
 const KEY='vg_airguild_u2';
 let S=load();
-function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';return r;}}catch(e){}
+function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
   return{members:['Commun'],cur:'Commun',inv:{Commun:{}},custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
@@ -36,7 +36,7 @@ function health(q,cat,unit){const c=cat.trim();if(unit==='slot'){if(q>=2)return'
 function itemAsset(it){if(it.icData)return `<img src="${it.icData}" alt="">`;if(it.ic&&ICOIDX[it.ic]!=null)return `<span class="climg bic-${ICOIDX[it.ic]}"></span>`;return classLogo(it.classe)||`<span>${catIcon(it.cat)}</span>`;}
 function priceOf(id){return S.prices[id]!=null?S.prices[id]:(catalog().find(x=>x.id===id)||{}).prix||0;}
 
-const TABS=[['bank','🏦','Banque'],['craft','⚒️','Craft'],['shop','🛒','Boutique'],['set','⚙️','Paramètres']];
+const TABS=[['bank','🏦','Dépôt en Coffre de Guilde'],['craft','⚒️','Craft'],['set','⚙️','Paramètres']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,ic,l])=>`<div class="tab ${S.tab===k?'on':''}" onclick="go('${k}')"><span>${ic}</span>${l}${k==='shop'&&S.debts.length?`<span class="pill pr">${S.debts.length}</span>`:''}</div>`).join('');}
 function go(t){S.tab=t;save();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
 function render(){const v=$('#view');if(!v){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;try{v.innerHTML=S.tab==='bank'?viewBank():S.tab==='craft'?viewCraft():S.tab==='shop'?viewShop():viewSettings();if(S.tab==='bank'&&bankQ)filterBank(bankQ);if(S.tab==='set'&&cfgQ)filterSet(cfgQ);}catch(err){console.error('[AirGuild] rendu partiel',err);}vgDD();}
@@ -53,7 +53,9 @@ function viewBank(){
    <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px"><button class="btn o" onclick="addItem()">＋ Objet</button><button class="btn" onclick="openJournal()">🧾 Journal</button></div>
    <div id="bankbody">${bankBody()}</div>`;
 }
-function bankBody(){const cats=catalog();const isTotal=S.cur==='__total__';
+function sortByOrder(arr){const o=S.order||[];return arr.slice().sort(function(a,b){var ia=o.indexOf(a.id),ib=o.indexOf(b.id);return (ia<0?1e9:ia)-(ib<0?1e9:ib);});}
+function moveItem(id,dir){var all=sortByOrder(catalog());var it=all.find(function(x){return x.id===id;});if(!it)return;var cat=(it.cat||'').trim();var sibs=all.filter(function(x){return (x.cat||'').trim()===cat;});var i=sibs.findIndex(function(x){return x.id===id;}),j=i+dir;if(j<0||j>=sibs.length)return;S.order=all.map(function(x){return x.id;});var a=S.order.indexOf(id),b=S.order.indexOf(sibs[j].id);var t=S.order[a];S.order[a]=S.order[b];S.order[b]=t;save();render();}
+function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__total__';
   const byCat={};cats.forEach(it=>{(byCat[it.cat]=byCat[it.cat]||[]).push(it);});
   const order=D.bankCats.concat(Object.keys(byCat).filter(c=>!D.bankCats.includes(c)));
   let body='';order.forEach(cat=>{let list=byCat[cat];if(!list||!list.length)return;
@@ -80,8 +82,9 @@ function setQ(id,v){const it=catalog().find(x=>x.id===id);setQty(S.cur,id,v,it?i
 function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
 function delM(m){agConfirm('Supprimer le coffre de '+m+' ?',function(){S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='Commun';save();render();});}
+function allCats(){return [...new Set(D.bankCats.concat((catalog()||[]).map(function(x){return (x.cat||'').trim();}).filter(Boolean)))];}
 function addItem(){openSheet(`<h3>Ajouter un objet au coffre</h3>
-  <div class="field"><label>Catégorie</label><select class="inp" id="ic">${D.bankCats.map(c=>`<option>${esc(c)}</option>`).join('')}<option>Autre</option></select></div>
+  <div class="field"><label>Catégorie</label><input class="inp" id="ic" list="catlist" placeholder="Catégorie existante ou nouvelle…"><datalist id="catlist">${allCats().map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div>
   <div class="field"><label>Classe (optionnel)</label><input class="inp" id="icl" placeholder="ex. Arcaniste — ou vide"></div>
   <div class="field"><label>Nom de l'objet</label><input class="inp" id="ii" placeholder="ex. Cristal féerique"></div>
   <div class="field"><label>Unité de comptage</label><select class="inp" id="iu"><option value="unitaire">Unitaire (à la pièce)</option><option value="slot">Slot (1 slot = 9 999)</option></select></div>
@@ -215,10 +218,11 @@ function cancelDebt(i){const d=S.debts[i];agConfirm('Annuler la dette et remettr
 /* ============ PARAMÈTRES (base de données) ============ */
 let cfgQ='';
 function filterSet(qv){const q=(qv||'').toLowerCase().trim();document.querySelectorAll('#setbody .it').forEach(el=>{el.style.display=(!q||el.dataset.s.includes(q))?'':'none';});}
-function viewSettings(){const cats=catalog();
+function viewSettings(){const cats=sortByOrder(catalog());
   const rows=cats.map(it=>{const ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();const custom=(S.custom||[]).some(c=>c.id===it.id);const ov=!!S.overrides[it.id];
     return `<div class="it" data-s="${esc(ds)}"><div class="logo">${itemAsset(it)}</div>
       <div class="nm"><div class="a">${esc(it.item)} ${ov?'<span class="utag" style="color:var(--gold);border-color:#ffd24a55;background:#ffd24a14">modifié</span>':''}${custom?'<span class="utag" style="color:var(--blue);border-color:#4ea8ff55;background:#4ea8ff14">perso</span>':''}</div><div class="b">${esc(it.cat.trim())}${it.classe?' · '+esc(it.classe):''} · ${it.unit==='slot'?'slot':'unitaire'}${it.prix?' · '+fmt(it.prix)+' périns':''}</div></div>
+      <button class="btn sm" onclick="moveItem('${esc(it.id)}',-1)" title="Monter dans la catégorie">↑</button><button class="btn sm" onclick="moveItem('${esc(it.id)}',1)" title="Descendre dans la catégorie">↓</button>
       <button class="btn sm" onclick="editItem('${esc(it.id)}')">✎ Éditer</button>
       <span class="rm" onclick="rmItem('${esc(it.id)}',${custom});render()">🗑</span></div>`;}).join('');
   return `<div class="card" style="margin-bottom:14px"><div class="sec-h">⚙️ Base de données du coffre <span class="n">${cats.length} objets</span></div>
@@ -231,7 +235,7 @@ function editItem(id){const it=catalog().find(x=>x.id===id);if(!it)return;
   openSheet(`<h3>✎ Éditer l'objet</h3>
    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="logo" style="width:54px;height:54px">${itemAsset(it)}</div><div class="mut" style="font-size:11px">Asset actuel</div></div>
    <div class="field"><label>Nom</label><input class="inp" id="eN" value="${esc(it.item)}"></div>
-   <div class="field"><label>Catégorie</label><select class="inp" id="eC">${opts.map(c=>`<option ${c===it.cat?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
+   <div class="field"><label>Catégorie</label><input class="inp" id="eC" list="ecatlist" value="${esc(it.cat)}"><datalist id="ecatlist">${[...new Set(opts.concat(allCats()))].map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div>
    <div class="field"><label>Classe (optionnel)</label><input class="inp" id="eCl" value="${esc(it.classe||'')}"></div>
    <div class="field"><label>Unité</label><select class="inp" id="eU"><option value="unitaire" ${it.unit!=='slot'?'selected':''}>Unitaire</option><option value="slot" ${it.unit==='slot'?'selected':''}>Slot (×9 999)</option></select></div>
    <div class="field"><label>Prix boutique (périns)</label><input class="inp" id="eP" type="number" value="${it.prix||0}"></div>

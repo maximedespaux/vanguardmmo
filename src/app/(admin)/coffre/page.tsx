@@ -5,7 +5,7 @@ import { AirGuildRunner } from "./AirGuildRunner";
 // et branchée sur la base : l'état du coffre est partagé par toute la guilde.
 const MARKUP = `<div class="wrap">
   <div class="top">
-    <div class="brand"><div class="owl">🦉</div><div><div class="t">Air<b>Guild</b></div><div class="s">Coffre · Craft · Boutique · Paramètres — Guilde Vanguard</div></div></div>
+    <div class="brand"><div class="owl">🦉</div><div><div class="t">Air<b>Guild</b></div><div class="s">Dépôt en Coffre de Guilde · Craft · Paramètres — Guilde Vanguard</div></div></div>
     <div class="spacer"></div><div class="savechip"><span class="savedot"></span> Sauvegarde auto · partagée</div>
   </div>
   <div class="tabs" id="tabs"></div>

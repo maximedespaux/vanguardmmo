@@ -160,9 +160,9 @@ export default function CandidaturePage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: 13, fontWeight: 600 }}>Quelles classes veux-tu mettre en avant ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars} — autant que de persos)</span></label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>Lesquelles de tes classes mettre en avant pour les CS ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars} — parmi tes persos)</span></label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} style={{ padding: "6px 12px", borderRadius: 7, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}>{c}</button>; })}
+                  {[...new Set(chars.map(ch => ch.cls))].map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} style={{ padding: "6px 12px", borderRadius: 7, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}>{c}</button>; })}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}>ℹ️ Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>

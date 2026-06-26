@@ -49,14 +49,17 @@ export function applicationEmbed(a: any): EmbedBuilder {
     .setDescription(a.motivation ? `*${String(a.motivation).slice(0, 500)}*` : "_(pas de motivation renseignée)_")
     .addFields({ name: "Statut", value: st.fr, inline: true });
 
-  if (Array.isArray(a.favClasses) && a.favClasses.length)
-    e.addFields({ name: "Classe(s)", value: a.favClasses.map(classLabel).join(", "), inline: true });
+  const chars = Array.isArray(a.chars) ? a.chars : [];
+  // « Classe(s) » = les classes réelles des personnages (cohérent avec « Personnages »),
+  // et non plus un champ « favClasses » séparé qui pouvait diverger.
+  const charClasses = [...new Set(chars.map((c: any) => c.cls).filter(Boolean))] as string[];
+  if (charClasses.length)
+    e.addFields({ name: "Classe(s)", value: charClasses.join(", "), inline: true });
   if (Array.isArray(a.specs) && a.specs.length)
     e.addFields({ name: "Spécialités", value: a.specs.join(", "), inline: true });
   if (a.csChars != null)
     e.addFields({ name: "Persos CS", value: String(a.csChars), inline: true });
 
-  const chars = Array.isArray(a.chars) ? a.chars : [];
   if (chars.length)
     e.addFields({ name: "Personnages", value: chars.map((c: any) => `• ${c.name ?? "?"}${c.cls ? ` (${c.cls})` : ""}${c.prestige ? ` P${c.prestige}` : ""}`).join("\n").slice(0, 1024) });
   if (a.experience)

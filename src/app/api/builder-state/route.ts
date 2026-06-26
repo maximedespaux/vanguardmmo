@@ -13,23 +13,29 @@ export async function GET(req: Request) {
   if ("error" in a) return a.error;
   const url = new URL(req.url);
   const target = url.searchParams.get("user");
+  const wantList = url.searchParams.get("list") === "1";
+  const v = url.searchParams.get("v");
+
+  // Cible : un membre (staff only) ou soi-même.
+  let userId = a.user.id;
+  let username: string | null = null;
   if (target && target !== a.user.id) {
     if (!canAccessAdmin(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    const u = await prisma.user.findFirst({ where: { OR: [{ id: target }, { discordId: target }] }, select: { id: true, builderBlob: true, username: true } });
+    const u = await prisma.user.findFirst({ where: { OR: [{ id: target }, { discordId: target }] }, select: { id: true, username: true } });
     if (!u) return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
-    if (url.searchParams.get("list") === "1") {
-      const snapshots = await prisma.buildSnapshot.findMany({ where: { userId: u.id }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, createdAt: true } });
-      return NextResponse.json({ snapshots, username: u.username });
-    }
-    const v = url.searchParams.get("v");
-    if (v) {
-      const snap = await prisma.buildSnapshot.findFirst({ where: { id: v, userId: u.id }, select: { blob: true } });
-      return NextResponse.json({ blob: snap?.blob ?? null, username: u.username });
-    }
-    return NextResponse.json({ blob: u.builderBlob ?? null, username: u.username });
+    userId = u.id; username = u.username;
   }
-  const u = await prisma.user.findUnique({ where: { id: a.user.id }, select: { builderBlob: true } });
-  return NextResponse.json({ blob: u?.builderBlob ?? null });
+
+  if (wantList) {
+    const snapshots = await prisma.buildSnapshot.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 10, select: { id: true, createdAt: true } });
+    return NextResponse.json({ snapshots, username });
+  }
+  if (v) {
+    const snap = await prisma.buildSnapshot.findFirst({ where: { id: v, userId }, select: { blob: true } });
+    return NextResponse.json({ blob: snap?.blob ?? null, username });
+  }
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { builderBlob: true, username: true } });
+  return NextResponse.json({ blob: u?.builderBlob ?? null, username: username ?? u?.username ?? null });
 }
 
 // POST — sauvegarde le blob complet (auto-save débounce côté builder).

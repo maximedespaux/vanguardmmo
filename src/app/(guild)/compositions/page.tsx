@@ -1,23 +1,23 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 
-type Slot = { id: string; group: string; label: string; classe: string; note: string };
+type Slot = { id: string; group: string; label: string; classe: string; note: string; build?: string };
 const CS_SLOTS: Slot[] = [
-  { id: "p1", group: "Tanks (Primats)", label: "Primat — Tank croix", classe: "Primat", note: "Croix puis boss final (tank/dps)" },
-  { id: "p2", group: "Tanks (Primats)", label: "Primat — Tank croix jumeaux", classe: "Primat", note: "Croix jumeaux → dps araignée → croix boss final" },
-  { id: "d1", group: "DPS physique", label: "Cheva", classe: "Templier", note: "DPS physique" },
-  { id: "d2", group: "DPS physique", label: "YJ", classe: "Sylphide", note: "DPS physique" },
-  { id: "d3", group: "DPS physique", label: "Spadassin", classe: "Spadassin", note: "DPS physique" },
-  { id: "d4", group: "DPS physique", label: "Arbalétrier", classe: "Arbaletrier", note: "DPS physique" },
-  { id: "d5", group: "DPS physique", label: "Moine", classe: "Chanoine", note: "DPS physique" },
-  { id: "d6", group: "DPS physique", label: "Arcaniste (option)", classe: "Arcaniste", note: "Si besoin : +1 à +2 arca" },
-  { id: "m1", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca" },
-  { id: "m2", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca" },
-  { id: "m3", group: "DPS magique", label: "Arcaniste (option)", classe: "Arcaniste", note: "3ème arca si dispo" },
-  { id: "m4", group: "DPS magique", label: "Soso", classe: "Envouteur", note: "Support / debuff magique" },
+  { id: "p1", group: "Tanks (Primats)", label: "Primat — Tank croix", classe: "Primat", note: "Croix puis boss final (tank/dps)", build: "Stuffs nécessaires : DPS · Off-Tank Full HP (Sceptre) · Tank Full HP (Poing).\n\nRôles :\n• DPS — AoE les araignées et petits mobs\n• Off-Tank — tank les Boss (4M8 d'HP) et croix en même temps\n• Tank — Full HP pour tanker le boss final (7M8 d'HP)" },
+  { id: "p2", group: "Tanks (Primats)", label: "Primat — Tank croix jumeaux", classe: "Primat", note: "Croix jumeaux → dps araignée → croix boss final", build: "Primat — DPS / Off-Tank.\n\nCroix jumeaux, puis DPS sur les araignées, puis croix sur le boss final." },
+  { id: "d1", group: "DPS physique", label: "Cheva", classe: "Templier", note: "DPS physique", build: "Templier DPS physique — AoE araignées et mobs." },
+  { id: "d2", group: "DPS physique", label: "YJ", classe: "Sylphide", note: "DPS physique", build: "Sylphide DPS physique." },
+  { id: "d3", group: "DPS physique", label: "Spadassin", classe: "Spadassin", note: "DPS physique", build: "Spadassin DPS physique." },
+  { id: "d4", group: "DPS physique", label: "Arbalétrier", classe: "Arbaletrier", note: "DPS physique", build: "Arbalétrier DPS physique." },
+  { id: "d5", group: "DPS physique", label: "Moine", classe: "Chanoine", note: "DPS physique", build: "Chanoine DPS physique." },
+  { id: "d6", group: "DPS physique", label: "Arcaniste (option)", classe: "Arcaniste", note: "Si besoin : +1 à +2 arca", build: "Arcaniste DPS — slot optionnel si besoin de +1 à +2 arca." },
+  { id: "m1", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca", build: "Arcaniste DPS magique." },
+  { id: "m2", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca", build: "Arcaniste DPS magique." },
+  { id: "m3", group: "DPS magique", label: "Arcaniste (option)", classe: "Arcaniste", note: "3ème arca si dispo", build: "Arcaniste DPS magique — 3ème arca si dispo." },
+  { id: "m4", group: "DPS magique", label: "Soso", classe: "Envouteur", note: "Support / debuff magique", build: "Envoûteur — support / debuff magique." },
 ];
 const GROUP_META: Record<string, { color: string; icon: string }> = {
   "Tanks (Primats)": { color: "#4EA8FF", icon: "🛡️" },
@@ -25,58 +25,42 @@ const GROUP_META: Record<string, { color: string; icon: string }> = {
   "DPS magique": { color: "#C77DFF", icon: "🔮" },
 };
 const GROUPS = Object.keys(GROUP_META);
-type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string };
-const LS_KEY = "vanguard_cs_signups";
-// Remise à zéro auto : mercredi & dimanche à 22h00 (Europe/Paris). On calcule la borne
-// du dernier reset ; si elle a changé depuis la dernière visite, on vide les inscriptions.
-function csPeriodKey(): string {
-  try {
-    const p = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Paris" }));
-    for (let i = 0; i <= 7; i++) {
-      const d = new Date(p); d.setDate(p.getDate() - i); d.setHours(22, 0, 0, 0);
-      const day = d.getDay(); // 0 = dimanche, 3 = mercredi
-      if ((day === 0 || day === 3) && d <= p) return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-    }
-  } catch {}
-  return "init";
-}
+type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string; selected?: boolean };
+const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
 export default function CompositionsPage() {
   const { data: session } = useSession();
-  const meName = (session?.user as any)?.discordName ?? session?.user?.name ?? "Moi";
+  const su = session?.user as { discordName?: string; username?: string; name?: string; role?: string } | undefined;
+  const meName = su?.discordName ?? su?.username ?? session?.user?.name ?? "Moi";
+  const isAdmin = (su?.role ? ADMIN_ROLES.includes(su.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const [tab, setTab] = useState<"cs" | "gvg">("cs");
   const [signups, setSignups] = useState<Signup[]>([]);
   const [myChars, setMyChars] = useState<{ id: string; name: string; class: string }[]>([]);
+  const [info, setInfo] = useState<Slot | null>(null);
 
-  useEffect(() => {
-    try {
-      const key = csPeriodKey();
-      if (localStorage.getItem(LS_KEY + "_p") !== key) {        // nouvelle période → remise à zéro
-        localStorage.removeItem(LS_KEY);
-        localStorage.setItem(LS_KEY + "_p", key);
-        setSignups([]);
-        return;
-      }
-      const r = localStorage.getItem(LS_KEY);
-      if (r) setSignups(JSON.parse(r));
-    } catch {}
+  // Inscriptions partagées (backend commun) + actualisation automatique toutes les 15 s.
+  const load = useCallback(() => {
+    fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => { if (d && Array.isArray(d.signups)) setSignups(d.signups); }).catch(() => {});
   }, []);
-  useEffect(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(signups)); } catch {} }, [signups]);
+  useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
   useEffect(() => { fetch("/api/characters").then(r => (r.ok ? r.json() : [])).then(setMyChars).catch(() => {}); }, []);
 
+  const persist = (next: Signup[]) => { setSignups(next); fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ signups: next }) }).catch(() => {}); };
   const norm = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  const removeSignup = (id: string) => setSignups(signups.filter(s => s.id !== id));
+  const removeSignup = (id: string) => persist(signups.filter(s => s.id !== id));
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
-    setSignups(prev => [...prev.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
+    if (signups.some(s => s.charId === char.id && s.slotId === slot.id)) return;
+    persist([...signups, { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
   };
+  const selectSignup = (slotId: string, id: string) => persist(signups.map(s => s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
+  const resetAll = () => { if (window.confirm("Réinitialiser toute la composition ? Toutes les inscriptions seront effacées pour tout le monde.")) persist([]); };
 
-  const filledSlots = new Set(signups.filter(s => s.slotId).map(s => s.slotId));
+  const selectedSlots = new Set(signups.filter(s => s.selected && s.slotId).map(s => s.slotId));
   const playersCount = new Set(signups.map(s => s.player.toLowerCase())).size;
   const byClass: Record<string, number> = {}; signups.forEach(s => { byClass[s.classe] = (byClass[s.classe] || 0) + 1; });
-  const fillPct = Math.round((filledSlots.size / CS_SLOTS.length) * 100);
+  const fillPct = Math.round((selectedSlots.size / CS_SLOTS.length) * 100);
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
-  const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" };
 
   return (
     <div style={{ padding: 32, maxWidth: 1100, margin: "0 auto" }}>
@@ -98,36 +82,50 @@ export default function CompositionsPage() {
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span className="font-heading" style={{ fontWeight: 700, fontSize: 20, color: "var(--orange)" }}>{fillPct}%</span></div>
           </div>
           <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{filledSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{CS_SLOTS.length}</span></div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes remplis</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{selectedSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{CS_SLOTS.length}</span></div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes validés</div></div>
             <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--blue)" }}>{playersCount}</div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Joueurs</div></div>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--purple)" }}>{signups.length}</div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Persos engagés</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--purple)" }}>{signups.length}</div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Candidatures</div></div>
+          </div>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 10.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)" }} /> Partagé · live</span>
+            {isAdmin && <button onClick={resetAll} style={{ fontSize: 11.5, padding: "7px 13px", borderRadius: 8, border: "1px solid var(--red)", background: "transparent", color: "var(--red)", cursor: "pointer", fontWeight: 600 }}>↺ Réinitialiser</button>}
           </div>
         </div>
 
         {/* Zones de composition */}
-        {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => filledSlots.has(s.id)).length; return (
+        {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
           <div key={g} style={{ ...card, padding: 0, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: `linear-gradient(90deg, ${meta.color}22, transparent)`, borderLeft: `4px solid ${meta.color}` }}>
               <span style={{ fontSize: 20 }}>{meta.icon}</span>
               <span className="font-heading" style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, fontSize: 15 }}>{g}</span>
               <span style={{ marginLeft: "auto", fontSize: 12, color: meta.color, fontWeight: 600 }}>{done}/{slots.length}</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(225px,1fr))", gap: 12, padding: 18 }}>
-              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const filled = taken.length > 0; return (
-                <div key={slot.id} style={{ position: "relative", background: filled ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${filled ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(235px,1fr))", gap: 12, padding: 18 }}>
+              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !taken.some(s => s.charId === c.id)); return (
+                <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${filled ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{slot.label}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{slot.note}</div></div>
+                    <button onClick={() => setInfo(slot)} title="Build conseillé" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 15, flexShrink: 0, padding: 2 }}>ℹ️</button>
                   </div>
-                  {filled ? <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>{taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: meta.color, display: "flex", alignItems: "center", gap: 5 }}><span style={{ width: 5, height: 5, borderRadius: "50%", background: meta.color }} /> <b>{t.pseudo}</b> <span style={{ color: "var(--text-muted)" }}>· {t.player}</span><button onClick={() => removeSignup(t.id)} title="Retirer" style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 13 }}>✕</button></div>)}</div>
-                    : (() => {
-                        const matching = myChars.filter(c => norm(c.class) === norm(slot.classe));
-                        return <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
-                          {matching.length === 0
-                            ? <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center" }}>Aucun perso {slot.classe}</div>
-                            : <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>{matching.map(c => <button key={c.id} onClick={() => registerToSlot(slot, c)} style={{ fontSize: 10.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${meta.color}`, background: "transparent", color: meta.color, cursor: "pointer" }}>+ {c.name}</button>)}</div>}
-                        </div>;
-                      })()}
+                  {/* Candidats (plusieurs possibles) */}
+                  {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
+                    {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.selected ? meta.color : "var(--text-muted)", flexShrink: 0 }} />
+                      {t.selected && <span title="Sélectionné" style={{ color: meta.color }}>✓</span>}
+                      <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.player}</span>
+                      <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                        {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? meta.color : "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>{t.selected ? "★" : "☆"}</button>}
+                        {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>✕</button>}
+                      </span>
+                    </div>)}
+                  </div>}
+                  {/* S'inscrire (toujours possible — plusieurs candidats) */}
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
+                    {mine.length === 0
+                      ? <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center" }}>{taken.some(s => s.charId && myChars.some(c => c.id === s.charId)) ? "Inscrit·e" : `Aucun perso ${slot.classe} dispo`}</div>
+                      : <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>{mine.map(c => <button key={c.id} onClick={() => registerToSlot(slot, c)} style={{ fontSize: 10.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${meta.color}`, background: "transparent", color: meta.color, cursor: "pointer" }}>+ {c.name}</button>)}</div>}
+                  </div>
                 </div>
               ); })}
             </div>
@@ -136,7 +134,7 @@ export default function CompositionsPage() {
 
         {/* Récap / aide */}
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Pour t'inscrire : clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe. Tes persos proviennent de tes <b>personnages</b> (AirBuilder).</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>ℹ️</b> donne le build conseillé.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -146,10 +144,23 @@ export default function CompositionsPage() {
         <div style={{ ...card, textAlign: "center", padding: 40, background: "radial-gradient(circle at 50% 30%, rgba(255,140,26,0.08), transparent 70%)" }}>
           <div style={{ fontSize: 44, marginBottom: 12 }}>⚔️</div>
           <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege — Libre</h2>
-          <p style={{ color: "var(--text)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>Tout le monde peut participer, il n'y a pas de composition stricte. On s'adapte : ramène ton meilleur perso, peu importe la classe. L'essentiel c'est d'être présent et de jouer ensemble. 💪</p>
+          <p style={{ color: "var(--text)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>Tout le monde peut participer, il n&apos;y a pas de composition stricte. On s&apos;adapte : ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. 💪</p>
         </div>
       )}
       </div>
+
+      {/* Bulle d'info : build conseillé */}
+      {info && <div onClick={() => setInfo(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 460, width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <ClassLogo name={info.classe} size={34} />
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{info.label}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
+            <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
+          </div>
+          <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
+          <div style={{ marginTop: 14, fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>🔧 Bientôt : un vrai build de référence consultable dans l&apos;AirBuilder.</div>
+        </div>
+      </div>}
     </div>
   );
 }

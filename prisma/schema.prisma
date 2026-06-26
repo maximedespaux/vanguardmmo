@@ -237,6 +237,13 @@ model AirGuildState {
   updatedAt DateTime @updatedAt
 }
 
+// Composition des Chambres Secrètes — un seul blob partagé par toute la guilde (inscriptions, candidats, sélection).
+model CompositionState {
+  id        String   @id @default("main")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 // ─── ÉVÉNEMENTS DU JEU (éditables sur le site, lus par le bot) ──
 model GameEvent {
   id           String   @id @default(cuid())

@@ -1,7 +1,7 @@
 // Markup du Stuff Builder (moteur vanilla d'iBeats). Source unique, partagée entre
 // /builder (édition) et /builder/[user] (lecture seule) pour éviter toute divergence de layout.
 export const BUILDER_MARKUP = `<div class="wrap">
-  <div class="topbar"><div class="brand">Air<span>Builder</span></div><div class="step">Crée, équipe et compare tes builds</div><div class="savechip" id="vgSaveChip" title="Tes changements sont enregistrés automatiquement. Chaque changement écrase l'état précédent (pas d'annulation) — clique « Publier » pour garder une version restaurable." style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green,#4ade80);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.28);border-radius:20px;padding:4px 11px;margin-left:14px;cursor:help"><span style="width:7px;height:7px;border-radius:50%;background:var(--green,#4ade80);box-shadow:0 0 6px var(--green,#4ade80)"></span> Sauvegarde auto</div>
+  <div class="topbar"><div class="brand">Air<span>Builder</span></div><div class="step">Crée, équipe et compare tes builds</div><div class="savechip" id="vgSaveChip" title="Tes changements sont enregistrés automatiquement. Chaque changement écrase l'état précédent (pas d'annulation) — clique « Publier » pour garder une version restaurable." style="display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green,#4ade80);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.28);border-radius:20px;padding:4px 11px;margin-left:14px;cursor:help"><span style="width:7px;height:7px;border-radius:50%;background:var(--green,#4ade80);box-shadow:0 0 6px var(--green,#4ade80)"></span> Sauvegarde &amp; publication auto</div>
     <div class="ptabs" id="ptabs" style="margin-left:auto"></div></div>
   <div class="setup" id="setup"></div>
   <div class="stuffbar" id="stuffbar"></div>
@@ -20,6 +20,6 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="note" id="famnote" style="display:none"></div>
   <div class="stats" id="stats"></div>
   <div class="panel" id="carnetsPanel"></div>
-  <div class="actions"><button class="btn ghost" onclick="vgSaveHelp()">ℹ️ Comment ça marche ?</button><button class="btn ghost" onclick="resetChar()">↺ Vider ce stuff</button><button class="btn" onclick="vgSavePersos()">📤 Publier mes persos</button></div>
+  <div class="actions"><button class="btn ghost" onclick="vgSaveHelp()">ℹ️ Comment ça marche ?</button><button class="btn ghost" onclick="resetChar()">↺ Vider ce stuff</button><button class="btn" onclick="vgSavePersos()">📤 Publier maintenant</button></div>
 </div>
 <div id="modalRoot"></div>`;

@@ -5,15 +5,17 @@ import { useSession } from "next-auth/react";
 // Charge l'app AirGuild d'iBeats (vanilla JS) et branche son stockage sur la base
 // (state partagé via /api/admin/airguild). Recharge proprement si une autre app
 // (AirBuilder) tenait les globals.
-export function AirGuildRunner() {
+export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
   const { data: session } = useSession();
   // Expose le staff connecté (pseudo + rôle) : tracer qui dépose (#29) + gating édition réservée Vanguard.
+  // + le roster Discord (F2) : les coffres membres sont auto-créés depuis la vraie liste de guilde.
   useEffect(() => {
-    const w = window as unknown as { __agUser?: string; __agRole?: string };
+    const w = window as unknown as { __agUser?: string; __agRole?: string; __agRoster?: string[] };
     const u = session?.user as { username?: string; name?: string; role?: string } | undefined;
     w.__agUser = (u?.username) || (session?.user?.name ?? "") || "";
     w.__agRole = u?.role || (process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1" ? "DIRECTION" : "");
-  }, [session]);
+    w.__agRoster = roster;
+  }, [session, roster]);
   useEffect(() => {
     const w = window as unknown as { __APP?: string; render?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
     if (w.__APP === "airguild" && typeof w.render === "function") { try { w.render(); } catch { /* noop */ } return; }

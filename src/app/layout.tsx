@@ -1,7 +1,11 @@
 import "./globals.css";
 import { Providers } from "./providers";
 
-export const metadata = { title: "Vanguard Hub", description: 'Gestion de la Guilde "Vanguard"' };
+export const metadata = {
+  title: "Vanguard Hub",
+  description: 'Gestion de la Guilde "Vanguard"',
+  verification: { google: "DkXlgvmIl_FtET37wQvxLciYbVqSaE06C78NJdh54Pg" },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

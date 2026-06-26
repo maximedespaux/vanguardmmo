@@ -13,7 +13,11 @@ export async function toggleRole(i: ButtonInteraction, roleId: string) {
 
   const me = await guild.members.fetchMe();
   if (me.roles.highest.comparePositionTo(role) <= 0) {
-    await i.reply({ content: `⚠️ Je ne peux pas gérer le rôle **${role.name}** : il est au-dessus du mien dans la liste des rôles.`, ephemeral: true });
+    await i.reply({ content: `⚠️ Je ne peux pas gérer le rôle **${role.name}** : il est au-dessus du mien dans la liste des rôles (place mon rôle plus haut dans Paramètres du serveur → Rôles).`, ephemeral: true });
+    return;
+  }
+  if (!me.permissions.has("ManageRoles")) {
+    await i.reply({ content: "⚠️ Il me manque la permission **« Gérer les rôles »**.\n→ Paramètres du serveur → Rôles → mon rôle → active **« Gérer les rôles »**.", ephemeral: true });
     return;
   }
 
@@ -28,7 +32,8 @@ export async function toggleRole(i: ButtonInteraction, roleId: string) {
       await member.roles.add(roleId);
       await i.reply({ content: `➕ Rôle **${role.name}** ajouté !`, ephemeral: true });
     }
-  } catch {
-    await i.reply({ content: "Impossible de modifier ce rôle 😬", ephemeral: true });
+  } catch (e) {
+    console.error("[toggleRole] échec add/remove du rôle", role.name, e);
+    await i.reply({ content: `Impossible de modifier le rôle **${role.name}** 😬\n\n→ Dans **Paramètres du serveur → Rôles**, vérifie que mon rôle a la permission **« Gérer les rôles »** et qu'il est placé **au-dessus** des rôles de classe.`, ephemeral: true });
   }
 }

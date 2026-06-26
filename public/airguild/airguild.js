@@ -15,7 +15,7 @@ function classLogo(cl){return cl&&LOGOIDX[cl]!=null?`<span class="climg cl-${LOG
 const KEY='vg_airguild_u2';
 let S=load();
 function canEdit(){return ['VANGUARD','DIRECTION'].indexOf(window.__agRole||'')>=0;} // édition du catalogue réservée Vanguard/Direction (les dépôts de quantité restent ouverts à tous les contributeurs)
-function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
+function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
   return{members:['Commun'],cur:'Commun',inv:{Commun:{}},custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
@@ -56,6 +56,7 @@ function viewBank(){
     sortedM.map(m=>{const isMe=!!me&&m.toLowerCase().trim()===me;const inR=roster.indexOf(m)>=0;return `<div class="mtab ${S.cur===m?'on':''}" onclick="selM('${sq(m)}')"${isMe?' title="Ton coffre personnel"':''}>${isMe?'🫵 ':'👤 '}${esc(m)}${isMe?' <span class="pill" style="font-size:8px;padding:1px 5px;background:var(--orange);color:#0a0a0c">perso</span>':''}${inR?'':` <span class="x" onclick="event.stopPropagation();delM('${sq(m)}')">✕</span>`}</div>`;}).join('')+
     `<div class="mtab ${isTotal?'on':''}" onclick="selM('__total__')" style="border-style:dashed">Σ Total guilde</div>`;
   return `<div class="card"><div class="sec-h">🏦 Coffres <span class="n">commun + individuels</span></div><div class="mtabs">${mtabs}</div></div>
+   ${S.cur==='Commun'?'<div class="hint" style="margin-top:8px">🏛️ <b>Coffre commun</b> — le coffre partagé de la guilde (dépôts et retraits communs ; sert à la boutique et aux crafts).</div>':isTotal?'<div class="hint" style="margin-top:8px">Σ <b>Total guilde</b> — vue en <b>lecture seule</b> : la somme de tous les coffres (Commun + chaque membre), pour voir ce que la guilde possède au total.</div>':''}
    <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()">＋ Objet</button>':''}<button class="btn" onclick="recapSheet()">📊 Récap</button><button class="btn" onclick="itemSearchSheet()">🔍 Fiche objet</button><button class="btn" onclick="openJournal()">🧾 Journal</button></div>
    <div id="bankbody">${bankBody()}</div>`;
 }
@@ -95,14 +96,25 @@ function setQ(id,v){const it=catalog().find(x=>x.id===id);setQty(S.cur,id,v,it?i
 function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
 function delM(m){agConfirm('Supprimer le coffre de '+m+' ?',function(){S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='Commun';save();render();});}
-function allCats(){return [...new Set(D.bankCats.concat((catalog()||[]).map(function(x){return (x.cat||'').trim();}).filter(Boolean)))];}
-function addItem(){if(!canEdit())return agToast('Ajout réservé au rôle Vanguard.',false);openSheet(`<h3>Ajouter un objet au coffre</h3>
-  <div class="field"><label>Catégorie</label><input class="inp" id="ic" list="catlist" placeholder="Catégorie existante ou nouvelle…"><datalist id="catlist">${allCats().map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div>
-  <div class="field"><label>Classe (optionnel)</label><input class="inp" id="icl" placeholder="ex. Arcaniste — ou vide"></div>
+function allCats(){return [...new Set(D.bankCats.concat(S.cats||[]).concat((catalog()||[]).map(function(x){return (x.cat||'').trim();}).filter(Boolean)))];}
+let _aiTab='item';
+function addItem(){if(!canEdit())return agToast('Ajout réservé au rôle Vanguard.',false);_aiTab='item';openSheet(addItemHTML());}
+function addItemHTML(){return `<h3>Ajouter au coffre</h3>
+  <div style="display:flex;gap:6px;margin-bottom:14px"><button class="btn aitab ${_aiTab==='item'?'o':''}" onclick="addItemTab('item')">📦 Item</button><button class="btn aitab ${_aiTab==='cat'?'o':''}" onclick="addItemTab('cat')">🏷️ Catégories</button></div>
+  <div id="aiBody">${_aiTab==='item'?aiItemHTML():aiCatHTML()}</div>`;}
+function addItemTab(t){_aiTab=t;var btns=document.querySelectorAll('.aitab');btns.forEach(function(x,i){x.classList.toggle('o',(i===0&&t==='item')||(i===1&&t==='cat'));});var b=document.getElementById('aiBody');if(b){b.innerHTML=t==='item'?aiItemHTML():aiCatHTML();vgDD();}}
+function aiItemHTML(){return `<div class="field"><label>Asset / image (optionnel)</label><input class="inp" id="iimg" type="file" accept="image/*"><div class="mut" style="font-size:10.5px;margin-top:4px">PNG/JPG. Vide = logo de classe.</div></div>
   <div class="field"><label>Nom de l'objet</label><input class="inp" id="ii" placeholder="ex. Cristal féerique"></div>
+  <div class="field"><label>Catégorie</label><select class="inp" id="ic">${allCats().map(c=>`<option>${esc(c)}</option>`).join('')}</select><div class="mut" style="font-size:10.5px;margin-top:4px">Pas la bonne ? Crée-la dans l'onglet 🏷️ Catégories.</div></div>
+  <div class="field"><label>Classe (optionnel)</label><input class="inp" id="icl" placeholder="ex. Arcaniste — ou vide"></div>
   <div class="field"><label>Unité de comptage</label><select class="inp" id="iu"><option value="unitaire">Unitaire (à la pièce)</option><option value="slot">Slot (1 slot = 9 999)</option></select></div>
-  <div class="field"><label>Asset / image (optionnel)</label><input class="inp" id="iimg" type="file" accept="image/*"><div class="mut" style="font-size:10.5px;margin-top:4px">PNG/JPG. Laisse vide pour utiliser le logo de classe.</div></div>
-  <div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddItem()">Ajouter</button></div>`);}
+  <div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddItem()">Ajouter l'item</button></div>`;}
+function aiCatHTML(){var cats=allCats();return `<div class="hint">Crée et gère les catégories — elles apparaissent dans le menu déroulant de l'onglet Item.</div>
+  <div class="field"><label>Nouvelle catégorie</label><div style="display:flex;gap:8px"><input class="inp" id="newcat" placeholder="ex. Stuff - Luzaka" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCat();}"><button class="btn o" onclick="addCat()">Ajouter</button></div></div>
+  <div style="margin-top:12px"><div class="sec-h" style="font-size:11.5px;margin:0 0 6px">Catégories existantes <span class="n">${cats.length}</span></div><div style="display:flex;flex-direction:column;gap:3px;max-height:38vh;overflow:auto">${cats.map(function(c){var n=(catalog()||[]).filter(function(x){return (x.cat||'').trim()===c;}).length;var custom=(S.cats||[]).indexOf(c)>=0;return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:5px 8px;background:#ffffff05;border-radius:6px"><span>${catIcon(c)} ${esc(c)} <span class="mut" style="font-size:10px">${n} item(s)</span></span>${custom&&!n?`<span class="rm" style="cursor:pointer" title="Supprimer la catégorie vide" onclick="delCat('${sq(c)}')">✕</span>`:''}</div>`;}).join('')}</div></div>
+  <div class="toolbar" style="justify-content:flex-end;margin:12px 0 0"><button class="btn" onclick="closeSheet()">Fermer</button></div>`;}
+function addCat(){var el=$('#newcat');var v=((el&&el.value)||'').trim();if(!v)return;S.cats=S.cats||[];if(allCats().indexOf(v)<0){S.cats.push(v);save();agToast('Catégorie « '+v+' » ajoutée ✓',true);}else{agToast('Cette catégorie existe déjà.',false);}var b=document.getElementById('aiBody');if(b){b.innerHTML=aiCatHTML();vgDD();}}
+function delCat(c){S.cats=(S.cats||[]).filter(function(x){return x!==c;});save();var b=document.getElementById('aiBody');if(b){b.innerHTML=aiCatHTML();vgDD();}}
 function doAddItem(){const cat=$('#ic').value,cl=$('#icl').value.trim(),it=$('#ii').value.trim(),unit=$('#iu').value;if(!it)return;
   const fin=icData=>{S.custom=S.custom||[];S.custom.push({id:'custom|'+cl+'|'+it+'|'+Date.now(),cat,classe:cl,item:it,unit,icData:icData||'',ic:'',prix:0});save();closeSheet();render();};
   const f=$('#iimg').files[0];
@@ -282,7 +294,7 @@ function editItem(id){if(!canEdit())return agToast('Édition réservée au rôle
   openSheet(`<h3>✎ Éditer l'objet</h3>
    <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><div class="logo" style="width:54px;height:54px">${itemAsset(it)}</div><div class="mut" style="font-size:11px">Asset actuel</div></div>
    <div class="field"><label>Nom</label><input class="inp" id="eN" value="${esc(it.item)}"></div>
-   <div class="field"><label>Catégorie</label><input class="inp" id="eC" list="ecatlist" value="${esc(it.cat)}"><datalist id="ecatlist">${[...new Set(opts.concat(allCats()))].map(c=>`<option value="${esc(c)}"></option>`).join('')}</datalist></div>
+   <div class="field"><label>Catégorie</label><select class="inp" id="eC">${[...new Set(opts.concat(allCats()).concat([(it.cat||'').trim()]).filter(Boolean))].map(c=>`<option ${c===(it.cat||'').trim()?'selected':''}>${esc(c)}</option>`).join('')}</select></div>
    <div class="field"><label>Classe (optionnel)</label><input class="inp" id="eCl" value="${esc(it.classe||'')}"></div>
    <div class="field"><label>Unité</label><select class="inp" id="eU"><option value="unitaire" ${it.unit!=='slot'?'selected':''}>Unitaire</option><option value="slot" ${it.unit==='slot'?'selected':''}>Slot (×9 999)</option></select></div>
    <div class="field"><label>Prix boutique (périns)</label><input class="inp" id="eP" type="number" value="${it.prix||0}"></div>

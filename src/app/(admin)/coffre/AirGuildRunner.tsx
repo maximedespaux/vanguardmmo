@@ -17,8 +17,9 @@ export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
     w.__agRoster = roster;
   }, [session, roster]);
   useEffect(() => {
-    const w = window as unknown as { __APP?: string; render?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
-    if (w.__APP === "airguild" && typeof w.render === "function") { try { w.render(); } catch { /* noop */ } return; }
+    const w = window as unknown as { __APP?: string; render?: () => void; renderTabs?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
+    // Re-navigation SPA (Administration → AirGuild) : le markup est recréé vide → on re-rend les onglets ET la vue (sinon onglets vides jusqu'au refresh).
+    if (w.__APP === "airguild" && typeof w.render === "function") { try { w.renderTabs?.(); w.render(); } catch { /* noop */ } return; }
     if (w.__APP && w.__APP !== "airguild") { window.location.reload(); return; }
 
     let cancelled = false;

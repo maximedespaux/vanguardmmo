@@ -141,7 +141,7 @@ export default function GuildViewerPage() {
                 <div style={{ margin: "0 17px 13px", padding: "11px 13px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10 }}>
                   <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", marginBottom: 8 }}>🕘 Historique des builds</div>
                   {histLoading ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Chargement…</div>
-                    : hist.length === 0 ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Aucune version archivée — le membre doit cliquer « 💾 Sauvegarder mes persos » dans l&apos;AirBuilder.</div>
+                    : hist.length === 0 ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Aucune version archivée — le membre doit cliquer « 📤 Publier mes persos » dans l&apos;AirBuilder.</div>
                     : <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>{hist.map((s, i) => (
                         <a key={s.id} href={`/builder/${u.id}?v=${s.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11.5, fontWeight: 600, color: i === 0 ? "var(--orange)" : "var(--text)", background: "var(--bg-2)", border: `1px solid ${i === 0 ? "var(--orange)" : "var(--border)"}`, borderRadius: 7, padding: "5px 11px", textDecoration: "none", whiteSpace: "nowrap" }}>{i === 0 ? "● Actuel · " : ""}{new Date(s.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</a>
                       ))}</div>}

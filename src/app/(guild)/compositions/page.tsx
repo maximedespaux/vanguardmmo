@@ -3,28 +3,8 @@ import { useState, useEffect, useCallback } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
+import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 
-type Slot = { id: string; group: string; label: string; classe: string; note: string; build?: string };
-const CS_SLOTS: Slot[] = [
-  { id: "p1", group: "Tanks (Primats)", label: "Primat — Tank croix", classe: "Primat", note: "Croix puis boss final (tank/dps)", build: "Stuffs nécessaires : DPS · Off-Tank Full HP (Sceptre) · Tank Full HP (Poing).\n\nRôles :\n• DPS — AoE les araignées et petits mobs\n• Off-Tank — tank les Boss (4M8 d'HP) et croix en même temps\n• Tank — Full HP pour tanker le boss final (7M8 d'HP)" },
-  { id: "p2", group: "Tanks (Primats)", label: "Primat — Tank croix jumeaux", classe: "Primat", note: "Croix jumeaux → dps araignée → croix boss final", build: "Primat — DPS / Off-Tank.\n\nCroix jumeaux, puis DPS sur les araignées, puis croix sur le boss final." },
-  { id: "d1", group: "DPS physique", label: "Cheva", classe: "Templier", note: "DPS physique", build: "Templier DPS physique — AoE araignées et mobs." },
-  { id: "d2", group: "DPS physique", label: "YJ", classe: "Sylphide", note: "DPS physique", build: "Sylphide DPS physique." },
-  { id: "d3", group: "DPS physique", label: "Spadassin", classe: "Spadassin", note: "DPS physique", build: "Spadassin DPS physique." },
-  { id: "d4", group: "DPS physique", label: "Arbalétrier", classe: "Arbaletrier", note: "DPS physique", build: "Arbalétrier DPS physique." },
-  { id: "d5", group: "DPS physique", label: "Moine", classe: "Chanoine", note: "DPS physique", build: "Chanoine DPS physique." },
-  { id: "d6", group: "DPS physique", label: "Arcaniste (option)", classe: "Arcaniste", note: "Si besoin : +1 à +2 arca", build: "Arcaniste DPS — slot optionnel si besoin de +1 à +2 arca." },
-  { id: "m1", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca", build: "Arcaniste DPS magique." },
-  { id: "m2", group: "DPS magique", label: "Arcaniste", classe: "Arcaniste", note: "2 à 3 arca", build: "Arcaniste DPS magique." },
-  { id: "m3", group: "DPS magique", label: "Arcaniste (option)", classe: "Arcaniste", note: "3ème arca si dispo", build: "Arcaniste DPS magique — 3ème arca si dispo." },
-  { id: "m4", group: "DPS magique", label: "Soso", classe: "Envouteur", note: "Support / debuff magique", build: "Envoûteur — support / debuff magique." },
-];
-const GROUP_META: Record<string, { color: string; icon: string }> = {
-  "Tanks (Primats)": { color: "#4EA8FF", icon: "🛡️" },
-  "DPS physique": { color: "#FF8C1A", icon: "⚔️" },
-  "DPS magique": { color: "#C77DFF", icon: "🔮" },
-};
-const GROUPS = Object.keys(GROUP_META);
 type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string; selected?: boolean };
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
@@ -108,7 +88,6 @@ export default function CompositionsPage() {
                     <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{slot.label}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{slot.note}</div></div>
                     <button onClick={() => setInfo(slot)} title="Build conseillé" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 15, flexShrink: 0, padding: 2 }}>ℹ️</button>
                   </div>
-                  {/* Candidats (plusieurs possibles) */}
                   {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
                     {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.selected ? meta.color : "var(--text-muted)", flexShrink: 0 }} />
@@ -120,7 +99,6 @@ export default function CompositionsPage() {
                       </span>
                     </div>)}
                   </div>}
-                  {/* S'inscrire (toujours possible — plusieurs candidats) */}
                   <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
                     {mine.length === 0
                       ? <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center" }}>{taken.some(s => s.charId && myChars.some(c => c.id === s.charId)) ? "Inscrit·e" : `Aucun perso ${slot.classe} dispo`}</div>
@@ -132,9 +110,8 @@ export default function CompositionsPage() {
           </div>
         ); })}
 
-        {/* Récap / aide */}
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>ℹ️</b> donne le build conseillé.</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>ℹ️</b> donne le build conseillé + le build de référence.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -149,7 +126,7 @@ export default function CompositionsPage() {
       )}
       </div>
 
-      {/* Bulle d'info : build conseillé */}
+      {/* Bulle d'info : build conseillé + accès au build de référence */}
       {info && <div onClick={() => setInfo(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 460, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
@@ -158,7 +135,10 @@ export default function CompositionsPage() {
             <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
-          <div style={{ marginTop: 14, fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>🔧 Bientôt : un vrai build de référence consultable dans l&apos;AirBuilder.</div>
+          <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 12.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none" }}>👁️ Voir le build de référence</a>
+            {isAdmin && <a href={`/compositions/build/${info.id}?edit=1`} style={{ fontSize: 12.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", textDecoration: "none" }}>✏️ Éditer la référence</a>}
+          </div>
         </div>
       </div>}
     </div>

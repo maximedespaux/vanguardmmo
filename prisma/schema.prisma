@@ -244,6 +244,14 @@ model CompositionState {
   updatedAt DateTime @updatedAt
 }
 
+// Build de référence par poste de Chambre Secrète (id = slotId). Créé/édité par un admin,
+// stocké à part (jamais sur le compte perso). Consultable en lecture par toute la guilde.
+model CompositionRefBuild {
+  id        String   @id
+  blob      Json
+  updatedAt DateTime @updatedAt
+}
+
 // ─── ÉVÉNEMENTS DU JEU (éditables sur le site, lus par le bot) ──
 model GameEvent {
   id           String   @id @default(cuid())

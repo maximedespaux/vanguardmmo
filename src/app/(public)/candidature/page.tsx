@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { QUIZ } from "@/data/quiz";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
+import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { canAccessGuild } from "@/config/roles";
 
@@ -64,7 +65,7 @@ export default function CandidaturePage() {
   async function submit() {
     setError(""); setSending(true);
     try {
-      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, interests, motivation, experience, stuffMode: "build", build: buildExport, quizScore: QUIZ.length, quizTotal: QUIZ.length }) });
+      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })(), quizScore: QUIZ.length, quizTotal: QUIZ.length }) });
       if (!r.ok) {
         setError(r.status === 401 ? "Tu dois être connecté avec Discord pour postuler." : "Échec de l'envoi — réessaie dans un instant.");
         return;
@@ -133,11 +134,18 @@ export default function CandidaturePage() {
         <div style={card}>
           <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}>👤 Tes personnages</h2>
           {chars.map((c, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
-              <input placeholder="Nom du perso" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
-              <VgSelect value={c.cls} onChange={v => { const n = [...chars]; n[i].cls = v; setChars(n); }} options={CLASSES} style={{ flex: 1 }} />
-              <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
-              {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 18 }}>✕</button>}
+            <div key={i} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--orange)" }}> · {c.cls}</span> : null}</span>
+                {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} title="Retirer ce perso" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 16 }}>✕</button>}
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 44, height: 44, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={30} /></button>; })}
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input placeholder="Nom du personnage" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
+                <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
+              </div>
             </div>
           ))}
           <button onClick={() => setChars([...chars, { name: "", cls: "Chanoine", prestige: 3 }])} style={{ ...btnG, marginTop: 10 }}>+ Ajouter un personnage</button>

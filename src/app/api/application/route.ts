@@ -30,6 +30,13 @@ export async function POST(req: Request) {
     console.error("application save failed", e);
   }
 
+  // 1bis) Reprise du build : le build complet realise pendant la candidature devient le build du compte,
+  //   pour que le candidat n'ait pas a tout refaire une fois accepte.
+  if (body.fullBuild && Array.isArray(body.fullBuild.chars) && body.fullBuild.chars.length) {
+    try { await prisma.user.update({ where: { discordId: user.discordId }, data: { builderBlob: body.fullBuild } }); }
+    catch (e) { console.error("carryover build failed", e); }
+  }
+
   // 2) Message public dans #candidatures (webhook)
   const webhook = process.env.DISCORD_CANDIDATURES_WEBHOOK;
   if (!webhook) return NextResponse.json({ ok: true, note: "candidature enregistrée (webhook non configuré)" });

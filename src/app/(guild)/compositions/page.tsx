@@ -17,15 +17,20 @@ export default function CompositionsPage() {
   const [signups, setSignups] = useState<Signup[]>([]);
   const [myChars, setMyChars] = useState<{ id: string; name: string; class: string }[]>([]);
   const [info, setInfo] = useState<Slot | null>(null);
+  const [slotMeta, setSlotMeta] = useState<Record<string, { label?: string; note?: string }>>({});
+  const [editSlot, setEditSlot] = useState<Slot | null>(null);
 
-  // Inscriptions partagées (backend commun) + actualisation automatique toutes les 15 s.
+  // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
-    fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => { if (d && Array.isArray(d.signups)) setSignups(d.signups); }).catch(() => {});
+    fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => { if (d) { if (Array.isArray(d.signups)) setSignups(d.signups); if (d.slotMeta && typeof d.slotMeta === "object") setSlotMeta(d.slotMeta); } }).catch(() => {});
   }, []);
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
   useEffect(() => { fetch("/api/characters").then(r => (r.ok ? r.json() : [])).then(setMyChars).catch(() => {}); }, []);
 
-  const persist = (next: Signup[]) => { setSignups(next); fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ signups: next }) }).catch(() => {}); };
+  const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => { setSignups(next); setSlotMeta(meta); fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ signups: next, slotMeta: meta }) }).catch(() => {}); };
+  const lbl = (s: Slot) => slotMeta[s.id]?.label || s.label;
+  const nt = (s: Slot) => slotMeta[s.id]?.note ?? s.note;
+  const renameSlot = (slot: Slot, label: string, note: string) => { persist(signups, { ...slotMeta, [slot.id]: { label: label || slot.label, note } }); setEditSlot(null); };
   const norm = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const removeSignup = (id: string) => persist(signups.filter(s => s.id !== id));
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
@@ -85,7 +90,8 @@ export default function CompositionsPage() {
                 <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{slot.label}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{slot.note}</div></div>
+                    <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{lbl(slot)}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{nt(slot)}</div></div>
+                    {isAdmin && <button onClick={() => setEditSlot(slot)} title="Renommer le poste (titre + desc)" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 13, flexShrink: 0, padding: 2 }}>✎</button>}
                     <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}>👁️</button>
                   </div>
                   {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
@@ -131,12 +137,27 @@ export default function CompositionsPage() {
         <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 460, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <ClassLogo name={info.classe} size={34} />
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{info.label}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{lbl(info)}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
             <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
           <div style={{ marginTop: 16 }}>
             <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>👁️ Voir le build de référence ↗</a>
+          </div>
+        </div>
+      </div>}
+
+      {/* Renommer un poste (admin) */}
+      {editSlot && <div onClick={() => setEditSlot(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div key={editSlot.id} onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 440, width: "100%" }}>
+          <div className="font-heading" style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>✎ Renommer le poste</div>
+          <label style={{ fontSize: 12, fontWeight: 600 }}>Titre du poste</label>
+          <input id="es-label" defaultValue={lbl(editSlot)} style={{ width: "100%", margin: "6px 0 12px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
+          <label style={{ fontSize: 12, fontWeight: 600 }}>Description</label>
+          <textarea id="es-note" defaultValue={nt(editSlot)} rows={2} style={{ width: "100%", margin: "6px 0 14px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", resize: "vertical", fontFamily: "inherit" }} />
+          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <button onClick={() => setEditSlot(null)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", cursor: "pointer" }}>Annuler</button>
+            <button onClick={() => { const l = (document.getElementById("es-label") as HTMLInputElement | null)?.value.trim() ?? ""; const n = (document.getElementById("es-note") as HTMLTextAreaElement | null)?.value.trim() ?? ""; renameSlot(editSlot, l, n); }} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--orange)", color: "#0a0a0c", fontWeight: 700, cursor: "pointer" }}>Enregistrer</button>
           </div>
         </div>
       </div>}

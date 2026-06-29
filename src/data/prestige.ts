@@ -11,9 +11,9 @@ export const PRESTIGE_COSTS: Record<number, Record<string, number>> = {
   4: { "Nucléus neutre": 35000 },
   5: { "Badge Jardin Prestigieux": 10, "Emblème de protection": 5000 },
   6: { "Badge Jardin Prestigieux": 15, "Badge de la Tour": 1, "Nucléus neutre": 10000, "Emblème de protection": 6000 },
-  7: { "Périn": 500, "Nucléus neutre": 25000, "Nucléus Feu": 5000, "Nucléus Eau": 5000, "Nucléus Foudre": 5000, "Nucléus Vent": 5000, "Nucléus Terre": 5000, "Badge World Boss prestigieux": 1 },
+  7: { "Périn": 500, "Nucléus neutre": 25000, "Nucléus parfait": 5000, "Badge World Boss prestigieux": 1 },
   8: { "Badge Jardin Prestigieux": 10, "Badge de la Tour": 1, "Badge de donjon mineur": 2, "Badge World Boss prestigieux": 1 },
-  9: { "Emblème de protection": 4000, "Nucléus Terre": 9999, "Nucléus Feu": 9999, "Nucléus Foudre": 9999, "Nucléus Eau": 9999, "Nucléus Vent": 9999, "Badge Donjon": 2, "Badge de donjon mineur": 2, "Badge Jardin Prestigieux": 25, "Badge World Boss prestigieux": 2 },
+  9: { "Emblème de protection": 4000, "Nucléus parfait": 9999, "Badge Donjon": 2, "Badge de donjon mineur": 2, "Badge Jardin Prestigieux": 25, "Badge World Boss prestigieux": 2 },
 };
 
 /** Toutes les ressources référencées, dans un ordre d'affichage stable. */

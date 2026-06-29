@@ -8,6 +8,7 @@ import { VgSelect } from "@/components/VgSelect";
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 function emojiFor(k: string): string {
   const s = k.toLowerCase();
+  if (s.includes("parfait")) return "💠";
   if (s.includes("feu")) return "🔥";
   if (s.includes("eau")) return "💧";
   if (s.includes("foudre")) return "⚡";

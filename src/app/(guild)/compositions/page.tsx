@@ -29,8 +29,8 @@ export default function CompositionsPage() {
   const norm = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const removeSignup = (id: string) => persist(signups.filter(s => s.id !== id));
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
-    if (signups.some(s => s.charId === char.id && s.slotId === slot.id)) return;
-    persist([...signups, { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
+    // Un perso ne peut être que sur UN poste : on retire son éventuelle inscription ailleurs avant d'ajouter.
+    persist([...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
   };
   const selectSignup = (slotId: string, id: string) => persist(signups.map(s => s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
   const resetAll = () => { if (window.confirm("Réinitialiser toute la composition ? Toutes les inscriptions seront effacées pour tout le monde.")) persist([]); };
@@ -81,12 +81,12 @@ export default function CompositionsPage() {
               <span style={{ marginLeft: "auto", fontSize: 12, color: meta.color, fontWeight: 600 }}>{done}/{slots.length}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(235px,1fr))", gap: 12, padding: 18 }}>
-              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !taken.some(s => s.charId === c.id)); return (
+              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !signups.some(s => s.charId === c.id)); return (
                 <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{slot.label}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{slot.note}</div></div>
-                    <button onClick={() => setInfo(slot)} title="Build conseillé" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 15, flexShrink: 0, padding: 2 }}>ℹ️</button>
+                    <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}>👁️</button>
                   </div>
                   {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
                     {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
@@ -111,7 +111,7 @@ export default function CompositionsPage() {
         ); })}
 
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>ℹ️</b> donne le build conseillé + le build de référence.</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>👁️</b> donne le build conseillé + le build de référence.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -135,9 +135,8 @@ export default function CompositionsPage() {
             <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
-          <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 12.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none" }}>👁️ Voir le build de référence</a>
-            {isAdmin && <a href={`/compositions/build/${info.id}?edit=1`} style={{ fontSize: 12.5, fontWeight: 600, padding: "8px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", textDecoration: "none" }}>✏️ Éditer la référence</a>}
+          <div style={{ marginTop: 16 }}>
+            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>👁️ Voir le build de référence ↗</a>
           </div>
         </div>
       </div>}

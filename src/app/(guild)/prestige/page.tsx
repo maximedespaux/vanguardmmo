@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PRESTIGE_COSTS, PRESTIGE_KEYS, prestigeNeed } from "@/data/prestige";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
@@ -67,8 +67,21 @@ function svgFor(k: string, size: number) {
   );
 }
 function PrestigeIcon({ name, size = 22 }: { name: string; size?: number }) {
-  const [fail, setFail] = useState(false);
-  if (!fail) return <img src={iconSrc(name)} alt="" width={size} height={size} style={{ objectFit: "contain", display: "inline-block", verticalAlign: "middle" }} onError={() => setFail(true)} />;
+  // Repli robuste (compatible SSR) : on affiche l'icône SVG par défaut, et on précharge
+  // la vraie image en arrière-plan. Si elle existe (override connu ou PNG déposé), on bascule
+  // dessus → jamais d'image cassée, et le « drop to swap » fonctionne sans toucher au code.
+  const override = ICON_OVERRIDE[name];
+  const [dropped, setDropped] = useState<string | null>(null);
+  useEffect(() => {
+    if (override) return;
+    let alive = true;
+    const im = new Image();
+    im.onload = () => { if (alive) setDropped(iconSrc(name)); };
+    im.src = iconSrc(name);
+    return () => { alive = false; };
+  }, [name, override]);
+  const src = override ?? dropped;
+  if (src) return <img src={src} alt="" width={size} height={size} style={{ objectFit: "contain", display: "inline-block", verticalAlign: "middle" }} />;
   return svgFor(name, size);
 }
 

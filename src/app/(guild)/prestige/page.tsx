@@ -6,21 +6,70 @@ import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
-function emojiFor(k: string): string {
+// Icône d'une ressource : vraie image si présente (override connu, ou PNG déposé dans
+// /public/assets/items/prestige/<slug>.png par l'admin) → sinon une icône SVG stylée en repli.
+// Déposer un PNG au bon nom suffit à basculer sur la vraie icône, sans toucher au code.
+const ICON_OVERRIDE: Record<string, string> = {
+  "Périn": "/assets/items/cash/perinparticle.png",
+};
+const SVGBOX = { display: "inline-block", verticalAlign: "middle" } as const;
+function slugify(k: string): string {
+  return k.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+function iconSrc(k: string): string {
+  return ICON_OVERRIDE[k] ?? `/assets/items/prestige/${slugify(k)}.png`;
+}
+function svgFor(k: string, size: number) {
   const s = k.toLowerCase();
-  if (s.includes("parfait")) return "💠";
-  if (s.includes("feu")) return "🔥";
-  if (s.includes("eau")) return "💧";
-  if (s.includes("foudre")) return "⚡";
-  if (s.includes("vent")) return "🌪️";
-  if (s.includes("terre")) return "🪨";
-  if (s.includes("nucléus") || s.includes("nucleus")) return "⚪";
-  if (s.includes("emblème") || s.includes("embleme")) return "🛡️";
-  if (s.includes("périn") || s.includes("perin")) return "🪙";
-  if (s.includes("badge")) return "🎖️";
-  if (s.includes("farm")) return "🎟️";
-  if (s.includes("jeton")) return "🎫";
-  return "📦";
+  const orb = (base: string, stops: [number, string][], ring: string) => {
+    const gid = base + size;
+    return (
+      <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
+        <defs><radialGradient id={gid} cx="38%" cy="33%" r="75%">{stops.map(([o, c]) => <stop key={o} offset={`${o}%`} stopColor={c} />)}</radialGradient></defs>
+        <circle cx="12" cy="12" r="9" fill={`url(#${gid})`} stroke={ring} strokeWidth="0.6" />
+        <ellipse cx="9" cy="8.4" rx="2.6" ry="1.5" fill="#ffffff" opacity="0.5" />
+      </svg>
+    );
+  };
+  if (s.includes("parfait")) return orb("nuP", [[0, "#ffffff"], [32, "#a6ecff"], [58, "#c3a3ff"], [82, "#ff9ec7"], [100, "#ffce6b"]], "#e9c2ff");
+  if (s.includes("feu")) return orb("nuFeu", [[0, "#fff0e0"], [55, "#ff8a4c"], [100, "#c0341a"]], "#ffb38a");
+  if (s.includes("eau")) return orb("nuEau", [[0, "#eaffff"], [55, "#54c8ff"], [100, "#1f6fd0"]], "#a9e4ff");
+  if (s.includes("foudre")) return orb("nuFou", [[0, "#fffbe0"], [55, "#ffd84a"], [100, "#caa00f"]], "#ffe98a");
+  if (s.includes("vent")) return orb("nuVen", [[0, "#eafff4"], [55, "#56e0a8"], [100, "#1f9c6e"]], "#a9f0d2");
+  if (s.includes("terre")) return orb("nuTer", [[0, "#f6ecde"], [55, "#caa06a"], [100, "#7d5a2e"]], "#e0c8a4");
+  if (s.includes("nucl")) return orb("nuN", [[0, "#ffffff"], [45, "#d2d6dd"], [100, "#6b7280"]], "#9aa1ab");
+  if (s.includes("embl")) return (
+    <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
+      <defs><linearGradient id={`emb${size}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7fb8ff" /><stop offset="1" stopColor="#2f6fd6" /></linearGradient></defs>
+      <path d="M12 2.4 L20 5.2 V11 C20 16 16.5 19.6 12 21.8 C7.5 19.6 4 16 4 11 V5.2 Z" fill={`url(#emb${size})`} stroke="#a8ccff" strokeWidth="0.7" />
+      <path d="M9 12 l2 2 3.6 -3.9" fill="none" stroke="#ffffff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+  if (s.includes("badge")) return (
+    <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
+      <defs><linearGradient id={`bdg${size}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFD96B" /><stop offset="1" stopColor="#E29A16" /></linearGradient></defs>
+      <path d="M8.4 2 H15.6 L14 9 H10 Z" fill="#c0492b" />
+      <circle cx="12" cy="14.6" r="6.6" fill={`url(#bdg${size})`} stroke="#b07d16" strokeWidth="0.7" />
+      <path d="M12 11.1 l1.05 2.13 2.35 .34 -1.7 1.66 .4 2.34 -2.1 -1.1 -2.1 1.1 .4 -2.34 -1.7 -1.66 2.35 -.34 Z" fill="#fff7df" />
+    </svg>
+  );
+  if (s.includes("perin") || s.includes("périn")) return (
+    <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
+      <defs><radialGradient id={`coin${size}`} cx="40%" cy="34%" r="72%"><stop offset="0" stopColor="#fff3c4" /><stop offset="60%" stopColor="#f4c542" /><stop offset="100%" stopColor="#c2871a" /></radialGradient></defs>
+      <circle cx="12" cy="12" r="9" fill={`url(#coin${size})`} stroke="#b07d16" strokeWidth="0.7" />
+      <text x="12" y="15.6" textAnchor="middle" fontSize="9" fontWeight="700" fill="#946410">P</text>
+    </svg>
+  );
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="#9aa1ab" strokeWidth="1.5" strokeLinejoin="round" style={SVGBOX}>
+      <path d="M3.5 7 L12 3 L20.5 7 V17 L12 21 L3.5 17 Z" /><path d="M3.5 7 L12 11 L20.5 7 M12 11 V21" />
+    </svg>
+  );
+}
+function PrestigeIcon({ name, size = 22 }: { name: string; size?: number }) {
+  const [fail, setFail] = useState(false);
+  if (!fail) return <img src={iconSrc(name)} alt="" width={size} height={size} style={{ objectFit: "contain", display: "inline-block", verticalAlign: "middle" }} onError={() => setFail(true)} />;
+  return svgFor(name, size);
 }
 
 export default function PrestigePage() {
@@ -76,7 +125,7 @@ export default function PrestigePage() {
               return (
                 <div key={k} className="pr-card" style={{ border: `1px solid ${ok ? "var(--green)" : "var(--border)"}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
-                    <span style={{ fontSize: 19 }}>{emojiFor(k)}</span>
+                    <PrestigeIcon name={k} size={24} />
                     <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>{k}</span>
                     {ok && <span style={{ color: "var(--green)", fontSize: 15 }}>✓</span>}
                   </div>
@@ -103,7 +152,7 @@ export default function PrestigePage() {
                   <thead>
                     <tr style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: 10, borderBottom: "1px solid var(--border)" }}>
                       <th style={{ padding: 8, textAlign: "left" }}>Palier</th>
-                      {PRESTIGE_KEYS.map((k) => <th key={k} style={{ padding: 8, textAlign: "right" }} title={k}>{emojiFor(k)}</th>)}
+                      {PRESTIGE_KEYS.map((k) => <th key={k} style={{ padding: 8, textAlign: "right" }} title={k}><PrestigeIcon name={k} size={16} /></th>)}
                     </tr>
                   </thead>
                   <tbody>

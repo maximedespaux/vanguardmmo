@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PRESTIGE_COSTS, PRESTIGE_KEYS, prestigeNeed } from "@/data/prestige";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
@@ -31,6 +31,17 @@ function svgFor(k: string, size: number) {
       </svg>
     );
   };
+  const medal = (base: string, ribbon: string, c1: string, c2: string, ring: string, emblem: ReactNode) => {
+    const gid = base + size;
+    return (
+      <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
+        <defs><linearGradient id={gid} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={c1} /><stop offset="1" stopColor={c2} /></linearGradient></defs>
+        <path d="M8.4 2 H15.6 L14 8.4 H10 Z" fill={ribbon} />
+        <circle cx="12" cy="14.6" r="6.6" fill={`url(#${gid})`} stroke={ring} strokeWidth="0.7" />
+        {emblem}
+      </svg>
+    );
+  };
   if (s.includes("parfait")) return orb("nuP", [[0, "#ffffff"], [32, "#a6ecff"], [58, "#c3a3ff"], [82, "#ff9ec7"], [100, "#ffce6b"]], "#e9c2ff");
   if (s.includes("feu")) return orb("nuFeu", [[0, "#fff0e0"], [55, "#ff8a4c"], [100, "#c0341a"]], "#ffb38a");
   if (s.includes("eau")) return orb("nuEau", [[0, "#eaffff"], [55, "#54c8ff"], [100, "#1f6fd0"]], "#a9e4ff");
@@ -45,14 +56,24 @@ function svgFor(k: string, size: number) {
       <path d="M9 12 l2 2 3.6 -3.9" fill="none" stroke="#ffffff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-  if (s.includes("badge")) return (
-    <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
-      <defs><linearGradient id={`bdg${size}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFD96B" /><stop offset="1" stopColor="#E29A16" /></linearGradient></defs>
-      <path d="M8.4 2 H15.6 L14 9 H10 Z" fill="#c0492b" />
-      <circle cx="12" cy="14.6" r="6.6" fill={`url(#bdg${size})`} stroke="#b07d16" strokeWidth="0.7" />
-      <path d="M12 11.1 l1.05 2.13 2.35 .34 -1.7 1.66 .4 2.34 -2.1 -1.1 -2.1 1.1 .4 -2.34 -1.7 -1.66 2.35 -.34 Z" fill="#fff7df" />
-    </svg>
-  );
+  if (s.includes("mineur")) return medal("bMin", "#0f6e5f", "#7fe6d4", "#1f9c84", "#2fbfa6", (
+    <g fill="none" stroke="#e3fffa" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"><circle cx="10.2" cy="12.6" r="2.2" /><path d="M11.8 14.2 L15.6 18 M14.2 16.6 L15.4 15.4 M15.6 18 L16.8 16.8" /></g>
+  ));
+  if (s.includes("jardin")) return medal("bJar", "#b06a14", "#FFD96B", "#E29A16", "#b07d16", (
+    <path d="M8.6 17.6 L8.1 12.4 L10.2 14.2 L12 10.9 L13.8 14.2 L15.9 12.4 L15.4 17.6 Z" fill="#fff7df" />
+  ));
+  if (s.includes("tour")) return medal("bTou", "#27406e", "#a9c2e6", "#3a5a8a", "#7d9bc4", (
+    <g><path d="M9.4 18 V12.2 H10.4 V11.2 H11.2 V12.2 H12.8 V11.2 H13.6 V12.2 H14.6 V18 Z" fill="#eef3fb" /><rect x="11.2" y="15" width="1.6" height="3" fill="#3a5a8a" /></g>
+  ));
+  if (s.includes("boss")) return medal("bBos", "#7a1828", "#e8788a", "#a82038", "#d05a6e", (
+    <g><path d="M12 9.6 C9.6 9.6 8.1 11.1 8.1 13 C8.1 14.2 8.7 15 9.5 15.4 V17.6 H10.6 V16.4 H11.4 V17.6 H12.6 V16.4 H13.4 V17.6 H14.5 V15.4 C15.3 15 15.9 14.2 15.9 13 C15.9 11.1 14.4 9.6 12 9.6 Z" fill="#ffe9ec" /><circle cx="10.3" cy="12.8" r="1.05" fill="#a82038" /><circle cx="13.7" cy="12.8" r="1.05" fill="#a82038" /></g>
+  ));
+  if (s.includes("donjon")) return medal("bDon", "#46228a", "#b89ae0", "#6a3fb0", "#9a78d0", (
+    <g fill="none" stroke="#f0e8fb"><path d="M8.2 18 V13.6 A3.8 3.8 0 0 1 15.8 13.6 V18" strokeWidth="1.3" /><path d="M10.3 11.6 V18 M12 10.7 V18 M13.7 11.6 V18 M8.2 18 H15.8" strokeWidth="1.1" /></g>
+  ));
+  if (s.includes("badge")) return medal("bGen", "#b06a14", "#FFD96B", "#E29A16", "#b07d16", (
+    <path d="M12 11.1 l1.05 2.13 2.35 .34 -1.7 1.66 .4 2.34 -2.1 -1.1 -2.1 1.1 .4 -2.34 -1.7 -1.66 2.35 -.34 Z" fill="#fff7df" />
+  ));
   if (s.includes("perin") || s.includes("périn")) return (
     <svg viewBox="0 0 24 24" width={size} height={size} style={SVGBOX}>
       <defs><radialGradient id={`coin${size}`} cx="40%" cy="34%" r="72%"><stop offset="0" stopColor="#fff3c4" /><stop offset="60%" stopColor="#f4c542" /><stop offset="100%" stopColor="#c2871a" /></radialGradient></defs>

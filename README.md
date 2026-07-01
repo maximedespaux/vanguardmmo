@@ -1,53 +1,154 @@
+<div align="center">
+
 # 🦉 Vanguard Control Center
 
-Plateforme de gestion de la guilde **Vanguard** sur le serveur privé **AirFlyff**.
-Un **site web** (Next.js 15) + un **bot Discord** (discord.js) qui partagent **une seule base PostgreSQL** et communiquent via celle-ci.
+**La plateforme tout-en-un de la guilde Vanguard** — serveur privé **AirFlyff**
 
-Connexion **Discord OAuth**, accès **par rôle** (Public / Membre / Staff), le tout en français.
+Un site web et un bot Discord qui partagent la même base de données :
+ce qui se passe sur le site se retrouve sur Discord, et inversement.
 
----
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![discord.js](https://img.shields.io/badge/discord.js-14-5865F2?logo=discord&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-prod-2496ED?logo=docker&logoColor=white)
 
-## ✨ Fonctionnalités
-
-### 🌐 Le site
-**Public**
-- **Accueil / Histoire** — présentation de la guilde + connexion Discord
-- **Candidature** — formulaire complet (profil, persos, stuff, quiz) relayé sur Discord
-
-**Espace membre**
-- **Dashboard** — vue d'ensemble de la guilde en temps réel
-- **AirBuilder** — créateur de build (classe, équipement, perçage, sertissage, runes, sets, fées, familiers…)
-- **Banque** — demandes d'achat (−20 %) ou de dette, liées au coffre, validées sur Discord
-- **Guides** — guide de progression + **calculateur de prestige**
-- **PvE** — suivi des donjons + World Boss
-- **Chambres Secrètes** — compositions d'équipe (reset auto mer./dim. 22h)
-- **Personnages**, **Échanges**, **Paramètres**
-
-**Espace staff (admin)**
-- **GuildViewer** — suivi des membres, persos, builds et spécialisations
-- **AirGuild** — coffre de guilde par membre, journal des mouvements, dettes, recettes
-- **Plan de farm** — déficits du coffre croisés avec les classes des membres
-- **Banque (gestion)**, **Candidatures**, **World Boss**, **Annonces**
-- **Discord** — pilotage du bot (embeds, giveaways, panneau de classes) + **Événements** (édités sur le site, lus par le bot)
-
-### 💬 Le bot Discord
-14 commandes slash, salon **#decisions** (validation candidatures/dettes/banque en 1 clic + MP au membre), relais automatiques site → Discord, rappels (candidatures, dettes, **événements de jeu**), giveaways avec tirage auto, auto-attribution des rôles de classe.
-👉 Détails dans [`bot/README.md`](bot/README.md).
+</div>
 
 ---
 
-## 🛠️ Stack technique
-- **Next.js 15** (App Router) · **React 18** · **TypeScript**
-- **PostgreSQL** + **Prisma** (ORM)
-- **NextAuth** (Discord OAuth)
-- **discord.js v14** + **node-cron** (le bot)
+## 🧭 Vue d'ensemble
+
+```mermaid
+flowchart LR
+    M["👤 Membre / Staff"] --> UI
+    V["🌍 Visiteur / Candidat"] --> UI
+
+    subgraph SITE["🌐 Site — Next.js 15"]
+        UI["27 pages<br/>(App Router)"] --> API["Routes API<br/>(35 endpoints)"]
+        AUTH["NextAuth<br/>OAuth Discord"]
+    end
+
+    API --> DB[("🗄️ PostgreSQL<br/>Prisma — 30 modèles")]
+
+    subgraph BOT["🤖 Bot — discord.js 14"]
+        CMD["14 commandes slash"]
+        CRON["Planificateur<br/>(node-cron)"]
+        DEC["Salon décisions<br/>(boutons 1 clic)"]
+    end
+
+    CMD --> DB
+    CRON --> DB
+    DEC --> DB
+
+    AUTH <--> DIS["💬 Serveur Discord<br/>Vanguard"]
+    CMD --> DIS
+    CRON --> DIS
+    DEC --> DIS
+```
+
+- **Connexion Discord** (OAuth) : le rôle Discord du membre détermine ses accès sur le site — vérifié **côté serveur** à 3 niveaux (middleware, layouts, API).
+- **Une seule base** : le site écrit, le bot lit (et inversement). Aucun doublon de données.
+- **Tout en français**, pensé pour la guilde.
 
 ---
 
-## 📦 Prérequis
-- **Node.js 18+**
-- **Docker** (pour la base PostgreSQL en local) — ou un PostgreSQL existant
-- Une **application Discord** (portail développeur) avec un bot
+## ✨ Le site
+
+### 🌍 Public
+| Page | Rôle |
+|---|---|
+| **Histoire** | Vitrine de la guilde : présentation, objectifs, fonctionnalités |
+| **Candidature** | Recrutement en 5 étapes (profil, spés, stuff via le Builder intégré, quiz, récap) — transmis au staff sur Discord, et le build réalisé est **repris automatiquement sur le compte** du candidat une fois accepté |
+
+### ⚔️ Espace membre
+| Page | Rôle |
+|---|---|
+| **Dashboard** | Vue d'ensemble temps réel : membres, persos, dettes, coffre, candidatures, world boss |
+| **AirBuilder** | Créateur de build complet (équipement, perçage, sertissage, runes, sets, fées, familiers…) avec **sauvegarde & publication automatiques**, versions archivées, multi-persos et multi-stuffs (DPS / Tank / Hybride) |
+| **Chambres Secrètes** | Compositions d'équipe **partagées** : plusieurs candidats par poste, sélection ★ par le staff, **builds de référence consultables par poste** (édités par le rang Vanguard), postes renommables |
+| **Banque** | Parcourir le coffre, panier, demandes d'achat (−20 %) ou de dette, suivi des remboursements |
+| **Personnages** | Ses persos (classe, prestige, niveau) et profils de stuff |
+| **Guides & Prestige** | Guide de progression par palier + **calculateur de prestige** (ressources cumulées entre deux paliers) |
+| **Donjons / World Boss** | Wiki des 23 donjons, suivi des runs, présence aux world boss |
+| **Échanges / Absences / Paramètres** | Échanges PNJ du serveur, déclaration d'absences, préférences |
+
+### 🛡️ Espace staff
+| Page | Rôle |
+|---|---|
+| **GuildViewer** | Suivi complet des membres : persos, classes, **builds publiés** (avec historique de versions), activité |
+| **AirGuild (coffre)** | Coffre de guilde par membre : dépôts, **catégories personnalisables** (création, image, réorganisation par glisser-déposer), fiche détaillée par objet, journal des mouvements, **calculateur de craft** |
+| **Plan de farm** | Ce qui manque au coffre pour atteindre les seuils, calculé sur le stock réel |
+| **Banque (gestion)** | Traiter les requêtes, fixer les prix, valider les remboursements |
+| **Candidatures** | Examiner et décider (accepter / refuser / entretien / attente) |
+| **Discord & Événements** | Piloter le bot depuis le site (embeds, giveaways, panneau de classes) et programmer les **événements récurrents du jeu** que le bot annonce tout seul |
+| **World Boss (gestion) / Annonces** | Fiches de boss, planification, annonces en embed |
+
+---
+
+## 🤖 Le bot
+
+**14 commandes slash** (`/candidature`, `/dette`, `/dettes`, `/dette-payer`, `/coffre`, `/mesperso`, `/absence`, `/giveaway`, `/embed`, `/boutonrole`, `/rolereaction`, `/panneau-classes`, `/aide`…) et surtout des **automatismes** :
+
+- **Salon décisions** : chaque candidature, demande de dette ou requête banque arrive en embed avec des boutons — le staff décide **en 1 clic**, le membre est prévenu **en message privé**, tout est journalisé.
+- **Rappels intelligents** : candidatures en attente, échéances de dettes (MP au débiteur + récap staff), événements du jeu (annonce + rappel X min avant, configurés depuis le site sans redémarrage).
+- **Rôles en self-service** : panneau de classes à boutons, bouton-rôles et rôle-réactions (façon MEE6, mais maison).
+- **Giveaways** : participation par bouton, tirage et clôture automatiques, reroll.
+
+```mermaid
+sequenceDiagram
+    actor C as Candidat
+    participant S as 🌐 Site
+    participant B as 🗄️ Base
+    participant T as 🤖 Bot
+    participant D as 💬 Salon décisions
+
+    C->>S: Candidature (5 étapes + build)
+    S->>B: Enregistrement
+    S-->>D: Annonce publique (webhook)
+    T->>B: Détecte la nouvelle candidature
+    T->>D: Embed avec boutons
+    Note over D: Le staff clique :<br/>✅ Accepter · ❌ Refuser · 🎙️ Entretien · ⏳ Attente
+    D->>T: Décision
+    T->>B: Statut + journal d'audit
+    T-->>C: Message privé avec le résultat
+```
+
+Le site peut aussi **commander le bot** (poster un embed, lancer un giveaway, publier le panneau de classes) via une file de commandes en base :
+
+```mermaid
+flowchart LR
+    A["🖥️ Page Discord<br/>(staff, sur le site)"] -->|"enfile une commande"| Q[("File<br/>BotCommand")]
+    Q -->|"lecture toutes les 12 s"| B["🤖 Bot"]
+    B -->|"poste"| D["💬 Discord"]
+    B -->|"met en cache les salons"| G[("GuildChannel")]
+    G -->|"alimente les menus"| A
+```
+
+👉 Détails complets dans [`bot/README.md`](bot/README.md).
+
+---
+
+## 🔐 Accès par rôle
+
+| Niveau | Rôles Discord | Ce qu'il ouvre |
+|---|---|---|
+| **Public** | tout le monde | Histoire, candidature, connexion |
+| **Membre** | 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard | Tout l'espace membre |
+| **Staff** | 👑 Vanguard · 🧭 Général · 🔥 Officier | Espace staff + décisions |
+| **Édition des builds de référence (CS)** | 👑 Vanguard uniquement | Les autres rôles consultent |
+
+Le gating est fait **côté serveur** (middleware → layouts → API). Les accès refusés redirigent vers `/login` avec un message clair ; pages 404 / erreur personnalisées.
+
+---
+
+## 🛠️ Stack
+
+**Next.js 15** (App Router) · **React 18** · **TypeScript 5** · **PostgreSQL 16** + **Prisma 5** · **NextAuth** (OAuth Discord) · **discord.js 14** + **node-cron** · **Docker** (prod)
+
+Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications JavaScript embarquées dans `public/`, branchées à la base via les routes API — synchronisation entre appareils et publication à la guilde incluses.
 
 ---
 
@@ -58,67 +159,38 @@ Connexion **Discord OAuth**, accès **par rôle** (Public / Membre / Staff), le 
 npm install
 
 # 2) Variables d'environnement
-cp .env.example .env
-#   → remplis les valeurs (voir la section ci-dessous)
+cp .env.example .env        # puis remplis les valeurs (voir ci-dessous)
 
-# 3) Base de données (PostgreSQL via Docker, port 5434)
+# 3) Base de données (PostgreSQL via Docker, port hôte 5434)
 docker compose up -d
-npm run db:push          # crée les tables depuis prisma/schema.prisma
+npm run db:push             # crée les tables
+npm run db:seed             # (optionnel) données du coffre
 
-# 4) Lancer le site
-npm run dev              # → http://localhost:3000
+# 4) Le site
+npm run dev                 # → http://localhost:3000
 
-# 5) (optionnel) Lancer le bot, dans un autre terminal
-npm run bot:deploy       # enregistre les commandes slash (une fois)
-npm run bot              # démarre le bot
+# 5) (optionnel) Le bot, dans un autre terminal
+npm run bot:deploy          # enregistre les commandes slash (une fois)
+npm run bot
 ```
 
-> 💡 **Mode dev local** : mets `DEV_ALL_ACCESS=1` et `NEXT_PUBLIC_DEV_ALL_ACCESS=1` dans `.env` pour bypasser la connexion Discord et accéder à tout (désactivé automatiquement en prod).
+> 💡 **Mode dev** : `DEV_ALL_ACCESS=1` + `NEXT_PUBLIC_DEV_ALL_ACCESS=1` dans `.env` simulent un compte Direction sans connexion Discord. **Jamais en production.**
 
 ---
 
-## 🔑 Variables d'environnement (`.env`)
+## 🔑 Variables d'environnement
 
-```bash
-# Base de données (partagée site + bot)
-DATABASE_URL="postgresql://USER:PASS@localhost:5434/vanguard"
+| Groupe | Variables | Rôle |
+|---|---|---|
+| Base | `DATABASE_URL` | Connexion PostgreSQL (partagée site + bot) |
+| Site | `NEXTAUTH_URL` · `NEXTAUTH_SECRET` | URL publique + secret de session |
+| OAuth | `DISCORD_CLIENT_ID` · `DISCORD_CLIENT_SECRET` | Application Discord (connexion) |
+| Bot | `DISCORD_BOT_TOKEN` · `DISCORD_GUILD_ID` | Token du bot + id du serveur |
+| Salons | `CHANNEL_DECISION` · `CHANNEL_CANDIDATURES` · `CHANNEL_STAFF` · `CHANNEL_EVENTS` · `DISCORD_CANDIDATURES_WEBHOOK` | Où le bot poste (décisions & candidatures : salon **forum** accepté) |
+| Rôles | `ROLE_DIRECTION` … `ROLE_GUARD` · `ROLE_CLASSE_SPADASSIN` … `ROLE_CLASSE_CHANOINE` | Ids des rangs et des 8 classes |
+| Dev | `DEV_ALL_ACCESS` · `NEXT_PUBLIC_DEV_ALL_ACCESS` | Bypass local uniquement |
 
-# NextAuth (site)
-NEXTAUTH_URL="http://localhost:3000"      # en prod : l'URL du domaine
-NEXTAUTH_SECRET="..."                     # openssl rand -base64 32
-
-# Discord — application (OAuth du site)
-DISCORD_CLIENT_ID="..."
-DISCORD_CLIENT_SECRET="..."
-
-# Discord — bot
-DISCORD_BOT_TOKEN="..."
-DISCORD_GUILD_ID="..."                    # id du serveur
-
-# Salons (clic droit → Copier l'identifiant ; ⚠️ #decisions & #candidatures = FORUM)
-CHANNEL_DECISION="..."
-CHANNEL_CANDIDATURES="..."
-CHANNEL_STAFF="..."
-CHANNEL_EVENTS="..."
-
-# Rôles — rangs (accès) + classes + spécialisations
-ROLE_DIRECTION / ROLE_VANGUARD / ROLE_GENERAL / ROLE_OFFICIER / ROLE_VETERAN / ROLE_GUARD
-ROLE_CLASSE_SPADASSIN … ROLE_CLASSE_CHANOINE
-ROLE_SPEC_CHAMBRES_SECRETES / ROLE_SPEC_PVE / ROLE_SPEC_PVP
-
-# Dev local uniquement (jamais en prod)
-DEV_ALL_ACCESS="1"
-NEXT_PUBLIC_DEV_ALL_ACCESS="1"
-```
-
----
-
-## 🔐 Accès par rôle (vérifié côté serveur)
-- **Public** : tout le monde (après connexion Discord)
-- **Membre** : 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard
-- **Staff / Admin** : 👑 Vanguard · 🧭 Général · 🔥 Officier
-
-Les accès refusés sont redirigés vers `/login?error=...` (pages d'erreur personnalisées : 404, erreur, accès refusé).
+Le détail commenté est dans **`.env.example`** (dev) et **`.env.prod.example`** (prod).
 
 ---
 
@@ -126,43 +198,48 @@ Les accès refusés sont redirigés vers `/login?error=...` (pages d'erreur pers
 
 ```
 src/app/
-  (auth)/login              Connexion Discord
-  (public)/histoire         Accueil / histoire
-  (public)/candidature      Formulaire de candidature
-  (guild)/dashboard         Tableau de bord guilde
-  (guild)/builder           AirBuilder (créateur de build)
-  (guild)/dettes            Banque (requêtes membre)
-  (guild)/astuces           Guides + (sous-onglet) prestige
-  (guild)/donjons · worldboss · compositions · personnages · echanges · parametres
-  (admin)/guildviewer       Suivi des membres
-  (admin)/coffre            AirGuild (coffre de guilde)
-  (admin)/plan-farm         Plan de farm (déficits)
-  (admin)/gestion-dettes · candidatures · gestion-worldboss · annonce · discord · events
-  api/...                   Routes API (auth, characters, debts, bank-request, coffre, airguild, events, dashboard…)
+  (public)/  histoire · candidature
+  (auth)/    login
+  (guild)/   dashboard · builder (+ /builder/<membre>) · personnages
+             compositions (+ build de référence par poste) · dettes (banque)
+             donjons · worldboss · prestige · astuces (guides)
+             echanges · absences · parametres
+  (admin)/   guildviewer · coffre (AirGuild) · plan-farm · gestion-dettes
+             candidatures · gestion-worldboss · annonce · discord · events
+  api/       35 endpoints (auth, characters, builder-state, compositions,
+             coffre, airguild, debts, bank-request, events, admin…)
 
-bot/                        Bot Discord (commandes, planificateur, décisions) — voir bot/README.md
-prisma/schema.prisma        Modèle de données
-public/airbuilder · airguild   Apps embarquées (données + icônes)
+bot/         commandes, planificateur, salon décisions   → bot/README.md
+prisma/      schéma (30 modèles) + seed du coffre
+public/      moteurs AirBuilder & AirGuild (données + icônes)
 ```
+
+Pour comprendre l'authentification, les niveaux d'accès et le modèle de données : **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
 
 ---
 
-## 🌐 Déploiement (prod)
+## 🌐 Déploiement
 
-1. Cloner le repo sur le serveur (VPS Ubuntu recommandé).
-2. `npm install` puis créer un `.env` de prod (à partir de `.env.example`) :
-   - **Régénérer** le token du bot + la clé secrète Discord, générer un `NEXTAUTH_SECRET` aléatoire.
-   - `NEXTAUTH_URL` = l'URL du domaine ; ajouter cette URL de redirection OAuth dans le portail Discord.
-   - **Ne jamais** mettre `DEV_ALL_ACCESS` en prod.
-3. Base : `npm run db:push` (sur le PostgreSQL de prod).
-4. Build + service : `npm run build` puis `npm run start` (site), et le bot en service permanent (`npm run bot`).
+La prod tourne en **Docker** sur un VPS : conteneurs `db` (PostgreSQL), `web` (site), `bot`, avec migration automatique au démarrage, derrière **Nginx Proxy Manager** (domaine + SSL).
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+Le guide pas-à-pas (VPS, SSL, redirect OAuth, sauvegardes) : **[`DEPLOY.md`](DEPLOY.md)**.
 
 ---
 
 ## ⚠️ Sécurité
-- Le fichier **`.env` n'est jamais versionné** (il est dans `.gitignore`) — seul `.env.example` (vide) l'est.
-- **Régénère** le `DISCORD_CLIENT_SECRET` et le `DISCORD_BOT_TOKEN` avant la mise en production si jamais ils ont été partagés en clair.
+
+- **`.env` n'est jamais versionné** (`.gitignore`) — seuls `.env.example` / `.env.prod.example` (vides) le sont.
+- **Régénérer** `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN` et `NEXTAUTH_SECRET` avant toute mise en production s'ils ont circulé en clair.
+- Tous les contrôles d'accès sont **serveur** : masquer un bouton ne suffit jamais, l'API revérifie.
 
 ---
 
-*Site + bot par syko, pour la guilde Vanguard (AirFlyff).*
+<div align="center">
+
+*Site + bot par **syko**, pour la guilde Vanguard (AirFlyff).*
+
+</div>

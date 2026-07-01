@@ -4,17 +4,15 @@ import { useSession } from "next-auth/react";
 import { BUILDER_MARKUP } from "@/app/(guild)/builder/markup";
 import { CS_SLOTS } from "../../slots";
 
-const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
-
 // Build de référence d'un poste : chargé depuis /api/compositions/ref/[slotId].
 // - lecture (tout le monde) : window.__VIEW (non modifiable, comme la vue d'un membre).
-// - édition (admin, ?edit=1) : window.__refSave → la sauvegarde du moteur part vers la compo
+// - édition (rôle Vanguard uniquement, ?edit=1) : window.__refSave → la sauvegarde du moteur part vers la compo
 //   (et window.__embed bloque toute écriture sur le compte perso de l'admin).
 export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boolean }) {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const isAdmin = (role ? ADMIN_ROLES.includes(role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
-  const editMode = edit && isAdmin;
+  const canEditRef = role === "VANGUARD" || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  const editMode = edit && canEditRef;
   const slot = CS_SLOTS.find((s) => s.id === slotId);
   const label = slot?.label ?? slotId;
   const [ready, setReady] = useState(false);
@@ -69,7 +67,7 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
     return () => { cancelled = true; };
   }, [ready]);
 
-  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{isAdmin && <a href={`/compositions/build/${slotId}?edit=1`} style={{ color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>✏️ Créer la référence</a>}<a href="/compositions" style={{ color: "var(--orange)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
+  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>✏️ Créer la référence</a>}<a href="/compositions" style={{ color: "var(--orange)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
   if (err) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>{err}<div style={{ marginTop: 12 }}><a href="/compositions" style={{ color: "var(--orange)" }}>← Retour aux compositions</a></div></div>;
   if (!ready) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Chargement…</div>;
   return (
@@ -80,7 +78,7 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
         <span style={{ opacity: 0.5 }}>·</span>
         {editMode
           ? <span>✏️ Édition du <b>build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(enregistré dans la composition, jamais sur ton compte)</span>{saved === "saving" ? " · 💾…" : saved === "ok" ? " · ✓ enregistré" : ""}</span>
-          : <><span>👁️ <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{isAdmin && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>✏️ Éditer ↗</a>}</>}
+          : <><span>👁️ <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>✏️ Éditer ↗</a>}</>}
       </div>
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
     </>

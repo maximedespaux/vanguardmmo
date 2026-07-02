@@ -10,8 +10,16 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 // /public/assets/items/prestige/<slug>.png par l'admin) → sinon une icône SVG stylée en repli.
 // Déposer un PNG au bon nom suffit à basculer sur la vraie icône, sans toucher au code.
 const ICON_OVERRIDE: Record<string, string> = {
-  "Périn": "/assets/items/cash/perinparticle.png",
+  "Périn": "/assets/items/prestige/perin.gif",
 };
+// Éléments d'un nucléus parfait (1 parfait = 1 nucléus au choix parmi ces 5).
+const NUCLEUS_ELEMENTS: [string, string][] = [
+  ["Feu", "/assets/items/prestige/nucleus-feu.png"],
+  ["Eau", "/assets/items/prestige/nucleus-eau.png"],
+  ["Foudre", "/assets/items/prestige/nucleus-foudre.png"],
+  ["Vent", "/assets/items/prestige/nucleus-vent.png"],
+  ["Terre", "/assets/items/prestige/nucleus-terre.png"],
+];
 const SVGBOX = { display: "inline-block", verticalAlign: "middle" } as const;
 function slugify(k: string): string {
   return k.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -163,6 +171,15 @@ export default function PrestigePage() {
                     <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>{k}</span>
                     {ok && <span style={{ color: "var(--green)", fontSize: 15 }}>✓</span>}
                   </div>
+                  {k.toLowerCase().includes("parfait") && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 9, fontSize: 10.5, color: "var(--text-muted)", flexWrap: "wrap" }}>
+                      <span>1 parfait = 1 au choix :</span>
+                      {NUCLEUS_ELEMENTS.map(([label, src]) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img key={label} src={src} alt={label} title={`Nucléus ${label}`} width={17} height={17} style={{ objectFit: "contain" }} />
+                      ))}
+                    </div>
+                  )}
                   <div style={{ height: 9, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden", marginBottom: 10 }}>
                     <div style={{ height: "100%", width: `${pct}%`, background: ok ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .3s ease" }} />
                   </div>

@@ -5,8 +5,9 @@
 // ════════════════════════════════════════════════════════════
 import cron from "node-cron";
 import { Client, EmbedBuilder, TextChannel } from "discord.js";
+import type { Role } from "@prisma/client";
 import { prisma } from "./lib/prisma.js";
-import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS } from "./config.js";
+import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
 import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision } from "./lib/decisions.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
@@ -171,6 +172,31 @@ async function remindDebts(client: Client) {
   }
 }
 
+// ─── Synchro périodique des RANGS (GuildViewer à jour) ──────
+//  Lit les rôles Discord en live et met à jour User.role en base, sans
+//  attendre que le membre se reconnecte. Prudent : n'écrase JAMAIS tout
+//  le monde en RECRUE si le fetch échoue ou si le mapping n'est pas configuré.
+async function syncMemberRanks(client: Client) {
+  if (!GUILD_ID || !Object.values(RANK_ROLES).some(Boolean)) return;
+  const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
+  if (!guild) return;
+  const members = await guild.members.fetch().catch(() => null);
+  if (!members || members.size === 0) return; // fetch KO → on ne rétrograde personne
+  const users = await prisma.user.findMany({ select: { id: true, discordId: true, role: true } });
+  let changed = 0;
+  for (const u of users) {
+    const m = members.get(u.discordId);
+    if (!m) continue; // parti du serveur / introuvable → inchangé
+    const roleIds = [...m.roles.cache.keys()];
+    const newRole = highestRankFromRoles(roleIds);
+    if (newRole !== u.role) {
+      await prisma.user.update({ where: { id: u.id }, data: { role: newRole as Role, discordRoles: roleIds } }).catch(() => {});
+      changed++;
+    }
+  }
+  if (changed) console.log(`🔄 Rangs resynchronisés : ${changed} membre(s).`);
+}
+
 export function startScheduler(client: Client) {
   // Candidatures : relance staff toutes les 2 heures.
   cron.schedule("0 */2 * * *", () => remindApplications(client).catch(console.error), CRON_TZ);
@@ -185,6 +211,9 @@ export function startScheduler(client: Client) {
   syncGuildChannels(client).catch(console.error);
   setInterval(() => syncGuildChannels(client).catch(console.error), 10 * 60_000);
   setInterval(() => processBotCommands(client).catch(console.error), 12_000);
+  // Synchro des rangs (GuildViewer à jour) : au démarrage + toutes les 10 min.
+  syncMemberRanks(client).catch(console.error);
+  setInterval(() => syncMemberRanks(client).catch(console.error), 10 * 60_000);
   // Événements du jeu : tick chaque minute (lus en base, éditables sur le site).
   cron.schedule("* * * * *", () => tickEvents(client).catch(console.error), CRON_TZ);
   console.log("🕒 Planificateur démarré.");

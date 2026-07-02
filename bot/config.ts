@@ -22,6 +22,27 @@ export const CHANNELS = {
 // ─── Rôles Discord à pinguer dans les relances staff ────────
 export const ROLE_OFFICIER = process.env.ROLE_OFFICIER ?? "";
 
+// ─── Mapping RANG (rôle applicatif) → rôle Discord ──────────
+//     Sert à resynchroniser le rang des membres en base (pour que le
+//     GuildViewer reste à jour même si le membre ne se reconnecte pas).
+export const RANK_ROLES: Record<string, string> = {
+  DIRECTION: process.env.ROLE_DIRECTION ?? "",
+  VANGUARD:  process.env.ROLE_VANGUARD  ?? "",
+  GENERAL:   process.env.ROLE_GENERAL   ?? "",
+  OFFICIER:  process.env.ROLE_OFFICIER  ?? "",
+  VETERAN:   process.env.ROLE_VETERAN   ?? "",
+  GUARD:     process.env.ROLE_GUARD     ?? "",
+};
+const RANK_ORDER = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
+/** Plus haut rang applicatif à partir des IDs de rôles Discord d'un membre. */
+export function highestRankFromRoles(roleIds: string[]): string {
+  for (const rank of RANK_ORDER) {
+    const id = RANK_ROLES[rank];
+    if (id && roleIds.includes(id)) return rank;
+  }
+  return "RECRUE";
+}
+
 // ─── Mapping classe (enum CharacterClass) → rôle Discord ────
 //     Utilisé par la synchro et le panneau d'auto-attribution des classes.
 export const CLASS_ROLES: Record<string, string> = {

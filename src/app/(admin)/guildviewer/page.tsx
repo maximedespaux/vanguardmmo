@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
+import { VgSelect } from "@/components/VgSelect";
 
 type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number; weapon?: any; armor?: any; jewelry?: any; pets?: any; cards?: any };
 type Spec = { id: string; type: string; score: number };
@@ -19,6 +20,8 @@ const ROLE_META: Record<string, { emoji: string; label: string; color: string }>
   RECRUE: { emoji: "🌱", label: "Recrue", color: "var(--text-muted)" },
 };
 const RANK_BADGE: Record<string, string> = { DIRECTION: "fondateur", VANGUARD: "fondateur", GENERAL: "brasdroit", OFFICIER: "brasdroit", VETERAN: "guilde", GUARD: "guilde", RECRUE: "public" };
+const RANK_ORDER = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD", "RECRUE"];
+const rankIdx = (role: string) => { const i = RANK_ORDER.indexOf(role); return i === -1 ? 99 : i; };
 const modeColor = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)");
 const RARITY_FR: Record<string, string> = { COMMUN: "Commun", RARE: "Rare", EPIQUE: "Épique", LEGENDAIRE: "Légendaire", PREMYTHIQUE: "Pré-myth.", MYTHIQUE: "Mythique" };
 const kfmt = (n?: number) => { const v = n || 0; return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "k" : String(v); };
@@ -28,6 +31,7 @@ export default function GuildViewerPage() {
   const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
   const [onlyNoBuild, setOnlyNoBuild] = useState(false);
+  const [roleFilter, setRoleFilter] = useState("");
   const [histUser, setHistUser] = useState<string | null>(null);
   const [hist, setHist] = useState<{ id: string; createdAt: string }[]>([]);
   const [histLoading, setHistLoading] = useState(false);
@@ -59,8 +63,9 @@ export default function GuildViewerPage() {
     const needle = q.trim().toLowerCase();
     if (needle) m = m.filter((u) => u.username.toLowerCase().includes(needle) || u.characters.some((c) => c.name.toLowerCase().includes(needle) || c.class.toLowerCase().includes(needle)));
     if (onlyNoBuild) m = m.filter((u) => u.characters.length === 0 || u.characters.some((c) => c.gearProfiles.length === 0));
-    return m;
-  }, [members, q, onlyNoBuild]);
+    if (roleFilter) m = m.filter((u) => u.role === roleFilter);
+    return [...m].sort((a, b) => rankIdx(a.role) - rankIdx(b.role) || a.username.localeCompare(b.username));
+  }, [members, q, onlyNoBuild, roleFilter]);
 
   const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "10px 13px", color: "var(--text)", fontSize: 14 };
 
@@ -107,6 +112,7 @@ export default function GuildViewerPage() {
       {/* Filtres */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
         <input style={{ ...inp, flex: 1, minWidth: 220 }} placeholder="🔍 Rechercher un membre, un perso, une classe…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div style={{ minWidth: 190 }}><VgSelect value={roleFilter} onChange={setRoleFilter} options={[{ value: "", label: "Tous les rangs" }, ...RANK_ORDER.map((role) => ({ value: role, label: `${ROLE_META[role]?.emoji ?? ""} ${ROLE_META[role]?.label ?? role}` }))]} /></div>
         <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: onlyNoBuild ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", background: "var(--bg-3)", border: `1px solid ${onlyNoBuild ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "9px 14px", transition: "border-color .15s, color .15s" }}>
           <input type="checkbox" checked={onlyNoBuild} onChange={(e) => setOnlyNoBuild(e.target.checked)} /> ⚠️ À accompagner (sans build)
         </label>

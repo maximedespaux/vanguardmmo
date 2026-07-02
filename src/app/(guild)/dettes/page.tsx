@@ -21,7 +21,6 @@ const REQ_STATUS: Record<string, { l: string; c: string }> = {
   REFUSE: { l: "Refusée", c: "var(--red)" }, ANNULE: { l: "Annulée", c: "var(--text-muted)" },
 };
 const KIND_LABEL: Record<string, string> = { OBJET_IG: "Objet IG", ITEM: "Items", PERINS: "Périns" };
-const CLASSES = ["Templier", "Spadassin", "Arcaniste", "Envouteur", "Arbaletrier", "Sylphide", "Primat", "Chanoine"];
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 14 };
 const stepBtn: React.CSSProperties = { width: 24, height: 26, borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 14 };
 const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocaleString("fr-FR"));
@@ -35,7 +34,7 @@ export default function BanquePage() {
   // ── Boutique ──
   const [shop, setShop] = useState<Shop[]>([]);
   const [cats, setCats] = useState<string[]>([]);
-  const [catF, setCatF] = useState(""); const [clsF, setClsF] = useState(""); const [q, setQ] = useState("");
+  const [catF, setCatF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence ♂/♀ par Stuff
   const [sending, setSending] = useState(false);
@@ -85,7 +84,7 @@ export default function BanquePage() {
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
-  const filtered = shop.filter(s => (!catF || s.cat === catF) && (!clsF || s.classe === clsF || !s.classe) && (!q || s.item.toLowerCase().includes(q.toLowerCase())));
+  const filtered = shop.filter(s => (!catF || s.cat === catF) && (!q || s.item.toLowerCase().includes(q.toLowerCase())));
   // Regroupe les requêtes par panier (batchId) → 1 carte par transaction
   const reqGroups = reqs.reduce<{ key: string; items: Req[] }[]>((acc, r) => { const k = r.batchId || r.id; let g = acc.find(x => x.key === k); if (!g) { g = { key: k, items: [] }; acc.push(g); } g.items.push(r); return acc; }, []);
 
@@ -106,7 +105,6 @@ export default function BanquePage() {
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>🛒 Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
-          <VgSelect value={clsF} onChange={setClsF} options={[{ value: "", label: "Toutes classes" }, ...CLASSES.map(c => ({ value: c, label: c }))]} minWidth={150} />
           <input placeholder="🔍 Rechercher un article…" value={q} onChange={e => setQ(e.target.value)} style={{ ...inp, flex: 1, minWidth: 160 }} />
         </div>
         <div className="shop-layout" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>

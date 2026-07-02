@@ -16,6 +16,9 @@ async function requireAdmin() {
 const day = (v: any) => (DAYS.includes(v) ? v : "tous");
 const time = (v: any) => (/^\d{1,2}:\d{2}$/.test(v) ? v : "21:00");
 const rb = (v: any) => Math.max(0, Math.min(720, Math.trunc(Number(v) || 0)));
+const str = (v: any) => { const s = typeof v === "string" ? v.trim() : ""; return s ? s.slice(0, 800) : null; };
+const color = (v: any) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v.trim()) ? v.trim() : null);
+const url = (v: any) => { const s = typeof v === "string" ? v.trim() : ""; return /^https?:\/\/\S+$/.test(s) ? s.slice(0, 600) : null; };
 
 export async function GET() {
   const g = await requireAdmin(); if ("error" in g) return g.error;
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
   const name = String(b.name ?? "").trim();
   if (!name) return NextResponse.json({ error: "Nom requis" }, { status: 400 });
   const row = await prisma.gameEvent.create({
-    data: { name, day: day(b.day), time: time(b.time), remindBefore: rb(b.remindBefore), channelId: b.channelId ? String(b.channelId).trim() : null, mention: typeof b.mention === "string" ? b.mention.trim() : "", enabled: b.enabled !== false },
+    data: { name, day: day(b.day), time: time(b.time), remindBefore: rb(b.remindBefore), channelId: b.channelId ? String(b.channelId).trim() : null, mention: typeof b.mention === "string" ? b.mention.trim() : "", embedTitle: str(b.embedTitle), embedDesc: str(b.embedDesc), embedColor: color(b.embedColor), embedImage: url(b.embedImage), enabled: b.enabled !== false },
   });
   return NextResponse.json(row);
 }
@@ -45,6 +48,10 @@ export async function PATCH(req: NextRequest) {
   if (b.remindBefore != null) data.remindBefore = rb(b.remindBefore);
   if (b.channelId !== undefined) data.channelId = b.channelId ? String(b.channelId).trim() : null;
   if (b.mention !== undefined) data.mention = typeof b.mention === "string" ? b.mention.trim() : "";
+  if (b.embedTitle !== undefined) data.embedTitle = str(b.embedTitle);
+  if (b.embedDesc !== undefined) data.embedDesc = str(b.embedDesc);
+  if (b.embedColor !== undefined) data.embedColor = color(b.embedColor);
+  if (b.embedImage !== undefined) data.embedImage = url(b.embedImage);
   if (b.enabled !== undefined) data.enabled = !!b.enabled;
   const row = await prisma.gameEvent.update({ where: { id: String(b.id) }, data });
   return NextResponse.json(row);

@@ -261,6 +261,10 @@ model GameEvent {
   remindBefore Int      @default(0) // minutes de rappel avant (0 = aucun)
   channelId    String?  // vide = CHANNEL_EVENTS
   mention      String   @default("") // "@here" | "@everyone" | "<@&id>" | ""
+  embedTitle   String?  // titre de l'embed (vide = "🔔 {nom}")
+  embedDesc    String?  // description libre de l'embed
+  embedColor   String?  // couleur hex "#RRGGBB"
+  embedImage   String?  // URL d'image de l'embed
   enabled      Boolean  @default(true)
   createdAt    DateTime @default(now())
 }

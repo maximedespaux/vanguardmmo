@@ -67,6 +67,19 @@ function subMin(t: string, mins: number): string {
   const x = ((((h || 0) * 60 + (m || 0) - mins) % 1440) + 1440) % 1440;
   return `${String(Math.floor(x / 60)).padStart(2, "0")}:${String(x % 60).padStart(2, "0")}`;
 }
+type EventRow = { name: string; time: string; day: string; remindBefore: number; embedTitle: string | null; embedDesc: string | null; embedColor: string | null; embedImage: string | null };
+function eventEmbed(ev: EventRow, kind: "now" | "soon") {
+  const e = new EmbedBuilder()
+    .setTitle((ev.embedTitle && ev.embedTitle.trim()) || `🔔 ${ev.name}`)
+    .setColor(ev.embedColor && /^#[0-9a-fA-F]{6}$/.test(ev.embedColor) ? parseInt(ev.embedColor.slice(1), 16) : ORANGE)
+    .setFooter({ text: `${ev.day === "tous" ? "Tous les jours" : ev.day} · ${ev.time}` });
+  const lines: string[] = [];
+  if (ev.embedDesc && ev.embedDesc.trim()) lines.push(ev.embedDesc.trim());
+  lines.push(kind === "now" ? "**C'est parti — ça commence maintenant !** 🔔" : `⏰ Commence dans **${ev.remindBefore} min** !`);
+  e.setDescription(lines.join("\n\n"));
+  if (ev.embedImage && /^https?:\/\//.test(ev.embedImage)) e.setImage(ev.embedImage);
+  return e;
+}
 async function tickEvents(client: Client) {
   const now = new Date();
   const dayFr = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", weekday: "long" }).format(now).toLowerCase();
@@ -77,11 +90,11 @@ async function tickEvents(client: Client) {
   for (const ev of events) {
     if (ev.day !== "tous" && ev.day !== dayFr) continue;
     const channelId = ev.channelId || CHANNELS.events;
-    const mention = ev.mention ? ev.mention + " " : "";
+    const ping = ev.mention ? ev.mention + " " : "";
     if (subMin(ev.time, 0) === hhmm)
-      await sendTo(client, channelId, { content: `${mention}🔔 **${ev.name}** commence maintenant !` });
+      await sendTo(client, channelId, { content: ping || undefined, embeds: [eventEmbed(ev, "now")] });
     if (ev.remindBefore > 0 && subMin(ev.time, ev.remindBefore) === hhmm)
-      await sendTo(client, channelId, { content: `${mention}⏰ **${ev.name}** dans ${ev.remindBefore} min !` });
+      await sendTo(client, channelId, { content: ping || undefined, embeds: [eventEmbed(ev, "soon")] });
   }
 }
 

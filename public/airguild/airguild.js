@@ -5,7 +5,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sq=s=>String(s).replace(/'/g,"\\'");
 const fmt=n=>(+n||0).toLocaleString('fr-FR');
-function img(ic){return ic&&ICONS[ic]?`<img src="${ICONS[ic]}" alt="">`:'';}
+function img(ic){return ic?(ICONS[ic]?`<img src="${ICONS[ic]}" alt="">`:(ic.charAt(0)==='/'?`<img src="${ic}" alt="">`:'')):'';}
 function slotTxt(q){if(typeof q!=='number')return'';const s=q/SLOT;if(s>=1)return(Number.isInteger(s)?s:s.toFixed(1))+' slot'+(s>=2?'s':'');return Math.round(s*100)/100+' slot';}
 const LOGOIDX={};Object.keys(LOGOS).forEach((k,i)=>LOGOIDX[k]=i);
 const ICOIDX={};Object.keys(ICONS).forEach((k,i)=>ICOIDX[k]=i);

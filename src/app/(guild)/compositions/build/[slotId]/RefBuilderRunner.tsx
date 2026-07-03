@@ -11,7 +11,7 @@ import { CS_SLOTS } from "../../slots";
 export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boolean }) {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const canEditRef = role === "VANGUARD" || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  const canEditRef = role === "VANGUARD" || role === "DIRECTION" || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const editMode = edit && canEditRef;
   const slot = CS_SLOTS.find((s) => s.id === slotId);
   const label = slot?.label ?? slotId;

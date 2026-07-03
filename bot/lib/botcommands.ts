@@ -73,7 +73,7 @@ export async function processBotCommands(client: Client) {
       const p: any = cmd.payload ?? {};
       let result = "";
       if (cmd.type === "post_embed") result = "message " + (await doPostEmbed(client, p));
-      else if (cmd.type === "create_giveaway") result = "giveaway " + (await createGiveaway(client, { channelId: p.channelId, prize: p.prize, description: p.description, winnersCount: p.winnersCount ?? 1, durationMs: p.durationMs, hostId: p.hostId || cmd.createdBy }));
+      else if (cmd.type === "create_giveaway") result = "giveaway " + (await createGiveaway(client, { channelId: p.channelId, prize: p.prize, prizes: p.prizes, description: p.description, winnersCount: p.winnersCount ?? 1, durationMs: p.durationMs, hostId: p.hostId || cmd.createdBy, embedTitle: p.embedTitle, embedColor: p.embedColor, embedImage: p.embedImage }));
       else if (cmd.type === "post_class_panel") result = "panneau " + (await postClassPanel(client, p.channelId));
       else throw new Error("type de commande inconnu: " + cmd.type);
       await prisma.botCommand.update({ where: { id: cmd.id }, data: { status: "DONE", result, processedAt: new Date() } });

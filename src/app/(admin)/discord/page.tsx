@@ -30,7 +30,7 @@ export default function DiscordPage() {
   // Embed
   const [eCh, setECh] = useState(""); const [eTitle, setETitle] = useState(""); const [eDesc, setEDesc] = useState(""); const [eColor, setEColor] = useState("#FF8C1A"); const [eImg, setEImg] = useState(""); const [eFoot, setEFoot] = useState("");
   // Giveaway
-  const [gCh, setGCh] = useState(""); const [gPrize, setGPrize] = useState(""); const [gDur, setGDur] = useState("1h"); const [gWin, setGWin] = useState(1); const [gDesc, setGDesc] = useState("");
+  const [gCh, setGCh] = useState(""); const [gPrizes, setGPrizes] = useState<string[]>([""]); const [gDur, setGDur] = useState("1h"); const [gWin, setGWin] = useState(1); const [gDesc, setGDesc] = useState(""); const [gTitle, setGTitle] = useState(""); const [gColor, setGColor] = useState("#FF8C1A"); const [gImg, setGImg] = useState("");
   // Classes
   const [cCh, setCCh] = useState("");
 
@@ -91,13 +91,26 @@ export default function DiscordPage() {
       {tab === "giveaway" && (
         <div style={card}>
           <label style={lab}>Salon</label><ChannelSelect v={gCh} set={setGCh} />
-          <label style={lab}>Lot à gagner</label><input style={inp} value={gPrize} onChange={(e) => setGPrize(e.target.value)} placeholder="Ex : Stuff Yggdrasil complet" />
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <label style={lab}>Lot(s) à gagner</label>
+          {gPrizes.map((p, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+              <input style={inp} value={p} onChange={(e) => setGPrizes(gPrizes.map((x, j) => (j === i ? e.target.value : x)))} placeholder={i === 0 ? "Ex : Stuff Yggdrasil complet" : `Lot ${i + 1}`} />
+              {gPrizes.length > 1 && <button onClick={() => setGPrizes(gPrizes.filter((_, j) => j !== i))} title="Retirer ce lot" style={{ ...inp, width: 44, cursor: "pointer", color: "var(--red)", flex: "none" }}>✕</button>}
+            </div>
+          ))}
+          <button onClick={() => setGPrizes([...gPrizes, ""])} style={{ ...inp, width: "auto", cursor: "pointer", fontSize: 13, color: "var(--orange)", borderColor: "var(--orange)", padding: "6px 12px" }}>+ Ajouter un lot</button>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
             <div style={{ flex: 1, minWidth: 120 }}><label style={lab}>Durée (30m, 2h, 1d)</label><input style={inp} value={gDur} onChange={(e) => setGDur(e.target.value)} /></div>
             <div style={{ width: 110 }}><label style={lab}>Gagnants</label><input type="number" min={1} style={inp} value={gWin} onChange={(e) => setGWin(Math.max(1, +e.target.value || 1))} /></div>
           </div>
-          <label style={lab}>Description (optionnel)</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} />
-          <button className="vg-btn" style={{ marginTop: 14, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => { const ms = parseDurationMs(gDur); if (!ms) { setToast("Durée invalide (ex : 30m, 2h, 1d)."); setTimeout(() => setToast(""), 4000); return; } send("create_giveaway", { channelId: gCh, prize: gPrize, durationMs: ms, winnersCount: gWin, description: gDesc || undefined }); }}>Lancer le giveaway</button>
+          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 11, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}>🎨 Embed (optionnel)</span></div>
+          <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = 🎉 GIVEAWAY — (1er lot)" />
+          <label style={lab}>Description</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} placeholder="Texte de l'embed (optionnel)" />
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <div><label style={lab}>Couleur</label><input type="color" value={gColor} onChange={(e) => setGColor(e.target.value)} style={{ ...inp, width: 60, padding: 4, height: 38 }} /></div>
+            <div style={{ flex: 1, minWidth: 180 }}><label style={lab}>Image (URL)</label><input style={inp} value={gImg} onChange={(e) => setGImg(e.target.value)} placeholder="https://…" /></div>
+          </div>
+          <button className="vg-btn" style={{ marginTop: 14, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => { const ms = parseDurationMs(gDur); if (!ms) { setToast("Durée invalide (ex : 30m, 2h, 1d)."); setTimeout(() => setToast(""), 4000); return; } const prizes = gPrizes.map((p) => p.trim()).filter(Boolean); if (!prizes.length) { setToast("Ajoute au moins un lot."); setTimeout(() => setToast(""), 4000); return; } send("create_giveaway", { channelId: gCh, prize: prizes[0], prizes, durationMs: ms, winnersCount: gWin, description: gDesc || undefined, embedTitle: gTitle || undefined, embedColor: hexToInt(gColor), embedImage: gImg || undefined }); }}>Lancer le giveaway</button>
         </div>
       )}
 

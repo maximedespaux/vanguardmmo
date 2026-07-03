@@ -509,7 +509,11 @@ model Giveaway {
   channelId    String
   messageId    String?
   prize        String
+  prizes       String[]        @default([])  // lots multiples (le 1er = prize, pour compat)
   description  String?
+  embedTitle   String?
+  embedColor   Int?
+  embedImage   String?
   winnersCount Int             @default(1)
   endsAt       DateTime
   status       GiveawayStatus  @default(RUNNING)

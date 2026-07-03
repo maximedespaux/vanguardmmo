@@ -8,18 +8,31 @@ import { ORANGE } from "./helpers.js";
 
 const RED = 0xf87171, GREEN = 0x4ade80;
 
+function prizeList(g: any): string[] {
+  const p = Array.isArray(g.prizes) && g.prizes.length ? g.prizes : [g.prize];
+  return p.map((x: string) => String(x)).filter(Boolean);
+}
+export function prizeText(g: any): string {
+  const p = prizeList(g);
+  return p.length ? p.join(" · ") : String(g.prize);
+}
 export function giveawayEmbed(g: any, entryCount: number): EmbedBuilder {
   const ts = Math.floor(new Date(g.endsAt).getTime() / 1000);
+  const prizes = prizeList(g);
+  const runColor = typeof g.embedColor === "number" ? g.embedColor : ORANGE;
   const e = new EmbedBuilder()
-    .setColor(g.status === "CANCELLED" ? RED : g.status === "ENDED" ? GREEN : ORANGE)
-    .setTitle(`🎉 GIVEAWAY — ${g.prize}`)
-    .setDescription(g.description ? g.description.replace(/\\n/g, "\n") : "Clique sur **🎉 Participer** pour tenter ta chance !")
-    .addFields(
-      { name: "🏅 Gagnant(s)", value: String(g.winnersCount), inline: true },
-      { name: "👥 Participants", value: String(entryCount), inline: true },
-      { name: g.status === "RUNNING" ? "⏳ Fin" : "⏳ Terminé", value: `<t:${ts}:R>`, inline: true },
-      { name: "Organisateur", value: `<@${g.hostId}>`, inline: true },
-    );
+    .setColor(g.status === "CANCELLED" ? RED : g.status === "ENDED" ? GREEN : runColor)
+    .setTitle((g.embedTitle && String(g.embedTitle).trim()) || `🎉 GIVEAWAY — ${prizes[0] ?? "?"}`)
+    .setDescription(g.description ? String(g.description).replace(/\\n/g, "\n") : "Clique sur **🎉 Participer** pour tenter ta chance !");
+  if (prizes.length > 1)
+    e.addFields({ name: "🎁 Lots à gagner", value: prizes.map((p) => `• ${p}`).join("\n") });
+  e.addFields(
+    { name: "🏅 Gagnant(s)", value: String(g.winnersCount), inline: true },
+    { name: "👥 Participants", value: String(entryCount), inline: true },
+    { name: g.status === "RUNNING" ? "⏳ Fin" : "⏳ Terminé", value: `<t:${ts}:R>`, inline: true },
+    { name: "Organisateur", value: `<@${g.hostId}>`, inline: true },
+  );
+  if (g.embedImage && /^https?:\/\//.test(String(g.embedImage))) e.setImage(String(g.embedImage));
   if (g.status === "ENDED")
     e.addFields({ name: "🏆 Résultat", value: g.winners?.length ? g.winners.map((id: string) => `<@${id}>`).join(", ") : "Aucun participant 😢" });
   if (g.status === "CANCELLED")
@@ -67,8 +80,8 @@ export async function endGiveaway(client: Client, giveawayId: string) {
   await refreshGiveaway(client, updated);
   try {
     const ch: any = await client.channels.fetch(g.channelId);
-    if (winners.length) await ch.send(`🎉 Bravo ${winners.map((id) => `<@${id}>`).join(", ")} ! Vous remportez **${g.prize}** !`);
-    else await ch.send(`😢 Le giveaway **${g.prize}** se termine sans participant.`);
+    if (winners.length) await ch.send(`🎉 Bravo ${winners.map((id) => `<@${id}>`).join(", ")} ! Vous remportez **${prizeText(g)}** !`);
+    else await ch.send(`😢 Le giveaway **${prizeText(g)}** se termine sans participant.`);
   } catch { /* ignore */ }
   return updated;
 }
@@ -84,20 +97,25 @@ export async function rerollGiveaway(client: Client, giveawayId: string) {
   await refreshGiveaway(client, updated);
   try {
     const ch: any = await client.channels.fetch(g.channelId);
-    if (winners.length) await ch.send(`🔄 Reroll du giveaway **${g.prize}** — nouveau(x) gagnant(s) : ${winners.map((id) => `<@${id}>`).join(", ")} 🎉`);
-    else await ch.send(`Aucun participant à retirer pour **${g.prize}**.`);
+    if (winners.length) await ch.send(`🔄 Reroll du giveaway **${prizeText(g)}** — nouveau(x) gagnant(s) : ${winners.map((id) => `<@${id}>`).join(", ")} 🎉`);
+    else await ch.send(`Aucun participant à retirer pour **${prizeText(g)}**.`);
   } catch { /* ignore */ }
   return updated;
 }
 
 /** Crée + poste un giveaway dans un salon texte. Renvoie l'ID du giveaway. */
-export async function createGiveaway(client: Client, opts: { channelId: string; prize: string; description?: string | null; winnersCount: number; durationMs: number; hostId: string }): Promise<string> {
+export async function createGiveaway(client: Client, opts: { channelId: string; prize: string; prizes?: string[]; description?: string | null; winnersCount: number; durationMs: number; hostId: string; embedTitle?: string | null; embedColor?: number | null; embedImage?: string | null }): Promise<string> {
   const ch: any = await client.channels.fetch(opts.channelId);
   if (!ch || !ch.isTextBased?.() || !ch.guildId) throw new Error("Salon de serveur requis pour un giveaway");
+  const prizes = (opts.prizes ?? []).map((p) => String(p).trim()).filter(Boolean);
   const g = await prisma.giveaway.create({
     data: {
       guildId: ch.guildId ?? "", channelId: opts.channelId, prize: opts.prize,
+      prizes: prizes.length ? prizes : [opts.prize],
       description: opts.description ?? null, winnersCount: Math.max(1, opts.winnersCount || 1),
+      embedTitle: opts.embedTitle ?? null,
+      embedColor: typeof opts.embedColor === "number" ? opts.embedColor : null,
+      embedImage: opts.embedImage ?? null,
       endsAt: new Date(Date.now() + opts.durationMs), hostId: opts.hostId,
     },
   });

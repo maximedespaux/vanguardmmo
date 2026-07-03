@@ -53,6 +53,8 @@ export async function GET() {
     })
     .filter(Boolean);
 
-  const usedCats = bankCats.filter((c: string) => items.some((i: any) => i.cat === c));
+  // Catégories réellement présentes en stock : bankCats (ordre stable) + toute NOUVELLE
+  // catégorie créée dans l'AirGuild (items custom / overrides), pour qu'elles apparaissent.
+  const usedCats = [...new Set([...bankCats, ...items.map((i: any) => i.cat)])].filter((c: string) => c && items.some((i: any) => i.cat === c));
   return NextResponse.json({ items, cats: usedCats });
 }

@@ -1,7 +1,7 @@
 import "./airguild.css";
 import { AirGuildRunner } from "./AirGuildRunner";
 import { prisma } from "@/lib/prisma";
-import { GUILD_ROLES } from "@/config/roles";
+import { ADMIN_ROLES } from "@/config/roles";
 
 // AirGuild — app fournie par iBeats (vanilla JS), intégrée nativement (CSS scopé .agx)
 // et branchée sur la base : l'état du coffre est partagé par toute la guilde.
@@ -17,9 +17,9 @@ const MARKUP = `<div class="wrap">
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>`;
 
 export default async function AirGuildPage() {
-  // Roster Discord → coffres membres auto-créés (F2). On ne lit que les pseudos des membres de guilde.
+  // Roster Discord → coffres membres auto-créés (F2). Coffres réservés aux admins (Direction/Vanguard/Général/Officier).
   const members = await prisma.user
-    .findMany({ where: { role: { in: GUILD_ROLES } }, select: { username: true }, orderBy: { username: "asc" } })
+    .findMany({ where: { role: { in: ADMIN_ROLES } }, select: { username: true }, orderBy: { username: "asc" } })
     .catch(() => [] as { username: string }[]);
   const roster = Array.from(new Set(members.map((m) => m.username).filter(Boolean)));
   return (

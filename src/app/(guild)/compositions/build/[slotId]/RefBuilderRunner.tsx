@@ -1,17 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { BUILDER_MARKUP } from "@/app/(guild)/builder/markup";
 import { CS_SLOTS } from "../../slots";
+import { canAccessAdmin } from "@/config/roles";
+import type { Role } from "@prisma/client";
 
 // Build de référence d'un poste : chargé depuis /api/compositions/ref/[slotId].
 // - lecture (tout le monde) : window.__VIEW (non modifiable, comme la vue d'un membre).
-// - édition (rôle Vanguard uniquement, ?edit=1) : window.__refSave → la sauvegarde du moteur part vers la compo
+// - édition (staff/admin, ?edit=1) : window.__refSave → la sauvegarde du moteur part vers la compo
 //   (et window.__embed bloque toute écriture sur le compte perso de l'admin).
 export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boolean }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const canEditRef = role === "VANGUARD" || role === "DIRECTION" || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  // Édition des builds de référence = tout le staff admin (Direction/Vanguard/Général/Officier), cohérent avec le reste de la page Compositions.
+  const canEditRef = (role ? canAccessAdmin(role as Role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const editMode = edit && canEditRef;
   const slot = CS_SLOTS.find((s) => s.id === slotId);
   const label = slot?.label ?? slotId;
@@ -19,10 +22,20 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<"idle" | "saving" | "ok">("idle");
   const [noRef, setNoRef] = useState(false);
-
+  // Le markup du moteur est monté UNE SEULE FOIS (référence d'élément stable) : sinon chaque changement
+  // d'état `saved` re-render le composant et React ré-applique le dangerouslySetInnerHTML → il écrase le
+  // DOM que airbuilder.js a construit (retour à un #setup VIDE) → le MutationObserver auto-réparateur du
+  // moteur rappelle render() → render() re-save → setSaved → … : boucle de rendu (« sauvegarde/actualisation
+  // constante »). Un élément mémoïsé n'est jamais re-réconcilié, donc le DOM du moteur est préservé.
+  const builderMarkup = useMemo(() => <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />, []);
   useEffect(() => {
+    // On attend que la session soit résolue AVANT de charger le moteur : `editMode` doit être final
+    // avant le montage du builder. AUCUN window.location.reload() ici : cette page n'est atteinte QUE par
+    // navigation pleine page (liens <a href>, jamais <Link>), donc la fenêtre est toujours neuve et le
+    // moteur jamais pré-chargé — un reload ne pouvait que créer une boucle (editMode bascule → l'effet se
+    // relance → voit __APP posé par notre propre moteur → recharge → …). On configure juste les globals.
+    if (status === "loading") return;
     const w = window as unknown as { __APP?: string; __VIEW?: boolean; __VIEW_BLOB?: unknown; __refSave?: (s: unknown) => void; __embed?: boolean; __rt?: ReturnType<typeof setTimeout> };
-    if (w.__APP === "airbuilder") { window.location.reload(); return; }
     let cancelled = false;
     (async () => {
       let blob: { chars?: unknown[] } | null = null;
@@ -39,6 +52,7 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
       }
       w.__VIEW_BLOB = blob;
       if (editMode) {
+        w.__VIEW = false;
         w.__embed = true;
         w.__refSave = (s: unknown) => {
           setSaved("saving");
@@ -48,12 +62,14 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
           }, 800);
         };
       } else {
+        w.__embed = false;
+        w.__refSave = undefined;
         w.__VIEW = true;
       }
       setReady(true);
     })();
     return () => { cancelled = true; };
-  }, [slotId, editMode, label, slot]);
+  }, [status, slotId, editMode, label, slot]);
 
   useEffect(() => {
     if (!ready) return;
@@ -78,9 +94,9 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
         <span style={{ opacity: 0.5 }}>·</span>
         {editMode
           ? <span>✏️ Édition du <b>build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(enregistré dans la composition, jamais sur ton compte)</span>{saved === "saving" ? " · 💾…" : saved === "ok" ? " · ✓ enregistré" : ""}</span>
-          : <><span>👁️ <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", color: "var(--green)", textDecoration: "none", fontWeight: 600 }}>✏️ Éditer ↗</a>}</>}
+          : <><span>👁️ <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", color: "#0a0a0c", background: "var(--green)", padding: "7px 14px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>✏️ Éditer ce build ↗</a>}</>}
       </div>
-      <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
+      {builderMarkup}
     </>
   );
 }

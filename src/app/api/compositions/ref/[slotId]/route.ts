@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
-import { canAccessGuild } from "@/config/roles";
+import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 
 // Build de référence d'un poste de Chambre Secrète (id = slotId).
-// GET : toute la guilde (lecture). PUT : rôle Vanguard uniquement (édition).
+// GET : toute la guilde (lecture). PUT : staff admin (Direction/Vanguard/Général/Officier).
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ slotId: string }> }) {
   const a = await apiAuth(); if ("error" in a) return a.error;
   if (!canAccessGuild(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ slo
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ slotId: string }> }) {
   const a = await apiAuth(); if ("error" in a) return a.error;
-  if (a.user.role !== "VANGUARD" && a.user.role !== "DIRECTION" && process.env.NEXT_PUBLIC_DEV_ALL_ACCESS !== "1") return NextResponse.json({ error: "Réservé au rôle Vanguard" }, { status: 403 });
+  if (!canAccessAdmin(a.user.role) && process.env.NEXT_PUBLIC_DEV_ALL_ACCESS !== "1") return NextResponse.json({ error: "Réservé au staff" }, { status: 403 });
   const { slotId } = await params;
   const body = await req.json().catch(() => null);
   const blob = body?.blob;

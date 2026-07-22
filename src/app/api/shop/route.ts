@@ -27,7 +27,16 @@ export async function GET() {
   const { bankItems, icons, bankCats } = loadCatalog();
   const row = await prisma.airGuildState.findUnique({ where: { id: "main" } });
   const S = (row?.data ?? {}) as any;
-  const inv: Record<string, number> = S.inv?.Commun ?? {};
+  // Boutique = stock TOTAL GUILDE : somme des coffres MEMBRES (le stock de chaque membre y compte).
+  // On somme uniquement S.members (comme le client totalGuild) pour ignorer une clé héritée « Commun » non migrée.
+  const allInv = (S.inv && typeof S.inv === "object") ? (S.inv as Record<string, Record<string, number>>) : {};
+  const members: string[] = Array.isArray(S.members) ? S.members : Object.keys(allInv);
+  const inv: Record<string, number> = {};
+  for (const m of members) {
+    const coffre = allInv[m];
+    if (!coffre || typeof coffre !== "object") continue;
+    for (const id of Object.keys(coffre)) inv[id] = (inv[id] || 0) + (Number(coffre[id]) || 0);
+  }
   const prices: Record<string, number> = S.prices ?? {};
   const custom: any[] = Array.isArray(S.custom) ? S.custom : [];
   const hidden = new Set<string>(Array.isArray(S.hidden) ? S.hidden : []);

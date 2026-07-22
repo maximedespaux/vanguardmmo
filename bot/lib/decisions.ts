@@ -265,6 +265,8 @@ async function findSellers(itemNames: string[]): Promise<Map<string, { items: Se
   const row = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
   const S = (row?.data ?? {}) as { inv?: Record<string, Record<string, number>>; members?: string[] };
   const inv = S.inv ?? {};
+  // Modèle « Total guilde » : tous les coffres sont des coffres membres égaux → on ping TOUS les détenteurs de
+  // l'objet (y compris l'ex-« coffre principal »). On garde juste l'exclusion de la clé héritée « Commun » (pré-migration).
   const members = (Array.isArray(S.members) ? S.members : Object.keys(inv)).filter((m) => m && m !== "Commun");
   for (const m of members) {
     const minv = inv[m] || {};

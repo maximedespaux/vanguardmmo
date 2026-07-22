@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { vgPrompt, vgToast } from "@/components/Dialogs";
+import { Icon, type IconName } from "@/components/Icon";
 
 type App = {
   id: string; discordId: string; username: string; avatar: string | null;
@@ -20,7 +21,7 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   WAITING:   { label: "Mise en attente", color: "var(--blue)" },
   INTERVIEW: { label: "Entretien",   color: "var(--purple)" },
 };
-const SPEC_LABELS: Record<string, string> = { PVE: "🌾 PvE", PVP: "🏆 PvP & Boss", CS: "🗝️ CS" };
+const SPEC_META: Record<string, { icon: IconName; label: string }> = { PVE: { icon: "sprout", label: "PvE" }, PVP: { icon: "trophy", label: "PvP & Boss" }, CS: { icon: "key", label: "CS" } };
 const FILTERS = [["", "Toutes"], ["PENDING", "En attente"], ["ACCEPTED", "Acceptées"], ["REJECTED", "Refusées"], ["WAITING", "En attente (mise)"], ["INTERVIEW", "Entretien"]] as const;
 
 export default function CandidaturesAdminPage() {
@@ -43,7 +44,7 @@ export default function CandidaturesAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="📋" title="Candidatures" subtitle="Examine et décide des candidatures reçues." />
+      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="clipboard" title="Candidatures" subtitle="Examine et décide des candidatures reçues." />
 
       <div className="vg-subtabs">
         {FILTERS.map(([k, l]) => (
@@ -74,7 +75,7 @@ export default function CandidaturesAdminPage() {
                 </div>
 
                 <div style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div><b style={{ color: "var(--text)" }}>Spés :</b> {(a.specs ?? []).map((s) => SPEC_LABELS[s] ?? s).join(" · ") || "—"}{a.specs?.includes("CS") && a.favClasses?.length ? ` · CS: ${a.csChars ?? "?"} perso(s), ${a.favClasses.join(", ")}` : ""}</div>
+                  <div><b style={{ color: "var(--text)" }}>Spés :</b> {(a.specs ?? []).length === 0 ? "—" : (a.specs ?? []).map((s, i) => { const m = SPEC_META[s]; return <span key={s}>{i > 0 ? " · " : ""}{m ? <><Icon name={m.icon} size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 3 }} />{m.label}</> : s}</span>; })}{a.specs?.includes("CS") && a.favClasses?.length ? ` · CS: ${a.csChars ?? "?"} perso(s), ${a.favClasses.join(", ")}` : ""}</div>
                   <div><b style={{ color: "var(--text)" }}>Quiz :</b> {a.quizScore ?? "?"}/{a.quizTotal ?? "?"}</div>
                   {a.interests && <div><b style={{ color: "var(--text)" }}>Intérêts :</b> {a.interests}</div>}
                   {a.motivation && <div><b style={{ color: "var(--text)" }}>Motivation :</b> {a.motivation}</div>}
@@ -83,10 +84,10 @@ export default function CandidaturesAdminPage() {
                 </div>
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
-                  <button onClick={() => decide(a.id, "ACCEPTED")} style={btn("var(--green)")}>✅ Accepter</button>
-                  <button onClick={() => decide(a.id, "REJECTED")} style={btn("var(--red)")}>❌ Refuser</button>
-                  <button onClick={() => decide(a.id, "WAITING")} style={btn("var(--blue)")}>⏸️ En attente</button>
-                  <button onClick={() => decide(a.id, "INTERVIEW")} style={btn("var(--purple)")}>💬 Entretien</button>
+                  <button onClick={() => decide(a.id, "ACCEPTED")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="check" size={15} /> Accepter</button>
+                  <button onClick={() => decide(a.id, "REJECTED")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>
+                  <button onClick={() => decide(a.id, "WAITING")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="clock" size={15} /> En attente</button>
+                  <button onClick={() => decide(a.id, "INTERVIEW")} style={{ ...btn("var(--purple)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="message" size={15} /> Entretien</button>
                 </div>
               </div>
             );

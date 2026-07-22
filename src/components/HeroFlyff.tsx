@@ -42,14 +42,14 @@ export function HeroFlyff() {
         .hf-discord{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:10px 22px;border-radius:10px;
           background:linear-gradient(180deg,#FF8C1A,#CC6E00);box-shadow:0 6px 20px rgba(255,140,26,.35);transition:transform .15s,box-shadow .15s}
         .hf-discord:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,140,26,.5)}
-        .hf-discord span{color:#0A0A0C;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1.5px}
+        .hf-discord span{color:#0A0A0C;font-family:Rubik,sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:1.5px}
         .hf-title{position:absolute;top:20%;left:0;right:0;text-align:center;z-index:6;transition:transform .2s,opacity .2s;animation:hfup 1s ease both}
-        .hf-login{display:inline-flex;align-items:center;gap:9px;margin-top:28px;padding:15px 38px;border-radius:14px;background:rgba(12,8,4,.55);border:1.5px solid rgba(255,140,26,.75);color:#fff;font-family:Rajdhani,sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:1.5px;text-decoration:none;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 8px 26px rgba(0,0,0,.5),0 0 24px rgba(255,140,26,.22);transition:transform .15s,box-shadow .15s,background .15s,color .15s,border-color .15s}
+        .hf-login{display:inline-flex;align-items:center;gap:9px;margin-top:28px;padding:15px 38px;border-radius:14px;background:rgba(12,8,4,.55);border:1.5px solid rgba(255,140,26,.75);color:#fff;font-family:Rubik,sans-serif;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:1.5px;text-decoration:none;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 8px 26px rgba(0,0,0,.5),0 0 24px rgba(255,140,26,.22);transition:transform .15s,box-shadow .15s,background .15s,color .15s,border-color .15s}
         .hf-login:hover{transform:translateY(-3px);background:linear-gradient(180deg,#FFB552,#FF8C1A);color:#241402;border-color:transparent;box-shadow:0 14px 36px rgba(255,140,26,.6)}
-        .hf-title h1{font-family:'Bruno Ace SC',Rajdhani,sans-serif;font-weight:400;font-size:clamp(54px,10vw,132px);letter-spacing:4px;color:#fff;margin:0;
+        .hf-title h1{font-family:'Rubik',Rubik,sans-serif;font-weight:400;font-size:clamp(54px,10vw,132px);letter-spacing:4px;color:#fff;margin:0;
           text-shadow:0 0 36px rgba(255,140,26,.65),0 4px 24px #000}
         .hf-title p{color:#f4c89a;max-width:580px;margin:10px auto 0;font-size:15.5px;line-height:1.6;text-shadow:0 2px 10px #000;padding:0 18px}
-        .hf-scrollhint{position:absolute;bottom:18px;left:0;right:0;text-align:center;z-index:7;color:#f4c89a;font-family:Rajdhani,sans-serif;letter-spacing:3px;font-size:13px;animation:hfbob 1.7s ease-in-out infinite}
+        .hf-scrollhint{position:absolute;bottom:18px;left:0;right:0;text-align:center;z-index:7;color:#f4c89a;font-family:Rubik,sans-serif;letter-spacing:3px;font-size:13px;animation:hfbob 1.7s ease-in-out infinite}
         @keyframes hfken{from{transform:scale(1)}to{transform:scale(1.09)}}
         @keyframes hfglow{0%,100%{opacity:.45}50%{opacity:.72}}
         @keyframes hfup{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}

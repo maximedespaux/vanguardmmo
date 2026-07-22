@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { vgConfirm, vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 type Boss = { id: string; name: string; zone: string | null; recommendedLevel: number | null; rewards: string | null; strategy: string | null };
 type Ev = { id: string; bossId: string; boss: Boss; startAt: string; status: string; note: string | null; participants: { status: string }[] };
@@ -28,7 +29,7 @@ export default function WorldBossAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
-      <PageHeader icon="🐉" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
+      <PageHeader icon="dragon" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
         <div className="glass-card" style={{ padding: 16 }}>
@@ -70,7 +71,7 @@ export default function WorldBossAdminPage() {
                   <button onClick={() => setStatus(e.id, "ONGOING")} style={mini("var(--green)")}>Démarrer</button>
                   <button onClick={() => setStatus(e.id, "DONE")} style={mini("var(--blue)")}>Terminer</button>
                   <button onClick={() => setStatus(e.id, "CANCELLED")} style={mini("var(--gold)")}>Annuler</button>
-                  <button onClick={() => del(e.id)} style={mini("var(--red)")}>✕</button>
+                  <button onClick={() => del(e.id)} style={{ ...mini("var(--red)"), display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Supprimer"><Icon name="x" size={15} /></button>
                 </div>
               </div>
             );

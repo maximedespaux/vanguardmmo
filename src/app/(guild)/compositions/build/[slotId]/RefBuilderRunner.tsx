@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { BUILDER_MARKUP } from "@/app/(guild)/builder/markup";
 import { CS_SLOTS } from "../../slots";
 import { canAccessAdmin } from "@/config/roles";
+import { Icon } from "@/components/Icon";
 import type { Role } from "@prisma/client";
 
 // Build de référence d'un poste : chargé depuis /api/compositions/ref/[slotId].
@@ -83,7 +84,7 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
     return () => { cancelled = true; };
   }, [ready]);
 
-  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}>✏️ Créer la référence</a>}<a href="/compositions" style={{ color: "var(--orange)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
+  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}><Icon name="edit" size={15} /> Créer la référence</a>}<a href="/compositions" style={{ color: "var(--orange)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
   if (err) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>{err}<div style={{ marginTop: 12 }}><a href="/compositions" style={{ color: "var(--orange)" }}>← Retour aux compositions</a></div></div>;
   if (!ready) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Chargement…</div>;
   return (
@@ -93,8 +94,8 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
         <a href="/compositions" style={{ color: "inherit", textDecoration: "none", opacity: 0.85 }}>← Compositions</a>
         <span style={{ opacity: 0.5 }}>·</span>
         {editMode
-          ? <span>✏️ Édition du <b>build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(enregistré dans la composition, jamais sur ton compte)</span>{saved === "saving" ? " · 💾…" : saved === "ok" ? " · ✓ enregistré" : ""}</span>
-          : <><span>👁️ <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", color: "#0a0a0c", background: "var(--green)", padding: "7px 14px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}>✏️ Éditer ce build ↗</a>}</>}
+          ? <span><Icon name="edit" size={15} style={{ display: "inline-block", verticalAlign: "-2px" }} /> Édition du <b>build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(enregistré dans la composition, jamais sur ton compte)</span>{saved === "saving" ? <> · <Icon name="save" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} />…</> : saved === "ok" ? <> · <Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} /> enregistré</> : ""}</span>
+          : <><span><Icon name="eye" size={15} style={{ display: "inline-block", verticalAlign: "-2px" }} /> <b>Build de référence</b> — {label} <span style={{ fontWeight: 400, opacity: 0.85 }}>(consultation)</span></span>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, color: "#0a0a0c", background: "var(--green)", padding: "7px 14px", borderRadius: 8, textDecoration: "none", fontWeight: 700 }}><Icon name="edit" size={15} /> Éditer ce build ↗</a>}</>}
       </div>
       {builderMarkup}
     </>

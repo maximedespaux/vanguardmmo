@@ -4,6 +4,7 @@ import { PRESTIGE_COSTS, PRESTIGE_KEYS, prestigeNeed } from "@/data/prestige";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 // Icône d'une ressource : vraie image si présente (override connu, ou PNG déposé dans
@@ -127,7 +128,7 @@ export default function PrestigePage() {
 
   return (
     <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guides.png" icon="🌟" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
+      <PageHeader banner="/assets/site/banners/banner-guides.png" icon="star" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
       <SectionTabs section="guides" />
 
       {/* Sélecteur */}
@@ -150,7 +151,7 @@ export default function PrestigePage() {
           {/* Progression globale */}
           <div className="glass-card" style={{ padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 9, flexWrap: "wrap", gap: 6 }}>
-              <span className="font-heading" style={{ fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}>📦 Pour passer de P{cur} à P{tgt}</span>
+              <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}><Icon name="package" size={16} /> Pour passer de P{cur} à P{tgt}</span>
               <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{done}/{keys.length} ressources · <b style={{ color: globalPct === 100 ? "var(--green)" : "var(--orange)" }}>{globalPct}%</b></span>
             </div>
             <div style={{ height: 12, background: "var(--bg-3)", borderRadius: 6, overflow: "hidden" }}>
@@ -169,7 +170,7 @@ export default function PrestigePage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
                     <PrestigeIcon name={k} size={24} />
                     <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>{k}</span>
-                    {ok && <span style={{ color: "var(--green)", fontSize: 15 }}>✓</span>}
+                    {ok && <Icon name="check" size={16} style={{ color: "var(--green)" }} />}
                   </div>
                   {k.toLowerCase().includes("parfait") && (
                     <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 9, fontSize: 10.5, color: "var(--text-muted)", flexWrap: "wrap" }}>
@@ -187,7 +188,7 @@ export default function PrestigePage() {
                     <input type="number" min={0} value={owned || ""} onChange={(e) => setHave({ ...have, [k]: Math.max(0, +e.target.value || 0) })} placeholder="J'en ai…"
                       style={{ width: 92, padding: "6px 9px", fontSize: 12.5, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 7, color: "var(--text)" }} />
                     <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>/ {fmt(total)}</span>
-                    <span style={{ marginLeft: "auto", fontFamily: "Rajdhani,sans-serif", fontWeight: 700, fontSize: 13, color: ok ? "var(--green)" : "var(--orange)" }}>{ok ? "Complet" : `reste ${fmt(rem)}`}</span>
+                    <span style={{ marginLeft: "auto", fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 13, color: ok ? "var(--green)" : "var(--orange)" }}>{ok ? "Complet" : `reste ${fmt(rem)}`}</span>
                   </div>
                 </div>
               );
@@ -228,7 +229,7 @@ export default function PrestigePage() {
         .pr-card{background:linear-gradient(180deg,#191920,#131318);border-radius:13px;padding:13px 15px;transition:transform .15s,box-shadow .15s}
         .pr-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.32)}
         .pr-card input:focus{outline:none;border-color:var(--orange)}
-        .pr-toggle{background:var(--bg-3);border:1px solid var(--border);color:var(--text-muted);border-radius:9px;padding:9px 16px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;transition:color .15s,border-color .15s}
+        .pr-toggle{background:var(--bg-3);border:1px solid var(--border);color:var(--text-muted);border-radius:9px;padding:9px 16px;font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;transition:color .15s,border-color .15s}
         .pr-toggle:hover{color:var(--orange);border-color:var(--orange)}
         @keyframes prIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         .pr-grid>*{animation:prIn .4s ease both}

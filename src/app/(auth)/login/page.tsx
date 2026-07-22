@@ -3,16 +3,17 @@ import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Icon, type IconName } from "@/components/Icon";
 
 // Messages amicaux par code d'erreur (auth NextAuth + accès par rôle).
-const ERRORS: Record<string, { icon: string; title: string; msg: string; access?: boolean }> = {
-  guild:         { icon: "🔒", title: "Accès réservé aux membres", msg: "Tu dois être membre de la guilde Vanguard sur Discord pour ouvrir cet espace.", access: true },
-  admin:         { icon: "🛡️", title: "Réservé au staff", msg: "Cette section est réservée aux officiers et à la direction de Vanguard.", access: true },
-  forbidden:     { icon: "⛔", title: "Accès non autorisé", msg: "Tu n'as pas les droits nécessaires pour cette page.", access: true },
-  AccessDenied:  { icon: "🚫", title: "Connexion refusée", msg: "L'accès Discord a été refusé. Autorise la connexion pour continuer." },
-  Configuration: { icon: "⚙️", title: "Configuration invalide", msg: "La connexion est mal réglée côté serveur. Préviens un admin." },
-  Verification:  { icon: "⌛", title: "Lien expiré", msg: "Ce lien de connexion a expiré. Relance la connexion." },
-  default:       { icon: "⚠️", title: "Connexion impossible", msg: "Une erreur est survenue pendant la connexion. Réessaie dans un instant." },
+const ERRORS: Record<string, { icon: IconName; title: string; msg: string; access?: boolean }> = {
+  guild:         { icon: "lock", title: "Accès réservé aux membres", msg: "Tu dois être membre de la guilde Vanguard sur Discord pour ouvrir cet espace.", access: true },
+  admin:         { icon: "shield", title: "Réservé au staff", msg: "Cette section est réservée aux officiers et à la direction de Vanguard.", access: true },
+  forbidden:     { icon: "ban", title: "Accès non autorisé", msg: "Tu n'as pas les droits nécessaires pour cette page.", access: true },
+  AccessDenied:  { icon: "ban", title: "Connexion refusée", msg: "L'accès Discord a été refusé. Autorise la connexion pour continuer." },
+  Configuration: { icon: "settings", title: "Configuration invalide", msg: "La connexion est mal réglée côté serveur. Préviens un admin." },
+  Verification:  { icon: "clock", title: "Lien expiré", msg: "Ce lien de connexion a expiré. Relance la connexion." },
+  default:       { icon: "alert", title: "Connexion impossible", msg: "Une erreur est survenue pendant la connexion. Réessaie dans un instant." },
 };
 
 function LoginCard() {
@@ -27,7 +28,7 @@ function LoginCard() {
 
         {info ? (
           <div className={`lg-alert ${info.access ? "is-access" : ""}`}>
-            <span className="lg-alert-ico">{info.icon}</span>
+            <span className="lg-alert-ico"><Icon name={info.icon} size={22} style={{ color: info.access ? "var(--orange)" : "var(--red)" }} /></span>
             <div className="lg-alert-txt"><strong>{info.title}</strong><span>{info.msg}</span></div>
           </div>
         ) : (
@@ -54,21 +55,21 @@ function LoginCard() {
         .lg-logo{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 14px;filter:drop-shadow(0 0 20px rgba(255,140,26,.55))}
         .lg-title{font-size:24px;font-weight:400;text-transform:uppercase;letter-spacing:1px;line-height:1.05;color:#fff;margin:0}
         .lg-title span{display:block;font-size:13px;letter-spacing:5px;color:var(--orange);margin-top:5px}
-        .lg-sub{font-family:'Inter',sans-serif;color:var(--text-muted);font-size:13.5px;margin:14px 4px 26px;line-height:1.55}
+        .lg-sub{font-family:'Athiti',sans-serif;color:var(--text-muted);font-size:13.5px;margin:14px 4px 26px;line-height:1.55}
         .lg-alert{display:flex;gap:12px;text-align:left;align-items:flex-start;margin:18px 0 22px;padding:14px 15px;border-radius:13px;
           background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.32)}
         .lg-alert.is-access{background:rgba(255,140,26,.08);border-color:rgba(255,140,26,.38)}
         .lg-alert-ico{font-size:21px;line-height:1.2}
-        .lg-alert-txt strong{display:block;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;color:#fff;margin-bottom:3px}
-        .lg-alert-txt span{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--text-muted);line-height:1.5}
+        .lg-alert-txt strong{display:block;font-family:'Rubik',sans-serif;font-weight:700;font-size:15px;color:#fff;margin-bottom:3px}
+        .lg-alert-txt span{font-family:'Athiti',sans-serif;font-size:12.5px;color:var(--text-muted);line-height:1.5}
         .lg-discord{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;padding:14px;border:none;border-radius:13px;cursor:pointer;
-          font-family:'Rajdhani',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.8px;color:#241402;
+          font-family:'Rubik',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.8px;color:#241402;
           background:linear-gradient(180deg,#FFB552,#FF8C1A);box-shadow:0 8px 24px rgba(255,140,26,.4);transition:transform .14s,box-shadow .14s}
         .lg-discord:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(255,140,26,.58)}
         .lg-discord svg{width:21px;height:21px;flex-shrink:0}
         .lg-back{display:inline-block;margin-top:16px;color:var(--text-muted);font-size:13px;text-decoration:none;transition:color .15s}
         .lg-back:hover{color:var(--orange)}
-        .lg-fine{font-family:'Inter',sans-serif;color:var(--text-muted);font-size:11px;margin-top:16px;line-height:1.5;opacity:.75}
+        .lg-fine{font-family:'Athiti',sans-serif;color:var(--text-muted);font-size:11px;margin-top:16px;line-height:1.5;opacity:.75}
       `}</style>
     </div>
   );

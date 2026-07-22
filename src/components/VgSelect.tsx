@@ -54,7 +54,7 @@ export function VgSelect({ value, onChange, options, style, minWidth, placeholde
   return (
     <div ref={ref} className="vg-dd" style={{ position: "relative", minWidth, width: full ? "100%" : undefined, ...style }}>
       <button ref={btnRef} type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
-        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "var(--bg-3)", border: `1px solid ${open ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "9px 12px", color: cur ? "var(--text)" : "var(--text-muted)", fontFamily: "'Rajdhani',sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer", boxShadow: open ? "0 0 0 3px rgba(255,140,26,.16)" : "none", transition: "border-color .15s, box-shadow .15s" }}>
+        style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, background: "var(--bg-3)", border: `1px solid ${open ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "9px 12px", color: cur ? "var(--text)" : "var(--text-muted)", fontFamily: "'Rubik',sans-serif", fontSize: 13.5, fontWeight: 600, cursor: "pointer", boxShadow: open ? "0 0 0 3px rgba(255,140,26,.16)" : "none", transition: "border-color .15s, box-shadow .15s" }}>
         <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cur?.label ?? placeholder ?? String(value)}</span>
         <span style={{ color: "var(--orange)", fontSize: 11, transform: open ? "rotate(180deg)" : "none", transition: "transform .18s", flexShrink: 0 }}>▾</span>
       </button>

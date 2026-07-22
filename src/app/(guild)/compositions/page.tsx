@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
+import { Icon } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 
 type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string; selected?: boolean };
@@ -49,10 +50,10 @@ export default function CompositionsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-chambres.png" icon="🧩" title="Compositions" subtitle="La composition optimale des Chambres Secrètes (à respecter pour la cohésion) et le Guild Siege (libre)." />
+      <PageHeader banner="/assets/site/banners/banner-chambres.png" icon="puzzle" title="Compositions" subtitle="La composition optimale des Chambres Secrètes (à respecter pour la cohésion) et le Guild Siege (libre)." />
       <div className="vg-subtabs">
-        <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`}>🗝️ Chambre Secrète</button>
-        <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`}>⚔️ Guild Siege</button>
+        <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="key" size={15} /> Chambre Secrète</button>
+        <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="sword" size={15} /> Guild Siege</button>
       </div>
 
       <div key={tab} className="vg-swap">
@@ -91,17 +92,17 @@ export default function CompositionsPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
                     <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{lbl(slot)}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{nt(slot)}</div></div>
-                    {isAdmin && <button onClick={() => setEditSlot(slot)} title="Renommer le poste (titre + desc)" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 13, flexShrink: 0, padding: 2 }}>✎</button>}
-                    <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", fontSize: 16, flexShrink: 0, padding: 2 }}>👁️</button>
+                    {isAdmin && <button onClick={() => setEditSlot(slot)} title="Renommer le poste (titre + desc)" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="edit" size={14} /></button>}
+                    <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="eye" size={16} /></button>
                   </div>
                   {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
                     {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.selected ? meta.color : "var(--text-muted)", flexShrink: 0 }} />
-                      {t.selected && <span title="Sélectionné" style={{ color: meta.color }}>✓</span>}
+                      {t.selected && <span title="Sélectionné" style={{ color: meta.color, display: "inline-flex", alignItems: "center" }}><Icon name="check" size={12} /></span>}
                       <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.player}</span>
                       <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-                        {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? meta.color : "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>{t.selected ? "★" : "☆"}</button>}
-                        {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 12 }}>✕</button>}
+                        {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="star" size={14} /></button>}
+                        {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>}
                       </span>
                     </div>)}
                   </div>}
@@ -117,7 +118,7 @@ export default function CompositionsPage() {
         ); })}
 
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (★). Le <b>👁️</b> donne le build conseillé + le build de référence.</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", verticalAlign: "-2px", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block", verticalAlign: "-3px" }} /> donne le build conseillé + le build de référence.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -125,9 +126,9 @@ export default function CompositionsPage() {
         </div>
       </>) : (
         <div style={{ ...card, textAlign: "center", padding: 40, background: "radial-gradient(circle at 50% 30%, rgba(255,140,26,0.08), transparent 70%)" }}>
-          <div style={{ fontSize: 44, marginBottom: 12 }}>⚔️</div>
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--orange)" }}><Icon name="sword" size={44} /></div>
           <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege — Libre</h2>
-          <p style={{ color: "var(--text)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>Tout le monde peut participer, il n&apos;y a pas de composition stricte. On s&apos;adapte : ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. 💪</p>
+          <p style={{ color: "var(--text)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>Tout le monde peut participer, il n&apos;y a pas de composition stricte. On s&apos;adapte : ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", verticalAlign: "-3px", color: "var(--orange)" }} /></p>
         </div>
       )}
       </div>
@@ -138,11 +139,11 @@ export default function CompositionsPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <ClassLogo name={info.classe} size={34} />
             <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{lbl(info)}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
-            <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 20 }}>✕</button>
+            <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={18} /></button>
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
           <div style={{ marginTop: 16 }}>
-            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>👁️ Voir le build de référence ↗</a>
+            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="eye" size={14} /> Voir le build de référence ↗</a>
           </div>
         </div>
       </div>}
@@ -150,7 +151,7 @@ export default function CompositionsPage() {
       {/* Renommer un poste (admin) */}
       {editSlot && <div onClick={() => setEditSlot(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
         <div key={editSlot.id} onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 440, width: "100%" }}>
-          <div className="font-heading" style={{ fontWeight: 700, fontSize: 16, marginBottom: 14 }}>✎ Renommer le poste</div>
+          <div className="font-heading" style={{ fontWeight: 700, fontSize: 16, marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}><Icon name="edit" size={16} /> Renommer le poste</div>
           <label style={{ fontSize: 12, fontWeight: 600 }}>Titre du poste</label>
           <input id="es-label" defaultValue={lbl(editSlot)} style={{ width: "100%", margin: "6px 0 12px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
           <label style={{ fontSize: 12, fontWeight: 600 }}>Description</label>

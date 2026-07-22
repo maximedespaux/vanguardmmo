@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
 const MODES = ["DPS","TANK","HYBRIDE"];
@@ -39,13 +40,13 @@ export default function PersonnagesPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader icon="🧙" title="Mes Personnages" subtitle="Crée d'abord ton personnage (nom, classe, prestige, niveau), puis configure un ou plusieurs stuffs (DPS / Tank / Hybride). Le Suivi & axes utilisera ces personnages." />
+      <PageHeader icon="users" title="Mes Personnages" subtitle="Crée d'abord ton personnage (nom, classe, prestige, niveau), puis configure un ou plusieurs stuffs (DPS / Tank / Hybride). Le Suivi & axes utilisera ces personnages." />
 
       {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.startsWith("✅") ? "var(--green)" : "var(--text)", fontSize: 13 }}>{toast}</div>}
 
       {/* Création */}
       <div style={card}>
-        <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>➕ Créer un personnage</h2>
+        <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}><Icon name="plus" size={16} /> Créer un personnage</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <input placeholder="Nom du personnage" value={name} onChange={e => setName(e.target.value)} style={{ ...inp, flex: 1, minWidth: 150 }} />
           <VgSelect value={cls} onChange={setCls} options={CLASS_ENUM} minWidth={140} />
@@ -64,22 +65,22 @@ export default function PersonnagesPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <div style={{ width: 48, height: 48, borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}><ClassLogo name={c.class} size={34} /></div>
             <div style={{ flex: 1 }}>
-              <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ fontSize: 11, color: "var(--gold)" }}>★ principal</span>}</div>
+              <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.class} · Niveau {c.level} · Prestige {c.prestige}</div>
             </div>
-            <button onClick={() => setConfirmDel(c.id)} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 18 }}>🗑️</button>
+            <button onClick={() => setConfirmDel(c.id)} title="Supprimer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={16} /></button>
           </div>
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs</span>
               {MODES.map(m => <button key={m} onClick={() => openGear(c.id, m)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
-              <Link href="/builder" style={{ marginLeft: "auto", fontSize: 12, color: "var(--orange)", textDecoration: "none" }}>⚔️ Configurer dans le Builder →</Link>
+              <Link href="/builder" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--orange)", textDecoration: "none" }}><Icon name="sword" size={14} /> Configurer dans le Builder →</Link>
             </div>
             {c.gearProfiles.length === 0 ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Aucun stuff. Ajoute DPS / Tank / Hybride ci-dessus.</div> :
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{c.gearProfiles.map(g => (
                 <span key={g.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)", border: `1px solid ${modeColor(g.mode)}`, borderRadius: 7, padding: "5px 10px", fontSize: 12 }}>
                   <b style={{ color: modeColor(g.mode) }}>{g.mode}</b> {g.name}
-                  <button onClick={() => delGear(g.id)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
+                  <button onClick={() => delGear(g.id)} title="Retirer ce stuff" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>
                 </span>
               ))}</div>}
           </div>

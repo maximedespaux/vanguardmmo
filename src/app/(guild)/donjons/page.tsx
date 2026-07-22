@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -65,14 +66,14 @@ export default function DonjonsPage() {
   const wikiList = dungeons.filter(d => (typeFilter === "Tous" || d.type === typeFilter) && (!q || d.name.toLowerCase().includes(q.toLowerCase())));
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
-  const TabBtn = ({ k, label }: { k: typeof tab; label: string }) => <button onClick={() => setTab(k)} className={`vg-subtab ${tab === k ? "active" : ""}`}>{label}</button>;
+  const TabBtn = ({ k, label }: { k: typeof tab; label: React.ReactNode }) => <button onClick={() => setTab(k)} className={`vg-subtab ${tab === k ? "active" : ""}`}>{label}</button>;
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-pve.png" icon="🗺️" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
+      <PageHeader banner="/assets/site/banners/banner-pve.png" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
       <div className="vg-subtabs">
-        <TabBtn k="wiki" label="📖 Wiki des donjons" />
+        <TabBtn k="wiki" label={<><Icon name="book" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Wiki des donjons</>} />
       </div>
 
       <div key={tab} className="vg-swap">
@@ -148,15 +149,15 @@ export default function DonjonsPage() {
 
       {tab === "wiki" && (<>
         <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="🔍 Rechercher un donjon..." style={{ flex: 1, minWidth: 180, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher un donjon..." style={{ flex: 1, minWidth: 180, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
           <div className="vg-subtabs" style={{ margin: 0 }}>{(["Tous", "SOLO", "GROUPE"] as const).map(t => <button key={t} onClick={() => setTypeFilter(t)} className={`vg-subtab ${typeFilter === t ? "active" : ""}`}>{t}</button>)}</div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 12 }}>
           {wikiList.map(d => (
             <div key={d.id} onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 26 }}>{d.icon}</span><div><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}>❤️ {d.hp.toLocaleString("fr-FR")}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}>🌀 {d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}>🛡️ {d.armor}</span>}</div>
-              <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}>🎁 {d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.hp.toLocaleString("fr-FR")}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
+              <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>
             </div>
           ))}
         </div>
@@ -168,8 +169,8 @@ export default function DonjonsPage() {
                 <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{sel.hp.toLocaleString("fr-FR")}</div></div>
                 <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>
               </div>
-              {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}>🛡️ Armure conseillée : <b>{sel.armor}</b></div>}
-              <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>🎁 Drops</div>
+              {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
+              <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}><Icon name="gift" size={12} style={{ verticalAlign: "-2px", marginRight: 5 }} />Drops</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{sel.drops.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px", fontSize: 12 }}>{d}</span>)}</div>
               <button onClick={() => setSel(null)} style={{ marginTop: 16, width: "100%", padding: 10, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }} className="font-heading">Fermer</button>
             </div>

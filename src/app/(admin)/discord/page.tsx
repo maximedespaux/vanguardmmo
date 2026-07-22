@@ -3,13 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 type Channel = { id: string; name: string; type: string };
 type Cmd = { id: string; type: string; status: string; result: string | null; createdBy: string; createdAt: string; payload: any };
 
 const TYPE_LABEL: Record<string, string> = { post_embed: "Embed", create_giveaway: "Giveaway", post_class_panel: "Panneau classes" };
-const STATUS_META: Record<string, { c: string; l: string }> = {
-  PENDING: { c: "var(--gold)", l: "⏳ en attente" }, DONE: { c: "var(--green)", l: "✅ envoyé" }, FAILED: { c: "var(--red)", l: "❌ échec" },
+const STATUS_META: Record<string, { c: string; l: React.ReactNode }> = {
+  PENDING: { c: "var(--gold)", l: <><Icon name="clock" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />en attente</> },
+  DONE: { c: "var(--green)", l: <><Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />envoyé</> },
+  FAILED: { c: "var(--red)", l: <><Icon name="x" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />échec</> },
 };
 
 function parseDurationMs(s: string): number | null {
@@ -25,6 +28,7 @@ export default function DiscordPage() {
   const [cmds, setCmds] = useState<Cmd[]>([]);
   const [tab, setTab] = useState<"embed" | "giveaway" | "classes">("embed");
   const [toast, setToast] = useState("");
+  const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
 
   // Embed
@@ -47,9 +51,10 @@ export default function DiscordPage() {
     try {
       const r = await fetch("/api/admin/bot-command", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, payload }) });
       const d = await r.json();
-      setToast(r.ok ? "✅ Commande envoyée au bot — exécution dans quelques secondes." : `Erreur : ${d.error ?? "inconnue"}`);
+      setOk(r.ok);
+      setToast(r.ok ? "Commande envoyée au bot — exécution dans quelques secondes." : `Erreur : ${d.error ?? "inconnue"}`);
       if (r.ok) loadCmds();
-    } catch { setToast("Erreur réseau."); }
+    } catch { setOk(false); setToast("Erreur réseau."); }
     setBusy(false); setTimeout(() => setToast(""), 4000);
   }
 
@@ -65,12 +70,12 @@ export default function DiscordPage() {
       <PageHeader banner="/assets/site/banners/banner-discord.png" title="Discord" subtitle="Pilote le bot depuis le site : poste des embeds, lance des giveaways et le panneau de classes. Le bot exécute dans les secondes qui suivent." />
       <SectionTabs section="discord" />
 
-      {toast && <div style={{ ...card, padding: "10px 14px", color: toast.startsWith("✅") ? "var(--green)" : "var(--red)", fontSize: 14 }}>{toast}</div>}
+      {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
 
       <div className="vg-subtabs">
-        <button className={`vg-subtab ${tab === "embed" ? "active" : ""}`} onClick={() => setTab("embed")}>📝 Embed Builder</button>
-        <button className={`vg-subtab ${tab === "giveaway" ? "active" : ""}`} onClick={() => setTab("giveaway")}>🎉 Giveaway</button>
-        <button className={`vg-subtab ${tab === "classes" ? "active" : ""}`} onClick={() => setTab("classes")}>🎭 Panneau classes</button>
+        <button className={`vg-subtab ${tab === "embed" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }} onClick={() => setTab("embed")}><Icon name="edit" size={15} />Embed Builder</button>
+        <button className={`vg-subtab ${tab === "giveaway" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }} onClick={() => setTab("giveaway")}><Icon name="sparkles" size={15} />Giveaway</button>
+        <button className={`vg-subtab ${tab === "classes" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }} onClick={() => setTab("classes")}><Icon name="users" size={15} />Panneau classes</button>
       </div>
 
       <div key={tab} className="vg-swap">
@@ -95,22 +100,22 @@ export default function DiscordPage() {
           {gPrizes.map((p, i) => (
             <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
               <input style={inp} value={p} onChange={(e) => setGPrizes(gPrizes.map((x, j) => (j === i ? e.target.value : x)))} placeholder={i === 0 ? "Ex : Stuff Yggdrasil complet" : `Lot ${i + 1}`} />
-              {gPrizes.length > 1 && <button onClick={() => setGPrizes(gPrizes.filter((_, j) => j !== i))} title="Retirer ce lot" style={{ ...inp, width: 44, cursor: "pointer", color: "var(--red)", flex: "none" }}>✕</button>}
+              {gPrizes.length > 1 && <button onClick={() => setGPrizes(gPrizes.filter((_, j) => j !== i))} title="Retirer ce lot" style={{ ...inp, width: 44, cursor: "pointer", color: "var(--red)", flex: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={15} /></button>}
             </div>
           ))}
-          <button onClick={() => setGPrizes([...gPrizes, ""])} style={{ ...inp, width: "auto", cursor: "pointer", fontSize: 13, color: "var(--orange)", borderColor: "var(--orange)", padding: "6px 12px" }}>+ Ajouter un lot</button>
+          <button onClick={() => setGPrizes([...gPrizes, ""])} style={{ ...inp, width: "auto", cursor: "pointer", fontSize: 13, color: "var(--orange)", borderColor: "var(--orange)", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="plus" size={15} />Ajouter un lot</button>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
             <div style={{ flex: 1, minWidth: 120 }}><label style={lab}>Durée (30m, 2h, 1d)</label><input style={inp} value={gDur} onChange={(e) => setGDur(e.target.value)} /></div>
             <div style={{ width: 110 }}><label style={lab}>Gagnants</label><input type="number" min={1} style={inp} value={gWin} onChange={(e) => setGWin(Math.max(1, +e.target.value || 1))} /></div>
           </div>
-          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 11, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}>🎨 Embed (optionnel)</span></div>
+          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 11, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = 🎉 GIVEAWAY — (1er lot)" />
           <label style={lab}>Description</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} placeholder="Texte de l'embed (optionnel)" />
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div><label style={lab}>Couleur</label><input type="color" value={gColor} onChange={(e) => setGColor(e.target.value)} style={{ ...inp, width: 60, padding: 4, height: 38 }} /></div>
             <div style={{ flex: 1, minWidth: 180 }}><label style={lab}>Image (URL)</label><input style={inp} value={gImg} onChange={(e) => setGImg(e.target.value)} placeholder="https://…" /></div>
           </div>
-          <button className="vg-btn" style={{ marginTop: 14, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => { const ms = parseDurationMs(gDur); if (!ms) { setToast("Durée invalide (ex : 30m, 2h, 1d)."); setTimeout(() => setToast(""), 4000); return; } const prizes = gPrizes.map((p) => p.trim()).filter(Boolean); if (!prizes.length) { setToast("Ajoute au moins un lot."); setTimeout(() => setToast(""), 4000); return; } send("create_giveaway", { channelId: gCh, prize: prizes[0], prizes, durationMs: ms, winnersCount: gWin, description: gDesc || undefined, embedTitle: gTitle || undefined, embedColor: hexToInt(gColor), embedImage: gImg || undefined }); }}>Lancer le giveaway</button>
+          <button className="vg-btn" style={{ marginTop: 14, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => { const ms = parseDurationMs(gDur); if (!ms) { setOk(false); setToast("Durée invalide (ex : 30m, 2h, 1d)."); setTimeout(() => setToast(""), 4000); return; } const prizes = gPrizes.map((p) => p.trim()).filter(Boolean); if (!prizes.length) { setOk(false); setToast("Ajoute au moins un lot."); setTimeout(() => setToast(""), 4000); return; } send("create_giveaway", { channelId: gCh, prize: prizes[0], prizes, durationMs: ms, winnersCount: gWin, description: gDesc || undefined, embedTitle: gTitle || undefined, embedColor: hexToInt(gColor), embedImage: gImg || undefined }); }}>Lancer le giveaway</button>
         </div>
       )}
 

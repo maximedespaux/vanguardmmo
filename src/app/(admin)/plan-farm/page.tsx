@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
+import { Icon } from "@/components/Icon";
 
 type FarmItem = { id: string; item: string; cat: string; classe: string; icon: string | null; stock: number; target: number; manque: number; unit: string };
 
@@ -66,7 +67,7 @@ export default function PlanFarmPage() {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 18px 80px" }}>
-      <PageHeader icon="🌾" title="Plan de farm" subtitle="Calculé sur le vrai stock du coffre AirGuild : ce qui manque pour atteindre les seuils." />
+      <PageHeader icon="sprout" title="Plan de farm" subtitle="Calculé sur le vrai stock du coffre AirGuild : ce qui manque pour atteindre les seuils." />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, margin: "8px 0 18px" }}>
         <Stat v={`${health}%`} l="coffres au seuil" c={col(health)} />
@@ -77,7 +78,7 @@ export default function PlanFarmPage() {
 
       {/* Recherche + filtre par catégorie (#farm) */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
-        <input placeholder="🔎 Rechercher un objet…" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...INPUT, flex: 1, minWidth: 200 }} />
+        <input placeholder="Rechercher un objet…" value={q} onChange={(e) => setQ(e.target.value)} style={{ ...INPUT, flex: 1, minWidth: 200 }} />
         <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} style={{ ...INPUT, minWidth: 170, cursor: "pointer" }}>
           <option value="">Toutes les catégories</option>
           {cats.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -85,7 +86,7 @@ export default function PlanFarmPage() {
       </div>
 
       {items.length === 0 ? (
-        <div className="glass-card" style={{ padding: 30, textAlign: "center", color: "var(--green)" }}>🎉 Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !</div>
+        <div className="glass-card" style={{ padding: 30, textAlign: "center", color: "var(--green)" }}><Icon name="sparkles" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} /> Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !</div>
       ) : filtered.length === 0 ? (
         <div className="glass-card" style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Aucun objet ne correspond au filtre.</div>
       ) : (
@@ -116,7 +117,7 @@ export default function PlanFarmPage() {
                         <div style={{ marginTop: 5 }}><Bar pc={pc} /></div>
                         <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>stock {d.stock}/{d.target}{d.unit === "slot" ? " (slots)" : ""} · <b style={{ color: col(pc) }}>{pc}%</b></div>
                       </div>
-                      <span title="à farmer" style={{ fontFamily: "Rajdhani,sans-serif", fontWeight: 700, fontSize: 16, color: "var(--red)", minWidth: 38, textAlign: "right" }}>−{d.manque}</span>
+                      <span title="à farmer" style={{ fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 16, color: "var(--red)", minWidth: 38, textAlign: "right" }}>−{d.manque}</span>
                     </div>
                   );
                 })}
@@ -127,7 +128,7 @@ export default function PlanFarmPage() {
       )}
 
       <div style={{ marginTop: 22, textAlign: "center" }}>
-        <Link href="/coffre" className="vg-btn" style={{ textDecoration: "none" }}>🧰 Gérer le stock du coffre</Link>
+        <Link href="/coffre" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="vault" size={15} /> Gérer le stock du coffre</Link>
       </div>
     </div>
   );

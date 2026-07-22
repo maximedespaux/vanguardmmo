@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { Icon } from "@/components/Icon";
 
 interface Item { name: string; def?: string; count: number; prob?: number; icon?: string; }
 interface Ex { require: Item[]; give: Item[]; }
@@ -44,20 +45,20 @@ export default function EchangesPage() {
 
   return (
     <div style={{ maxWidth: 980, margin: "0 auto", padding: "28px 32px 90px" }}>
-      <PageHeader icon="🔄" title="Échanges PNJ" subtitle="Tous les échanges PNJ d'AirFlyff : ce qu'il faut donner (à gauche) pour obtenir quoi (à droite). Cherche un item pour le retrouver vite." />
+      <PageHeader icon="swap" title="Échanges PNJ" subtitle="Tous les échanges PNJ d'AirFlyff : ce qu'il faut donner (à gauche) pour obtenir quoi (à droite). Cherche un item pour le retrouver vite." />
       <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
         <div className="vg-subtabs" style={{ margin: 0 }}>
-          <button onClick={() => setTab("custom")} className={`vg-subtab ${tab === "custom" ? "active" : ""}`}>✨ Custom AirFlyff ({D.custom.length})</button>
-          <button onClick={() => setTab("ressources")} className={`vg-subtab ${tab === "ressources" ? "active" : ""}`}>⛏️ Ressources ({D.ressources.length})</button>
+          <button onClick={() => setTab("custom")} className={`vg-subtab ${tab === "custom" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="sparkles" size={14} />Custom AirFlyff ({D.custom.length})</button>
+          <button onClick={() => setTab("ressources")} className={`vg-subtab ${tab === "ressources" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="sprout" size={14} />Ressources ({D.ressources.length})</button>
         </div>
-        <input placeholder="🔍 Rechercher un item…" value={q} onChange={(e) => setQ(e.target.value)} style={{ marginLeft: "auto", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)", padding: "9px 13px", borderRadius: 9, fontSize: 13.5, minWidth: 220, flex: "1 1 220px" }} />
+        <input placeholder="Rechercher un item…" value={q} onChange={(e) => setQ(e.target.value)} style={{ marginLeft: "auto", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)", padding: "9px 13px", borderRadius: 9, fontSize: 13.5, minWidth: 220, flex: "1 1 220px" }} />
       </div>
 
       <div key={tab} className="vg-swap">
         {list.map((n, i) => (
           <div key={i} className="glass-card" style={{ padding: 0, marginBottom: 14, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 16px", background: "linear-gradient(90deg, rgba(255,210,74,.1), transparent 60%)", borderLeft: "3px solid var(--gold)" }}>
-              <span style={{ fontSize: 16 }}>🔄</span>
+              <Icon name="swap" size={16} style={{ color: "var(--gold)" }} />
               <span className="font-heading" style={{ color: "var(--gold)", fontSize: 14.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{nice(n.mmi || n.npc)}</span>
               <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-muted)" }}>{n.echanges.length} échange(s)</span>
             </div>

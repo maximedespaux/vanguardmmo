@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { Icon } from "@/components/Icon";
 
 type Abs = { id: string; startDate: string; endDate: string; reason: string | null; status: string };
 const ST: Record<string, { l: string; c: string }> = {
@@ -38,11 +39,11 @@ export default function AbsencesPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 760, margin: "0 auto" }}>
-      <PageHeader icon="🌙" title="Mes absences" subtitle="Préviens le staff quand tu seras absent(e) — ça évite les relances." />
+      <PageHeader icon="moon" title="Mes absences" subtitle="Préviens le staff quand tu seras absent(e) — ça évite les relances." />
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       <div className="glass-card" style={{ padding: 18, marginBottom: 18 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>📅 Faire une demande</div>
+        <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="calendar" size={16} /> Faire une demande</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>Du<input type="date" value={start} onChange={e => setStart(e.target.value)} style={inp} /></label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>Au<input type="date" value={end} onChange={e => setEnd(e.target.value)} style={inp} /></label>

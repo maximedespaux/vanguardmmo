@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon, type IconName } from "@/components/Icon";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
@@ -95,27 +96,27 @@ export default function BanquePage() {
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
-        {([["boutique", "🛒 Boutique"], ["requetes", `📋 Requêtes${reqs.length ? ` (${reqs.length})` : ""}`], ["dettes", `💰 Dettes${debts.filter(d => d.status !== "REPAID").length ? ` (${debts.filter(d => d.status !== "REPAID").length})` : ""}`], ["rembourse", `✅ Remboursé${debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}`]] as const).map(([k, l]) => (
-          <button key={k} onClick={() => setTab(k)} style={{ padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rajdhani',sans-serif", border: `1px solid ${tab === k ? "var(--orange)" : "var(--border)"}`, background: tab === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: tab === k ? "var(--orange)" : "var(--text-muted)" }}>{l}</button>
+        {([["boutique", "cart", "Boutique"], ["requetes", "clipboard", `Requêtes${reqs.length ? ` (${reqs.length})` : ""}`], ["dettes", "coins", `Dettes${debts.filter(d => d.status !== "REPAID").length ? ` (${debts.filter(d => d.status !== "REPAID").length})` : ""}`], ["rembourse", "check", `Remboursé${debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}`]] as const).map(([k, ic, l]) => (
+          <button key={k} onClick={() => setTab(k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${tab === k ? "var(--orange)" : "var(--border)"}`, background: tab === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: tab === k ? "var(--orange)" : "var(--text-muted)" }}><Icon name={ic} size={15} />{l}</button>
         ))}
       </div>
 
       {/* ── BOUTIQUE ── */}
       {tab === "boutique" && <div className="glass-card" style={{ padding: 18, marginBottom: 16 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>🛒 Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
+        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
-          <input placeholder="🔍 Rechercher un article…" value={q} onChange={e => setQ(e.target.value)} style={{ ...inp, flex: 1, minWidth: 160 }} />
+          <input placeholder="Rechercher un article…" value={q} onChange={e => setQ(e.target.value)} style={{ ...inp, flex: 1, minWidth: 160 }} />
         </div>
         <div className="shop-layout" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 14 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: 7, maxHeight: 470, overflowY: "auto", paddingRight: 4 }}>
-            {shop.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Le coffre commun est vide pour l'instant — reviens quand le staff l'aura rempli. 📦</div> :
+            {shop.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Le coffre commun est vide pour l'instant — reviens quand le staff l'aura rempli.</div> :
              filtered.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Aucun article ne correspond à ta recherche.</div> :
              filtered.map(s => { const inCart = cart[s.id] || 0; return (
               <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--bg-3)", border: `1px solid ${inCart ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "7px 11px" }}>
                 <div style={{ width: 34, height: 34, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-2)", borderRadius: 7 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {s.icon ? <img src={s.icon} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} /> : <span>📦</span>}
+                  {s.icon ? <img src={s.icon} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} /> : <Icon name="package" size={18} style={{ color: "var(--text-muted)" }} />}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
@@ -130,7 +131,7 @@ export default function BanquePage() {
             ); })}
           </div>
           <div style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: 14, alignSelf: "start" }}>
-            <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10 }}>🧺 Ton panier</div>
+            <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} style={{ color: "var(--orange)" }} /> Ton panier</div>
             {cartIds.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: "14px 0", textAlign: "center" }}>Panier vide.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 4, maxHeight: 240, overflowY: "auto" }}>
                 {cartIds.map(id => { const it = byId(id); if (!it) return null; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return (
@@ -139,7 +140,7 @@ export default function BanquePage() {
                       <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
                       <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(it.price * cart[id])}</span>
-                      <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}>✕</button>
+                      <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
                     </div>
                     {isStuff && (
                       <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2 }}>
@@ -155,10 +156,10 @@ export default function BanquePage() {
             )}
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns</b></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={() => submitCart("achat")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13 }}>🛒 Demander en achat</button>
-              <button onClick={() => submitCart("dette")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "rgba(255,140,26,0.12)", color: "var(--orange)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13 }}>📝 Demander en dette</button>
+              <button onClick={() => submitCart("achat")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander en achat</button>
+              <button onClick={() => submitCart("dette")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "rgba(255,140,26,0.12)", color: "var(--orange)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="edit" size={15} /> Demander en dette</button>
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}>ℹ️ Ta demande part au staff qui valide (achat −20 % ou dette). Profil avec personnage requis.</div>
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff qui valide (achat −20 % ou dette). Profil avec personnage requis.</div>
           </div>
         </div>
       </div>}
@@ -178,7 +179,7 @@ export default function BanquePage() {
                   return (
                     <div key={g.key} className="glass-card" style={{ padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span className="font-heading" style={{ fontWeight: 700 }}>{multi ? `🧺 Panier — ${g.items.length} articles` : (first.item ?? "Périns")}{!multi && first.quantity > 1 ? <span style={{ color: "var(--text-muted)" }}> ×{first.quantity}</span> : null}</span>
+                        <span className="font-heading" style={{ fontWeight: 700 }}>{multi ? <><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 5 }} />Panier — {g.items.length} articles</> : (first.item ?? "Périns")}{!multi && first.quantity > 1 ? <span style={{ color: "var(--text-muted)" }}> ×{first.quantity}</span> : null}</span>
                         {total > 0 && <span style={{ color: "var(--gold)", fontSize: 13 }}>~{fmt(total)} périns</span>}
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
                       </div>
@@ -207,7 +208,7 @@ export default function BanquePage() {
           {(tab === "dettes" || tab === "rembourse") && (() => { const list = debts.filter(d => tab === "rembourse" ? d.status === "REPAID" : d.status !== "REPAID"); return (
           <section>
             <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{tab === "rembourse" ? "Dettes remboursées" : "Mes dettes"}</h2>
-            {list.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours. 🎉"}</div> : (
+            {list.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours."}</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {list.map(d => {
                   const st = DEBT_STATUS[d.status] ?? DEBT_STATUS.REQUESTED;
@@ -218,14 +219,14 @@ export default function BanquePage() {
                         <span className="font-heading" style={{ fontWeight: 700 }}>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}</span>
                         {d.item && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>· {d.item}</span>}
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
-                        {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0 }}>🗑️</button>}
+                        {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={15} /></button>}
                       </div>
                       {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
                       {paid > 0 && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 5 }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</div>}
                       {d.status === "ACCEPTED" && (() => { const reste = Math.max(0, d.amount - paid); return (
                         <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
                           <input type="number" min={1} max={reste} placeholder="Montant à rembourser…" value={payAmt[d.id] ?? ""} onChange={e => setPayAmt(p => ({ ...p, [d.id]: e.target.value }))} style={{ width: 150, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
-                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>💰 Rembourser</button>
+                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="coins" size={14} /> Rembourser</button>
                           <button onClick={() => setPayAmt(p => ({ ...p, [d.id]: String(reste) }))} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>Tout ({fmt(reste)})</button>
                         </div>
                       ); })()}

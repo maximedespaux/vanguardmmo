@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
+import { Icon } from "@/components/Icon";
 
 type Channel = { id: string; name: string; type: string };
 
@@ -13,6 +14,7 @@ export default function AnnoncePage() {
   const [msg, setMsg] = useState("");
   const [color, setColor] = useState("#FF8C1A");
   const [toast, setToast] = useState("");
+  const [ok, setOk] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export default function AnnoncePage() {
   }, []);
 
   async function publish() {
-    if (!title && !msg) { setToast("Donne un titre ou un message."); setTimeout(() => setToast(""), 3000); return; }
+    if (!title && !msg) { setOk(false); setToast("Donne un titre ou un message."); setTimeout(() => setToast(""), 3000); return; }
     setBusy(true);
     try {
       const r = await fetch("/api/admin/bot-command", {
@@ -33,9 +35,10 @@ export default function AnnoncePage() {
         body: JSON.stringify({ type: "post_embed", payload: { channelId: ch, title, description: msg, color: parseInt(color.replace(/^#/, ""), 16) || 0xff8c1a } }),
       });
       const d = await r.json();
-      setToast(r.ok ? "✅ Annonce envoyée — le bot la publie dans quelques secondes." : `Erreur : ${d.error ?? "inconnue"}`);
+      setOk(r.ok);
+      setToast(r.ok ? "Annonce envoyée — le bot la publie dans quelques secondes." : `Erreur : ${d.error ?? "inconnue"}`);
       if (r.ok) { setTitle(""); setMsg(""); }
-    } catch { setToast("Erreur réseau."); }
+    } catch { setOk(false); setToast("Erreur réseau."); }
     setBusy(false); setTimeout(() => setToast(""), 4000);
   }
 
@@ -47,7 +50,7 @@ export default function AnnoncePage() {
     <div style={{ padding: "28px 32px", maxWidth: 760, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-annonce.png" title="Annonce" subtitle="Rédige une annonce : le bot la publie en embed dans le salon choisi." />
       <SectionTabs section="discord" />
-      {toast && <div style={{ ...card, padding: "10px 14px", color: toast.startsWith("✅") ? "var(--green)" : "var(--red)", fontSize: 14 }}>{toast}</div>}
+      {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
       <div style={card}>
         <label style={lab}>Salon</label>
         <VgSelect full value={ch} onChange={setCh} options={channels.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : channels.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " 📢" : ""}` }))} />

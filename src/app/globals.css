@@ -2,10 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Charte typo Vanguard (fournie par le proprio) ── */
-@font-face{font-family:'Bruno Ace SC';src:url('/fonts/BrunoAceSC-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
-@font-face{font-family:'Cherry Bomb One';src:url('/fonts/CherryBombOne-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
-@font-face{font-family:'Story Script';src:url('/fonts/StoryScript-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+/* ── Charte typo Vanguard — Rubik (titres) · Athiti (corps) · Alef (accents) ── */
+@font-face{font-family:'Rubik';src:url('/fonts/Rubik-VariableFont_wght.ttf') format('truetype');font-weight:300 900;font-display:swap}
+@font-face{font-family:'Athiti';src:url('/fonts/Athiti-Light.ttf') format('truetype');font-weight:300;font-display:swap}
+@font-face{font-family:'Athiti';src:url('/fonts/Athiti-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Athiti';src:url('/fonts/Athiti-Medium.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:'Athiti';src:url('/fonts/Athiti-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:'Athiti';src:url('/fonts/Athiti-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Alef';src:url('/fonts/Alef-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Alef';src:url('/fonts/Alef-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
 
 :root {
   --orange:#FF8C1A; --orange-dark:#CC6E00; --bg:#0A0A0C; --bg-2:#131318;
@@ -13,13 +18,13 @@
   --green:#4ADE80; --red:#F87171; --gold:#FFD24A; --blue:#4EA8FF; --purple:#C77DFF;
 }
 * { box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'Inter',system-ui,sans-serif; margin:0;
+body { background:var(--bg); color:var(--text); font-family:'Athiti',system-ui,sans-serif; margin:0;
   background-image:radial-gradient(circle at 15% 10%, rgba(255,140,26,0.05), transparent 35%); }
-.font-heading { font-family:'Cherry Bomb One','Rajdhani','Inter',sans-serif; }
-p { font-family:'Story Script','Inter',system-ui,sans-serif; letter-spacing:.2px; }
+.font-heading { font-family:'Rubik','Rubik','Athiti',sans-serif; }
+p { font-family:'Athiti','Athiti',system-ui,sans-serif; letter-spacing:.2px; }
 .glass-card { background:linear-gradient(180deg, rgba(26,26,33,.82), rgba(15,15,19,.88)); border:1px solid var(--border); border-radius:14px; box-shadow:0 2px 14px rgba(0,0,0,.3); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); transition:border-color .2s, box-shadow .2s, transform .2s; }
 .glass-card:hover { border-color:rgba(255,140,26,.32); box-shadow:0 9px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,140,26,.07); transform:translateY(-3px); }
-.vg-btn { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:10px; border:none; cursor:pointer; font-family:'Rajdhani',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-size:13px; color:#2a1400; background:linear-gradient(180deg,#FFC061,#FF8C1A); box-shadow:0 4px 16px rgba(255,140,26,.32); transition:transform .12s, box-shadow .12s; text-decoration:none; }
+.vg-btn { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:10px; border:none; cursor:pointer; font-family:'Rubik',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-size:13px; color:#2a1400; background:linear-gradient(180deg,#FFC061,#FF8C1A); box-shadow:0 4px 16px rgba(255,140,26,.32); transition:transform .12s, box-shadow .12s; text-decoration:none; }
 .vg-btn:hover { transform:translateY(-2px); box-shadow:0 7px 24px rgba(255,140,26,.5); }
 .vg-btn:active { transform:translateY(0) scale(.97); }
 /* ── Scrollbars maison (vertical + horizontal + Firefox) + défilement doux ── */
@@ -44,7 +49,7 @@ input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer
 input[type=number] { -moz-appearance:textfield; appearance:textfield; }
 /* Champs texte/nombre : focus thémé orange partout */
 input:focus, textarea:focus { outline:none; border-color:var(--orange) !important; box-shadow:0 0 0 3px rgba(255,140,26,.16); }
-.vg-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--bg-3); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23FF8C1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:11px; border:1px solid var(--border); border-radius:9px; padding:9px 32px 9px 12px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.vg-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--bg-3); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23FF8C1A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; background-size:11px; border:1px solid var(--border); border-radius:9px; padding:9px 32px 9px 12px; color:var(--text); font-family:'Rubik',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
 .vg-select:hover { border-color:rgba(255,140,26,.5); }
 .vg-select:focus { outline:none; border-color:var(--orange); box-shadow:0 0 0 3px rgba(255,140,26,.18); }
 .vg-select option { background:#16161c; color:var(--text); font-weight:500; }
@@ -95,10 +100,10 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-side-head::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,140,26,.55),transparent)}
 .vg-side-logo{width:44px;height:44px;object-fit:contain;animation:logopulse 4s ease-in-out infinite}
 @keyframes logopulse{0%,100%{filter:drop-shadow(0 0 6px rgba(255,140,26,.4))}50%{filter:drop-shadow(0 0 15px rgba(255,140,26,.85))}}
-.vg-side-title{font-family:'Cherry Bomb One','Rajdhani',sans-serif;font-weight:400;letter-spacing:.5px;font-size:15px;line-height:1;color:#fff}
+.vg-side-title{font-family:'Rubik','Rubik',sans-serif;font-weight:400;letter-spacing:.5px;font-size:15px;line-height:1;color:#fff}
 .vg-side-sub{font-size:9px;color:var(--orange);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;opacity:.9}
 .vg-nav{flex:1;overflow-y:auto;padding:14px 10px}
-.vg-sec-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7a7a86;padding:13px 10px 6px;transition:color .15s}
+.vg-sec-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;font-family:'Rubik',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#7a7a86;padding:13px 10px 6px;transition:color .15s}
 .vg-sec-btn:hover{color:var(--text)}
 .vg-link{position:relative;display:flex;align-items:center;gap:11px;padding:9px 13px;margin:3px 0;border-radius:10px;font-size:13.5px;text-decoration:none;color:var(--text-muted);transition:background .15s,color .15s,transform .12s}
 .vg-link:hover{background:rgba(255,255,255,.05);color:var(--text);transform:translateX(3px)}
@@ -137,14 +142,14 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-pagehead::after{content:"";position:absolute;right:-40px;top:-40px;width:190px;height:190px;background:radial-gradient(circle,rgba(255,140,26,.16),transparent 70%);pointer-events:none}
 .vg-pagehead-row{position:relative;display:flex;align-items:center;gap:16px}
 .vg-pagehead-ic{font-size:28px;width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:linear-gradient(180deg,rgba(255,140,26,.22),rgba(255,140,26,.05));border:1px solid rgba(255,140,26,.32);box-shadow:0 0 16px rgba(255,140,26,.18);flex-shrink:0}
-.vg-pagehead-title{margin:0;font-family:'Cherry Bomb One','Rajdhani',sans-serif;font-size:26px;font-weight:400;letter-spacing:.5px;color:#fff;line-height:1.1}
+.vg-pagehead-title{margin:0;font-family:'Rubik','Rubik',sans-serif;font-size:26px;font-weight:400;letter-spacing:.5px;color:#fff;line-height:1.1}
 .vg-pagehead-sub{margin:5px 0 0;color:var(--text-muted);font-size:14px;line-height:1.5}
 .vg-pagehead-bannerwrap{position:relative;display:flex;flex-direction:column;gap:4px}
 .vg-pagehead-banner{height:76px;width:auto;max-width:min(100%,380px);object-fit:contain;align-self:flex-start;filter:drop-shadow(0 5px 18px rgba(0,0,0,.55))}
 @media(max-width:760px){.vg-pagehead-banner{height:56px}}
 /* ── Sous-onglets de section ── */
 .vg-subtabs{display:inline-flex;gap:3px;margin:-4px 0 22px;padding:5px;background:linear-gradient(180deg,rgba(24,24,30,.72),rgba(15,15,20,.72));border:1px solid var(--border);border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 2px 10px rgba(0,0,0,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);flex-wrap:wrap}
-.vg-subtab{position:relative;padding:8px 19px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;text-decoration:none;color:var(--text-muted);background:transparent;border:none;cursor:pointer;transition:color .15s,background .15s}
+.vg-subtab{position:relative;padding:8px 19px;border-radius:9px;font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;text-decoration:none;color:var(--text-muted);background:transparent;border:none;cursor:pointer;transition:color .15s,background .15s}
 .vg-subtab:hover{color:var(--text);background:rgba(255,255,255,.05)}
 .vg-subtab.active{color:#2a1400;background:linear-gradient(180deg,#FFC061,#FF8C1A);box-shadow:0 2px 12px rgba(255,140,26,.5),inset 0 1px 0 rgba(255,255,255,.45)}
 
@@ -153,7 +158,7 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-topnav::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,140,26,.45),transparent)}
 .vg-top-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0}
 .vg-top-logo{width:42px;height:42px;object-fit:contain;animation:logopulse 4s ease-in-out infinite}
-.vg-top-title{font-family:'Cherry Bomb One','Rajdhani',sans-serif;font-size:21px;color:#fff;letter-spacing:.5px}
+.vg-top-title{font-family:'Rubik','Rubik',sans-serif;font-size:21px;color:#fff;letter-spacing:.5px}
 .vg-top-nav{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
 .vg-top-item{position:relative}
 .vg-top-link{position:relative;display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:9px;font-size:13.5px;color:var(--text-muted);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,transform .12s}

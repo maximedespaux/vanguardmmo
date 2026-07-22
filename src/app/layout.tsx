@@ -11,10 +11,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <head>
-        {/* Polices de la charte : Rajdhani (titres) + Inter (corps) */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+        {/* Polices auto-hébergées (@font-face dans globals.css) : Rubik (titres) · Athiti (corps) · Alef (accents) */}
+        <link rel="preload" href="/fonts/Rubik-VariableFont_wght.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Athiti-Regular.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
       </head>
       <body>
         <Providers>{children}</Providers>

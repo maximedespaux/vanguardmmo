@@ -50,7 +50,6 @@ export async function POST(req: Request) {
     fields: [
       { name: "👥 Personnages", value: chars },
       { name: "⚡ Spécialisations", value: (body.specs ?? []).map((s: string) => specLabels[s] ?? s).join(" · ") || "—" },
-      { name: "🧠 Quiz", value: `${body.quizScore ?? "?"}/${body.quizTotal ?? "?"}`, inline: true },
       ...(body.build ? [{ name: "🛠️ Build", value: `**${body.build.name || "Perso"}** — ${body.build.className} (P${body.build.prestige})` + (body.build.stats ? "\n" + Object.entries(body.build.stats).slice(0, 5).map(([k, v]) => `${k} +${v}`).join(" · ") : "") }] : []),
       { name: "🎯 Intérêts", value: (body.interests ?? "—").slice(0, 1000) },
       { name: "🔥 Motivation", value: (body.motivation ?? "—").slice(0, 1000) },

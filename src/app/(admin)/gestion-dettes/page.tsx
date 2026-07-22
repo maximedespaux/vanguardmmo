@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { vgPrompt } from "@/components/Dialogs";
+import { Icon } from "@/components/Icon";
 
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; decidedBy: string | null; createdAt: string; user: { username: string }; payments: { amount: number }[] };
 type Req = { id: string; username: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; createdAt: string };
@@ -74,9 +75,9 @@ export default function BanqueAdminPage() {
               {r.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{r.reason}</div>}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
                 <input placeholder="Prix public (périn)" value={prices[r.id] ?? ""} onChange={e => setPrices(p => ({ ...p, [r.id]: e.target.value }))} style={{ ...inp, width: 160 }} />
-                <button onClick={() => decideReq(r.id, "achat")} style={btn("var(--green)")}>🛒 Achat −20 %</button>
-                <button onClick={() => decideReq(r.id, "dette")} style={btn("var(--blue)")}>📜 Dette (prix public)</button>
-                <button onClick={() => decideReq(r.id, "refuse")} style={btn("var(--red)")}>❌ Refuser</button>
+                <button onClick={() => decideReq(r.id, "achat")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} /> Achat −20 %</button>
+                <button onClick={() => decideReq(r.id, "dette")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="book" size={15} /> Dette (prix public)</button>
+                <button onClick={() => decideReq(r.id, "refuse")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>
               </div>
               {prices[r.id] && Number(prices[r.id]) > 0 && <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>Achat = {fmt(Math.floor(Number(prices[r.id]) * 0.8))} périn · Dette = {fmt(Number(prices[r.id]))} périn</div>}
             </div>
@@ -109,9 +110,9 @@ export default function BanqueAdminPage() {
                 {d.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note : {d.adminNote}{d.decidedBy ? ` — ${d.decidedBy}` : ""}</div>}
                 {!["REFUSED", "REPAID", "CANCELLED"].includes(d.status) && (
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-                    {d.status !== "ACCEPTED" && <button onClick={() => decideDebt(d.id, "ACCEPTED")} style={btn("var(--blue)")}>✅ Valider</button>}
-                    <button onClick={() => decideDebt(d.id, "REFUSED")} style={btn("var(--red)")}>❌ Refuser</button>
-                    {d.status === "ACCEPTED" && <button onClick={() => decideDebt(d.id, "REPAID")} style={btn("var(--green)")}>💰 Remboursée</button>}
+                    {d.status !== "ACCEPTED" && <button onClick={() => decideDebt(d.id, "ACCEPTED")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="check" size={15} /> Valider</button>}
+                    <button onClick={() => decideDebt(d.id, "REFUSED")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>
+                    {d.status === "ACCEPTED" && <button onClick={() => decideDebt(d.id, "REPAID")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="coins" size={15} /> Remboursée</button>}
                   </div>
                 )}
               </div>

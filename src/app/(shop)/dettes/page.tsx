@@ -108,17 +108,9 @@ export default function BanquePage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique" subtitle="Parcours le coffre de guilde, ajoute au panier, et fais ta demande (achat ou dette). Le staff valide depuis l'AirGuild." />
+      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — le détenteur te répond pour organiser l'échange." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
-
-      {!isMember && (
-        <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "rgba(255,140,26,.08)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <Icon name="discord" size={20} style={{ color: "var(--orange)", flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 200, fontSize: 13, color: "var(--text)" }}>Tu consultes les <b>prix publics</b>. Rejoins <b>Vanguard</b> pour le <b style={{ color: "var(--green)" }}>prix membre</b> et pouvoir commander depuis le coffre.</div>
-          <a href="/candidature" style={{ padding: "8px 14px", borderRadius: 8, background: "var(--orange)", color: "#0A0A0C", fontWeight: 700, fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" }}>Rejoindre Vanguard</a>
-        </div>
-      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         {([["boutique", "cart", "Boutique"], ["requetes", "clipboard", `Requêtes${reqs.length ? ` (${reqs.length})` : ""}`], ["dettes", "coins", `Dettes${debts.filter(d => d.status !== "REPAID").length ? ` (${debts.filter(d => d.status !== "REPAID").length})` : ""}`], ["rembourse", "check", `Remboursé${debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}`]] as const).map(([k, ic, l]) => (

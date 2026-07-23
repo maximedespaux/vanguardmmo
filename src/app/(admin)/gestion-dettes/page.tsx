@@ -20,6 +20,7 @@ const fmt = (n: number) => n.toLocaleString("fr-FR");
 export default function BanqueAdminPage() {
   const [reqs, setReqs] = useState<Req[]>([]);
   const [prices, setPrices] = useState<Record<string, string>>({});
+  const [cautions, setCautions] = useState<Record<string, string>>({});
   const [debts, setDebts] = useState<Debt[]>([]);
   const [filter, setFilter] = useState("PENDING_VALIDATION");
   const [loading, setLoading] = useState(true);
@@ -43,8 +44,9 @@ export default function BanqueAdminPage() {
   const decideReq = async (id: string, action: "achat" | "dette" | "refuse") => {
     const prixPublic = action === "refuse" ? undefined : Number(prices[id] || 0);
     if (action !== "refuse" && (!prixPublic || prixPublic <= 0)) return flash("Fixe un prix public (> 0) avant d'accepter.");
+    const caution = action === "dette" ? Number(cautions[id] || 0) : undefined;
     const adminNote = action === "refuse" ? ((await vgPrompt("Raison du refus ? (optionnel)")) ?? undefined) : undefined;
-    const r = await fetch(`/api/admin/bank-request/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, prixPublic, adminNote }) });
+    const r = await fetch(`/api/admin/bank-request/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, prixPublic, caution, adminNote }) });
     if (r.ok) { flash(action === "achat" ? "Achat accepté ✓" : action === "dette" ? "Dette accordée ✓" : "Requête refusée."); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur"); }
   };
@@ -74,7 +76,8 @@ export default function BanqueAdminPage() {
               </div>
               {r.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{r.reason}</div>}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
-                <input placeholder="Prix public (périn)" value={prices[r.id] ?? ""} onChange={e => setPrices(p => ({ ...p, [r.id]: e.target.value }))} style={{ ...inp, width: 160 }} />
+                <input placeholder="Prix public (périn)" value={prices[r.id] ?? ""} onChange={e => setPrices(p => ({ ...p, [r.id]: e.target.value }))} style={{ ...inp, width: 150 }} />
+                <input placeholder="Caution (dette)" value={cautions[r.id] ?? ""} onChange={e => setCautions(p => ({ ...p, [r.id]: e.target.value }))} style={{ ...inp, width: 130 }} title="Caution rendue au retour de l'objet (pour une dette)" />
                 <button onClick={() => decideReq(r.id, "achat")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} /> Achat</button>
                 <button onClick={() => decideReq(r.id, "dette")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="book" size={15} /> Dette (prix public)</button>
                 <button onClick={() => decideReq(r.id, "refuse")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>

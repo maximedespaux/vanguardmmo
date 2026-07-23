@@ -17,6 +17,16 @@ export async function POST(req: Request) {
   const charCount = await prisma.character.count({ where: { userId: a.user.id } });
   if (charCount === 0) return NextResponse.json({ error: "Complète d'abord ton profil (au moins un personnage) pour faire une requête." }, { status: 400 });
 
+  // ── Verrou dette : pas de nouvelle requête tant qu'une dette accordée n'est pas remboursée. ──
+  const outstanding = await prisma.debt.findFirst({
+    where: { userId: a.user.id, status: { in: ["ACCEPTED", "PENDING_VALIDATION"] } },
+    orderBy: { createdAt: "asc" }, select: { amount: true, item: true },
+  });
+  if (outstanding) {
+    const quoi = outstanding.item ? ` (${outstanding.item})` : "";
+    return NextResponse.json({ error: `Tu dois d'abord rembourser ta dette en cours${quoi} avant de refaire une requête à la boutique.` }, { status: 403 });
+  }
+
   const b = await req.json();
 
   // ── Panier boutique : plusieurs articles d'un coup (souhait achat ou dette) ──

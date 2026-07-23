@@ -39,6 +39,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
   const prixPublic = BigInt(Math.max(0, Math.floor(Number(b.prixPublic) || 0)));
   if (prixPublic <= 0n) return NextResponse.json({ error: "Fixe un prix public (> 0) pour accepter." }, { status: 400 });
+  const caution = BigInt(Math.max(0, Math.floor(Number(b.caution) || 0))); // caution éventuelle (dette)
 
   if (b.action === "achat") {
     const prixFinal = prixPublic * BigInt(row.quantity); // total = prix unitaire × quantité (plus de remise)
@@ -54,6 +55,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         userId: row.userId,
         type: row.kind === "PERINS" ? "PENYA" : "ITEM",
         amount: prixPublic * BigInt(row.quantity),
+        caution,
         item: row.item,
         reason: `Banque — ${label}`,
         status: "ACCEPTED",

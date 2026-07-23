@@ -330,6 +330,7 @@ model Debt {
   characterName String?
   type          DebtType     @default(PENYA)
   amount        BigInt       @default(0)
+  caution       BigInt       @default(0)  // caution rendue au retour de l'objet (paliers boutique)
   item          String?
   reason        String?
   dueDate       DateTime?
@@ -603,12 +604,13 @@ model BankRequest {
   batchId     String?           // regroupe les items d'un même panier = 1 transaction
   status      BankRequestStatus @default(PENDING)
   prixPublic  BigInt?           // fixé par l'admin à l'acceptation
-  prixFinal   BigInt?           // achat = prixPublic×0,8 ; dette = prixPublic
+  prixFinal   BigInt?           // total = prix unitaire × quantité (plus de remise)
   debtId      String?           // dette créée si issue = dette
   decidedBy   String?
   adminNote   String?
   channelId   String?           // embed « Décision »
   messageId   String?
+  discordSynced Boolean         @default(false) // embed Discord à jour après une décision prise sur le site
   remindedAt  DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

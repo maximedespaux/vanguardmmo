@@ -27,6 +27,9 @@ export async function POST(req: Request) {
   const chars = Array.isArray(body?.chars) ? body.chars : null;
   if (!chars) return NextResponse.json({ error: "chars requis" }, { status: 400 });
   if (chars.length > 30) return NextResponse.json({ error: "trop de persos" }, { status: 400 });
+  // Anti-écrasement : ne JAMAIS vider tous les persos d'un compte via une sync vide
+  // (ex. consultation du build d'un autre membre / état transitoire du builder).
+  if (chars.length === 0) return NextResponse.json({ ok: true, count: 0, skipped: "vide" });
 
   await prisma.$transaction(async (tx) => {
     // écrasement total : on repart des persos du builder (source de vérité côté joueur)

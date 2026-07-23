@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   let username: string | null = null;
   if (target && target !== a.user.id) {
     if (!canAccessAdmin(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-    const u = await prisma.user.findFirst({ where: { OR: [{ id: target }, { discordId: target }] }, select: { id: true, username: true } });
+    const u = await prisma.user.findFirst({ where: { OR: [{ id: target }, { discordId: target }, { username: { equals: target, mode: "insensitive" } }] }, select: { id: true, username: true } });
     if (!u) return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
     userId = u.id; username = u.username;
   }

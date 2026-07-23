@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
+import { canAccessGuild } from "@/config/roles";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
@@ -15,7 +16,8 @@ const RARITY_META: Record<string, { l: string; c: string }> = {
   rare: { l: "Rare", c: "#4EA8FF" }, epique: { l: "Épique", c: "#C77DFF" },
   legendaire: { l: "Légendaire", c: "#FF8C1A" }, premyth: { l: "Pré-myth.", c: "#FF5C8A" },
 };
-const mprice = (s: Shop) => (s.tiers ? s.tiers.mem : s.price); // page membre → prix membre (fallback prix public)
+// Prix affiché selon le statut : membre de guilde → prix membre ; public → prix public.
+const priceFor = (s: Shop, member: boolean) => (s.tiers ? (member ? s.tiers.mem : s.tiers.pub) : s.price);
 
 const DEBT_STATUS: Record<string, { l: string; c: string }> = {
   REQUESTED: { l: "Demandée", c: "var(--text-muted)" }, PENDING_VALIDATION: { l: "À valider", c: "var(--gold)" },
@@ -49,6 +51,8 @@ export default function BanquePage() {
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
+  const role = (session?.user as any)?.role ?? "RECRUE";
+  const isMember = canAccessGuild(role); // membre de guilde → prix membre ; sinon prix public + invitation Discord
 
   const load = async () => {
     setLoading(true);
@@ -79,13 +83,13 @@ export default function BanquePage() {
   const byId = (id: string) => shop.find(s => s.id === id);
   const setQty = (id: string, v: number) => setCart(c => { const it = byId(id); const max = it ? it.stock : 0; const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
   const cartIds = Object.keys(cart);
-  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? mprice(it) * cart[id] : 0); }, 0);
+  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: mprice(it), cat: it.cat }; });
+    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: priceFor(it, isMember), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
@@ -101,6 +105,14 @@ export default function BanquePage() {
       <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique" subtitle="Parcours le coffre de guilde, ajoute au panier, et fais ta demande (achat ou dette). Le staff valide depuis l'AirGuild." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
+
+      {!isMember && (
+        <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, border: "1px solid var(--border)", background: "rgba(255,140,26,.08)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <Icon name="discord" size={20} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <div style={{ flex: 1, minWidth: 200, fontSize: 13, color: "var(--text)" }}>Tu consultes les <b>prix publics</b>. Rejoins <b>Vanguard</b> pour le <b style={{ color: "var(--green)" }}>prix membre</b> et pouvoir commander depuis le coffre.</div>
+          <a href="/candidature" style={{ padding: "8px 14px", borderRadius: 8, background: "var(--orange)", color: "#0A0A0C", fontWeight: 700, fontSize: 13, textDecoration: "none", whiteSpace: "nowrap" }}>Rejoindre Vanguard</a>
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         {([["boutique", "cart", "Boutique"], ["requetes", "clipboard", `Requêtes${reqs.length ? ` (${reqs.length})` : ""}`], ["dettes", "coins", `Dettes${debts.filter(d => d.status !== "REPAID").length ? ` (${debts.filter(d => d.status !== "REPAID").length})` : ""}`], ["rembourse", "check", `Remboursé${debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}`]] as const).map(([k, ic, l]) => (
@@ -127,7 +139,7 @@ export default function BanquePage() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(mprice(s))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(priceFor(s, isMember))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}</div>
                   {s.rarities && Object.keys(s.rarities).length > 0 && (
                     <div style={{ display: "flex", gap: 4, marginTop: 3, flexWrap: "wrap" }}>
                       {Object.keys(s.rarities).map(r => { const m = RARITY_META[r]; return m ? (
@@ -153,7 +165,7 @@ export default function BanquePage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                       <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
-                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(mprice(it) * cart[id])}</span>
+                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, isMember) * cart[id])}</span>
                       <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
                     </div>
                     {isStuff && (

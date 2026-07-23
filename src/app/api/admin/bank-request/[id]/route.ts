@@ -22,6 +22,27 @@ async function autoTierPrice(itemName: string | null, member: boolean): Promise<
   return { price: 0, caution: 0 };
 }
 
+// #6 — détenteur principal d'un objet (celui qui en a le plus en coffre) → créancier de la dette.
+async function resolveHolder(itemName: string | null): Promise<string | null> {
+  const row = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
+  const S = (row?.data ?? {}) as { inv?: Record<string, Record<string, number>>; members?: string[] };
+  const inv = S.inv ?? {};
+  const base = String(itemName || "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  if (!base) return null;
+  const members = (Array.isArray(S.members) ? S.members : Object.keys(inv)).filter((m) => m && m !== "Commun");
+  let best: { name: string; qty: number } | null = null;
+  for (const m of members) {
+    const minv = inv[m] || {};
+    let q = 0;
+    for (const id of Object.keys(minv)) {
+      const label = (id.split("|R#")[0].split("|").pop() || "").toLowerCase().trim();
+      if (label && (label === base || label.includes(base) || base.includes(label))) q += Number(minv[id]) || 0;
+    }
+    if (q > 0 && (!best || q > best.qty)) best = { name: m, qty: q };
+  }
+  return best?.name ?? null;
+}
+
 // Sortie d'un objet du coffre suite à une décision banque (achat/dette) :
 // ajuste le stock de l'objet suivi (s'il l'est) + journalise un débit (qui/combien/quand).
 async function coffreDebit(itemName: string | null, qty: number, reason: string, byUser: string) {
@@ -71,6 +92,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   }
 
   if (b.action === "dette") {
+    const holder = await resolveHolder(row.item); // #6 — créancier = le détenteur qui fournit l'objet
     const debt = await prisma.debt.create({
       data: {
         userId: row.userId,
@@ -78,9 +100,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         amount: prixPublic * BigInt(row.quantity),
         caution,
         item: row.item,
-        reason: `Banque — ${label}`,
+        reason: `Boutique — ${label}${holder ? ` (dû à ${holder})` : ""}`,
         status: "ACCEPTED",
-        creditor: "Guilde",
+        creditor: holder ?? "Guilde",
         decidedBy: a.user.username,
       },
     });

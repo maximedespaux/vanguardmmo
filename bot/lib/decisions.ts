@@ -437,7 +437,9 @@ export async function applyBankAccept(client: Client, idOrBatch: string, mode: "
     const unit = BigInt(Math.max(0, Math.round(tier.price)));
     const total = unit * BigInt(r.quantity);
     if (mode === "dette") {
-      const debt = await prisma.debt.create({ data: { userId: r.userId, type: r.kind === "PERINS" ? "PENYA" : "ITEM", amount: total, caution: BigInt(Math.max(0, Math.round(tier.caution))), item: r.item, reason: `Boutique — ${r.item} ×${r.quantity}`, status: "ACCEPTED", creditor: "Guilde", decidedBy: actor } });
+      const owners = await resolveOwners([r.item || ""]); // #6 — créancier = le détenteur qui fournit
+      const holder = owners.slice().sort((a, b) => b.qty - a.qty)[0]?.name || "Guilde";
+      const debt = await prisma.debt.create({ data: { userId: r.userId, type: r.kind === "PERINS" ? "PENYA" : "ITEM", amount: total, caution: BigInt(Math.max(0, Math.round(tier.caution))), item: r.item, reason: `Boutique — ${r.item} ×${r.quantity}${holder !== "Guilde" ? ` (dû à ${holder})` : ""}`, status: "ACCEPTED", creditor: holder, decidedBy: actor } });
       await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_DETTE", prixPublic: unit, prixFinal: total, debtId: debt.id, decidedBy: actor, discordSynced: false } });
     } else {
       await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_ACHAT", prixPublic: unit, prixFinal: total, decidedBy: actor, discordSynced: false } });

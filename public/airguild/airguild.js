@@ -109,17 +109,22 @@ function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__t
 }
 function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);const h=health(v,it.cat,it.unit,it.id);const isSlot=it.unit==='slot';
   const unitTag=isSlot?'<span class="utag">slot</span>':'';
-  const ctrl=isTotal?`<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right">${fmt(v)}</div>`:`<div class="step"><button onclick="adj('${sq(it.id)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(it.id)}',this.value)"><button onclick="adj('${sq(it.id)}',1)">＋</button></div>`;
+  const editable=!isTotal&&canDeposit(); // édition seulement dans SON coffre (ou Vanguard/Direction) — sinon lecture seule
+  const ctrl=editable?`<div class="step"><button onclick="adj('${sq(it.id)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(it.id)}',this.value)"><button onclick="adj('${sq(it.id)}',1)">＋</button></div>`:`<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right">${fmt(v)}</div>`;
   const custom=(S.custom||[]).some(c=>c.id===it.id);
+  const price=editable?priceMini(it.id):'';
+  const rm=editable?`<span class="rm" onclick="rmItem('${sq(it.id)}',${custom})">✕</span>`:'';
   const ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
-  return `<div class="it" data-s="${esc(ds)}"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()}${isSlot?' · compté en slots':''}</div></div><span class="dot ${h}"></span>${ctrl}${unitTag}<span class="rm" onclick="rmItem('${sq(it.id)}',${custom})">✕</span></div>`;
+  return `<div class="it" data-s="${esc(ds)}"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()}${isSlot?' · compté en slots':''}</div></div><span class="dot ${h}"></span>${price}${ctrl}${unitTag}${rm}</div>`;
 }
 // Arme suivie par rareté : une ligne d'en-tête (total) + 4 lignes de rareté (stock indépendant, clé id|R#rareté).
 function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
-  var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div><div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
+  var editable=!isTotal&&canDeposit();
+  var price=editable?priceMini(it.id):'';
+  var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div>${price}<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
   var rows=RARITIES.map(function(r){var key=rarKey(it.id,r[0]);var v=isTotal?totalGuild(key):qty(S.cur,key);
-    var ctrl=isTotal?`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`:`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)">＋</button></div>`;
-    var clr=(!isTotal&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider">✕</span>`:'<span style="width:14px;flex:none"></span>';
+    var ctrl=editable?`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)">＋</button></div>`:`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`;
+    var clr=(editable&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider">✕</span>`:'<span style="width:14px;flex:none"></span>';
     return `<div class="it" data-s="${esc(ds)}" style="padding-left:30px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r[2]};box-shadow:0 0 5px ${r[2]}99;flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:${r[2]};font-size:12.5px">${r[1]}</div></div>${ctrl}${clr}</div>`;}).join('');
   return head+rows;
 }
@@ -130,8 +135,8 @@ function filterBank(qv){const q=(qv||'').toLowerCase().trim();
 }
 function selM(m){S.cur=m;save();render();}
 function togC(c){S.closed[c]=!S.closed[c];save();paintBank();}
-function adj(id,d){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,qty(S.cur,id)+d,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();}
-function setQ(id,v){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,v,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();}
+function adj(id,d){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,qty(S.cur,id)+d,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();if(d>0)promptPriceIfNew(id);}
+function setQ(id,v){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,v,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();if((+v||0)>0)promptPriceIfNew(id);}
 function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
 function delM(m){if(!canEdit())return agToast('Suppression de coffre réservée au rôle Vanguard.',false);agConfirm('Supprimer le coffre de '+m+' ?\nLe contenu sera perdu — l\'action est tracée dans le journal.',function(){S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:'Coffre supprimé',delta:0});if(S.log.length>200)S.log.length=200;S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='__total__';save();render();agToast('Coffre de '+m+' supprimé (journalisé).',true);});}
@@ -335,7 +340,7 @@ function viewShop(){
 }
 function setPrice(id,v){var p=priceObj(id);p.pub=Math.max(0,Math.round(+v||0));S.prices[id]=p;save();} // compat : fixe le prix public en gardant les paliers
 // Éditeur de tarifs par objet (réservé Vanguard/Direction) : vendable/dette + prix public/membre/dette + caution.
-function editPrice(id){if(!canEdit())return agToast('Édition des tarifs réservée Vanguard/Direction.',false);var it=catalog().find(function(x){return x.id===id;})||{item:id};var p=priceObj(id);var f=function(l,i,val){return '<div class="field"><label>'+l+'</label><input class="inp" id="'+i+'" type="number" min="0" value="'+val+'"></div>';};
+function editPrice(id){if(!canEdit()&&!canDeposit())return agToast('Tarifs : possible au dépôt dans TON coffre (ou rôle Vanguard/Direction).',false);var it=catalog().find(function(x){return x.id===id;})||{item:id};var p=priceObj(id);var f=function(l,i,val){return '<div class="field"><label>'+l+'</label><input class="inp" id="'+i+'" type="number" min="0" value="'+val+'"></div>';};
   openSheet('<h3>💰 Tarifs — '+esc(it.item)+'</h3><div class="hint">Le membre voit le prix membre ; le public le prix public. La caution est rendue au retour de l\'objet.</div>'
    +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pV" '+(p.v?'checked':'')+'> Vendable (achat direct)</label></div>'
    +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pD" '+(p.d?'checked':'')+'> Dette membre autorisée</label></div>'
@@ -346,6 +351,10 @@ function savePrice(id){var g=function(i){return Math.max(0,Math.round(+(document
   S.prices[id]={v:document.getElementById('pV').checked,d:document.getElementById('pD').checked,pub:g('pPub'),mem:g('pMem'),det:g('pDet'),cau:g('pCau')};
   save();closeSheet();render();agToast('Tarifs enregistrés ✓',true);}
 function priceBtn(id){var p=priceObj(id);return '<button class="inp" style="cursor:pointer;text-align:right;white-space:nowrap;min-width:120px" onclick="editPrice(\''+sqa(id)+'\')" title="Éditer les tarifs (public / membre / dette / caution)"><b style="color:var(--gold)">'+fmt(p.pub)+'</b> <span class="mut" style="font-size:10px">pub</span> · <b style="color:var(--green)">'+fmt(p.mem)+'</b> <span class="mut" style="font-size:10px">mbr</span>'+(p.v?'':' <span style="color:var(--red);font-size:10px">✕vente</span>')+'</button>';}
+// Bouton compact « 💰 tarifs » posé sur chaque ligne du coffre (au dépôt). Doré si le tarif n'est pas encore fixé.
+function priceMini(id){var bid=baseId(id);var set=S.prices[bid]!=null;var p=priceObj(bid);return '<button class="btn" style="padding:3px 8px;font-size:11px;white-space:nowrap;flex:none;'+(set?'':'border-color:var(--gold);color:var(--gold)')+'" onclick="editPrice(\''+sqa(bid)+'\')" title="Tarifs : à vendre et/ou dette · prix public/membre/dette + caution">💰 '+(set?fmt(p.pub):'à fixer')+'</button>';}
+// Au 1er dépôt d'un objet non tarifé dans SON coffre : ouvre la fenêtre de tarifs (« que faire de l'objet + prix »).
+function promptPriceIfNew(id){var bid=baseId(id);if(canDeposit()&&S.prices[bid]==null&&qty(S.cur,id)>0)editPrice(bid);}
 function cartAdd(id,d){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,(S.cart[id]||0)+d));if(!S.cart[id])delete S.cart[id];save();render();}
 function cartSet(id,v){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,Math.round(+v||0)));if(!S.cart[id])delete S.cart[id];save();render();}
 function cartTotal(){let t=0;Object.keys(S.cart).forEach(id=>t+=S.cart[id]*priceOf(id));return t;}

@@ -17,7 +17,13 @@ export const CHANNELS = {
   events:       process.env.CHANNEL_EVENTS ?? "",       // rappels d'événements
   staff:        process.env.CHANNEL_STAFF ?? "",        // salon officiers (optionnel)
   decision:     process.env.CHANNEL_DECISION ?? "",     // salon « Décision » (embeds à boutons)
+  // Catégorie où créer les salons d'échange temporaires (acheteur ↔ détenteur).
+  // ⚠️ Laisse vide pour DÉSACTIVER la création de salons (sécurité : rien n'est créé tant que ce n'est pas configuré).
+  exchangeCategory: process.env.CHANNEL_EXCHANGE_CATEGORY ?? "",
 };
+
+// Rôle staff qui voit tous les salons d'échange (repli : ROLE_OFFICIER).
+export const ROLE_STAFF_VIEW = process.env.ROLE_STAFF_VIEW ?? process.env.ROLE_OFFICIER ?? "";
 
 // ─── Rôles Discord à pinguer dans les relances staff ────────
 export const ROLE_OFFICIER = process.env.ROLE_OFFICIER ?? "";

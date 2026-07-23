@@ -12,6 +12,7 @@ import { registerReactionRoles } from "./lib/reactionroles.js";
 import { prisma } from "./lib/prisma.js";
 import { debtEmbed, debtButtons, dm, refreshDebtMessage } from "./lib/debts.js";
 import { applyApplicationDecision, applyDebtDecision, applyBankRefuse } from "./lib/decisions.js";
+import { applyExchangeDecision } from "./lib/exchange.js";
 import { toggleRole } from "./lib/buttonroles.js";
 import { refreshGiveaway } from "./lib/giveaways.js";
 import { isStaff } from "./lib/permissions.js";
@@ -59,6 +60,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       else if (id.startsWith("dbt:")) await handleDebtDecision(interaction);
       else if (id.startsWith("app:")) await handleAppDecision(interaction);
       else if (id.startsWith("bank:")) await handleBankDecision(interaction);
+      else if (id.startsWith("exch:")) await handleExchangeDecision(interaction);
       else if (id.startsWith("role:")) await toggleRole(interaction, id.slice("role:".length));
       else if (id.startsWith("gw:join:")) await handleGiveawayJoin(interaction);
     } catch (e) {
@@ -152,6 +154,14 @@ async function handleBankDecision(interaction: any) {
   const updated = await applyBankRefuse(interaction.client, id, interaction.user.username);
   if (updated) await dm(interaction.client, updated.discordId, { content: `❌ Ta requête Banque à **Vanguard** a été refusée.` });
   await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** refusée.`, ephemeral: true });
+}
+
+// ─── Boutons du salon d'échange (Remis / Refusé) — participants du salon privé ───
+async function handleExchangeDecision(interaction: any) {
+  const [, action, key] = interaction.customId.split(":");
+  if (action !== "remis" && action !== "refuse") { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
+  await applyExchangeDecision(interaction.client, key, action as "remis" | "refuse", interaction.user.username);
+  await interaction.reply({ content: action === "remis" ? "✅ Échange marqué **remis**." : "❌ Échange **refusé / annulé**.", ephemeral: true });
 }
 
 // ─── Bouton « Participer » d'un giveaway (toggle) ───

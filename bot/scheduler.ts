@@ -10,6 +10,7 @@ import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
 import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
+import { openExchange } from "./lib/exchange.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
 import { dm } from "./lib/debts.js";
@@ -147,6 +148,24 @@ async function relayBankRequests(client: Client) {
   }
 }
 
+// ─── Ouverture des salons d'échange (requêtes acceptées) ────
+//  Désactivé tant que CHANNEL_EXCHANGE_CATEGORY n'est pas configuré (openExchange no-op).
+async function openPendingExchanges(client: Client) {
+  if (!CHANNELS.exchangeCategory) return;
+  const fresh = await prisma.bankRequest.findMany({
+    where: { status: { in: ["ACCEPTE_ACHAT", "ACCEPTE_DETTE"] }, exchangeChannelId: null },
+    orderBy: { createdAt: "asc" }, take: 30,
+  });
+  if (!fresh.length) return;
+  const batches = new Map<string, typeof fresh>();
+  for (const r of fresh) {
+    const key = r.batchId || `single:${r.id}`;
+    if (!batches.has(key)) batches.set(key, []);
+    batches.get(key)!.push(r);
+  }
+  for (const reqs of batches.values()) await openExchange(client, reqs).catch((e) => console.error("openExchange:", e));
+}
+
 // ─── Rappel d'échéance des dettes acceptées ─────────────────
 async function remindDebts(client: Client) {
   const now = new Date();
@@ -218,6 +237,7 @@ export function startScheduler(client: Client) {
   cron.schedule("*/2 * * * *", () => relayNewDebts(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => relayBankRequests(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => syncDecidedBankRequests(client).catch(console.error), CRON_TZ); // rafraîchit l'embed après décision sur le site
+  cron.schedule("*/2 * * * *", () => openPendingExchanges(client).catch(console.error), CRON_TZ);    // ouvre les salons d'échange (si CHANNEL_EXCHANGE_CATEGORY configuré)
   cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);

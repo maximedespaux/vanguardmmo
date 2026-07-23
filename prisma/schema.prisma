@@ -585,6 +585,8 @@ enum BankRequestStatus {
   PENDING
   ACCEPTE_ACHAT
   ACCEPTE_DETTE
+  EN_ECHANGE     // salon d'échange ouvert (acheteur ↔ détenteur ↔ staff)
+  REMIS          // objet remis (échange terminé)
   REFUSE
   ANNULE
 }
@@ -611,6 +613,8 @@ model BankRequest {
   channelId   String?           // embed « Décision »
   messageId   String?
   discordSynced Boolean         @default(false) // embed Discord à jour après une décision prise sur le site
+  exchangeChannelId String?     // salon d'échange temporaire (acheteur ↔ détenteur), créé par le bot après acceptation
+  exchangeMessageId String?     // embed « Échange » (Remis / Refusé)
   remindedAt  DateTime?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt

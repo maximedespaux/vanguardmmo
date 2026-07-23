@@ -225,6 +225,8 @@ export const BANK_STATUS: Record<string, { fr: string; color: number }> = {
   PENDING:       { fr: "🟠 En attente", color: ORANGE },
   ACCEPTE_ACHAT: { fr: "🟢 Achat accepté", color: GREEN },
   ACCEPTE_DETTE: { fr: "🔵 Dette accordée", color: BLUE },
+  EN_ECHANGE:    { fr: "🤝 En échange", color: ORANGE },
+  REMIS:         { fr: "🟢 Remis", color: GREEN },
   REFUSE:        { fr: "⚫ Refusée", color: RED },
   ANNULE:        { fr: "⚫ Annulée", color: GREY },
 };
@@ -287,6 +289,16 @@ async function findSellers(itemNames: string[]): Promise<Map<string, { items: Se
 async function sellerMention(memberName: string): Promise<string> {
   const u = await prisma.user.findFirst({ where: { username: { equals: memberName, mode: "insensitive" } }, select: { discordId: true } }).catch(() => null);
   return u?.discordId ? `<@${u.discordId}>` : `**${memberName}**`;
+}
+/** Détenteurs d'un/des objet(s) avec leur Discord ID (pour le salon d'échange). */
+export async function resolveOwners(itemNames: string[]): Promise<{ name: string; discordId: string | null; items: string[]; qty: number }[]> {
+  const sellers = await findSellers(itemNames);
+  const out: { name: string; discordId: string | null; items: string[]; qty: number }[] = [];
+  for (const [name, info] of sellers) {
+    const u = await prisma.user.findFirst({ where: { username: { equals: name, mode: "insensitive" } }, select: { discordId: true } }).catch(() => null);
+    out.push({ name, discordId: u?.discordId ?? null, items: [...info.items], qty: info.qty });
+  }
+  return out;
 }
 /** Poste, sous la requête banque, la mention des membres détenteurs (vendeurs à contacter pour la transaction). */
 export async function postSellerPing(client: Client, channelId: string | null, reqs: any[]) {

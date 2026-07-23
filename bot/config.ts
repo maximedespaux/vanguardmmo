@@ -22,8 +22,8 @@ export const CHANNELS = {
   exchangeCategory: process.env.CHANNEL_EXCHANGE_CATEGORY ?? "",
 };
 
-// Rôle staff qui voit tous les salons d'échange (repli : ROLE_OFFICIER).
-export const ROLE_STAFF_VIEW = process.env.ROLE_STAFF_VIEW ?? process.env.ROLE_OFFICIER ?? "";
+// Rôle Vanguard qui suit tous les salons d'échange (repli : ROLE_STAFF_VIEW puis ROLE_VANGUARD).
+export const ROLE_STAFF_VIEW = process.env.ROLE_STAFF_VIEW ?? process.env.ROLE_VANGUARD ?? "";
 
 // ─── Rôles Discord à pinguer dans les relances staff ────────
 export const ROLE_OFFICIER = process.env.ROLE_OFFICIER ?? "";

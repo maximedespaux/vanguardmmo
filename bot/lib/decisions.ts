@@ -275,11 +275,12 @@ async function findSellers(itemNames: string[]): Promise<Map<string, { items: Se
     for (const id of Object.keys(minv)) {
       const qty = Number(minv[id]) || 0;
       if (qty <= 0) continue;
-      const nom = (id.split("|").pop() || "").toLowerCase().trim();
+      const label = (id.split("|R#")[0].split("|").pop() || "").trim(); // nom d'objet (rareté d'arme « |R#… » retirée)
+      const nom = label.toLowerCase();
       if (nom && needles.some((nd) => nd.includes(nom) || nom.includes(nd))) {
         if (!out.has(m)) out.set(m, { items: new Set<string>(), qty: 0 });
         const e = out.get(m)!;
-        e.items.add((id.split("|").pop() || "").trim());
+        e.items.add(label);
         e.qty += qty;
       }
     }

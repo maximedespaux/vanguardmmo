@@ -166,6 +166,27 @@ async function openPendingExchanges(client: Client) {
   for (const reqs of batches.values()) await openExchange(client, reqs).catch((e) => console.error("openExchange:", e));
 }
 
+// ─── Suppression des salons d'échange terminés (Remis / Refusé) ─
+//  Robuste aux redémarrages du bot (pas de setTimeout perdu). ~90 s de battement
+//  pour laisser lire le message final, puis le salon est supprimé.
+async function closeFinishedExchanges(client: Client) {
+  if (!CHANNELS.exchangeCategory) return;
+  const grace = new Date(Date.now() - 90_000);
+  const done = await prisma.bankRequest.findMany({
+    where: { status: { in: ["REMIS", "REFUSE"] }, exchangeChannelId: { not: null }, updatedAt: { lt: grace } },
+    take: 40,
+  });
+  if (!done.length) return;
+  const channelIds = [...new Set(done.map((r) => r.exchangeChannelId!).filter(Boolean))];
+  for (const cid of channelIds) {
+    try {
+      const ch: any = await client.channels.fetch(cid).catch(() => null);
+      if (ch?.delete) await ch.delete("Échange terminé").catch(() => {});
+    } catch { /* déjà supprimé : on ignore */ }
+    await prisma.bankRequest.updateMany({ where: { exchangeChannelId: cid }, data: { exchangeChannelId: null } });
+  }
+}
+
 // ─── Rappel d'échéance des dettes acceptées ─────────────────
 async function remindDebts(client: Client) {
   const now = new Date();
@@ -238,6 +259,7 @@ export function startScheduler(client: Client) {
   cron.schedule("*/2 * * * *", () => relayBankRequests(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => syncDecidedBankRequests(client).catch(console.error), CRON_TZ); // rafraîchit l'embed après décision sur le site
   cron.schedule("*/2 * * * *", () => openPendingExchanges(client).catch(console.error), CRON_TZ);    // ouvre les salons d'échange (si CHANNEL_EXCHANGE_CATEGORY configuré)
+  cron.schedule("*/1 * * * *", () => closeFinishedExchanges(client).catch(console.error), CRON_TZ);  // supprime les salons d'échange terminés (Remis/Refusé)
   cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);

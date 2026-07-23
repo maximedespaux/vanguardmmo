@@ -96,7 +96,7 @@ export async function applyExchangeDecision(client: Client, key: string, action:
     if (ch?.isTextBased()) {
       const m = await ch.messages.fetch(first.exchangeMessageId).catch(() => null);
       if (m) await m.edit({ embeds: [exchangeEmbed(refreshed, owners)], components: [] });
-      await ch.send({ content: status === "REMIS" ? `✅ Objet **remis** — échange clôturé par **${actor}**. Le salon peut être supprimé.` : `❌ Échange **refusé / annulé** par **${actor}**.` }).catch(() => {});
+      await ch.send({ content: status === "REMIS" ? `✅ Objet **remis** — échange clôturé par **${actor}**. Ce salon sera **supprimé automatiquement** d'ici une minute.` : `❌ Échange **refusé / annulé** par **${actor}**. Ce salon sera **supprimé automatiquement** d'ici une minute.` }).catch(() => {});
     }
   } catch { /* salon supprimé : on ignore */ }
 }

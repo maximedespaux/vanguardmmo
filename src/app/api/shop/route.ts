@@ -46,7 +46,14 @@ export async function GET() {
       } else inv[id] = (inv[id] || 0) + n;
     }
   }
-  const prices: Record<string, number> = S.prices ?? {};
+  const prices: Record<string, any> = S.prices ?? {};
+  // Tarifs par objet : accepte l'ancien format (nombre = prix public) et le nouveau (objet à paliers).
+  const tiers = (id: string, base: number) => {
+    const p = prices[id];
+    if (p && typeof p === "object") return { v: p.v !== false, d: p.d !== false, pub: +p.pub || 0, mem: +p.mem || 0, det: +p.det || 0, cau: +p.cau || 0 };
+    const n = (p != null ? +p : 0) || base || 0;
+    return { v: true, d: true, pub: n, mem: n, det: n, cau: 0 };
+  };
   const custom: any[] = Array.isArray(S.custom) ? S.custom : [];
   const hidden = new Set<string>(Array.isArray(S.hidden) ? S.hidden : []);
   const overrides: Record<string, any> = S.overrides ?? {};
@@ -58,12 +65,15 @@ export async function GET() {
     .map((it: any) => {
       const stock = inv[it.id] ?? 0;
       if (stock <= 0) return null;
+      const t = tiers(it.id, it.prix ?? 0);
+      if (!t.v && !t.d) return null; // ni vendable ni dette → hors boutique
       return {
         id: it.id,
         item: it.item,
         cat: it.cat,
         classe: it.classe ?? "",
-        price: prices[it.id] != null ? prices[it.id] : (it.prix ?? 0),
+        price: t.pub, // prix public (compat)
+        tiers: t,     // { v, d, pub, mem, det, cau }
         stock,
         unit: it.unit ?? "",
         rarities: rarInv[it.id] ?? null, // armes → { rareté: stock } ; null pour les objets sans rareté

@@ -49,7 +49,14 @@ function drawFromGuild(id,need,label){need=Math.max(0,Math.round(+need||0));var 
 function setQty(m,id,v,label){v=Math.max(0,Math.round(+v||0));if(!S.inv[m])S.inv[m]={};const old=qty(m,id);if(v===old)return;S.inv[m][id]=v;S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:label||id,delta:v-old});if(S.log.length>200)S.log.length=200;save();}
 function health(q,cat,unit,id){var t=id&&S.thresh&&S.thresh[id];if(t){var ok=+t.ok||0,mid=+t.mid||0;if(ok>0||mid>0){if(ok>0&&q>=ok)return'ok';if(mid>0&&q>=mid)return'mid';return'low';}}const c=cat.trim();if(unit==='slot'){if(q>=2)return'ok';if(q>=1)return'mid';return'low';}if(c==='Ressource'||c==='R1'||c==='R2'||c.startsWith('Carte')){if(q>=20)return'ok';if(q>=8)return'mid';return'low';}if(q>=10)return'ok';if(q>=6)return'mid';return'low';}
 function itemAsset(it){if(it.icData)return `<img src="${it.icData}" alt="">`;if(it.ic&&ICOIDX[it.ic]!=null)return `<span class="climg bic-${ICOIDX[it.ic]}"></span>`;return classLogo(it.classe)||`<span>${catIcon(it.cat)}</span>`;}
-function priceOf(id){return S.prices[id]!=null?S.prices[id]:(catalog().find(x=>x.id===id)||{}).prix||0;}
+// Tarifs par objet. Legacy = un nombre (= prix public). Nouveau modèle = objet à paliers.
+//  v = vendable (achat direct) · d = dette membre autorisée · pub/mem/det = prix public/membre/dette · cau = caution
+function priceObj(id){var p=S.prices[id];
+  if(p&&typeof p==='object')return {v:p.v!==false,d:p.d!==false,pub:+p.pub||0,mem:+p.mem||0,det:+p.det||0,cau:+p.cau||0};
+  var n=(p!=null?+p:0)||((catalog().find(function(x){return x.id===id;})||{}).prix||0);
+  return {v:true,d:true,pub:n,mem:n,det:n,cau:0};
+}
+function priceOf(id){return priceObj(id).pub;} // prix public (compat panier / checkout / fiche objet)
 // ── Rareté des armes (Yggdrasil/Luzaka) : un stock par rareté. Clé = id|R#rareté (le ♂/♀ des armes). ──
 var RARITIES=[['rare','Rare','#4EA8FF'],['epique','Épique','#C77DFF'],['legendaire','Légendaire','#FF8C1A'],['premyth','Pré-myth.','#FF5C8A']];
 function needsRarity(it){return !!it&&String(it.cat||'').indexOf('Armes')===0&&String(it.item||'')!=='Bouclier';}
@@ -316,7 +323,7 @@ function viewShop(){
   if(q)list=list.filter(it=>(it.item+' '+it.classe).toLowerCase().includes(q));
   const rows=list.map(it=>{const stock=totalGuild(it.id);const inCart=(S.cart[it.id]||0);const logo=itemAsset(it);
     return `<div class="shopitem"><div class="logo">${logo}</div><div class="nm" style="flex:1;min-width:0"><div class="a" style="font-weight:600;font-size:13.5px">${esc(it.item)}</div><div class="b" style="color:var(--mut);font-size:11px">${it.classe?esc(it.classe)+' · ':''}stock ${stock}</div></div>
-      <div class="price"><input class="inp" type="number" value="${priceOf(it.id)}" onchange="setPrice('${sq(it.id)}',this.value)" title="Prix (périns)"></div>
+      <div class="price">${priceBtn(it.id)}</div>
       <div class="step"><button onclick="cartAdd('${sq(it.id)}',-1)">−</button><input value="${inCart}" onchange="cartSet('${sq(it.id)}',this.value)"><button onclick="cartAdd('${sq(it.id)}',1)">＋</button></div></div>`;}).join('');
   return `<div class="card" style="margin-bottom:14px"><div class="sec-h">🛒 Boutique de guilde <span class="n">stock total de la guilde</span></div>
     <div class="toolbar" style="margin:0"><label class="mut" style="font-size:12px">Membre :</label>
@@ -326,7 +333,19 @@ function viewShop(){
      ${cartPanel()}</div>
    ${debtsPanel()}`;
 }
-function setPrice(id,v){S.prices[id]=Math.max(0,Math.round(+v||0));save();}
+function setPrice(id,v){var p=priceObj(id);p.pub=Math.max(0,Math.round(+v||0));S.prices[id]=p;save();} // compat : fixe le prix public en gardant les paliers
+// Éditeur de tarifs par objet (réservé Vanguard/Direction) : vendable/dette + prix public/membre/dette + caution.
+function editPrice(id){if(!canEdit())return agToast('Édition des tarifs réservée Vanguard/Direction.',false);var it=catalog().find(function(x){return x.id===id;})||{item:id};var p=priceObj(id);var f=function(l,i,val){return '<div class="field"><label>'+l+'</label><input class="inp" id="'+i+'" type="number" min="0" value="'+val+'"></div>';};
+  openSheet('<h3>💰 Tarifs — '+esc(it.item)+'</h3><div class="hint">Le membre voit le prix membre ; le public le prix public. La caution est rendue au retour de l\'objet.</div>'
+   +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pV" '+(p.v?'checked':'')+'> Vendable (achat direct)</label></div>'
+   +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pD" '+(p.d?'checked':'')+'> Dette membre autorisée</label></div>'
+   +f('Prix public (périns)','pPub',p.pub)+f('Prix membre (périns)','pMem',p.mem)+f('Prix dette (périns)','pDet',p.det)+f('Caution (périns)','pCau',p.cau)
+   +'<div class="toolbar" style="justify-content:flex-end;margin:6px 0 0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="savePrice(\''+sqa(id)+'\')">Enregistrer</button></div>');
+}
+function savePrice(id){var g=function(i){return Math.max(0,Math.round(+(document.getElementById(i)||{}).value||0));};
+  S.prices[id]={v:document.getElementById('pV').checked,d:document.getElementById('pD').checked,pub:g('pPub'),mem:g('pMem'),det:g('pDet'),cau:g('pCau')};
+  save();closeSheet();render();agToast('Tarifs enregistrés ✓',true);}
+function priceBtn(id){var p=priceObj(id);return '<button class="inp" style="cursor:pointer;text-align:right;white-space:nowrap;min-width:120px" onclick="editPrice(\''+sqa(id)+'\')" title="Éditer les tarifs (public / membre / dette / caution)"><b style="color:var(--gold)">'+fmt(p.pub)+'</b> <span class="mut" style="font-size:10px">pub</span> · <b style="color:var(--green)">'+fmt(p.mem)+'</b> <span class="mut" style="font-size:10px">mbr</span>'+(p.v?'':' <span style="color:var(--red);font-size:10px">✕vente</span>')+'</button>';}
 function cartAdd(id,d){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,(S.cart[id]||0)+d));if(!S.cart[id])delete S.cart[id];save();render();}
 function cartSet(id,v){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,Math.round(+v||0)));if(!S.cart[id])delete S.cart[id];save();render();}
 function cartTotal(){let t=0;Object.keys(S.cart).forEach(id=>t+=S.cart[id]*priceOf(id));return t;}

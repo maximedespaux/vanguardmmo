@@ -218,12 +218,12 @@ export async function applyDebtDecision(client: Client, debtId: string, action: 
 }
 
 // ════════════════════════════════════════════════════════════
-//  BANQUE — requête d'objet (achat −20 % ou dette), même salon « Décision »
+//  BANQUE — requête d'objet (achat ou dette), même salon « Décision »
 //  Le prix se fixe sur le SITE (achat/dette). Discord = notification + refus rapide.
 // ════════════════════════════════════════════════════════════
 export const BANK_STATUS: Record<string, { fr: string; color: number }> = {
   PENDING:       { fr: "🟠 En attente", color: ORANGE },
-  ACCEPTE_ACHAT: { fr: "🟢 Achat −20 %", color: GREEN },
+  ACCEPTE_ACHAT: { fr: "🟢 Achat accepté", color: GREEN },
   ACCEPTE_DETTE: { fr: "🔵 Dette accordée", color: BLUE },
   REFUSE:        { fr: "⚫ Refusée", color: RED },
   ANNULE:        { fr: "⚫ Annulée", color: GREY },
@@ -243,7 +243,7 @@ export function bankRequestEmbed(r: any): EmbedBuilder {
   if (r.item) e.addFields({ name: "Objet / items", value: String(r.item), inline: true });
   if (r.reason) e.addFields({ name: "Raison", value: String(r.reason).slice(0, 1024) });
   if (r.prixPublic) e.addFields({ name: "Prix public", value: `${Number(r.prixPublic).toLocaleString("fr-FR")} penya`, inline: true });
-  if (r.prixFinal && r.status === "ACCEPTE_ACHAT") e.addFields({ name: "Prix achat (−20 %)", value: `${Number(r.prixFinal).toLocaleString("fr-FR")} penya`, inline: true });
+  if (r.prixFinal && r.status === "ACCEPTE_ACHAT") e.addFields({ name: "Prix achat", value: `${Number(r.prixFinal).toLocaleString("fr-FR")} penya`, inline: true });
   if (r.decidedBy) e.addFields({ name: "Décision", value: `par **${r.decidedBy}**${r.adminNote ? ` — ${r.adminNote}` : ""}` });
   e.setFooter({ text: `Acceptation (prix) sur le site → Banque (gestion) · réf. ${String(r.id).slice(-6)}` }).setTimestamp(new Date(r.updatedAt || r.createdAt));
   return e;
@@ -353,11 +353,31 @@ export async function postBankBatchDecision(client: Client, reqs: any[]) {
 export async function applyBankRefuse(client: Client, idOrBatch: string, actor: string) {
   const reqs = await prisma.bankRequest.findMany({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }], status: "PENDING" } });
   if (!reqs.length) return prisma.bankRequest.findFirst({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }] } });
-  await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { status: "REFUSE", decidedBy: actor } });
+  await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { status: "REFUSE", decidedBy: actor, discordSynced: true } });
   await prisma.auditLog.create({ data: { actor, action: "banque.REFUSE", target: idOrBatch, detail: `${reqs.length} article(s)` } }).catch(() => {});
   const refreshed = await prisma.bankRequest.findMany({ where: { id: { in: reqs.map((r) => r.id) } } });
   const first = refreshed[0];
   if (first?.batchId || refreshed.length > 1) await editDecision(client, first.channelId, first.messageId, bankBatchEmbed(refreshed), []);
   else await editDecision(client, first.channelId, first.messageId, bankRequestEmbed(first), bankRequestButtons(first));
   return first;
+}
+
+/** Sync site → Discord : rafraîchit l'embed des requêtes tranchées SUR LE SITE (l'embed Discord était figé).
+ *  Cron régulier ; ne touche que les requêtes déjà postées (messageId) et pas encore synchronisées. */
+export async function syncDecidedBankRequests(client: Client) {
+  const rows = await prisma.bankRequest.findMany({
+    where: { status: { not: "PENDING" }, messageId: { not: null }, discordSynced: false },
+    take: 60, orderBy: { updatedAt: "asc" },
+  });
+  if (!rows.length) return;
+  // Regroupe par message (les articles d'un même panier partagent un embed).
+  const keys = [...new Set(rows.map((r) => r.batchId || r.id))];
+  for (const key of keys) {
+    const all = await prisma.bankRequest.findMany({ where: { OR: [{ id: key }, { batchId: key }] } });
+    const first = all[0];
+    if (!first || !first.messageId) continue;
+    const isBatch = !!first.batchId || all.length > 1;
+    await editDecision(client, first.channelId, first.messageId, isBatch ? bankBatchEmbed(all) : bankRequestEmbed(first), isBatch ? [] : bankRequestButtons(first));
+    await prisma.bankRequest.updateMany({ where: { id: { in: all.map((r) => r.id) } }, data: { discordSynced: true } });
+  }
 }

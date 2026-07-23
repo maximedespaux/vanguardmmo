@@ -9,7 +9,7 @@ import type { Role } from "@prisma/client";
 import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
-import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision } from "./lib/decisions.js";
+import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
 import { dm } from "./lib/debts.js";
@@ -217,6 +217,7 @@ export function startScheduler(client: Client) {
   cron.schedule("*/2 * * * *", () => relayNewApplications(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => relayNewDebts(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => relayBankRequests(client).catch(console.error), CRON_TZ);
+  cron.schedule("*/2 * * * *", () => syncDecidedBankRequests(client).catch(console.error), CRON_TZ); // rafraîchit l'embed après décision sur le site
   cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);

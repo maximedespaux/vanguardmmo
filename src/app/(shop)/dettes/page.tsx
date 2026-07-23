@@ -47,6 +47,7 @@ export default function BanquePage() {
   const [catF, setCatF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence ♂/♀ par Stuff
+  const [weaponRarity, setWeaponRarity] = useState<Record<string, string>>({}); // rareté voulue par arme (même principe que ♂/♀)
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
   const { data: session } = useSession();
@@ -88,8 +89,10 @@ export default function BanquePage() {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
+    const missingRar = cartIds.filter(id => { const it = byId(id); return it && it.rarities && Object.keys(it.rarities).length > 0 && !weaponRarity[id]; });
+    if (missingRar.length) return flash("Choisis la rareté voulue pour chaque arme avant d'envoyer.");
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: priceFor(it, isMember), cat: it.cat }; });
+    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = weaponRarity[id]; const rlabel = it.rarities && rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : `${it.item}${rlabel}`; return { name, quantity: cart[id], price: priceFor(it, isMember), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
@@ -174,6 +177,14 @@ export default function BanquePage() {
                         {(["G", "F"] as const).map(sx => (
                           <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}>{sx === "G" ? "♂ Garçon" : "♀ Fille"}</button>
                         ))}
+                      </div>
+                    )}
+                    {it.rarities && Object.keys(it.rarities).length > 0 && (
+                      <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 10.5, color: weaponRarity[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: weaponRarity[id] ? 400 : 700 }}>Rareté voulue :</span>
+                        {Object.keys(it.rarities).map(rk => { const m = RARITY_META[rk]; if (!m) return null; const on = weaponRarity[id] === rk; return (
+                          <button key={rk} onClick={() => setWeaponRarity(p => ({ ...p, [id]: rk }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${on ? m.c : "var(--border)"}`, background: on ? `${m.c}22` : "var(--bg-2)", color: on ? m.c : "var(--text-muted)" }}>{m.l} <span style={{ opacity: 0.7, fontWeight: 400 }}>×{it.rarities![rk]}</span></button>
+                        ); })}
                       </div>
                     )}
                   </div>

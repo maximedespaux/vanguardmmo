@@ -8,7 +8,14 @@ import { Icon, type IconName } from "@/components/Icon";
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null };
-type Shop = { id: string; item: string; cat: string; classe: string; price: number; stock: number; unit: string; icon: string | null };
+type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number; cau: number };
+type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
+// Raretés d'armes (mêmes clés/couleurs que le coffre AirGuild).
+const RARITY_META: Record<string, { l: string; c: string }> = {
+  rare: { l: "Rare", c: "#4EA8FF" }, epique: { l: "Épique", c: "#C77DFF" },
+  legendaire: { l: "Légendaire", c: "#FF8C1A" }, premyth: { l: "Pré-myth.", c: "#FF5C8A" },
+};
+const mprice = (s: Shop) => (s.tiers ? s.tiers.mem : s.price); // page membre → prix membre (fallback prix public)
 
 const DEBT_STATUS: Record<string, { l: string; c: string }> = {
   REQUESTED: { l: "Demandée", c: "var(--text-muted)" }, PENDING_VALIDATION: { l: "À valider", c: "var(--gold)" },
@@ -72,13 +79,13 @@ export default function BanquePage() {
   const byId = (id: string) => shop.find(s => s.id === id);
   const setQty = (id: string, v: number) => setCart(c => { const it = byId(id); const max = it ? it.stock : 0; const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
   const cartIds = Object.keys(cart);
-  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? it.price * cart[id] : 0); }, 0);
+  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? mprice(it) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: it.price, cat: it.cat }; });
+    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return { name: isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : it.item, quantity: cart[id], price: mprice(it), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
@@ -120,7 +127,14 @@ export default function BanquePage() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(s.price)}</b> périns</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(mprice(s))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}</div>
+                  {s.rarities && Object.keys(s.rarities).length > 0 && (
+                    <div style={{ display: "flex", gap: 4, marginTop: 3, flexWrap: "wrap" }}>
+                      {Object.keys(s.rarities).map(r => { const m = RARITY_META[r]; return m ? (
+                        <span key={r} style={{ fontSize: 9.5, fontWeight: 700, padding: "1px 6px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14` }}>{m.l} ×{s.rarities![r]}</span>
+                      ) : null; })}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <button onClick={() => setQty(s.id, inCart - 1)} style={stepBtn}>−</button>
@@ -139,7 +153,7 @@ export default function BanquePage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                       <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
-                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(it.price * cart[id])}</span>
+                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(mprice(it) * cart[id])}</span>
                       <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
                     </div>
                     {isStuff && (

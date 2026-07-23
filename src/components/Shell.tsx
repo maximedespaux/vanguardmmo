@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
+import { NotificationBell } from "@/components/NotificationBell";
 
 // ── Navigation v2 — bandeau supérieur (sections + sous-sections en déroulants) ──
 type Sub = { label: string; href: string };
@@ -82,7 +83,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
         <div className="vg-top-user">
           {(session || DEV_ALL) ? (
-            <ProfilePanel devAll={DEV_ALL} />
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <NotificationBell />
+              <ProfilePanel devAll={DEV_ALL} />
+            </div>
           ) : (pathname !== "/histoire" && pathname !== "/candidature") ? (
             <Link href="/login" style={{ padding: "8px 16px", background: "#5865F2", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }} className="font-heading">Se connecter</Link>
           ) : null}

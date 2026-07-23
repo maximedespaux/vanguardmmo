@@ -622,3 +622,18 @@ model BankRequest {
   @@index([userId])
   @@index([status])
 }
+
+// Notification sur le SITE (cloche 🔔) — ex. « X veut ton Glaive » adressé à un détenteur.
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   // destinataire (User.id)
+  type      String   @default("info") // "bank_request" | "info" | …
+  title     String
+  body      String?
+  link      String?  // URL de la page concernée (ex. /gestion-dettes)
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
+}

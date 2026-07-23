@@ -4,7 +4,7 @@
 //  + rôle-réaction + planificateur.
 //  Commande : npm run bot
 // ════════════════════════════════════════════════════════════
-import { Client, GatewayIntentBits, Partials, Collection, ChatInputCommandInteraction, GuildMember, Events } from "discord.js";
+import { Client, GatewayIntentBits, Partials, Collection, ChatInputCommandInteraction, GuildMember, Events, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
 import { TOKEN } from "./config.js";
 import { commands } from "./commands/index.js";
 import { startScheduler } from "./scheduler.js";
@@ -66,6 +66,20 @@ client.on(Events.InteractionCreate, async (interaction) => {
     } catch (e) {
       console.error("Erreur bouton", id, e);
       try { if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: "Une erreur est survenue 😬", ephemeral: true }); } catch { /* ignore */ }
+    }
+    return;
+  }
+
+  // ─── Soumission de modal (horaire d'échange proposé) ───
+  if (interaction.isModalSubmit()) {
+    try {
+      if (interaction.customId.startsWith("exchtime:")) {
+        const time = interaction.fields.getTextInputValue("time").slice(0, 100);
+        await interaction.reply({ content: `🗓️ **${interaction.user.username}** propose un horaire : **${time}**` });
+      }
+    } catch (e) {
+      console.error("Erreur modal", interaction.customId, e);
+      try { if (!interaction.replied) await interaction.reply({ content: "Une erreur est survenue 😬", ephemeral: true }); } catch { /* ignore */ }
     }
     return;
   }
@@ -168,6 +182,17 @@ async function handleBankDecision(interaction: any) {
 // ─── Boutons du salon d'échange (Remis / Refusé) — participants du salon privé ───
 async function handleExchangeDecision(interaction: any) {
   const [, action, key] = interaction.customId.split(":");
+  if (action === "time") { // proposer un horaire in-game → modal
+    const modal = new ModalBuilder().setCustomId(`exchtime:${key}`).setTitle("Proposer un horaire d'échange");
+    modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(
+      new TextInputBuilder().setCustomId("time").setLabel("Quand es-tu dispo in-game ?").setStyle(TextInputStyle.Short).setPlaceholder("ex. ce soir 21h · maintenant · demain midi").setRequired(true).setMaxLength(100)));
+    await interaction.showModal(modal);
+    return;
+  }
+  if (action === "ready") { // signale être connecté in-game (visible par tous dans le salon)
+    await interaction.reply({ content: `🟢 **${interaction.user.username}** est connecté·e in-game et prêt·e pour l'échange.` });
+    return;
+  }
   if (action !== "remis" && action !== "refuse") { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
   await applyExchangeDecision(interaction.client, key, action as "remis" | "refuse", interaction.user.username);
   await interaction.reply({ content: action === "remis" ? "✅ Échange marqué **remis**." : "❌ Échange **refusé / annulé**.", ephemeral: true });

@@ -44,10 +44,18 @@ function exchangeEmbed(reqs: any[], owners: Owner[]): EmbedBuilder {
 
 function exchangeButtons(status: string, key: string): ActionRowBuilder<ButtonBuilder>[] {
   if (status === "REMIS" || status === "REFUSE") return [];
-  return [new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`exch:remis:${key}`).setLabel("Remis").setEmoji("✅").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`exch:refuse:${key}`).setLabel("Refusé / annulé").setEmoji("❌").setStyle(ButtonStyle.Danger),
-  )];
+  return [
+    // Étape « Échange » : se mettre d'accord sur un horaire in-game.
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setCustomId(`exch:time:${key}`).setLabel("Proposer un horaire").setEmoji("📅").setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`exch:ready:${key}`).setLabel("Je suis connecté in-game").setEmoji("🟢").setStyle(ButtonStyle.Secondary),
+    ),
+    // Étape « Remis / Refusé » : conclusion.
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setCustomId(`exch:remis:${key}`).setLabel("Remis").setEmoji("✅").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId(`exch:refuse:${key}`).setLabel("Refusé / annulé").setEmoji("❌").setStyle(ButtonStyle.Danger),
+    ),
+  ];
 }
 
 /** Ouvre un salon d'échange privé pour une requête acceptée. No-op si la catégorie n'est pas configurée. */

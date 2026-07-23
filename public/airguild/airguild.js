@@ -50,6 +50,14 @@ function setQty(m,id,v,label){v=Math.max(0,Math.round(+v||0));if(!S.inv[m])S.inv
 function health(q,cat,unit,id){var t=id&&S.thresh&&S.thresh[id];if(t){var ok=+t.ok||0,mid=+t.mid||0;if(ok>0||mid>0){if(ok>0&&q>=ok)return'ok';if(mid>0&&q>=mid)return'mid';return'low';}}const c=cat.trim();if(unit==='slot'){if(q>=2)return'ok';if(q>=1)return'mid';return'low';}if(c==='Ressource'||c==='R1'||c==='R2'||c.startsWith('Carte')){if(q>=20)return'ok';if(q>=8)return'mid';return'low';}if(q>=10)return'ok';if(q>=6)return'mid';return'low';}
 function itemAsset(it){if(it.icData)return `<img src="${it.icData}" alt="">`;if(it.ic&&ICOIDX[it.ic]!=null)return `<span class="climg bic-${ICOIDX[it.ic]}"></span>`;return classLogo(it.classe)||`<span>${catIcon(it.cat)}</span>`;}
 function priceOf(id){return S.prices[id]!=null?S.prices[id]:(catalog().find(x=>x.id===id)||{}).prix||0;}
+// ── Rareté des armes (Yggdrasil/Luzaka) : un stock par rareté. Clé = id|R#rareté (le ♂/♀ des armes). ──
+var RARITIES=[['rare','Rare','#4EA8FF'],['epique','Épique','#C77DFF'],['legendaire','Légendaire','#FF8C1A'],['premyth','Pré-myth.','#FF5C8A']];
+function needsRarity(it){return !!it&&String(it.cat||'').indexOf('Armes')===0&&String(it.item||'')!=='Bouclier';}
+function rarKey(id,r){return id+'|R#'+r;}
+function baseId(key){return String(key).split('|R#')[0];}
+function rarOf(key){var p=String(key).split('|R#');return p.length>1?p[1]:null;}
+function rarMeta(r){for(var i=0;i<RARITIES.length;i++)if(RARITIES[i][0]===r)return RARITIES[i];return null;}
+function itemStock(it,isTotal){if(needsRarity(it)){var t=0;RARITIES.forEach(function(r){var k=rarKey(it.id,r[0]);t+=isTotal?totalGuild(k):qty(S.cur,k);});return t;}return isTotal?totalGuild(it.id):qty(S.cur,it.id);}
 
 const TABS=[['bank','🏦','Dépôt en Coffre de Guilde'],['craft','⚒️','Craft'],['set','⚙️','Paramètres']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,ic,l])=>`<div class="tab ${S.tab===k?'on':''}" onclick="go('${k}')"><span>${ic}</span>${l}${k==='shop'&&S.debts.length?`<span class="pill pr">${S.debts.length}</span>`:''}</div>`).join('');}
@@ -88,8 +96,8 @@ function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__t
   const byCat={};cats.forEach(it=>{(byCat[it.cat]=byCat[it.cat]||[]).push(it);});
   const order=sortCats(D.bankCats.concat(Object.keys(byCat).filter(c=>!D.bankCats.includes(c))));
   let body='';order.forEach(cat=>{let list=byCat[cat];if(!list||!list.length)return;
-    const closed=S.closed[cat]?'closed':'';const sums=list.reduce((a,it)=>a+(isTotal?totalGuild(it.id):qty(S.cur,it.id)),0);
-    body+=`<div class="catblk ${closed}"><div class="cathead" onclick="togC('${sq(cat)}')"><span class="ci">${catBadge(cat)}</span><span class="ct">${esc(cat.trim())}</span><span class="meta"><span class="pill">${list.length}</span><span class="pill">${fmt(sums)} u.</span><span class="chev">▾</span></span></div><div class="catbody">${list.map(it=>itemRow(it,isTotal)).join('')}</div></div>`;});
+    const closed=S.closed[cat]?'closed':'';const sums=list.reduce((a,it)=>a+itemStock(it,isTotal),0);
+    body+=`<div class="catblk ${closed}"><div class="cathead" onclick="togC('${sq(cat)}')"><span class="ci">${catBadge(cat)}</span><span class="ct">${esc(cat.trim())}</span><span class="meta"><span class="pill">${list.length}</span><span class="pill">${fmt(sums)} u.</span><span class="chev">▾</span></span></div><div class="catbody">${list.map(it=>needsRarity(it)?weaponRows(it,isTotal):itemRow(it,isTotal)).join('')}</div></div>`;});
   return body||'<div class="empty">Aucun objet.</div>';
 }
 function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);const h=health(v,it.cat,it.unit,it.id);const isSlot=it.unit==='slot';
@@ -99,6 +107,15 @@ function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);
   const ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
   return `<div class="it" data-s="${esc(ds)}"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()}${isSlot?' · compté en slots':''}</div></div><span class="dot ${h}"></span>${ctrl}${unitTag}<span class="rm" onclick="rmItem('${sq(it.id)}',${custom})">✕</span></div>`;
 }
+// Arme suivie par rareté : une ligne d'en-tête (total) + 4 lignes de rareté (stock indépendant, clé id|R#rareté).
+function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
+  var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div><div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
+  var rows=RARITIES.map(function(r){var key=rarKey(it.id,r[0]);var v=isTotal?totalGuild(key):qty(S.cur,key);
+    var ctrl=isTotal?`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`:`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)">＋</button></div>`;
+    var clr=(!isTotal&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider">✕</span>`:'<span style="width:14px;flex:none"></span>';
+    return `<div class="it" data-s="${esc(ds)}" style="padding-left:30px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r[2]};box-shadow:0 0 5px ${r[2]}99;flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:${r[2]};font-size:12.5px">${r[1]}</div></div>${ctrl}${clr}</div>`;}).join('');
+  return head+rows;
+}
 function paintBank(){const b=$('#bankbody');if(b){b.innerHTML=bankBody();if(bankQ)filterBank(bankQ);}}
 function filterBank(qv){const q=(qv||'').toLowerCase().trim();
   document.querySelectorAll('#bankbody .it').forEach(el=>{el.style.display=(!q||el.dataset.s.includes(q))?'':'none';});
@@ -106,8 +123,8 @@ function filterBank(qv){const q=(qv||'').toLowerCase().trim();
 }
 function selM(m){S.cur=m;save();render();}
 function togC(c){S.closed[c]=!S.closed[c];save();paintBank();}
-function adj(id,d){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);const it=catalog().find(x=>x.id===id);setQty(S.cur,id,qty(S.cur,id)+d,it?it.item:id);paintBank();}
-function setQ(id,v){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);const it=catalog().find(x=>x.id===id);setQty(S.cur,id,v,it?it.item:id);paintBank();}
+function adj(id,d){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,qty(S.cur,id)+d,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();}
+function setQ(id,v){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,v,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();}
 function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
 function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
 function delM(m){if(!canEdit())return agToast('Suppression de coffre réservée au rôle Vanguard.',false);agConfirm('Supprimer le coffre de '+m+' ?\nLe contenu sera perdu — l\'action est tracée dans le journal.',function(){S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:'Coffre supprimé',delta:0});if(S.log.length>200)S.log.length=200;S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='__total__';save();render();agToast('Coffre de '+m+' supprimé (journalisé).',true);});}

@@ -32,10 +32,19 @@ export async function GET() {
   const allInv = (S.inv && typeof S.inv === "object") ? (S.inv as Record<string, Record<string, number>>) : {};
   const members: string[] = Array.isArray(S.members) ? S.members : Object.keys(allInv);
   const inv: Record<string, number> = {};
+  const rarInv: Record<string, Record<string, number>> = {}; // armes suivies par rareté : baseId → { rareté: stock }
   for (const m of members) {
     const coffre = allInv[m];
     if (!coffre || typeof coffre !== "object") continue;
-    for (const id of Object.keys(coffre)) inv[id] = (inv[id] || 0) + (Number(coffre[id]) || 0);
+    for (const id of Object.keys(coffre)) {
+      const n = Number(coffre[id]) || 0; if (!n) continue;
+      const sep = id.indexOf("|R#"); // clé arme = « baseId|R#rareté »
+      if (sep >= 0) {
+        const base = id.slice(0, sep), rar = id.slice(sep + 3);
+        inv[base] = (inv[base] || 0) + n;
+        (rarInv[base] = rarInv[base] || {})[rar] = (rarInv[base][rar] || 0) + n;
+      } else inv[id] = (inv[id] || 0) + n;
+    }
   }
   const prices: Record<string, number> = S.prices ?? {};
   const custom: any[] = Array.isArray(S.custom) ? S.custom : [];
@@ -57,6 +66,7 @@ export async function GET() {
         price: prices[it.id] != null ? prices[it.id] : (it.prix ?? 0),
         stock,
         unit: it.unit ?? "",
+        rarities: rarInv[it.id] ?? null, // armes → { rareté: stock } ; null pour les objets sans rareté
         icon: it.icData ? it.icData : (it.ic && icons[it.ic] ? icons[it.ic] : null), // icData (asset perso édité) prioritaire, comme dans l'AirGuild (itemAsset)
       };
     })

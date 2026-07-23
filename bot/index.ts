@@ -11,7 +11,7 @@ import { startScheduler } from "./scheduler.js";
 import { registerReactionRoles } from "./lib/reactionroles.js";
 import { prisma } from "./lib/prisma.js";
 import { debtEmbed, debtButtons, dm, refreshDebtMessage } from "./lib/debts.js";
-import { applyApplicationDecision, applyDebtDecision, applyBankRefuse } from "./lib/decisions.js";
+import { applyApplicationDecision, applyDebtDecision, applyBankRefuse, applyBankAccept } from "./lib/decisions.js";
 import { applyExchangeDecision } from "./lib/exchange.js";
 import { toggleRole } from "./lib/buttonroles.js";
 import { refreshGiveaway } from "./lib/giveaways.js";
@@ -147,13 +147,22 @@ async function handleBankDecision(interaction: any) {
   const [, action, id] = interaction.customId.split(":");
   const member = interaction.member as GuildMember | null;
   if (!isStaff(member)) { await interaction.reply({ content: "⛔ Réservé au staff (bras droits / owners).", ephemeral: true }); return; }
-  if (action !== "refuse") { await interaction.reply({ content: "L'acceptation (avec prix) se fait sur le site → **Banque (gestion)**.", ephemeral: true }); return; }
   const r = await prisma.bankRequest.findFirst({ where: { OR: [{ id }, { batchId: id }] } });
   if (!r) { await interaction.reply({ content: "Cette requête n'existe plus.", ephemeral: true }); return; }
   if (r.status !== "PENDING") { await interaction.reply({ content: "Requête déjà traitée.", ephemeral: true }); return; }
-  const updated = await applyBankRefuse(interaction.client, id, interaction.user.username);
-  if (updated) await dm(interaction.client, updated.discordId, { content: `❌ Ta requête Banque à **Vanguard** a été refusée.` });
-  await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** refusée.`, ephemeral: true });
+  if (action === "refuse") {
+    const updated = await applyBankRefuse(interaction.client, id, interaction.user.username);
+    if (updated) await dm(interaction.client, updated.discordId, { content: `❌ Ta requête boutique à **Vanguard** a été refusée.` });
+    await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** refusée.`, ephemeral: true });
+    return;
+  }
+  if (action === "achat" || action === "dette") {
+    const updated = await applyBankAccept(interaction.client, id, action, interaction.user.username);
+    if (updated) await dm(interaction.client, updated.discordId, { content: action === "dette" ? "📝 Ta requête boutique a été **acceptée en dette**. Un salon d'échange va s'ouvrir." : "🛒 Ta requête boutique a été **acceptée (achat)**. Un salon d'échange va s'ouvrir." });
+    await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** acceptée (${action}, prix auto). L'embed et le salon d'échange se mettent à jour sous peu.`, ephemeral: true });
+    return;
+  }
+  await interaction.reply({ content: "Action inconnue.", ephemeral: true });
 }
 
 // ─── Boutons du salon d'échange (Remis / Refusé) — participants du salon privé ───

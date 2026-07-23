@@ -254,6 +254,8 @@ export function bankRequestEmbed(r: any): EmbedBuilder {
 export function bankRequestButtons(r: any): ActionRowBuilder<ButtonBuilder>[] {
   if (r.status !== "PENDING") return [];
   return [new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId(`bank:achat:${r.id}`).setLabel("Accepter (achat)").setEmoji("🛒").setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId(`bank:dette:${r.id}`).setLabel("Accepter (dette)").setEmoji("📝").setStyle(ButtonStyle.Primary),
     new ButtonBuilder().setCustomId(`bank:refuse:${r.id}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
   )];
 }
@@ -352,7 +354,11 @@ export async function postBankBatchDecision(client: Client, reqs: any[]) {
   const first = reqs[0];
   const refuseId = first.batchId || first.id;
   const buttons = first.status === "PENDING"
-    ? [new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId(`bank:refuse:${refuseId}`).setLabel("Refuser la requête").setEmoji("❌").setStyle(ButtonStyle.Danger))]
+    ? [new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId(`bank:achat:${refuseId}`).setLabel("Accepter (achat)").setEmoji("🛒").setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId(`bank:dette:${refuseId}`).setLabel("Accepter (dette)").setEmoji("📝").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId(`bank:refuse:${refuseId}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
+      )]
     : [];
   const res = await postToDecision(client, `Requête Banque — ${first.username}`, bankBatchEmbed(reqs), buttons, "dette");
   if (res) {
@@ -393,4 +399,51 @@ export async function syncDecidedBankRequests(client: Client) {
     await editDecision(client, first.channelId, first.messageId, isBatch ? bankBatchEmbed(all) : bankRequestEmbed(first), isBatch ? [] : bankRequestButtons(first));
     await prisma.bankRequest.updateMany({ where: { id: { in: all.map((r) => r.id) } }, data: { discordSynced: true } });
   }
+}
+
+// ════ #3 — Acceptation depuis Discord (prix AUTO = palier fixé au dépôt) ════
+async function coffreDebitBot(itemName: string | null, qty: number, reason: string, byUser: string) {
+  if (!itemName || qty <= 0) return;
+  try {
+    const base = itemName.replace(/\s*\([^)]*\)\s*$/, "").trim(); // retire (rareté)/(sexe)
+    const match = await prisma.coffreItem.findFirst({ where: { item: base } });
+    if (match?.itemId != null) await prisma.coffreItem.update({ where: { itemId: match.itemId }, data: { stockTotal: Math.max(0, match.stockTotal - qty) } });
+    await prisma.coffreMouvement.create({ data: { itemId: match?.itemId ?? null, item: base, delta: -qty, type: "debit", reason, byUser } });
+  } catch { /* le journal ne bloque jamais la décision */ }
+}
+// Prix membre/public d'un objet, lu depuis les paliers du dépôt (airGuildState.prices).
+async function bankTierPrice(itemName: string, member: boolean): Promise<{ price: number; caution: number }> {
+  const row = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
+  const prices = (((row?.data ?? {}) as { prices?: Record<string, any> }).prices) ?? {};
+  const base = String(itemName || "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  for (const id of Object.keys(prices)) {
+    const label = (id.split("|R#")[0].split("|").pop() || "").toLowerCase().trim();
+    if (label && (label === base || label.includes(base) || base.includes(label))) {
+      const p = prices[id];
+      if (p && typeof p === "object") return { price: (member ? +p.mem : +p.pub) || 0, caution: +p.cau || 0 };
+      if (p != null) return { price: +p || 0, caution: 0 };
+    }
+  }
+  return { price: 0, caution: 0 };
+}
+/** Accepte une requête Banque depuis Discord (achat ou dette), prix auto depuis les paliers. */
+export async function applyBankAccept(client: Client, idOrBatch: string, mode: "achat" | "dette", actor: string) {
+  const reqs = await prisma.bankRequest.findMany({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }], status: "PENDING" } });
+  if (!reqs.length) return prisma.bankRequest.findFirst({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }] } });
+  const u = await prisma.user.findUnique({ where: { id: reqs[0].userId }, select: { role: true } }).catch(() => null);
+  const member = !!(u && u.role && u.role !== "RECRUE"); // membre de guilde → prix membre
+  for (const r of reqs) {
+    const tier = await bankTierPrice(r.item || "", member);
+    const unit = BigInt(Math.max(0, Math.round(tier.price)));
+    const total = unit * BigInt(r.quantity);
+    if (mode === "dette") {
+      const debt = await prisma.debt.create({ data: { userId: r.userId, type: r.kind === "PERINS" ? "PENYA" : "ITEM", amount: total, caution: BigInt(Math.max(0, Math.round(tier.caution))), item: r.item, reason: `Boutique — ${r.item} ×${r.quantity}`, status: "ACCEPTED", creditor: "Guilde", decidedBy: actor } });
+      await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_DETTE", prixPublic: unit, prixFinal: total, debtId: debt.id, decidedBy: actor, discordSynced: false } });
+    } else {
+      await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_ACHAT", prixPublic: unit, prixFinal: total, decidedBy: actor, discordSynced: false } });
+    }
+    await coffreDebitBot(r.item, r.quantity, `Boutique ${mode} → ${r.username}`, actor);
+  }
+  await prisma.auditLog.create({ data: { actor, action: `banque.${mode === "achat" ? "ACHAT" : "DETTE"}`, target: idOrBatch, detail: `${reqs.length} article(s) · prix auto` } }).catch(() => {});
+  return prisma.bankRequest.findFirst({ where: { OR: [{ id: idOrBatch }, { batchId: idOrBatch }] } });
 }

@@ -17,7 +17,7 @@ const DEBT_STATUS: Record<string, { l: string; c: string }> = {
 };
 const REQ_STATUS: Record<string, { l: string; c: string }> = {
   PENDING: { l: "En attente", c: "var(--gold)" },
-  ACCEPTE_ACHAT: { l: "Achat accepté (−20 %)", c: "var(--green)" },
+  ACCEPTE_ACHAT: { l: "Achat accepté", c: "var(--green)" },
   ACCEPTE_DETTE: { l: "Dette accordée", c: "var(--blue)" },
   REFUSE: { l: "Refusée", c: "var(--red)" }, ANNULE: { l: "Annulée", c: "var(--text-muted)" },
 };
@@ -91,7 +91,7 @@ export default function BanquePage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Banque" subtitle="Parcours le coffre de guilde, ajoute au panier, et fais ta demande (achat ou dette). Le staff valide depuis l'AirGuild." />
+      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique" subtitle="Parcours le coffre de guilde, ajoute au panier, et fais ta demande (achat ou dette). Le staff valide depuis l'AirGuild." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
@@ -159,7 +159,7 @@ export default function BanquePage() {
               <button onClick={() => submitCart("achat")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander en achat</button>
               <button onClick={() => submitCart("dette")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "rgba(255,140,26,0.12)", color: "var(--orange)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="edit" size={15} /> Demander en dette</button>
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff qui valide (achat −20 % ou dette). Profil avec personnage requis.</div>
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff qui valide (achat ou dette). Profil avec personnage requis.</div>
           </div>
         </div>
       </div>}
@@ -194,7 +194,7 @@ export default function BanquePage() {
                         </div>
                       )}
                       {!multi && first.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{first.reason}</div>}
-                      {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn <span style={{ color: "var(--text-muted)" }}>(public {fmt(first.prixPublic)} −20 %)</span></div>}
+                      {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn</div>}
                       {first.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(first.prixPublic)}</b> périn — voir l'onglet « Dettes ».</div>}
                       {first.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {first.adminNote}</div>}
                     </div>

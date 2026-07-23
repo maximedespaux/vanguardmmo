@@ -16,7 +16,7 @@ const NAV: Item[] = [
   { label: "Candidature", href: "/candidature", icon: "user-plus", access: "public" },
   { label: "Dashboard", href: "/dashboard", icon: "grid", access: "guild" },
   { label: "AirBuilder", href: "/builder", icon: "shirt", access: "guild" },
-  { label: "Banque", href: "/dettes", icon: "landmark", access: "guild" },
+  { label: "Boutique", href: "/dettes", icon: "cart", access: "guild" },
   { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [{ label: "Guide", href: "/astuces" }, { label: "Prestige", href: "/prestige" }] },
   { label: "PvE", href: "/donjons", icon: "skull", access: "guild", sub: [{ label: "Donjons", href: "/donjons" }, { label: "World Boss", href: "/worldboss" }] },
   { label: "Chambres S.", href: "/compositions", icon: "key", access: "guild" },

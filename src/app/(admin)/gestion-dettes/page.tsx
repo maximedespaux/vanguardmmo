@@ -45,7 +45,7 @@ export default function BanqueAdminPage() {
     if (action !== "refuse" && (!prixPublic || prixPublic <= 0)) return flash("Fixe un prix public (> 0) avant d'accepter.");
     const adminNote = action === "refuse" ? ((await vgPrompt("Raison du refus ? (optionnel)")) ?? undefined) : undefined;
     const r = await fetch(`/api/admin/bank-request/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, prixPublic, adminNote }) });
-    if (r.ok) { flash(action === "achat" ? "Achat −20 % accepté ✓" : action === "dette" ? "Dette accordée ✓" : "Requête refusée."); load(); }
+    if (r.ok) { flash(action === "achat" ? "Achat accepté ✓" : action === "dette" ? "Dette accordée ✓" : "Requête refusée."); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur"); }
   };
   const decideDebt = async (id: string, status: string) => {
@@ -57,7 +57,7 @@ export default function BanqueAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Banque — gestion" subtitle="Traite les requêtes (achat −20 % ou dette) et valide les remboursements." />
+      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique — gestion" subtitle="Traite les requêtes (achat ou dette) et valide les remboursements." />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       {/* ── Requêtes à traiter ── */}
@@ -75,11 +75,11 @@ export default function BanqueAdminPage() {
               {r.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{r.reason}</div>}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 12 }}>
                 <input placeholder="Prix public (périn)" value={prices[r.id] ?? ""} onChange={e => setPrices(p => ({ ...p, [r.id]: e.target.value }))} style={{ ...inp, width: 160 }} />
-                <button onClick={() => decideReq(r.id, "achat")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} /> Achat −20 %</button>
+                <button onClick={() => decideReq(r.id, "achat")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} /> Achat</button>
                 <button onClick={() => decideReq(r.id, "dette")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="book" size={15} /> Dette (prix public)</button>
                 <button onClick={() => decideReq(r.id, "refuse")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>
               </div>
-              {prices[r.id] && Number(prices[r.id]) > 0 && <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>Achat = {fmt(Math.floor(Number(prices[r.id]) * 0.8))} périn · Dette = {fmt(Number(prices[r.id]))} périn</div>}
+              {prices[r.id] && Number(prices[r.id]) > 0 && <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>Prix = {fmt(Number(prices[r.id]))} périn (achat ou dette)</div>}
             </div>
           ))}
         </div>

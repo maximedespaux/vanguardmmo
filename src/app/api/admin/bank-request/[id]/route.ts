@@ -19,7 +19,7 @@ async function coffreDebit(itemName: string | null, qty: number, reason: string,
 
 // PATCH /api/admin/bank-request/[id] — décision admin
 //  body : { action: "refuse" | "achat" | "dette", prixPublic?, adminNote? }
-//  achat = prix public −20 % ; dette = prix public complet (crée une Debt).
+//  achat = prix public ; dette = prix public complet (crée une Debt).
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const a = await apiRole(ADMIN_ROLES); if ("error" in a) return a.error;
@@ -41,9 +41,9 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   if (prixPublic <= 0n) return NextResponse.json({ error: "Fixe un prix public (> 0) pour accepter." }, { status: 400 });
 
   if (b.action === "achat") {
-    const prixFinal = (prixPublic * BigInt(row.quantity) * 80n) / 100n; // total = prix unitaire × quantité −20 %
+    const prixFinal = prixPublic * BigInt(row.quantity); // total = prix unitaire × quantité (plus de remise)
     const r = await prisma.bankRequest.update({ where: { id }, data: { status: "ACCEPTE_ACHAT", prixPublic, prixFinal, decidedBy: a.user.username, adminNote } });
-    await audit(a.user.username, "banque.ACHAT", id, `${label} — ${prixFinal} (−20%)`);
+    await audit(a.user.username, "banque.ACHAT", id, `${label} — ${prixFinal}`);
     await coffreDebit(row.item, row.quantity, `Achat banque → ${row.username}`, a.user.username);
     return NextResponse.json(ser(r));
   }

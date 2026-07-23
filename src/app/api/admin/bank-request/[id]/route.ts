@@ -1,10 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiRole } from "@/lib/access";
-import { ADMIN_ROLES } from "@/config/roles";
+import { ADMIN_ROLES, canAccessGuild } from "@/config/roles";
 import { audit } from "@/lib/audit";
 
 const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, prixFinal: r.prixFinal?.toString() ?? null });
+
+// Prix membre/public d'un objet, lu depuis les paliers du dépôt (airGuildState.prices).
+async function autoTierPrice(itemName: string | null, member: boolean): Promise<{ price: number; caution: number }> {
+  const row = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
+  const prices = (((row?.data ?? {}) as { prices?: Record<string, any> }).prices) ?? {};
+  const base = String(itemName || "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+  for (const id of Object.keys(prices)) {
+    const label = (id.split("|R#")[0].split("|").pop() || "").toLowerCase().trim();
+    if (label && (label === base || label.includes(base) || base.includes(label))) {
+      const p = prices[id];
+      if (p && typeof p === "object") return { price: (member ? +p.mem : +p.pub) || 0, caution: +p.cau || 0 };
+      if (p != null) return { price: +p || 0, caution: 0 };
+    }
+  }
+  return { price: 0, caution: 0 };
+}
 
 // Sortie d'un objet du coffre suite à une décision banque (achat/dette) :
 // ajuste le stock de l'objet suivi (s'il l'est) + journalise un débit (qui/combien/quand).
@@ -37,9 +53,14 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     return NextResponse.json(ser(r));
   }
 
-  const prixPublic = BigInt(Math.max(0, Math.floor(Number(b.prixPublic) || 0)));
-  if (prixPublic <= 0n) return NextResponse.json({ error: "Fixe un prix public (> 0) pour accepter." }, { status: 400 });
-  const caution = BigInt(Math.max(0, Math.floor(Number(b.caution) || 0))); // caution éventuelle (dette)
+  // Prix AUTO depuis les paliers du dépôt (membre si l'acheteur est de la guilde, sinon public). Un prix saisi manuellement reste prioritaire.
+  const buyer = await prisma.user.findUnique({ where: { id: row.userId }, select: { role: true } });
+  const isMemberBuyer = !!(buyer && canAccessGuild(buyer.role));
+  const auto = await autoTierPrice(row.item, isMemberBuyer);
+  const manual = Math.max(0, Math.floor(Number(b.prixPublic) || 0));
+  const prixPublic = BigInt(manual > 0 ? manual : Math.round(auto.price));
+  if (prixPublic <= 0n) return NextResponse.json({ error: "Aucun prix : fixe un palier au dépôt de l'objet (ou saisis un prix)." }, { status: 400 });
+  const caution = BigInt(Math.max(0, Math.floor(Number(b.caution) || auto.caution || 0)));
 
   if (b.action === "achat") {
     const prixFinal = prixPublic * BigInt(row.quantity); // total = prix unitaire × quantité (plus de remise)

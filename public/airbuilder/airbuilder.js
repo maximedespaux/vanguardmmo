@@ -221,7 +221,7 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const pick=`<input class="srch" placeholder="🔍 ${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
     <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${esc(it.n)}${it.sex?' ('+it.sex+')':''}<div style="font-size:10px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:10px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'🔒':'🌟'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
   document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?('<span class="pill rm" onclick="removeItem()">🗑️ Retirer cet objet</span>'+(e.cfg?'<span class="pill" onclick="maximizeSlot(\''+slot+'\')" title="Mettre tous les niveaux de cette pièce au max">⚡ Max</span>':'')):'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
-function equip(id){if(window.__VIEW)return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)maxCfg(pickSlot,it.tier);render();drawPick('');}
+function equip(id){if(window.__VIEW)return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
 function equipFam(id,n){if(window.__VIEW)return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
 function setRank(r){if(_ro())return;const e=E('familier');if(e){e.rank=r;render();drawPick('');}}
@@ -261,20 +261,34 @@ function maxCfg(slot,tier){var c=cfgOf(slot);if(!c)return;var artef=['Éternel',
   var fillS=function(n){c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;};
   if(slot==='weapon'||slot==='weapon2'){c.rune=true;c.up=artef?20:10;if(artef)c.stars=3;fillS(artef?12:10);c.scrL=4;c.elemLvl=20;c.mastery=100;}
   else if(slot==='shield'){c.up=10;fillS(10);c.elemLvl=20;}
-  else if(slot==='suit'){c.up=10;fillS(4);c.scrL=4;c.elemLvl=20;}
-  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=10;c.scrL=4;}
-  else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=10;}
-  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=10;}
-  else if(slot==='fairy'){c.lvl=(typeof FAIRYMAX!=='undefined')?FAIRYMAX:30;}
+  else if(slot==='suit'){c.up=20;fillS(4);c.scrL=4;c.elemLvl=20;}
+  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=20;c.scrL=4;}
+  else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=0;}
+  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=30;}
+  else if(slot==='fairy'){c.lvl=(typeof FAIRYMAX!=='undefined')?FAIRYMAX:50;}
 }
 function maximizeSlot(slot){if(_ro())return;var e=E(slot);if(!e||!e.item)return;maxCfg(slot,e.item.tier);render();try{drawPick(curQ());}catch(x){}agToast('Pièce maximisée ✓ — choisis élément / stats',true);}
 function maximizeAll(){if(_ro())return;var s=ST();if(!s||!s.eq||!Object.keys(s.eq).length)return agToast('Aucune pièce à maximiser.',false);agConfirm('🎯 Maximiser TOUTES les pièces équipées de ce stuff ?\n\nLes niveaux passent au max (tu gardes le choix des éléments et des stats).',function(){Object.keys(s.eq).forEach(function(slot){var e=s.eq[slot];if(e&&e.item&&e.cfg)maxCfg(slot,e.item.tier);});render();agToast('Stuff maximisé ✓',true);});}
+// Classes magiques (Int) — leurs armes n'ont pas d'élément par défaut.
+var MAGIC_CLS=['Arcaniste','Envouteur'];
+// Valeurs PAR DÉFAUT à l'ajout d'une pièce (réglage voulu par la guilde, pas le max absolu).
+//  Arme : sans rune, +10, sans étoile, perçage +10 · élément Vent +20 si classe physique (rien si magique).
+//  Bijoux +20 · Armure (suit/casque/gants/bottes) +20 (+ Vent sur le plastron) · Fashion +0.
+function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGIC_CLS.indexOf(cls)>=0;
+  var fillS=function(n){c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;};
+  if(slot==='weapon'||slot==='weapon2'){c.rune=false;c.up=10;c.stars=0;fillS(10);if(magic){c.elemType='';c.elemLvl=0;}else{c.elemType='Vent';c.elemLvl=20;}}
+  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=20;}
+  else if(slot==='suit'){c.up=20;c.elemType='Vent';c.elemLvl=20;fillS(4);}
+  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=20;}
+  else if(slot==='shield'){c.up=10;}
+  else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=0;}
+}
 function upUI(slot,max){const w=cfgOf(slot);const v=w.up||0;const isW=(slot==='weapon'||slot==='weapon2');const art=(isW&&max>10&&v>10);
   let foot='';
   if(isW&&max>10)foot=`<div class="row" style="margin-top:5px"><span class="mini">Étoiles</span>${[0,1,2,3].map(s=>`<span class="tierbtn ${w.stars===s?'on':''}" onclick="cset('${slot}','stars',${s})">${s?'★'.repeat(s):'—'}</span>`).join('')}</div><div class="mini">0–10 = normale · 11–20 = artefact</div>`;
   else if(isW)foot='<div class="mini">Pas d\'artefact sur ce tier (max +10).</div>';
-  else if(slot==='shield')foot='<div class="mini">Max +10 · pas d\'artefact</div>';
-  else foot='<div class="mini">Max +10</div>';
+  else if(slot==='shield')foot='<div class="mini">Max +'+max+' · pas d\'artefact</div>';
+  else foot='<div class="mini">Max +'+max+'</div>';
   return `<div class="grp"><div class="gh">⬆️ Upgrade ${isW?`<span class="mini">(${art?'Artefact':'Normale'})</span>`:''}</div>
    <div class="lvl"><span class="mini">Niveau : <b>+${v}</b> / +${max}</span>
    <input type="range" min="0" max="${max}" value="${v}" oninput="upLive(this,'${slot}',${max})" onchange="cset('${slot}','up',+this.value)"></div>
@@ -354,8 +368,8 @@ function weaponPanelImpl(SL,e){const w=cfgOf(SL);const artefactable=['Éternel',
    ${elemUI(SL,20)}
    </div>`;}
 function shieldPanel(e){return `<div class="wp">${upUI('shield',10)}${pierceUI('shield',10)}${eveilUI('shield')}${elemUI('shield',20)}</div>`;}
-function suitPanel(e){return `<div class="wp">${upUI('suit',10)}${pierceUI('suit',4)}${eveilUI('suit')}${scrollUI('suit')}${elemUI('suit',20)}</div>`;}
-function armorPanel(slot,e){return `<div class="wp">${upUI(slot,10)}${eveilUI(slot)}${scrollUI(slot)}<div class="mini">Cette pièce n'a ni perçage ni élément.</div></div>`;}
+function suitPanel(e){return `<div class="wp">${upUI('suit',20)}${pierceUI('suit',4)}${eveilUI('suit')}${scrollUI('suit')}${elemUI('suit',20)}</div>`;}
+function armorPanel(slot,e){return `<div class="wp">${upUI(slot,20)}${eveilUI(slot)}${scrollUI(slot)}<div class="mini">Cette pièce n'a ni perçage ni élément.</div></div>`;}
 function jewelPanel(slot,e){const w=cfgOf(slot);
   return `<div class="wp"><div class="grp"><div class="gh">⬆️ Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +30</span><input type="range" min="0" max="30" value="${w.up||0}" oninput="upLive(this,'${slot}',30)" onchange="cset('${slot}','up',+this.value)"></div><div class="mini">+20 (aProtect) · jusqu'à +30 (aProtect lunaire = stats plus fortes)</div></div>${eveilUI(slot)}</div>`;}
 

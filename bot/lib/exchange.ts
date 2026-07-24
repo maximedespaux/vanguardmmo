@@ -17,13 +17,18 @@ import { resolveOwners } from "./decisions.js";
 const GREEN = 0x4ade80, RED = 0xf87171;
 type Owner = { name: string; discordId: string | null; items: string[]; qty: number };
 
+const baseName = (n: string) => String(n || "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
+const reqValue = (r: any) => Number(r.prixFinal) || (Number(r.priceEach) || 0) * (r.quantity || 1);
+const fmtP = (n: number) => n.toLocaleString("fr-FR");
+
 function exchangeEmbed(reqs: any[], owners: Owner[]): EmbedBuilder {
   const first = reqs[0] || {};
-  const mode = first.status === "ACCEPTE_DETTE" ? "Dette" : "Achat";
+  const mode = first.debtId ? "Dette" : "Achat"; // fiable quel que soit le statut (les dettes ont un debtId)
   const label = first.status === "REMIS" ? "🟢 Remis" : first.status === "REFUSE" ? "⚫ Refusé / annulé" : "🟠 En cours";
   const color = first.status === "REMIS" ? GREEN : first.status === "REFUSE" ? RED : ORANGE;
-  const total = reqs.reduce((s, r) => s + (Number(r.prixFinal) || (Number(r.priceEach) || 0) * (r.quantity || 1)), 0);
-  const lines = reqs.map((r) => `• **${r.item ?? "?"}** ×${r.quantity}`).join("\n").slice(0, 1024);
+  const total = reqs.reduce((s, r) => s + reqValue(r), 0);
+  // Articles : le nom (r.item) contient déjà la rareté choisie « (Épique) » + le prix de la ligne.
+  const lines = reqs.map((r) => `• **${r.item ?? "?"}** ×${r.quantity}${reqValue(r) ? ` · ${fmtP(reqValue(r))} périns` : ""}`).join("\n").slice(0, 1024);
   const e = new EmbedBuilder()
     .setColor(color)
     .setTitle(`🤝 Échange — ${first.username}`)
@@ -33,11 +38,22 @@ function exchangeEmbed(reqs: any[], owners: Owner[]): EmbedBuilder {
       { name: "Mode", value: mode, inline: true },
       { name: "Statut", value: label, inline: true },
     );
-  if (total > 0) e.addFields({ name: "Montant", value: `${total.toLocaleString("fr-FR")} périns`, inline: true });
-  const ownerLine = owners.length
-    ? owners.map((o) => `${o.discordId ? `<@${o.discordId}>` : `**${o.name}**`} — ${o.items.join(", ")} (${o.qty} en coffre)`).join("\n")
-    : "_Aucun détenteur repéré dans les coffres — voir avec le staff._";
-  e.addFields({ name: "Détenteur(s) à contacter", value: ownerLine.slice(0, 1024) });
+  if (total > 0) e.addFields({ name: "💰 Montant total (à régler par l'acheteur)", value: `**${fmtP(total)}** périns`, inline: false });
+  // Détail PAR VENDEUR : chaque article est attribué à son détenteur principal + la valeur qui lui revient.
+  const byHolder = new Map<string, { discordId: string | null; lines: string[]; value: number }>();
+  for (const r of reqs) {
+    const base = baseName(r.item);
+    const owner = owners.find((o) => o.items.some((it) => { const b = baseName(it); return !!b && (b === base || base.includes(b) || b.includes(base)); }));
+    const key = owner?.name ?? "— (à voir avec le staff)";
+    if (!byHolder.has(key)) byHolder.set(key, { discordId: owner?.discordId ?? null, lines: [], value: 0 });
+    const h = byHolder.get(key)!;
+    h.lines.push(`${r.item} ×${r.quantity}`);
+    h.value += reqValue(r);
+  }
+  const ownerLine = byHolder.size
+    ? [...byHolder.entries()].map(([name, h]) => `${h.discordId ? `<@${h.discordId}>` : `**${name}**`} — ${h.lines.join(", ")} · **${fmtP(h.value)}** périns`).join("\n")
+    : "_Aucun détenteur repéré — voir avec le staff._";
+  e.addFields({ name: "📦 Détail par vendeur (à contacter + valeur due)", value: ownerLine.slice(0, 1024) });
   e.setFooter({ text: `réf. ${String(first.batchId || first.id).slice(-6)} · « Remis » une fois l'objet donné` }).setTimestamp(new Date());
   return e;
 }

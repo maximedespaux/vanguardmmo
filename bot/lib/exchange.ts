@@ -75,9 +75,17 @@ export async function openExchange(client: Client, reqs: any[]): Promise<void> {
   for (const uid of allow) overwrites.push({ id: uid, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] });
   if (ROLE_STAFF_VIEW) overwrites.push({ id: ROLE_STAFF_VIEW, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] });
   const name = `echange-${String(first.username || "membre").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 20)}-${String(key).slice(-4)}`.slice(0, 90);
+  // La valeur configurée doit être une CATÉGORIE. Si c'en est une, on range le salon dedans ;
+  // sinon (un salon texte, un ID erroné…) on le crée quand même à la racine plutôt que d'échouer.
+  let parentId: string | undefined = undefined;
+  try {
+    const cat: any = await guild.channels.fetch(CHANNELS.exchangeCategory).catch(() => null);
+    if (cat && cat.type === ChannelType.GuildCategory) parentId = cat.id;
+    else console.warn("[exchange] CHANNEL_EXCHANGE_CATEGORY n'est pas une catégorie — salon d'échange créé à la racine du serveur.");
+  } catch { /* ignore */ }
   try {
     const ch: any = await guild.channels.create({
-      name, type: ChannelType.GuildText, parent: CHANNELS.exchangeCategory,
+      name, type: ChannelType.GuildText, parent: parentId,
       permissionOverwrites: overwrites, topic: `Échange boutique — ${first.username} · réf. ${String(key).slice(-6)}`,
     });
     const ping = [first.discordId ? `<@${first.discordId}>` : "", ...owners.filter((o) => o.discordId).map((o) => `<@${o.discordId}>`)].filter(Boolean).join(" ");

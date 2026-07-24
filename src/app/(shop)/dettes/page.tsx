@@ -47,7 +47,6 @@ export default function BanquePage() {
   const [catF, setCatF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence ♂/♀ par Stuff
-  const [weaponRarity, setWeaponRarity] = useState<Record<string, string>>({}); // rareté voulue par arme (même principe que ♂/♀)
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
   const { data: session } = useSession();
@@ -81,39 +80,24 @@ export default function BanquePage() {
   };
 
   // ── Panier ──
-  const byId = (id: string) => shop.find(s => s.id === id);
-  // Quantité max = stock de la RARETÉ choisie (si l'arme en a une sélectionnée), sinon stock total.
-  const maxFor = (id: string) => { const it = byId(id); if (!it) return 0; const rk = weaponRarity[id]; return (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; };
-  const setQty = (id: string, v: number) => setCart(c => { const max = maxFor(id); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
+  // Clé de panier : "itemId" pour un objet simple, "itemId::rareté" pour une arme (une entrée par rareté).
+  const baseIdOf = (key: string) => String(key).split("::")[0];
+  const rarOf = (key: string) => { const p = String(key).split("::"); return p.length > 1 ? p[1] : null; };
+  const byId = (key: string) => shop.find(s => s.id === baseIdOf(key));
+  // Quantité max = stock de la RARETÉ de la clé (arme), sinon stock total de l'objet.
+  const maxFor = (key: string) => { const it = byId(key); if (!it) return 0; const rk = rarOf(key); return (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; };
+  const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
-  // Si une arme du panier n'a qu'UNE rareté en stock, on la présélectionne (pas besoin de cliquer).
-  useEffect(() => {
-    setWeaponRarity(prev => {
-      let changed = false; const next = { ...prev };
-      for (const id of Object.keys(cart)) { const it = shop.find(s => s.id === id); if (it?.rarities) { const ks = Object.keys(it.rarities); if (ks.length === 1 && !next[id]) { next[id] = ks[0]; changed = true; } } }
-      return changed ? next : prev;
-    });
-  }, [cart, shop]);
-  // Quand la rareté choisie change, on plafonne la quantité au stock de CETTE rareté (ex. 1 Pré-myth. dispo → max 1).
-  useEffect(() => {
-    setCart(c => {
-      let changed = false; const next = { ...c };
-      for (const id of Object.keys(c)) { const it = shop.find(s => s.id === id); if (!it) continue; const rk = weaponRarity[id]; const max = (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; if (c[id] > max) { if (max <= 0) delete next[id]; else next[id] = max; changed = true; } }
-      return changed ? next : c;
-    });
-  }, [weaponRarity, shop]);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
-    const missingRar = cartIds.filter(id => { const it = byId(id); return it && it.rarities && Object.keys(it.rarities).length > 0 && !weaponRarity[id]; });
-    if (missingRar.length) return flash("Choisis la rareté voulue pour chaque arme avant d'envoyer.");
     // #5 — respecter les choix « Vendre » / « Dette » fixés au dépôt de chaque objet.
     if (mode === "achat") { const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.v === false); if (bad) return flash(`« ${bad.item} » est proposé en dette uniquement (pas d'achat direct).`); }
     if (mode === "dette") { if (!isMember) return flash("La dette est réservée aux membres de la guilde."); const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.d === false); if (bad) return flash(`« ${bad.item} » n'est pas disponible en dette.`); }
     setSending(true);
-    const items = cartIds.map(id => { const it = byId(id)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = weaponRarity[id]; const rlabel = it.rarities && rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[id] ? `${it.item} (${stuffSex[id]})` : `${it.item}${rlabel}`; return { name, quantity: cart[id], price: priceFor(it, isMember), cat: it.cat }; });
+    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
@@ -147,28 +131,44 @@ export default function BanquePage() {
           <div style={{ display: "flex", flexDirection: "column", gap: 7, maxHeight: 470, overflowY: "auto", paddingRight: 4 }}>
             {shop.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Le coffre commun est vide pour l'instant — reviens quand le staff l'aura rempli.</div> :
              filtered.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Aucun article ne correspond à ta recherche.</div> :
-             filtered.map(s => { const inCart = cart[s.id] || 0; return (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--bg-3)", border: `1px solid ${inCart ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "7px 11px" }}>
-                <div style={{ width: 34, height: 34, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-2)", borderRadius: 7 }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {s.icon ? <img src={s.icon} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} /> : <Icon name="package" size={18} style={{ color: "var(--text-muted)" }} />}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(priceFor(s, isMember))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}</div>
-                  {s.rarities && Object.keys(s.rarities).length > 0 && (
-                    <div style={{ display: "flex", gap: 4, marginTop: 3, flexWrap: "wrap" }}>
-                      {Object.keys(s.rarities).map(r => { const m = RARITY_META[r]; return m ? (
-                        <span key={r} style={{ fontSize: 9.5, fontWeight: 700, padding: "1px 6px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14` }}>{m.l} ×{s.rarities![r]}</span>
-                      ) : null; })}
+             filtered.map(s => {
+              const raritys = s.rarities ? Object.keys(s.rarities) : [];
+              const isWeapon = raritys.length > 0;
+              const inCart = isWeapon ? raritys.reduce((t, rk) => t + (cart[`${s.id}::${rk}`] || 0), 0) : (cart[s.id] || 0);
+              return (
+              <div key={s.id} style={{ display: "flex", flexDirection: "column", gap: 6, background: "var(--bg-3)", border: `1px solid ${inCart ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "7px 11px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 34, height: 34, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-2)", borderRadius: 7 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {s.icon ? <img src={s.icon} alt="" style={{ width: 28, height: 28, objectFit: "contain" }} /> : <Icon name="package" size={18} style={{ color: "var(--text-muted)" }} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(priceFor(s, isMember))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                  </div>
+                  {!isWeapon && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button onClick={() => setQty(s.id, inCart - 1)} style={stepBtn}>−</button>
+                      <input value={inCart} onChange={e => setQty(s.id, +e.target.value || 0)} style={{ ...inp, width: 42, textAlign: "center", padding: "5px 4px", fontSize: 13 }} />
+                      <button onClick={() => setQty(s.id, inCart + 1)} style={stepBtn}>＋</button>
                     </div>
                   )}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <button onClick={() => setQty(s.id, inCart - 1)} style={stepBtn}>−</button>
-                  <input value={inCart} onChange={e => setQty(s.id, +e.target.value || 0)} style={{ ...inp, width: 42, textAlign: "center", padding: "5px 4px", fontSize: 13 }} />
-                  <button onClick={() => setQty(s.id, inCart + 1)} style={stepBtn}>＋</button>
-                </div>
+                {isWeapon && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 44 }}>
+                    {raritys.map(rk => { const m = RARITY_META[rk]; if (!m) return null; const key = `${s.id}::${rk}`; const q = cart[key] || 0; const stk = s.rarities![rk]; return (
+                      <div key={rk} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14`, minWidth: 78 }}>{m.l}</span>
+                        <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>stock {stk}</span>
+                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, opacity: stk > 0 ? 1 : 0.4 }}>
+                          <button onClick={() => setQty(key, q - 1)} style={stepBtn}>−</button>
+                          <input value={q} onChange={e => setQty(key, +e.target.value || 0)} style={{ ...inp, width: 40, textAlign: "center", padding: "4px 3px", fontSize: 13 }} />
+                          <button onClick={() => setQty(key, q + 1)} style={stepBtn}>＋</button>
+                        </div>
+                      </div>
+                    ); })}
+                  </div>
+                )}
               </div>
             ); })}
           </div>
@@ -176,10 +176,10 @@ export default function BanquePage() {
             <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, marginBottom: 10, display: "flex", alignItems: "center", gap: 7 }}><Icon name="cart" size={15} style={{ color: "var(--orange)" }} /> Ton panier</div>
             {cartIds.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: "14px 0", textAlign: "center" }}>Panier vide.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 4, maxHeight: 240, overflowY: "auto" }}>
-                {cartIds.map(id => { const it = byId(id); if (!it) return null; const isStuff = (it.cat || "").trim().startsWith("Stuff"); return (
+                {cartIds.map(id => { const it = byId(id); if (!it) return null; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(id); const rm = rk ? RARITY_META[rk] : null; return (
                   <div key={id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
-                      <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}</span>
+                      <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}{rm ? <span style={{ color: rm.c, fontWeight: 700 }}> · {rm.l}</span> : null}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
                       <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, isMember) * cart[id])}</span>
                       <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
@@ -190,14 +190,6 @@ export default function BanquePage() {
                         {(["G", "F"] as const).map(sx => (
                           <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}>{sx === "G" ? "♂ Garçon" : "♀ Fille"}</button>
                         ))}
-                      </div>
-                    )}
-                    {it.rarities && Object.keys(it.rarities).length > 0 && (
-                      <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10.5, color: weaponRarity[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: weaponRarity[id] ? 400 : 700 }}>Rareté voulue :</span>
-                        {Object.keys(it.rarities).map(rk => { const m = RARITY_META[rk]; if (!m) return null; const on = weaponRarity[id] === rk; return (
-                          <button key={rk} onClick={() => setWeaponRarity(p => ({ ...p, [id]: rk }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${on ? m.c : "var(--border)"}`, background: on ? `${m.c}22` : "var(--bg-2)", color: on ? m.c : "var(--text-muted)" }}>{m.l} <span style={{ opacity: 0.7, fontWeight: 400 }}>×{it.rarities![rk]}</span></button>
-                        ); })}
                       </div>
                     )}
                   </div>

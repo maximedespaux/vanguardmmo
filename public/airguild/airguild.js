@@ -59,9 +59,9 @@ function priceObj(id){var p=S.prices[id];
 function priceOf(id){return priceObj(id).pub;} // prix public (compat panier / checkout / fiche objet)
 // ── Rareté des armes (Yggdrasil/Luzaka) : un stock par rareté. Clé = id|R#rareté (le ♂/♀ des armes). ──
 var RARITIES=[['rare','Rare','#4EA8FF'],['epique','Épique','#C77DFF'],['legendaire','Légendaire','#FF8C1A'],['premyth','Pré-myth.','#FF5C8A']];
-// Seules ces armes (Yggdrasil/Éternel) ont des raretés — PAS les Runes, Marteaux, Boucliers ni tout autre item d'une catégorie « Armes ».
-var RARITY_WEAPONS=['glaive','hache','epee','arbalete','yo-yo','sceptre','poing','baguette','baton','doloire'];
-function needsRarity(it){if(!it||String(it.cat||'').indexOf('Armes')!==0)return false;var n=String(it.item||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();return RARITY_WEAPONS.indexOf(n)>=0;}
+// Rareté = TOUTES les armes des catégories « Armes… », SAUF les Runes, Marteaux et Boucliers.
+var NO_RARITY=['rune','marteau','bouclier'];
+function needsRarity(it){if(!it||String(it.cat||'').toLowerCase().indexOf('armes')!==0)return false;var n=String(it.item||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return !NO_RARITY.some(function(w){return n.indexOf(w)>=0;});}
 function rarKey(id,r){return id+'|R#'+r;}
 function baseId(key){return String(key).split('|R#')[0];}
 function rarOf(key){var p=String(key).split('|R#');return p.length>1?p[1]:null;}

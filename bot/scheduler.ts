@@ -10,7 +10,7 @@ import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
 import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
-import { openExchange } from "./lib/exchange.js";
+import { openDiscussion } from "./lib/exchange.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
 import { dm } from "./lib/debts.js";
@@ -148,12 +148,12 @@ async function relayBankRequests(client: Client) {
   }
 }
 
-// ─── Ouverture des salons d'échange (requêtes acceptées) ────
-//  Désactivé tant que CHANNEL_EXCHANGE_CATEGORY n'est pas configuré (openExchange no-op).
-async function openPendingExchanges(client: Client) {
+// ─── Ouverture du salon de discussion DÈS la requête (statut PENDING) ────
+//  Désactivé tant que CHANNEL_EXCHANGE_CATEGORY n'est pas configuré (openDiscussion no-op).
+async function openDiscussions(client: Client) {
   if (!CHANNELS.exchangeCategory) return;
   const fresh = await prisma.bankRequest.findMany({
-    where: { status: { in: ["ACCEPTE_ACHAT", "ACCEPTE_DETTE"] }, exchangeChannelId: null },
+    where: { status: "PENDING", exchangeChannelId: null },
     orderBy: { createdAt: "asc" }, take: 30,
   });
   if (!fresh.length) return;
@@ -163,7 +163,7 @@ async function openPendingExchanges(client: Client) {
     if (!batches.has(key)) batches.set(key, []);
     batches.get(key)!.push(r);
   }
-  for (const reqs of batches.values()) await openExchange(client, reqs).catch((e) => console.error("openExchange:", e));
+  for (const reqs of batches.values()) await openDiscussion(client, reqs).catch((e) => console.error("openDiscussion:", e));
 }
 
 // ─── Suppression des salons d'échange terminés (Remis / Refusé) ─
@@ -179,6 +179,9 @@ async function closeFinishedExchanges(client: Client) {
   if (!done.length) return;
   const channelIds = [...new Set(done.map((r) => r.exchangeChannelId!).filter(Boolean))];
   for (const cid of channelIds) {
+    // Ne supprime QUE si toute la transaction de ce salon est conclue (aucun objet encore en attente ou en cours).
+    const open = await prisma.bankRequest.count({ where: { exchangeChannelId: cid, status: { in: ["PENDING", "ACCEPTE_ACHAT", "ACCEPTE_DETTE", "EN_ECHANGE"] } } });
+    if (open > 0) continue;
     try {
       const ch: any = await client.channels.fetch(cid).catch(() => null);
       if (ch?.delete) await ch.delete("Échange terminé").catch(() => {});
@@ -258,7 +261,7 @@ export function startScheduler(client: Client) {
   cron.schedule("*/2 * * * *", () => relayNewDebts(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => relayBankRequests(client).catch(console.error), CRON_TZ);
   cron.schedule("*/2 * * * *", () => syncDecidedBankRequests(client).catch(console.error), CRON_TZ); // rafraîchit l'embed après décision sur le site
-  cron.schedule("*/2 * * * *", () => openPendingExchanges(client).catch(console.error), CRON_TZ);    // ouvre les salons d'échange (si CHANNEL_EXCHANGE_CATEGORY configuré)
+  cron.schedule("*/2 * * * *", () => openDiscussions(client).catch(console.error), CRON_TZ);          // ouvre le salon de discussion dès la requête (si CHANNEL_EXCHANGE_CATEGORY configuré)
   cron.schedule("*/1 * * * *", () => closeFinishedExchanges(client).catch(console.error), CRON_TZ);  // supprime les salons d'échange terminés (Remis/Refusé)
   cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.

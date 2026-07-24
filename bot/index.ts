@@ -12,7 +12,7 @@ import { registerReactionRoles } from "./lib/reactionroles.js";
 import { prisma } from "./lib/prisma.js";
 import { debtEmbed, debtButtons, dm, refreshDebtMessage } from "./lib/debts.js";
 import { applyApplicationDecision, applyDebtDecision, applyBankRefuse, applyBankAccept } from "./lib/decisions.js";
-import { applyExchangeDecision } from "./lib/exchange.js";
+import { applyExchangeDecision, applyHolderDecision } from "./lib/exchange.js";
 import { toggleRole } from "./lib/buttonroles.js";
 import { refreshGiveaway } from "./lib/giveaways.js";
 import { isStaff } from "./lib/permissions.js";
@@ -61,6 +61,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       else if (id.startsWith("app:")) await handleAppDecision(interaction);
       else if (id.startsWith("bank:")) await handleBankDecision(interaction);
       else if (id.startsWith("exch:")) await handleExchangeDecision(interaction);
+      else if (id.startsWith("hold:")) await handleHolderDecision(interaction);
       else if (id.startsWith("role:")) await toggleRole(interaction, id.slice("role:".length));
       else if (id.startsWith("gw:join:")) await handleGiveawayJoin(interaction);
     } catch (e) {
@@ -177,6 +178,21 @@ async function handleBankDecision(interaction: any) {
     return;
   }
   await interaction.reply({ content: "Action inconnue.", ephemeral: true });
+}
+
+// ─── Boutons « J'accepte / Je refuse mes objets » — détenteur (ou Vanguard en secours) ───
+async function handleHolderDecision(interaction: any) {
+  const [, action, key] = interaction.customId.split(":");
+  if (action !== "accept" && action !== "refuse") { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
+  const member = interaction.member as GuildMember | null;
+  const res = await applyHolderDecision(interaction.client, key, action as "accept" | "refuse", interaction.user.id, interaction.user.username, isStaff(member));
+  if (res.mine === 0) { await interaction.reply({ content: "Tu n'as aucun objet à décider dans cette requête.", ephemeral: true }); return; }
+  await interaction.reply({
+    content: action === "accept"
+      ? `✅ Tu as **accepté** ${res.mine} objet(s).${res.done ? " Tous les détenteurs ont répondu — vous pouvez coordonner l'échange puis cliquer **Remis**." : ""}`
+      : `❌ Tu as **refusé** ${res.mine} objet(s).`,
+    ephemeral: true,
+  });
 }
 
 // ─── Boutons du salon d'échange (Remis / Refusé) — participants du salon privé ───

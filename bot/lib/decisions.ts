@@ -251,13 +251,10 @@ export function bankRequestEmbed(r: any): EmbedBuilder {
   return e;
 }
 
-export function bankRequestButtons(r: any): ActionRowBuilder<ButtonBuilder>[] {
-  if (r.status !== "PENDING") return [];
-  return [new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId(`bank:achat:${r.id}`).setLabel("Accepter (achat)").setEmoji("🛒").setStyle(ButtonStyle.Success),
-    new ButtonBuilder().setCustomId(`bank:dette:${r.id}`).setLabel("Accepter (dette)").setEmoji("📝").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId(`bank:refuse:${r.id}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
-  )];
+// #decision est désormais un simple JOURNAL : plus de boutons ici, la décision se prend
+// dans le salon de discussion (chaque détenteur accepte/refuse ses objets).
+export function bankRequestButtons(_r: any): ActionRowBuilder<ButtonBuilder>[] {
+  return [];
 }
 
 /** Poste une requête Banque dans le salon Décision (tag « Dettes »). */
@@ -353,13 +350,8 @@ export async function postBankBatchDecision(client: Client, reqs: any[]) {
   if (!reqs.length) return null;
   const first = reqs[0];
   const refuseId = first.batchId || first.id;
-  const buttons = first.status === "PENDING"
-    ? [new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder().setCustomId(`bank:achat:${refuseId}`).setLabel("Accepter (achat)").setEmoji("🛒").setStyle(ButtonStyle.Success),
-        new ButtonBuilder().setCustomId(`bank:dette:${refuseId}`).setLabel("Accepter (dette)").setEmoji("📝").setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId(`bank:refuse:${refuseId}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
-      )]
-    : [];
+  const buttons: any[] = []; // #decision = journal ; la décision se prend dans le salon de discussion.
+  void refuseId;
   const res = await postToDecision(client, `Requête Banque — ${first.username}`, bankBatchEmbed(reqs), buttons, "dette");
   if (res) {
     await prisma.bankRequest.updateMany({ where: { id: { in: reqs.map((r) => r.id) } }, data: { channelId: res.channelId, messageId: res.messageId } });

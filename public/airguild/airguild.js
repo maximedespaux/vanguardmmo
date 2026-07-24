@@ -126,7 +126,10 @@ function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' 
     var ctrl=editable?`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)">＋</button></div>`:`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`;
     var clr=(editable&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider">✕</span>`:'<span style="width:14px;flex:none"></span>';
     return `<div class="it" data-s="${esc(ds)}" style="padding-left:30px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r[2]};box-shadow:0 0 5px ${r[2]}99;flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:${r[2]};font-size:12.5px">${r[1]}</div></div>${ctrl}${clr}</div>`;}).join('');
-  return head+rows;
+  // Ancien stock déposé AVANT le système de rareté (clé sans « |R# ») : on l'affiche pour pouvoir le supprimer/migrer.
+  var legacy=isTotal?totalGuild(it.id):qty(S.cur,it.id);
+  var legacyRow=legacy>0?`<div class="it" data-s="${esc(ds)}" style="padding-left:30px;background:rgba(248,113,113,.06)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:var(--red);font-size:12px">Sans rareté (ancien)</div><div class="b" style="font-size:10px">à supprimer — re-dépose avec la bonne rareté</div></div><div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:70px;text-align:right">${fmt(legacy)}</div>${editable?`<span class="rm" onclick="setQ('${sq(it.id)}','0')" title="Supprimer l'ancien stock sans rareté">✕</span>`:'<span style="width:14px;flex:none"></span>'}</div>`:'';
+  return head+legacyRow+rows;
 }
 function paintBank(){const b=$('#bankbody');if(b){b.innerHTML=bankBody();if(bankQ)filterBank(bankQ);}}
 function filterBank(qv){const q=(qv||'').toLowerCase().trim();

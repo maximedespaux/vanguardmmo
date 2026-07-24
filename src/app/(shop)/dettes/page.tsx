@@ -82,7 +82,9 @@ export default function BanquePage() {
 
   // ── Panier ──
   const byId = (id: string) => shop.find(s => s.id === id);
-  const setQty = (id: string, v: number) => setCart(c => { const it = byId(id); const max = it ? it.stock : 0; const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
+  // Quantité max = stock de la RARETÉ choisie (si l'arme en a une sélectionnée), sinon stock total.
+  const maxFor = (id: string) => { const it = byId(id); if (!it) return 0; const rk = weaponRarity[id]; return (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; };
+  const setQty = (id: string, v: number) => setCart(c => { const max = maxFor(id); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
   const cartIds = Object.keys(cart);
   // Si une arme du panier n'a qu'UNE rareté en stock, on la présélectionne (pas besoin de cliquer).
   useEffect(() => {
@@ -92,6 +94,14 @@ export default function BanquePage() {
       return changed ? next : prev;
     });
   }, [cart, shop]);
+  // Quand la rareté choisie change, on plafonne la quantité au stock de CETTE rareté (ex. 1 Pré-myth. dispo → max 1).
+  useEffect(() => {
+    setCart(c => {
+      let changed = false; const next = { ...c };
+      for (const id of Object.keys(c)) { const it = shop.find(s => s.id === id); if (!it) continue; const rk = weaponRarity[id]; const max = (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; if (c[id] > max) { if (max <= 0) delete next[id]; else next[id] = max; changed = true; } }
+      return changed ? next : c;
+    });
+  }, [weaponRarity, shop]);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;

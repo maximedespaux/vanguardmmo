@@ -84,6 +84,14 @@ export default function BanquePage() {
   const byId = (id: string) => shop.find(s => s.id === id);
   const setQty = (id: string, v: number) => setCart(c => { const it = byId(id); const max = it ? it.stock : 0; const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[id]; else cc[id] = n; return cc; });
   const cartIds = Object.keys(cart);
+  // Si une arme du panier n'a qu'UNE rareté en stock, on la présélectionne (pas besoin de cliquer).
+  useEffect(() => {
+    setWeaponRarity(prev => {
+      let changed = false; const next = { ...prev };
+      for (const id of Object.keys(cart)) { const it = shop.find(s => s.id === id); if (it?.rarities) { const ks = Object.keys(it.rarities); if (ks.length === 1 && !next[id]) { next[id] = ks[0]; changed = true; } } }
+      return changed ? next : prev;
+    });
+  }, [cart, shop]);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;

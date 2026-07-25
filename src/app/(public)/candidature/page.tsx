@@ -52,6 +52,12 @@ export default function CandidaturePage() {
   const [persosReprisDuCompte, setPersosReprisDuCompte] = useState(0);
   /** Noms (minuscules) des personnages qui ont au moins une pièce équipée. */
   const [nomsAvecBuild, setNomsAvecBuild] = useState<Set<string>>(new Set());
+  /**
+   * Détail par personnage, lu dans l'AirBuilder : sa classe telle qu'elle y est
+   * enregistrée, et les stuffs réellement équipés (DPS / Tank / Hybride…).
+   * Permet de montrer au candidat ce qui est couvert, et de le transmettre au staff.
+   */
+  const [detailBuilds, setDetailBuilds] = useState<Record<string, { cls: string; stuffs: string[] }>>({});
   // Le même appel sert à deux choses : savoir si on est connecté, et RÉCUPÉRER les
   // personnages déjà enregistrés sur le compte. Avant, seul `r.ok` était lu et la
   // liste était jetée — le candidat devait tout ressaisir à la main.
@@ -75,15 +81,20 @@ export default function CandidaturePage() {
   // les persos ayant au moins une pièce équipée : un stuff vide n'est pas un build.
   // Relu quand le builder se ferme ou vient de publier un build.
   useEffect(() => {
-    type Blob = { chars?: { name?: string; stuffs?: { eq?: Record<string, unknown> }[] }[] };
-    const nomsEquipes = (blob: Blob | null) => {
-      const noms = new Set<string>();
+    type Stuff = { name?: string; eq?: Record<string, unknown> };
+    type Blob = { chars?: { name?: string; cls?: string; stuffs?: Stuff[] }[] };
+    /** Un stuff ne compte que s'il porte au moins une pièce : vide ≠ build. */
+    const estEquipe = (s: Stuff) => Object.values(s?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item);
+    /** Extrait, par nom de perso, sa classe et la liste de ses stuffs équipés. */
+    const lire = (blob: Blob | null) => {
+      const out: Record<string, { cls: string; stuffs: string[] }> = {};
       for (const p of blob?.chars ?? []) {
-        const equipe = (p?.stuffs ?? []).some((s) =>
-          Object.values(s?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item));
-        if (equipe && p?.name) noms.add(String(p.name).trim().toLowerCase());
+        if (!p?.name) continue;
+        const stuffs = (p.stuffs ?? []).filter(estEquipe).map((s, i) => s.name?.trim() || `Stuff ${i + 1}`);
+        if (!stuffs.length) continue;
+        out[String(p.name).trim().toLowerCase()] = { cls: p.cls ?? "", stuffs };
       }
-      return noms;
+      return out;
     };
     let annule = false;
     (async () => {
@@ -98,7 +109,11 @@ export default function CandidaturePage() {
         if (r.ok) distant = (await r.json())?.blob ?? null;
       } catch { /* hors ligne : on se contente du local */ }
       if (annule) return;
-      setNomsAvecBuild(new Set([...nomsEquipes(local), ...nomsEquipes(distant)]));
+      // Le distant complète le local (et non l'inverse) : ce que le candidat vient
+      // de faire dans le builder ouvert doit primer sur la version enregistrée.
+      const detail = { ...lire(distant), ...lire(local) };
+      setDetailBuilds(detail);
+      setNomsAvecBuild(new Set(Object.keys(detail)));
     })();
     return () => { annule = true; };
   }, [buildExport, showBuilder]);
@@ -187,7 +202,7 @@ export default function CandidaturePage() {
           return copie;
         });
       }
-      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, classesAConstruire, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
+      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, classesAConstruire, detailBuilds, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
       if (!r.ok) {
         setError(r.status === 401 ? "Tu dois être connecté avec Discord pour postuler." : "Échec de l'envoi — réessaie dans un instant.");
         return;
@@ -318,6 +333,42 @@ export default function CandidaturePage() {
           <div style={{ textAlign: "center", padding: "10px 0 20px" }}>
             <button onClick={() => { try { localStorage.setItem("vg_air_seed", JSON.stringify(chars.map((c) => ({ name: c.name, cls: c.cls, prestige: c.prestige })))); } catch {} setShowBuilder(true); }} className="vg-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="sword" size={15} />Ouvrir le Stuff Builder</button>
           </div>
+          {/* État par personnage : ce qui est couvert, ce qui manque, et les stuffs
+              réellement équipés. Le candidat voit d'un coup d'œil ce qui reste à
+              faire au lieu de deviner pourquoi l'envoi est bloqué. */}
+          {chars.some(c => c.name.trim()) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+              {chars.filter(c => c.name.trim()).map((c, i) => {
+                const d = detailBuilds[c.name.trim().toLowerCase()];
+                const ok = !!d;
+                // La classe du builder peut différer de celle déclarée ici : on le dit.
+                const diverge = ok && !!d.cls && d.cls !== c.cls;
+                const teinte = !ok ? "var(--red)" : diverge ? "var(--gold)" : "var(--green)";
+                return (
+                  <div key={`${c.name}-${i}`} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "11px 13px", borderRadius: 10, fontSize: 13, background: "var(--bg-3)", border: `1px solid ${teinte}`, borderLeftWidth: 3 }}>
+                    <Icon name={ok ? (diverge ? "alert" : "check") : "alert"} size={15} style={{ color: teinte, flexShrink: 0, marginTop: 1 }} />
+                    <div style={{ lineHeight: 1.6 }}>
+                      <b>{c.name}</b> <span style={{ color: "var(--text-muted)" }}>· {c.cls}</span>
+                      {ok ? (
+                        <>
+                          <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>
+                            Stuffs équipés : <b style={{ color: "var(--text)" }}>{d.stuffs.join(" · ")}</b>
+                          </div>
+                          {diverge && (
+                            <div style={{ color: "var(--gold)", fontSize: 12.5 }}>
+                              Enregistré en <b>{d.cls}</b> dans l&apos;AirBuilder — corrige la classe ici ou là-bas.
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div style={{ color: "var(--red)", fontSize: 12.5 }}>Aucun build — ouvre l&apos;AirBuilder et équipe-le.</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {buildExport && (
             <div style={{ padding: 12, background: "rgba(74,222,128,0.08)", border: "1px solid var(--green)", borderRadius: 10, fontSize: 13, marginBottom: 10 }}>
               <Icon name="check" size={15} style={ico} />Build détecté : <b>{buildExport.name || "Perso"}</b> — {buildExport.cls || buildExport.className || "?"} (P{buildExport.prestige})

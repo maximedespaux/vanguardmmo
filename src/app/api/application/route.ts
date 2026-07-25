@@ -42,7 +42,14 @@ export async function POST(req: Request) {
   if (!webhook) return NextResponse.json({ ok: true, note: "candidature enregistrée (webhook non configuré)" });
 
   const specLabels: Record<string, string> = { PVE: "🌾 PvE", PVP: "🏆 PvP & Boss", CS: "🗝️ Chambres Secrètes" };
-  const chars = (body.chars ?? []).map((c: any) => `• **${c.name}** — ${c.cls} (P${c.prestige})`).join("\n") || "—";
+  // Chaque personnage est annoté avec ses stuffs réellement équipés (DPS / Tank…),
+  // pour que le staff sache ce qui est jouable sans ouvrir chaque build.
+  const detail = (body.detailBuilds ?? {}) as Record<string, { cls?: string; stuffs?: string[] }>;
+  const chars = (body.chars ?? []).map((c: any) => {
+    const d = detail[String(c.name ?? "").trim().toLowerCase()];
+    const stuffs = d?.stuffs?.length ? ` · stuffs : ${d.stuffs.join(", ")}` : " · _aucun build_";
+    return `• **${c.name}** — ${c.cls} (P${c.prestige})${stuffs}`;
+  }).join("\n") || "—";
   // Base publique du site : sans elle on n'affiche simplement pas le lien.
   const base = (process.env.NEXTAUTH_URL ?? "").replace(/\/+$/, "");
   const buildUrl = base && body.fullBuild && user.username

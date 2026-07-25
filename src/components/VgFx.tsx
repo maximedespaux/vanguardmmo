@@ -73,10 +73,16 @@ export function useReveal<T extends HTMLElement>(ref: React.RefObject<T | null>)
  * (--mx/--my pour la position, --rx/--ry pour l'inclinaison) lues par le CSS,
  * et limité à une mise à jour par image affichée.
  */
-export function useCardFx<T extends HTMLElement>(ref: React.RefObject<T | null>, tilt = 3) {
+export function useCardFx(tilt = 3) {
   useEffect(() => {
-    const root = ref.current;
-    if (!root || reduced()) return;
+    if (reduced()) return;
+    // On écoute le DOCUMENT, pas un conteneur passé par référence. Avec une
+    // référence, sur toute page qui affiche d'abord « Chargement… » la racine
+    // n'existe pas encore au premier rendu : le hook sortait aussitôt et ne
+    // réessayait jamais, donc l'effet ne s'activait jamais (cas constaté sur
+    // GuildViewer et le Dashboard). Le ciblage reste assuré par closest('.fx-card'),
+    // et les cartes ajoutées plus tard sont couvertes sans surcoût.
+    const root: Document = document;
     // Limitation par horodatage plutôt que par requestAnimationFrame : le halo
     // apparaît dès le premier mouvement (avec rAF il fallait attendre l'image
     // suivante), et le comportement ne dépend pas d'un rAF qui ne s'exécute pas
@@ -105,11 +111,11 @@ export function useCardFx<T extends HTMLElement>(ref: React.RefObject<T | null>,
       card.style.setProperty("--ry", "0deg");
     };
 
-    root.addEventListener("pointermove", onMove, { passive: true });
-    root.addEventListener("pointerout", onLeave, { passive: true });
+    root.addEventListener("pointermove", onMove as EventListener, { passive: true });
+    root.addEventListener("pointerout", onLeave as EventListener, { passive: true });
     return () => {
-      root.removeEventListener("pointermove", onMove);
-      root.removeEventListener("pointerout", onLeave);
+      root.removeEventListener("pointermove", onMove as EventListener);
+      root.removeEventListener("pointerout", onLeave as EventListener);
     };
-  }, [ref, tilt]);
+  }, [tilt]);
 }

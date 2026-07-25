@@ -25,8 +25,7 @@ type Run = { dungeonId: number; dungeonName: string; icon: string; date: string;
 
 export default function DonjonsPage() {
   // Halo curseur + relief sur les cartes de donjon (.fx-card), cf. VgFx.
-  const fxRef = useRef<HTMLDivElement>(null);
-  useCardFx(fxRef);
+  useCardFx();
   const dungeons = dungeonsData as Dungeon[];
   const [tab, setTab] = useState<"suivi" | "rapport" | "wiki">("wiki");
 
@@ -73,7 +72,7 @@ export default function DonjonsPage() {
   const TabBtn = ({ k, label }: { k: typeof tab; label: React.ReactNode }) => <button onClick={() => setTab(k)} className={`vg-subtab ${tab === k ? "active" : ""}`}>{label}</button>;
 
   return (
-    <div ref={fxRef} style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
+    <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
       <div className="vg-subtabs">

@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Ev = { id: string; name: string; day: string; time: string; remindBefore: number; channelId: string | null; mention: string; embedTitle: string | null; embedDesc: string | null; embedColor: string | null; embedImage: string | null; enabled: boolean };
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "tous"];
@@ -13,6 +14,8 @@ const lab: React.CSSProperties = { fontSize: 10.5, color: "var(--text-muted)", t
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function EventsPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [list, setList] = useState<Ev[]>([]);
   const [f, setF] = useState({ name: "", day: "mercredi", time: "21:00", remindBefore: 15, channelId: "", mention: "", embedTitle: "", embedDesc: "", embedColor: "", embedImage: "" });
   const [toast, setToast] = useState<React.ReactNode>("");
@@ -35,7 +38,7 @@ export default function EventsPage() {
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       {/* Ajouter */}
-      <div className="glass-card" style={{ padding: 16, marginBottom: 24 }}>
+      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 24 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><Icon name="plus" size={15} />Nouvel événement</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10, alignItems: "end" }}>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Nom</label><input style={{ ...inp, width: "100%" }} placeholder="Ex : Chambres Secrètes" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
@@ -55,11 +58,11 @@ export default function EventsPage() {
 
       {/* Liste */}
       {list.length === 0 ? (
-        <div className="glass-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement configuré. Ajoute-en un ci-dessus.</div>
+        <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement configuré. Ajoute-en un ci-dessus.</div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {list.map((e) => (
-            <div key={e.id} className="glass-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", opacity: e.enabled ? 1 : 0.5 }}>
+            <div key={e.id} className="glass-card fx-card" style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", opacity: e.enabled ? 1 : 0.5 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="font-heading" style={{ fontSize: 15, fontWeight: 700 }}>{e.name}</div>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>

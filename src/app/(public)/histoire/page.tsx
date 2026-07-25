@@ -49,8 +49,9 @@ export default function HistoirePage() {
   // rootMargin -8%) laissait des elements a opacity:0 pour toujours quand il les
   // ratait — du contenu devenait invisible. Voir useReveal.
   useReveal(ref);
-  // Halo qui suit le curseur + leger relief 3D sur les elements .fx-card.
-  useCardFx(ref);
+  // Halo qui suit le curseur + léger relief 3D sur les éléments .fx-card.
+  // Pas de référence à passer : le hook écoute le document (voir VgFx).
+  useCardFx();
 
   return (
     <div ref={ref} style={{ paddingBottom: 60 }}>

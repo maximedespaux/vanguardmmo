@@ -65,8 +65,7 @@ function Hub({ icon, title, metric, href, cta }: { icon: IconName; title: string
 export default function DashboardPage() {
   // Mêmes effets que l'accueil : halo suivant le curseur + léger relief sur les
   // cartes portant la classe .fx-card. Un seul écouteur délégué pour toute la page.
-  const fxRef = useRef<HTMLDivElement>(null);
-  useCardFx(fxRef);
+  useCardFx();
   const { data: session } = useSession();
   const DEV_ALL = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const isAdmin = DEV_ALL || canAccessAdmin((session?.user as any)?.role ?? "RECRUE");
@@ -87,7 +86,7 @@ export default function DashboardPage() {
   const wbNext = d.worldboss.next ? new Date(d.worldboss.next).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null;
 
   return (
-    <div ref={fxRef} style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="Dashboard guilde" subtitle="Vue d'ensemble de Vanguard, en temps réel." />
 
       {/* ── CTA AirBuilder ── */}

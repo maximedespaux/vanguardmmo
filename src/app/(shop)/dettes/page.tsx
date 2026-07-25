@@ -39,8 +39,7 @@ const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocale
 export default function BanquePage() {
   // Halo suivant le curseur + léger relief sur les panneaux (.fx-card), comme
   // sur l'accueil et le dashboard. Un seul écouteur délégué pour toute la page.
-  const fxRef = useRef<HTMLDivElement>(null);
-  useCardFx(fxRef);
+  useCardFx();
   const [reqs, setReqs] = useState<Req[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [payAmt, setPayAmt] = useState<Record<string, string>>({});
@@ -114,7 +113,7 @@ export default function BanquePage() {
   const reqGroups = reqs.reduce<{ key: string; items: Req[] }[]>((acc, r) => { const k = r.batchId || r.id; let g = acc.find(x => x.key === k); if (!g) { g = { key: k, items: [] }; acc.push(g); } g.items.push(r); return acc; }, []);
 
   return (
-    <div ref={fxRef} style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Variante icône + titre : la bannière disponible dit « Banque », alors que
           la nav, l'onglet et le titre disent « Boutique ». Une tuile d'icône évite
           l'incohérence sans réclamer un nouvel asset. */}

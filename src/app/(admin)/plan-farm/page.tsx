@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type FarmItem = { id: string; item: string; cat: string; classe: string; icon: string | null; stock: number; target: number; manque: number; unit: string };
 
@@ -12,7 +13,7 @@ function col(pc: number) { return pc >= 80 ? "var(--green)" : pc >= 50 ? "var(--
 
 function Stat({ v, l, c }: { v: React.ReactNode; l: string; c: string }) {
   return (
-    <div className="glass-card" style={{ padding: 14, textAlign: "center" }}>
+    <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center" }}>
       <div className="font-heading" style={{ fontSize: 26, fontWeight: 700, color: c }}>{v}</div>
       <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>{l}</div>
     </div>
@@ -28,6 +29,8 @@ function Bar({ pc }: { pc: number }) {
 }
 
 export default function PlanFarmPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [items, setItems] = useState<FarmItem[]>([]);
   const [okCount, setOkCount] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -86,9 +89,9 @@ export default function PlanFarmPage() {
       </div>
 
       {items.length === 0 ? (
-        <div className="glass-card" style={{ padding: 30, textAlign: "center", color: "var(--green)" }}><Icon name="sparkles" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} /> Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !</div>
+        <div className="glass-card fx-card" style={{ padding: 30, textAlign: "center", color: "var(--green)" }}><Icon name="sparkles" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} /> Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !</div>
       ) : filtered.length === 0 ? (
-        <div className="glass-card" style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Aucun objet ne correspond au filtre.</div>
+        <div className="glass-card fx-card" style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Aucun objet ne correspond au filtre.</div>
       ) : (
         grouped.map(([cat, list]) => {
           const sumStock = list.reduce((s, x) => s + x.stock, 0);
@@ -106,7 +109,7 @@ export default function PlanFarmPage() {
                 {list.map((d) => {
                   const pc = d.target ? Math.round((d.stock / d.target) * 100) : 100;
                   return (
-                    <div key={d.id} className="glass-card" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px" }}>
+                    <div key={d.id} className="glass-card fx-card" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px" }}>
                       {d.icon ? (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={d.icon} alt="" width={30} height={30} style={{ objectFit: "contain", borderRadius: 6, flexShrink: 0 }} />

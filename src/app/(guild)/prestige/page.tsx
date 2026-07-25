@@ -118,8 +118,7 @@ function PrestigeIcon({ name, size = 22 }: { name: string; size?: number }) {
 
 export default function PrestigePage() {
   // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
-  const fxRef = useRef<HTMLDivElement>(null);
-  useCardFx(fxRef);
+  useCardFx();
   const [cur, setCur] = useState(1);
   const [tgt, setTgt] = useState(10);
   const [have, setHave] = useState<Record<string, number>>({});
@@ -131,7 +130,7 @@ export default function PrestigePage() {
   const globalPct = keys.length ? Math.round((keys.reduce((s, k) => s + Math.min(1, (have[k] ?? 0) / need[k]), 0) / keys.length) * 100) : 0;
 
   return (
-    <div ref={fxRef} style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-guides.webp" icon="star" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
       <SectionTabs section="guides" />
 

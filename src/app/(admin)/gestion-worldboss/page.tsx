@@ -1,15 +1,18 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { vgConfirm, vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Boss = { id: string; name: string; zone: string | null; recommendedLevel: number | null; rewards: string | null; strategy: string | null };
 type Ev = { id: string; bossId: string; boss: Boss; startAt: string; status: string; note: string | null; participants: { status: string }[] };
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "8px 11px", color: "var(--text)", fontSize: 13 };
 
 export default function WorldBossAdminPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [bosses, setBosses] = useState<Boss[]>([]);
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,7 +35,7 @@ export default function WorldBossAdminPage() {
       <PageHeader icon="dragon" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-        <div className="glass-card" style={{ padding: 16 }}>
+        <div className="glass-card fx-card" style={{ padding: 16 }}>
           <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Nouveau boss</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <input placeholder="Nom" value={bn} onChange={e => setBn(e.target.value)} style={inp} />
@@ -43,7 +46,7 @@ export default function WorldBossAdminPage() {
             <button onClick={createBoss} className="vg-btn">Créer le boss</button>
           </div>
         </div>
-        <div className="glass-card" style={{ padding: 16 }}>
+        <div className="glass-card fx-card" style={{ padding: 16 }}>
           <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Programmer un événement</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <VgSelect full value={evBoss} onChange={setEvBoss} options={bosses.length === 0 ? [{ value: "", label: "— crée un boss d'abord —" }] : bosses.map(b => ({ value: b.id, label: b.name }))} />
@@ -56,13 +59,13 @@ export default function WorldBossAdminPage() {
 
       <div className="font-heading" style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Événements</div>
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
-        : events.length === 0 ? <div className="glass-card" style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement.</div>
+        : events.length === 0 ? <div className="glass-card fx-card" style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement.</div>
         : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {events.map(e => {
             const conf = e.participants.filter(p => p.status === "CONFIRMED").length;
             return (
-              <div key={e.id} className="glass-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <div key={e.id} className="glass-card fx-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <span className="font-heading" style={{ fontWeight: 700 }}>{e.boss?.name}</span>
                 <span style={{ fontSize: 13, color: "var(--orange)" }}>{new Date(e.startAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{conf} présent(s)</span>

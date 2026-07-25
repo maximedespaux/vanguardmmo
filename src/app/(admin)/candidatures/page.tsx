@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { vgPrompt, vgToast } from "@/components/Dialogs";
 import { Icon, type IconName } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type App = {
   id: string; discordId: string; username: string; avatar: string | null;
@@ -25,6 +26,8 @@ const SPEC_META: Record<string, { icon: IconName; label: string }> = { PVE: { ic
 const FILTERS = [["", "Toutes"], ["PENDING", "En attente"], ["ACCEPTED", "Acceptées"], ["REJECTED", "Refusées"], ["WAITING", "En attente (mise)"], ["INTERVIEW", "Entretien"]] as const;
 
 export default function CandidaturesAdminPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [apps, setApps] = useState<App[]>([]);
   const [filter, setFilter] = useState("PENDING");
   const [loading, setLoading] = useState(true);
@@ -53,13 +56,13 @@ export default function CandidaturesAdminPage() {
       </div>
 
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
-        : apps.length === 0 ? <div className="glass-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucune candidature ici.</div>
+        : apps.length === 0 ? <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucune candidature ici.</div>
         : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {apps.map((a) => {
             const sm = STATUS_META[a.status] ?? STATUS_META.PENDING;
             return (
-              <div key={a.id} className="glass-card" style={{ padding: 18 }}>
+              <div key={a.id} className="glass-card fx-card" style={{ padding: 18 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                   <div className="font-heading" style={{ fontSize: 17, fontWeight: 700 }}>{a.username}</div>
                   <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "var(--bg-3)", border: `1px solid ${sm.color}`, color: sm.color }}>{sm.label}</span>

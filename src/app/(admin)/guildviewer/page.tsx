@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number; weapon?: any; armor?: any; jewelry?: any; pets?: any; cards?: any };
 type Spec = { id: string; type: string; score: number };
@@ -28,6 +29,8 @@ const RARITY_FR: Record<string, string> = { COMMUN: "Commun", RARE: "Rare", EPIQ
 const kfmt = (n?: number) => { const v = n || 0; return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(1).replace(".0", "") + "k" : String(v); };
 const SPEC_FR: Record<string, string> = { PVE: "PvE", PVP_BOSS: "PvP/Boss", CHAMBRES_SECRETES: "Chambres S." };
 export default function GuildViewerPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [members, setMembers] = useState<Member[] | null>(null);
   const [err, setErr] = useState(false);
   const [q, setQ] = useState("");
@@ -125,7 +128,7 @@ export default function GuildViewerPage() {
           const r = ROLE_META[u.role] ?? ROLE_META.RECRUE;
           const noChar = u.characters.length === 0;
           return (
-            <div key={u.id} className="gv-member glass-card" style={{ padding: 0, marginBottom: 13, overflow: "hidden", borderLeft: `3px solid ${r.color}` }}>
+            <div key={u.id} className="gv-member glass-card fx-card" style={{ padding: 0, marginBottom: 13, overflow: "hidden", borderLeft: `3px solid ${r.color}` }}>
               {/* En-tête membre */}
               <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 17px", flexWrap: "wrap", background: `linear-gradient(90deg, color-mix(in srgb, ${r.color} 9%, transparent), transparent 55%)` }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}

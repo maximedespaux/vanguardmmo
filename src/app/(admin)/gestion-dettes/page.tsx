@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { vgPrompt } from "@/components/Dialogs";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; decidedBy: string | null; createdAt: string; user: { username: string }; payments: { amount: number }[] };
 type Req = { id: string; username: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; createdAt: string };
@@ -18,6 +19,8 @@ const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
 export default function BanqueAdminPage() {
+  // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
+  useCardFx();
   const [reqs, setReqs] = useState<Req[]>([]);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [cautions, setCautions] = useState<Record<string, string>>({});
@@ -63,10 +66,10 @@ export default function BanqueAdminPage() {
 
       {/* ── Requêtes à traiter ── */}
       <h2 className="font-heading" style={{ fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Requêtes à traiter {reqs.length > 0 && <span style={{ color: "var(--gold)" }}>· {reqs.length}</span>}</h2>
-      {reqs.length === 0 ? <div className="glass-card" style={{ padding: 18, textAlign: "center", color: "var(--text-muted)", marginBottom: 24 }}>Aucune requête en attente.</div> : (
+      {reqs.length === 0 ? <div className="glass-card fx-card" style={{ padding: 18, textAlign: "center", color: "var(--text-muted)", marginBottom: 24 }}>Aucune requête en attente.</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
           {reqs.map(r => (
-            <div key={r.id} className="glass-card" style={{ padding: 16 }}>
+            <div key={r.id} className="glass-card fx-card" style={{ padding: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                 <span className="font-heading" style={{ fontWeight: 700 }}>{r.username}</span>
                 <span style={{ color: "var(--text-muted)" }}>·</span>
@@ -93,14 +96,14 @@ export default function BanqueAdminPage() {
         {FILTERS.map(([k, l]) => <button key={k} onClick={() => setFilter(k)} className={`vg-subtab ${filter === k ? "active" : ""}`}>{l}</button>)}
       </div>
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
-        : debts.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Rien ici.</div>
+        : debts.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Rien ici.</div>
         : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {debts.map(d => {
             const st = STATUS[d.status] ?? STATUS.REQUESTED;
             const paid = d.payments.reduce((s, p) => s + p.amount, 0);
             return (
-              <div key={d.id} className="glass-card" style={{ padding: 16 }}>
+              <div key={d.id} className="glass-card fx-card" style={{ padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span className="font-heading" style={{ fontWeight: 700 }}>{d.user?.username ?? "?"}</span>
                   <span style={{ color: "var(--text-muted)" }}>·</span>

@@ -1,15 +1,18 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
+import { useCardFx } from "@/components/VgFx";
 
 type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string; selected?: boolean };
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
 export default function CompositionsPage() {
+  // Halo curseur + relief sur les cartes de poste (.fx-card), cf. VgFx.
+  useCardFx();
   const { data: session } = useSession();
   const su = session?.user as { discordName?: string; username?: string; name?: string; role?: string } | undefined;
   const meName = su?.discordName ?? su?.username ?? session?.user?.name ?? "Moi";
@@ -80,7 +83,7 @@ export default function CompositionsPage() {
 
         {/* Zones de composition */}
         {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
-          <div key={g} style={{ ...card, padding: 0, overflow: "hidden" }}>
+          <div key={g} className="fx-card" style={{ ...card, padding: 0, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: `linear-gradient(90deg, ${meta.color}22, transparent)`, borderLeft: `4px solid ${meta.color}` }}>
               <Icon name={meta.icon as IconName} framed frameSize={30} tone="gold" />
               <span className="font-heading" style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, fontSize: 15 }}>{g}</span>

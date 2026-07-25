@@ -33,14 +33,13 @@ function Prestige({ badge, title, subtitle, isOpen, onToggle, icon, children }: 
 
 export default function GuidePage() {
   // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
-  const fxRef = useRef<HTMLDivElement>(null);
-  useCardFx(fxRef);
+  useCardFx();
   const [open, setOpen] = useState<Record<string, boolean>>({ p3: true });
   const toggle = (id: string) => setOpen(o => ({ ...o, [id]: !o[id] }));
   const P = (id: string) => ({ isOpen: !!open[id], onToggle: () => toggle(id) });
 
   return (
-    <div ref={fxRef} style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
+    <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guides" subtitle="Guide de progression, calculateur de prestige et infos de jeu." />
       <SectionTabs section="guides" />
 

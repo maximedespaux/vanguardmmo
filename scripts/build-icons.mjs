@@ -111,6 +111,12 @@ let css = `/* FICHIER GÉNÉRÉ — NE PAS ÉDITER À LA MAIN.
 [class^="vgi-"]{display:inline-block;width:1em;height:1em;vertical-align:-.14em;flex-shrink:0;
   background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
   -webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+/* Icone SEULE dans son conteneur : en inline elle est alignee sur la ligne de
+   base, donc le parent prend la hauteur de sa line-height (ex. 24px d'icone dans
+   une boite de 36px) et l'icone apparait decentree verticalement. En display:block
+   le parent n'a plus de contenu inline : sa hauteur devient celle de l'icone.
+   margin:auto la recentre horizontalement dans un parent plus large. */
+[class^="vgi-"]:only-child{display:block;margin-left:auto;margin-right:auto;vertical-align:top}
 /* .vgi-frame est un conteneur stylé (globals.css), pas un masque : on l'exclut. */
 .vgi-frame{background-color:transparent;-webkit-mask:none;mask:none;width:auto;height:auto}
 `;

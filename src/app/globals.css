@@ -158,7 +158,13 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-topnav::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,140,26,.45),transparent)}
 .vg-top-brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex-shrink:0}
 .vg-top-logo{width:42px;height:42px;object-fit:contain;animation:logopulse 4s ease-in-out infinite}
-.vg-top-title{font-family:'Rubik','Rubik',sans-serif;font-size:21px;color:#fff;letter-spacing:.5px}
+/* Marque bicolore, meme principe que « AirBuilder » dans le builder :
+   la premiere syllabe en orange, la suite en blanc. */
+.vg-top-title{font-family:'Rubik',sans-serif;font-size:21px;font-weight:700;letter-spacing:1.2px;
+  color:var(--orange);text-shadow:0 0 18px rgba(255,140,26,.42);transition:text-shadow .25s var(--ease,ease)}
+.vg-top-title span{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.7)}
+.vg-top-brand:hover .vg-top-title{text-shadow:0 0 26px rgba(255,140,26,.72)}
+.vg-top-brand:focus-visible{outline:2px solid var(--orange);outline-offset:4px;border-radius:10px}
 .vg-top-nav{display:flex;align-items:center;gap:2px;flex-wrap:nowrap}
 .vg-top-item{position:relative}
 .vg-top-link{position:relative;display:flex;align-items:center;gap:7px;padding:9px 13px;border-radius:9px;font-size:13.5px;color:var(--text-muted);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s,transform .12s}

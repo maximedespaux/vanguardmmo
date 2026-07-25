@@ -57,7 +57,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <header className="vg-topnav">
         <Link href="/histoire" className="vg-top-brand">
           <img src="/assets/site/logo-bat.webp" alt="Vanguard" className="vg-top-logo" />
-          <span className="vg-top-title">Vanguard</span>
+          {/* Traitement bicolore, comme « AirBuilder » : la première syllabe en
+              orange, la suite en blanc. Charte orange et noir. */}
+          <span className="vg-top-title">Van<span>guard</span></span>
         </Link>
 
         <button className="vg-top-burger" onClick={() => setNavOpen((o) => !o)} aria-label="Menu"><Icon name="menu" size={19} /></button>

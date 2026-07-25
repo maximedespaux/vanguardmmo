@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Charge l'app AirGuild d'iBeats (vanilla JS) et branche son stockage sur la base
 // (state partagé via /api/admin/airguild). Recharge proprement si une autre app
@@ -38,6 +39,7 @@ export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
       if (!document.getElementById("AG_DATA")) {
         const d = document.createElement("script"); d.id = "AG_DATA"; d.type = "application/json"; d.textContent = data; document.body.appendChild(d);
       }
+      await ensureVgIcons(); // window.VGI + classes .vgi-* avant le premier rendu du moteur
       if (!document.getElementById("__ag_js")) {
         const sc = document.createElement("script"); sc.id = "__ag_js"; sc.src = "/airguild/airguild.js"; document.body.appendChild(sc);
       }

@@ -50,6 +50,8 @@ export default function CandidaturePage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   /** Nombre de personnages repris du compte (0 = le candidat n'en avait aucun). */
   const [persosReprisDuCompte, setPersosReprisDuCompte] = useState(0);
+  /** Noms (minuscules) des personnages qui ont au moins une pièce équipée. */
+  const [nomsAvecBuild, setNomsAvecBuild] = useState<Set<string>>(new Set());
   // Le même appel sert à deux choses : savoir si on est connecté, et RÉCUPÉRER les
   // personnages déjà enregistrés sur le compte. Avant, seul `r.ok` était lu et la
   // liste était jetée — le candidat devait tout ressaisir à la main.
@@ -67,6 +69,39 @@ export default function CandidaturePage() {
       })
       .catch(() => setAuthed(false));
   }, []);
+
+  // Quels personnages ont réellement un build ? On relit l'état complet de
+  // l'AirBuilder (même source que ce qu'on envoie au staff) et on ne retient que
+  // les persos ayant au moins une pièce équipée : un stuff vide n'est pas un build.
+  // Relu quand le builder se ferme ou vient de publier un build.
+  useEffect(() => {
+    type Blob = { chars?: { name?: string; stuffs?: { eq?: Record<string, unknown> }[] }[] };
+    const nomsEquipes = (blob: Blob | null) => {
+      const noms = new Set<string>();
+      for (const p of blob?.chars ?? []) {
+        const equipe = (p?.stuffs ?? []).some((s) =>
+          Object.values(s?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item));
+        if (equipe && p?.name) noms.add(String(p.name).trim().toLowerCase());
+      }
+      return noms;
+    };
+    let annule = false;
+    (async () => {
+      let local: Blob | null = null;
+      try { local = JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { /* rien en local */ }
+      // On interroge AUSSI le build enregistré sur le compte : un candidat qui
+      // revient depuis un autre navigateur n'a rien en local, et serait bloqué à
+      // tort alors que son build existe bien.
+      let distant: Blob | null = null;
+      try {
+        const r = await fetch("/api/builder-state");
+        if (r.ok) distant = (await r.json())?.blob ?? null;
+      } catch { /* hors ligne : on se contente du local */ }
+      if (annule) return;
+      setNomsAvecBuild(new Set([...nomsEquipes(local), ...nomsEquipes(distant)]));
+    })();
+    return () => { annule = true; };
+  }, [buildExport, showBuilder]);
 
   // Si le candidat change la classe d'un personnage, une classe de Chambre Secrète
   // déjà cochée peut devenir orpheline : on la retire au lieu de la laisser mentir.
@@ -103,9 +138,18 @@ export default function CandidaturePage() {
   // au candidat et au staff, au lieu de l'interdire.
   const classesAConstruire = favClasses.filter(c => !classesJouables.includes(c));
 
+  // Exigence stricte : un build par personnage déclaré. Une candidature arrive
+  // ainsi complète, sans allers-retours pour réclamer les stuffs manquants.
+  const persosSansBuild = chars.filter(c => c.name.trim() && !nomsAvecBuild.has(c.name.trim().toLowerCase()));
+
   const problemes: string[] = [];
   if (buildExport && !buildCoherent) problemes.push(`Le build joint est un ${classeDuBuild}, or aucun de tes personnages n'a cette classe.`);
   if (!csAssezDePersos) problemes.push(`Tu veux jouer ${csChars} personnages en Chambre Secrète : déclare-en ${csChars}.`);
+  if (persosSansBuild.length) problemes.push(
+    persosSansBuild.length === 1
+      ? `${persosSansBuild[0].name} n'a pas encore de build : ouvre l'AirBuilder et équipe-le.`
+      : `Ces personnages n'ont pas de build : ${persosSansBuild.map(c => c.name).join(", ")}. Équipe-les dans l'AirBuilder.`
+  );
 
   const valid = chars.every(c => c.name.trim()) && specs.length > 0 && interests.trim()
     && motivation.trim() && experience.trim() && stuffOk && problemes.length === 0;

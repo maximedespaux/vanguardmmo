@@ -17,9 +17,10 @@ export default async function BuilderPage({
   searchParams: Promise<{ embed?: string }>;
 }) {
   const { embed } = await searchParams;
+  const enIframe = embed === "1";
   return (
     <div className="abx">
-      {embed === "1" && (
+      {enIframe && (
         <style>{`
           .vg-topnav{display:none!important}
           .vg-main{padding-top:0!important}
@@ -27,7 +28,7 @@ export default async function BuilderPage({
         `}</style>
       )}
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
-      <BuilderRunner />
+      <BuilderRunner embed={enIframe} />
     </div>
   );
 }

@@ -18,6 +18,13 @@ export async function POST(req: Request) {
   const a = await apiAuth(); if ("error" in a) return a.error;
   const b = await req.json();
   if (!b?.name || !b?.class) return NextResponse.json({ error: "name et class requis" }, { status: 400 });
+  // Les noms de personnage sont uniques en jeu. L'AirBuilder pousse ici les
+  // persos qu'il cree (vgPousserPersoCompte) : sans ce garde-fou, rouvrir le
+  // builder ou recreer un perso deja connu remplirait le compte de doublons.
+  const deja = await prisma.character.findFirst({
+    where: { userId: a.user.id, name: { equals: String(b.name), mode: "insensitive" } },
+  });
+  if (deja) return NextResponse.json(deja);
   // si on demande isMain, on retire le flag des autres
   if (b.isMain) await prisma.character.updateMany({ where: { userId: a.user.id }, data: { isMain: false } });
   const character = await prisma.character.create({

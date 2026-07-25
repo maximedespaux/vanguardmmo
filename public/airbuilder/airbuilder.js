@@ -173,7 +173,7 @@ function charForm(){if(_ro())return;window.__cfCls='Arcaniste';window.__cfSex='G
 function cfUpdateRender(){var cls=window.__cfCls||'Arcaniste',sex=window.__cfSex||'G';var im=document.getElementById('cfRender');if(im){var src=(typeof CHARIMG!=='undefined'&&(CHARIMG[cls+'|'+sex]||CHARIMG[cls+'|G']))||'';im.src=src;im.style.display=src?'block':'none';}var r=document.getElementById('cfClsRecap');if(r)r.innerHTML='<i class=vgi-check></i> Classe : '+esc(cls)+' '+(sex==='F'?'<i class=vgi-female></i>':'<i class=vgi-male></i>');}
 function cfPickCls(x){window.__cfCls=x;var s=document.getElementById('cfClsSel');if(s)Array.prototype.forEach.call(s.children,function(d){d.classList.toggle('on',d.getAttribute('data-c')===x);});cfUpdateRender();}
 function cfPickSex(x){window.__cfSex=x;Array.prototype.forEach.call(document.querySelectorAll('.cfsx'),function(d){d.classList.toggle('on',d.getAttribute('data-s')===x);});cfUpdateRender();}
-function doCharForm(){var el=document.getElementById('cfName');var nm=((el&&el.value)||'').trim();if(!nm){if(el){el.style.borderColor='#f87171';el.focus();}return;}var c=newChar(nm);c.cls=window.__cfCls||'Arcaniste';c.sex=window.__cfSex||'G';c.lvl=Math.min(200,Math.max(1,parseInt((document.getElementById('cfLvl')||{}).value,10)||200));c.prestige=Math.min(12,Math.max(0,parseInt((document.getElementById('cfPrest')||{}).value,10)||0));state.chars.push(c);state.cur=state.chars.length-1;agClose(0);render();}
+function doCharForm(){var el=document.getElementById('cfName');var nm=((el&&el.value)||'').trim();if(!nm){if(el){el.style.borderColor='#f87171';el.focus();}return;}var c=newChar(nm);c.cls=window.__cfCls||'Arcaniste';c.sex=window.__cfSex||'G';c.lvl=Math.min(200,Math.max(1,parseInt((document.getElementById('cfLvl')||{}).value,10)||200));c.prestige=Math.min(12,Math.max(0,parseInt((document.getElementById('cfPrest')||{}).value,10)||0));state.chars.push(c);state.cur=state.chars.length-1;agClose(0);render();vgPousserPersoCompte(c);}
 function delChar(i){if(_ro())return;if(state.chars.length<=1)return;agConfirm('Supprimer ce personnage ?',function(){state.chars.splice(i,1);state.cur=0;render();});}
 function setCls(v){if(_ro())return;if(C().cls===v)return;const hasGear=(C().stuffs||[]).some(s=>s.eq&&Object.keys(s.eq).length);const apply=function(){C().cls=v;(C().stuffs||[]).forEach(s=>s.eq={});render();};if(hasGear)agConfirm('Changer de classe va vider tout l\'équipement de ce personnage (sur tous ses stuffs).\n\nCette action est irréversible. Continuer ?',apply);else apply();}
 function toggleCarnet(i){if(_ro())return;const c=C();c.carnets=c.carnets||[];c.carnetsFull=c.carnetsFull||[];const k=c.carnets.indexOf(i);if(k>=0){c.carnets.splice(k,1);const f=c.carnetsFull.indexOf(i);if(f>=0)c.carnetsFull.splice(f,1);}else c.carnets.push(i);render();}
@@ -483,7 +483,63 @@ function crlDel(i){keepScroll();const w=cfgOf('weapon');w.rlines.splice(i,1);ren
 function crl(i,v){const w=cfgOf('weapon');w.rlines[i]=v;render();}
 function curQ(){const s=document.querySelector('.srch');return s?s.value:'';}
 
+/* ─── Personnages : une seule liste pour tout le site ────────────────────
+   Le builder gardait ses persos dans son propre etat, la candidature et la
+   page « Mes personnages » lisaient /api/characters : deux listes qui ne se
+   parlaient pas. On les relie ici, dans les deux sens.                    */
+
+/* Libelle affiche -> valeur de l'enum Prisma (majuscules, sans accent). */
+function vgClsEnum(x){return String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();}
+/* Valeur de l'enum -> libelle affiche (celui de CLASSES, accents compris). */
+function vgClsLibelle(v){var t=vgClsEnum(v);for(var i=0;i<CLASSES.length;i++){if(vgClsEnum(CLASSES[i])===t)return CLASSES[i];}return CLASSES[0];}
+
+/* Envoie au compte un perso cree dans le builder. Silencieux : en mode
+   lecture seule / iframe / hors connexion, il n'y a rien a synchroniser. */
+function vgPousserPersoCompte(c){
+  if(window.__VIEW||window.__embed||!c||!c.name)return;
+  try{
+    fetch('/api/characters',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:c.name,class:vgClsEnum(c.cls),level:c.lvl||200,prestige:c.prestige||0,sex:c.sex==='F'?'F':'G',
+        isMain:state.chars.length===1})}).catch(function(){});
+  }catch(e){}
+}
+
+/* Etat vierge : un seul perso, nom par defaut, aucun equipement pose.
+   C'est le seul cas ou on s'autorise a remplacer la liste locale. */
+function vgEtatVierge(){
+  if(!state.chars||state.chars.length!==1)return false;
+  var c=state.chars[0];
+  if(!/^Perso\s*1$/i.test(String(c.name||'')))return false;
+  return !(c.stuffs||[]).some(function(s){return s.eq&&Object.keys(s.eq).length;});
+}
+
+/* Premier lancement : on reprend les persos du compte, et s'il n'y en a
+   aucun on ouvre directement la creation — meme point de depart que la
+   candidature (tes personnages, ou creation si aucun). */
+function vgPremierPerso(){
+  if(window.__VIEW||window.__embed||window.__refSave)return;
+  if(!vgEtatVierge())return;
+  fetch('/api/characters').then(function(r){return r.ok?r.json():[];}).then(function(list){
+    if(!vgEtatVierge())return;                      /* l'utilisateur a agi entre-temps */
+    if(Array.isArray(list)&&list.length){
+      state.chars=list.map(function(p){
+        var c=newChar(p.name);
+        c.cls=vgClsLibelle(p.class);
+        c.sex=p.sex==='F'?'F':'G';
+        c.lvl=p.level||200;
+        c.prestige=typeof p.prestige==='number'?p.prestige:3;
+        return c;
+      });
+      state.cur=0;render();
+      agToast(list.length+' personnage'+(list.length>1?'s':'')+' repris de ton compte.',true);
+    }else{
+      charForm();                                   /* aucun perso : on le cree d'abord */
+    }
+  }).catch(function(){});
+}
+
 render();
+vgPremierPerso();
 window.addEventListener('beforeunload',function(){try{save();}catch(e){}});
 ;
 window.__APP='airbuilder';

@@ -31,14 +31,25 @@ const CLE_PRECEDENT = "main:precedent";
  * postes renommes effaces par un appel qui envoyait signups: []), et seule la
  * lecture des versions mortes de la ligne PostgreSQL a permis de les retrouver.
  *
- * Deux protections, la seconde parce que la premiere ne couvre pas tout :
- *  - un effacement massif exige `force: true`, que seul le bouton
- *    « Reinitialiser » envoie. Un appel distrait ou un client incomplet est donc
- *    refuse au lieu d'etre applique en silence ;
+ * Trois protections, chacune couvrant ce que les autres laissent passer :
+ *  - un effacement TOTAL exige `force: true`, que seul le bouton
+ *    « Reinitialiser » envoie ;
+ *  - une CHUTE brutale du nombre d'inscriptions est refusee elle aussi : elle ne
+ *    passe jamais par zero, donc le premier controle ne la voyait pas, et c'est
+ *    pourtant le cas le plus dangereux (un client qui publie un etat qu'il
+ *    n'avait pas fini de lire) ;
  *  - l'etat precedent est conserve a chaque ecriture, pour que meme un
  *    effacement legitime mais regrette reste rattrapable.
  */
 const SEUIL_EFFACEMENT = 3;
+/**
+ * Une chute d'au moins autant d'inscriptions en UNE ecriture n'est pas un geste
+ * normal : la page en retire une a la fois. C'est en revanche la signature d'un
+ * client qui publie un etat qu'il n'avait pas fini de lire — cas qui effacait
+ * les inscriptions des autres joueurs sans jamais passer par zero, donc sans
+ * declencher le garde-fou d'effacement total.
+ */
+const CHUTE_SUSPECTE = 3;
 
 export async function PUT(req: NextRequest) {
   const g = await guard(); if ("error" in g) return g.error;
@@ -54,15 +65,19 @@ export async function PUT(req: NextRequest) {
   const force = (brut as { force?: unknown }).force === true;
 
   const videTout = data.signups.length === 0 && precedent.signups.length >= SEUIL_EFFACEMENT;
+  const chuteBrutale = precedent.signups.length - data.signups.length >= CHUTE_SUSPECTE;
   const perdSlotMeta =
     Object.keys(data.slotMeta).length === 0 && Object.keys(precedent.slotMeta).length > 0;
-  if (!force && (videTout || perdSlotMeta)) {
+  if (!force && (videTout || chuteBrutale || perdSlotMeta)) {
     return NextResponse.json(
       {
         error:
           "Cet enregistrement effacerait la composition partagée. " +
           "Renvoie l'état complet, ou passe force: true si l'effacement est voulu.",
-        aurait_efface: { inscriptions: precedent.signups.length, postes_renommes: Object.keys(precedent.slotMeta).length },
+        aurait_efface: {
+          inscriptions: precedent.signups.length - data.signups.length,
+          postes_renommes: Object.keys(precedent.slotMeta).length - Object.keys(data.slotMeta).length,
+        },
       },
       { status: 409 }
     );

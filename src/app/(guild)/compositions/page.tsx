@@ -27,6 +27,13 @@ export default function CompositionsPage() {
   const [presences, setPresences] = useState<Presence[]>([]);
   const [instructions, setInstructions] = useState("");
   const [editInstr, setEditInstr] = useState<string | null>(null);
+  /**
+   * Vrai une fois la composition partagée lue au moins une fois.
+   * L'état est un blob remplacé EN BLOC : écrire avant de l'avoir lu revient à
+   * publier un état vide. Un joueur qui s'inscrivait pendant le chargement
+   * effaçait ainsi les inscriptions de tous les autres.
+   */
+  const [charge, setCharge] = useState(false);
 
   // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
@@ -34,6 +41,7 @@ export default function CompositionsPage() {
       if (!d) return;
       const e = normaliserCompo(d);
       setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
+      setCharge(true);
       // On n'ecrase pas le texte pendant qu'un membre du staff le redige.
       setInstructions(prev => (editInstr === null ? e.instructions : prev));
     }).catch(() => {});
@@ -46,6 +54,7 @@ export default function CompositionsPage() {
    * partiel effacerait donc les champs absents (les presences, les consignes).
    */
   const sauver = (patch: Partial<CompoState>, force = false) => {
+    if (!charge) return; // rien n'a encore été lu : écrire écraserait tout
     const etat: CompoState & { force?: boolean } = { signups, slotMeta, presences, instructions, ...patch };
     // L'API refuse un effacement massif sans ce drapeau : seul le bouton
     // « Réinitialiser » a le droit de vider la composition de tout le monde.
@@ -120,6 +129,16 @@ export default function CompositionsPage() {
             {isAdmin && <button onClick={resetAll} style={{ fontSize: 11.5, padding: "7px 13px", borderRadius: 8, border: "1px solid var(--red)", background: "transparent", color: "var(--red)", cursor: "pointer", fontWeight: 600 }}>↺ Réinitialiser</button>}
           </div>
         </div>
+
+        {/* Tant que la composition partagée n'est pas lue, aucune action n'est
+            enregistrée (voir `charge`). On le dit, plutôt que de laisser croire
+            qu'un clic a été pris en compte. */}
+        {!charge && (
+          <div style={{ ...card, display: "flex", alignItems: "center", gap: 10, borderColor: "rgba(255,140,26,.35)", background: "rgba(255,140,26,.06)" }}>
+            <Icon name="clock" size={16} style={{ color: "var(--orange)" }} />
+            <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Chargement de la composition partagée… les inscriptions et présences sont en lecture seule le temps de la récupérer.</span>
+          </div>
+        )}
 
         {/* ── Presences ────────────────────────────────────────────────────
             « Je serai la » par creneau. C'est cette liste que le rappel Discord

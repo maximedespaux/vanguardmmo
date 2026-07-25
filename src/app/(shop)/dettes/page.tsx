@@ -50,6 +50,7 @@ export default function BanquePage() {
   const [reqs, setReqs] = useState<Req[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [payAmt, setPayAmt] = useState<Record<string, string>>({});
+  const [engDate, setEngDate] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   // ── Boutique ──
@@ -82,6 +83,15 @@ export default function BanquePage() {
     if (!amount || amount <= 0) return flash("Entre un montant à rembourser (> 0).");
     const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) });
     if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré"); load(); } else flash("Erreur");
+  };
+
+  /** Le debiteur s'engage sur une date de remboursement (une seule fois). */
+  const engager = async (id: string, dueDate: string) => {
+    if (!dueDate) return flash("Choisis une date de remboursement.");
+    const r = await fetch(`/api/debts/${id}/engagement`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dueDate }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { setEngDate(p => ({ ...p, [id]: "" })); flash("Engagement enregistré — le détenteur en est informé."); load(); }
+    else flash(j.error ?? "Erreur");
   };
 
   const deleteDebt = async (id: string) => {
@@ -324,6 +334,26 @@ export default function BanquePage() {
                           </div>
                           <div style={{ height: 6, borderRadius: 4, background: "var(--bg-3)", overflow: "hidden" }}>
                             <div style={{ width: `${pct}%`, height: "100%", borderRadius: 4, background: pct >= 100 ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s" }} />
+                          </div>
+                        </div>
+                      )}
+                      {/* Engagement : c'est le client qui donne la date, une fois
+                          l'objet remis. Tant qu'elle manque, aucun suivi de retard
+                          n'est possible — d'ou la demande bien visible. */}
+                      {d.role !== "detenteur" && d.status === "ACCEPTED" && !d.dueDate && (
+                        <div style={{ marginTop: 9, padding: 11, borderRadius: 9, background: "rgba(255,140,26,.08)", border: "1px solid rgba(255,140,26,.32)" }}>
+                          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)", display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                            <Icon name="calendar" size={13} />Engage-toi sur une date de remboursement
+                          </div>
+                          <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 8 }}>
+                            Une date approximative suffit, mais elle t&apos;engage : {d.creditor ?? "le détenteur"} et le staff la verront. Elle ne se modifie plus ensuite.
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <input type="date" value={engDate[d.id] ?? ""} onChange={e => setEngDate(p => ({ ...p, [d.id]: e.target.value }))}
+                              min={new Date().toISOString().slice(0, 10)}
+                              max={new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10)}
+                              style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", fontFamily: "inherit", fontSize: 13 }} />
+                            <button onClick={() => engager(d.id, engDate[d.id] ?? "")} className="vg-btn" style={{ padding: "7px 14px", fontSize: 12.5 }}>Je m&apos;engage</button>
                           </div>
                         </div>
                       )}

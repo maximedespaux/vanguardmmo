@@ -29,6 +29,38 @@ export default function PersonnagesPage() {
 
   const load = async () => { setLoading(true); try { const r = await fetch("/api/characters"); if (r.ok) setChars(await r.json()); } catch {} setLoading(false); };
   useEffect(() => { load(); }, []);
+  // Quels stuffs sont REELLEMENT equipes ? Les profils DPS / Tank / Hybride sont
+  // crees par defaut mais souvent vides : afficher une pastille pour un stuff vide
+  // laisse croire qu'un build existe. On lit donc l'etat de l'AirBuilder (meme
+  // source que la candidature) et on ne garde que les stuffs portant au moins une
+  // piece. Cle = nom du perso en minuscules -> ensemble des noms de stuffs remplis.
+  const [stuffsRemplis, setStuffsRemplis] = useState<Record<string, Set<string>>>({});
+  useEffect(() => {
+    type Stuff = { name?: string; eq?: Record<string, unknown> };
+    type Blob = { chars?: { name?: string; stuffs?: Stuff[] }[] };
+    const equipe = (st: Stuff) => Object.values(st?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item);
+    const lire = (blob: Blob | null) => {
+      const out: Record<string, Set<string>> = {};
+      for (const pc of blob?.chars ?? []) {
+        if (!pc?.name) continue;
+        const noms = (pc.stuffs ?? []).filter(equipe).map((st, i) => (st.name?.trim() || `Stuff ${i + 1}`).toLowerCase());
+        if (noms.length) out[String(pc.name).trim().toLowerCase()] = new Set(noms);
+      }
+      return out;
+    };
+    let annule = false;
+    (async () => {
+      let local: Blob | null = null;
+      try { local = JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { /* rien en local */ }
+      let distant: Blob | null = null;
+      try { const r = await fetch("/api/builder-state"); if (r.ok) distant = (await r.json())?.blob ?? null; } catch { /* hors ligne */ }
+      if (annule) return;
+      // Le local prime : il reflete ce que le joueur vient de faire dans le builder.
+      setStuffsRemplis({ ...lire(distant), ...lire(local) });
+    })();
+    return () => { annule = true; };
+  }, []);
+
 
   const createChar = async () => {
     if (!name.trim()) { flash("Donne un nom au personnage."); return; }
@@ -92,15 +124,38 @@ export default function PersonnagesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs</span>
               {MODES.map(m => <button key={m} onClick={() => openGear(c.id, m)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
-              <Link href="/builder" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--orange)", textDecoration: "none" }}><Icon name="sword" size={14} /> Configurer dans le Builder →</Link>
+              {/* C'est l'action principale de la carte : c'est dans le Builder qu'on
+                  equipe reellement un personnage. Elle est donc traitee comme un
+                  vrai bouton et non comme un lien discret. */}
+              <Link href="/builder" className="vg-btn" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, padding: "9px 16px", textDecoration: "none" }}><Icon name="sword" size={14} /> Configurer dans le Builder</Link>
             </div>
-            {c.gearProfiles.length === 0 ? <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Aucun stuff. Ajoute DPS / Tank / Hybride ci-dessus.</div> :
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{c.gearProfiles.map(g => (
+            {(() => {
+              // Un profil cree mais vide ne compte pas : afficher « DPS » alors que rien
+              // n'est equipe laisse croire qu'un build existe. On ne garde que les stuffs
+              // portant au moins une piece dans l'AirBuilder.
+              const remplis = stuffsRemplis[c.name.trim().toLowerCase()];
+              const visibles = c.gearProfiles.filter(g =>
+                remplis?.has((g.name || "").trim().toLowerCase()) || remplis?.has((g.mode || "").trim().toLowerCase()));
+              if (!visibles.length) return (
+                <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 7 }}>
+                  <Icon name="info" size={13} />
+                  Aucun stuff equipe pour l&apos;instant — ouvre le Builder pour en composer un.
+                </div>
+              );
+              return (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{visibles.map(g => (
                 <span key={g.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)", border: `1px solid ${modeColor(g.mode)}`, borderRadius: 7, padding: "5px 10px", fontSize: 12 }}>
-                  <b style={{ color: modeColor(g.mode) }}>{g.mode}</b> {g.name}
+                  {/* Un clic sur un stuff rempli ouvre directement sa page dans le Builder. */}
+                  <Link href={`/builder?perso=${encodeURIComponent(c.name)}&stuff=${encodeURIComponent(g.name || g.mode)}`}
+                    title={`Ouvrir « ${g.name || g.mode} » dans le Builder`}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "inherit" }}>
+                    <b style={{ color: modeColor(g.mode) }}>{g.mode}</b> {g.name}
+                  </Link>
                   <button onClick={() => delGear(g.id)} title="Retirer ce stuff" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>
                 </span>
-              ))}</div>}
+              ))}</div>
+              );
+            })()}
           </div>
         </div>
       ))}

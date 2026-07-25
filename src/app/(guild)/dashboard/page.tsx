@@ -34,16 +34,19 @@ function Stat({ value, label, color }: { value: React.ReactNode; label: string; 
   );
 }
 
-// Carte dépliable : résumé + bouton « + » qui révèle le détail et un lien vers l'outil.
-function ExpandCard({ icon, title, summary, children }: { icon: IconName; title: string; summary: React.ReactNode; children?: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+// Carte de chiffres CLIQUABLE : elle mène directement à l'outil concerné.
+// Avant, un bouton « + » dépliait un détail sur place — un clic pour voir, un autre
+// pour aller à l'outil. La carte entière est désormais le lien : on va là où on peut
+// agir (les dettes vers leur suivi, les membres vers leur fiche…).
+function StatCard({ icon, title, summary, href }: { icon: IconName; title: string; summary: React.ReactNode; href: string }) {
   return (
-    <div className="dash-card fx-card" style={{ position: "relative" }}>
-      {children && <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Replier" : "Voir le détail"} className={`dash-plus ${open ? "on" : ""}`}>{open ? "−" : "+"}</button>}
-      <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><Icon name={icon} size={16} style={{ color: "var(--orange)" }} />{title}</div>
+    <Link href={href} className="dash-card fx-card dash-stat-link" style={{ position: "relative", display: "block", textDecoration: "none", color: "inherit" }}>
+      <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}>
+        <Icon name={icon} size={16} style={{ color: "var(--orange)" }} />{title}
+        <Icon name="arrow-right" size={14} className="dash-stat-arrow" style={{ marginLeft: "auto", color: "var(--orange)" }} />
+      </div>
       {summary}
-      {open && children && <div style={{ marginTop: 13, paddingTop: 12, borderTop: "1px dashed var(--border)", display: "flex", flexDirection: "column", gap: 8 }}>{children}</div>}
-    </div>
+    </Link>
   );
 }
 
@@ -122,93 +125,58 @@ export default function DashboardPage() {
 
       {/* ── Cartes chiffres (dépliables) ── */}
       <div className="dash-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <ExpandCard icon="users" title="Membres" summary={
+        <StatCard href="/guildviewer" icon="users" title="Membres" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.members.total} label="total" />
             <Stat value={d.members.active} label="actifs" color="var(--green)" />
             <Stat value={d.members.inactive} label="inactifs" color="var(--text-muted)" />
-          </div>}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {[...d.members.roles].sort((a, b) => b.count - a.count).map((r) => (
-              <span key={r.role} style={{ fontSize: 11.5, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 10px" }}>{cap(r.role)} <b style={{ color: "var(--orange)" }}>{r.count}</b></span>
-            ))}
-          </div>
-          <GoLink href="/guildviewer" label="GuildViewer" show={isAdmin} />
-        </ExpandCard>
+          </div>} />
 
-        {isAdmin && <ExpandCard icon="sword" title="Personnages" summary={
+        {isAdmin && <StatCard href="/guildviewer" icon="sword" title="Personnages" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.characters.total} label="total" />
             <Stat value={d.characters.mains} label="principaux" color="var(--gold)" />
             <Stat value={d.characters.secondaries} label="secondaires" />
-          </div>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.characters.withoutBuild > 0 ? `${d.characters.withoutBuild} perso(s) sans build à accompagner.` : "Tous les persos ont un build"}</div>
-          <GoLink href="/guildviewer" label="GuildViewer" show={isAdmin} />
-        </ExpandCard>}
+          </div>} />}
 
-        {isAdmin && <ExpandCard icon="shield" title="Builds" summary={
+        {isAdmin && <StatCard href="/guildviewer" icon="shield" title="Builds" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.builds.total} label="enregistrés" color="var(--blue)" />
             <Stat value={d.builds.withoutBuild} label="sans build" color={d.builds.withoutBuild ? "var(--red)" : "var(--green)"} />
-          </div>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.builds.withoutBuild > 0 ? `${d.builds.withoutBuild} personnage(s) à équiper.` : "Tout le monde est équipé"}</div>
-          <GoLink href="/builder" label="AirBuilder" />
-        </ExpandCard>}
+          </div>} />}
 
-        <ExpandCard icon="vault" title="Coffre de guilde" summary={
+        <StatCard href="/coffre" icon="vault" title="Coffre de guilde" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.coffre.under} label="à compléter" color={d.coffre.under ? "var(--red)" : "var(--green)"} />
             <Stat value={d.coffre.total} label="objets suivis" />
-          </div>}>
-          {d.coffre.topDeficits.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: "var(--green)" }}>Tout est au-dessus du seuil</div>
-          ) : d.coffre.topDeficits.map((x, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
-              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.item}</span>
-              <span style={{ color: "var(--text-muted)", fontSize: 11 }}>{x.stock}/{x.target}</span>
-              <span style={{ fontFamily: "Rubik,sans-serif", fontWeight: 700, color: "var(--red)" }}>−{x.manque}</span>
-            </div>
-          ))}
-          <GoLink href="/dettes" label="Banque" show={!isAdmin} />
-          <GoLink href="/plan-farm" label="Plan de farm" show={isAdmin} />
-        </ExpandCard>
+          </div>} />
 
-        <ExpandCard icon="coins" title="Dettes" summary={
+        <StatCard href="/gestion-dettes" icon="coins" title="Dettes" summary={
           <>
             <div style={{ display: "flex", gap: 22 }}>
               <Stat value={d.debts.ongoing} label="en cours" color={d.debts.ongoing ? "var(--gold)" : "var(--green)"} />
               <Stat value={d.debts.repaid} label="remboursées" color="var(--green)" />
             </div>
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{d.debts.ongoingAmount.toLocaleString("fr-FR")} périn en circulation</div>
-          </>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.debts.toValidate > 0 ? `${d.debts.toValidate} à valider.` : "Aucune à valider."}</div>
-          <GoLink href="/dettes" label="Mes dettes" show={!isAdmin} />
-          <GoLink href="/gestion-dettes" label="Banque (gestion)" show={isAdmin} />
-        </ExpandCard>
+          </>} />
 
-        <ExpandCard icon="moon" title="Absences" summary={
+        <StatCard href="/absences" icon="moon" title="Absences" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.absences.active} label="en cours" color="var(--purple)" />
             <Stat value={d.absences.pending} label="à valider" color={d.absences.pending ? "var(--gold)" : "var(--text-muted)"} />
-          </div>}>
-          <GoLink href="/absences" label="Faire une demande" />
-        </ExpandCard>
+          </div>} />
 
-        {isAdmin && <ExpandCard icon="clipboard" title="Candidatures" summary={
+        {isAdmin && <StatCard href="/candidatures" icon="clipboard" title="Candidatures" summary={
           <div style={{ display: "flex", gap: 22 }}>
             <Stat value={d.candidatures.pending} label="en attente" color={d.candidatures.pending ? "var(--gold)" : "var(--green)"} />
             <Stat value={d.candidatures.waiting} label="en suivi" color="var(--blue)" />
-          </div>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.candidatures.total} candidature(s) au total.</div>
-          <GoLink href="/candidatures" label="Candidatures" show={isAdmin} />
-        </ExpandCard>}
+          </div>} />}
 
-        <ExpandCard icon="dragon" title="World Boss" summary={
+        <StatCard href="/worldboss" icon="dragon" title="World Boss" summary={
           <>
             <Stat value={d.worldboss.upcoming} label="à venir" color={d.worldboss.upcoming ? "var(--red)" : "var(--text-muted)"} />
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{wbNext ? `Prochain : ${wbNext}` : "Aucun programmé"}</div>
-          </>}>
-        </ExpandCard>
+          </>} />
       </div>
 
       {/* ── Répartition des classes ── */}
@@ -260,8 +228,6 @@ export default function DashboardPage() {
         .dash-hub:hover{border-color:var(--orange)}
         .dash-cta{transition:transform .15s,box-shadow .15s}
         .dash-cta:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,140,26,.25)}
-        .dash-plus{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s,background .15s}
-        .dash-plus:hover,.dash-plus.on{color:var(--orange);border-color:var(--orange);background:#241a0e}
         @keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
         .dash-grid>*,.dash-hubs>*{animation:dashIn .5s ease both}
         .dash-grid>*:nth-child(1){animation-delay:.03s}.dash-grid>*:nth-child(2){animation-delay:.07s}.dash-grid>*:nth-child(3){animation-delay:.11s}.dash-grid>*:nth-child(4){animation-delay:.15s}.dash-grid>*:nth-child(5){animation-delay:.19s}.dash-grid>*:nth-child(6){animation-delay:.23s}.dash-grid>*:nth-child(7){animation-delay:.27s}.dash-grid>*:nth-child(8){animation-delay:.31s}

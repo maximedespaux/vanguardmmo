@@ -397,3 +397,13 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
   .fx-card{transition:none}
   .fx-card::before{display:none}
 }
+
+/* ─── Cartes de chiffres du tableau de bord : toute la carte est un lien ─────
+   Elles ouvraient un detail sur place via un bouton « + » : un clic pour voir,
+   un autre pour rejoindre l'outil. La carte entiere mene desormais la ou l'on
+   peut agir, et la fleche l'annonce au survol. */
+.dash-stat-link{cursor:pointer}
+.dash-stat-arrow{opacity:0;transform:translateX(-4px);transition:opacity .2s var(--ease,ease),transform .2s var(--ease,ease)}
+.dash-stat-link:hover .dash-stat-arrow{opacity:1;transform:translateX(0)}
+.dash-stat-link:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.dash-stat-arrow{transition:none}}

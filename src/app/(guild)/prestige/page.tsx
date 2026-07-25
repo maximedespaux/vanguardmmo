@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode, useRef } from "react";
 import { PRESTIGE_COSTS, PRESTIGE_KEYS, prestigeNeed } from "@/data/prestige";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 // Icône d'une ressource : vraie image si présente (override connu, ou PNG déposé dans
@@ -116,6 +117,9 @@ function PrestigeIcon({ name, size = 22 }: { name: string; size?: number }) {
 }
 
 export default function PrestigePage() {
+  // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
+  const fxRef = useRef<HTMLDivElement>(null);
+  useCardFx(fxRef);
   const [cur, setCur] = useState(1);
   const [tgt, setTgt] = useState(10);
   const [have, setHave] = useState<Record<string, number>>({});
@@ -127,12 +131,12 @@ export default function PrestigePage() {
   const globalPct = keys.length ? Math.round((keys.reduce((s, k) => s + Math.min(1, (have[k] ?? 0) / need[k]), 0) / keys.length) * 100) : 0;
 
   return (
-    <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
+    <div ref={fxRef} style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-guides.webp" icon="star" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
       <SectionTabs section="guides" />
 
       {/* Sélecteur */}
-      <div className="glass-card" style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end", padding: 18, marginBottom: 16 }}>
+      <div className="glass-card fx-card" style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end", padding: 18, marginBottom: 16 }}>
         <label style={{ flex: 1, minWidth: 150 }}>
           <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige actuel</div>
           <VgSelect full value={cur} onChange={(val) => { const v = +val; setCur(v); if (v >= tgt) setTgt(Math.min(10, v + 1)); }} options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
@@ -145,11 +149,11 @@ export default function PrestigePage() {
       </div>
 
       {keys.length === 0 ? (
-        <div className="glass-card" style={{ padding: 26, textAlign: "center", color: "var(--text-muted)" }}>Aucune donnée pour cet intervalle.</div>
+        <div className="glass-card fx-card" style={{ padding: 26, textAlign: "center", color: "var(--text-muted)" }}>Aucune donnée pour cet intervalle.</div>
       ) : (
         <>
           {/* Progression globale */}
-          <div className="glass-card" style={{ padding: 16, marginBottom: 16 }}>
+          <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 9, flexWrap: "wrap", gap: 6 }}>
               <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}><Icon name="package" size={16} /> Pour passer de P{cur} à P{tgt}</span>
               <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{done}/{keys.length} ressources · <b style={{ color: globalPct === 100 ? "var(--green)" : "var(--orange)" }}>{globalPct}%</b></span>
@@ -198,7 +202,7 @@ export default function PrestigePage() {
           {/* Détail par palier (repliable) */}
           <button onClick={() => setShowTable((s) => !s)} className="pr-toggle">{showTable ? "▾" : "▸"} Détail par palier</button>
           {showTable && (
-            <div className="glass-card" style={{ padding: 16, marginTop: 10 }}>
+            <div className="glass-card fx-card" style={{ padding: 16, marginTop: 10 }}>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>

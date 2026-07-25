@@ -77,21 +77,26 @@ export function useCardFx<T extends HTMLElement>(ref: React.RefObject<T | null>,
   useEffect(() => {
     const root = ref.current;
     if (!root || reduced()) return;
-    let frame = 0;
+    // Limitation par horodatage plutôt que par requestAnimationFrame : le halo
+    // apparaît dès le premier mouvement (avec rAF il fallait attendre l'image
+    // suivante), et le comportement ne dépend pas d'un rAF qui ne s'exécute pas
+    // quand l'onglet est masqué.
+    let dernier = 0;
 
     const onMove = (ev: PointerEvent) => {
       const card = (ev.target as HTMLElement)?.closest<HTMLElement>(".fx-card");
-      if (!card || frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const r = card.getBoundingClientRect();
-        const px = (ev.clientX - r.left) / r.width;
-        const py = (ev.clientY - r.top) / r.height;
-        card.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
-        card.style.setProperty("--my", (py * 100).toFixed(1) + "%");
-        card.style.setProperty("--rx", ((0.5 - py) * tilt * 2).toFixed(2) + "deg");
-        card.style.setProperty("--ry", ((px - 0.5) * tilt * 2).toFixed(2) + "deg");
-      });
+      if (!card) return;
+      const t = ev.timeStamp || performance.now();
+      if (t - dernier < 16) return; // ~60 fois par seconde au maximum
+      dernier = t;
+      const r = card.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      const px = (ev.clientX - r.left) / r.width;
+      const py = (ev.clientY - r.top) / r.height;
+      card.style.setProperty("--mx", (px * 100).toFixed(1) + "%");
+      card.style.setProperty("--my", (py * 100).toFixed(1) + "%");
+      card.style.setProperty("--rx", ((0.5 - py) * tilt * 2).toFixed(2) + "deg");
+      card.style.setProperty("--ry", ((px - 0.5) * tilt * 2).toFixed(2) + "deg");
     };
     const onLeave = (ev: PointerEvent) => {
       const card = (ev.target as HTMLElement)?.closest<HTMLElement>(".fx-card");
@@ -103,7 +108,6 @@ export function useCardFx<T extends HTMLElement>(ref: React.RefObject<T | null>,
     root.addEventListener("pointermove", onMove, { passive: true });
     root.addEventListener("pointerout", onLeave, { passive: true });
     return () => {
-      if (frame) cancelAnimationFrame(frame);
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerout", onLeave);
     };

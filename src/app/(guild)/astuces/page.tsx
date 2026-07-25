@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 function Tip({ title, prio, mt, icon, children }: { title?: string; prio?: string; mt?: boolean; icon?: IconName; children: React.ReactNode }) {
   return (
@@ -31,18 +32,21 @@ function Prestige({ badge, title, subtitle, isOpen, onToggle, icon, children }: 
 }
 
 export default function GuidePage() {
+  // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
+  const fxRef = useRef<HTMLDivElement>(null);
+  useCardFx(fxRef);
   const [open, setOpen] = useState<Record<string, boolean>>({ p3: true });
   const toggle = (id: string) => setOpen(o => ({ ...o, [id]: !o[id] }));
   const P = (id: string) => ({ isOpen: !!open[id], onToggle: () => toggle(id) });
 
   return (
-    <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
+    <div ref={fxRef} style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guides" subtitle="Guide de progression, calculateur de prestige et infos de jeu." />
       <SectionTabs section="guides" />
 
       <div className="gd">
         {/* VIDEOS */}
-        <div className="gd-card">
+        <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="video" size={18} />Astuces en vidéo</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>Playlist d&apos;astuces pour les <b>instances Solo</b> (8 vidéos · série en cours).</p>
           <div className="gd-video">
@@ -52,7 +56,7 @@ export default function GuidePage() {
         </div>
 
         {/* AUTHOR */}
-        <div className="gd-card">
+        <div className="gd-card fx-card">
           <div className="gd-author">
             <div className="av"><Icon name="graduation" size={24} style={{ color: "var(--orange)" }} /></div>
             <div><div className="n">Guide de progression — par Sugot</div><div className="r">Formateur volontaire é__è</div></div>
@@ -61,7 +65,7 @@ export default function GuidePage() {
         </div>
 
         {/* QUEST ITEMS */}
-        <div className="gd-card">
+        <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="package" size={18} />Items quête requis (tous prestiges)</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>La quantité totale d&apos;items de quête requis pour tous les prestiges. Ça peut sembler important, mais en vous y prenant bien tout se goupillera — le farm étant l&apos;essence même de Flyff </p>
           <div className="gd-grid">

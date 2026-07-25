@@ -40,9 +40,16 @@ export function HeroFlyff() {
     return () => target.removeEventListener("scroll", read);
   }, []);
 
+  // Même convention que la marque et AirGuild : la première syllabe en blanc,
+  // la seconde en orange. « VAN » | « GUARD ».
+  const COUPURE = 3;
   const lettres = useMemo(
     () => TITRE.split("").map((c, i) => (
-      <span key={i} className="hf-ch" style={{ animationDelay: `${0.18 + i * 0.055}s` }}>{c}</span>
+      <span
+        key={i}
+        className={`hf-ch ${i < COUPURE ? "hf-ch-a" : "hf-ch-b"}`}
+        style={{ animationDelay: `${0.18 + i * 0.055}s` }}
+      >{c}</span>
     )),
     []
   );

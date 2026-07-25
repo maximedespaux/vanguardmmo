@@ -50,9 +50,9 @@ export async function GET() {
   // Tarifs par objet : accepte l'ancien format (nombre = prix public) et le nouveau (objet à paliers).
   const tiers = (id: string, base: number) => {
     const p = prices[id];
-    if (p && typeof p === "object") return { v: p.v !== false, d: p.d !== false, pub: +p.pub || 0, mem: +p.mem || 0, det: +p.det || 0, cau: +p.cau || 0 };
+    if (p && typeof p === "object") return { v: p.v !== false, d: p.d !== false, pub: +p.pub || 0, mem: +p.mem || 0, det: +p.det || 0 };
     const n = (p != null ? +p : 0) || base || 0;
-    return { v: true, d: true, pub: n, mem: n, det: n, cau: 0 };
+    return { v: true, d: true, pub: n, mem: n, det: n };
   };
   const custom: any[] = Array.isArray(S.custom) ? S.custom : [];
   const hidden = new Set<string>(Array.isArray(S.hidden) ? S.hidden : []);
@@ -67,16 +67,24 @@ export async function GET() {
       if (stock <= 0) return null;
       const t = tiers(it.id, it.prix ?? 0);
       if (!t.v && !t.d) return null; // ni vendable ni dette → hors boutique
+      // Une arme a un prix PAR RARETÉ (clé « id|R#rareté » dans S.prices) : sans
+      // cela, les tarifs saisis par rareté dans l'AirGuild ne seraient jamais lus
+      // et la Boutique afficherait le même prix pour une Rare et une Pré-myth.
+      const rar = rarInv[it.id] ?? null;
+      const tiersParRarete = rar
+        ? Object.fromEntries(Object.keys(rar).map((r) => [r, tiers(`${it.id}|R#${r}`, it.prix ?? 0)]))
+        : null;
       return {
         id: it.id,
         item: it.item,
         cat: it.cat,
         classe: it.classe ?? "",
         price: t.pub, // prix public (compat)
-        tiers: t,     // { v, d, pub, mem, det, cau }
+        tiers: t,     // { v, d, pub, mem, det } — la caution a ete supprimee
+        tiersByRarity: tiersParRarete, // { rareté: { v, d, pub, mem, det } } ou null
         stock,
         unit: it.unit ?? "",
-        rarities: rarInv[it.id] ?? null, // armes → { rareté: stock } ; null pour les objets sans rareté
+        rarities: rar, // armes → { rareté: stock } ; null pour les objets sans rareté
         icon: it.icData ? it.icData : (it.ic && icons[it.ic] ? icons[it.ic] : null), // icData (asset perso édité) prioritaire, comme dans l'AirGuild (itemAsset)
       };
     })

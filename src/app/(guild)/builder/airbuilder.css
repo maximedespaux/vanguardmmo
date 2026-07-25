@@ -4,8 +4,8 @@
 .abx{margin:0;background-color:#0b0b10;background-image:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(255,140,26,.16),transparent 60%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.08),transparent 46%),linear-gradient(rgba(9,9,13,.8),rgba(9,9,13,.9)),url('/assets/site/bg/sup2.webp');background-size:auto,auto,auto,cover;background-position:center;background-repeat:no-repeat;color:var(--text);font-family:Inter,sans-serif;padding-bottom:34px}
 .wrap{max-width:1280px;margin:0 auto;padding:14px}
 .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-.brand{font-family:Rubik;font-weight:700;font-size:22px;color:var(--orange);letter-spacing:1px}
-.brand span{color:var(--text)}.step{font-size:11px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
+.brand{font-family:Rubik;font-weight:700;font-size:21px;color:var(--text);letter-spacing:1.6px;text-transform:uppercase}
+.brand span{color:var(--orange);text-shadow:0 0 18px rgba(255,140,26,.4)}.step{font-size:11px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
 .ptabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ptab{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:5px 9px;cursor:pointer;font-size:13px}
 .ptab.on{border-color:var(--orange);background:#241a0e}.ptab .x{color:var(--mut);font-size:11px}.ptab .x:hover{color:var(--red)}

@@ -10,15 +10,21 @@ import { useCardFx } from "@/components/VgFx";
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null };
-type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number; cau: number };
-type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
+type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number };
+type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; tiersByRarity?: Record<string, Tiers> | null; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
 // Raretés d'armes (mêmes clés/couleurs que le coffre AirGuild).
 const RARITY_META: Record<string, { l: string; c: string }> = {
   rare: { l: "Rare", c: "#4EA8FF" }, epique: { l: "Épique", c: "#C77DFF" },
   legendaire: { l: "Légendaire", c: "#FF8C1A" }, premyth: { l: "Pré-myth.", c: "#FF5C8A" },
 };
 // Prix affiché selon le statut : membre de guilde → prix membre ; public → prix public.
-const priceFor = (s: Shop, member: boolean) => (s.tiers ? (member ? s.tiers.mem : s.tiers.pub) : s.price);
+// Prix applicable : si une rareté est précisée et qu'un tarif existe pour elle, il
+// PRIME sur le tarif de l'objet — une Hache Rare et une Hache Pré-myth. n'ont pas
+// le même prix. Sinon on retombe sur le tarif de l'objet.
+const priceFor = (s: Shop, member: boolean, rarete?: string | null) => {
+  const t = (rarete && s.tiersByRarity?.[rarete]) || s.tiers;
+  return t ? (member ? t.mem : t.pub) : s.price;
+};
 
 const DEBT_STATUS: Record<string, { l: string; c: string }> = {
   REQUESTED: { l: "Demandée", c: "var(--text-muted)" }, PENDING_VALIDATION: { l: "À valider", c: "var(--gold)" },
@@ -92,7 +98,7 @@ export default function BanquePage() {
   const maxFor = (key: string) => { const it = byId(key); if (!it) return 0; const rk = rarOf(key); return (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; };
   const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
-  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember) * cart[id] : 0); }, 0);
+  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember, rarOf(id)) * cart[id] : 0); }, 0);
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
@@ -101,7 +107,7 @@ export default function BanquePage() {
     if (mode === "achat") { const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.v === false); if (bad) return flash(`« ${bad.item} » est proposé en dette uniquement (pas d'achat direct).`); }
     if (mode === "dette") { if (!isMember) return flash("La dette est réservée aux membres de la guilde."); const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.d === false); if (bad) return flash(`« ${bad.item} » n'est pas disponible en dette.`); }
     setSending(true);
-    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember), cat: it.cat }; });
+    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember, rk), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
@@ -151,7 +157,7 @@ export default function BanquePage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -167,6 +173,11 @@ export default function BanquePage() {
                       <div key={rk} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14`, minWidth: 78 }}>{m.l}</span>
                         <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>stock {stk}</span>
+                        {/* Le prix de CETTE rareté : c'est la seule information qui
+                            permet de choisir en connaissance de cause. */}
+                        {(() => { const pr = priceFor(s, isMember, rk); return pr > 0
+                          ? <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)" }}>{fmt(pr)} périns</span>
+                          : <span style={{ fontSize: 10.5, fontStyle: "italic", color: "var(--text-muted)" }}>prix à définir</span>; })()}
                         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, opacity: stk > 0 ? 1 : 0.4 }}>
                           <button onClick={() => setQty(key, q - 1)} style={stepBtn}>−</button>
                           <input value={q} onChange={e => setQty(key, +e.target.value || 0)} style={{ ...inp, width: 40, textAlign: "center", padding: "4px 3px", fontSize: 13 }} />
@@ -188,7 +199,7 @@ export default function BanquePage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                       <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}{rm ? <span style={{ color: rm.c, fontWeight: 700 }}> · {rm.l}</span> : null}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
-                      <span style={{ color: "var(--gold)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, isMember) * cart[id])}</span>
+                      <span style={{ color: "var(--orange)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, isMember, rarOf(id)) * cart[id])}</span>
                       <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
                     </div>
                     {isStuff && (

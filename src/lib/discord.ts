@@ -71,6 +71,25 @@ export async function attribuerRole(discordId: string, roleId: string): Promise<
   }
 }
 
+/**
+ * Ce joueur est-il membre du serveur ? null = on ne sait pas (Discord
+ * injoignable, pas de token) — a distinguer de false, qui est un vrai « non ».
+ * Sans cette distinction on refuserait l'acces sur une simple panne reseau.
+ */
+export async function estMembreDuServeur(discordId: string): Promise<boolean | null> {
+  const h = entete();
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!h || !guildId || !discordId) return null;
+  try {
+    const res = await fetch(`${API}/guilds/${guildId}/members/${discordId}`, { headers: h });
+    if (res.status === 404) return false;
+    if (!res.ok) return null;
+    return true;
+  } catch {
+    return null;
+  }
+}
+
 /* ─── Invitation au serveur ───────────────────────────────────────────────
    Affichee sur /login a un visiteur connecte mais pas encore sur le serveur.
    C'est le bot qui la produit : rien a coller a la main dans un .env, et le

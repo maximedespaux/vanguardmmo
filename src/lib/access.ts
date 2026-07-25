@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessGuild, canAccessAdmin, canAccessVerified, rankValue } from "@/config/roles";
+import { canAccessGuild, canAccessAdmin, canAccessVerified, rankValue, ROLE_VERIFIE_ID } from "@/config/roles";
+import { estMembreDuServeur, attribuerRole } from "@/lib/discord";
 import type { Role, User } from "@prisma/client";
 import { DEV_ALL } from "@/lib/devAccess";
 
@@ -53,9 +54,19 @@ export async function requireGuild(): Promise<User> {
  */
 export async function requireVerified(): Promise<User> {
   const user = await requireAuth();
-  if (!canAccessVerified(user.role, user.discordRoles ?? [], (user as { verifiedAt?: Date | null }).verifiedAt)) {
-    redirect("/login?error=discord");
-  }
+  const u = user as User & { verifiedAt?: Date | null };
+  if (canAccessVerified(u.role, u.discordRoles ?? [], u.verifiedAt)) return user;
+
+  // Rien en base : soit le joueur n'est pas sur le serveur, soit il s'est
+  // connecte AVANT la mise en place de ce verrou (verifiedAt n'est ecrit qu'a la
+  // connexion). On demande a Discord plutot que d'ejecter quelqu'un dont la
+  // seule faute est de ne pas s'etre reconnecte.
+  const membre = await estMembreDuServeur(u.discordId);
+  if (membre === false) redirect("/login?error=discord");
+  if (membre === null) return user; // Discord injoignable : on ne punit pas une panne
+
+  await prisma.user.update({ where: { id: u.id }, data: { verifiedAt: new Date() } }).catch(() => {});
+  void attribuerRole(u.discordId, ROLE_VERIFIE_ID);
   return user;
 }
 

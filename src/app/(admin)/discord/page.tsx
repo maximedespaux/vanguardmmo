@@ -67,7 +67,7 @@ export default function DiscordPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 980, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-discord.png" title="Discord" subtitle="Pilote le bot depuis le site : poste des embeds, lance des giveaways et le panneau de classes. Le bot exécute dans les secondes qui suivent." />
+      <PageHeader banner="/assets/site/banners/banner-discord.webp" title="Discord" subtitle="Pilote le bot depuis le site : poste des embeds, lance des giveaways et le panneau de classes. Le bot exécute dans les secondes qui suivent." />
       <SectionTabs section="discord" />
 
       {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}

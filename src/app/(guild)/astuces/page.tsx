@@ -37,7 +37,7 @@ export default function GuidePage() {
 
   return (
     <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guides.png" title="Guides" subtitle="Guide de progression, calculateur de prestige et infos de jeu." />
+      <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guides" subtitle="Guide de progression, calculateur de prestige et infos de jeu." />
       <SectionTabs section="guides" />
 
       <div className="gd">

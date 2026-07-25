@@ -44,7 +44,7 @@ export default function CandidaturesAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="clipboard" title="Candidatures" subtitle="Examine et décide des candidatures reçues." />
+      <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidatures" subtitle="Examine et décide des candidatures reçues." />
 
       <div className="vg-subtabs">
         {FILTERS.map(([k, l]) => (

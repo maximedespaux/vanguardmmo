@@ -128,7 +128,7 @@ export default function PrestigePage() {
 
   return (
     <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guides.png" icon="star" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
+      <PageHeader banner="/assets/site/banners/banner-guides.webp" icon="star" title="Calculateur de Prestige" subtitle="Choisis ton prestige actuel et ta cible : le calculateur additionne les ressources de chaque palier (données AirFlyff réelles)." />
       <SectionTabs section="guides" />
 
       {/* Sélecteur */}

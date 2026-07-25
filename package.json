@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "icons": "node scripts/build-icons.mjs",
+    "assets": "node scripts/optimize-assets.mjs",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed-coffre.ts",

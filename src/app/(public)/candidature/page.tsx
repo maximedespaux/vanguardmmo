@@ -85,7 +85,7 @@ export default function CandidaturePage() {
   // Déjà membre de la guilde → pas de candidature, petit message clin d'œil.
   if (canAccessGuild(((session?.user as any)?.role) ?? "RECRUE")) return (
     <div style={{ padding: 40, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
-      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="clipboard" title="Candidature" subtitle="" />
+      <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidature" subtitle="" />
       <div className="glass-card" style={{ padding: 32, marginTop: 20 }}>
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name="shield" size={46} /></div>
         <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres 🙂</h2>
@@ -97,7 +97,7 @@ export default function CandidaturePage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-candidature.png" icon="clipboard" title="Candidature" subtitle="Tout est obligatoire. Ta candidature sera transmise au staff sur Discord avec ton profil, ton stuff et tes objectifs." />
+      <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidature" subtitle="Tout est obligatoire. Ta candidature sera transmise au staff sur Discord avec ton profil, ton stuff et tes objectifs." />
       <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 24 }}>
         {STEP_NAMES.map((n, i) => {
           const num = i + 1; const done = step > num; const cur = step === num;

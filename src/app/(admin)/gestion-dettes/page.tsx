@@ -58,7 +58,7 @@ export default function BanqueAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.png" title="Boutique — gestion" subtitle="Traite les requêtes (achat ou dette) et valide les remboursements." />
+      <PageHeader banner="/assets/site/banners/banner-banque.webp" title="Boutique — gestion" subtitle="Traite les requêtes (achat ou dette) et valide les remboursements." />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       {/* ── Requêtes à traiter ── */}

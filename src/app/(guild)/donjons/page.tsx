@@ -70,7 +70,7 @@ export default function DonjonsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-pve.png" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
+      <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
       <div className="vg-subtabs">
         <TabBtn k="wiki" label={<><Icon name="book" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Wiki des donjons</>} />

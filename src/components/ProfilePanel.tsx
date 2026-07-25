@@ -47,7 +47,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => setOpen((o) => !o)} aria-label="Profil" aria-expanded={open} style={{ display: "flex", alignItems: "center", gap: 9, background: open ? "rgba(255,140,26,.1)" : "none", border: `1px solid ${open ? "rgba(255,140,26,.4)" : "transparent"}`, borderRadius: 10, padding: "4px 9px 4px 5px", cursor: "pointer", transition: "background .15s, border-color .15s" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/assets/site/ranks/${r.badge}.png`} alt={r.label} style={{ height: 30, width: "auto", objectFit: "contain", filter: "drop-shadow(0 0 6px rgba(255,140,26,.4))" }} />
+        <img src={`/assets/site/ranks/${r.badge}.webp`} alt={r.label} style={{ height: 30, width: "auto", objectFit: "contain", filter: "drop-shadow(0 0 6px rgba(255,140,26,.4))" }} />
         <span style={{ fontSize: 12.5, color: "var(--text)", whiteSpace: "nowrap", fontWeight: 600, maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
         <Icon name="chevron-right" size={13} style={{ color: "var(--text-muted)", transform: open ? "rotate(-90deg)" : "rotate(90deg)", transition: "transform .18s" }} />
       </button>
@@ -57,7 +57,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
           {/* Identité */}
           <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "16px 16px 14px", background: `linear-gradient(90deg, color-mix(in srgb, ${r.color} 12%, transparent), transparent 70%)`, borderBottom: "1px solid var(--border)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`/assets/site/ranks/${r.badge}.png`} alt={r.label} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 8px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
+            <img src={`/assets/site/ranks/${r.badge}.webp`} alt={r.label} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 8px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
             <div style={{ minWidth: 0 }}>
               <div className="font-heading" style={{ fontSize: 16, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
               <span style={{ fontSize: 10.5, fontWeight: 700, color: r.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{r.label}{dev ? " · dev" : ""}</span>

@@ -4,7 +4,7 @@ import { Icon } from "@/components/Icon";
 export default function NotFound() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.png') center / cover no-repeat" }}>
+      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.webp') center / cover no-repeat" }}>
       <div className="glass-card" style={{ maxWidth: 460, width: "100%", padding: "46px 34px", textAlign: "center", borderRadius: 20 }}>
         <div style={{ fontFamily: "'Rubik', Rubik, sans-serif", fontSize: 70, color: "var(--orange)", lineHeight: 1, textShadow: "0 0 34px rgba(255,140,26,.5), 0 4px 20px #000" }}>404</div>
         <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 400, margin: "16px 0 0", textTransform: "uppercase", letterSpacing: 1, color: "#fff" }}>Page introuvable</h1>

@@ -23,7 +23,7 @@ function LoginCard() {
   return (
     <div className="lg-wrap">
       <div className="lg-card">
-        <img src="/assets/site/logo-bat.png" alt="Vanguard" className="lg-logo" />
+        <img src="/assets/site/logo-bat.webp" alt="Vanguard" className="lg-logo" />
         <h1 className="lg-title font-heading">Vanguard<span>Control Center</span></h1>
 
         {info ? (
@@ -46,7 +46,7 @@ function LoginCard() {
 
       <style>{`
         .lg-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;
-          background:linear-gradient(rgba(8,8,11,.84),rgba(8,8,11,.93)),url('/assets/site/new/guild.png') center / cover no-repeat}
+          background:linear-gradient(rgba(8,8,11,.84),rgba(8,8,11,.93)),url('/assets/site/new/guild.webp') center / cover no-repeat}
         .lg-wrap::before{content:"";position:absolute;width:560px;height:560px;left:50%;top:46%;transform:translate(-50%,-50%);pointer-events:none;
           background:radial-gradient(circle,rgba(255,140,26,.16),transparent 62%)}
         .lg-card{position:relative;z-index:1;width:100%;max-width:430px;padding:42px 34px 30px;text-align:center;

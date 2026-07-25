@@ -70,22 +70,22 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 /* ── Shell responsive (nav repliable sur mobile) ── */
 .vg-shell { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
 .vg-sidebar { width:252px; flex-shrink:0; background:linear-gradient(180deg,#15151b,#0e0e12); border-right:1px solid #24242e; display:flex; flex-direction:column; position:relative; z-index:10; }
-.vg-main { flex:1; overflow-y:auto; background:linear-gradient(rgba(10,10,12,.88), rgba(10,10,12,.93)), url('/assets/site/new/guild.png') center top / cover no-repeat; }
+.vg-main { flex:1; overflow-y:auto; background:linear-gradient(rgba(10,10,12,.88), rgba(10,10,12,.93)), url('/assets/site/new/guild.webp') center top / cover no-repeat; }
 /* Fonds par page (fournis par iBeats) — surcharge l'image, garde le voile sombre. */
-.vg-main[data-bg="airguild"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/airguild.png')}
-.vg-main[data-bg="banque"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/banque.png')}
-.vg-main[data-bg="guildviewer"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/guildviewer.png')}
-.vg-main[data-bg="sup1"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup1.png')}
-.vg-main[data-bg="sup2"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup2.png')}
-.vg-main[data-bg="sup3"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup3.png')}
-.vg-main[data-bg="sup4"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup4.png')}
-.vg-main[data-bg="sup5"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup5.png')}
-.vg-main[data-bg="sup6"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup6.png')}
-.vg-main[data-bg="sup7"]{background-image:linear-gradient(rgba(10,10,12,.7),rgba(10,10,12,.8)),url('/assets/site/bg/sup7.png');background-size:cover;background-position:center}
-.vg-main[data-bg="sup8"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup8.png')}
-.vg-main[data-bg="sup9"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup9.png')}
-.vg-main[data-bg="sup10"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup10.png')}
-.vg-main[data-bg="sup11"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup11.png')}
+.vg-main[data-bg="airguild"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/airguild.webp')}
+.vg-main[data-bg="banque"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/banque.webp')}
+.vg-main[data-bg="guildviewer"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/guildviewer.webp')}
+.vg-main[data-bg="sup1"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup1.webp')}
+.vg-main[data-bg="sup2"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup2.webp')}
+.vg-main[data-bg="sup3"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup3.webp')}
+.vg-main[data-bg="sup4"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup4.webp')}
+.vg-main[data-bg="sup5"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup5.webp')}
+.vg-main[data-bg="sup6"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup6.webp')}
+.vg-main[data-bg="sup7"]{background-image:linear-gradient(rgba(10,10,12,.7),rgba(10,10,12,.8)),url('/assets/site/bg/sup7.webp');background-size:cover;background-position:center}
+.vg-main[data-bg="sup8"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup8.webp')}
+.vg-main[data-bg="sup9"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup9.webp')}
+.vg-main[data-bg="sup10"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup10.webp')}
+.vg-main[data-bg="sup11"]{background-image:linear-gradient(rgba(10,10,12,.87),rgba(10,10,12,.92)),url('/assets/site/bg/sup11.webp')}
 .vg-burger { display:none; }
 .vg-overlay { display:none; }
 @media (max-width: 768px) {
@@ -116,7 +116,7 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-user{display:flex;align-items:center;gap:10px}
 .vg-user-av{width:36px;height:36px;border-radius:50%;background:radial-gradient(circle,#2a2a33,#16161c);display:flex;align-items:center;justify-content:center;border:1px solid var(--orange);box-shadow:0 0 12px rgba(255,140,26,.35);flex-shrink:0;font-size:18px}
 .vg-sidebar>*{position:relative;z-index:1}
-.vg-sidebar::after{content:"";position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:175px;height:175px;background:url('/assets/site/logo-bat.png') center/contain no-repeat;opacity:.05;pointer-events:none;z-index:0}
+.vg-sidebar::after{content:"";position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:175px;height:175px;background:url('/assets/site/logo-bat.webp') center/contain no-repeat;opacity:.05;pointer-events:none;z-index:0}
 .vg-page>*>*{animation:vgfade .5s cubic-bezier(.22,.61,.36,1) backwards}
 .vg-page>*>*:nth-child(1){animation-delay:.04s}
 .vg-page>*>*:nth-child(2){animation-delay:.11s}

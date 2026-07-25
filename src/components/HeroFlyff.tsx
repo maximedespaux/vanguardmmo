@@ -32,7 +32,7 @@ export function HeroFlyff() {
       <style>{`
         .hero-flyff{position:relative;width:100%;height:100vh;min-height:560px;overflow:hidden;background:#050200;margin:0}
         .hf-bgwrap{position:absolute;inset:-6%;z-index:1;will-change:transform;transition:transform .12s linear}
-        .hf-bg{position:absolute;inset:0;background:url('/assets/site/new/accueil.png') center 28% / cover no-repeat;animation:hfken 26s ease-in-out infinite alternate}
+        .hf-bg{position:absolute;inset:0;background:url('/assets/site/new/accueil.webp') center 28% / cover no-repeat;animation:hfken 26s ease-in-out infinite alternate}
         .hf-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:
           radial-gradient(ellipse 85% 75% at 50% 38%, transparent 32%, rgba(5,2,0,.5) 100%),
           linear-gradient(to bottom, rgba(5,2,0,.55) 0%, transparent 22%, transparent 50%, rgba(10,10,12,.85) 88%, #0A0A0C 100%)}

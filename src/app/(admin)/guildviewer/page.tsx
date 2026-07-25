@@ -82,7 +82,7 @@ export default function GuildViewerPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guildviewer.png" icon="eye" title="GuildViewer" subtitle="Suivi complet des membres : personnages, classes, builds et activité. Repère qui accompagner en priorité." />
+      <PageHeader banner="/assets/site/banners/banner-guildviewer.webp" icon="eye" title="GuildViewer" subtitle="Suivi complet des membres : personnages, classes, builds et activité. Repère qui accompagner en priorité." />
 
       {/* Hub admin — tout relié depuis le GuildViewer (#26) */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
@@ -129,7 +129,7 @@ export default function GuildViewerPage() {
               {/* En-tête membre */}
               <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "14px 17px", flexWrap: "wrap", background: `linear-gradient(90deg, color-mix(in srgb, ${r.color} 9%, transparent), transparent 55%)` }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/assets/site/ranks/${RANK_BADGE[u.role] ?? "public"}.png`} alt={r.label} title={r.label} style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 7px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
+                <img src={`/assets/site/ranks/${RANK_BADGE[u.role] ?? "public"}.webp`} alt={r.label} title={r.label} style={{ width: 46, height: 46, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 7px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
                 <div style={{ flex: 1, minWidth: 150 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                     <span className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{u.username}</span>

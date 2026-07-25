@@ -32,7 +32,8 @@ const NAV: Item[] = [
   ] },
 ];
 
-// Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.png
+// Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
+// (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
 const PAGE_BG: Record<string, string> = {
   "/coffre": "airguild", "/dettes": "banque", "/gestion-dettes": "banque", "/guildviewer": "guildviewer",
   "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
@@ -55,7 +56,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <div className="vg-shell">
       <header className="vg-topnav">
         <Link href="/histoire" className="vg-top-brand">
-          <img src="/assets/site/logo-bat.png" alt="Vanguard" className="vg-top-logo" />
+          <img src="/assets/site/logo-bat.webp" alt="Vanguard" className="vg-top-logo" />
           <span className="vg-top-title">Vanguard</span>
         </Link>
 

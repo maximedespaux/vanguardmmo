@@ -48,7 +48,7 @@ export default function AnnoncePage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 760, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-annonce.png" title="Annonce" subtitle="Rédige une annonce : le bot la publie en embed dans le salon choisi." />
+      <PageHeader banner="/assets/site/banners/banner-annonce.webp" title="Annonce" subtitle="Rédige une annonce : le bot la publie en embed dans le salon choisi." />
       <SectionTabs section="discord" />
       {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
       <div style={card}>

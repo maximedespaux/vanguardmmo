@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-dashboard.png" title="Dashboard guilde" subtitle="Vue d'ensemble de Vanguard, en temps réel." />
+      <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="Dashboard guilde" subtitle="Vue d'ensemble de Vanguard, en temps réel." />
 
       {/* ── CTA AirBuilder ── */}
       <Link href="/builder" className="dash-cta" style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", marginBottom: 24, borderRadius: 14, textDecoration: "none", background: "linear-gradient(90deg, rgba(255,140,26,0.18), rgba(255,140,26,0.04))", border: "1px solid var(--orange)" }}>

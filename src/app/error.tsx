@@ -8,7 +8,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.png') center / cover no-repeat" }}>
+      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.webp') center / cover no-repeat" }}>
       <div className="glass-card" style={{ maxWidth: 460, width: "100%", padding: "44px 34px", textAlign: "center", borderRadius: 20 }}>
         <div style={{ display: "flex", justifyContent: "center", color: "var(--orange)" }}><Icon name="wrench" size={52} strokeWidth={1.4} /></div>
         <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 400, margin: "14px 0 0", textTransform: "uppercase", letterSpacing: 1, color: "#fff" }}>Oups, un pépin</h1>

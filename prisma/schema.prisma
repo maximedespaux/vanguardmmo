@@ -88,6 +88,8 @@ model User {
   discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
   isActive      Boolean  @default(true)
   builderBlob   Json?                       // état complet du Stuff Builder (sync cross-device)
+  shareId       String?                      // lien de partage du build (comme DofusBook) — unique généré côté code
+  sharePublic   Boolean  @default(false)     // le build est-il visible publiquement via shareId ?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

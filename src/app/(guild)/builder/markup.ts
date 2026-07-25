@@ -20,6 +20,6 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="note" id="famnote" style="display:none"></div>
   <div class="stats" id="stats"></div>
   <div class="panel" id="carnetsPanel"></div>
-  <div class="actions"><button class="btn ghost" onclick="vgSaveHelp()">ℹ️ Comment ça marche ?</button><button class="btn ghost" onclick="resetChar()">↺ Vider ce stuff</button><button class="btn" onclick="vgSavePersos()">📤 Publier maintenant</button></div>
+  <div class="actions"><button class="btn ghost" onclick="vgSaveHelp()">ℹ️ Comment ça marche ?</button><button class="btn ghost" onclick="resetChar()">↺ Vider ce stuff</button><button class="btn" onclick="vgShare()">🔗 Partager</button><button class="btn" onclick="vgSavePersos()">📤 Publier maintenant</button></div>
 </div>
 <div id="modalRoot"></div>`;

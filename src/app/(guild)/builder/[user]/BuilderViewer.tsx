@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { BUILDER_MARKUP } from "../markup";
+import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Vue lecture seule du build d'un membre (pour le staff, depuis le GuildViewer).
 // version → ouvre un snapshot archivé (#7) au lieu du build courant.
@@ -49,6 +50,8 @@ export function BuilderViewer({ user, version }: { user: string; version?: strin
         d.id = "DATA"; d.type = "application/json"; d.textContent = txt;
         document.body.appendChild(d);
       }
+      await ensureVgIcons(); // window.VGI doit exister avant le premier rendu du moteur
+      if (cancelled) return;
       if (!document.getElementById("__ab_js")) {
         const s = document.createElement("script");
         s.id = "__ab_js"; s.src = "/airbuilder/airbuilder.js";

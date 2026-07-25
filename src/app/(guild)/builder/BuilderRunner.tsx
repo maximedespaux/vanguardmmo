@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Charge le moteur AirBuilder (vanilla JS d'iBeats). Re-render au re-montage de la page.
 // Recharge proprement si une autre app (AirGuild) tenait les globals (isolation SPA).
@@ -34,6 +35,8 @@ export function BuilderRunner() {
         d.id = "DATA"; d.type = "application/json"; d.textContent = txt;
         document.body.appendChild(d);
       }
+      await ensureVgIcons(); // window.VGI doit exister avant le premier rendu du moteur
+      if (cancelled) return;
       if (!document.getElementById("__ab_js")) {
         const s = document.createElement("script");
         s.id = "__ab_js"; s.src = "/airbuilder/airbuilder.js";

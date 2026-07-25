@@ -6,6 +6,7 @@ import { CS_SLOTS } from "../../slots";
 import { canAccessAdmin } from "@/config/roles";
 import { Icon } from "@/components/Icon";
 import type { Role } from "@prisma/client";
+import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Build de référence d'un poste : chargé depuis /api/compositions/ref/[slotId].
 // - lecture (tout le monde) : window.__VIEW (non modifiable, comme la vue d'un membre).
@@ -79,6 +80,8 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
       const txt = await fetch("/airbuilder/data.json").then((r) => r.text()).catch(() => null);
       if (cancelled || txt === null) return;
       if (!document.getElementById("DATA")) { const d = document.createElement("script"); d.id = "DATA"; d.type = "application/json"; d.textContent = txt; document.body.appendChild(d); }
+      await ensureVgIcons(); // window.VGI doit exister avant le premier rendu du moteur
+      if (cancelled) return;
       if (!document.getElementById("__ab_js")) { const s = document.createElement("script"); s.id = "__ab_js"; s.src = "/airbuilder/airbuilder.js"; document.body.appendChild(s); }
     })();
     return () => { cancelled = true; };

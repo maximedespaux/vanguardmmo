@@ -183,3 +183,37 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
   .vg-dropdown{position:static;display:block;box-shadow:none;border:none;background:transparent;padding:2px 0 6px 28px;min-width:0}
   .vg-top-user{display:none}
 }
+
+/* ─── Icônes Vanguard ────────────────────────────────────────────────────────
+   Cadre RPG doré : pour les icônes AUTONOMES (titres de section, boutons,
+   slots). Pour une icône au fil du texte (✓ dans un toast, chevron…), utiliser
+   l'icône nue — un cadre au milieu d'une phrase est illisible.
+   Tracés : src/lib/vg-icon-paths.ts · vanilla : public/icons/vg-icons.js   */
+.vgi{flex-shrink:0}
+.vgi-frame{
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  border-radius:8px;color:var(--gold);
+  background:linear-gradient(180deg,#1f1a11,#12100b);
+  border:1px solid #3a2c16;
+  box-shadow:inset 0 1px 0 rgba(255,210,74,.13),0 2px 7px rgba(0,0,0,.45);
+  transition:border-color .18s,box-shadow .18s,transform .18s;
+}
+/* Teintes : alignent tracé + liseré + fond sur un token de couleur. */
+.vgi-frame.vgi-orange{color:var(--orange);border-color:rgba(255,140,26,.44);background:linear-gradient(180deg,#20160c,#120d07)}
+.vgi-frame.vgi-gold  {color:var(--gold);border-color:rgba(255,210,74,.44)}
+.vgi-frame.vgi-green {color:var(--green);border-color:rgba(74,222,128,.38);background:linear-gradient(180deg,#0f1a13,#0a120d)}
+.vgi-frame.vgi-red   {color:var(--red);border-color:rgba(248,113,113,.38);background:linear-gradient(180deg,#1c1011,#12090a)}
+.vgi-frame.vgi-blue  {color:var(--blue);border-color:rgba(78,168,255,.38);background:linear-gradient(180deg,#0e1622,#090f16)}
+.vgi-frame.vgi-purple{color:var(--purple);border-color:rgba(199,125,255,.38);background:linear-gradient(180deg,#170f1f,#0e0914)}
+.vgi-frame.vgi-muted {color:var(--text-muted);border-color:var(--border);background:linear-gradient(180deg,var(--bg-3),var(--bg-2))}
+/* Survol : réservé aux cadres dans un élément cliquable. */
+a:hover>.vgi-frame,button:hover>.vgi-frame,[role="button"]:hover>.vgi-frame,
+.vgi-frame.is-hoverable:hover{
+  border-color:var(--orange);
+  box-shadow:inset 0 1px 0 rgba(255,210,74,.2),0 4px 13px rgba(255,140,26,.3);
+  transform:translateY(-1px);
+}
+@media(prefers-reduced-motion:reduce){
+  .vgi-frame{transition:none}
+  a:hover>.vgi-frame,button:hover>.vgi-frame,.vgi-frame.is-hoverable:hover{transform:none}
+}

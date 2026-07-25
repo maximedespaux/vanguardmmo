@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { canAccessGuild } from "@/config/roles";
+import { useCardFx } from "@/components/VgFx";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string };
 type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
@@ -36,6 +37,10 @@ const stepBtn: React.CSSProperties = { width: 24, height: 26, borderRadius: 6, b
 const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocaleString("fr-FR"));
 
 export default function BanquePage() {
+  // Halo suivant le curseur + léger relief sur les panneaux (.fx-card), comme
+  // sur l'accueil et le dashboard. Un seul écouteur délégué pour toute la page.
+  const fxRef = useRef<HTMLDivElement>(null);
+  useCardFx(fxRef);
   const [reqs, setReqs] = useState<Req[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [payAmt, setPayAmt] = useState<Record<string, string>>({});
@@ -109,7 +114,7 @@ export default function BanquePage() {
   const reqGroups = reqs.reduce<{ key: string; items: Req[] }[]>((acc, r) => { const k = r.batchId || r.id; let g = acc.find(x => x.key === k); if (!g) { g = { key: k, items: [] }; acc.push(g); } g.items.push(r); return acc; }, []);
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <div ref={fxRef} style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-banque.webp" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — le détenteur te répond pour organiser l'échange." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
@@ -121,7 +126,7 @@ export default function BanquePage() {
       </div>
 
       {/* ── BOUTIQUE ── */}
-      {tab === "boutique" && <div className="glass-card" style={{ padding: 18, marginBottom: 16 }}>
+      {tab === "boutique" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
@@ -136,7 +141,7 @@ export default function BanquePage() {
               const isWeapon = raritys.length > 0;
               const inCart = isWeapon ? raritys.reduce((t, rk) => t + (cart[`${s.id}::${rk}`] || 0), 0) : (cart[s.id] || 0);
               return (
-              <div key={s.id} style={{ display: "flex", flexDirection: "column", gap: 6, background: "var(--bg-3)", border: `1px solid ${inCart ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "7px 11px" }}>
+              <div key={s.id} className="vg-tr" style={{ display: "flex", flexDirection: "column", gap: 6, background: "var(--bg-3)", border: `1px solid ${inCart ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "7px 11px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ width: 34, height: 34, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-2)", borderRadius: 7 }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -144,7 +149,7 @@ export default function BanquePage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>~{fmt(priceFor(s, isMember))}</b> périns{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{s.tiers && s.tiers.cau > 0 ? ` · caution ${fmt(s.tiers.cau)}` : ""}{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -211,7 +216,7 @@ export default function BanquePage() {
           {tab === "requetes" && (
             <section style={{ marginBottom: 22 }}>
               <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes requêtes</h2>
-              {reqs.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune requête en cours.</div> : (
+              {reqs.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune requête en cours.</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {reqGroups.map(g => {
                   const first = g.items[0];
@@ -219,7 +224,7 @@ export default function BanquePage() {
                   const total = g.items.reduce((s, r) => s + (r.priceEach || 0) * r.quantity, 0);
                   const multi = g.items.length > 1;
                   return (
-                    <div key={g.key} className="glass-card" style={{ padding: 14 }}>
+                    <div key={g.key} className="glass-card fx-card" style={{ padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <span className="font-heading" style={{ fontWeight: 700 }}>{multi ? <><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 5 }} />Panier — {g.items.length} articles</> : (first.item ?? "Périns")}{!multi && first.quantity > 1 ? <span style={{ color: "var(--text-muted)" }}> ×{first.quantity}</span> : null}</span>
                         {total > 0 && <span style={{ color: "var(--gold)", fontSize: 13 }}>~{fmt(total)} périns</span>}
@@ -250,13 +255,13 @@ export default function BanquePage() {
           {(tab === "dettes" || tab === "rembourse") && (() => { const list = debts.filter(d => tab === "rembourse" ? d.status === "REPAID" : d.status !== "REPAID"); return (
           <section>
             <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{tab === "rembourse" ? "Dettes remboursées" : "Mes dettes"}</h2>
-            {list.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours."}</div> : (
+            {list.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours."}</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {list.map(d => {
                   const st = DEBT_STATUS[d.status] ?? DEBT_STATUS.REQUESTED;
                   const paid = d.payments.reduce((s, p) => s + p.amount, 0);
                   return (
-                    <div key={d.id} className="glass-card" style={{ padding: 14 }}>
+                    <div key={d.id} className="glass-card fx-card" style={{ padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <span className="font-heading" style={{ fontWeight: 700 }}>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}</span>
                         {d.item && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>· {d.item}</span>}

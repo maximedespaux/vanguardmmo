@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { canAccessAdmin } from "@/config/roles";
 import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Prio = { level: "haute" | "moyenne" | "basse"; label: string; count: number; href: string };
 type Deficit = { item: string; stock: number; target: number; manque: number };
@@ -37,7 +38,7 @@ function Stat({ value, label, color }: { value: React.ReactNode; label: string; 
 function ExpandCard({ icon, title, summary, children }: { icon: IconName; title: string; summary: React.ReactNode; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="dash-card" style={{ position: "relative" }}>
+    <div className="dash-card fx-card" style={{ position: "relative" }}>
       {children && <button onClick={() => setOpen((o) => !o)} aria-label={open ? "Replier" : "Voir le détail"} className={`dash-plus ${open ? "on" : ""}`}>{open ? "−" : "+"}</button>}
       <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}><Icon name={icon} size={16} style={{ color: "var(--orange)" }} />{title}</div>
       {summary}
@@ -53,7 +54,7 @@ function GoLink({ href, label, show = true }: { href: string; label: string; sho
 
 function Hub({ icon, title, metric, href, cta }: { icon: IconName; title: string; metric: React.ReactNode; href: string; cta: string }) {
   return (
-    <div className="dash-card dash-hub" style={{ padding: 17, display: "flex", flexDirection: "column", gap: 5 }}>
+    <div className="dash-card dash-hub fx-card" style={{ padding: 17, display: "flex", flexDirection: "column", gap: 5 }}>
       <div className="font-heading" style={{ fontSize: 17, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 9 }}><Icon name={icon} size={18} style={{ color: "var(--orange)" }} />{title}</div>
       <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{metric}</div>
       <Link href={href} className="dash-hub-cta" style={{ marginTop: 10, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 17px", borderRadius: 9, fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8, textDecoration: "none" }}>{cta} <span className="dash-hub-arrow">→</span></Link>
@@ -62,6 +63,10 @@ function Hub({ icon, title, metric, href, cta }: { icon: IconName; title: string
 }
 
 export default function DashboardPage() {
+  // Mêmes effets que l'accueil : halo suivant le curseur + léger relief sur les
+  // cartes portant la classe .fx-card. Un seul écouteur délégué pour toute la page.
+  const fxRef = useRef<HTMLDivElement>(null);
+  useCardFx(fxRef);
   const { data: session } = useSession();
   const DEV_ALL = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const isAdmin = DEV_ALL || canAccessAdmin((session?.user as any)?.role ?? "RECRUE");
@@ -82,7 +87,7 @@ export default function DashboardPage() {
   const wbNext = d.worldboss.next ? new Date(d.worldboss.next).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null;
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <div ref={fxRef} style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="Dashboard guilde" subtitle="Vue d'ensemble de Vanguard, en temps réel." />
 
       {/* ── CTA AirBuilder ── */}
@@ -220,7 +225,13 @@ export default function DashboardPage() {
                 <div style={{ flex: 1, height: 10, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden" }}>
                   <div style={{ width: `${(c.count / maxClass) * 100}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)" }} />
                 </div>
+                {/* La barre est relative à la classe la plus jouée (bonne pour comparer),
+                    mais 100 % se lisait comme « au maximum ». La part du total donne
+                    le sens réel : 3 personnages sur 14, c'est 21 % de la guilde. */}
                 <span className="font-heading" style={{ fontSize: 14, fontWeight: 600, width: 28, textAlign: "right" }}>{c.count}</span>
+                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 42, textAlign: "right" }}>
+                  {d.characters.total ? Math.round((c.count / d.characters.total) * 100) : 0} %
+                </span>
               </div>
             ))}
           </div>

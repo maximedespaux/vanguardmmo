@@ -25,10 +25,21 @@ export const RENDUS: Record<string, string> = {
 const sansAccent = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 /**
+ * Index insensible à la casse et aux accents. Indispensable : la classe s'écrit
+ * « Arbalétrier » dans les libellés affichés, « Arbaletrier » dans les clés, et
+ * « ARBALETRIER » dans l'enum Prisma. Exiger la bonne casse de chaque appelant
+ * revenait à oublier un cas quelque part.
+ */
+const INDEX: Record<string, string> = Object.fromEntries(
+  Object.entries(RENDUS).map(([k, v]) => [k.toLowerCase(), v])
+);
+
+/**
  * Illustration d'un personnage. Repli sur le rendu Garçon si le sexe est inconnu,
  * puis `null` si la classe elle-même est inconnue — à l'appelant d'afficher autre chose.
  */
 export function renduPerso(classe: string, sexe: Sexe | null | undefined): string | null {
-  const c = sansAccent(String(classe || "").trim());
-  return RENDUS[`${c}|${sexe === "F" ? "F" : "G"}`] ?? RENDUS[`${c}|G`] ?? null;
+  const c = sansAccent(String(classe || "").trim()).toLowerCase();
+  if (!c) return null;
+  return INDEX[`${c}|${sexe === "F" ? "f" : "g"}`] ?? INDEX[`${c}|g`] ?? null;
 }

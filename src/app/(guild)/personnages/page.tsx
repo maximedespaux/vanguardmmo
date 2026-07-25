@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ClassLogo } from "@/components/ClassLogo";
+import { renduPerso, type Sexe } from "@/data/charRenders";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
@@ -10,7 +11,7 @@ import { useCardFx } from "@/components/VgFx";
 const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
 const MODES = ["DPS","TANK","HYBRIDE"];
 type Gear = { id: string; name: string; mode: string };
-type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; gearProfiles: Gear[]; specializations: any[] };
+type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; sex?: string | null; gearProfiles: Gear[]; specializations: any[] };
 
 export default function PersonnagesPage() {
   // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
@@ -68,7 +69,19 @@ export default function PersonnagesPage() {
        chars.map(c => (
         <div key={c.id} style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}><ClassLogo name={c.class} size={34} /></div>
+            {/* Illustration du personnage (classe + sexe), meme visuel que la
+                candidature et l'AirBuilder : on reconnait son perso d'un coup d'oeil.
+                Repli sur le logo de classe si l'illustration manque. */}
+            <div style={{ width: 74, height: 102, flexShrink: 0, borderRadius: 11, overflow: "hidden", position: "relative",
+              background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.15), rgba(10,10,12,.9) 72%)",
+              border: "1px solid rgba(255,140,26,.28)", boxShadow: "inset 0 0 18px rgba(0,0,0,.6)",
+              display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe)
+                ? <img src={renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe)!} alt={c.name}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center",
+                      filter: "drop-shadow(0 4px 10px rgba(255,140,26,.25))" }} />
+                : <ClassLogo name={c.class} size={34} />}
+            </div>
             <div style={{ flex: 1 }}>
               <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.class} · Niveau {c.level} · Prestige {c.prestige}</div>

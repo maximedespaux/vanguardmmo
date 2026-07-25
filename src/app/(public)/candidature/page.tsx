@@ -11,7 +11,16 @@ const CLASSES = ["Spadassin","Templier","Arcaniste","Envouteur","Arbalétrier","
 const SPECS: { k: string; ic: IconName; l: string }[] = [{k:"PVE",ic:"sprout",l:"PvE / Farm"},{k:"PVP",ic:"trophy",l:"PvP & Boss"},{k:"CS",ic:"key",l:"Chambres Secrètes"}];
 const STEP_NAMES = ["Profil","Spés","Stuff","Récap"];
 
-type Char = { name: string; cls: string; prestige: number };
+// `id` présent = personnage qui existe DÉJÀ sur le compte (repris, pas ressaisi,
+// et surtout pas recréé à l'envoi). Absent = nouveau, il sera créé en base.
+type Char = { name: string; cls: string; prestige: number; id?: string };
+
+/** Libellé affiché -> valeur de l'enum Prisma (majuscules, sans accent). */
+const versEnumClasse = (label: string) =>
+  label.normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+/** Valeur de l'enum -> libellé affiché (celui de CLASSES, accents compris). */
+const depuisEnumClasse = (v: string) =>
+  CLASSES.find((c) => versEnumClasse(c) === String(v).toUpperCase()) ?? CLASSES[0];
 
 export default function CandidaturePage() {
   const { data: session } = useSession();
@@ -39,7 +48,25 @@ export default function CandidaturePage() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
-  useEffect(() => { fetch("/api/characters").then((r) => setAuthed(r.ok)).catch(() => setAuthed(false)); }, []);
+  /** Nombre de personnages repris du compte (0 = le candidat n'en avait aucun). */
+  const [persosReprisDuCompte, setPersosReprisDuCompte] = useState(0);
+  // Le même appel sert à deux choses : savoir si on est connecté, et RÉCUPÉRER les
+  // personnages déjà enregistrés sur le compte. Avant, seul `r.ok` était lu et la
+  // liste était jetée — le candidat devait tout ressaisir à la main.
+  useEffect(() => {
+    fetch("/api/characters")
+      .then(async (r) => {
+        setAuthed(r.ok);
+        if (!r.ok) return;
+        const list = await r.json();
+        if (!Array.isArray(list) || !list.length) return;
+        setChars(list.map((p: { id: string; name: string; class: string; prestige: number }) => ({
+          id: p.id, name: p.name, cls: depuisEnumClasse(p.class), prestige: p.prestige ?? 3,
+        })));
+        setPersosReprisDuCompte(list.length);
+      })
+      .catch(() => setAuthed(false));
+  }, []);
 
   // Si le candidat change la classe d'un personnage, une classe de Chambre Secrète
   // déjà cochée peut devenir orpheline : on la retire au lieu de la laisser mentir.
@@ -87,6 +114,33 @@ export default function CandidaturePage() {
   async function submit() {
     setError(""); setSending(true);
     try {
+      // Les personnages déclarés qui n'existent pas encore sont réellement créés sur
+      // le compte : ils resteront acquis (Dashboard, AirBuilder, Compositions) même
+      // si la candidature n'aboutit pas, et le candidat n'aura pas à les ressaisir.
+      const aCreer = chars.filter((c) => !c.id && c.name.trim());
+      if (aCreer.length) {
+        const faits = await Promise.all(aCreer.map((c, i) =>
+          fetch("/api/characters", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: c.name.trim(), class: versEnumClasse(c.cls), prestige: c.prestige, level: 200,
+              // Le premier personnage déclaré devient le principal s'il n'y en avait aucun.
+              isMain: persosReprisDuCompte === 0 && i === 0,
+            }),
+          }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        ));
+        // On note les identifiants obtenus pour ne pas recréer en cas de nouvel envoi.
+        setChars((prev) => {
+          const copie = [...prev];
+          aCreer.forEach((c, i) => {
+            const cree = faits[i];
+            if (!cree?.id) return;
+            const j = copie.findIndex((x) => !x.id && x.name === c.name && x.cls === c.cls);
+            if (j >= 0) copie[j] = { ...copie[j], id: cree.id };
+          });
+          return copie;
+        });
+      }
       const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
       if (!r.ok) {
         setError(r.status === 401 ? "Tu dois être connecté avec Discord pour postuler." : "Échec de l'envoi — réessaie dans un instant.");
@@ -159,7 +213,9 @@ export default function CandidaturePage() {
           {chars.map((c, i) => (
             <div key={i} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--orange)" }}> · {c.cls}</span> : null}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--orange)" }}> · {c.cls}</span> : null}
+                  {/* Repère : ce perso vient du compte, il n'est ni ressaisi ni recréé. */}
+                  {c.id && <span title="Repris de ton compte — pas besoin de le ressaisir" style={{ marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4, textTransform: "none", letterSpacing: 0, fontSize: 10.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 8px" }}><Icon name="check" size={11} />de ton compte</span>}</span>
                 {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} title="Retirer ce perso" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0 }}><Icon name="x" size={15} /></button>}
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>

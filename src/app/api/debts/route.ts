@@ -11,12 +11,28 @@ function ser(d: any) {
 export async function GET() {
   const auth = await apiAuth();
   if ("error" in auth) return auth.error;
+  // On renvoie DEUX ensembles : mes dettes (je suis débiteur) ET celles dont je
+  // suis le détenteur/créancier. Sans le second, un détenteur ne verrait jamais
+  // les dettes qu'il est censé suivre, et ne pourrait donc rien enregistrer.
+  const pseudo = (auth.user.username ?? "").trim();
   const debts = await prisma.debt.findMany({
-    where: { userId: auth.user.id },
-    include: { payments: { orderBy: { createdAt: "desc" } } },
+    where: pseudo
+      ? { OR: [{ userId: auth.user.id }, { creditor: { equals: pseudo, mode: "insensitive" } }] }
+      : { userId: auth.user.id },
+    include: {
+      payments: { orderBy: { createdAt: "desc" } },
+      user: { select: { username: true } }, // qui doit l'argent, pour la vue détenteur
+    },
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json(debts.map(ser));
+  // `role` distingue les deux vues côté interface sans qu'elle ait à comparer les pseudos.
+  return NextResponse.json(
+    debts.map((d) => ({
+      ...ser(d),
+      debtorName: d.user?.username ?? null,
+      role: d.userId === auth.user.id ? "debiteur" : "detenteur",
+    }))
+  );
 }
 
 // POST /api/debts — créer une demande de dette/prêt  { type, amount, item, reason, dueDate, characterName, creditor }

@@ -355,6 +355,7 @@ model DebtPayment {
   debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
   amount    BigInt   @default(0)
   note      String?
+  recordedBy String? // pseudo de qui a saisi le remboursement (detenteur, ou staff) — trace du suivi
   createdAt DateTime @default(now())
   @@index([debtId])
 }

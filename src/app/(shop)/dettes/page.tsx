@@ -7,8 +7,8 @@ import { Icon, type IconName } from "@/components/Icon";
 import { canAccessGuild } from "@/config/roles";
 import { useCardFx } from "@/components/VgFx";
 
-type Pay = { id: string; amount: number; note: string | null; createdAt: string };
-type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string };
+type Pay = { id: string; amount: number; note: string | null; createdAt: string; recordedBy?: string | null };
+type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string; creditor?: string | null; dueDate?: string | null; debtorName?: string | null; role?: "debiteur" | "detenteur" };
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null };
 type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number };
 type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; tiersByRarity?: Record<string, Tiers> | null; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
@@ -281,15 +281,52 @@ export default function BanquePage() {
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
                         {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={15} /></button>}
                       </div>
+                      {d.role === "detenteur" && d.debtorName && (
+                        <div style={{ fontSize: 12, marginTop: 5, color: "var(--orange)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <Icon name="user" size={13} /><b>{d.debtorName}</b> te doit cette somme
+                        </div>
+                      )}
                       {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
                       {paid > 0 && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 5 }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</div>}
-                      {d.status === "ACCEPTED" && (() => { const reste = Math.max(0, d.amount - paid); return (
+                      {d.dueDate && (
+                        <div style={{ fontSize: 12, marginTop: 5, color: "var(--gold)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <Icon name="calendar" size={13} />Remboursement promis pour le {new Date(d.dueDate).toLocaleDateString("fr-FR")}
+                        </div>
+                      )}
+                      {/* Historique : chaque remboursement, avec qui l'a saisi. C'est la
+                          trace qui permet au detenteur et au staff de suivre sans discussion. */}
+                      {d.payments.length > 0 && (
+                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--border)", display: "flex", flexDirection: "column", gap: 4 }}>
+                          {d.payments.map(p => (
+                            <div key={p.id} style={{ fontSize: 11.5, color: "var(--text-muted)", display: "flex", gap: 8, flexWrap: "wrap" }}>
+                              <Icon name="check" size={12} style={{ color: "var(--green)" }} />
+                              <b style={{ color: "var(--green)" }}>{fmt(p.amount)} périns</b>
+                              <span>· {new Date(p.createdAt).toLocaleDateString("fr-FR")}</span>
+                              {p.recordedBy && <span>· saisi par {p.recordedBy}</span>}
+                              {p.note && <span>· {p.note}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {/* Le remboursement est saisi par le DETENTEUR de l'objet (ou le
+                          staff), pas par le debiteur : il attesterait de son propre
+                          paiement. On n'affiche donc le champ qu'aux personnes autorisees. */}
+                      {d.status === "ACCEPTED" && (() => {
+                        const reste = Math.max(0, d.amount - paid);
+                        const jeSuisDetenteur = d.role === "detenteur";
+                        if (!jeSuisDetenteur && !canDelete) return (
+                          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 9, display: "flex", alignItems: "center", gap: 7 }}>
+                            <Icon name="info" size={13} />
+                            {d.creditor ? <>C&apos;est <b style={{ color: "var(--text)" }}>{d.creditor}</b> qui enregistre les remboursements reçus.</> : "Le détenteur de l'objet enregistre les remboursements reçus."}
+                          </div>
+                        );
+                        return (
                         <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                          <input type="number" min={1} max={reste} placeholder="Montant à rembourser…" value={payAmt[d.id] ?? ""} onChange={e => setPayAmt(p => ({ ...p, [d.id]: e.target.value }))} style={{ width: 150, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
-                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="coins" size={14} /> Rembourser</button>
+                          <input type="number" min={1} max={reste} placeholder="Montant reçu…" value={payAmt[d.id] ?? ""} onChange={e => setPayAmt(p => ({ ...p, [d.id]: e.target.value }))} style={{ width: 150, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
+                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="coins" size={14} /> J&apos;ai reçu</button>
                           <button onClick={() => setPayAmt(p => ({ ...p, [d.id]: String(reste) }))} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>Tout ({fmt(reste)})</button>
                         </div>
-                      ); })()}
+                        ); })()}
                     </div>
                   );
                 })}

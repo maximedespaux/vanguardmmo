@@ -120,6 +120,7 @@ model Character {
   class          CharacterClass
   level          Int             @default(200)
   prestige       Int             @default(1)
+  sex            String?         // "G" | "F" — choisit l'illustration du personnage (cf. src/data/charRenders.ts)
   isMain         Boolean         @default(false)
   specialization SpecType?       // spécialité principale (optionnelle)
   createdAt      DateTime        @default(now())

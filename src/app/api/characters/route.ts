@@ -27,6 +27,8 @@ export async function POST(req: Request) {
       class: b.class,
       level: Number(b.level) || 200,
       prestige: Number(b.prestige) || 1,
+      // "G" ou "F" : choisit l'illustration du personnage. Toute autre valeur est ignoree.
+      sex: b.sex === "F" || b.sex === "G" ? b.sex : null,
       isMain: !!b.isMain,
       specialization: b.specialization ?? null,
     },

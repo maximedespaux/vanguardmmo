@@ -7,6 +7,7 @@ import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { canAccessGuild } from "@/config/roles";
 import { useCardFx } from "@/components/VgFx";
+import { renduPerso, type Sexe } from "@/data/charRenders";
 
 const CLASSES = ["Spadassin","Templier","Arcaniste","Envouteur","Arbalétrier","Sylphide","Primat","Chanoine"];
 const SPECS: { k: string; ic: IconName; l: string }[] = [{k:"PVE",ic:"sprout",l:"PvE / Farm"},{k:"PVP",ic:"trophy",l:"PvP & Boss"},{k:"CS",ic:"key",l:"Chambres Secrètes"}];
@@ -14,7 +15,7 @@ const STEP_NAMES = ["Profil","Spés","Stuff","Récap"];
 
 // `id` présent = personnage qui existe DÉJÀ sur le compte (repris, pas ressaisi,
 // et surtout pas recréé à l'envoi). Absent = nouveau, il sera créé en base.
-type Char = { name: string; cls: string; prestige: number; id?: string };
+type Char = { name: string; cls: string; prestige: number; id?: string; sex?: Sexe };
 
 /** Libellé affiché -> valeur de l'enum Prisma (majuscules, sans accent). */
 const versEnumClasse = (label: string) =>
@@ -28,7 +29,7 @@ export default function CandidaturePage() {
   useCardFx();
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
-  const [chars, setChars] = useState<Char[]>([{ name: "", cls: "Spadassin", prestige: 3 }]);
+  const [chars, setChars] = useState<Char[]>([{ name: "", cls: "Spadassin", prestige: 3, sex: "G" }]);
   const [specs, setSpecs] = useState<string[]>([]);
   const [csChars, setCsChars] = useState(1);              // 1 ou 2 persos en CS
   const [favClasses, setFavClasses] = useState<string[]>([]); // classes à mettre en avant
@@ -71,8 +72,9 @@ export default function CandidaturePage() {
         if (!r.ok) return;
         const list = await r.json();
         if (!Array.isArray(list) || !list.length) return;
-        setChars(list.map((p: { id: string; name: string; class: string; prestige: number }) => ({
+        setChars(list.map((p: { id: string; name: string; class: string; prestige: number; sex?: string | null }) => ({
           id: p.id, name: p.name, cls: depuisEnumClasse(p.class), prestige: p.prestige ?? 3,
+          sex: p.sex === "F" ? "F" : "G",
         })));
         setPersosReprisDuCompte(list.length);
       })
@@ -187,7 +189,7 @@ export default function CandidaturePage() {
           fetch("/api/characters", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              name: c.name.trim(), class: versEnumClasse(c.cls), prestige: c.prestige, level: 200,
+              name: c.name.trim(), class: versEnumClasse(c.cls), prestige: c.prestige, level: 200, sex: c.sex ?? "G",
               // Le premier personnage déclaré devient le principal s'il n'y en avait aucun.
               isMain: persosReprisDuCompte === 0 && i === 0,
             }),
@@ -282,16 +284,43 @@ export default function CandidaturePage() {
                   {c.id && <span title="Repris de ton compte — pas besoin de le ressaisir" style={{ marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4, textTransform: "none", letterSpacing: 0, fontSize: 10.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 8px" }}><Icon name="check" size={11} />de ton compte</span>}</span>
                 {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} title="Retirer ce perso" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0 }}><Icon name="x" size={15} /></button>}
               </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 44, height: 44, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={30} /></button>; })}
-              </div>
+              {/* Illustration du personnage (classe + sexe) a gauche, reglages a droite —
+                  meme visuel que l'AirBuilder, pour qu'on reconnaisse son perso d'un coup d'oeil. */}
+              <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                <div style={{ flexShrink: 0, width: 96, height: 132, borderRadius: 12, overflow: "hidden", position: "relative",
+                  background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.14), rgba(10,10,12,.9) 72%)",
+                  border: "1px solid rgba(255,140,26,.28)", boxShadow: "inset 0 0 22px rgba(0,0,0,.6)" }}>
+                  {renduPerso(c.cls, c.sex) ? (
+                    <img src={renduPerso(c.cls, c.sex)!} alt={`${c.cls} ${c.sex === "F" ? "Fille" : "Garçon"}`}
+                      style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center",
+                        filter: "drop-shadow(0 5px 12px rgba(255,140,26,.25))" }} />
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-muted)" }}><Icon name="user" size={30} /></div>
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                    {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={28} /></button>; })}
+                  </div>
+                  {/* Le sexe change l'illustration : on le choisit ici, comme dans l'AirBuilder. */}
+                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                    {(["G", "F"] as const).map(sx => { const sel = (c.sex ?? "G") === sx; return (
+                      <button key={sx} onClick={() => { const n = [...chars]; n[i].sex = sx; setChars(n); }}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 8, cursor: "pointer",
+                          border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,.14)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text-muted)" }}>
+                        <Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}
+                      </button>
+                    ); })}
+                  </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <input placeholder="Nom du personnage" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
                 <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
               </div>
+                </div>
+              </div>
             </div>
           ))}
-          <button onClick={() => setChars([...chars, { name: "", cls: "Chanoine", prestige: 3 }])} style={{ ...btnG, marginTop: 10 }}>+ Ajouter un personnage</button>
+          <button onClick={() => setChars([...chars, { name: "", cls: "Chanoine", prestige: 3, sex: "G" }])} style={{ ...btnG, marginTop: 10 }}>+ Ajouter un personnage</button>
           <div style={{ marginTop: 18, textAlign: "right" }}><button onClick={() => setStep(2)} disabled={!canNext(1)} className="vg-btn" style={{ opacity: canNext(1) ? 1 : 0.4 }}>Suivant →</button></div>
         </div>
       )}

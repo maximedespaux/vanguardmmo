@@ -43,6 +43,11 @@ export async function POST(req: Request) {
 
   const specLabels: Record<string, string> = { PVE: "🌾 PvE", PVP: "🏆 PvP & Boss", CS: "🗝️ Chambres Secrètes" };
   const chars = (body.chars ?? []).map((c: any) => `• **${c.name}** — ${c.cls} (P${c.prestige})`).join("\n") || "—";
+  // Base publique du site : sans elle on n'affiche simplement pas le lien.
+  const base = (process.env.NEXTAUTH_URL ?? "").replace(/\/+$/, "");
+  const buildUrl = base && body.fullBuild && user.username
+    ? `${base}/builder/${encodeURIComponent(user.username)}`
+    : null;
   const embed = {
     title: `📋 Nouvelle candidature — ${user.username}`,
     description: `<@${user.discordId}> souhaite rejoindre Vanguard.`,
@@ -51,6 +56,11 @@ export async function POST(req: Request) {
       { name: "👥 Personnages", value: chars },
       { name: "⚡ Spécialisations", value: (body.specs ?? []).map((s: string) => specLabels[s] ?? s).join(" · ") || "—" },
       ...(body.build ? [{ name: "🛠️ Build", value: `**${body.build.name || "Perso"}** — ${body.build.className} (P${body.build.prestige})` + (body.build.stats ? "\n" + Object.entries(body.build.stats).slice(0, 5).map(([k, v]) => `${k} +${v}`).join(" · ") : "") }] : []),
+      // Lien vers le build, pour que le staff l'ouvre sans le redemander.
+      // On pointe la vue STAFF (/builder/<pseudo>) et non un lien public : activer
+      // le partage public à la place du candidat serait une décision qui ne nous
+      // appartient pas.
+      ...(buildUrl ? [{ name: "🔗 Voir le build", value: `[Ouvrir le build de ${user.username}](${buildUrl})` }] : []),
       { name: "🎯 Intérêts", value: (body.interests ?? "—").slice(0, 1000) },
       { name: "🔥 Motivation", value: (body.motivation ?? "—").slice(0, 1000) },
       { name: "📜 Expérience", value: (body.experience ?? "—").slice(0, 1000) },

@@ -41,9 +41,45 @@ export default function CandidaturePage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   useEffect(() => { fetch("/api/characters").then((r) => setAuthed(r.ok)).catch(() => setAuthed(false)); }, []);
 
+  // Si le candidat change la classe d'un personnage, une classe de Chambre Secrète
+  // déjà cochée peut devenir orpheline : on la retire au lieu de la laisser mentir.
+  useEffect(() => {
+    const dispo = new Set(chars.map(c => c.cls));
+    setFavClasses(f => (f.every(c => dispo.has(c)) ? f : f.filter(c => dispo.has(c))));
+  }, [chars]);
+
+  // Ramener csChars au nombre de personnages réellement déclarés.
+  useEffect(() => {
+    setCsChars(n => (n > chars.length ? Math.max(1, chars.length) : n));
+  }, [chars.length]);
+
+  // ── Cohérence de la candidature ───────────────────────────────────────────
+  // Avant, personnages / classes de Chambre Secrète / build étaient trois listes
+  // indépendantes : on pouvait déclarer un Primat, cocher Spadassin + Templier et
+  // joindre un build d'Arbalétrier sans que rien ne soit signalé. Tout est
+  // désormais dérivé des personnages réellement déclarés.
+
+  /** Classes des personnages déclarés (dédupliquées) : seules jouables en CS. */
+  const classesJouables = Array.from(new Set(chars.map(c => c.cls).filter(Boolean)));
+  /** Classe du build joint, telle que l'AirBuilder l'a exportée. */
+  const classeDuBuild: string | null = buildExport ? (buildExport.cls ?? buildExport.className ?? null) : null;
+
   // Build réellement exporté depuis le Stuff Builder (la case à cocher seule ne suffit plus).
   const stuffOk = !!buildExport;
-  const valid = chars.every(c => c.name.trim()) && specs.length > 0 && interests.trim() && motivation.trim() && experience.trim() && stuffOk;
+  // Le build doit correspondre à l'un des personnages déclarés.
+  const buildCoherent = !buildExport || !classeDuBuild || classesJouables.includes(classeDuBuild);
+  // Jouer 2 persos en Chambre Secrète suppose d'en avoir déclaré 2.
+  const csAssezDePersos = !specs.includes("CS") || chars.length >= csChars;
+  // Les classes retenues pour la CS doivent appartenir aux personnages déclarés.
+  const favCoherentes = favClasses.every(c => classesJouables.includes(c));
+
+  const problemes: string[] = [];
+  if (buildExport && !buildCoherent) problemes.push(`Le build joint est un ${classeDuBuild}, or aucun de tes personnages n'a cette classe.`);
+  if (!csAssezDePersos) problemes.push(`Tu veux jouer ${csChars} personnages en Chambre Secrète : déclare-en ${csChars}.`);
+  if (!favCoherentes) problemes.push("Une classe retenue pour la Chambre Secrète ne correspond à aucun de tes personnages.");
+
+  const valid = chars.every(c => c.name.trim()) && specs.length > 0 && interests.trim()
+    && motivation.trim() && experience.trim() && stuffOk && problemes.length === 0;
 
   const toggleSpec = (k: string) => setSpecs(s => s.includes(k) ? s.filter(x => x !== k) : [...s, k]);
   const toggleFav = (c: string) => setFavClasses(s => s.includes(c) ? s.filter(x => x !== c) : s.length >= csChars ? s : [...s, c]);
@@ -151,13 +187,13 @@ export default function CandidaturePage() {
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Combien de personnages souhaites-tu jouer en Chambre Secrète ?</label>
                 <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  {[1, 2].map(n => <button key={n} onClick={() => { setCsChars(n); setFavClasses(f => f.slice(0, n)); }} style={{ padding: "8px 20px", borderRadius: 8, cursor: "pointer", border: `1px solid ${csChars === n ? "var(--orange)" : "var(--border)"}`, background: csChars === n ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: csChars === n ? "var(--orange)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>)}
+                  {[1, 2].map(n => { const trop = n > chars.length; return <button key={n} disabled={trop} title={trop ? `Déclare ${n} personnages à l'étape précédente pour choisir cette option.` : undefined} onClick={() => { setCsChars(n); setFavClasses(f => f.slice(0, n)); }} style={{ padding: "8px 20px", borderRadius: 8, cursor: trop ? "not-allowed" : "pointer", opacity: trop ? 0.4 : 1, border: `1px solid ${csChars === n ? "var(--orange)" : "var(--border)"}`, background: csChars === n ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: csChars === n ? "var(--orange)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>; })}
                 </div>
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Quelle(s) classe(s) veux-tu jouer en Chambre Secrète ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars})</span></label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={c} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}</button>; })}
+                  {classesJouables.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={c} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}</button>; })}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>
@@ -209,6 +245,18 @@ export default function CandidaturePage() {
             <div><b><Icon name="book" size={14} style={ico} />Expérience :</b> {experience || "—"}</div>
             <div><b><Icon name="sword" size={14} style={ico} />Stuff :</b> build configuré <Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} /></div>
           </div>
+          {/* Incohérences bloquantes : on dit précisément quoi corriger, plutôt que
+              de désactiver le bouton d'envoi sans explication. */}
+          {problemes.length > 0 && (
+            <div style={{ marginTop: 16, background: "rgba(255,140,26,.09)", border: "1px solid rgba(255,140,26,.4)", borderRadius: 10, padding: "13px 15px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--orange)", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+                <Icon name="alert" size={15} />À corriger avant d&apos;envoyer
+              </div>
+              <ul style={{ margin: 0, paddingLeft: 20, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.65 }}>
+                {problemes.map(p => <li key={p}>{p}</li>)}
+              </ul>
+            </div>
+          )}
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between" }}>
             <button onClick={() => setStep(3)} style={btnG}>← Retour</button>
             <button onClick={submit} disabled={!valid || sending || sent} className="vg-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7, opacity: valid && !sending && !sent ? 1 : 0.4 }}>{sending ? "Envoi…" : <><Icon name="send" size={15} />Soumettre sur Discord</>}</button>

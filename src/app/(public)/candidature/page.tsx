@@ -472,7 +472,7 @@ export default function CandidaturePage() {
               <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>Configure ton build, puis clique <b style={{ color: "var(--green)" }}>« Valider ce build »</b> en bas ↓ (ça se ferme tout seul)</span>
               <button onClick={() => setShowBuilder(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 12, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}><Icon name="x" size={16} /></button>
             </div>
-            <iframe src="/builder.html" style={{ flex: 1, border: "none", width: "100%" }} title="Stuff Builder" />
+            <iframe src="/builder?embed=1" style={{ flex: 1, border: "none", width: "100%" }} title="Stuff Builder" />
           </div>
         </div>
       )}

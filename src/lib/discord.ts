@@ -51,4 +51,24 @@ export async function envoyerMP(discordId: string, payload: unknown): Promise<bo
 }
 
 /** Couleurs d'embed alignées sur la charte (orange, vert de réussite, rouge). */
+/**
+ * Ajoute un rôle à un membre. Échoue silencieusement (false) : le bot peut
+ * manquer de MANAGE_ROLES, ou le rôle peut être au-dessus du sien dans la
+ * hiérarchie Discord. Ce n'est jamais bloquant pour la connexion.
+ */
+export async function attribuerRole(discordId: string, roleId: string): Promise<boolean> {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!token || !guildId || !discordId || !roleId) return false;
+  try {
+    const res = await fetch(`${API}/guilds/${guildId}/members/${discordId}/roles/${roleId}`, {
+      method: "PUT",
+      headers: { Authorization: `Bot ${token}`, "Content-Length": "0" },
+    });
+    return res.ok; // 204 si ajouté, 204 aussi s'il l'avait déjà
+  } catch {
+    return false;
+  }
+}
+
 export const COULEURS = { orange: 0xff8c1a, vert: 0x4ade80, rouge: 0xf87171 } as const;

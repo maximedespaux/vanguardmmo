@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canAccessGuild, canAccessAdmin, rankValue } from "@/config/roles";
+import { canAccessGuild, canAccessAdmin, canAccessVerified, rankValue } from "@/config/roles";
 import type { Role, User } from "@prisma/client";
 import { DEV_ALL } from "@/lib/devAccess";
 
@@ -46,6 +46,19 @@ export async function requireGuild(): Promise<User> {
   if (!canAccessGuild(user.role)) redirect("/login?error=guild");
   return user;
 }
+/**
+ * Membre du serveur Discord (pas forcément de la guilde en jeu).
+ * Utilisé par /builder : un candidat doit pouvoir construire son build,
+ * puisque la candidature le lui demande.
+ */
+export async function requireVerified(): Promise<User> {
+  const user = await requireAuth();
+  if (!canAccessVerified(user.role, user.discordRoles ?? [], (user as { verifiedAt?: Date | null }).verifiedAt)) {
+    redirect("/login?error=discord");
+  }
+  return user;
+}
+
 export async function requireAdmin(): Promise<User> {
   const user = await requireAuth();
   if (!canAccessAdmin(user.role)) redirect("/login?error=admin");

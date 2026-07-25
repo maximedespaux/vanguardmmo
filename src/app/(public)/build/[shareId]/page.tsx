@@ -1,4 +1,4 @@
-import "@/app/(guild)/builder/airbuilder.css";
+import "@/app/(verified)/builder/airbuilder.css";
 import { SharedBuildViewer } from "./SharedBuildViewer";
 
 // Vue PUBLIQUE d'un build partagé (lisible sans login si le build est public).

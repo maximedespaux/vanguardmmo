@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { BUILDER_MARKUP } from "@/app/(guild)/builder/markup";
+import { BUILDER_MARKUP } from "@/app/(verified)/builder/markup";
 import { CS_SLOTS } from "../../slots";
 import { canAccessAdmin } from "@/config/roles";
 import { Icon } from "@/components/Icon";

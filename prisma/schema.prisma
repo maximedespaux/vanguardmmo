@@ -85,6 +85,9 @@ model User {
   username      String                     // pseudo Discord
   avatar        String?                    // hash avatar Discord
   role          Role     @default(RECRUE)  // plus haut rôle, synchronisé depuis Discord à la connexion
+  /// Date de la 1re connexion constatée en tant que membre du serveur Discord.
+  /// Sert de niveau d'accès intermédiaire (candidat) : voir canAccessVerified.
+  verifiedAt   DateTime?
   discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
   isActive      Boolean  @default(true)
   builderBlob   Json?                       // état complet du Stuff Builder (sync cross-device)

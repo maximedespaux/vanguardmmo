@@ -10,6 +10,7 @@ declare module "next-auth" {
       image?: string | null;
       role: Role;            // plus haut rôle (synchronisé Discord)
       discordRoles: string[];
+      verifie: boolean;
     };
   }
 }
@@ -19,5 +20,6 @@ declare module "next-auth/jwt" {
     discordId?: string;
     role?: Role;
     discordRoles?: string[];
+    verifie?: boolean;
   }
 }

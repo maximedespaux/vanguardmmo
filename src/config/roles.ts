@@ -28,5 +28,31 @@ export function highestRoleFromDiscord(memberRoleIds: string[]): Role {
   return "RECRUE";
 }
 export function canAccessGuild(role: Role) { return GUILD_ROLES.includes(role); }
+
+/**
+ * Rôle Discord « Vérifié(e) », attribué automatiquement dès qu'un joueur se
+ * connecte au site ET qu'il est membre du serveur Vanguard.
+ * C'est le marqueur visible côté Discord ; côté site l'autorité reste le
+ * champ User.verifiedAt (voir canAccessVerified).
+ */
+export const ROLE_VERIFIE_ID = "1530581532752875680";
+
+/**
+ * Niveau intermédiaire : membre du serveur Discord, mais pas (encore) membre
+ * de la guilde en jeu. Suffisant pour créer des personnages et un build —
+ * c'est ce que la candidature exige, donc un candidat doit pouvoir le faire.
+ *
+ * On accepte trois preuves, de la plus fiable à la plus faible, parce qu'aucune
+ * n'est garantie seule : verifiedAt (constaté à la connexion), le rôle Discord
+ * (peut échouer si le bot manque de MANAGE_ROLES), et le rôle de guilde
+ * (un membre confirmé est évidemment sur le serveur).
+ */
+export function canAccessVerified(
+  role: Role,
+  discordRoles: string[] = [],
+  verifiedAt?: Date | string | null,
+) {
+  return canAccessGuild(role) || Boolean(verifiedAt) || discordRoles.includes(ROLE_VERIFIE_ID);
+}
 export function canAccessAdmin(role: Role) { return ADMIN_ROLES.includes(role); }
 export function rankValue(role: Role) { return ROLE_RANK.length - ROLE_RANK.indexOf(role); }

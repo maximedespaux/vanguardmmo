@@ -7,7 +7,7 @@ import { canAccessGuild, canAccessAdmin, rankValue } from "@/config/roles";
 import type { Role, User } from "@prisma/client";
 import { DEV_ALL } from "@/lib/devAccess";
 
-// 🔓 Mode dev local (DEV_ALL) : crée/utilise un vrai User « dev » (rôle DIRECTION) pour
+// Mode dev local (DEV_ALL) : crée/utilise un vrai User « dev » (rôle DIRECTION) pour
 //    simuler la prod sans Discord. Source unique : src/lib/devAccess.ts (fail-closed en prod).
 
 async function devUser(): Promise<User> {

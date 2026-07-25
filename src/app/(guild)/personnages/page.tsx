@@ -15,11 +15,13 @@ export default function PersonnagesPage() {
   const [chars, setChars] = useState<Char[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState(""); const [cls, setCls] = useState("SPADASSIN"); const [prestige, setPrestige] = useState(3); const [level, setLevel] = useState(200); const [isMain, setIsMain] = useState(false);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const [gearModal, setGearModal] = useState<{ charId: string; mode: string } | null>(null);
   const [gearName, setGearName] = useState("");
-  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2500); };
+  // ok = succès (vert + coche) ; sinon neutre. Avant, la couleur dépendait d'un
+  // préfixe du message, ce qui rendait le texte porteur de logique.
+  const flash = (m: string, ok = false) => { setToast({ msg: m, ok }); setTimeout(() => setToast(null), 2500); };
 
   const load = async () => { setLoading(true); try { const r = await fetch("/api/characters"); if (r.ok) setChars(await r.json()); } catch {} setLoading(false); };
   useEffect(() => { load(); }, []);
@@ -27,11 +29,11 @@ export default function PersonnagesPage() {
   const createChar = async () => {
     if (!name.trim()) { flash("Donne un nom au personnage."); return; }
     const r = await fetch("/api/characters", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, class: cls, prestige, level, isMain }) });
-    if (r.ok) { setName(""); setIsMain(false); load(); flash("✅ Personnage créé."); } else flash("Erreur lors de la création.");
+    if (r.ok) { setName(""); setIsMain(false); load(); flash("Personnage créé.", true); } else flash("Erreur lors de la création.");
   };
   const doDelChar = async () => { if (!confirmDel) return; await fetch(`/api/characters/${confirmDel}`, { method: "DELETE" }); setConfirmDel(null); load(); flash("Personnage supprimé."); };
   const openGear = (charId: string, mode: string) => { setGearName(`Stuff ${mode}`); setGearModal({ charId, mode }); };
-  const doAddGear = async () => { if (!gearModal) return; await fetch(`/api/characters/${gearModal.charId}/gear`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: gearName || `Stuff ${gearModal.mode}`, mode: gearModal.mode }) }); setGearModal(null); load(); flash("✅ Stuff ajouté."); };
+  const doAddGear = async () => { if (!gearModal) return; await fetch(`/api/characters/${gearModal.charId}/gear`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: gearName || `Stuff ${gearModal.mode}`, mode: gearModal.mode }) }); setGearModal(null); load(); flash("Stuff ajouté.", true); };
   const delGear = async (gearId: string) => { await fetch(`/api/gear/${gearId}`, { method: "DELETE" }); load(); };
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
@@ -42,7 +44,7 @@ export default function PersonnagesPage() {
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
       <PageHeader icon="users" title="Mes Personnages" subtitle="Crée d'abord ton personnage (nom, classe, prestige, niveau), puis configure un ou plusieurs stuffs (DPS / Tank / Hybride). Le Suivi & axes utilisera ces personnages." />
 
-      {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.startsWith("✅") ? "var(--green)" : "var(--text)", fontSize: 13 }}>{toast}</div>}
+      {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>{toast.ok && <Icon name="check" size={15} />}{toast.msg}</div>}
 
       {/* Création */}
       <div style={card}>
@@ -59,7 +61,7 @@ export default function PersonnagesPage() {
 
       {/* Liste */}
       {loading ? <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 30 }}>Chargement…</div> :
-       chars.length === 0 ? <div style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun personnage. Crée ton premier ci-dessus 👆</div> :
+       chars.length === 0 ? <div style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun personnage. Crée ton premier ci-dessus</div> :
        chars.map(c => (
         <div key={c.id} style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>

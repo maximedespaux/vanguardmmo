@@ -11,14 +11,14 @@ type Char = { id: string; name: string; class: string; level: number; prestige: 
 type DebtLite = { id: string; item: string | null; amount: number; status: string };
 type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; debts: DebtLite[]; _count: { transactions: number; absences: number } };
 
-const ROLE_META: Record<string, { emoji: string; label: string; color: string }> = {
-  DIRECTION: { emoji: "🛡️", label: "Direction", color: "var(--red)" },
-  VANGUARD: { emoji: "👑", label: "Vanguard", color: "var(--gold)" },
-  GENERAL: { emoji: "🧭", label: "Général", color: "var(--orange)" },
-  OFFICIER: { emoji: "🔥", label: "Officier", color: "var(--orange)" },
-  VETERAN: { emoji: "📋", label: "Vétéran", color: "var(--blue)" },
-  GUARD: { emoji: "⚔️", label: "Guard", color: "var(--blue)" },
-  RECRUE: { emoji: "🌱", label: "Recrue", color: "var(--text-muted)" },
+const ROLE_META: Record<string, { icon: IconName; label: string; color: string }> = {
+  DIRECTION: { icon: "shield", label: "Direction", color: "var(--red)" },
+  VANGUARD: { icon: "crown", label: "Vanguard", color: "var(--gold)" },
+  GENERAL: { icon: "compass", label: "Général", color: "var(--orange)" },
+  OFFICIER: { icon: "flame", label: "Officier", color: "var(--orange)" },
+  VETERAN: { icon: "clipboard", label: "Vétéran", color: "var(--blue)" },
+  GUARD: { icon: "sword-cross", label: "Guard", color: "var(--blue)" },
+  RECRUE: { icon: "sprout", label: "Recrue", color: "var(--text-muted)" },
 };
 const RANK_BADGE: Record<string, string> = { DIRECTION: "fondateur", VANGUARD: "fondateur", GENERAL: "brasdroit", OFFICIER: "brasdroit", VETERAN: "guilde", GUARD: "guilde", RECRUE: "public" };
 const RANK_ORDER = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD", "RECRUE"];
@@ -95,14 +95,14 @@ export default function GuildViewerPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(158px, 1fr))", gap: 12, marginBottom: 22 }}>
         {[
           { v: stats.members, l: "membres", c: "var(--text)", icon: "users" as IconName | null, ic: "" },
-          { v: stats.active, l: "actifs", c: "var(--green)", icon: null, ic: "🟢" },
+          { v: stats.active, l: "actifs", c: "var(--green)", icon: "user-check" as IconName | null, ic: "" },
           { v: stats.chars, l: "personnages", c: "var(--orange)", icon: "users" as IconName | null, ic: "" },
           { v: stats.builds, l: "builds", c: "var(--blue)", icon: "sword" as IconName | null, ic: "" },
           { v: stats.charsNoBuild, l: "persos sans build", c: stats.charsNoBuild ? "var(--red)" : "var(--green)", icon: "shield" as IconName | null, ic: "" },
-          { v: stats.membersNoChar, l: "membres sans perso", c: stats.membersNoChar ? "var(--gold)" : "var(--green)", icon: null, ic: "👤" },
+          { v: stats.membersNoChar, l: "membres sans perso", c: stats.membersNoChar ? "var(--gold)" : "var(--green)", icon: "user-plus" as IconName | null, ic: "" },
         ].map((s) => (
           <div key={s.l} className="gv-stat glass-card" style={{ padding: "15px 17px", position: "relative", overflow: "hidden" }}>
-            <span style={{ position: "absolute", right: -10, top: -14, fontSize: 50, opacity: 0.07, pointerEvents: "none" }}>{s.icon ? <Icon name={s.icon} size={50} /> : s.ic}</span>
+            <span style={{ position: "absolute", right: -10, top: -14, fontSize: 50, opacity: 0.07, pointerEvents: "none" }}>{s.icon ? <Icon name={s.icon} size={50} /> : null}</span>
             <span style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, background: s.c }} />
             <div className="font-heading" style={{ fontSize: 30, fontWeight: 700, color: s.c, lineHeight: 1 }}>{s.v}</div>
             <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6, textTransform: "uppercase", letterSpacing: 0.6 }}>{s.l}</div>
@@ -113,7 +113,7 @@ export default function GuildViewerPage() {
       {/* Filtres */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 18 }}>
         <input style={{ ...inp, flex: 1, minWidth: 220 }} placeholder="Rechercher un membre, un perso, une classe…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <div style={{ minWidth: 190 }}><VgSelect value={roleFilter} onChange={setRoleFilter} options={[{ value: "", label: "Tous les rangs" }, ...RANK_ORDER.map((role) => ({ value: role, label: `${ROLE_META[role]?.emoji ?? ""} ${ROLE_META[role]?.label ?? role}` }))]} /></div>
+        <div style={{ minWidth: 190 }}><VgSelect value={roleFilter} onChange={setRoleFilter} options={[{ value: "", label: "Tous les rangs" }, ...RANK_ORDER.map((role) => ({ value: role, label: ROLE_META[role]?.label ?? role }))]} /></div>
         <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13, color: onlyNoBuild ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", background: "var(--bg-3)", border: `1px solid ${onlyNoBuild ? "var(--orange)" : "var(--border)"}`, borderRadius: 9, padding: "9px 14px", transition: "border-color .15s, color .15s" }}>
           <input type="checkbox" checked={onlyNoBuild} onChange={(e) => setOnlyNoBuild(e.target.checked)} /><Icon name="alert" size={14} />À accompagner (sans build)
         </label>
@@ -135,7 +135,7 @@ export default function GuildViewerPage() {
                     <span className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{u.username}</span>
                     <span title={u.isActive ? "Actif" : "Inactif"} style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: u.isActive ? "var(--green)" : "var(--text-muted)", boxShadow: u.isActive ? "0 0 7px var(--green)" : "none" }} />
                   </div>
-                  <span style={{ display: "inline-block", marginTop: 5, fontSize: 10.5, fontWeight: 700, color: r.color, background: `color-mix(in srgb, ${r.color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${r.color} 40%, transparent)`, borderRadius: 20, padding: "2px 11px", textTransform: "uppercase", letterSpacing: 0.6 }}>{r.emoji} {r.label}</span>
+                  <span style={{ display: "inline-block", marginTop: 5, fontSize: 10.5, fontWeight: 700, color: r.color, background: `color-mix(in srgb, ${r.color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${r.color} 40%, transparent)`, borderRadius: 20, padding: "2px 11px", textTransform: "uppercase", letterSpacing: 0.6 }}><Icon name={r.icon} size={12} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{r.label}</span>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {miniStat("users", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
@@ -172,7 +172,7 @@ export default function GuildViewerPage() {
                           {c.gearProfiles.length === 0
                             ? <span style={{ fontSize: 10.5, fontWeight: 600, color: "var(--red)", background: "rgba(248,113,113,.1)", border: "1px solid var(--red)", borderRadius: 6, padding: "2px 9px" }}>aucun build</span>
                             : c.gearProfiles.map((g) => (
-                                <span key={g.id} title={`${g.name} — ❤️ ${kfmt(g.hp)} · ⚔️ ${kfmt(g.attack)} · 🛡️ ${kfmt(g.defense)} · 💥 ${g.critRate ?? 0}%`} style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, background: `color-mix(in srgb, ${modeColor(g.mode)} 13%, transparent)`, color: modeColor(g.mode), whiteSpace: "nowrap" }}>
+                                <span key={g.id} title={`${g.name} — PV ${kfmt(g.hp)} · Atq ${kfmt(g.attack)} · Déf ${kfmt(g.defense)} · Dégâts ${g.critRate ?? 0}%`} style={{ fontSize: 10.5, fontWeight: 700, padding: "3px 9px", borderRadius: 6, border: `1px solid ${modeColor(g.mode)}`, background: `color-mix(in srgb, ${modeColor(g.mode)} 13%, transparent)`, color: modeColor(g.mode), whiteSpace: "nowrap" }}>
                                   {g.mode}{g.weaponRarity ? ` · ${RARITY_FR[g.weaponRarity] ?? g.weaponRarity}` : ""}
                                 </span>
                               ))}

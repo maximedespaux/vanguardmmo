@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════
 //  MOTEUR DE STATS — formules de combat Flyff
 //  Implémente les formules de references/FORMULES_FR.md.
-//  ⚠️ Constantes officielles : à confirmer/ajuster pour AirFlyff (TODO).
+//  Constantes officielles : à confirmer/ajuster pour AirFlyff (TODO).
 //  Les facteurs par classe (autoAttackFactors, maxHP) peuvent être
 //  récupérés depuis l'API officielle — cf. references/API_OFFICIELLE_FR.md §5.
 // ════════════════════════════════════════════════════════════

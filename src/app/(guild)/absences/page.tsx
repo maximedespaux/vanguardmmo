@@ -33,7 +33,7 @@ export default function AbsencesPage() {
     setSending(true);
     const r = await fetch("/api/absences", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ startDate: start, endDate: end, reason }) });
     setSending(false);
-    if (r.ok) { setStart(""); setEnd(""); setReason(""); flash("Demande d'absence envoyée ✓ — le staff est prévenu."); load(); }
+    if (r.ok) { setStart(""); setEnd(""); setReason(""); flash("Demande d'absence envoyée — le staff est prévenu."); load(); }
     else flash("Erreur — réessaie.");
   };
 

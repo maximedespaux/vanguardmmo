@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { BUILDER_MARKUP } from "../markup";
 import { ensureVgIcons } from "@/lib/vanillaLoader";
+import { Icon } from "@/components/Icon";
 
 // Vue lecture seule du build d'un membre (pour le staff, depuis le GuildViewer).
 // version → ouvre un snapshot archivé (#7) au lieu du build courant.
@@ -67,7 +68,9 @@ export function BuilderViewer({ user, version }: { user: string; version?: strin
     <>
       <style>{`.builder-readonly .actions{display:none}`}</style>
       <div style={{ margin: "0 0 12px", padding: "9px 14px", borderRadius: 10, background: "rgba(255,140,26,.10)", border: "1px solid rgba(255,140,26,.35)", color: "var(--orange)", fontSize: 13, fontWeight: 600 }}>
-        {version ? "🕘 Ancienne version" : "👁️ Mode lecture"} — build de <b>{who || "ce membre"}</b> (consultation, non modifiable).
+        {version
+          ? <><Icon name="clock" size={15} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 6 }} />Ancienne version</>
+          : <><Icon name="eye" size={15} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 6 }} />Mode lecture</>} — build de <b>{who || "ce membre"}</b> (consultation, non modifiable).
       </div>
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
     </>

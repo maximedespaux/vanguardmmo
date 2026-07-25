@@ -79,7 +79,7 @@ export default function DonjonsPage() {
       <div key={tab} className="vg-swap">
       {tab === "suivi" && (<>
         <div style={card}>
-          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 14 }}>📊 7 derniers jours</h2>
+          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 14 }}><Icon name="bar-chart" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />7 derniers jours</h2>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120 }}>
             {last7.map(dk => { const v = dayTotal(dk); return (
               <div key={dk} onClick={() => setDay(dk)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer" }}>
@@ -92,7 +92,7 @@ export default function DonjonsPage() {
         </div>
         <div style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-            <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, flex: 1 }}>📅 {frDay(day)}</h2>
+            <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, flex: 1 }}><Icon name="calendar" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />{frDay(day)}</h2>
             <input type="date" value={day} onChange={e => setDay(e.target.value)} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)" }} />
           </div>
           {dungeons.map(d => { const c = (logs[day] || {})[d.id] || 0; return (
@@ -109,25 +109,25 @@ export default function DonjonsPage() {
 
       {tab === "rapport" && (<>
         <div style={card}>
-          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>1️⃣ Choisis le donjon</h2>
+          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>1⃣ Choisis le donjon</h2>
           <VgSelect full value={curId} onChange={v => { setCurId(v ? +v : ""); setReceived({}); }} options={[{ value: "", label: `— Sélectionner parmi les ${dungeons.length} donjons —` }, ...dungeons.map(d => ({ value: String(d.id), label: `${d.icon} ${d.name}${d.prestige ? ` (P${d.prestige})` : ""}` }))]} />
           {cur && <div style={{ marginTop: 14 }}><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Bonus actifs (drop +)</div><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{BONUSES.map(b => { const on = bonuses[b]; return <button key={b} onClick={() => setBonuses({ ...bonuses, [b]: !on })} style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`, background: on ? "rgba(255,140,26,0.12)" : "var(--bg-3)", color: on ? "var(--orange)" : "var(--text-muted)" }}>{b}</button>; })}</div></div>}
         </div>
         {cur && <div style={card}>
-          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>2️⃣ Objets reçus — {cur.icon} {cur.name}</h2>
+          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>2⃣ Objets reçus — {cur.icon} {cur.name}</h2>
           {cur.drops.map((d, i) => { const rec = received[i]; const weap = isWeapon(d); return (
             <div key={i} style={{ background: "var(--bg-3)", borderRadius: 10, padding: 12, marginBottom: 8, borderLeft: `3px solid ${rec ? (rec.trash ? "var(--text-muted)" : rec.rarity ? rarColor(rec.rarity) : "var(--green)") : "transparent"}` }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                <button onClick={() => toggleDrop(i)} style={{ padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 13, border: `1px solid ${rec ? "var(--green)" : "var(--border)"}`, background: rec ? "rgba(74,222,128,0.12)" : "var(--bg-2)", color: rec ? "var(--green)" : "var(--text)" }}>{rec ? "✓ " : ""}{d}</button>
+                <button onClick={() => toggleDrop(i)} style={{ padding: "6px 12px", borderRadius: 7, cursor: "pointer", fontSize: 13, border: `1px solid ${rec ? "var(--green)" : "var(--border)"}`, background: rec ? "rgba(74,222,128,0.12)" : "var(--bg-2)", color: rec ? "var(--green)" : "var(--text)" }}>{rec ? "" : ""}{d}</button>
                 {rec && <input type="number" min={1} value={rec.qty} onChange={e => setReceived({ ...received, [i]: { ...rec, qty: +e.target.value || 1 } })} style={{ width: 64, padding: 5, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--text)" }} />}
-                {rec && weap && <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{RARITIES.map(r => <button key={r.k} onClick={() => setReceived({ ...received, [i]: { ...rec, rarity: r.k, trash: false } })} style={{ padding: "4px 9px", borderRadius: 6, cursor: "pointer", fontSize: 11, border: `1px solid ${rec.rarity === r.k ? r.c : "var(--border)"}`, background: rec.rarity === r.k ? r.c + "22" : "var(--bg-2)", color: rec.rarity === r.k ? r.c : "var(--text-muted)" }}>{r.l}</button>)}<button onClick={() => setReceived({ ...received, [i]: { ...rec, trash: true, rarity: null } })} style={{ padding: "4px 9px", borderRadius: 6, cursor: "pointer", fontSize: 11, border: `1px solid ${rec.trash ? "var(--text-muted)" : "var(--border)"}`, background: "var(--bg-2)", color: "var(--text-muted)" }}>🗑️ Trash</button></div>}
+                {rec && weap && <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>{RARITIES.map(r => <button key={r.k} onClick={() => setReceived({ ...received, [i]: { ...rec, rarity: r.k, trash: false } })} style={{ padding: "4px 9px", borderRadius: 6, cursor: "pointer", fontSize: 11, border: `1px solid ${rec.rarity === r.k ? r.c : "var(--border)"}`, background: rec.rarity === r.k ? r.c + "22" : "var(--bg-2)", color: rec.rarity === r.k ? r.c : "var(--text-muted)" }}>{r.l}</button>)}<button onClick={() => setReceived({ ...received, [i]: { ...rec, trash: true, rarity: null } })} style={{ padding: "4px 9px", borderRadius: 6, cursor: "pointer", fontSize: 11, border: `1px solid ${rec.trash ? "var(--text-muted)" : "var(--border)"}`, background: "var(--bg-2)", color: "var(--text-muted)" }}><Icon name="trash" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />Trash</button></div>}
               </div>
             </div>
           ); })}
-          <button onClick={logRun} style={{ marginTop: 14 }} className="vg-btn">✅ Enregistrer l'instance</button>
+          <button onClick={logRun} style={{ marginTop: 14 }} className="vg-btn"><Icon name="check" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />Enregistrer l'instance</button>
         </div>}
         <div style={card}>
-          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>📈 Butin</h2>
+          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}><Icon name="trending" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />Butin</h2>
           <div className="vg-subtabs">{(["donjon", "jour", "mois"] as const).map(v => <button key={v} onClick={() => setRView(v)} className={`vg-subtab ${rView === v ? "active" : ""}`}>{v === "jour" ? "Par jour" : v === "mois" ? "Par mois" : "Par donjon"}</button>)}</div>
           {Object.keys(rGroups).length ? Object.entries(rGroups).map(([k, v]) => (
             <div key={k} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 7 }}>
@@ -137,11 +137,11 @@ export default function DonjonsPage() {
           )) : <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 20 }}>Aucune instance enregistrée.</div>}
         </div>
         <div style={card}>
-          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>🗂️ Récap des loots par donjon</h2>
+          <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}><Icon name="layers" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 7 }} />Récap des loots par donjon</h2>
           {Object.keys(byDungeon).length ? Object.entries(byDungeon).map(([id, d]) => (
             <div key={id} style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, marginBottom: 12 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}><Icon name={d.icon as IconName} framed frameSize={34} tone="gold" /><div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{d.name}</div><span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{d.runs} run(s) · {d.items} objet(s)</span></div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{Object.entries(d.loot).map(([key, l]) => { const name = key.split("|")[0]; return <span key={key} style={{ fontSize: 11.5, padding: "4px 10px", borderRadius: 6, background: "var(--bg-2)", border: `1px solid ${l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--border)"}`, color: l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--text)" }}>{name} <b>×{l.qty}</b>{l.rarity ? ` · ${rarLabel(l.rarity)}` : ""}{l.trash ? " · 🗑️" : ""}</span>; })}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{Object.entries(d.loot).map(([key, l]) => { const name = key.split("|")[0]; return <span key={key} style={{ fontSize: 11.5, padding: "4px 10px", borderRadius: 6, background: "var(--bg-2)", border: `1px solid ${l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--border)"}`, color: l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--text)" }}>{name} <b>×{l.qty}</b>{l.rarity ? ` · ${rarLabel(l.rarity)}` : ""}{l.trash ? <> · <Icon name="trash" size={11} style={{ display: "inline-block", verticalAlign: "-1px" }} /></> : null}</span>; })}</div>
             </div>
           )) : <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 20 }}>Le récap par donjon apparaîtra après tes premières instances.</div>}
         </div>

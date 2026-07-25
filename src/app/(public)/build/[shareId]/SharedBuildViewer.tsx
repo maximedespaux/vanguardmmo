@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { BUILDER_MARKUP } from "@/app/(guild)/builder/markup";
 import { ensureVgIcons } from "@/lib/vanillaLoader";
+import { Icon } from "@/components/Icon";
 
 // Charge un build PARTAGÉ (public) par shareId et le rend en lecture seule (window.__VIEW).
 export function SharedBuildViewer({ shareId }: { shareId: string }) {
@@ -49,7 +50,7 @@ export function SharedBuildViewer({ shareId }: { shareId: string }) {
     <>
       <style>{`.builder-readonly .actions{display:none}`}</style>
       <div style={{ margin: "0 0 12px", padding: "9px 14px", borderRadius: 10, background: "rgba(255,140,26,.10)", border: "1px solid rgba(255,140,26,.35)", color: "var(--orange)", fontSize: 13, fontWeight: 600 }}>
-        👁️ Build partagé de <b>{who || "un membre"}</b> — consultation (lecture seule).
+        <Icon name="eye" size={15} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 6 }} />Build partagé de <b>{who || "un membre"}</b> — consultation (lecture seule).
       </div>
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
     </>

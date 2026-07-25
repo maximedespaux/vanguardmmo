@@ -46,7 +46,7 @@ export default function BanqueAdminPage() {
     const caution = action === "dette" ? (Number(cautions[id] || 0) || undefined) : undefined;
     const adminNote = action === "refuse" ? ((await vgPrompt("Raison du refus ? (optionnel)")) ?? undefined) : undefined;
     const r = await fetch(`/api/admin/bank-request/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, prixPublic, caution, adminNote }) });
-    if (r.ok) { flash(action === "achat" ? "Achat accepté ✓" : action === "dette" ? "Dette accordée ✓" : "Requête refusée."); load(); }
+    if (r.ok) { flash(action === "achat" ? "Achat accepté" : action === "dette" ? "Dette accordée" : "Requête refusée."); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur"); }
   };
   const decideDebt = async (id: string, status: string) => {

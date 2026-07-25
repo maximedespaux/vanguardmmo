@@ -136,7 +136,7 @@ export default function DashboardPage() {
             <Stat value={d.characters.mains} label="principaux" color="var(--gold)" />
             <Stat value={d.characters.secondaries} label="secondaires" />
           </div>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.characters.withoutBuild > 0 ? `${d.characters.withoutBuild} perso(s) sans build à accompagner.` : "Tous les persos ont un build ✓"}</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.characters.withoutBuild > 0 ? `${d.characters.withoutBuild} perso(s) sans build à accompagner.` : "Tous les persos ont un build"}</div>
           <GoLink href="/guildviewer" label="GuildViewer" show={isAdmin} />
         </ExpandCard>}
 
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             <Stat value={d.builds.total} label="enregistrés" color="var(--blue)" />
             <Stat value={d.builds.withoutBuild} label="sans build" color={d.builds.withoutBuild ? "var(--red)" : "var(--green)"} />
           </div>}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.builds.withoutBuild > 0 ? `${d.builds.withoutBuild} personnage(s) à équiper.` : "Tout le monde est équipé ✓"}</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{d.builds.withoutBuild > 0 ? `${d.builds.withoutBuild} personnage(s) à équiper.` : "Tout le monde est équipé"}</div>
           <GoLink href="/builder" label="AirBuilder" />
         </ExpandCard>}
 
@@ -155,7 +155,7 @@ export default function DashboardPage() {
             <Stat value={d.coffre.total} label="objets suivis" />
           </div>}>
           {d.coffre.topDeficits.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: "var(--green)" }}>Tout est au-dessus du seuil ✓</div>
+            <div style={{ fontSize: 12.5, color: "var(--green)" }}>Tout est au-dessus du seuil</div>
           ) : d.coffre.topDeficits.map((x, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
               <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{x.item}</span>

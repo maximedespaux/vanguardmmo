@@ -53,7 +53,7 @@ export default function AnnoncePage() {
       {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
       <div style={card}>
         <label style={lab}>Salon</label>
-        <VgSelect full value={ch} onChange={setCh} options={channels.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : channels.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " 📢" : ""}` }))} />
+        <VgSelect full value={ch} onChange={setCh} options={channels.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : channels.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " " : ""}` }))} />
         <label style={lab}>Titre</label>
         <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de l'annonce" />
         <label style={lab}>Message (utilise \n pour un saut de ligne)</label>

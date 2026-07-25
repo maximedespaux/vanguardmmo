@@ -88,7 +88,7 @@ export default function CandidaturePage() {
       <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidature" subtitle="" />
       <div className="glass-card" style={{ padding: 32, marginTop: 20 }}>
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name="shield" size={46} /></div>
-        <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres 🙂</h2>
+        <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres</h2>
         <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour ou jeter un œil au dashboard.</p>
         <a href="/dashboard" className="vg-btn" style={{ textDecoration: "none" }}>→ Aller au Dashboard</a>
       </div>
@@ -224,7 +224,7 @@ export default function CandidaturePage() {
           <div onClick={e => e.stopPropagation()} style={{ flex: 1, background: "var(--bg-2)", border: "1px solid var(--orange)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
               <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)" }}><Icon name="sword" size={16} />Stuff Builder</span>
-              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>Configure ton build, puis clique <b style={{ color: "var(--green)" }}>« ✅ Valider ce build »</b> en bas ↓ (ça se ferme tout seul)</span>
+              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>Configure ton build, puis clique <b style={{ color: "var(--green)" }}>« Valider ce build »</b> en bas ↓ (ça se ferme tout seul)</span>
               <button onClick={() => setShowBuilder(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 12, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}><Icon name="x" size={16} /></button>
             </div>
             <iframe src="/builder.html" style={{ flex: 1, border: "none", width: "100%" }} title="Stuff Builder" />

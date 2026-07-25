@@ -125,7 +125,7 @@ export default function CompositionsPage() {
         ); })}
 
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>👉 Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", verticalAlign: "-2px", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block", verticalAlign: "-3px" }} /> donne le build conseillé + le build de référence.</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", verticalAlign: "-2px", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block", verticalAlign: "-3px" }} /> donne le build conseillé + le build de référence.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>

@@ -7,7 +7,7 @@ const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, p
 // Nom d'objet « propre » : retire la parenthèse finale (rareté / sexe) pour matcher les coffres.
 const baseName = (n: string) => String(n || "").replace(/\s*\([^)]*\)\s*$/, "").toLowerCase().trim();
 
-// #2 — notifie sur le SITE (cloche 🔔) les détenteurs des objets demandés (ceux qui les ont en coffre AirGuild).
+// #2 — notifie sur le SITE (cloche) les détenteurs des objets demandés (ceux qui les ont en coffre AirGuild).
 async function notifyHolders(itemNames: string[], requester: string, requesterId: string) {
   try {
     const needles = [...new Set(itemNames.map(baseName).filter(Boolean))];
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
           cat: (it?.cat ?? "").toString().slice(0, 60).trim() || null,
           priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
           batchId,
-          reason: `🛒 Boutique · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
+          reason: `Boutique · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
         },
       });
       count++;

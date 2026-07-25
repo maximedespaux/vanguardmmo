@@ -62,7 +62,7 @@ export default function DiscordPage() {
   const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 14, width: "100%" };
   const lab: React.CSSProperties = { fontSize: 12, color: "var(--text-muted)", display: "block", marginBottom: 4, marginTop: 10 };
   const ChannelSelect = ({ v, set }: { v: string; set: (s: string) => void }) => (
-    <VgSelect full value={v} onChange={set} options={postable.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : postable.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " 📢" : ""}` }))} />
+    <VgSelect full value={v} onChange={set} options={postable.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : postable.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? "" : ""}` }))} />
   );
 
   return (
@@ -109,7 +109,7 @@ export default function DiscordPage() {
             <div style={{ width: 110 }}><label style={lab}>Gagnants</label><input type="number" min={1} style={inp} value={gWin} onChange={(e) => setGWin(Math.max(1, +e.target.value || 1))} /></div>
           </div>
           <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 11, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
-          <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = 🎉 GIVEAWAY — (1er lot)" />
+          <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = GIVEAWAY — (1er lot)" />
           <label style={lab}>Description</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} placeholder="Texte de l'embed (optionnel)" />
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <div><label style={lab}>Couleur</label><input type="color" value={gColor} onChange={(e) => setGColor(e.target.value)} style={{ ...inp, width: 60, padding: 4, height: 38 }} /></div>

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { SectionTabs } from "@/components/SectionTabs";
 
 type Ev = { id: string; name: string; day: string; time: string; remindBefore: number; channelId: string | null; mention: string; embedTitle: string | null; embedDesc: string | null; embedColor: string | null; embedImage: string | null; enabled: boolean };
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche", "tous"];
@@ -35,6 +36,7 @@ export default function EventsPage() {
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "24px 18px 80px" }}>
       <PageHeader icon="calendar" title="Événements du jeu" subtitle="Le bot annonce ces événements et envoie les rappels automatiquement. Modifie-les ici — pas besoin de toucher au code." />
+      <SectionTabs section="discord" />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       {/* Ajouter */}

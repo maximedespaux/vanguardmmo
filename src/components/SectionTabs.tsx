@@ -12,8 +12,14 @@ const SECTIONS: Record<string, { label: string; href: string }[]> = {
     { label: "Donjons", href: "/donjons" },
     { label: "World Boss", href: "/worldboss" },
   ],
+  // Tout le pilotage du bot vit sous une seule entree « Bot Discord » : les
+  // panneaux restent des pages distinctes, mais partagent cette barre d'onglets
+  // pour se comporter comme un seul outil.
   discord: [
     { label: "Pilotage", href: "/discord" },
+    { label: "Créneaux", href: "/discord#creneaux" },
+    { label: "Events du jeu", href: "/events" },
+    { label: "World Boss", href: "/gestion-worldboss" },
     { label: "Annonce", href: "/annonce" },
   ],
 };

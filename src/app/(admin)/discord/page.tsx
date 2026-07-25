@@ -28,21 +28,28 @@ export default function DiscordPage() {
   // Interrupteur des rappels Chambres Secretes (mercredi et dimanche 21h).
   // Il existe parce que le jeu peut etre indisponible : on coupe les rappels sans
   // toucher au code ni au bot.
-  const [csRappels, setCsRappels] = useState<boolean | null>(null);
+  const [reglages, setReglages] = useState<Record<string, boolean> | null>(null);
   useEffect(() => {
     fetch("/api/admin/settings")
       .then((r) => (r.ok ? r.json() : null))
-      .then((j) => setCsRappels(j ? j.cs_rappels_actifs === "1" : false))
-      .catch(() => setCsRappels(false));
+      .then((j) => setReglages({ cs: j?.cs_rappels_actifs === "1", gs: j?.gs_rappels_actifs === "1" }))
+      .catch(() => setReglages({ cs: false, gs: false }));
   }, []);
-  const basculerCs = async (actif: boolean) => {
-    setCsRappels(actif); // retour immediat, on corrige si le serveur refuse
-    const r = await fetch("/api/admin/settings", {
+  const basculer = async (quel: "cs" | "gs", actif: boolean) => {
+    setReglages((r) => ({ ...(r ?? { cs: false, gs: false }), [quel]: actif })); // retour immediat
+    const rep = await fetch("/api/admin/settings", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: "cs_rappels_actifs", value: actif ? "1" : "0" }),
+      body: JSON.stringify({ key: `${quel}_rappels_actifs`, value: actif ? "1" : "0" }),
     }).catch(() => null);
-    if (!r || !r.ok) setCsRappels(!actif);
+    // Le serveur refuse ? On revient a l'etat precedent plutot que de mentir a l'ecran.
+    if (!rep || !rep.ok) setReglages((r) => ({ ...(r ?? { cs: false, gs: false }), [quel]: !actif }));
   };
+
+  /** Un creneau recurrent : rappel @everyone la veille puis le jour meme. */
+  const CRENEAUX = [
+    { cle: "cs" as const, icone: "key" as const, titre: "Chambres Secrètes", quand: "Mercredi et dimanche à 21h" },
+    { cle: "gs" as const, icone: "swords" as const, titre: "Guild Siege", quand: "Horaire à définir" },
+  ];
 
   // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
   useCardFx();
@@ -94,33 +101,48 @@ export default function DiscordPage() {
 
       {toast && <div className="fx-card" style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
 
-      {/* Rappels Chambres Secretes — interrupteur, parce que le jeu peut etre
-          indisponible et qu'un @everyone deux fois par semaine dans le vide
-          apprend surtout aux membres a ignorer le salon. */}
-      <div className="fx-card" style={{ ...card, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <Icon name="key" framed frameSize={40} tone="orange" />
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <div className="font-heading" style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Rappels Chambres Secrètes</div>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, lineHeight: 1.55 }}>
-            Annonce <b>@everyone</b> dans le salon de la guilde, <b>mercredi et dimanche</b> : la veille pour se préparer, puis une heure avant.
-            {csRappels === false && <span style={{ color: "var(--gold)" }}> Actuellement coupés.</span>}
-          </div>
+      {/* Créneaux récurrents — un rappel @everyone la veille puis le jour même, dans
+          le salon de la guilde. Chacun a son interrupteur : le jeu peut être
+          indisponible, et deux @everyone par semaine dans le vide apprennent surtout
+          aux membres à ignorer le salon. */}
+      <div id="creneaux" className="fx-card" style={card}>
+        <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="calendar" size={16} />Créneaux récurrents
         </div>
-        {csRappels === null ? (
-          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Chargement…</span>
-        ) : (
-          <div style={{ display: "flex", gap: 0, border: "1px solid var(--border)", borderRadius: 9, overflow: "hidden" }}>
-            {[false, true].map((actif) => (
-              <button key={String(actif)} onClick={() => basculerCs(actif)}
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 16px", border: 0, cursor: "pointer",
-                  fontSize: 12.5, fontWeight: 700,
-                  background: csRappels === actif ? (actif ? "linear-gradient(180deg,#FFC061,#FF8C1A)" : "var(--bg-4)") : "rgba(0,0,0,.25)",
-                  color: csRappels === actif ? (actif ? "#2a1400" : "var(--text)") : "var(--text-muted)" }}>
-                <Icon name={actif ? "bell" : "ban"} size={13} />{actif ? "Activés" : "Coupés"}
-              </button>
-            ))}
-          </div>
-        )}
+        <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.55 }}>
+          Le bot annonce <b>@everyone</b> dans le salon de la guilde : la veille à 20h pour préparer, puis le jour même à 20h pour se connecter.
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {CRENEAUX.map((c) => {
+            const actif = reglages?.[c.cle] ?? false;
+            return (
+              <div key={c.cle} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: "12px 14px" }}>
+                <Icon name={c.icone} framed frameSize={38} tone="orange" />
+                <div style={{ flex: 1, minWidth: 190 }}>
+                  <div className="font-heading" style={{ fontSize: 13.5, fontWeight: 700 }}>{c.titre}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+                    {c.quand}
+                    {reglages && !actif && <span style={{ color: "var(--gold)" }}> · rappels coupés</span>}
+                  </div>
+                </div>
+                {reglages === null ? (
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Chargement…</span>
+                ) : (
+                  <div style={{ display: "flex", border: "1px solid var(--border)", borderRadius: 9, overflow: "hidden" }}>
+                    {[false, true].map((v) => (
+                      <button key={String(v)} onClick={() => basculer(c.cle, v)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 15px", border: 0, cursor: "pointer", fontSize: 12.5, fontWeight: 700,
+                          background: actif === v ? (v ? "linear-gradient(180deg,#FFC061,#FF8C1A)" : "var(--bg-4)") : "rgba(0,0,0,.25)",
+                          color: actif === v ? (v ? "#2a1400" : "var(--text)") : "var(--text-muted)" }}>
+                        <Icon name={v ? "bell" : "ban"} size={13} />{v ? "Activés" : "Coupés"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="vg-subtabs">

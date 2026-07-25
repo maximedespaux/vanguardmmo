@@ -11,10 +11,10 @@ import { canAccessAdmin } from "@/config/roles";
  * Seules les clés de LISTE_BLANCHE sont acceptées : sans ça, cette route
  * deviendrait un stockage libre écrivable par n'importe quel admin.
  */
-const LISTE_BLANCHE = new Set(["cs_rappels_actifs"]);
+const LISTE_BLANCHE = new Set(["cs_rappels_actifs", "gs_rappels_actifs"]);
 
 /** Valeurs par défaut, appliquées quand la clé n'a jamais été écrite. */
-const DEFAUTS: Record<string, string> = { cs_rappels_actifs: "0" };
+const DEFAUTS: Record<string, string> = { cs_rappels_actifs: "0", gs_rappels_actifs: "0" };
 
 export async function GET() {
   const auth = await apiAuth();

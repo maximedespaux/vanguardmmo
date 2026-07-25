@@ -5,6 +5,7 @@ import { vgConfirm, vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { SectionTabs } from "@/components/SectionTabs";
 
 type Boss = { id: string; name: string; zone: string | null; recommendedLevel: number | null; rewards: string | null; strategy: string | null };
 type Ev = { id: string; bossId: string; boss: Boss; startAt: string; status: string; note: string | null; participants: { status: string }[] };
@@ -33,6 +34,7 @@ export default function WorldBossAdminPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
       <PageHeader icon="dragon" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
+      <SectionTabs section="discord" />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
         <div className="glass-card fx-card" style={{ padding: 16 }}>

@@ -32,17 +32,25 @@ async function sendTo(client: Client, channelId: string, payload: any) {
 // surtout aux membres a ignorer le salon.
 const SALON_CS = "1498696982229811352";
 
-async function rappelsActifs(): Promise<boolean> {
+async function rappelsActifs(cle: string): Promise<boolean> {
   try {
-    const r = await prisma.setting.findUnique({ where: { key: "cs_rappels_actifs" } });
+    const r = await prisma.setting.findUnique({ where: { key: cle } });
     return r?.value === "1"; // coupes par defaut : on n'annonce jamais sans decision explicite
   } catch {
-    return false; // base injoignable : on se tait plutot que de spammer
+    return false; // base injoignable : on se tait plutot que de risquer un envoi non voulu
   }
 }
 
-async function rappelChambresSecretes(client: Client, quand: "veille" | "jour") {
-  if (!(await rappelsActifs())) return;
+/**
+ * Rappel d'un creneau recurrent. `cle` est le reglage qui l'autorise ; il est
+ * COUPE par defaut et se pilote depuis la page « Bot Discord » du site.
+ */
+async function rappelCreneau(
+  client: Client,
+  opts: { cle: string; titre: string; heure: string; quand: "veille" | "jour" }
+) {
+  if (!(await rappelsActifs(opts.cle))) return;
+  const { titre, heure, quand } = opts;
 
   // Note : le nombre de presences n'est PAS repris ici. Elles vivent dans un blob
   // JSON (CompositionState.data) dont la forme n'est pas garantie ; le lire a
@@ -52,12 +60,12 @@ async function rappelChambresSecretes(client: Client, quand: "veille" | "jour") 
     content: "@everyone",
     allowedMentions: { parse: ["everyone"] },
     embeds: [{
-      title: veille ? "Chambres Secretes demain a 21h" : "Chambres Secretes ce soir a 21h",
+      title: veille ? `${titre} demain a ${heure}` : `${titre} ce soir a ${heure}`,
       color: ORANGE,
       description: veille
         ? "Prepare ton stuff et annonce ta presence des maintenant, pour qu'on puisse composer les equipes a l'avance."
-        : "Rendez-vous a **21h** en vocal. Verifie ton stuff et ta composition avant de te connecter.",
-      footer: { text: "Vanguard · Chambres Secretes" },
+        : `Rendez-vous a **${heure}** en vocal. Verifie ton stuff et ta composition avant de te connecter.`,
+      footer: { text: `Vanguard · ${titre}` },
       timestamp: new Date().toISOString(),
     }],
   });
@@ -316,7 +324,14 @@ export function startScheduler(client: Client) {
   cron.schedule("* * * * *", () => tickEvents(client).catch(console.error), CRON_TZ);
   // Chambres Secretes : mercredi (3) et dimanche (0) a 21h.
   // Veille a 20h -> mardi (2) et samedi (6) ; jour meme a 20h -> mercredi et dimanche.
-  cron.schedule("0 20 * * 2,6", () => rappelChambresSecretes(client, "veille").catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 3,0", () => rappelChambresSecretes(client, "jour").catch(console.error), CRON_TZ);
+  const CS = { cle: "cs_rappels_actifs", titre: "Chambres Secretes", heure: "21h" };
+  cron.schedule("0 20 * * 2,6", () => rappelCreneau(client, { ...CS, quand: "veille" }).catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 3,0", () => rappelCreneau(client, { ...CS, quand: "jour" }).catch(console.error), CRON_TZ);
+  // Guild Siege : meme mecanique, mais l'HORAIRE RESTE A CONFIRMER. En attendant il
+  // est cale sur samedi 21h ; l'interrupteur est coupe par defaut, donc rien ne part
+  // tant que le creneau n'a pas ete valide.
+  const GS = { cle: "gs_rappels_actifs", titre: "Guild Siege", heure: "21h" };
+  cron.schedule("0 20 * * 5", () => rappelCreneau(client, { ...GS, quand: "veille" }).catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 6", () => rappelCreneau(client, { ...GS, quand: "jour" }).catch(console.error), CRON_TZ);
   console.log("🕒 Planificateur démarré.");
 }

@@ -52,14 +52,10 @@ const NAV: Item[] = [
     { label: "Échanges PNJ", href: "/echanges" },
   ] },
 
-  // Pilotage du bot. Events et Annonces se font surtout depuis Discord, mais les
-  // panneaux existent : les retirer de la navigation les rendrait inatteignables.
-  { label: "Bot", href: "/discord", icon: "discord", access: "admin", sub: [
-    { label: "Panneau Discord", href: "/discord" },
-    { label: "Events", href: "/events" },
-    { label: "Annonce", href: "/annonce" },
-    { label: "World Boss (gestion)", href: "/gestion-worldboss" },
-  ] },
+  // Tout le pilotage du bot est regroupe sur « Bot Discord » : creneaux recurrents,
+  // events du jeu, World Boss et annonces s'y gerent via ses onglets, plutot que
+  // d'occuper quatre entrees de navigation distinctes.
+  { label: "Bot Discord", href: "/discord", icon: "discord", access: "admin" },
 ];
 
 

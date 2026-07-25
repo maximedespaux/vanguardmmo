@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ensureVgIcons } from "@/lib/vanillaLoader";
 
@@ -8,6 +8,13 @@ import { ensureVgIcons } from "@/lib/vanillaLoader";
 // (AirBuilder) tenait les globals.
 export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
   const { data: session } = useSession();
+  /**
+   * Le coffre est un etat partage remplace EN BLOC a chaque sauvegarde. Si sa
+   * lecture echoue, demarrer le moteur quand meme le ferait partir d'un coffre
+   * VIDE — et la premiere action ecraserait le vrai coffre de la guilde. On
+   * refuse donc de demarrer plutot que de risquer ca.
+   */
+  const [echecLecture, setEchecLecture] = useState(false);
   // Expose le staff connecté (pseudo + rôle) : tracer qui dépose (#29) + gating édition réservée Vanguard.
   // + le roster Discord (F2) : les coffres membres sont auto-créés depuis la vraie liste de guilde.
   useEffect(() => {
@@ -31,8 +38,14 @@ export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
       }, 600);
     };
     (async () => {
-      const state = await fetch("/api/admin/airguild").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      // On distingue « pas encore de coffre » (reponse valide, contenu vide) de
+      // « lecture impossible » : seul le second cas doit empecher le demarrage.
+      let lu = true;
+      const state = await fetch("/api/admin/airguild")
+        .then((r) => { if (!r.ok) { lu = false; return null; } return r.json(); })
+        .catch(() => { lu = false; return null; });
       if (cancelled) return;
+      if (!lu) { setEchecLecture(true); return; }
       w.__AGSTATE = state;
       const data = await fetch("/airguild/data.json").then((r) => r.text()).catch(() => "{}");
       if (cancelled) return;
@@ -46,5 +59,18 @@ export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  if (echecLecture) {
+    return (
+      <div style={{ margin: 24, padding: 20, borderRadius: 12, border: "1px solid var(--red)", background: "rgba(248,113,113,.08)" }}>
+        <div style={{ fontWeight: 700, color: "var(--red)", marginBottom: 6 }}>Coffre non chargé</div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 12 }}>
+          Impossible de lire le coffre de guilde. L&apos;éditeur reste fermé volontairement : l&apos;ouvrir sur un coffre vide
+          écraserait le vrai au premier enregistrement.
+        </div>
+        <button className="vg-btn" onClick={() => window.location.reload()}>Réessayer</button>
+      </div>
+    );
+  }
   return null;
 }

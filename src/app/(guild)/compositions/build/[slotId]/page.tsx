@@ -1,4 +1,4 @@
-import "../../../builder/airbuilder.css";
+import "@/app/(verified)/builder/airbuilder.css";
 import { RefBuilderRunner } from "./RefBuilderRunner";
 
 // /compositions/build/<slotId> — build de référence d'un poste de Chambre Secrète.

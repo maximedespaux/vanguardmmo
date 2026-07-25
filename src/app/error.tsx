@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect } from "react";
+import { Icon } from "@/components/Icon";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => { console.error(error); }, [error]);
@@ -9,7 +10,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
       background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.png') center / cover no-repeat" }}>
       <div className="glass-card" style={{ maxWidth: 460, width: "100%", padding: "44px 34px", textAlign: "center", borderRadius: 20 }}>
-        <div style={{ fontSize: 52, lineHeight: 1 }}>🛠️</div>
+        <div style={{ display: "flex", justifyContent: "center", color: "var(--orange)" }}><Icon name="wrench" size={52} strokeWidth={1.4} /></div>
         <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 400, margin: "14px 0 0", textTransform: "uppercase", letterSpacing: 1, color: "#fff" }}>Oups, un pépin</h1>
         <div style={{ fontFamily: "'Athiti', sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px auto 26px", lineHeight: 1.6, maxWidth: 360 }}>
           Une erreur inattendue est survenue de notre côté. Tu peux réessayer — si ça persiste, préviens un officier.

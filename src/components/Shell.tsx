@@ -67,7 +67,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             return (
               <div key={it.href} className="vg-top-item">
                 <Link href={it.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
-                  <Icon name={it.icon} size={16} />{it.label}{it.sub ? " ▾" : ""}
+                  <Icon name={it.icon} size={16} />{it.label}{it.sub ? <Icon name="chevron-down" size={13} style={{ opacity: .7 }} /> : null}
                 </Link>
                 {it.sub && (
                   <div className="vg-dropdown">

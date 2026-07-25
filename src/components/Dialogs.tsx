@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 // Usage : import { vgConfirm, vgPrompt, vgToast } from "@/components/Dialogs";
 //   if (await vgConfirm("Supprimer ?")) { ... }
 //   const note = await vgPrompt("Raison ?");
-//   vgToast("Enregistré ✓");
+//   vgToast("Enregistré");
 
 type Dlg = { kind: "confirm" | "prompt"; msg: string; def?: string; resolve: (v: unknown) => void };
 let _open: ((d: Dlg | null) => void) | null = null;

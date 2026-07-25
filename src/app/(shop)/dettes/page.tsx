@@ -46,7 +46,7 @@ export default function BanquePage() {
   const [cats, setCats] = useState<string[]>([]);
   const [catF, setCatF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
-  const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence ♂/♀ par Stuff
+  const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
   const [sending, setSending] = useState(false);
   const [tab, setTab] = useState<"boutique" | "requetes" | "dettes" | "rembourse">("boutique");
   const { data: session } = useSession();
@@ -70,13 +70,13 @@ export default function BanquePage() {
   const pay = async (id: string, amount: number) => {
     if (!amount || amount <= 0) return flash("Entre un montant à rembourser (> 0).");
     const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) });
-    if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré ✓"); load(); } else flash("Erreur");
+    if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré"); load(); } else flash("Erreur");
   };
 
   const deleteDebt = async (id: string) => {
     if (!window.confirm("Supprimer définitivement cette dette de l'historique ?\nCette action est irréversible.")) return;
     const r = await fetch(`/api/debts/${id}`, { method: "DELETE" });
-    if (r.ok) { flash("Dette supprimée ✓"); load(); } else flash("Erreur — suppression refusée.");
+    if (r.ok) { flash("Dette supprimée"); load(); } else flash("Erreur — suppression refusée.");
   };
 
   // ── Panier ──
@@ -92,7 +92,7 @@ export default function BanquePage() {
   const submitCart = async (mode: "achat" | "dette") => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
-    if (missingSex.length) return flash("Indique ♂ Garçon ou ♀ Fille pour chaque Stuff avant d'envoyer.");
+    if (missingSex.length) return flash("Indique Garçon ou Fille pour chaque Stuff avant d'envoyer.");
     // #5 — respecter les choix « Vendre » / « Dette » fixés au dépôt de chaque objet.
     if (mode === "achat") { const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.v === false); if (bad) return flash(`« ${bad.item} » est proposé en dette uniquement (pas d'achat direct).`); }
     if (mode === "dette") { if (!isMember) return flash("La dette est réservée aux membres de la guilde."); const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.d === false); if (bad) return flash(`« ${bad.item} » n'est pas disponible en dette.`); }
@@ -100,7 +100,7 @@ export default function BanquePage() {
     const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
     setSending(false);
-    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée ✓ — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
+    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
@@ -188,7 +188,7 @@ export default function BanquePage() {
                       <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2 }}>
                         <span style={{ fontSize: 10.5, color: stuffSex[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: stuffSex[id] ? 400 : 700 }}>Sexe du Stuff :</span>
                         {(["G", "F"] as const).map(sx => (
-                          <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}>{sx === "G" ? "♂ Garçon" : "♀ Fille"}</button>
+                          <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}</span></button>
                         ))}
                       </div>
                     )}

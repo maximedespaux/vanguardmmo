@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Icon } from "./Icon";
 
 export function HeroFlyff() {
   const [scroll, setScroll] = useState(0);
@@ -23,7 +24,7 @@ export function HeroFlyff() {
       <div className="hf-title" style={{ transform: `translateY(${-scroll * 40}px)`, opacity: 1 - scroll }}>
         <h1 className="font-heading">VANGUARD</h1>
         <p>La guilde d&apos;élite d&apos;AirFlyff — progresser ensemble, dominer le end-game.</p>
-        <a href="/login" className="hf-login">🎮 Se connecter avec Discord</a>
+        <a href="/login" className="hf-login"><Icon name="discord" size={18} /> Se connecter avec Discord</a>
       </div>
 
       <div className="hf-scrollhint" style={{ opacity: 1 - scroll * 2 }}>▾ défile</div>

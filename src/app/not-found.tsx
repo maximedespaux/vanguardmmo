@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Icon } from "@/components/Icon";
 
 export default function NotFound() {
   return (
@@ -10,7 +11,7 @@ export default function NotFound() {
         <div style={{ fontFamily: "'Athiti', sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px auto 28px", lineHeight: 1.6, maxWidth: 340 }}>
           Cette page n&apos;existe pas (ou plus). Vérifie l&apos;adresse, ou retourne à la base.
         </div>
-        <Link href="/histoire" className="vg-btn" style={{ textDecoration: "none" }}>🏠 Retour à l&apos;accueil</Link>
+        <Link href="/histoire" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 }}><Icon name="home" size={17} /> Retour à l&apos;accueil</Link>
       </div>
     </div>
   );

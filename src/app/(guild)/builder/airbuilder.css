@@ -149,3 +149,58 @@
 .cgA{background:#4EA8FF22;color:#4EA8FF;border:1px solid #4EA8FF55}
 .cgS{background:#FFD24A22;color:#FFD24A;border:1px solid #FFD24A55}
 .gemlbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-top:5px;text-align:center;opacity:.85}
+
+/* ─── En-tête de build : configuration à gauche, partage en haut à droite ───── */
+.buildhead{display:flex;gap:18px;align-items:flex-start;margin-bottom:6px}
+.buildhead-main{flex:1 1 auto;min-width:0}
+.buildhead-main .setup{margin-top:0}
+
+/* Encadré de partage (façon DofusBook) */
+.sharebox{flex:0 0 316px;background:linear-gradient(180deg,rgba(28,22,15,.95),rgba(15,13,11,.96));
+  border:1px solid #3a2c16;border-radius:14px;padding:13px 15px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,210,74,.1),0 10px 30px rgba(0,0,0,.45)}
+.sharebox:empty{display:none}
+.sharebox h4{display:flex;align-items:center;gap:8px;margin:0 0 3px;font-family:Rubik;font-weight:700;
+  font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold)}
+.sharebox .shmini{font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:11px}
+.sharebox .shrow{display:flex;gap:7px;align-items:center}
+.sharebox .shlink{flex:1;min-width:0;background:#0d0d11;border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:8px 10px;font-size:11.5px;font-family:monospace;text-overflow:ellipsis}
+.sharebox .shlink:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
+.sharebox .shbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);
+  padding:8px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:border-color .16s,color .16s,background .16s}
+.sharebox .shbtn:hover{border-color:var(--orange);color:var(--orange)}
+.sharebox .shbtn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.sharebox .shbtn.on{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400}
+/* Bascule public / privé : deux segments, l'actif est mis en avant. */
+.sharebox .shseg{display:flex;margin:0 0 11px;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.sharebox .shseg button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  background:rgba(0,0,0,.28);border:0;color:var(--mut);padding:8px 6px;font-size:11.5px;font-weight:600;
+  cursor:pointer;transition:background .16s,color .16s}
+.sharebox .shseg button:hover{color:var(--text)}
+.sharebox .shseg button:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.sharebox .shseg button.on{background:linear-gradient(180deg,#2a2013,#1d160c);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,210,74,.32)}
+.sharebox .shstate{display:flex;align-items:center;gap:7px;font-size:11px;margin-top:10px;color:var(--mut)}
+.sharebox .shstate.pub{color:var(--green)}
+@media(max-width:1000px){
+  .buildhead{flex-direction:column}
+  .sharebox{flex:none;width:100%}
+}
+
+/* ─── Puce « sauvegarde auto » (le style était inline, il est maintenant ici) ── */
+.savechip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  color:var(--green);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.28);
+  border-radius:20px;padding:4px 11px;margin-left:14px;cursor:help}
+
+/* ─── Lien « Carnets des Arcanes » : c'est un <button> (accessible au clavier) ─ */
+.legend.vg-scrollhint{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
+  background:none;border:0;font:inherit;font-size:11px;color:var(--mut);cursor:pointer;
+  user-select:none;padding:6px 0;transition:color .16s}
+.legend.vg-scrollhint b{color:var(--orange)}
+.legend.vg-scrollhint:hover{color:var(--text)}
+.legend.vg-scrollhint:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:8px}
+
+/* Les boutons d'action portent désormais une icône : aligner icône + libellé. */
+.actions .btn{display:inline-flex;align-items:center;gap:8px}
+.actions .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}

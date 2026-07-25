@@ -86,3 +86,37 @@ const body = `${banner}
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, body);
 console.log(`✓ ${OUT} — ${count} icônes générées depuis ${SRC}`);
+
+/* ── Variante CSS : <i class=vgi-nom></i> ─────────────────────────────────────
+   Pourquoi une deuxième forme : dans airbuilder.js / airguild.js les emojis sont
+   noyés dans des chaînes aux guillemets mêlés (simples, doubles, gabarits).
+   Insérer du SVG ou une concaténation y serait cassant selon le contexte.
+   Cette balise ne contient AUCUN guillemet (attribut HTML5 non quoté) : elle est
+   donc insérable telle quelle dans n'importe quelle chaîne JS.
+   Le tracé passe par `mask`, la couleur par background-color:currentColor —
+   l'icône hérite donc la couleur du texte, exactement comme <Icon>.          */
+const OUT_CSS = "public/icons/vg-icons.css";
+const svgDataUri = (d) => {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" ` +
+    `stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  // encodeURIComponent est sûr dans url("…") ; on garde quelques caractères lisibles.
+  return encodeURIComponent(svg).replace(/%20/g, " ").replace(/%3D/g, "=").replace(/%3A/g, ":").replace(/%2F/g, "/");
+};
+let css = `/* FICHIER GÉNÉRÉ — NE PAS ÉDITER À LA MAIN.
+ * Source : ${SRC}  ·  Régénérer : npm run icons
+ * Usage : <i class=vgi-nom></i>  (attribut non quoté = insérable dans toute chaîne JS)
+ * L'icône prend la taille de la police (1em) et la couleur du texte.
+ */
+[class^="vgi-"]{display:inline-block;width:1em;height:1em;vertical-align:-.14em;flex-shrink:0;
+  background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+/* .vgi-frame est un conteneur stylé (globals.css), pas un masque : on l'exclut. */
+.vgi-frame{background-color:transparent;-webkit-mask:none;mask:none;width:auto;height:auto}
+`;
+for (const [n, d] of Object.entries(icons)) {
+  const u = `url("data:image/svg+xml,${svgDataUri(d)}")`;
+  css += `.vgi-${n}{-webkit-mask-image:${u};mask-image:${u}}\n`;
+}
+fs.writeFileSync(OUT_CSS, css);
+console.log(`✓ ${OUT_CSS} — ${count} classes générées (${Math.round(css.length / 1024)} Ko)`);

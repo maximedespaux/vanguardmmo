@@ -103,9 +103,22 @@ function totals(){const c=C();const acc={};const add=(k,v)=>{if(v)acc[k]=(acc[k]
   const st=ST();for(const s in st.eq){const e=st.eq[s];if(!e||s==='familier')continue;(e.item.b||[]).forEach(b=>add(b[0],b[1]));if(s==='weapon'){weaponTotals(add,e);}}
   const _c=C();(_c.carnets||[]).forEach(ci=>{const cn=CARNETS[ci];if(!cn)return;((_c.carnetsFull||[]).includes(ci)?cn.complet:cn.base).forEach(b=>add(b[0],b[1]));});
   return acc;}
-function renderStats(){const t=Object.entries(totals()).sort((a,b)=>b[1]-a[1]);
-  document.getElementById('stats').innerHTML='<h3>📊 Statistiques (objets + carnets — mécaniques détaillées en étape 2)</h3>'+
-   (t.length?t.map(([k,v])=>`<div class="l"><span>${esc(k)}</span><b>+${(+v).toLocaleString('fr-FR')}</b></div>`).join(''):'<div style="color:var(--mut);font-size:12px">Équipe des pièces…</div>');}
+// Catégorie d'une stat pour le résumé groupé.
+function statCat(k){var s=(k||'').toLowerCase();
+  if(s.indexOf("vitesse d'attaque")>=0)return 'off';
+  if(/force|dext|intel|attaque|critiq|magiq|préci|preci|dmg|dégât|degat|toutes stats|jcj|pvp|pve|boss|monstre/.test(s))return 'off';
+  if(/endurance|défense|defense|block/.test(s))return 'def';
+  if(/pv max|mp max|mp_max/.test(s))return 'vit';
+  return 'uti';}
+function renderStats(){var t=totals();var G={off:[],def:[],vit:[],uti:[]};
+  Object.entries(t).sort(function(a,b){return b[1]-a[1];}).forEach(function(p){G[statCat(p[0])].push(p);});
+  var META={off:['⚔️ Offensif','#F87171'],def:['🛡️ Défensif','#4EA8FF'],vit:['❤️ Vitalité','#4ADE80'],uti:['✨ Utilitaire','#FFD24A']};
+  var html='<h3>📊 Résumé du build</h3>',any=false;
+  ['off','def','vit','uti'].forEach(function(g){if(!G[g].length)return;any=true;
+    html+='<div style="margin:9px 0 2px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:'+META[g][1]+'">'+META[g][0]+'</div>'+
+      G[g].map(function(p){return '<div class="l"><span>'+esc(p[0])+'</span><b>+'+(+p[1]).toLocaleString('fr-FR')+'</b></div>';}).join('');});
+  if(!any)html+='<div style="color:var(--mut);font-size:12px">Équipe des pièces pour voir le résumé…</div>';
+  document.getElementById('stats').innerHTML=html;}
 
 window.C=C;
 function switchChar(i){state.cur=i;render();}

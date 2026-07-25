@@ -115,7 +115,10 @@ export default function BanquePage() {
 
   return (
     <div ref={fxRef} style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.webp" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — le détenteur te répond pour organiser l'échange." />
+      {/* Variante icône + titre : la bannière disponible dit « Banque », alors que
+          la nav, l'onglet et le titre disent « Boutique ». Une tuile d'icône évite
+          l'incohérence sans réclamer un nouvel asset. */}
+      <PageHeader icon="cart" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — le détenteur te répond pour organiser l'échange." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 

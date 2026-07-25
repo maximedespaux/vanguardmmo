@@ -1,11 +1,12 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import dungeonsData from "@/data/dungeons.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -23,6 +24,9 @@ type LootItem = { name: string; qty: number; rarity: string | null; trash: boole
 type Run = { dungeonId: number; dungeonName: string; icon: string; date: string; items: LootItem[] };
 
 export default function DonjonsPage() {
+  // Halo curseur + relief sur les cartes de donjon (.fx-card), cf. VgFx.
+  const fxRef = useRef<HTMLDivElement>(null);
+  useCardFx(fxRef);
   const dungeons = dungeonsData as Dungeon[];
   const [tab, setTab] = useState<"suivi" | "rapport" | "wiki">("wiki");
 
@@ -69,7 +73,7 @@ export default function DonjonsPage() {
   const TabBtn = ({ k, label }: { k: typeof tab; label: React.ReactNode }) => <button onClick={() => setTab(k)} className={`vg-subtab ${tab === k ? "active" : ""}`}>{label}</button>;
 
   return (
-    <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
+    <div ref={fxRef} style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
       <div className="vg-subtabs">
@@ -154,7 +158,7 @@ export default function DonjonsPage() {
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 12 }}>
           {wikiList.map(d => (
-            <div key={d.id} onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
+            <div key={d.id} className="fx-card" onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="gold" /><div><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.hp.toLocaleString("fr-FR")}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
               <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>

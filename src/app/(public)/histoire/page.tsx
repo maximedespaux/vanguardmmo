@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { HeroFlyff } from "@/components/HeroFlyff";
 import { Icon, type IconName } from "@/components/Icon";
+import { useReveal, useCardFx } from "@/components/VgFx";
 
 /** Pastille d'icône à la charte (carré arrondi, dégradé orange, icône orange). */
 function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: number; icon?: number }) {
@@ -44,17 +45,12 @@ const features: [IconName, string, string][] = [
 
 export default function HistoirePage() {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    const els = Array.from(root.querySelectorAll<HTMLElement>(".vg-reveal"));
-    const io = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, []);
+  // Revelation au scroll AVEC repli : l'ancien observateur (seuil 0.12 +
+  // rootMargin -8%) laissait des elements a opacity:0 pour toujours quand il les
+  // ratait — du contenu devenait invisible. Voir useReveal.
+  useReveal(ref);
+  // Halo qui suit le curseur + leger relief 3D sur les elements .fx-card.
+  useCardFx(ref);
 
   return (
     <div ref={ref} style={{ paddingBottom: 60 }}>
@@ -71,11 +67,11 @@ export default function HistoirePage() {
         {/* Bandeau de stats */}
         <div className="vg-reveal" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginTop: 18 }}>
           {stats.map(([ic, n, l]) => (
-            <div key={l} style={{ display: "flex", alignItems: "center", gap: 12, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px" }}>
+            <div key={l} className="fx-stat fx-card">
               <IconBadge name={ic} size={42} icon={20} />
               <div>
-                <div className="font-heading" style={{ fontSize: 20, fontWeight: 700, color: "#fff", lineHeight: 1 }}>{n}</div>
-                <div style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 3 }}>{l}</div>
+                <div className="n">{n}</div>
+                <div className="l">{l}</div>
               </div>
             </div>
           ))}
@@ -83,11 +79,11 @@ export default function HistoirePage() {
 
         {/* Objectifs */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "40px 0 18px", display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ color: "var(--orange)" }}><Icon name="target" size={26} /></span> Nos objectifs
+          <Icon name="target" framed frameSize={34} tone="gold" /> <span className="vg-h2">Nos objectifs</span>
         </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "stretch", maxWidth: 760, margin: "0 auto" }}>
           {objectifs.map(([ic, t, d], i) => (
-            <div key={t} className="glass-card vg-reveal" style={{ padding: 22, position: "relative", overflow: "hidden", transitionDelay: `${i * 60}ms` }}>
+            <div key={t} className="glass-card vg-reveal fx-card" style={{ padding: 22, overflow: "hidden", transitionDelay: `${i * 60}ms` }}>
               <div style={{ marginBottom: 12 }}><IconBadge name={ic} /></div>
               <div className="font-heading" style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>{t}</div>
               <div style={{ color: "var(--text-muted)", fontSize: 13.5, lineHeight: 1.6 }}>{d}</div>
@@ -97,14 +93,14 @@ export default function HistoirePage() {
 
         {/* Fonctionnalités */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "44px 0 6px", display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ color: "var(--orange)" }}><Icon name="settings" size={26} /></span> Les fonctionnalités du site
+          <Icon name="settings" framed frameSize={34} tone="gold" /> <span className="vg-h2">Les fonctionnalités du site</span>
         </h2>
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "0 0 18px", letterSpacing: ".2px" }}>
           Un site et un bot Discord qui partagent la même base — ce qui se passe ici se retrouve sur Discord, et inversement.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 14 }}>
           {features.map(([ic, t, d], i) => (
-            <div key={t} className="vg-reveal" style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, transition: "border-color .15s, transform .15s", transitionDelay: `${i * 45}ms` }}>
+            <div key={t} className="vg-reveal fx-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, transitionDelay: `${i * 45}ms` }}>
               <IconBadge name={ic} size={44} icon={22} />
               <div>
                 <div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{t}</div>

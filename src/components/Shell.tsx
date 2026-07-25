@@ -9,28 +9,59 @@ import { ProfilePanel } from "@/components/ProfilePanel";
 import { NotificationBell } from "@/components/NotificationBell";
 
 // ── Navigation v2 — bandeau supérieur (sections + sous-sections en déroulants) ──
-type Sub = { label: string; href: string };
+type Sub = { label: string; href: string; access?: "public" | "guild" | "admin" };
 type Item = { label: string; href: string; icon: IconName; access: "public" | "guild" | "admin"; sub?: Sub[] };
 
+// Navigation organisee autour des TROIS outils de la guilde, chacun regroupant ce
+// qui le concerne, au lieu d'une liste plate ou « Dashboard », « Boutique » et
+// « GuildViewer » vivaient separement :
+//   AirBuilder  -> creer et partager les builds
+//   AirGuild    -> l'economie (coffres, boutique, crafts, farm)
+//   GuildViewer -> les membres (tableau de bord, fiches, compositions)
+// Events et Annonces ont quitte la navigation : ils se pilotent depuis Discord.
 const NAV: Item[] = [
   { label: "Accueil", href: "/histoire", icon: "book", access: "public" },
   { label: "Candidature", href: "/candidature", icon: "user-plus", access: "public" },
-  { label: "Dashboard", href: "/dashboard", icon: "grid", access: "guild" },
-  { label: "AirBuilder", href: "/builder", icon: "shirt", access: "guild" },
-  { label: "Boutique", href: "/dettes", icon: "cart", access: "public" },
-  { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [{ label: "Guide", href: "/astuces" }, { label: "Prestige", href: "/prestige" }] },
-  { label: "PvE", href: "/donjons", icon: "skull", access: "guild", sub: [{ label: "Donjons", href: "/donjons" }, { label: "World Boss", href: "/worldboss" }] },
-  { label: "Chambres S.", href: "/compositions", icon: "key", access: "guild" },
-  { label: "Administration", href: "/guildviewer", icon: "shield", access: "admin", sub: [
-    { label: "GuildViewer", href: "/guildviewer" },
-    { label: "AirGuild", href: "/coffre" },
-    { label: "Banque (gestion)", href: "/gestion-dettes" },
-    { label: "Discord", href: "/discord" },
+
+  { label: "AirBuilder", href: "/builder", icon: "shirt", access: "guild", sub: [
+    { label: "Mes builds", href: "/builder" },
+    { label: "Mes personnages", href: "/personnages" },
+  ] },
+
+  { label: "AirGuild", href: "/dettes", icon: "vault", access: "public", sub: [
+    { label: "Boutique", href: "/dettes", access: "public" },
+    { label: "Coffres & crafts", href: "/coffre", access: "admin" },
+    { label: "Plan de farm", href: "/plan-farm", access: "admin" },
+    { label: "Suivi des dettes", href: "/gestion-dettes", access: "admin" },
+  ] },
+
+  { label: "GuildViewer", href: "/dashboard", icon: "users", access: "guild", sub: [
+    { label: "Tableau de bord", href: "/dashboard", access: "guild" },
+    { label: "Membres & builds", href: "/guildviewer", access: "admin" },
+    { label: "Compositions", href: "/compositions", access: "guild" },
+    { label: "Candidatures", href: "/candidatures", access: "admin" },
+  ] },
+
+  { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [
+    { label: "Guide de progression", href: "/astuces" },
+    { label: "Prestige", href: "/prestige" },
+  ] },
+  { label: "PvE", href: "/donjons", icon: "skull", access: "guild", sub: [
+    { label: "Donjons", href: "/donjons" },
+    { label: "World Boss", href: "/worldboss" },
+    { label: "Échanges PNJ", href: "/echanges" },
+  ] },
+
+  // Pilotage du bot. Events et Annonces se font surtout depuis Discord, mais les
+  // panneaux existent : les retirer de la navigation les rendrait inatteignables.
+  { label: "Bot", href: "/discord", icon: "discord", access: "admin", sub: [
+    { label: "Panneau Discord", href: "/discord" },
     { label: "Events", href: "/events" },
     { label: "Annonce", href: "/annonce" },
-    { label: "Candidatures", href: "/candidatures" },
+    { label: "World Boss (gestion)", href: "/gestion-worldboss" },
   ] },
 ];
+
 
 // Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
 // (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
@@ -74,7 +105,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </Link>
                 {it.sub && (
                   <div className="vg-dropdown">
-                    {it.sub.map((s) => (
+                    {it.sub.filter((s) => has(s.access ?? it.access)).map((s) => (
                       <Link key={s.href} href={s.href} onClick={() => setNavOpen(false)} className={`vg-drop-link ${isActive(s.href) ? "active" : ""}`}>{s.label}</Link>
                     ))}
                   </div>

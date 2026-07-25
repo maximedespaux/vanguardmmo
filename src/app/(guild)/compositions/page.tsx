@@ -6,8 +6,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
+import { CRENEAUX, classeAffichee, classesManquantes, normaliserCompo, type CompoState, type Creneau, type Presence } from "@/lib/compositions";
 
-type Signup = { id: string; player: string; pseudo: string; classe: string; slotId: string | null; charId?: string; selected?: boolean };
+import type { Signup } from "@/lib/compositions";
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
 export default function CompositionsPage() {
@@ -23,15 +24,44 @@ export default function CompositionsPage() {
   const [info, setInfo] = useState<Slot | null>(null);
   const [slotMeta, setSlotMeta] = useState<Record<string, { label?: string; note?: string }>>({});
   const [editSlot, setEditSlot] = useState<Slot | null>(null);
+  const [presences, setPresences] = useState<Presence[]>([]);
+  const [instructions, setInstructions] = useState("");
+  const [editInstr, setEditInstr] = useState<string | null>(null);
 
   // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
-    fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => { if (d) { if (Array.isArray(d.signups)) setSignups(d.signups); if (d.slotMeta && typeof d.slotMeta === "object") setSlotMeta(d.slotMeta); } }).catch(() => {});
-  }, []);
+    fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => {
+      if (!d) return;
+      const e = normaliserCompo(d);
+      setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
+      // On n'ecrase pas le texte pendant qu'un membre du staff le redige.
+      setInstructions(prev => (editInstr === null ? e.instructions : prev));
+    }).catch(() => {});
+  }, [editInstr]);
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
   useEffect(() => { fetch("/api/characters").then(r => (r.ok ? r.json() : [])).then(setMyChars).catch(() => {}); }, []);
 
-  const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => { setSignups(next); setSlotMeta(meta); fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ signups: next, slotMeta: meta }) }).catch(() => {}); };
+  /**
+   * Envoie TOUJOURS l'etat complet. L'API normalise ce qu'elle recoit : un PUT
+   * partiel effacerait donc les champs absents (les presences, les consignes).
+   */
+  const sauver = (patch: Partial<CompoState>) => {
+    const etat: CompoState = { signups, slotMeta, presences, instructions, ...patch };
+    if (patch.signups) setSignups(patch.signups);
+    if (patch.slotMeta) setSlotMeta(patch.slotMeta);
+    if (patch.presences) setPresences(patch.presences);
+    if (patch.instructions !== undefined) setInstructions(patch.instructions);
+    fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(etat) }).catch(() => {});
+  };
+  const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => sauver({ signups: next, slotMeta: meta });
+
+  /** « Je serai la » : une bascule par personnage et par creneau. */
+  const basculerPresence = (creneau: Creneau, char: { name: string; class: string }) => {
+    const deja = presences.some(p => p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase());
+    sauver({ presences: deja
+      ? presences.filter(p => !(p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase()))
+      : [...presences, { player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau, ts: Date.now() }] });
+  };
   const lbl = (s: Slot) => slotMeta[s.id]?.label || s.label;
   const nt = (s: Slot) => slotMeta[s.id]?.note ?? s.note;
   const renameSlot = (slot: Slot, label: string, note: string) => { persist(signups, { ...slotMeta, [slot.id]: { label: label || slot.label, note } }); setEditSlot(null); };
@@ -48,6 +78,8 @@ export default function CompositionsPage() {
   const playersCount = new Set(signups.map(s => s.player.toLowerCase())).size;
   const byClass: Record<string, number> = {}; signups.forEach(s => { byClass[s.classe] = (byClass[s.classe] || 0) + 1; });
   const fillPct = Math.round((selectedSlots.size / CS_SLOTS.length) * 100);
+
+  const etatCourant: CompoState = { signups, slotMeta, presences, instructions };
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
@@ -79,6 +111,111 @@ export default function CompositionsPage() {
             <span style={{ fontSize: 10.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)" }} /> Partagé · live</span>
             {isAdmin && <button onClick={resetAll} style={{ fontSize: 11.5, padding: "7px 13px", borderRadius: 8, border: "1px solid var(--red)", background: "transparent", color: "var(--red)", cursor: "pointer", fontWeight: 600 }}>↺ Réinitialiser</button>}
           </div>
+        </div>
+
+        {/* ── Presences ────────────────────────────────────────────────────
+            « Je serai la » par creneau. C'est cette liste que le rappel Discord
+            lit pour annoncer « il manque un Templier » : une bascule par
+            personnage, pour connaitre la classe et pas seulement le nombre. */}
+        <div className="fx-card" style={card}>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, marginBottom: 4 }}>
+            <Icon name="check" size={17} />Présences
+          </h2>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>
+            Annonce tes personnages présents. Le rappel Discord de la veille annonce ce qu&apos;il manque.
+          </p>
+
+          {CRENEAUX.map(cr => {
+            const liste = presences.filter(p => p.creneau === cr.id);
+            const manques = classesManquantes(etatCourant, cr.id);
+            return (
+              <div key={cr.id} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                  <span className="font-heading" style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: .6 }}>{cr.label}</span>
+                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 9px" }}>
+                    {liste.length} présent{liste.length > 1 ? "s" : ""}
+                  </span>
+                  {manques.length === 0
+                    ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
+                    : <span style={{ fontSize: 11.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
+                </div>
+
+                {myChars.length === 0 ? (
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Crée un personnage pour annoncer ta présence.</div>
+                ) : (
+                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                    {myChars.map(ch => {
+                      const on = liste.some(p => p.pseudo.toLowerCase() === ch.name.toLowerCase());
+                      return (
+                        <button key={ch.id} onClick={() => basculerPresence(cr.id, ch)}
+                          title={on ? "Retirer ma présence" : "Je serai là avec ce personnage"}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 20, cursor: "pointer",
+                            border: `1px solid ${on ? "var(--green)" : "var(--border)"}`,
+                            background: on ? "rgba(74,222,128,.13)" : "var(--bg-2)",
+                            color: on ? "var(--green)" : "var(--text-muted)" }}>
+                          <ClassLogo name={classeAffichee(ch.class)} size={16} />
+                          {ch.name}
+                          <Icon name={on ? "check" : "plus"} size={12} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {liste.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                    {liste.map(pr => (
+                      <span key={`${pr.creneau}|${pr.pseudo}`} title={`${pr.pseudo} · ${pr.classe} — annoncé par ${pr.player}`}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text)", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 9px" }}>
+                        <ClassLogo name={pr.classe} size={13} />{pr.pseudo}
+                        {(isAdmin || pr.player === meName) && (
+                          <button onClick={() => sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) })}
+                            title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={11} /></button>
+                        )}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Consignes ────────────────────────────────────────────────────
+            Redigees par le staff, lues par tout le monde. Maxime voulait une
+            page d'instructions : elle est ici, a cote des postes qu'elle
+            explique, plutot que sur une page separee qu'il faudrait aller
+            chercher. */}
+        <div className="fx-card" style={card}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+            <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
+              <Icon name="book" size={17} />Consignes
+            </h2>
+            {isAdmin && editInstr === null && (
+              <button onClick={() => setEditInstr(instructions)} style={{ marginLeft: "auto", fontSize: 11.5, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontWeight: 600 }}>
+                {instructions ? "Modifier" : "Rédiger"}
+              </button>
+            )}
+          </div>
+
+          {editInstr !== null ? (
+            <>
+              <textarea value={editInstr} onChange={e => setEditInstr(e.target.value.slice(0, 4000))} rows={10}
+                placeholder="Déroulé de la Chambre Secrète, rôle de chaque poste, points de rendez-vous…"
+                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, color: "var(--text)", fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, resize: "vertical" }} />
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", marginTop: 10 }}>
+                <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: "auto" }}>{editInstr.length}/4000</span>
+                <button onClick={() => setEditInstr(null)} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer" }}>Annuler</button>
+                <button className="vg-btn" onClick={() => { sauver({ instructions: editInstr }); setEditInstr(null); }}>Enregistrer</button>
+              </div>
+            </>
+          ) : instructions ? (
+            <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-wrap" }}>{instructions}</div>
+          ) : (
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+              Aucune consigne pour l&apos;instant{isAdmin ? " — clique sur « Rédiger »." : ". Le staff les publiera ici."}
+            </div>
+          )}
         </div>
 
         {/* Zones de composition */}

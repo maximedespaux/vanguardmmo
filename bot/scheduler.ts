@@ -9,6 +9,9 @@ import type { Role } from "@prisma/client";
 import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
+// Module partage avec le site : c'est lui qui garantit la forme du blob des
+// Chambres Secretes, donc la fiabilite de l'effectif annonce ici.
+import { normaliserCompo, presencesDu, resumeManques, type Creneau } from "@/lib/compositions";
 import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
 import { openDiscussion } from "./lib/exchange.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
@@ -47,24 +50,39 @@ async function rappelsActifs(cle: string): Promise<boolean> {
  */
 async function rappelCreneau(
   client: Client,
-  opts: { cle: string; titre: string; heure: string; quand: "veille" | "jour" }
+  opts: { cle: string; titre: string; heure: string; quand: "veille" | "jour"; creneau?: Creneau }
 ) {
   if (!(await rappelsActifs(opts.cle))) return;
-  const { titre, heure, quand } = opts;
-
-  // Note : le nombre de presences n'est PAS repris ici. Elles vivent dans un blob
-  // JSON (CompositionState.data) dont la forme n'est pas garantie ; le lire a
-  // l'aveugle produirait un compte faux, ce qui est pire que pas de compte.
+  const { titre, heure, quand, creneau } = opts;
   const veille = quand === "veille";
+
+  // Effectif manquant. La forme des donnees est desormais garantie par
+  // normaliserCompo (module partage avec le site), ce qui rend ce compte fiable
+  // — c'etait le seul blocage a l'annoncer ici.
+  let effectif = "";
+  if (creneau) {
+    try {
+      const row = await prisma.compositionState.findUnique({ where: { id: "main" } });
+      const etat = normaliserCompo(row?.data);
+      const presents = presencesDu(etat, creneau).length;
+      const manque = resumeManques(etat, creneau);
+      effectif = manque
+        ? `\n\n**Effectif : ${presents} annonce${presents > 1 ? "s" : ""}.** Il manque ${manque}.`
+        : `\n\n**Effectif au complet** (${presents} annonces). Merci a tout le monde.`;
+    } catch {
+      /* Blob illisible ou base indisponible : on envoie le rappel sans effectif
+         plutot que d'annoncer un chiffre faux. */
+    }
+  }
   await sendTo(client, SALON_CS, {
     content: "@everyone",
     allowedMentions: { parse: ["everyone"] },
     embeds: [{
       title: veille ? `${titre} demain a ${heure}` : `${titre} ce soir a ${heure}`,
       color: ORANGE,
-      description: veille
+      description: (veille
         ? "Prepare ton stuff et annonce ta presence des maintenant, pour qu'on puisse composer les equipes a l'avance."
-        : `Rendez-vous a **${heure}** en vocal. Verifie ton stuff et ta composition avant de te connecter.`,
+        : `Rendez-vous a **${heure}** en vocal. Verifie ton stuff et ta composition avant de te connecter.`) + effectif,
       footer: { text: `Vanguard · ${titre}` },
       timestamp: new Date().toISOString(),
     }],
@@ -325,8 +343,11 @@ export function startScheduler(client: Client) {
   // Chambres Secretes : mercredi (3) et dimanche (0) a 21h.
   // Veille a 20h -> mardi (2) et samedi (6) ; jour meme a 20h -> mercredi et dimanche.
   const CS = { cle: "cs_rappels_actifs", titre: "Chambres Secretes", heure: "21h" };
-  cron.schedule("0 20 * * 2,6", () => rappelCreneau(client, { ...CS, quand: "veille" }).catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 3,0", () => rappelCreneau(client, { ...CS, quand: "jour" }).catch(console.error), CRON_TZ);
+  // Mardi -> mercredi, samedi -> dimanche : chaque rappel parle du creneau qu'il annonce.
+  cron.schedule("0 20 * * 2", () => rappelCreneau(client, { ...CS, quand: "veille", creneau: "mer" }).catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 6", () => rappelCreneau(client, { ...CS, quand: "veille", creneau: "dim" }).catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 3", () => rappelCreneau(client, { ...CS, quand: "jour", creneau: "mer" }).catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 0", () => rappelCreneau(client, { ...CS, quand: "jour", creneau: "dim" }).catch(console.error), CRON_TZ);
   // Guild Siege : meme mecanique, mais l'HORAIRE RESTE A CONFIRMER. En attendant il
   // est cale sur samedi 21h ; l'interrupteur est coupe par defaut, donc rien ne part
   // tant que le creneau n'a pas ete valide.

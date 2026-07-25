@@ -4,10 +4,13 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Channel = { id: string; name: string; type: string };
 
 export default function AnnoncePage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [ch, setCh] = useState("");
   const [title, setTitle] = useState("");
@@ -50,8 +53,8 @@ export default function AnnoncePage() {
     <div style={{ padding: "28px 32px", maxWidth: 760, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-annonce.webp" title="Annonce" subtitle="Rédige une annonce : le bot la publie en embed dans le salon choisi." />
       <SectionTabs section="discord" />
-      {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
-      <div style={card}>
+      {toast && <div className="fx-card" style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
+      <div className="fx-card" style={card}>
         <label style={lab}>Salon</label>
         <VgSelect full value={ch} onChange={setCh} options={channels.length === 0 ? [{ value: "", label: "(salons en cours de synchro…)" }] : channels.map((c) => ({ value: c.id, label: `#${c.name}${c.type === "announcement" ? " " : ""}` }))} />
         <label style={lab}>Titre</label>

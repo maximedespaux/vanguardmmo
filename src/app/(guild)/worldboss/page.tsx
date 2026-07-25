@@ -3,10 +3,13 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Ev = { id: string; boss: { name: string; zone: string | null; recommendedLevel: number | null; strategy: string | null; rewards: string | null }; startAt: string; status: string; note: string | null; confirmed: number; declined: number; participants: string[]; myStatus: string | null };
 
 export default function WorldBossPage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [events, setEvents] = useState<Ev[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,11 +29,11 @@ export default function WorldBossPage() {
       <SectionTabs section="pve" />
 
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
-        : events.length === 0 ? <div className="glass-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement prévu pour l'instant.</div>
+        : events.length === 0 ? <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucun événement prévu pour l'instant.</div>
         : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {events.map(e => (
-            <div key={e.id} className="glass-card" style={{ padding: 18 }}>
+            <div key={e.id} className="glass-card fx-card" style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span className="font-heading" style={{ fontSize: 18, fontWeight: 700 }}>{e.boss.name}</span>
                 {e.boss.recommendedLevel && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>niv. {e.boss.recommendedLevel}+</span>}

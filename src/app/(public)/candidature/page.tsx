@@ -6,6 +6,7 @@ import { VgSelect } from "@/components/VgSelect";
 import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { canAccessGuild } from "@/config/roles";
+import { useCardFx } from "@/components/VgFx";
 
 const CLASSES = ["Spadassin","Templier","Arcaniste","Envouteur","Arbalétrier","Sylphide","Primat","Chanoine"];
 const SPECS: { k: string; ic: IconName; l: string }[] = [{k:"PVE",ic:"sprout",l:"PvE / Farm"},{k:"PVP",ic:"trophy",l:"PvP & Boss"},{k:"CS",ic:"key",l:"Chambres Secrètes"}];
@@ -23,6 +24,8 @@ const depuisEnumClasse = (v: string) =>
   CLASSES.find((c) => versEnumClasse(c) === String(v).toUpperCase()) ?? CLASSES[0];
 
 export default function CandidaturePage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const { data: session } = useSession();
   const [step, setStep] = useState(1);
   const [chars, setChars] = useState<Char[]>([{ name: "", cls: "Spadassin", prestige: 3 }]);
@@ -226,7 +229,7 @@ export default function CandidaturePage() {
   if (authed === false) return (
     <div style={{ padding: 40, maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
       <h1 className="font-heading" style={{ fontSize: 30, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Candidature <Icon name="clipboard" size={24} style={{ display: "inline-block", verticalAlign: "-3px" }} /></h1>
-      <div className="glass-card" style={{ padding: 28, marginTop: 20 }}>
+      <div className="glass-card fx-card" style={{ padding: 28, marginTop: 20 }}>
         <p style={{ color: "var(--text)", marginBottom: 18 }}>Connecte-toi avec Discord pour postuler — c'est la première étape.</p>
         <a href="/login" className="vg-btn">Se connecter avec Discord</a>
       </div>
@@ -237,7 +240,7 @@ export default function CandidaturePage() {
   if (canAccessGuild(((session?.user as any)?.role) ?? "RECRUE")) return (
     <div style={{ padding: 40, maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
       <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidature" subtitle="" />
-      <div className="glass-card" style={{ padding: 32, marginTop: 20 }}>
+      <div className="glass-card fx-card" style={{ padding: 32, marginTop: 20 }}>
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name="shield" size={46} /></div>
         <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres</h2>
         <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour ou jeter un œil au dashboard.</p>
@@ -269,7 +272,7 @@ export default function CandidaturePage() {
       </div>
 
       {step === 1 && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="users" size={18} />Tes personnages</h2>
           {chars.map((c, i) => (
             <div key={i} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
@@ -294,7 +297,7 @@ export default function CandidaturePage() {
       )}
 
       {step === 2 && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="zap" size={18} />Spécialisations</h2>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
             {SPECS.map(s => { const sel = specs.includes(s.k); return <button key={s.k} onClick={() => toggleSpec(s.k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-3)", color: sel ? "var(--orange)" : "var(--text)" }}><Icon name={s.ic} size={14} />{s.l}</button>; })}
@@ -327,7 +330,7 @@ export default function CandidaturePage() {
       )}
 
       {step === 3 && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="sword" size={18} />Construis ton build</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 18, lineHeight: 1.6 }}>Ouvre le Stuff Builder, configure ton équipement (arme, armures, bijoux, éveil, cartes…), puis clique « Exporter » dans le builder — ton build sera repris ici automatiquement.</p>
           <div style={{ textAlign: "center", padding: "10px 0 20px" }}>
@@ -388,7 +391,7 @@ export default function CandidaturePage() {
       )}
 
       {step === 4 && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="clipboard" size={18} />Récapitulatif</h2>
           <div style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, fontSize: 13, lineHeight: 1.9 }}>
             <div><b><Icon name="users" size={14} style={ico} />Personnages :</b> {chars.map(c => `${c.name || "(sans nom)"} — ${c.cls} P${c.prestige}`).join(", ")}</div>

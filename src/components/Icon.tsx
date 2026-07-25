@@ -63,7 +63,14 @@ export function Icon({
       aria-hidden="true"
       focusable="false"
       className={framed ? undefined : className}
-      style={framed ? { flexShrink: 0, display: "block" } : { flexShrink: 0, display: "block", ...style }}
+      // `display:block` cassait tous les usages au fil du texte : le libellé qui
+      // suivait l'icône passait à la ligne (« ♥ » au-dessus de « 3 000 » au lieu
+      // d'être à côté). `inline-block` + vertical-align aligne l'icône sur la
+      // ligne de base du texte, et reste correct dans un conteneur flex, où le
+      // display de l'enfant est de toute façon neutralisé.
+      style={framed
+        ? { flexShrink: 0, display: "block" }
+        : { flexShrink: 0, display: "inline-block", verticalAlign: "-0.14em", ...style }}
       dangerouslySetInnerHTML={{ __html: paths }}
       {...rest}
     />

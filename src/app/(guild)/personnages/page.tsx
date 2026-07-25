@@ -5,6 +5,7 @@ import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
 const MODES = ["DPS","TANK","HYBRIDE"];
@@ -12,6 +13,8 @@ type Gear = { id: string; name: string; mode: string };
 type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; gearProfiles: Gear[]; specializations: any[] };
 
 export default function PersonnagesPage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [chars, setChars] = useState<Char[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState(""); const [cls, setCls] = useState("SPADASSIN"); const [prestige, setPrestige] = useState(3); const [level, setLevel] = useState(200); const [isMain, setIsMain] = useState(false);
@@ -47,7 +50,7 @@ export default function PersonnagesPage() {
       {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>{toast.ok && <Icon name="check" size={15} />}{toast.msg}</div>}
 
       {/* Création */}
-      <div style={card}>
+      <div className="fx-card" style={card}>
         <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}><Icon name="plus" size={16} /> Créer un personnage</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <input placeholder="Nom du personnage" value={name} onChange={e => setName(e.target.value)} style={{ ...inp, flex: 1, minWidth: 150 }} />
@@ -61,7 +64,7 @@ export default function PersonnagesPage() {
 
       {/* Liste */}
       {loading ? <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 30 }}>Chargement…</div> :
-       chars.length === 0 ? <div style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun personnage. Crée ton premier ci-dessus</div> :
+       chars.length === 0 ? <div className="fx-card" style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun personnage. Crée ton premier ci-dessus</div> :
        chars.map(c => (
         <div key={c.id} style={card}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>

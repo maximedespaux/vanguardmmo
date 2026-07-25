@@ -83,7 +83,7 @@ export default function HistoirePage() {
 
         {/* Objectifs */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "40px 0 18px", display: "flex", alignItems: "center", gap: 12 }}>
-          <Icon name="target" framed frameSize={34} tone="gold" /> <span className="vg-h2">Nos objectifs</span>
+          <Icon name="target" framed frameSize={34} tone="orange" /> <span className="vg-h2">Nos objectifs</span>
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))", gap: 16, alignItems: "stretch", maxWidth: 760, margin: "0 auto" }}>
           {objectifs.map(([ic, t, d], i) => (
@@ -97,7 +97,7 @@ export default function HistoirePage() {
 
         {/* Fonctionnalités */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "44px 0 6px", display: "flex", alignItems: "center", gap: 12 }}>
-          <Icon name="settings" framed frameSize={34} tone="gold" /> <span className="vg-h2">Les fonctionnalités du site</span>
+          <Icon name="settings" framed frameSize={34} tone="orange" /> <span className="vg-h2">Les fonctionnalités du site</span>
         </h2>
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "0 0 18px", letterSpacing: ".2px" }}>
           Un site et un bot Discord qui partagent la même base — ce qui se passe ici se retrouve sur Discord, et inversement.

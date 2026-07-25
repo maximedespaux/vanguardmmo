@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Channel = { id: string; name: string; type: string };
 type Cmd = { id: string; type: string; status: string; result: string | null; createdBy: string; createdAt: string; payload: any };
@@ -24,6 +25,8 @@ function parseDurationMs(s: string): number | null {
 const hexToInt = (hex: string) => { const n = parseInt(hex.replace(/^#/, ""), 16); return Number.isNaN(n) ? 0xff8c1a : n; };
 
 export default function DiscordPage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [cmds, setCmds] = useState<Cmd[]>([]);
   const [tab, setTab] = useState<"embed" | "giveaway" | "classes">("embed");
@@ -70,7 +73,7 @@ export default function DiscordPage() {
       <PageHeader banner="/assets/site/banners/banner-discord.webp" title="Discord" subtitle="Pilote le bot depuis le site : poste des embeds, lance des giveaways et le panneau de classes. Le bot exécute dans les secondes qui suivent." />
       <SectionTabs section="discord" />
 
-      {toast && <div style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
+      {toast && <div className="fx-card" style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
 
       <div className="vg-subtabs">
         <button className={`vg-subtab ${tab === "embed" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }} onClick={() => setTab("embed")}><Icon name="edit" size={15} />Embed Builder</button>
@@ -80,7 +83,7 @@ export default function DiscordPage() {
 
       <div key={tab} className="vg-swap">
       {tab === "embed" && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <label style={lab}>Salon</label><ChannelSelect v={eCh} set={setECh} />
           <label style={lab}>Titre</label><input style={inp} value={eTitle} onChange={(e) => setETitle(e.target.value)} placeholder="Titre de l'embed" />
           <label style={lab}>Description (utilise \n pour un saut de ligne)</label><textarea style={{ ...inp, minHeight: 90, resize: "vertical" }} value={eDesc} onChange={(e) => setEDesc(e.target.value)} />
@@ -94,7 +97,7 @@ export default function DiscordPage() {
       )}
 
       {tab === "giveaway" && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <label style={lab}>Salon</label><ChannelSelect v={gCh} set={setGCh} />
           <label style={lab}>Lot(s) à gagner</label>
           {gPrizes.map((p, i) => (
@@ -120,7 +123,7 @@ export default function DiscordPage() {
       )}
 
       {tab === "classes" && (
-        <div style={card}>
+        <div className="fx-card" style={card}>
           <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 0 }}>Poste le panneau des 8 classes (boutons d'auto-attribution de rôle) dans le salon choisi.</p>
           <label style={lab}>Salon</label><ChannelSelect v={cCh} set={setCCh} />
           <button className="vg-btn" style={{ marginTop: 14, opacity: busy ? 0.6 : 1 }} disabled={busy} onClick={() => send("post_class_panel", { channelId: cCh })}>Poster le panneau de classes</button>
@@ -129,7 +132,7 @@ export default function DiscordPage() {
       </div>
 
       {/* Historique */}
-      <div style={card}>
+      <div className="fx-card" style={card}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Historique des commandes</div>
         {cmds.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Aucune commande pour l'instant.</div> :
           <div style={{ display: "grid", gap: 8 }}>

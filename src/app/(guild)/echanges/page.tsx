@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 interface Item { name: string; def?: string; count: number; prob?: number; icon?: string; }
 interface Ex { require: Item[]; give: Item[]; }
@@ -21,6 +22,8 @@ const LABELS: Record<string, string> = {
 const nice = (k?: string) => (k && LABELS[k]) || (k || "").replace(/^MMI_/, "").replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
 
 export default function EchangesPage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [D, setD] = useState<Data | null>(null);
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"custom" | "ressources">("custom");
@@ -56,7 +59,7 @@ export default function EchangesPage() {
 
       <div key={tab} className="vg-swap">
         {list.map((n, i) => (
-          <div key={i} className="glass-card" style={{ padding: 0, marginBottom: 14, overflow: "hidden" }}>
+          <div key={i} className="glass-card fx-card" style={{ padding: 0, marginBottom: 14, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 16px", background: "linear-gradient(90deg, rgba(255,210,74,.1), transparent 60%)", borderLeft: "3px solid var(--gold)" }}>
               <Icon name="swap" size={16} style={{ color: "var(--gold)" }} />
               <span className="font-heading" style={{ color: "var(--gold)", fontSize: 14.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{nice(n.mmi || n.npc)}</span>
@@ -73,7 +76,7 @@ export default function EchangesPage() {
             </div>
           </div>
         ))}
-        {list.length === 0 && <div className="glass-card" style={{ padding: 26, textAlign: "center", color: "var(--text-muted)" }}>Aucun résultat pour « {q} ».</div>}
+        {list.length === 0 && <div className="glass-card fx-card" style={{ padding: 26, textAlign: "center", color: "var(--text-muted)" }}>Aucun résultat pour « {q} ».</div>}
       </div>
 
       <style>{`

@@ -85,7 +85,7 @@ export default function CompositionsPage() {
         {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
           <div key={g} className="fx-card" style={{ ...card, padding: 0, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: `linear-gradient(90deg, ${meta.color}22, transparent)`, borderLeft: `4px solid ${meta.color}` }}>
-              <Icon name={meta.icon as IconName} framed frameSize={30} tone="gold" />
+              <Icon name={meta.icon as IconName} framed frameSize={30} tone="orange" />
               <span className="font-heading" style={{ fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, fontSize: 15 }}>{g}</span>
               <span style={{ marginLeft: "auto", fontSize: 12, color: meta.color, fontWeight: 600 }}>{done}/{slots.length}</span>
             </div>

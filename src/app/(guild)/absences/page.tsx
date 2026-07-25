@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { useCardFx } from "@/components/VgFx";
 
 type Abs = { id: string; startDate: string; endDate: string; reason: string | null; status: string };
 const ST: Record<string, { l: string; c: string }> = {
@@ -16,6 +17,8 @@ const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid
 const fmtD = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function AbsencesPage() {
+  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
+  useCardFx();
   const [list, setList] = useState<Abs[]>([]);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -42,7 +45,7 @@ export default function AbsencesPage() {
       <PageHeader icon="moon" title="Mes absences" subtitle="Préviens le staff quand tu seras absent(e) — ça évite les relances." />
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
-      <div className="glass-card" style={{ padding: 18, marginBottom: 18 }}>
+      <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 18 }}>
         <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="calendar" size={16} /> Faire une demande</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 12, color: "var(--text-muted)" }}>Du<input type="date" value={start} onChange={e => setStart(e.target.value)} style={inp} /></label>
@@ -53,10 +56,10 @@ export default function AbsencesPage() {
       </div>
 
       <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes absences</h2>
-      {list.length === 0 ? <div className="glass-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune absence déclarée.</div> : (
+      {list.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune absence déclarée.</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {list.map(a => { const st = ST[a.status] ?? { l: a.status, c: "var(--text-muted)" }; return (
-            <div key={a.id} className="glass-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <div key={a.id} className="glass-card fx-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span className="font-heading" style={{ fontWeight: 700 }}>{fmtD(a.startDate)} → {fmtD(a.endDate)}</span>
               {a.reason && <span style={{ fontSize: 13, color: "var(--text-muted)" }}>· {a.reason}</span>}
               <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>

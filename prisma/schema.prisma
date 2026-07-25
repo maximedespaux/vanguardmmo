@@ -641,3 +641,12 @@ model Notification {
   @@index([userId, read])
   @@index([createdAt])
 }
+
+/// Reglages simples cle/valeur, partages entre le site et le bot.
+/// Cree pour l'interrupteur des rappels Chambres Secretes (le jeu peut etre
+/// indisponible), pense pour accueillir les suivants sans nouvelle table.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -25,6 +25,25 @@ function parseDurationMs(s: string): number | null {
 const hexToInt = (hex: string) => { const n = parseInt(hex.replace(/^#/, ""), 16); return Number.isNaN(n) ? 0xff8c1a : n; };
 
 export default function DiscordPage() {
+  // Interrupteur des rappels Chambres Secretes (mercredi et dimanche 21h).
+  // Il existe parce que le jeu peut etre indisponible : on coupe les rappels sans
+  // toucher au code ni au bot.
+  const [csRappels, setCsRappels] = useState<boolean | null>(null);
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => setCsRappels(j ? j.cs_rappels_actifs === "1" : false))
+      .catch(() => setCsRappels(false));
+  }, []);
+  const basculerCs = async (actif: boolean) => {
+    setCsRappels(actif); // retour immediat, on corrige si le serveur refuse
+    const r = await fetch("/api/admin/settings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "cs_rappels_actifs", value: actif ? "1" : "0" }),
+    }).catch(() => null);
+    if (!r || !r.ok) setCsRappels(!actif);
+  };
+
   // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
   useCardFx();
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -74,6 +93,35 @@ export default function DiscordPage() {
       <SectionTabs section="discord" />
 
       {toast && <div className="fx-card" style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
+
+      {/* Rappels Chambres Secretes — interrupteur, parce que le jeu peut etre
+          indisponible et qu'un @everyone deux fois par semaine dans le vide
+          apprend surtout aux membres a ignorer le salon. */}
+      <div className="fx-card" style={{ ...card, display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <Icon name="key" framed frameSize={40} tone="orange" />
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div className="font-heading" style={{ fontSize: 14, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Rappels Chambres Secrètes</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, lineHeight: 1.55 }}>
+            Annonce <b>@everyone</b> dans le salon de la guilde, <b>mercredi et dimanche</b> : la veille pour se préparer, puis une heure avant.
+            {csRappels === false && <span style={{ color: "var(--gold)" }}> Actuellement coupés.</span>}
+          </div>
+        </div>
+        {csRappels === null ? (
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Chargement…</span>
+        ) : (
+          <div style={{ display: "flex", gap: 0, border: "1px solid var(--border)", borderRadius: 9, overflow: "hidden" }}>
+            {[false, true].map((actif) => (
+              <button key={String(actif)} onClick={() => basculerCs(actif)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 16px", border: 0, cursor: "pointer",
+                  fontSize: 12.5, fontWeight: 700,
+                  background: csRappels === actif ? (actif ? "linear-gradient(180deg,#FFC061,#FF8C1A)" : "var(--bg-4)") : "rgba(0,0,0,.25)",
+                  color: csRappels === actif ? (actif ? "#2a1400" : "var(--text)") : "var(--text-muted)" }}>
+                <Icon name={actif ? "bell" : "ban"} size={13} />{actif ? "Activés" : "Coupés"}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="vg-subtabs">
         <button className={`vg-subtab ${tab === "embed" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 7 }} onClick={() => setTab("embed")}><Icon name="edit" size={15} />Embed Builder</button>

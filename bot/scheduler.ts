@@ -24,6 +24,45 @@ async function sendTo(client: Client, channelId: string, payload: any) {
     console.error("Envoi impossible vers le salon", channelId, e);
   }
 }
+// ── Rappels Chambres Secretes (mercredi et dimanche, 21h) ────────────────────
+// Deux rappels : la veille a 20h pour se preparer (stuff, presences), puis a 20h
+// le jour meme pour se connecter. Mention @everyone, mais UNIQUEMENT dans le salon
+// de la guilde — et seulement si l'interrupteur du site est actif : le jeu peut
+// etre indisponible, et un @everyone deux fois par semaine dans le vide apprend
+// surtout aux membres a ignorer le salon.
+const SALON_CS = "1498696982229811352";
+
+async function rappelsActifs(): Promise<boolean> {
+  try {
+    const r = await prisma.setting.findUnique({ where: { key: "cs_rappels_actifs" } });
+    return r?.value === "1"; // coupes par defaut : on n'annonce jamais sans decision explicite
+  } catch {
+    return false; // base injoignable : on se tait plutot que de spammer
+  }
+}
+
+async function rappelChambresSecretes(client: Client, quand: "veille" | "jour") {
+  if (!(await rappelsActifs())) return;
+
+  // Note : le nombre de presences n'est PAS repris ici. Elles vivent dans un blob
+  // JSON (CompositionState.data) dont la forme n'est pas garantie ; le lire a
+  // l'aveugle produirait un compte faux, ce qui est pire que pas de compte.
+  const veille = quand === "veille";
+  await sendTo(client, SALON_CS, {
+    content: "@everyone",
+    allowedMentions: { parse: ["everyone"] },
+    embeds: [{
+      title: veille ? "Chambres Secretes demain a 21h" : "Chambres Secretes ce soir a 21h",
+      color: ORANGE,
+      description: veille
+        ? "Prepare ton stuff et annonce ta presence des maintenant, pour qu'on puisse composer les equipes a l'avance."
+        : "Rendez-vous a **21h** en vocal. Verifie ton stuff et ta composition avant de te connecter.",
+      footer: { text: "Vanguard · Chambres Secretes" },
+      timestamp: new Date().toISOString(),
+    }],
+  });
+}
+
 
 // ─── Rappel des candidatures en attente ─────────────────────
 async function remindApplications(client: Client) {
@@ -275,5 +314,9 @@ export function startScheduler(client: Client) {
   setInterval(() => syncMemberRanks(client).catch(console.error), 10 * 60_000);
   // Événements du jeu : tick chaque minute (lus en base, éditables sur le site).
   cron.schedule("* * * * *", () => tickEvents(client).catch(console.error), CRON_TZ);
+  // Chambres Secretes : mercredi (3) et dimanche (0) a 21h.
+  // Veille a 20h -> mardi (2) et samedi (6) ; jour meme a 20h -> mercredi et dimanche.
+  cron.schedule("0 20 * * 2,6", () => rappelChambresSecretes(client, "veille").catch(console.error), CRON_TZ);
+  cron.schedule("0 20 * * 3,0", () => rappelChambresSecretes(client, "jour").catch(console.error), CRON_TZ);
   console.log("🕒 Planificateur démarré.");
 }

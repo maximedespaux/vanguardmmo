@@ -264,6 +264,21 @@ function pourToBank(k){const f=S.farm[k];if(!f||!f.have)return;
 /* ============ CRAFT ============ */
 function ingRow(o){const sl=o.slot&&typeof o.q==='number'?`<div class="b">${slotTxt(o.q)} · 1 slot = 9 999</div>`:'';return `<div class="ing">${img(o.ic)||'<span class="x"><i class=vgi-package></i></span>'}<div class="in"><div class="a">${esc(o.n)}</div>${sl}</div><div class="q">×${typeof o.q==='number'?fmt(o.q):o.q}</div></div>`;}
 function craftCost(c){return S.recipes[c.key]||c.cost||[];}
+/* Ce que la recette PRODUIT. Decision de Maxime : un craft peut rendre un seul
+   objet ou plusieurs, avec quantite — on garde les deux possibles.
+   Repli : les 25 crafts predefinis n'ont pas de champ produits et rendent 1 fois
+   leur propre nom. Sans ce repli, ils afficheraient tous « ne produit rien ». */
+function craftProduits(c){
+  var p=(S.craftYields||{})[c.key]||c.produits;
+  if(!p||!p.length)return [{n:c.key,q:1}];
+  return p;
+}
+/* Vrai si la recette produit autre chose qu'un seul exemplaire d'elle-meme :
+   c'est le seul cas ou l'afficher apporte une information. */
+function craftProduitsSpeciaux(c){
+  var p=craftProduits(c);
+  return !(p.length===1 && p[0].n===c.key && Number(p[0].q)===1);
+}
 const GROUP_EMOJI={'Œufs':'<i class=vgi-egg></i>','Badges':'<i class=vgi-medal></i>','Masques':'<i class=vgi-mask></i>','Mantras':'<i class=vgi-shirt></i>','Médailles & reliques':'<i class=vgi-medal></i>'};
 // ── Crafts personnalisés (Vanguard) : créer / supprimer / éditer les icônes (assets craft.zip) ──
 const CRAFT_ASSETS={
@@ -281,13 +296,18 @@ function galleryRows(fnName,extra){var out='';['Badges','Mantras','Masques'].for
 function iqNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
 function iqFind(name){var q=iqNorm(name);if(!q)return null;var cat=catalog()||[];var it=cat.find(function(x){return iqNorm(x.item)===q;});if(it)return it;var qt=q.split(' ').filter(Boolean);if(qt.length<2)return null;/* flou uniquement sur les noms à ≥2 mots (ex. « liane ruine prestigieuse » → « Liane de Ruine Prestigieuse ») : tous les mots de l'ingrédient présents dans le nom de l'objet. Pas d'appariement inverse (éviterait qu'un objet générique « Casque » matche « Casque du Berserker »). */return cat.find(function(x){var t=iqNorm(x.item);return t&&qt.every(function(w){return t.indexOf(w)>=0;});})||null;}
 function iqHolders(name){var it=iqFind(name);if(!it)return [];return (S.members||[]).map(function(m){return {m:m,q:+((S.inv[m]||{})[it.id])||0};}).filter(function(h){return h.q>0;}).sort(function(a,b){return b.q-a.q;});}
-function newCraftForm(){if(!canEdit())return;var groups=['Œufs','Badges','Masques','Mantras'];openSheet('<h3><i class=vgi-plus></i> Nouveau craft</h3><div class="hint">Crée le craft puis renseigne sa recette. Tu pourras changer son icône ensuite.</div><div class="field"><label>Nom</label><input class="inp" id="ncN" placeholder="ex. Masque HP III"></div><div class="field"><label>Catégorie</label><select class="inp" id="ncG">'+groups.map(function(g){return '<option>'+esc(g)+'</option>';}).join('')+'</select></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="doAddCraft()">Créer</button></div>');}
+function newCraftForm(){if(!canEdit())return;
+  /* Categories existantes + celles deja creees a la main : la liste etait figee,
+     donc impossible de ranger un nouvel objet ailleurs que dans les 4 d'origine. */
+  var groups=[];allCrafts().forEach(function(c){if(c.group&&groups.indexOf(c.group)<0)groups.push(c.group);});
+  ['Œufs','Badges','Masques','Mantras'].forEach(function(g){if(groups.indexOf(g)<0)groups.push(g);});openSheet('<h3><i class=vgi-plus></i> Nouveau craft</h3><div class="hint">Crée le craft puis renseigne sa recette. Tu pourras changer son icône ensuite.</div><div class="field"><label>Nom</label><input class="inp" id="ncN" placeholder="ex. Masque HP III"></div><div class="field"><label>Catégorie</label><select class="inp" id="ncG" onchange="var f=document.getElementById(\'ncGnew\');if(f)f.style.display=this.value===\'__new__\'?\'block\':\'none\';">'+groups.map(function(g){return '<option>'+esc(g)+'</option>';}).join('')+'<option value="__new__">+ Nouvelle catégorie…</option></select><input class="inp" id="ncGnew" placeholder="Nom de la nouvelle catégorie" style="display:none;margin-top:6px"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="doAddCraft()">Créer</button></div>');}
 function doAddCraft(){var n=(($('#ncN')||{}).value||'').replace(/["'\\<>&]/g,'').replace(/\s+/g,' ').trim();if(!n)return;var g=($('#ncG')||{}).value||'Badges';
+  if(g==='__new__'){g=((($('#ncGnew')||{}).value)||'').replace(/["'\\<>&]/g,'').trim();if(!g){agToast('Donne un nom à la nouvelle catégorie.',false);return;}}
   // Si on recrée un craft prédéfini supprimé (caché), on le restaure au lieu de créer un doublon fantôme.
   if((S.hiddenCrafts||[]).indexOf(n)>=0){S.hiddenCrafts=(S.hiddenCrafts||[]).filter(function(k){return k!==n;});save();closeSheet();render();openRecipe(n);return;}
   if(allCrafts().some(function(c){return c.key===n;})){agToast('Un craft porte déjà ce nom.',false);return;}
   S.customCrafts=S.customCrafts||[];S.customCrafts.push({key:n,group:g,npc:'',ic:'',cost:[]});save();closeSheet();render();openRecipe(n);}
-function delCraft(key){if(!canEdit())return;agConfirm('Supprimer le craft « '+key+' » ?',function(){if((S.customCrafts||[]).some(function(c){return c.key===key;})){S.customCrafts=(S.customCrafts||[]).filter(function(c){return c.key!==key;});}else{S.hiddenCrafts=S.hiddenCrafts||[];if(S.hiddenCrafts.indexOf(key)<0)S.hiddenCrafts.push(key);}if(S.recipes)delete S.recipes[key];if(S.craftAssets)delete S.craftAssets[key];save();render();});}
+function delCraft(key){if(!canEdit())return;agConfirm('Supprimer le craft « '+key+' » ?',function(){if((S.customCrafts||[]).some(function(c){return c.key===key;})){S.customCrafts=(S.customCrafts||[]).filter(function(c){return c.key!==key;});}else{S.hiddenCrafts=S.hiddenCrafts||[];if(S.hiddenCrafts.indexOf(key)<0)S.hiddenCrafts.push(key);}if(S.recipes)delete S.recipes[key];if(S.craftAssets)delete S.craftAssets[key];if(S.craftYields)delete S.craftYields[key];save();render();});}
 function editCraftIcon(key){if(!canEdit())return;openSheet('<h3><i class=vgi-image></i> Icône — '+esc(key)+'</h3><div class="hint">Choisis une icône fournie, ou colle un lien.</div>'+galleryRows('setCraftIcon',"'"+sqa(key)+"'")+'<div class="field" style="margin-top:10px"><label>Lien personnalisé (URL ou /chemin)</label><input class="inp" id="ciU" value="'+esc((S.craftAssets||{})[key]||'')+'" placeholder="/assets/... ou https://..."></div><div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="setCraftIcon(\''+sqa(key)+'\',\'\')">Retirer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="setCraftIcon(\''+sqa(key)+'\',((document.getElementById(\'ciU\')||{}).value||\'\').trim())">Enregistrer</button></div></div>');}
 function setCraftIcon(key,path){S.craftAssets=S.craftAssets||{};if(path){S.craftAssets[key]=path;}else{delete S.craftAssets[key];}save();closeSheet();render();}
 function pickIngIcon(i,key){openSheet('<h3><i class=vgi-image></i> Icône ingrédient</h3><div class="hint">Choisis une icône, ou colle un lien.</div>'+galleryRows('setIngIcon',i+",'"+sqa(key)+"'")+'<div class="field" style="margin-top:10px"><label>Lien personnalisé</label><input class="inp" id="iiU" placeholder="/assets/... ou https://..."></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="drawRecipe(\''+sqa(key)+'\')">Retour</button> <button class="btn o" onclick="setIngIcon('+i+',\''+sqa(key)+'\',((document.getElementById(\'iiU\')||{}).value||\'\').trim())">Enregistrer</button></div>');}
@@ -309,10 +329,16 @@ function craftCard(c){const cost=craftCost(c);const edited=!!S.recipes[c.key];co
   return `<div class="ocard"><h3>${img(craftIcon(c))||GROUP_EMOJI[c.group]||'<i class=vgi-hammer></i>'} ${esc(c.key)}</h3>
     <div class="npc">${c.npc?esc(c.npc):(cost.length?'Composants':'Recette à compléter')}${edited?' · <span style="color:var(--gold)">modifiée</span>':''}</div>
     ${cost.length?cost.map(ingRow).join(''):'<div class="mut" style="font-size:12px;padding:6px 0">Aucune recette renseignée.</div>'}
+    ${craftProduitsSpeciaux(c)?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="mut">Produit :</span> '+craftProduits(c).map(function(pr){return '<b style="color:var(--gold,#FFB552)">'+esc(pr.q)+' ×</b> '+esc(pr.n);}).join(' · ')+'</div>':''}
     <div class="toolbar" style="margin:8px 0 0;flex-wrap:wrap">${cost.length?`<button class="btn sm o" onclick="craftCalc('${sqa(c.key)}')"><i class=vgi-gauge></i> Calculer</button> `:''}<button class="btn sm" onclick="openRecipe('${sqa(c.key)}')"><i class=vgi-edit></i> Recette</button>${ce?` <button class="btn sm" onclick="editCraftIcon('${sqa(c.key)}')"><i class=vgi-image></i> Icône</button> <button class="btn sm danger" onclick="delCraft('${sqa(c.key)}')"><i class=vgi-trash></i></button>`:''}</div></div>`;}
 function farmReqSection(){var fk=Object.keys(S.farm||{});if(!fk.length)return '';return '<div style="margin-top:6px"><div class="sec-h"><i class=vgi-clipboard></i> Demandes de farm en cours <span class="n">'+fk.length+'</span></div><div class="ogrid">'+fk.map(function(k){var f=S.farm[k];var have=f.have||0;var pc=f.target?Math.min(100,Math.round(have/f.target*100)):0;return '<div class="ocard" style="padding:10px"><div style="display:flex;align-items:center;gap:8px"><span class="x">'+(img(f.ic)||'<i class=vgi-package></i>')+'</span><div style="flex:1;min-width:0"><div class="a" style="font-weight:600">'+esc(f.n)+'</div><div class="mut" style="font-size:10px">'+esc(f.cat||'')+'</div></div><span class="rm" style="cursor:pointer" onclick="delete S.farm[\''+sq(k)+'\'];save();render()"><i class=vgi-x></i></span></div><div class="mut" style="font-size:11px;margin:5px 0 3px">'+have+' / '+f.target+'</div><div class="prog"><i style="width:'+pc+'%"></i></div><div class="toolbar" style="margin:6px 0 0;gap:4px"><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=Math.max(0,(f.have||0)-1);save();render();}">−</button><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=(f.have||0)+1;save();render();}"><i class=vgi-plus></i></button></div></div>';}).join('')+'</div></div>';}
-function viewCraft(){const O=D.objectifs;const groups=['Œufs','Badges','Masques','Mantras','Médailles & reliques'];
+function viewCraft(){const O=D.objectifs;
   const byG={};allCrafts().forEach(c=>{(byG[c.group]=byG[c.group]||[]).push(c);});
+  /* Les categories d'origine d'abord, pour garder l'ordre habituel, PUIS toute
+     categorie creee a la main. Cette liste etait figee : un craft range dans une
+     nouvelle categorie etait bien enregistre mais n'apparaissait nulle part. */
+  const groups=['Œufs','Badges','Masques','Mantras','Médailles & reliques'].filter(g=>byG[g])
+    .concat(Object.keys(byG).filter(g=>['Œufs','Badges','Masques','Mantras','Médailles & reliques'].indexOf(g)<0).sort());
   const tiers=Object.keys(O.prestige).sort((a,b)=>+a-+b);
   return `<div class="legend">Recettes & items. Les <b>ressources</b> en gros volume se comptent en <b>slots</b> (1 = 9 999) ; <b>médailles & reliques</b> à l'unité. Tu peux <b>compléter une recette</b> dès que tu as les infos du guide book.</div>
    ${canEdit()?`<div class="toolbar" style="margin:8px 0"><button class="btn o" onclick="newCraftForm()"><i class=vgi-plus></i> Nouveau craft</button></div>`:''}
@@ -322,15 +348,32 @@ function viewCraft(){const O=D.objectifs;const groups=['Œufs','Badges','Masques
 }
 function openRecipe(key){const base=findCraft(key)||{cost:[]};const cur=(S.recipes[key]||base.cost||[]).map(x=>({n:x.n,q:x.q,slot:!!x.slot,ic:x.ic||''}));
   window.__rec=cur;
+  /* Vide quand la recette rend 1 fois son propre nom : l'editeur affiche alors
+     le comportement par defaut plutot qu'une ligne a supprimer. */
+  window.__prod=craftProduitsSpeciaux(base)?craftProduits(base).map(function(x){return {n:x.n,q:x.q};}):[];
   drawRecipe(key);}
 function drawRecipe(key){const cur=window.__rec;
   const rows=cur.map((r,i)=>`<div class="ing"><span class="x" style="cursor:pointer" title="Changer l'icône" onclick="pickIngIcon(${i},'${sqa(key)}')">${img(r.ic)||'<i class=vgi-package></i>'}</span><input class="inp" style="flex:1" value="${esc(r.n)}" oninput="window.__rec[${i}].n=this.value" placeholder="Nom de l'ingrédient"><input class="inp" style="width:90px" value="${esc(r.q)}" oninput="window.__rec[${i}].q=this.value" placeholder="Qté"><label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center">slot<input type="checkbox" ${r.slot?'checked':''} onchange="window.__rec[${i}].slot=this.checked"></label><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__rec.splice(${i},1);drawRecipe('${sqa(key)}')"><i class=vgi-x></i></span></div>`).join('');
+  var prods=window.__prod||[];
+  var prodRows=prods.map(function(r,i){return '<div class="ing"><input class="inp" style="flex:1" value="'+esc(r.n)+'" oninput="window.__prod['+i+'].n=this.value" placeholder="Objet produit"><input class="inp" style="width:90px" value="'+esc(r.q)+'" oninput="window.__prod['+i+'].q=this.value" placeholder="Qté"><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__prod.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
   openSheet(`<h3><i class=vgi-edit></i> Recette — ${esc(key)}</h3><div class="hint">Renseigne les ingrédients et quantités. Coche « slot » pour les grosses ressources.</div>
    <div id="recrows">${rows||'<div class="mut" style="font-size:12px">Aucun ingrédient.</div>'}</div>
    <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({n:'',q:'',slot:false,ic:''});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Ingrédient</button></div>
+   <h3 style="margin-top:14px"><i class=vgi-package></i> Ce que la recette produit</h3>
+   <div class="hint">Laisse vide si la recette rend simplement <b>1 ${esc(key)}</b>. Ajoute une ou plusieurs lignes pour un autre résultat, ou pour plusieurs objets à la fois.</div>
+   <div id="prodrows">${prodRows||'<div class="mut" style="font-size:12px">1 × ' + esc(key) + ' (par défaut)</div>'}</div>
+   <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__prod.push({n:'',q:1});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Objet produit</button></div>
+   <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({n:'',q:'',slot:false,ic:''});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Ingrédient</button></div>
    <div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="delete S.recipes['${sqa(key)}'];save();closeSheet();render()">Réinitialiser</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveRecipe('${sqa(key)}')">Enregistrer</button></div></div>`);}
 function saveRecipe(key){const cur=(window.__rec||[]).filter(r=>r.n&&String(r.n).trim()).map(r=>{const qn=Number(r.q);return {n:r.n.trim(),q:isNaN(qn)||r.q===''?(r.q||'?'):qn,slot:!!r.slot,ic:r.ic||''};});
-  S.recipes[key]=cur;save();closeSheet();render();}
+  S.recipes[key]=cur;
+  /* Quantite invalide ou absente -> 1 : une recette qui produit « ? » objets
+     serait inexploitable par le calcul de cout. */
+  var prod=(window.__prod||[]).filter(function(r){return r.n&&String(r.n).trim();}).map(function(r){
+    var q=Math.max(1,Math.floor(Number(r.q)||1));return {n:String(r.n).trim(),q:q};});
+  S.craftYields=S.craftYields||{};
+  if(prod.length)S.craftYields[key]=prod;else delete S.craftYields[key];
+  save();closeSheet();render();}
 
 /* ============ BOUTIQUE / DETTE ============ */
 let shopQ='';

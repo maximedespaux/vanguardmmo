@@ -69,15 +69,13 @@ export default function DonjonsPage() {
   const wikiList = dungeons.filter(d => (typeFilter === "Tous" || d.type === typeFilter) && (!q || d.name.toLowerCase().includes(q.toLowerCase())));
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
-  const TabBtn = ({ k, label }: { k: typeof tab; label: React.ReactNode }) => <button onClick={() => setTab(k)} className={`vg-subtab ${tab === k ? "active" : ""}`}>{label}</button>;
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
       <SectionTabs section="pve" />
-      <div className="vg-subtabs">
-        <TabBtn k="wiki" label={<><Icon name="book" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Wiki des donjons</>} />
-      </div>
+      {/* L'onglet « Wiki des donjons » a ete retire : il etait seul dans sa barre,
+          donc il ne proposait aucun choix — la page EST le wiki. */}
 
       <div key={tab} className="vg-swap">
       {tab === "suivi" && (<>

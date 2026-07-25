@@ -47,8 +47,11 @@ export function Icon({
   const paths = ICON_PATHS[name];
   if (!paths) return null;
 
-  // Dans un cadre, le pictogramme occupe ~62 % du cadre pour garder de l'air autour.
-  const glyphSize = size ?? (framed ? Math.round(frameSize * 0.62) : 24);
+  // Dans un cadre, le pictogramme occupe ~70 % du carré et sa taille est ARRONDIE
+  // À UN NOMBRE PAIR. À 62 % on obtenait des tailles impaires (21 px dans un carré
+  // de 34) : le glyphe paraissait petit et flottant, et une dimension impaire ne
+  // peut pas se centrer sur un pixel entier, ce qui ajoutait un demi-pixel de flou.
+  const glyphSize = size ?? (framed ? Math.round((frameSize * 0.7) / 2) * 2 : 24);
 
   const svg = (
     <svg

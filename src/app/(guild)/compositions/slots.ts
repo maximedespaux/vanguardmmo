@@ -18,8 +18,8 @@ export const CS_SLOTS: Slot[] = [
 ];
 
 export const GROUP_META: Record<string, { color: string; icon: string }> = {
-  "Tanks (Primats)": { color: "#4EA8FF", icon: "🛡️" },
-  "DPS physique": { color: "#FF8C1A", icon: "⚔️" },
-  "DPS magique": { color: "#C77DFF", icon: "🔮" },
+  "Tanks (Primats)": { color: "#4EA8FF", icon: "shield" },
+  "DPS physique": { color: "#FF8C1A", icon: "sword-cross" },
+  "DPS magique": { color: "#C77DFF", icon: "orb" },
 };
 export const GROUPS = Object.keys(GROUP_META);

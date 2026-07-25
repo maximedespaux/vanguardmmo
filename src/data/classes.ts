@@ -14,14 +14,14 @@ export interface ClassInfo {
 }
 
 export const CLASSES: Record<string, ClassInfo> = {
-  Spadassin:   { key: "Spadassin",   label: "Spadassin",   en: "Slayer",       role: "dps",     emoji: "⚔️", logo: "/classes/Slayer.png" },
-  Templier:    { key: "Templier",    label: "Templier",    en: "Templar",      role: "tank",    emoji: "🛡️", logo: "/classes/Templar.png" },
-  Arcaniste:   { key: "Arcaniste",   label: "Arcaniste",   en: "Arcanist",     role: "dps",     emoji: "🔮", logo: "/classes/Arcanist.png" },
-  Envouteur:   { key: "Envouteur",   label: "Envoûteur",   en: "Mentalist",    role: "support", emoji: "🌀", logo: "/classes/Mentalist.png" },
-  Arbaletrier: { key: "Arbaletrier", label: "Arbalétrier", en: "Crackshooter", role: "dps",     emoji: "🏹", logo: "/classes/Crackshooter.png" },
-  Sylphide:    { key: "Sylphide",    label: "Sylphide",    en: "Harlequin",    role: "support", emoji: "🎯", logo: "/classes/Harlequin.png" },
-  Primat:      { key: "Primat",      label: "Primat",      en: "Seraph",       role: "dps",     emoji: "👊", logo: "/classes/Seraph.png" },
-  Chanoine:    { key: "Chanoine",    label: "Chanoine",    en: "Forcemaster",  role: "support", emoji: "✨", logo: "/classes/Forcemaster.png" },
+  Spadassin:   { key: "Spadassin",   label: "Spadassin",   en: "Slayer",       role: "dps",     emoji: "sword-cross", logo: "/classes/Slayer.png" },
+  Templier:    { key: "Templier",    label: "Templier",    en: "Templar",      role: "tank",    emoji: "shield", logo: "/classes/Templar.png" },
+  Arcaniste:   { key: "Arcaniste",   label: "Arcaniste",   en: "Arcanist",     role: "dps",     emoji: "orb", logo: "/classes/Arcanist.png" },
+  Envouteur:   { key: "Envouteur",   label: "Envoûteur",   en: "Mentalist",    role: "support", emoji: "spiral", logo: "/classes/Mentalist.png" },
+  Arbaletrier: { key: "Arbaletrier", label: "Arbalétrier", en: "Crackshooter", role: "dps",     emoji: "bow", logo: "/classes/Crackshooter.png" },
+  Sylphide:    { key: "Sylphide",    label: "Sylphide",    en: "Harlequin",    role: "support", emoji: "target", logo: "/classes/Harlequin.png" },
+  Primat:      { key: "Primat",      label: "Primat",      en: "Seraph",       role: "dps",     emoji: "fist", logo: "/classes/Seraph.png" },
+  Chanoine:    { key: "Chanoine",    label: "Chanoine",    en: "Forcemaster",  role: "support", emoji: "sparkles", logo: "/classes/Forcemaster.png" },
 };
 export const CLASS_NAMES = Object.keys(CLASSES);
 export const BONUS_LOGOS = { crown: "/classes/Crown.png", mvp: "/classes/Mvp.png" };

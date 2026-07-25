@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -97,7 +97,7 @@ export default function DonjonsPage() {
           </div>
           {dungeons.map(d => { const c = (logs[day] || {})[d.id] || 0; return (
             <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 8, background: c > 0 ? "rgba(255,140,26,0.06)" : "transparent", borderBottom: "1px solid rgba(46,46,56,0.4)" }}>
-              <span style={{ fontSize: 20 }}>{d.icon}</span>
+              <Icon name={d.icon as IconName} framed frameSize={30} tone="gold" />
               <span style={{ flex: 1, fontSize: 13 }}>{d.name} <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{d.prestige ? `P${d.prestige}` : d.type}</span></span>
               <button onClick={() => inc(d.id, -1)} style={{ width: 26, height: 26, borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer" }}>−</button>
               <span className="font-heading" style={{ minWidth: 24, textAlign: "center", fontWeight: 700, color: c > 0 ? "var(--orange)" : "var(--text-muted)" }}>{c}</span>
@@ -140,7 +140,7 @@ export default function DonjonsPage() {
           <h2 className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}>🗂️ Récap des loots par donjon</h2>
           {Object.keys(byDungeon).length ? Object.entries(byDungeon).map(([id, d]) => (
             <div key={id} style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, marginBottom: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}><span style={{ fontSize: 24 }}>{d.icon}</span><div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{d.name}</div><span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{d.runs} run(s) · {d.items} objet(s)</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}><Icon name={d.icon as IconName} framed frameSize={34} tone="gold" /><div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{d.name}</div><span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{d.runs} run(s) · {d.items} objet(s)</span></div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{Object.entries(d.loot).map(([key, l]) => { const name = key.split("|")[0]; return <span key={key} style={{ fontSize: 11.5, padding: "4px 10px", borderRadius: 6, background: "var(--bg-2)", border: `1px solid ${l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--border)"}`, color: l.trash ? "var(--text-muted)" : l.rarity ? rarColor(l.rarity) : "var(--text)" }}>{name} <b>×{l.qty}</b>{l.rarity ? ` · ${rarLabel(l.rarity)}` : ""}{l.trash ? " · 🗑️" : ""}</span>; })}</div>
             </div>
           )) : <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 20 }}>Le récap par donjon apparaîtra après tes premières instances.</div>}
@@ -155,7 +155,7 @@ export default function DonjonsPage() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 12 }}>
           {wikiList.map(d => (
             <div key={d.id} onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 26 }}>{d.icon}</span><div><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="gold" /><div><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.hp.toLocaleString("fr-FR")}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
               <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>
             </div>
@@ -164,7 +164,7 @@ export default function DonjonsPage() {
         {sel && (
           <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
             <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 500, width: "100%", marginBottom: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><span style={{ fontSize: 40 }}>{sel.icon}</span><div><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div></div></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><Icon name={sel.icon as IconName} framed frameSize={48} tone="orange" /><div><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div></div></div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                 <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{sel.hp.toLocaleString("fr-FR")}</div></div>
                 <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>

@@ -97,13 +97,15 @@ export default function CandidaturePage() {
   const buildCoherent = !buildExport || !classeDuBuild || classesJouables.includes(classeDuBuild);
   // Jouer 2 persos en Chambre Secrète suppose d'en avoir déclaré 2.
   const csAssezDePersos = !specs.includes("CS") || chars.length >= csChars;
-  // Les classes retenues pour la CS doivent appartenir aux personnages déclarés.
-  const favCoherentes = favClasses.every(c => classesJouables.includes(c));
+  // Classes visées en CS pour lesquelles le candidat n'a pas encore de personnage.
+  // Ce n'est PAS une erreur : le choix de Chambre Secrète est une intention, on
+  // peut viser une classe qu'on n'a pas encore montée. On le signale simplement,
+  // au candidat et au staff, au lieu de l'interdire.
+  const classesAConstruire = favClasses.filter(c => !classesJouables.includes(c));
 
   const problemes: string[] = [];
   if (buildExport && !buildCoherent) problemes.push(`Le build joint est un ${classeDuBuild}, or aucun de tes personnages n'a cette classe.`);
   if (!csAssezDePersos) problemes.push(`Tu veux jouer ${csChars} personnages en Chambre Secrète : déclare-en ${csChars}.`);
-  if (!favCoherentes) problemes.push("Une classe retenue pour la Chambre Secrète ne correspond à aucun de tes personnages.");
 
   const valid = chars.every(c => c.name.trim()) && specs.length > 0 && interests.trim()
     && motivation.trim() && experience.trim() && stuffOk && problemes.length === 0;
@@ -141,7 +143,7 @@ export default function CandidaturePage() {
           return copie;
         });
       }
-      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
+      const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, classesAConstruire, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
       if (!r.ok) {
         setError(r.status === 401 ? "Tu dois être connecté avec Discord pour postuler." : "Échec de l'envoi — réessaie dans un instant.");
         return;
@@ -249,7 +251,7 @@ export default function CandidaturePage() {
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Quelle(s) classe(s) veux-tu jouer en Chambre Secrète ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars})</span></label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                  {classesJouables.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={c} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}</button>; })}
+                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; const aUnPerso = classesJouables.includes(c); return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={aUnPerso ? c : `${c} — tu n'as pas encore de personnage de cette classe, tu pourras le construire ensuite`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}{!aUnPerso && <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", color: "var(--gold)", background: "rgba(255,210,74,.12)", border: "1px solid rgba(255,210,74,.3)", borderRadius: 20, padding: "1px 6px", marginLeft: 3 }}>à construire</span>}</button>; })}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>
@@ -301,6 +303,18 @@ export default function CandidaturePage() {
             <div><b><Icon name="book" size={14} style={ico} />Expérience :</b> {experience || "—"}</div>
             <div><b><Icon name="sword" size={14} style={ico} />Stuff :</b> build configuré <Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} /></div>
           </div>
+          {/* Non bloquant : viser une classe qu'on n'a pas encore montée est
+              légitime, on l'annonce juste clairement au candidat et au staff. */}
+          {classesAConstruire.length > 0 && (
+            <div style={{ marginTop: 16, background: "rgba(255,210,74,.08)", border: "1px solid rgba(255,210,74,.32)", borderRadius: 10, padding: "12px 15px", display: "flex", gap: 9, alignItems: "flex-start" }}>
+              <Icon name="info" size={15} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 1 }} />
+              <div style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.6 }}>
+                Tu vises <b style={{ color: "var(--gold)" }}>{classesAConstruire.join(", ")}</b> en Chambre Secrète sans avoir
+                encore de personnage de cette classe. Ce n&apos;est pas un problème — le staff le saura, et tu pourras monter
+                ce build ensuite dans l&apos;AirBuilder.
+              </div>
+            </div>
+          )}
           {/* Incohérences bloquantes : on dit précisément quoi corriger, plutôt que
               de désactiver le bouton d'envoi sans explication. */}
           {problemes.length > 0 && (

@@ -61,6 +61,11 @@ export async function POST(req: Request) {
       // le partage public à la place du candidat serait une décision qui ne nous
       // appartient pas.
       ...(buildUrl ? [{ name: "🔗 Voir le build", value: `[Ouvrir le build de ${user.username}](${buildUrl})` }] : []),
+      // Classes visées en Chambre Secrète sans personnage correspondant : ce n'est
+      // pas un refus, mais le staff doit le savoir avant de composer une équipe.
+      ...((body.classesAConstruire ?? []).length
+        ? [{ name: "🚧 Classes à construire", value: `Visé en CS sans personnage existant : **${(body.classesAConstruire as string[]).join(", ")}**` }]
+        : []),
       { name: "🎯 Intérêts", value: (body.interests ?? "—").slice(0, 1000) },
       { name: "🔥 Motivation", value: (body.motivation ?? "—").slice(0, 1000) },
       { name: "📜 Expérience", value: (body.experience ?? "—").slice(0, 1000) },

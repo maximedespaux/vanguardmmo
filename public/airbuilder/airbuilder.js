@@ -287,7 +287,7 @@ function stuffRole(){var n=((ST()||{}).name||'').toLowerCase();return n.indexOf(
 // Valeurs PAR DÉFAUT à l'ajout d'une pièce : réglages guilde (up/élément) + reco éveil/cartes selon classe & rôle du stuff.
 //  Arme : sans rune, +10, sans étoile · élément Vent+20 si physique (rien si magique) · Bijoux +20 · Armure +10 (Vent+20 plastron) · Fashion +0.
 function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGIC_CLS.indexOf(cls)>=0;var R=recoFor(cls,stuffRole());
-  var setEv=function(){if(R.ev[slot]&&EVN[R.ev[slot]])c.evL=EVN[R.ev[slot]];};
+  var setEv=function(){if(R.ev[slot]&&EVN[R.ev[slot]]){c.evS=EVN[R.ev[slot]];c.evL='R1';}}; // evS = la stat d'éveil · evL = la ligne (R1 par défaut)
   var setCard=function(n){if(R.card[slot]){c.pierceEl=R.card[slot];c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;}};
   if(slot==='weapon'||slot==='weapon2'){c.rune=false;c.up=10;c.stars=0;if(magic){c.elemType='';c.elemLvl=0;}else{c.elemType='Vent';c.elemLvl=20;}setCard(10);setEv();}
   else if(slot==='shield'){c.up=10;setCard(10);setEv();}

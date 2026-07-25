@@ -83,7 +83,7 @@ export function HeroFlyff() {
       {/* Titre + connexion (accueil = login Discord + histoire en dessous) */}
       <div className="hf-title" style={{ transform: `translateY(${-scroll * 40}px)`, opacity: 1 - scroll }}>
         <h1 className="font-heading hf-h1" aria-label={TITRE}>{lettres}</h1>
-        <p>La guilde d&apos;élite d&apos;AirFlyff — progresser ensemble, dominer le end-game.</p>
+        <p>Peu de membres, mais présents. Discord et vocal obligatoires — c&apos;est là qu&apos;on joue vraiment ensemble.</p>
         <a href="/login" className="hf-login"><Icon name="discord" size={19} /> Se connecter avec Discord</a>
       </div>
 

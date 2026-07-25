@@ -26,10 +26,10 @@ const stats: [IconName, string, string][] = [
 ];
 
 const objectifs: [IconName, string, string][] = [
-  ["trending-up", "Progression collective", "Accompagner chaque membre du P3 au P10 avec un guide pas-à-pas et de l'entraide."],
-  ["key", "Chambres Secrètes optimisées", "Monter des compositions optimales pour farmer efficacement le end-game."],
-  ["swords", "Guild Siege (PvP)", "Représenter Vanguard lors des affrontements de guilde, dans la cohésion."],
-  ["vault", "Entraide & partage", "Un coffre de guilde commun pour aider les membres à s'équiper."],
+  ["message", "Vocal avant tout", "Discord obligatoire, vocal pendant les runs. C'est là que les Chambres Secrètes se jouent — et que le groupe devient une équipe."],
+  ["trending-up", "Personne ne reste bloqué", "Du prestige 3 au 10, on avance ensemble : guide par palier, conseils de stuff, et quelqu'un pour répondre."],
+  ["key", "Chambres Secrètes sérieuses", "Des compositions préparées à l'avance, des présences annoncées. On y va pour réussir, pas pour tenter."],
+  ["vault", "Un coffre qui sert", "Le stock de la guilde est là pour équiper les membres, pas pour dormir. Tu demandes, on répond."],
 ];
 
 const features: [IconName, string, string][] = [
@@ -59,8 +59,11 @@ export default function HistoirePage() {
         {/* Intro */}
         <div className="glass-card vg-reveal" style={{ padding: 28, marginTop: 32, borderLeft: "3px solid var(--orange)" }}>
           <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>
-            Que tu sois nouveau au niveau 200 prestige 3 ou un vétéran prestige 10, tu trouveras ici un cadre clair,
-            de l'entraide et des outils pour avancer <b style={{ color: "var(--orange)" }}>sans t'éparpiller</b>. Vanguard, c'est avant tout une équipe soudée.
+            On ne cherche pas à être nombreux. On cherche des joueurs <b style={{ color: "var(--orange)" }}>présents</b> :
+            qui viennent en vocal, qui préviennent quand ils ne peuvent pas, et sur qui on peut compter en Chambre Secrète.
+            Le <b style={{ color: "var(--orange)" }}>Discord et le vocal sont obligatoires</b> — c'est ce qui sépare une guilde
+            d'une simple liste de pseudos. Que tu arrives au prestige 3 ou que tu sois déjà P10, tu trouveras ici un cadre clair
+            et de quoi progresser <b style={{ color: "var(--orange)" }}>sans t'éparpiller</b>.
           </p>
         </div>
 
@@ -113,7 +116,10 @@ export default function HistoirePage() {
         {/* CTA */}
         <div className="vg-reveal" style={{ textAlign: "center", marginTop: 46, padding: 34, background: "radial-gradient(circle at 50% 50%, rgba(255,140,26,0.10), transparent 70%)", borderRadius: 16, border: "1px solid var(--orange-dark)" }}>
           <div className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Prêt à nous rejoindre ?</div>
-          <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 20 }}>Dépose ta candidature avec tes persos, ton stuff et tes objectifs.</p>
+          <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 20, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.65 }}>
+            Présente-nous tes personnages, ton stuff et ce que tu cherches. On lit tout, et on répond — même quand c&apos;est non.
+            Une seule condition ferme : être joignable en vocal sur Discord.
+          </p>
           <a href="/candidature" className="vg-btn"><Icon name="clipboard" size={17} /> Postuler maintenant</a>
         </div>
       </div>

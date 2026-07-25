@@ -7,6 +7,10 @@
 Un site web et un bot Discord qui partagent la même base de données :
 ce qui se passe sur le site se retrouve sur Discord, et inversement.
 
+*Vanguard ne cherche pas le nombre mais la présence : **Discord et vocal obligatoires**.
+Les outils de ce dépôt existent pour servir ça — préparer les Chambres Secrètes,
+suivre les progressions et équiper les membres, sans paperasse.*
+
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -148,9 +152,68 @@ Le gating est fait **côté serveur** (middleware → layouts → API). Les acc�
 
 **Next.js 15** (App Router) · **React 18** · **TypeScript 5** · **PostgreSQL 16** + **Prisma 5** · **NextAuth** (OAuth Discord) · **discord.js 14** + **node-cron** · **Docker** (prod)
 
-**Design** — thème sombre, charte orange/noir. Polices auto-hébergées **Rubik** (titres) · **Athiti** (corps) · **Alef** (accents), et un jeu d'**icônes SVG maison** (`src/components/Icon.tsx` → `<Icon name="…" />`) qui remplace progressivement les emojis dans l'UI.
+**Design** — thème sombre, charte orange/noir. Polices auto-hébergées **Rubik** (titres) · **Athiti** (corps) · **Alef** (accents).
 
 Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications JavaScript embarquées dans `public/`, branchées à la base via les routes API — synchronisation entre appareils et publication à la guilde incluses.
+
+---
+
+## 🎨 Conventions à connaître
+
+### Icônes : une seule source, deux mondes
+
+Les tracés vivent **uniquement** dans `src/lib/vg-icon-paths.ts` (grille 24×24, `currentColor`).
+Deux consommateurs, générés depuis cette source :
+
+| Contexte | Utilisation |
+|---|---|
+| React | `<Icon name="vault" />` · `<Icon name="vault" framed tone="gold" />` (cadre RPG doré) |
+| Apps vanilla (`airbuilder.js`, `airguild.js`) | `VGI("vault", 16)` pour du SVG, ou `<i class=vgi-vault></i>` |
+
+```bash
+npm run icons   # après TOUT ajout d'icône : régénère public/icons/vg-icons.{js,css}
+```
+
+Pourquoi la forme `<i class=vgi-nom></i>` : dans les apps vanilla les libellés sont
+noyés dans des chaînes aux guillemets mêlés (simples, doubles, gabarits). Cette
+balise ne contient **aucun guillemet** (attribut HTML5 non quoté), elle est donc
+insérable partout sans casser la chaîne.
+
+**Pièges à connaître** (déjà rencontrés) :
+- `agToast` rend son message en `textContent`, `agConfirm`/`agPrompt` passent par `esc()` :
+  **aucune balise** ne doit y être insérée, elle s'afficherait en clair.
+- Une icône **seule** dans son conteneur doit être en `display:block` (règle
+  `:only-child` du CSS généré), sinon la `line-height` du parent la décentre.
+
+**Emojis** : bannis du site (les SVG les remplacent), **conservés dans `bot/`** —
+Discord ne sait pas afficher de SVG dans ses embeds.
+
+### Images
+
+```bash
+npm run assets  # convertit public/assets/**.png > 200 Ko en WebP (originaux conservés)
+```
+
+Les fonds de page pesaient 1,5–2,8 Mo **par navigation** : la conversion a ramené
+87,7 Mo à 9,2 Mo (−89,5 %). Les références dans le code pointent les `.webp`.
+Exception volontaire : `/assets/items/prestige/<slug>.png` — 1 à 3 Ko, et le
+mécanisme repose sur « déposer un PNG au bon nom pour remplacer une icône ».
+
+### Effets et animations
+
+`src/components/VgFx.tsx` fournit deux hooks posables sur n'importe quelle page
+sans toucher au markup — il suffit d'ajouter une classe :
+
+- `useReveal(ref)` → apparition au défilement des éléments `.vg-reveal`
+- `useCardFx(ref)` → halo suivant le curseur + relief 3D sur les `.fx-card`
+
+> ⚠️ Le défilement est porté par **`.vg-main`**, pas par la fenêtre (`.vg-shell`
+> est en `overflow:hidden`). Écouter `window.scrollY` ne renvoie **jamais rien** :
+> c'est ce qui rendait la parallaxe du hero inopérante. `useReveal` inclut un
+> repli, car un élément raté par l'`IntersectionObserver` resterait invisible
+> **définitivement**.
+
+Tout le décoratif est coupé sous `prefers-reduced-motion`.
 
 ---
 

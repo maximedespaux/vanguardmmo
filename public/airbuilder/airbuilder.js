@@ -261,26 +261,39 @@ function maxCfg(slot,tier){var c=cfgOf(slot);if(!c)return;var artef=['Éternel',
   var fillS=function(n){c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;};
   if(slot==='weapon'||slot==='weapon2'){c.rune=true;c.up=artef?20:10;if(artef)c.stars=3;fillS(artef?12:10);c.scrL=4;c.elemLvl=20;c.mastery=100;}
   else if(slot==='shield'){c.up=10;fillS(10);c.elemLvl=20;}
-  else if(slot==='suit'){c.up=20;fillS(4);c.scrL=4;c.elemLvl=20;}
-  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=20;c.scrL=4;}
+  else if(slot==='suit'){c.up=10;fillS(4);c.scrL=4;c.elemLvl=20;}
+  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=10;c.scrL=4;}
   else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=0;}
   else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=30;}
   else if(slot==='fairy'){c.lvl=(typeof FAIRYMAX!=='undefined')?FAIRYMAX:50;}
 }
 function maximizeSlot(slot){if(_ro())return;var e=E(slot);if(!e||!e.item)return;maxCfg(slot,e.item.tier);render();try{drawPick(curQ());}catch(x){}agToast('Pièce maximisée ✓ — choisis élément / stats',true);}
 function maximizeAll(){if(_ro())return;var s=ST();if(!s||!s.eq||!Object.keys(s.eq).length)return agToast('Aucune pièce à maximiser.',false);agConfirm('🎯 Maximiser TOUTES les pièces équipées de ce stuff ?\n\nLes niveaux passent au max (tu gardes le choix des éléments et des stats).',function(){Object.keys(s.eq).forEach(function(slot){var e=s.eq[slot];if(e&&e.item&&e.cfg)maxCfg(slot,e.item.tier);});render();agToast('Stuff maximisé ✓',true);});}
-// Classes magiques (Int) — leurs armes n'ont pas d'élément par défaut.
-var MAGIC_CLS=['Arcaniste','Envouteur'];
-// Valeurs PAR DÉFAUT à l'ajout d'une pièce (réglage voulu par la guilde, pas le max absolu).
-//  Arme : sans rune, +10, sans étoile, perçage +10 · élément Vent +20 si classe physique (rien si magique).
-//  Bijoux +20 · Armure (suit/casque/gants/bottes) +20 (+ Vent sur le plastron) · Fashion +0.
-function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGIC_CLS.indexOf(cls)>=0;
-  var fillS=function(n){c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;};
-  if(slot==='weapon'||slot==='weapon2'){c.rune=false;c.up=10;c.stars=0;fillS(10);if(magic){c.elemType='';c.elemLvl=0;}else{c.elemType='Vent';c.elemLvl=20;}}
-  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=20;}
-  else if(slot==='suit'){c.up=20;c.elemType='Vent';c.elemLvl=20;fillS(4);}
-  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=20;}
-  else if(slot==='shield'){c.up=10;}
+// Classes magiques (Int) — leurs armes n'ont pas d'élément d'attaque par défaut.
+var MAGIC_CLS=['Arcaniste','Envouteur','Primat'];
+// Stats d'éveil : codes → noms exacts du builder.
+var EVN={INT:'Intelligence',DCC:'Dégâts critiques',FOR:'Force',DEX:'Dextérité',END:'Endurance',ATK:'Attaque',HP:'PV max'};
+// Recommandations ÉVEIL (evL) + CARTE de perçage (pierceEl) par classe & rôle (DPS / Tank).
+function recoFor(cls,role){
+  if(role==='tank')return{ev:{suit:'END',helmet:'END',gauntlet:'HP',boots:'HP',weapon:'END',weapon2:'END',shield:'END'},card:{suit:'Volcano',weapon:'Terre',weapon2:'Terre',shield:'Terre'}};
+  if(MAGIC_CLS.indexOf(cls)>=0)return{ev:{suit:'INT',helmet:'INT',gauntlet:'ATK',boots:'ATK',weapon:'INT',weapon2:'INT',shield:'INT',ring1:'INT',ring2:'INT',earring1:'INT',earring2:'INT',necklace:'INT'},card:{suit:'Fulgur',weapon:'Eau',weapon2:'Eau',shield:'Eau'}};
+  var arba=(cls==='Arbaletrier');
+  var ev={suit:'DCC',helmet:arba?'DEX':'FOR',gauntlet:'ATK',boots:'DCC',weapon:'DCC',weapon2:'DCC',shield:'DCC',ring1:'DCC',ring2:'DCC',earring1:'DCC',earring2:'DCC',necklace:'DCC'};
+  if(cls==='Chanoine'){ev.ring1=ev.ring2=ev.earring1=ev.earring2=ev.necklace='INT';} // Chanoine : bijoux en INT
+  var wc=arba?'Foudre':'Feu';
+  return{ev:ev,card:{suit:'Fulgur',weapon:wc,weapon2:wc,shield:wc}};
+}
+function stuffRole(){var n=((ST()||{}).name||'').toLowerCase();return n.indexOf('tank')>=0?'tank':'dps';}
+// Valeurs PAR DÉFAUT à l'ajout d'une pièce : réglages guilde (up/élément) + reco éveil/cartes selon classe & rôle du stuff.
+//  Arme : sans rune, +10, sans étoile · élément Vent+20 si physique (rien si magique) · Bijoux +20 · Armure +10 (Vent+20 plastron) · Fashion +0.
+function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGIC_CLS.indexOf(cls)>=0;var R=recoFor(cls,stuffRole());
+  var setEv=function(){if(R.ev[slot]&&EVN[R.ev[slot]])c.evL=EVN[R.ev[slot]];};
+  var setCard=function(n){if(R.card[slot]){c.pierceEl=R.card[slot];c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;}};
+  if(slot==='weapon'||slot==='weapon2'){c.rune=false;c.up=10;c.stars=0;if(magic){c.elemType='';c.elemLvl=0;}else{c.elemType='Vent';c.elemLvl=20;}setCard(10);setEv();}
+  else if(slot==='shield'){c.up=10;setCard(10);setEv();}
+  else if(slot==='suit'){c.up=10;c.elemType='Vent';c.elemLvl=20;setCard(4);setEv();}
+  else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=10;setEv();}
+  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=20;setEv();}
   else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=0;}
 }
 function upUI(slot,max){const w=cfgOf(slot);const v=w.up||0;const isW=(slot==='weapon'||slot==='weapon2');const art=(isW&&max>10&&v>10);
@@ -368,8 +381,8 @@ function weaponPanelImpl(SL,e){const w=cfgOf(SL);const artefactable=['Éternel',
    ${elemUI(SL,20)}
    </div>`;}
 function shieldPanel(e){return `<div class="wp">${upUI('shield',10)}${pierceUI('shield',10)}${eveilUI('shield')}${elemUI('shield',20)}</div>`;}
-function suitPanel(e){return `<div class="wp">${upUI('suit',20)}${pierceUI('suit',4)}${eveilUI('suit')}${scrollUI('suit')}${elemUI('suit',20)}</div>`;}
-function armorPanel(slot,e){return `<div class="wp">${upUI(slot,20)}${eveilUI(slot)}${scrollUI(slot)}<div class="mini">Cette pièce n'a ni perçage ni élément.</div></div>`;}
+function suitPanel(e){return `<div class="wp">${upUI('suit',10)}${pierceUI('suit',4)}${eveilUI('suit')}${scrollUI('suit')}${elemUI('suit',20)}</div>`;}
+function armorPanel(slot,e){return `<div class="wp">${upUI(slot,10)}${eveilUI(slot)}${scrollUI(slot)}<div class="mini">Cette pièce n'a ni perçage ni élément.</div></div>`;}
 function jewelPanel(slot,e){const w=cfgOf(slot);
   return `<div class="wp"><div class="grp"><div class="gh">⬆️ Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +30</span><input type="range" min="0" max="30" value="${w.up||0}" oninput="upLive(this,'${slot}',30)" onchange="cset('${slot}','up',+this.value)"></div><div class="mini">+20 (aProtect) · jusqu'à +30 (aProtect lunaire = stats plus fortes)</div></div>${eveilUI(slot)}</div>`;}
 

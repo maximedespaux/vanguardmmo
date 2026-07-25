@@ -28,7 +28,7 @@ export async function middleware(req: NextRequest) {
   // Le flag vient du callback JWT : il vaut true si l'API Discord a confirmé
   // l'appartenance au serveur lors d'une connexion (voir lib/auth.ts).
   if (needsVerified && !token.verifie && !GUILD_ROLES.includes(role)) {
-    return NextResponse.redirect(new URL("/?error=discord", req.url));
+    return NextResponse.redirect(new URL("/login?error=discord", req.url));
   }
   return NextResponse.next();
 }

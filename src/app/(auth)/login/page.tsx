@@ -6,7 +6,12 @@ import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
 
 // Messages amicaux par code d'erreur (auth NextAuth + accès par rôle).
-const ERRORS: Record<string, { icon: IconName; title: string; msg: string; access?: boolean }> = {
+const ERRORS: Record<string, { icon: IconName; title: string; msg: string; access?: boolean; invite?: boolean }> = {
+  // Niveau intermediaire : il suffit d'etre sur le serveur Discord (pas d'etre
+  // membre de la guilde). C'est le cas du builder, qu'un candidat doit pouvoir
+  // utiliser. On en profite pour inviter : c'est aussi comme ca que le serveur
+  // se fait connaitre.
+  discord:       { icon: "discord", title: "Rejoins le serveur Discord", msg: "L'AirBuilder est ouvert à tout le monde sur le serveur Vanguard — pas besoin d'être dans la guilde. Rejoins-nous, reconnecte-toi, et ton build t'attend.", access: true, invite: true },
   guild:         { icon: "lock", title: "Accès réservé aux membres", msg: "Tu dois être membre de la guilde Vanguard sur Discord pour ouvrir cet espace.", access: true },
   admin:         { icon: "shield", title: "Réservé au staff", msg: "Cette section est réservée aux officiers et à la direction de Vanguard.", access: true },
   forbidden:     { icon: "ban", title: "Accès non autorisé", msg: "Tu n'as pas les droits nécessaires pour cette page.", access: true },
@@ -15,6 +20,9 @@ const ERRORS: Record<string, { icon: IconName; title: string; msg: string; acces
   Verification:  { icon: "clock", title: "Lien expiré", msg: "Ce lien de connexion a expiré. Relance la connexion." },
   default:       { icon: "alert", title: "Connexion impossible", msg: "Une erreur est survenue pendant la connexion. Réessaie dans un instant." },
 };
+
+/** Invitation au serveur. Absente = on n'affiche pas le bouton, jamais de lien mort. */
+const INVITE = process.env.NEXT_PUBLIC_DISCORD_INVITE ?? "";
 
 function LoginCard() {
   const code = useSearchParams().get("error");
@@ -33,6 +41,12 @@ function LoginCard() {
           </div>
         ) : (
           <div className="lg-sub">Connexion via Discord — réservé aux membres de la guilde.</div>
+        )}
+
+        {info?.invite && INVITE && (
+          <a className="lg-discord" href={INVITE} target="_blank" rel="noopener noreferrer" style={{ marginBottom: 10 }}>
+            <Icon name="discord" size={19} />Rejoindre le serveur Vanguard
+          </a>
         )}
 
         <button className="lg-discord" onClick={() => signIn("discord", { callbackUrl: "/" })}>

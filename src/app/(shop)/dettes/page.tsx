@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { canAccessGuild } from "@/config/roles";
+import { enRetard, joursDeRetard, progressionDette, resteDette, totauxDettes } from "@/lib/dettes";
 import { useCardFx } from "@/components/VgFx";
 
 type Pay = { id: string; amount: number; note: string | null; createdAt: string; recordedBy?: string | null };
@@ -268,16 +269,44 @@ export default function BanquePage() {
           {(tab === "dettes" || tab === "rembourse") && (() => { const list = debts.filter(d => tab === "rembourse" ? d.status === "REPAID" : d.status !== "REPAID"); return (
           <section>
             <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{tab === "rembourse" ? "Dettes remboursées" : "Mes dettes"}</h2>
+
+            {/* Totaux. Separes par role : ce que JE dois et ce qu'on ME doit sont
+                deux sommes qu'il ne faut surtout pas melanger. */}
+            {tab === "dettes" && list.length > 0 && (() => {
+              const mien = totauxDettes(list.filter(d => d.role !== "detenteur"));
+              const tenu = totauxDettes(list.filter(d => d.role === "detenteur"));
+              const bloc = (t: ReturnType<typeof totauxDettes>, titre: string, couleur: string) => t.nb === 0 ? null : (
+                <div style={{ flex: "1 1 220px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .6, color: "var(--text-muted)", marginBottom: 6 }}>{titre}</div>
+                  <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: couleur }}>{fmt(t.reste)}<span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}> restant sur {fmt(t.du)}</span></div>
+                  <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
+                    {t.nb} dette{t.nb > 1 ? "s" : ""} · {fmt(t.paye)} déjà remboursé
+                    {t.enRetard > 0 && <span style={{ color: "var(--red)", fontWeight: 700 }}> · {t.enRetard} en retard</span>}
+                  </div>
+                </div>
+              );
+              const blocs = [bloc(mien, "Ce que je dois", "var(--gold)"), bloc(tenu, "Ce qu'on me doit", "var(--green)")].filter(Boolean);
+              return blocs.length ? <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>{blocs}</div> : null;
+            })()}
             {list.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours."}</div> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {list.map(d => {
                   const st = DEBT_STATUS[d.status] ?? DEBT_STATUS.REQUESTED;
                   const paid = d.payments.reduce((s, p) => s + p.amount, 0);
+                  const retard = enRetard(d);
+                  const jours = joursDeRetard(d);
+                  const pct = progressionDette(d);
                   return (
                     <div key={d.id} className="glass-card fx-card" style={{ padding: 14 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                         <span className="font-heading" style={{ fontWeight: 700 }}>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}</span>
                         {d.item && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>· {d.item}</span>}
+                        {retard && (
+                          <span title={`Échéance dépassée de ${jours} jour${jours > 1 ? "s" : ""}`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--red)", background: "rgba(248,113,113,.12)", color: "var(--red)" }}>
+                            <Icon name="alert" size={12} />En retard de {jours} j
+                          </span>
+                        )}
                         <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
                         {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={15} /></button>}
                       </div>
@@ -287,9 +316,19 @@ export default function BanquePage() {
                         </div>
                       )}
                       {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
-                      {paid > 0 && <div style={{ fontSize: 12, color: "var(--green)", marginTop: 5 }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</div>}
+                      {paid > 0 && (
+                        <div style={{ marginTop: 7 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                            <span style={{ color: "var(--green)" }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</span>
+                            <span style={{ color: "var(--text-muted)" }}>reste {fmt(resteDette(d))}</span>
+                          </div>
+                          <div style={{ height: 6, borderRadius: 4, background: "var(--bg-3)", overflow: "hidden" }}>
+                            <div style={{ width: `${pct}%`, height: "100%", borderRadius: 4, background: pct >= 100 ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s" }} />
+                          </div>
+                        </div>
+                      )}
                       {d.dueDate && (
-                        <div style={{ fontSize: 12, marginTop: 5, color: "var(--gold)", display: "flex", alignItems: "center", gap: 6 }}>
+                        <div style={{ fontSize: 12, marginTop: 5, color: retard ? "var(--red)" : "var(--gold)", display: "flex", alignItems: "center", gap: 6 }}>
                           <Icon name="calendar" size={13} />Remboursement promis pour le {new Date(d.dueDate).toLocaleDateString("fr-FR")}
                         </div>
                       )}

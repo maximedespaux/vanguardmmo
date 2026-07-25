@@ -14,7 +14,7 @@ type Data = {
   members: { total: number; active: number; inactive: number; roles: { role: string; count: number }[] };
   characters: { total: number; mains: number; secondaries: number; withoutBuild: number; classes: { classe: string; count: number }[] };
   builds: { total: number; withoutBuild: number };
-  debts: { ongoing: number; repaid: number; toValidate: number; ongoingAmount: number };
+  debts: { ongoing: number; repaid: number; toValidate: number; ongoingAmount: number; overdue: number; remaining: number };
   absences: { active: number; pending: number };
   coffre: { under: number; total: number; topDeficits: Deficit[] };
   candidatures: { pending: number; waiting: number; total: number };
@@ -156,8 +156,9 @@ export default function DashboardPage() {
             <div style={{ display: "flex", gap: 22 }}>
               <Stat value={d.debts.ongoing} label="en cours" color={d.debts.ongoing ? "var(--gold)" : "var(--green)"} />
               <Stat value={d.debts.repaid} label="remboursées" color="var(--green)" />
+              <Stat value={d.debts.overdue} label="en retard" color={d.debts.overdue ? "var(--red)" : "var(--green)"} />
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{d.debts.ongoingAmount.toLocaleString("fr-FR")} périn en circulation</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{d.debts.remaining.toLocaleString("fr-FR")} périns restant à rembourser sur {d.debts.ongoingAmount.toLocaleString("fr-FR")} périn en circulation</div>
           </>} />
 
         <StatCard href="/absences" icon="moon" title="Absences" summary={

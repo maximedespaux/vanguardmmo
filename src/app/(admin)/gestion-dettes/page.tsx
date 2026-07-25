@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { enRetard, joursDeRetard, resteDette, totauxDettes } from "@/lib/dettes";
 import { vgPrompt } from "@/components/Dialogs";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 
-type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; decidedBy: string | null; createdAt: string; user: { username: string }; payments: { amount: number }[] };
+// creditor et dueDate etaient deja renvoyes par l'API (un `include` Prisma ne
+// restreint pas les champs scalaires) — ils manquaient juste au type.
+type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; decidedBy: string | null; createdAt: string; creditor: string | null; dueDate: string | null; user: { username: string }; payments: { amount: number }[] };
 type Req = { id: string; username: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; createdAt: string };
 
 const STATUS: Record<string, { l: string; c: string }> = {
@@ -25,6 +28,9 @@ export default function BanqueAdminPage() {
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [cautions, setCautions] = useState<Record<string, string>>({});
   const [debts, setDebts] = useState<Debt[]>([]);
+  // Toutes les dettes, sans filtre de statut : les totaux par detenteur n'ont de
+  // sens que sur l'ensemble, pas sur l'onglet affiche.
+  const [toutes, setToutes] = useState<Debt[]>([]);
   const [filter, setFilter] = useState("PENDING_VALIDATION");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
@@ -42,6 +48,7 @@ export default function BanqueAdminPage() {
     setLoading(false);
   };
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [filter]);
+  useEffect(() => { fetch("/api/admin/debts").then(r => (r.ok ? r.json() : [])).then(setToutes).catch(() => {}); }, [filter]);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3500); };
 
   const decideReq = async (id: string, action: "achat" | "dette" | "refuse") => {
@@ -95,6 +102,62 @@ export default function BanqueAdminPage() {
       <div className="vg-subtabs">
         {FILTERS.map(([k, l]) => <button key={k} onClick={() => setFilter(k)} className={`vg-subtab ${filter === k ? "active" : ""}`}>{l}</button>)}
       </div>
+      {/* ── Suivi par detenteur ──────────────────────────────────────────
+          Qui a prete quoi, ce qui est rentre, ce qui traine. Le detenteur est
+          responsable du suivi : sans cette vue, le staff devait ouvrir chaque
+          dette une par une pour savoir ou en etait un preteur. */}
+      {(() => {
+        const parDetenteur = new Map<string, Debt[]>();
+        for (const d of toutes) {
+          const cle = (d.creditor || "Guilde").trim() || "Guilde";
+          const l = parDetenteur.get(cle) ?? []; l.push(d); parDetenteur.set(cle, l);
+        }
+        const lignes = [...parDetenteur.entries()]
+          .map(([nom, list]) => ({ nom, t: totauxDettes(list) }))
+          .filter(x => x.t.nb > 0)
+          .sort((a, b) => b.t.reste - a.t.reste || b.t.enRetard - a.t.enRetard);
+        if (!lignes.length) return null;
+        const g = totauxDettes(toutes);
+        return (
+          <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+              <h2 className="font-heading" style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Icon name="coins" size={16} />Suivi par détenteur
+              </h2>
+              <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>
+                {g.nb} dette{g.nb > 1 ? "s" : ""} en cours · <b style={{ color: "var(--gold)" }}>{fmt(g.reste)}</b> à rembourser
+                {g.enRetard > 0 && <> · <b style={{ color: "var(--red)" }}>{g.enRetard} en retard</b></>}
+              </span>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 520 }}>
+                <thead>
+                  <tr style={{ textAlign: "left", color: "var(--text-muted)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .6 }}>
+                    <th style={{ padding: "6px 8px" }}>Détenteur</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Dettes</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Prêté</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Reçu</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Restant</th>
+                    <th style={{ padding: "6px 8px", textAlign: "right" }}>Retards</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lignes.map(({ nom, t }) => (
+                    <tr key={nom} style={{ borderTop: "1px solid var(--border)" }}>
+                      <td style={{ padding: "8px", fontWeight: 600 }}>{nom}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "var(--text-muted)" }}>{t.nb}</td>
+                      <td style={{ padding: "8px", textAlign: "right" }}>{fmt(t.du)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "var(--green)" }}>{fmt(t.paye)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: "var(--gold)", fontWeight: 700 }}>{fmt(t.reste)}</td>
+                      <td style={{ padding: "8px", textAlign: "right", color: t.enRetard ? "var(--red)" : "var(--text-muted)", fontWeight: t.enRetard ? 700 : 400 }}>{t.enRetard || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
         : debts.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Rien ici.</div>
         : (
@@ -102,12 +165,20 @@ export default function BanqueAdminPage() {
           {debts.map(d => {
             const st = STATUS[d.status] ?? STATUS.REQUESTED;
             const paid = d.payments.reduce((s, p) => s + p.amount, 0);
+            const retard = enRetard(d);
             return (
-              <div key={d.id} className="glass-card fx-card" style={{ padding: 16 }}>
+              <div key={d.id} className="glass-card fx-card" style={{ padding: 16, ...(retard ? { borderColor: "var(--red)" } : null) }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                   <span className="font-heading" style={{ fontWeight: 700 }}>{d.user?.username ?? "?"}</span>
                   <span style={{ color: "var(--text-muted)" }}>·</span>
                   <span>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}{d.item ? ` (${d.item})` : ""}</span>
+                  {d.creditor && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>→ détenu par <b style={{ color: "var(--text)" }}>{d.creditor}</b></span>}
+                  {retard && (
+                    <span title={`Échéance du ${new Date(d.dueDate!).toLocaleDateString("fr-FR")} dépassée · reste ${fmt(resteDette(d))}`}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--red)", background: "rgba(248,113,113,.12)", color: "var(--red)" }}>
+                      <Icon name="alert" size={12} />Retard {joursDeRetard(d)} j
+                    </span>
+                  )}
                   <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
                 </div>
                 {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>{d.reason}</div>}

@@ -15,6 +15,16 @@ const lab: React.CSSProperties = { fontSize: 10.5, color: "var(--text-muted)", t
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function EventsPage() {
+  // Liste des salons du serveur, meme source que la page Pilotage : saisir un ID
+  // Discord a la main est une invitation a se tromper, et une erreur de salon ne
+  // se voit qu'au moment ou l'annonce part au mauvais endroit.
+  const [salons, setSalons] = useState<{ id: string; name: string; type: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/admin/channels")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((ch) => setSalons(Array.isArray(ch) ? ch.filter((c: { type: string }) => c.type === "text" || c.type === "announcement") : []))
+      .catch(() => setSalons([]));
+  }, []);
   // Halo curseur + relief sur les panneaux (.fx-card), cf. VgFx.
   useCardFx();
   const [list, setList] = useState<Ev[]>([]);
@@ -48,7 +58,14 @@ export default function EventsPage() {
           <div><label style={lab}>Heure</label><input style={{ ...inp, width: "100%" }} type="time" value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} /></div>
           <div><label style={lab}>Rappel (min avant)</label><input style={{ ...inp, width: "100%" }} type="number" min={0} value={f.remindBefore} onChange={(e) => setF({ ...f, remindBefore: Math.max(0, Number(e.target.value) || 0) })} /></div>
           <div><label style={lab}>Ping</label><VgSelect full value={f.mention} onChange={v => setF({ ...f, mention: v })} options={MENTIONS.map(([v, l]) => ({ value: v, label: l }))} /></div>
-          <div style={{ gridColumn: "span 2" }}><label style={lab}>Salon (ID — vide = salon d'annonces par défaut)</label><input style={{ ...inp, width: "100%" }} placeholder="optionnel" value={f.channelId} onChange={(e) => setF({ ...f, channelId: e.target.value })} /></div>
+          <div style={{ gridColumn: "span 2" }}>
+            <label style={lab}>Salon</label>
+            <VgSelect full value={f.channelId} onChange={(v) => setF({ ...f, channelId: v })}
+              options={[
+                { value: "", label: "Salon d'annonces par défaut" },
+                ...salons.map((c) => ({ value: c.id, label: `#${c.name}` })),
+              ]} />
+          </div>
           <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed var(--border)", paddingTop: 4, marginTop: 2 }}><span style={{ fontSize: 10.5, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Titre de l&apos;embed</label><input style={{ ...inp, width: "100%" }} placeholder={`vide = ${f.name || "Nom de l'événement"}`} value={f.embedTitle} onChange={(e) => setF({ ...f, embedTitle: e.target.value })} /></div>
           <div><label style={lab}>Couleur</label><input type="color" style={{ ...inp, width: "100%", height: 38, padding: 3, cursor: "pointer" }} value={f.embedColor || "#ff8c1a"} onChange={(e) => setF({ ...f, embedColor: e.target.value })} /></div>
@@ -71,7 +88,7 @@ export default function EventsPage() {
                   {e.day === "tous" ? "Tous les jours" : cap(e.day)} à {e.time}
                   {e.remindBefore > 0 ? ` · rappel ${e.remindBefore} min avant` : ""}
                   {e.mention ? ` · ${e.mention}` : ""}
-                  {e.channelId ? ` · salon ${e.channelId}` : ""}
+                  {e.channelId ? ` · #${salons.find((c) => c.id === e.channelId)?.name ?? e.channelId}` : " · salon par défaut"}
                 </div>
               </div>
               <button onClick={() => toggle(e)} style={{ ...inp, cursor: "pointer", fontSize: 12, color: e.enabled ? "var(--green)" : "var(--text-muted)", borderColor: e.enabled ? "var(--green)" : "var(--border)" }}>{e.enabled ? "● Actif" : "○ Inactif"}</button>

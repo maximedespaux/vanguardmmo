@@ -45,13 +45,18 @@ export default function CompositionsPage() {
    * Envoie TOUJOURS l'etat complet. L'API normalise ce qu'elle recoit : un PUT
    * partiel effacerait donc les champs absents (les presences, les consignes).
    */
-  const sauver = (patch: Partial<CompoState>) => {
-    const etat: CompoState = { signups, slotMeta, presences, instructions, ...patch };
+  const sauver = (patch: Partial<CompoState>, force = false) => {
+    const etat: CompoState & { force?: boolean } = { signups, slotMeta, presences, instructions, ...patch };
+    // L'API refuse un effacement massif sans ce drapeau : seul le bouton
+    // « Réinitialiser » a le droit de vider la composition de tout le monde.
+    if (force) etat.force = true;
     if (patch.signups) setSignups(patch.signups);
     if (patch.slotMeta) setSlotMeta(patch.slotMeta);
     if (patch.presences) setPresences(patch.presences);
     if (patch.instructions !== undefined) setInstructions(patch.instructions);
-    fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(etat) }).catch(() => {});
+    fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(etat) })
+      .then(r => { if (!r.ok) load(); })  // refus cote serveur : on reprend l'etat reel plutot que de garder un affichage faux
+      .catch(() => {});
   };
   const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => sauver({ signups: next, slotMeta: meta });
 
@@ -72,7 +77,10 @@ export default function CompositionsPage() {
     persist([...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
   };
   const selectSignup = (slotId: string, id: string) => persist(signups.map(s => s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
-  const resetAll = () => { if (window.confirm("Réinitialiser toute la composition ? Toutes les inscriptions seront effacées pour tout le monde.")) persist([]); };
+  const resetAll = () => {
+    if (!window.confirm("Réinitialiser toute la composition ? Toutes les inscriptions seront effacées pour tout le monde.")) return;
+    sauver({ signups: [], presences: [] }, true); // effacement explicitement voulu
+  };
 
   const selectedSlots = new Set(signups.filter(s => s.selected && s.slotId).map(s => s.slotId));
   const playersCount = new Set(signups.map(s => s.player.toLowerCase())).size;

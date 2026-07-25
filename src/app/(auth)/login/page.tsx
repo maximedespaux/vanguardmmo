@@ -1,5 +1,5 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -21,12 +21,24 @@ const ERRORS: Record<string, { icon: IconName; title: string; msg: string; acces
   default:       { icon: "alert", title: "Connexion impossible", msg: "Une erreur est survenue pendant la connexion. Réessaie dans un instant." },
 };
 
-/** Invitation au serveur. Absente = on n'affiche pas le bouton, jamais de lien mort. */
-const INVITE = process.env.NEXT_PUBLIC_DISCORD_INVITE ?? "";
-
 function LoginCard() {
   const code = useSearchParams().get("error");
   const info = code ? (ERRORS[code] ?? ERRORS.default) : null;
+
+  // L'invitation est produite par le bot (voir obtenirInvitation) : rien a
+  // coller a la main, et le lien ne peut pas devenir obsolete. On ne la demande
+  // que si le message affiche en a besoin. Absente = pas de bouton, jamais de
+  // lien mort.
+  const [invite, setInvite] = useState("");
+  useEffect(() => {
+    if (!info?.invite) return;
+    let vivant = true;
+    fetch("/api/discord/invite")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (vivant && j?.url) setInvite(String(j.url)); })
+      .catch(() => { /* pas d'invitation : on n'affiche rien */ });
+    return () => { vivant = false; };
+  }, [info?.invite]);
 
   return (
     <div className="lg-wrap">
@@ -43,8 +55,8 @@ function LoginCard() {
           <div className="lg-sub">Connexion via Discord — réservé aux membres de la guilde.</div>
         )}
 
-        {info?.invite && INVITE && (
-          <a className="lg-discord" href={INVITE} target="_blank" rel="noopener noreferrer" style={{ marginBottom: 10 }}>
+        {info?.invite && invite && (
+          <a className="lg-discord" href={invite} target="_blank" rel="noopener noreferrer" style={{ marginBottom: 10 }}>
             <Icon name="discord" size={19} />Rejoindre le serveur Vanguard
           </a>
         )}

@@ -165,8 +165,8 @@ function invCorps(){
     var me=(window.__agUser||'').trim();
     /* Barre d'outils fixe, resultats dans #recRes : la recherche ne redessine
        que les resultats, le champ garde donc le focus a chaque frappe. */
-    el.innerHTML='<div class="hint">Le contenu de chaque coffre, membre par membre. Cherche un objet, une catégorie, une classe ou un pseudo.</div>'
-      +'<input class="inp" id="recq" placeholder="ex. Glaive, Perles, Templier, ibeats…" value="'+esc(window.__invQ||'')+'" oninput="invRecherche(this.value)" style="width:100%;margin-bottom:9px;font-size:15px;padding:12px 14px">'
+    el.innerHTML='<div class="hint">Le contenu de chaque coffre, membre par membre. Cherche un objet ou une catégorie.</div>'
+      +'<input class="inp" id="recq" placeholder="ex. Glaive, Perles, Carnet d\'Arcanes…" value="'+esc(window.__invQ||'')+'" oninput="invRecherche(this.value)" style="width:100%;margin-bottom:9px;font-size:15px;padding:12px 14px">'
       +'<div class="toolbar" style="margin:0 0 10px;flex-wrap:wrap">'
       +(me?'<button class="btn '+(window.__invMine?'o':'')+' sm" onclick="invMine('+(window.__invMine?'false':'true')+')"><i class=vgi-hand-point></i> '+(window.__invMine?'Voir tous les coffres':'Mes objets seulement')+'</button>':'')
       +'<button class="btn sm" onclick="invToutPlier(false)"><i class=vgi-chevron-down></i> Tout déplier</button>'
@@ -188,6 +188,20 @@ function invMine(v){window.__invMine=!!v;invCorps();}
    bruit pour une seule ligne). */
 window.__invQ = window.__invQ || '';
 window.__invPlie = window.__invPlie || {};
+/* Categories dont on a demande l'affichage complet (cle = membre|categorie). */
+window.__invTout = window.__invTout || {};
+
+/* Icone d'un objet. img() ne sait pas rendre un data-URI (il teste le '/' de
+   tete), or les objets crees a la main stockent leur image dans icData : sans ce
+   resolveur, ces objets s'affichaient sans vignette. */
+function recapIcone(it){
+  var d=it&&it.icData;
+  if(d)return '<img src="'+d+'" alt="" style="width:22px;height:22px;object-fit:contain;flex:none">';
+  var ic=it&&it.ic;
+  var src=ic?(ICONS[ic]||(String(ic).charAt(0)==='/'?ic:'')):'';
+  return src?'<img src="'+src+'" alt="" style="width:22px;height:22px;object-fit:contain;flex:none">'
+            :'<span style="width:22px;height:22px;flex:none"></span>';
+}
 
 /* Lignes d'un coffre, cle de rarete resolue vers l'objet de base. */
 function recapLignes(inv, nameOf){
@@ -196,6 +210,7 @@ function recapLignes(inv, nameOf){
     var it=nameOf[id]||nameOf[base]||{};
     var meta=r?rarMeta(r):null;
     return {nom:(it.item||base.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim()||'Sans catégorie',
+            ic:recapIcone(it),
             rar:r,rarLabel:meta?meta[1]:(r||''),rarColor:meta?meta[2]:'var(--text-muted)',qty:+inv[id]};
   });
 }
@@ -209,12 +224,12 @@ function recapCorps(mineOnly){
 
   var corps=members.map(function(m){
     var lignes=recapLignes(S.inv[m]||{},nameOf);
-    /* Le membre reste visible si SON nom correspond, meme si aucun objet ne
-       correspond : sinon chercher un pseudo ne renverrait rien. */
-    var surMembre=q&&m.toLowerCase().indexOf(q)>=0;
-    if(q&&!surMembre)lignes=lignes.filter(function(x){
-      return (x.nom+' '+x.cat+' '+x.cls+' '+x.rarLabel).toLowerCase().indexOf(q)>=0;});
-    if(q&&!surMembre&&!lignes.length)return '';
+    /* La recherche porte sur l'OBJET et sa categorie seulement. Le membre est
+       deja une section et la classe est deja sur la ligne : les chercher
+       n'apportait rien et brouillait les resultats. */
+    if(q)lignes=lignes.filter(function(x){
+      return (x.nom+' '+x.cat).toLowerCase().indexOf(q)>=0;});
+    if(q&&!lignes.length)return '';
 
     var isMe=!!me&&m.toLowerCase().trim()===me;
     var total=lignes.reduce(function(s,x){return s+x.qty;},0);
@@ -225,8 +240,9 @@ function recapCorps(mineOnly){
     var cats=Object.keys(parCat).sort(function(a,b){return a.localeCompare(b,'fr');});
 
     var ligneHtml=function(x){
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;padding:5px 0">'
-        +'<span style="min-width:0"><b style="font-weight:600">'+esc(x.nom)+'</b>'
+      return '<div style="display:flex;align-items:center;gap:9px;font-size:14px;padding:5px 0">'
+        +x.ic
+        +'<span style="flex:1;min-width:0"><b style="font-weight:600">'+esc(x.nom)+'</b>'
         +(x.rar?' <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;white-space:nowrap;border:1px solid '+x.rarColor+';color:'+x.rarColor+';background:'+x.rarColor+'22">'+esc(x.rarLabel)+'</span>':'')
         +(x.cls?' <span class="mut" style="font-size:11.5px">'+esc(x.cls)+'</span>':'')
         +'</span><b style="color:var(--gold);font-size:15px;white-space:nowrap">×'+fmt(x.qty)+'</b></div>';
@@ -234,12 +250,19 @@ function recapCorps(mineOnly){
 
     var dedans=cats.length?cats.map(function(c){
       var l=parCat[c];
+      /* On n'affiche que les 3 premiers : la fenetre tenait sur plusieurs ecrans
+         alors qu'on veut la lire d'un coup. Le reste s'ouvre a la demande, et une
+         recherche montre tout (on a deja restreint le resultat soi-meme). */
+      var cle=m+'|'+c, tout=q||window.__invTout[cle], caches=l.length-3;
+      var vus=tout?l:l.slice(0,3);
       /* Titre de groupe seulement s'il regroupe vraiment : pour un objet seul,
          il ajouterait une ligne sans rien apprendre. */
       var titre=l.length>1
         ? '<div class="mut" style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin:8px 0 2px;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:3px">'+esc(c)+' <span style="color:var(--orange)">'+l.length+'</span></div>'
         : '<div class="mut" style="font-size:11px;margin:6px 0 0">'+esc(c)+'</div>';
-      return titre+l.map(ligneHtml).join('');
+      return titre+vus.map(ligneHtml).join('')
+        +((!tout&&caches>0)?'<div onclick="invTout(\''+sq(cle)+'\')" style="cursor:pointer;font-size:11.5px;font-weight:700;color:var(--orange);padding:4px 0 2px">+ '+caches+' autre'+(caches>1?'s':'')+'</div>':'')
+        +((tout&&!q&&l.length>3)?'<div onclick="invTout(\''+sq(cle)+'\')" style="cursor:pointer;font-size:11.5px;color:var(--text-muted);padding:4px 0 2px">Réduire</div>':'');
     }).join('') : '<div class="mut" style="font-size:12.5px">Coffre vide.</div>';
 
     return '<div class="ocard" style="margin-bottom:10px;padding:0'+(isMe?';border-color:var(--orange)':'')+'">'
@@ -253,13 +276,17 @@ function recapCorps(mineOnly){
   }).join('');
 
   if(!corps)corps='<div class="mut" style="font-size:13px;padding:10px 2px">'
-    +(q?'Aucun objet ni coffre ne correspond à « '+esc(window.__invQ)+' ».':'Aucun coffre à afficher.')+'</div>';
+    /* Message aligne sur la portee reelle de la recherche : elle ne cherche plus
+       les coffres, l'annoncer serait faux. On rappelle aussi que seuls les objets
+       en stock apparaissent — sinon une recherche vide passe pour un bug. */
+    +(q?'Aucun objet en stock ne correspond à « '+esc(window.__invQ)+' ». Seuls les objets présents dans un coffre sont listés.':'Aucun coffre à afficher.')+'</div>';
   return corps;
 }
 
 /* Recherche : on ne redessine QUE les resultats, sinon le champ perdrait le focus. */
 function invRecherche(v){window.__invQ=v;var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
 function invPlier(m){window.__invPlie[m]=!( (window.__invPlie[m]!==undefined)?window.__invPlie[m]:false );var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
+function invTout(cle){window.__invTout[cle]=!window.__invTout[cle];var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
 function invToutPlier(v){(S.members||[]).forEach(function(m){window.__invPlie[m]=!!v;});var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
 
 /* Conserve pour les anciens appels : ouvre le panneau sur le bon sous-onglet. */

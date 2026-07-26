@@ -69,8 +69,11 @@ function priceObj(id){var p=S.prices[id];
 function priceOf(id){return priceObj(id).pub;} // prix public (compat panier / checkout / fiche objet)
 //── Rareté des armes (Yggdrasil/Luzaka) : un stock par rareté. Clé = id|R#rareté (le sexe/des armes). ──
 var RARITIES=[['rare','Rare','#4EA8FF'],['epique','Épique','#C77DFF'],['legendaire','Légendaire','#FF8C1A'],['premyth','Pré-myth.','#FF5C8A']];
-// Rareté = TOUTES les armes des catégories « Armes… », SAUF les Runes, Marteaux et Boucliers.
-var NO_RARITY=['rune','marteau','bouclier'];
+// Rareté = TOUTES les armes des catégories « Armes… », SAUF ce que liste noRarity.
+// La liste vit dans data.json (clé noRarity) pour être partagée avec le plan de
+// farm côté serveur : dupliquée, elle avait aussitôt dérivé — « grimoire » y
+// manquait ici, donc les grimoires réclamaient un exemplaire pré-mythique.
+var NO_RARITY=(D&&Array.isArray(D.noRarity)&&D.noRarity.length)?D.noRarity:['rune','marteau','bouclier','grimoire'];
 function needsRarity(it){if(!it||String(it.cat||'').toLowerCase().indexOf('armes')!==0)return false;var n=String(it.item||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');return !NO_RARITY.some(function(w){return n.indexOf(w)>=0;});}
 function rarKey(id,r){return id+'|R#'+r;}
 function baseId(key){return String(key).split('|R#')[0];}
@@ -81,6 +84,25 @@ function itemStock(it,isTotal){if(needsRarity(it)){var t=0;RARITIES.forEach(func
 const TABS=[['bank','<i class=vgi-bank></i>','Dépôt en Coffre de Guilde'],['craft','<i class=vgi-hammer></i>','Craft'],['set','<i class=vgi-settings></i>','Paramètres']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,ic,l])=>`<div class="tab ${S.tab===k?'on':''}" onclick="go('${k}')"><span>${ic}</span>${l}${k==='shop'&&S.debts.length?`<span class="pill pr">${S.debts.length}</span>`:''}</div>`).join('');}
 function go(t){S.tab=t;save();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
+/* Lien profond : ?tab=bank&coffre=moi ouvre directement le depot sur SON coffre.
+   Sert au bouton « Deposer au coffre » du plan de farm — sans ca il fallait
+   arriver sur le coffre, trouver l'onglet, puis se retrouver dans la liste.
+   Le parametre est retire de l'URL apres coup : un rechargement ne doit pas
+   reimposer l'onglet des heures plus tard. */
+function vgLienProfond(){
+  try{
+    var p=new URLSearchParams(location.search);
+    var t=p.get('tab'), c=p.get('coffre');
+    if(!t&&!c)return;
+    if(c){var moi=(window.__agUser||'').trim();
+      var cible=(c==='moi')?moi:c;
+      if(cible&&S.members.indexOf(cible)>=0)S.cur=cible;}
+    if(t&&TABS.some(function(x){return x[0]===t;}))S.tab=t;
+    save();renderTabs();render();
+    p.delete('tab');p.delete('coffre');
+    history.replaceState(null,'',location.pathname+(p.toString()?'?'+p:''));
+  }catch(e){}
+}
 function render(){const v=$('#view');if(!v){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;if($('#tabs')&&!$('#tabs').innerHTML.trim()){try{renderTabs();}catch(e){}}try{v.innerHTML=S.tab==='bank'?viewBank():S.tab==='craft'?viewCraft():S.tab==='shop'?viewShop():viewSettings();if(S.tab==='bank'&&bankQ)filterBank(bankQ);if(S.tab==='set'&&cfgQ)filterSet(cfgQ);}catch(err){console.error('[AirGuild] rendu partiel',err);}vgDD();}
 
 /* ============ BANQUE ============ */
@@ -538,7 +560,7 @@ function importData(){const inp=document.createElement('input');inp.type='file';
 function openSheet(html){$('#sheet').innerHTML=html;$('#modal').classList.add('on');vgDD();}
 function closeSheet(){$('#modal').classList.remove('on');}
 let _agBd=false;$('#modal').addEventListener('mousedown',e=>{_agBd=(e.target.id==='modal');});$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&_agBd)closeSheet();_agBd=false;});
-injectLogoCSS();renderTabs();render();try{cleanMagentaIcData();}catch(e){}
+injectLogoCSS();renderTabs();render();try{cleanMagentaIcData();}catch(e){}vgLienProfond();
 ;
 window.__APP='airguild';
 // Auto-réparation : si le conteneur AirGuild est recréé vide (re-clic sur le lien nav / navigation vers la même route), on relance render() automatiquement.

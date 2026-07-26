@@ -33,10 +33,29 @@ function Stat({ v, l, c }: { v: React.ReactNode; l: string; c: string }) {
   );
 }
 
-function Bar({ pc, h = 6 }: { pc: number; h?: number }) {
+/**
+ * Barre de progression. Deux corrections par rapport a la version precedente :
+ *  - la PISTE est visible (fond clair + liseré). Avant, piste et page avaient la
+ *    meme couleur : a 0 % on ne voyait donc rien du tout, et on ne pouvait pas
+ *    deviner l'echelle.
+ *  - plus de largeur minimale factice. L'ancien `Math.max(2, pc)` dessinait un
+ *    petit point a 0 %, qu'on lisait comme un bug d'affichage plutot que comme
+ *    « rien en stock ».
+ */
+function Bar({ pc, h = 8 }: { pc: number; h?: number }) {
+  const v = Math.max(0, Math.min(100, pc));
   return (
-    <div style={{ height: h, background: "var(--bg)", borderRadius: 4, overflow: "hidden" }}>
-      <div style={{ width: `${Math.max(2, Math.min(100, pc))}%`, height: "100%", background: col(pc), borderRadius: 4, transition: "width .3s" }} />
+    <div
+      title={`${v}%`}
+      style={{
+        height: h, width: "100%", borderRadius: h, overflow: "hidden",
+        background: "rgba(255,255,255,.09)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.10)",
+      }}
+    >
+      {v > 0 && (
+        <div style={{ width: `${v}%`, height: "100%", borderRadius: h, background: col(v), boxShadow: `0 0 8px ${col(v)}55`, transition: "width .3s" }} />
+      )}
     </div>
   );
 }
@@ -295,7 +314,11 @@ export default function PlanFarmPage() {
                     <span style={{ fontWeight: 600, fontSize: 13.5, flexShrink: 0 }}>{g.cat}</span>
                     <span style={{ fontSize: 11.5, color: "var(--text-muted)", flexShrink: 0 }}>{g.list.length} obj.</span>
                     {/* La barre porte l'information : on voit d'un coup d'œil où en est chaque catégorie. */}
-                    <span style={{ flex: 1, minWidth: 50, maxWidth: 260 }}><Bar pc={g.pc} h={5} /></span>
+                    {/* Colonne de largeur stable et barre centrée : les sections
+                        s'alignent les unes sous les autres au lieu de flotter. */}
+                    <span style={{ flex: 1, minWidth: 60, maxWidth: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Bar pc={g.pc} />
+                    </span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: col(g.pc), width: 38, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{g.pc}%</span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", width: 66, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>−{g.manque.toLocaleString("fr-FR")}</span>
                   </button>
@@ -312,8 +335,16 @@ export default function PlanFarmPage() {
         </>
       )}
 
-      <div style={{ marginTop: 22, textAlign: "center" }}>
-        <Link href="/coffre" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="vault" size={15} /> Gérer le stock du coffre</Link>
+      {/* Deux destinations distinctes : deposer dans SON coffre (le geste courant)
+          ou gerer le stock de la guilde. `coffre=moi` est resolu cote AirGuild
+          depuis le compte connecte, la page n'a pas a connaitre le pseudo. */}
+      <div style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+        <Link href="/coffre?tab=bank&coffre=moi" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7 }}>
+          <Icon name="package" size={15} /> Déposer dans mon coffre
+        </Link>
+        <Link href="/coffre" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", fontSize: 13, fontWeight: 600 }}>
+          <Icon name="vault" size={15} /> Gérer le stock du coffre
+        </Link>
       </div>
     </div>
   );

@@ -8,14 +8,14 @@ import path from "path";
 // Plan de farm calculé sur le VRAI stock du coffre AirGuild (airGuildState), et non plus
 // sur la table CoffreItem (qui était déconnectée → « plan de farm vide »). #5
 
-let CATALOG: { bankItems: any[]; icons: Record<string, string> } | null = null;
+let CATALOG: { bankItems: any[]; icons: Record<string, string>; noRarity: string[] } | null = null;
 function loadCatalog() {
   if (CATALOG) return CATALOG;
   try {
     const p = path.join(process.cwd(), "public", "airguild", "data.json");
     const d = JSON.parse(fs.readFileSync(p, "utf-8"));
-    CATALOG = { bankItems: d.bankItems ?? [], icons: d.icons ?? {} };
-  } catch { CATALOG = { bankItems: [], icons: {} }; }
+    CATALOG = { bankItems: d.bankItems ?? [], icons: d.icons ?? {}, noRarity: Array.isArray(d.noRarity) ? d.noRarity : [] };
+  } catch { CATALOG = { bankItems: [], icons: {}, noRarity: [] }; }
   return CATALOG;
 }
 
@@ -27,16 +27,20 @@ const RARETES = ["rare", "epique", "legendaire", "premyth"] as const;
 const PREMYTH_MINI = 1;
 
 /**
- * Meme regle que needsRarity() dans airguild.js : toutes les armes des
- * categories « Armes… » SAUF runes, marteaux et boucliers.
- * Dupliquee faute de module partage entre l'app vanilla et le site — a garder
- * alignee si la liste change la-bas.
+ * Meme regle que needsRarity() dans airguild.js : toutes les armes des categories
+ * « Armes… » SAUF ce que liste `noRarity`.
+ *
+ * La liste vit dans data.json, lue par les DEUX cotes. Elle etait auparavant
+ * recopiee ici, et la copie avait aussitot derive : « grimoire » manquait, donc
+ * les grimoires reclamaient un exemplaire pre-mythique qui n'existe pas pour eux.
+ * Le repli couvre le cas d'un data.json sans la cle.
  */
-const SANS_RARETE = ["rune", "marteau", "bouclier"];
+const SANS_RARETE_DEFAUT = ["rune", "marteau", "bouclier", "grimoire"];
 function aDesRaretes(it: { cat?: string; item?: string }): boolean {
   if (String(it.cat ?? "").toLowerCase().indexOf("armes") !== 0) return false;
+  const liste = loadCatalog().noRarity.length ? loadCatalog().noRarity : SANS_RARETE_DEFAUT;
   const n = String(it.item ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  return !SANS_RARETE.some((w) => n.includes(w));
+  return !liste.some((w) => n.includes(String(w).toLowerCase()));
 }
 
 // Seuil « vert » par défaut, aligné sur health() de airguild.js.

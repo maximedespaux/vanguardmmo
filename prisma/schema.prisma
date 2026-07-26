@@ -88,6 +88,7 @@ model User {
   /// Date de la 1re connexion constatée en tant que membre du serveur Discord.
   /// Sert de niveau d'accès intermédiaire (candidat) : voir canAccessVerified.
   verifiedAt   DateTime?
+  prefs        UserPref[]
   discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
   isActive      Boolean  @default(true)
   builderBlob   Json?                       // état complet du Stuff Builder (sync cross-device)
@@ -652,4 +653,18 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+/// Préférences d'affichage propres à un compte (ordre des sections, filtres…).
+/// Volontairement générique : une ligne par (utilisateur, clé), valeur JSON libre.
+/// Rien de fonctionnel ne doit en dépendre — une préférence absente doit toujours
+/// retomber sur un affichage par défaut correct.
+model UserPref {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, key])
 }

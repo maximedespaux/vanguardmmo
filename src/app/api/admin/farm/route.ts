@@ -19,6 +19,26 @@ function loadCatalog() {
   return CATALOG;
 }
 
+/**
+ * Raretes d'armes, memes cles que airguild.js. `premyth` est traitee a part : la
+ * guilde veut toujours au moins un exemplaire pre-mythique de chaque arme.
+ */
+const RARETES = ["rare", "epique", "legendaire", "premyth"] as const;
+const PREMYTH_MINI = 1;
+
+/**
+ * Meme regle que needsRarity() dans airguild.js : toutes les armes des
+ * categories « Armes… » SAUF runes, marteaux et boucliers.
+ * Dupliquee faute de module partage entre l'app vanilla et le site — a garder
+ * alignee si la liste change la-bas.
+ */
+const SANS_RARETE = ["rune", "marteau", "bouclier"];
+function aDesRaretes(it: { cat?: string; item?: string }): boolean {
+  if (String(it.cat ?? "").toLowerCase().indexOf("armes") !== 0) return false;
+  const n = String(it.item ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return !SANS_RARETE.some((w) => n.includes(w));
+}
+
 // Seuil « vert » par défaut, aligné sur health() de airguild.js.
 function defaultGreen(cat: string, unit: string): number {
   const c = (cat || "").trim();
@@ -43,7 +63,20 @@ export async function GET() {
   const overrides: Record<string, any> = S.overrides ?? {};
   const thresh: Record<string, { mid?: number; ok?: number }> = S.thresh ?? {};
 
-  const totalOf = (id: string) => members.reduce((s, m) => s + (Number(inv[m]?.[id]) || 0), 0);
+  const brut = (id: string) => members.reduce((s, m) => s + (Number(inv[m]?.[id]) || 0), 0);
+
+  /**
+   * Stock total d'un objet. Pour une arme, le coffre repartit le stock sur des
+   * cles par rarete (`id|R#rare`, `id|R#premyth`, …) et la cle nue reste vide :
+   * ne sommer que celle-ci faisait apparaitre TOUTES les armes a 0, meme
+   * largement en stock. On englobe donc l'ensemble des raretes.
+   */
+  const totalOf = (it: { id: string; cat?: string; item?: string }) => {
+    if (!aDesRaretes(it)) return brut(it.id);
+    return brut(it.id) + RARETES.reduce((s, r) => s + brut(`${it.id}|R#${r}`), 0);
+  };
+
+  const premythOf = (id: string) => brut(`${id}|R#premyth`);
 
   const all = bankItems
     .concat(custom)
@@ -52,22 +85,30 @@ export async function GET() {
 
   const items = all
     .map((it: any) => {
-      const stock = totalOf(it.id);
+      const stock = totalOf(it);
       const tok = thresh[it.id]?.ok;
       const target = tok && tok > 0 ? tok : defaultGreen(it.cat, it.unit);
+      // Reserve pre-mythique : comptee separement du total, car une arme peut
+      // etre au seuil sans qu'aucun exemplaire ne soit pre-myth.
+      const rarete = aDesRaretes(it);
+      const premyth = rarete ? premythOf(it.id) : 0;
+      const manquePremyth = rarete ? Math.max(0, PREMYTH_MINI - premyth) : 0;
       return {
         id: it.id, item: it.item, cat: (it.cat || "").trim(), classe: it.classe ?? "",
         icon: it.icData ? it.icData : (it.ic && icons[it.ic] ? icons[it.ic] : null),
         stock, target, manque: Math.max(0, target - stock), unit: it.unit ?? "",
+        rarete, premyth, manquePremyth,
       };
     })
-    .filter((x) => x.manque > 0)
+    // Une arme au seuil mais sans pre-myth reste a farmer : sans ce `||` elle
+    // disparaissait du plan et la reserve pre-mythique n'etait jamais constituee.
+    .filter((x) => x.manque > 0 || x.manquePremyth > 0)
     .sort((a, b) => b.manque - a.manque);
 
   return NextResponse.json({
     items,
     totalItems: all.length,
-    okCount: all.length - items.length,
+    okCount: all.length - items.length, // meme critere que le filtre ci-dessus
     members: members.length,
   });
 }

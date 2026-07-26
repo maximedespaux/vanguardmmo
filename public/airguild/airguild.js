@@ -117,9 +117,26 @@ function viewBank(){
   const sortedM=S.members.filter(m=>m!=='Commun').sort((a,b)=>{const am=a.toLowerCase().trim()===me,bm=b.toLowerCase().trim()===me;return am===bm?a.localeCompare(b,'fr'):(am?-1:1);});
   const mtabs=
     sortedM.map(m=>{const isMe=!!me&&m.toLowerCase().trim()===me;const inR=roster.indexOf(m)>=0;return `<div class="mtab ${S.cur===m?'on':''}" onclick="selM('${sq(m)}')"${isMe?' title="Ton coffre personnel"':''}>${isMe?'<i class=vgi-hand-point></i> ':'<i class=vgi-user></i> '}${esc(m)}${isMe?' <span class="pill" style="font-size:8px;padding:1px 5px;background:var(--orange);color:#0a0a0c">perso</span>':''}${(canM&&!inR)?` <span class="x" onclick="event.stopPropagation();delM('${sq(m)}')"><i class=vgi-x></i></span>`:''}</div>`;}).join('')+
-    (canM?`<div class="mtab" onclick="addMember()" style="border-style:dashed;opacity:.9" title="Ajouter un coffre membre (Vanguard)"><i class=vgi-plus></i> Coffre</div>`:'')+
-    `<div class="mtab ${isTotal?'on':''}" onclick="selM('__total__')" style="border-style:dashed">Σ Total guilde</div>`;
-  return `<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span></div><div class="mtabs">${mtabs}</div></div>
+    (canM?`<div class="mtab" onclick="addMember()" style="border-style:dashed;opacity:.9" title="Ajouter un coffre membre (Vanguard)"><i class=vgi-plus></i> Coffre</div>`:'');
+  /* « Total guilde » n'est pas un coffre de plus : c'est la reference sur laquelle
+     s'appuient la boutique et les crafts. Le laisser dans la meme rangee que les
+     membres le faisait passer pour l'un d'eux. Il a donc son propre encadre. */
+  const totalTab = `<div onclick="selM('__total__')" title="Somme de tous les coffres — reference boutique & crafts" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:12px;`
+    + (isTotal
+      ? `border:2px solid var(--orange);background:linear-gradient(180deg,rgba(255,181,82,.16),rgba(255,140,26,.10));box-shadow:0 0 16px rgba(255,140,26,.28)`
+      : `border:1px solid rgba(255,140,26,.42);background:rgba(255,140,26,.07)`)
+    + `"><i class=vgi-landmark style="color:var(--orange)"></i>`
+    + `<span><span style="font-family:Rajdhani;font-weight:700;font-size:15px;color:var(--orange)">Σ Total guilde</span>`
+    + `<span class="mut" style="display:block;font-size:10.5px">référence boutique &amp; crafts</span></span></div>`;
+
+  /* Etat d'edition annonce explicitement : rien ne le signalait, on ne savait pas
+     si l'on pouvait modifier ou seulement consulter. */
+  const etat = canEdit()
+    ? `<span class="pill" style="background:rgba(74,222,128,.13);border:1px solid rgba(74,222,128,.45);color:var(--green);font-size:10.5px;padding:3px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px"><i class=vgi-edit></i> Édition</span>`
+    : `<span class="pill" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);color:var(--mut);font-size:10.5px;padding:3px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px" title="Seuls Vanguard et Direction modifient le coffre ; tu peux déposer dans le tien."><i class=vgi-lock></i> Lecture seule</span>`;
+
+  return `<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span> ${etat}</div>
+   <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div class="mtabs" style="flex:1;min-width:220px">${mtabs}</div>${totalTab}</div></div>
    ${isTotal?'<div class="hint" style="margin-top:8px">Σ <b>Total guilde</b> = la somme de <b>tous</b> les coffres membres. C\'est la <b>référence</b> : la boutique et les crafts se basent dessus, donc le stock de chaque membre compte.</div>':'<div class="hint" style="margin-top:8px">Le stock de ce coffre compte dans le <b>Total guilde</b> (référence boutique &amp; crafts). Dépose ici ce que tu ramènes.</div>'}
    <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()"><i class=vgi-plus></i> Objet</button>':''}<button class="btn o" onclick="inventaireSheet()" style="font-size:14px;padding:10px 18px"><i class=vgi-bar-chart></i> Qui détient quoi</button><button class="btn" onclick="openJournal()"><i class=vgi-receipt></i> Journal</button></div>
    <div id="bankbody">${bankBody()}</div>`;

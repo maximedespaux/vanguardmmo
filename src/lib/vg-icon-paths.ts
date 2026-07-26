@@ -140,6 +140,7 @@ export const ICON_PATHS: Record<string, string> = {
   "upload": "<path d=\"M12 16V4\"/><path d=\"m7.5 8.5 4.5-4.5 4.5 4.5\"/><path d=\"M4 15v3.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V15\"/>",
   "user-check": "<circle cx=\"9.5\" cy=\"8\" r=\"3.4\"/><path d=\"M4 20a5.5 5.5 0 0 1 11 0\"/><path d=\"m16 12.5 2 2 3.5-3.5\"/>",
   "user-plus": "<circle cx=\"9\" cy=\"8\" r=\"3.4\" /><path d=\"M3.5 20a5.5 5.5 0 0 1 11 0\" /><path d=\"M19 8.5v5\" /><path d=\"M16.5 11h5\" />",
+  "user": "<circle cx=\"12\" cy=\"8\" r=\"3.4\" /><path d=\"M5.5 20c0-3.3 2.9-5.6 6.5-5.6s6.5 2.3 6.5 5.6\" />",
   "users": "<circle cx=\"9\" cy=\"8\" r=\"3.2\" /><path d=\"M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5\" /><path d=\"M16 5.2A3.2 3.2 0 0 1 16 11.4\" /><path d=\"M17 15c2.3.5 3.5 2.4 3.5 5\" />",
   "vault": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"15\" rx=\"2\" /><circle cx=\"12\" cy=\"11.5\" r=\"3.5\" /><path d=\"M12 9.5v4\" /><path d=\"M10 11.5h4\" /><path d=\"M6 19v2\" /><path d=\"M18 19v2\" />",
   "video": "<rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"2\" /><path d=\"m10 9.5 5 2.5-5 2.5Z\" fill=\"currentColor\" stroke=\"none\" />",

@@ -68,8 +68,32 @@ export default function BanqueAdminPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-banque.webp" title="Boutique — gestion" subtitle="Traite les requêtes (achat ou dette) et valide les remboursements." />
+      <PageHeader banner="/assets/site/banners/banner-banque.webp" title="Suivi des dettes" subtitle="Traite les requêtes (achat ou dette) et valide les remboursements." />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
+
+      {/* Chiffres en tete, comme au tableau de bord : on doit savoir d'un coup
+          d'oeil s'il y a un retard ou une validation en attente, sans lire la
+          liste. Calcules sur TOUTES les dettes (`toutes`), pas sur l'onglet
+          affiche — sinon le total dependrait du filtre ouvert. */}
+      {(() => {
+        const t = totauxDettes(toutes);
+        const aValider = toutes.filter((d) => d.status === "PENDING_VALIDATION").length;
+        const Tuile = ({ v, l, c, alerte }: { v: React.ReactNode; l: string; c: string; alerte?: boolean }) => (
+          <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center", ...(alerte ? { borderColor: c } : null) }}>
+            <div className="font-heading" style={{ fontSize: 24, fontWeight: 700, color: c }}>{v}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: .5 }}>{l}</div>
+          </div>
+        );
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, marginBottom: 18 }}>
+            <Tuile v={t.nb} l="dettes en cours" c={t.nb ? "var(--gold)" : "var(--green)"} />
+            <Tuile v={fmt(t.reste)} l="périns à rembourser" c="var(--orange)" />
+            <Tuile v={fmt(t.paye)} l="déjà remboursé" c="var(--green)" />
+            <Tuile v={t.enRetard} l="en retard" c={t.enRetard ? "var(--red)" : "var(--green)"} alerte={t.enRetard > 0} />
+            <Tuile v={aValider} l="à valider" c={aValider ? "var(--gold)" : "var(--green)"} alerte={aValider > 0} />
+          </div>
+        );
+      })()}
 
       {/* ── Requêtes à traiter ── */}
       <h2 className="font-heading" style={{ fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Requêtes à traiter {reqs.length > 0 && <span style={{ color: "var(--gold)" }}>· {reqs.length}</span>}</h2>

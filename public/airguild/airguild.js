@@ -139,9 +139,18 @@ function viewBank(){
 
   /* Etat d'edition annonce explicitement : rien ne le signalait, on ne savait pas
      si l'on pouvait modifier ou seulement consulter. */
-  const etat = canEdit()
-    ? `<span class="pill" style="background:rgba(74,222,128,.13);border:1px solid rgba(74,222,128,.45);color:var(--green);font-size:10.5px;padding:3px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px"><i class=vgi-edit></i> Édition</span>`
-    : `<span class="pill" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);color:var(--mut);font-size:10.5px;padding:3px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px" title="Seuls Vanguard et Direction modifient le coffre ; tu peux déposer dans le tien."><i class=vgi-lock></i> Lecture seule</span>`;
+  /* L'etat depend du coffre AFFICHE, pas du role seul : on peut modifier son
+     propre coffre et seulement consulter celui des autres. Un badge global
+     annoncait « Edition » partout, y compris sur un coffre qu'on ne peut pas
+     toucher. canDeposit() porte deja la regle, on s'appuie dessus. */
+  const pillule = (fond, bord, couleur, ic, txt, info) =>
+    `<span class="pill" title="${info}" style="background:${fond};border:1px solid ${bord};color:${couleur};font-size:10.5px;padding:3px 9px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px"><i class=vgi-${ic}></i> ${txt}</span>`;
+  const etat = canDeposit()
+    ? pillule('rgba(74,222,128,.13)', 'rgba(74,222,128,.45)', 'var(--green)', 'edit', 'Édition',
+        isTotal ? 'Tu peux modifier le stock' : 'Tu peux modifier ce coffre')
+    : pillule('rgba(255,255,255,.05)', 'rgba(255,255,255,.16)', 'var(--mut)', 'lock', 'Lecture seule',
+        isTotal ? 'Le total est un calcul : il se modifie coffre par coffre.'
+                : 'Ce coffre n\'est pas le tien — sélectionne le tien pour y déposer.');
 
   return `<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span> ${etat}</div>
    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div class="mtabs" style="flex:1;min-width:220px">${mtabs}</div>${totalTab}</div></div>

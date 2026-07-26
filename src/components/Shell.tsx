@@ -32,7 +32,6 @@ const NAV: Item[] = [
     { label: "Boutique", href: "/dettes", access: "public" },
     { label: "Coffres & crafts", href: "/coffre", access: "admin" },
     { label: "Plan de farm", href: "/plan-farm", access: "admin" },
-    { label: "Suivi des dettes", href: "/gestion-dettes", access: "admin" },
   ] },
 
   { label: "GuildViewer", href: "/dashboard", icon: "users", access: "guild", sub: [
@@ -40,6 +39,9 @@ const NAV: Item[] = [
     { label: "Membres & builds", href: "/guildviewer", access: "admin" },
     { label: "Compositions", href: "/compositions", access: "guild" },
     { label: "Candidatures", href: "/candidatures", access: "admin" },
+    // Le suivi des dettes parle des MEMBRES (qui doit quoi a qui), pas du stock :
+    // sa place est avec le GuildViewer, pas dans l'espace marchand.
+    { label: "Suivi des dettes", href: "/gestion-dettes", access: "admin" },
   ] },
 
   { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [
@@ -62,7 +64,7 @@ const NAV: Item[] = [
 // Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
 // (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
 const PAGE_BG: Record<string, string> = {
-  "/coffre": "airguild", "/dettes": "banque", "/gestion-dettes": "banque", "/guildviewer": "guildviewer",
+  "/coffre": "airguild", "/dettes": "banque", "/gestion-dettes": "guildviewer", "/guildviewer": "guildviewer",
   "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",

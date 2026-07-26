@@ -121,16 +121,80 @@ function viewBank(){
     `<div class="mtab ${isTotal?'on':''}" onclick="selM('__total__')" style="border-style:dashed">Σ Total guilde</div>`;
   return `<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span></div><div class="mtabs">${mtabs}</div></div>
    ${isTotal?'<div class="hint" style="margin-top:8px">Σ <b>Total guilde</b> = la somme de <b>tous</b> les coffres membres. C\'est la <b>référence</b> : la boutique et les crafts se basent dessus, donc le stock de chaque membre compte.</div>':'<div class="hint" style="margin-top:8px">Le stock de ce coffre compte dans le <b>Total guilde</b> (référence boutique &amp; crafts). Dépose ici ce que tu ramènes.</div>'}
-   <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()"><i class=vgi-plus></i> Objet</button>':''}<button class="btn" onclick="recapSheet()"><i class=vgi-bar-chart></i> Récap</button><button class="btn" onclick="itemSearchSheet()"><i class=vgi-search></i> Fiche objet</button><button class="btn" onclick="openJournal()"><i class=vgi-receipt></i> Journal</button></div>
+   <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()"><i class=vgi-plus></i> Objet</button>':''}<button class="btn o" onclick="inventaireSheet()" style="font-size:14px;padding:10px 18px"><i class=vgi-bar-chart></i> Qui détient quoi</button><button class="btn" onclick="openJournal()"><i class=vgi-receipt></i> Journal</button></div>
    <div id="bankbody">${bankBody()}</div>`;
 }
 // ── B1 : récap « Mes objets / Mes ventes » + qui détient quoi (par membre) ──
-function recapSheet(mineOnly){var me=(window.__agUser||'').toLowerCase().trim();var members=S.members||[];if(mineOnly&&me)members=members.filter(function(m){return m.toLowerCase().trim()===me;});var nameOf={};(catalog()||[]).forEach(function(it){nameOf[it.id]=it;});
-  var body=members.map(function(m){var inv=S.inv[m]||{};var items=Object.keys(inv).filter(function(id){return (+inv[id]||0)>0;}).map(function(id){var it=nameOf[id]||{};return {nom:(it.item||id.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim(),qty:+inv[id]};});items.sort(function(a,b){return (a.cat+a.nom).localeCompare(b.cat+b.nom,'fr');});var isMe=!!me&&m.toLowerCase().trim()===me;var total=items.reduce(function(s,x){return s+x.qty;},0);
-    return '<div class="ocard" style="margin-bottom:10px'+(isMe?';border-color:var(--orange)':'')+'"><div class="sec-h" style="margin:0 0 6px">'+(m===S.mainCoffre?'<i class=vgi-landmark></i> ':'<i class=vgi-user></i> ')+esc(m)+(isMe?' <span class="pill" style="background:var(--orange);color:#0a0a0c"><i class=vgi-hand-point></i> Mes objets</span>':'')+' <span class="n">'+items.length+' items · '+fmt(total)+' u.</span></div>'+(items.length?'<div style="display:flex;flex-direction:column;gap:3px">'+items.map(function(x){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px"><span>'+esc(x.nom)+(x.cls?' <span class="mut" style="font-size:10px">'+esc(x.cls)+'</span>':'')+'</span><b style="color:var(--gold)">×'+fmt(x.qty)+'</b></div>';}).join('')+'</div>':'<div class="mut" style="font-size:12px">Coffre vide.</div>')+'</div>';}).join('');
+
+/* ─── Inventaire : Récap + Fiche objet dans un seul panneau ──────────────
+   Les deux repondaient a la meme question (« ou est cet objet, qui l'a ») par
+   deux boutons et deux fenetres separees. Ils sont desormais deux sous-onglets
+   d'un meme panneau, ouvert par un bouton unique et mis en avant.
+   L'onglet actif est garde en memoire pour la duree de la session. */
+window.__invOnglet = window.__invOnglet || 'recap';
+window.__invMine = false;
+
+function inventaireSheet(onglet){
+  if(onglet)window.__invOnglet=onglet;
+  var o=window.__invOnglet;
+  var bt=function(cle,ic,lib){
+    var on=o===cle;
+    return '<span onclick="inventaireSheet(\''+cle+'\')" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;'
+      +'font-size:14px;font-weight:700;padding:9px 16px;border-radius:9px;user-select:none;'
+      +(on?'background:linear-gradient(180deg,#FFB552,#FF8C1A);color:#0A0A0C;border:1px solid #FF8C1A':'background:#17171d;color:#d2d2d9;border:1px solid rgba(255,255,255,.14)')
+      +'"><i class='+ic+'></i>'+lib+'</span>';
+  };
+  var barre='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px">'
+    +bt('recap','vgi-bar-chart','Qui détient quoi')+bt('fiche','vgi-search','Fiche d\'un objet')+'</div>';
+
+  openSheet('<h3 style="font-size:19px"><i class=vgi-bank></i> Inventaire de la guilde</h3>'
+    +barre+'<div id="invCorps"></div>'
+    +'<div class="toolbar" style="justify-content:flex-end;margin:10px 0 0"><button class="btn" onclick="closeSheet()">Fermer</button></div>');
+  invCorps();
+}
+
+function invCorps(){
+  var el=document.getElementById('invCorps');if(!el)return;
+  if(window.__invOnglet==='fiche'){
+    el.innerHTML='<div class="hint">Tape un nom : où il est, qui l\'a, qui le vend, les crafts, le farm et les derniers mouvements.</div>'
+      +'<input class="inp" id="isq" placeholder="ex. Catalyseur Bubble…" oninput="itemSearchFilter(this.value)" style="width:100%;margin-bottom:10px;font-size:15px;padding:12px 14px">'
+      +'<div id="isres" style="max-height:56vh;overflow:auto"></div>';
+    itemSearchFilter('');
+    var f=document.getElementById('isq');if(f)f.focus();
+  }else{
+    el.innerHTML=recapCorps(window.__invMine);
+  }
+}
+
+/* Bascule « mes objets » / tous les coffres, sans reconstruire la fenetre. */
+function invMine(v){window.__invMine=!!v;invCorps();}
+
+/* Corps du recap, sans la fenetre : reutilise tel quel dans le sous-onglet. */
+function recapCorps(mineOnly){var me=(window.__agUser||'').toLowerCase().trim();var members=S.members||[];if(mineOnly&&me)members=members.filter(function(m){return m.toLowerCase().trim()===me;});var nameOf={};(catalog()||[]).forEach(function(it){nameOf[it.id]=it;});
+  var body=members.map(function(m){var inv=S.inv[m]||{};var items=Object.keys(inv).filter(function(id){return (+inv[id]||0)>0;}).map(function(id){
+      /* Une cle de rarete (id|R#epique) n'existe PAS au catalogue : nameOf[id]
+         etait donc vide et le nom retombait sur le dernier segment de la cle,
+         soit « R#epique » — sans type d'arme ni categorie. On resout l'objet de
+         base et on garde la rarete a part, pour l'afficher proprement. */
+      var base=baseId(id);var r=rarOf(id);
+      var it=nameOf[id]||nameOf[base]||{};
+      var meta=r?rarMeta(r):null;
+      return {nom:(it.item||base.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim(),
+              rar:r,rarLabel:meta?meta[1]:(r||''),rarColor:meta?meta[2]:'var(--text-muted)',qty:+inv[id]};});items.sort(function(a,b){return (a.cat+a.nom).localeCompare(b.cat+b.nom,'fr');});var isMe=!!me&&m.toLowerCase().trim()===me;var total=items.reduce(function(s,x){return s+x.qty;},0);
+    return '<div class="ocard" style="margin-bottom:10px'+(isMe?';border-color:var(--orange)':'')+'"><div class="sec-h" style="margin:0 0 6px">'+(m===S.mainCoffre?'<i class=vgi-landmark></i> ':'<i class=vgi-user></i> ')+esc(m)+(isMe?' <span class="pill" style="background:var(--orange);color:#0a0a0c"><i class=vgi-hand-point></i> Mes objets</span>':'')+' <span class="n">'+items.length+' items · '+fmt(total)+' u.</span></div>'+(items.length?'<div style="display:flex;flex-direction:column;gap:3px">'+items.map(function(x){return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;padding:3px 0"><span style="min-width:0">'
+      +'<b style="font-weight:600">'+esc(x.nom)+'</b>'
+      +(x.rar?' <span style="font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap;border:1px solid '+x.rarColor+';color:'+x.rarColor+';background:'+x.rarColor+'22">'+esc(x.rarLabel)+'</span>':'')
+      +(x.cls?' <span class="mut" style="font-size:11px">'+esc(x.cls)+'</span>':'')
+      +(x.cat?'<div class="mut" style="font-size:10.5px">'+esc(x.cat)+'</div>':'')
+      +'</span><b style="color:var(--gold);font-size:14px;white-space:nowrap">×'+fmt(x.qty)+'</b></div>';}).join('')+'</div>':'<div class="mut" style="font-size:12px">Coffre vide.</div>')+'</div>';}).join('');
   if(mineOnly&&!body)body='<div class="mut" style="font-size:12px;padding:8px 2px">Aucun coffre à ton nom (« '+esc(window.__agUser||'?')+' »). Vérifie que le coffre porte ton pseudo.</div>';
-  var toggle=me?'<button class="btn '+(mineOnly?'o':'')+' sm" onclick="recapSheet('+(mineOnly?'false':'true')+')">'+(mineOnly?'<i class=vgi-users></i> Voir tous les coffres':'<i class=vgi-hand-point></i> Mes objets seulement')+'</button>':'';
-  openSheet('<h3><i class=vgi-bar-chart></i> Récap des coffres — qui détient quoi</h3><div class="hint">Le contenu de chaque coffre, membre par membre. Le tien (« <i class=vgi-hand-point></i> Mes objets ») est surligné.</div><div class="toolbar" style="margin:0 0 10px">'+toggle+'</div>'+body+'<div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Fermer</button></div>');}
+  var toggle=me?'<button class="btn '+(mineOnly?'o':'')+' sm" onclick="invMine('+(mineOnly?'false':'true')+')">'+(mineOnly?'<i class=vgi-users></i> Voir tous les coffres':'<i class=vgi-hand-point></i> Mes objets seulement')+'</button>':'';
+  return '<div class="hint">Le contenu de chaque coffre, membre par membre. Le tien (« <i class=vgi-hand-point></i> Mes objets ») est surligné.</div>'
+    +'<div class="toolbar" style="margin:0 0 10px">'+toggle+'</div>'
+    +'<div style="max-height:56vh;overflow:auto">'+body+'</div>';}
+
+/* Conserve pour les anciens appels : ouvre le panneau sur le bon sous-onglet. */
+function recapSheet(mineOnly){window.__invMine=!!mineOnly;inventaireSheet('recap');}
 function sortByOrder(arr){const o=S.order||[];return arr.slice().sort(function(a,b){var ia=o.indexOf(a.id),ib=o.indexOf(b.id);return (ia<0?1e9:ia)-(ib<0?1e9:ib);});}
 function moveItem(id,dir){var all=sortByOrder(catalog());var it=all.find(function(x){return x.id===id;});if(!it)return;var cat=(it.cat||'').trim();var sibs=all.filter(function(x){return (x.cat||'').trim()===cat;});var i=sibs.findIndex(function(x){return x.id===id;}),j=i+dir;if(j<0||j>=sibs.length)return;S.order=all.map(function(x){return x.id;});var a=S.order.indexOf(id),b=S.order.indexOf(sibs[j].id);var t=S.order[a];S.order[a]=S.order[b];S.order[b]=t;save();render();}
 function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__total__';

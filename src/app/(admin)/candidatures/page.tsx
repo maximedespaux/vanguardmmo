@@ -31,10 +31,17 @@ export default function CandidaturesAdminPage() {
   const [apps, setApps] = useState<App[]>([]);
   const [filter, setFilter] = useState("PENDING");
   const [loading, setLoading] = useState(true);
+  /**
+   * Toutes les candidatures, sans filtre de statut : les chiffres en tete n'ont
+   * de sens que sur l'ensemble. Calcules sur l'onglet affiche, « 3 en attente »
+   * aurait voulu dire « 3 en attente parmi les acceptees ».
+   */
+  const [toutes, setToutes] = useState<App[]>([]);
 
   const load = async () => {
     setLoading(true);
     try { const r = await fetch(`/api/admin/candidatures${filter ? `?status=${filter}` : ""}`); if (r.ok) setApps(await r.json()); } catch {}
+    try { const a = await fetch("/api/admin/candidatures"); if (a.ok) setToutes(await a.json()); } catch {}
     setLoading(false);
   };
   useEffect(() => { load(); }, [filter]);
@@ -48,6 +55,27 @@ export default function CandidaturesAdminPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1000, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidatures" subtitle="Examine et décide des candidatures reçues." />
+
+      {/* Chiffres en tete, comme au tableau de bord et au suivi des dettes : on
+          doit voir s'il y a des dossiers en attente sans parcourir la liste. */}
+      {(() => {
+        const n = (st: string) => toutes.filter((a) => a.status === st).length;
+        const enAttente = n("PENDING") + n("WAITING") + n("INTERVIEW");
+        const Tuile = ({ v, l, c, alerte }: { v: React.ReactNode; l: string; c: string; alerte?: boolean }) => (
+          <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center", ...(alerte ? { borderColor: c } : null) }}>
+            <div className="font-heading" style={{ fontSize: 24, fontWeight: 700, color: c }}>{v}</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: .5 }}>{l}</div>
+          </div>
+        );
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, margin: "8px 0 18px" }}>
+            <Tuile v={enAttente} l="à traiter" c={enAttente ? "var(--gold)" : "var(--green)"} alerte={enAttente > 0} />
+            <Tuile v={n("ACCEPTED")} l="acceptées" c="var(--green)" />
+            <Tuile v={n("REJECTED")} l="refusées" c="var(--text-muted)" />
+            <Tuile v={toutes.length} l="au total" c="var(--orange)" />
+          </div>
+        );
+      })()}
 
       <div className="vg-subtabs">
         {FILTERS.map(([k, l]) => (

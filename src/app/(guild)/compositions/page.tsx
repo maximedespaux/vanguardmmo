@@ -34,6 +34,13 @@ export default function CompositionsPage() {
    * effaçait ainsi les inscriptions de tous les autres.
    */
   const [charge, setCharge] = useState(false);
+  /**
+   * Personnage qui vient d'être inscrit sur un poste. Ouvre la demande de
+   * disponibilité : s'inscrire sur un poste et annoncer sa présence étaient deux
+   * saisies séparées pour la même information, donc l'une des deux restait vide.
+   */
+  const [dispoChoix, setDispoChoix] = useState<Creneau[] | null>(null);
+  const [aprsInscription, setAprsInscription] = useState<{ slot: Slot; char: { id: string; name: string; class: string } } | null>(null);
 
   // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
@@ -84,6 +91,14 @@ export default function CompositionsPage() {
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
     // Un perso ne peut être que sur UN poste : on retire son éventuelle inscription ailleurs avant d'ajouter.
     persist([...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
+    setAprsInscription({ slot, char });
+  };
+
+  /** Enregistre les créneaux annoncés pour ce personnage, en une écriture. */
+  const enregistrerDispos = (char: { name: string; class: string }, creneaux: Creneau[]) => {
+    const nom = char.name.toLowerCase();
+    const autres = presences.filter(p => p.pseudo.toLowerCase() !== nom);
+    sauver({ presences: [...autres, ...creneaux.map(c => ({ player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau: c, ts: Date.now() }))] });
   };
   const selectSignup = (slotId: string, id: string) => persist(signups.map(s => s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
   const resetAll = () => {
@@ -336,6 +351,60 @@ export default function CompositionsPage() {
           </div>
         </div>
       </div>}
+
+      {/* Après une inscription : on demande les créneaux, puis on propose d'en
+          inscrire un autre. Les deux gestes que Maxime enchaîne en pratique.
+          Les créneaux déjà annoncés pour ce personnage sont pré-cochés — on
+          corrige, on ne ressaisit pas. */}
+      {aprsInscription && (() => {
+        const ch = aprsInscription.char;
+        const nom = ch.name.toLowerCase();
+        const dejaLa = CRENEAUX.filter(c => presences.some(p => p.creneau === c.id && p.pseudo.toLowerCase() === nom)).map(c => c.id);
+        const choix = dispoChoix ?? dejaLa;
+        const fermer = () => { setDispoChoix(null); setAprsInscription(null); };
+        const valider = (encore: boolean) => { enregistrerDispos(ch, choix); setDispoChoix(null); setAprsInscription(null); if (!encore) return; };
+        return (
+          <div onClick={fermer} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, maxWidth: 440, width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                <ClassLogo name={classeAffichee(ch.class)} size={26} />
+                <div>
+                  <div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{ch.name}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>inscrit sur {lbl(aprsInscription.slot)}</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "10px 0 9px" }}>
+                Tu seras là quand ? Coche les deux si tu es disponible mercredi <b>et</b> dimanche.
+              </p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {CRENEAUX.map(cr => {
+                  const on = choix.includes(cr.id);
+                  return (
+                    <button key={cr.id} onClick={() => setDispoChoix(on ? choix.filter(x => x !== cr.id) : [...choix, cr.id])}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 700, padding: "9px 15px", borderRadius: 10, cursor: "pointer",
+                        border: `1px solid ${on ? "var(--green)" : "var(--border)"}`,
+                        background: on ? "rgba(74,222,128,.13)" : "var(--bg-3)",
+                        color: on ? "var(--green)" : "var(--text-muted)" }}>
+                      <Icon name={on ? "check" : "plus"} size={13} />{cr.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                <button onClick={fermer} style={{ fontSize: 12.5, padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer" }}>
+                  Plus tard
+                </button>
+                {/* « Un autre personnage » enregistre AUSSI les créneaux : sinon
+                    enchaîner les inscriptions perdrait ce qu'on vient de cocher. */}
+                <button onClick={() => valider(true)} style={{ fontSize: 12.5, fontWeight: 600, padding: "9px 14px", borderRadius: 9, border: "1px solid var(--orange)", background: "transparent", color: "var(--orange)", cursor: "pointer" }}>
+                  Enregistrer et en inscrire un autre
+                </button>
+                <button className="vg-btn" onClick={() => valider(false)}>Terminé</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

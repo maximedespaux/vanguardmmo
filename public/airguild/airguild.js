@@ -121,13 +121,21 @@ function viewBank(){
   /* « Total guilde » n'est pas un coffre de plus : c'est la reference sur laquelle
      s'appuient la boutique et les crafts. Le laisser dans la meme rangee que les
      membres le faisait passer pour l'un d'eux. Il a donc son propre encadre. */
-  const totalTab = `<div onclick="selM('__total__')" title="Somme de tous les coffres — reference boutique & crafts" style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:12px;`
+  /* « Total guilde » n'est pas un coffre de plus : c'est la somme sur laquelle
+     s'appuient la boutique et les crafts. Le laisser dans la rangee des membres le
+     faisait passer pour l'un d'eux, d'ou son propre encadre.
+     Styles reprises du projet : degrade et bordure de .mtab.on pour l'etat actif,
+     typographie de .t pour le libelle. Aucune couleur inventee ici. */
+  const totalTab = `<div onclick="selM('__total__')" title="Somme de tous les coffres membres"`
+    + ` style="cursor:pointer;user-select:none;display:flex;align-items:center;gap:11px;padding:12px 16px;border-radius:12px;transition:.15s;`
     + (isTotal
-      ? `border:2px solid var(--orange);background:linear-gradient(180deg,rgba(255,181,82,.16),rgba(255,140,26,.10));box-shadow:0 0 16px rgba(255,140,26,.28)`
-      : `border:1px solid rgba(255,140,26,.42);background:rgba(255,140,26,.07)`)
-    + `"><i class=vgi-landmark style="color:var(--orange)"></i>`
-    + `<span><span style="font-family:Rajdhani;font-weight:700;font-size:15px;color:var(--orange)">Σ Total guilde</span>`
-    + `<span class="mut" style="display:block;font-size:10.5px">référence boutique &amp; crafts</span></span></div>`;
+      ? `background:linear-gradient(180deg,#2a1d0c,#1a1208);border:2px solid var(--orange);box-shadow:0 0 14px rgba(255,140,26,.22)`
+      : `background:var(--bg2);border:1px solid rgba(255,140,26,.38)`)
+    + `">`
+    + `<span style="font-family:Rajdhani;font-weight:700;font-size:20px;color:var(--orange);line-height:1">Σ</span>`
+    + `<span><span class="t" style="font-size:15px;letter-spacing:1.2px;color:${isTotal ? 'var(--orange)' : 'var(--text)'};display:block">Total guilde</span>`
+    + `<span class="mut" style="font-size:10.5px;letter-spacing:.3px">Somme de tous les coffres</span></span></div>`;
+
 
   /* Etat d'edition annonce explicitement : rien ne le signalait, on ne savait pas
      si l'on pouvait modifier ou seulement consulter. */

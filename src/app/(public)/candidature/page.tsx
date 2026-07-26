@@ -299,23 +299,51 @@ export default function CandidaturePage() {
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                    {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={28} /></button>; })}
-                  </div>
-                  {/* Le sexe change l'illustration : on le choisit ici, comme dans l'AirBuilder. */}
-                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                    {(["G", "F"] as const).map(sx => { const sel = (c.sex ?? "G") === sx; return (
-                      <button key={sx} onClick={() => { const n = [...chars]; n[i].sex = sx; setChars(n); }}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 8, cursor: "pointer",
-                          border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,.14)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text-muted)" }}>
-                        <Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}
-                      </button>
-                    ); })}
-                  </div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input placeholder="Nom du personnage" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
-                <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
-              </div>
+                  {/* Un personnage repris du compte est en LECTURE SEULE. Seuls les
+                      personnages nouvellement declares sont crees a l'envoi (voir
+                      `aCreer`) : tout ce qu'on modifiait ici sur un perso existant
+                      etait jete en silence — classe, nom, prestige et sexe compris.
+                      Pour une autre classe, on ajoute un personnage. */}
+                  {c.id ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
+                        <span style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--orange)", background: "rgba(255,140,26,.14)", boxShadow: "0 0 10px rgba(255,140,26,.3)" }}>
+                          <ClassLogo name={c.cls} size={28} />
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <div className="font-heading" style={{ fontWeight: 700, fontSize: 16, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
+                          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                            {c.cls} · P{c.prestige} · {c.sex === "F" ? "Fille" : "Garçon"}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <Icon name="lock" size={12} />
+                        Personnage déjà enregistré — modifiable dans <a href="/personnages" style={{ color: "var(--orange)", fontWeight: 600 }}>Mes personnages</a>.
+                        Pour une autre classe, ajoute un personnage.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                        {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={28} /></button>; })}
+                      </div>
+                      {/* Le sexe change l'illustration : on le choisit ici, comme dans l'AirBuilder. */}
+                      <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                        {(["G", "F"] as const).map(sx => { const sel = (c.sex ?? "G") === sx; return (
+                          <button key={sx} onClick={() => { const n = [...chars]; n[i].sex = sx; setChars(n); }}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 8, cursor: "pointer",
+                              border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,.14)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text-muted)" }}>
+                            <Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}
+                          </button>
+                        ); })}
+                      </div>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <input placeholder="Nom du personnage" value={c.name} onChange={e => { const n = [...chars]; n[i].name = e.target.value; setChars(n); }} style={{ ...inp, flex: 2 }} />
+                        <VgSelect value={c.prestige} onChange={v => { const n = [...chars]; n[i].prestige = +v; setChars(n); }} options={[0,1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 92 }} />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

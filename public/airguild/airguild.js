@@ -126,171 +126,91 @@ function viewBank(){
 }
 // ── B1 : récap « Mes objets / Mes ventes » + qui détient quoi (par membre) ──
 
-/* ─── Inventaire : Récap + Fiche objet dans un seul panneau ──────────────
-   Les deux repondaient a la meme question (« ou est cet objet, qui l'a ») par
-   deux boutons et deux fenetres separees. Ils sont desormais deux sous-onglets
-   d'un meme panneau, ouvert par un bouton unique et mis en avant.
-   L'onglet actif est garde en memoire pour la duree de la session. */
-window.__invOnglet = window.__invOnglet || 'recap';
-window.__invMine = false;
+/* ─── Inventaire : UN seul ecran ─────────────────────────────────────────
+   « Fiche d'un objet » et « Qui detient quoi » repondaient a la meme question en
+   deux endroits : la premiere disait si l'objet existe et en quelle quantite, la
+   seconde qui le detient. Il fallait donc chercher dans l'une puis retrouver le
+   coffre dans l'autre.
+   Ici : une recherche sur le catalogue, la disponibilite sur chaque ligne, et le
+   detail des detenteurs en depliant la ligne. Le catalogue COMPLET est parcouru,
+   pas seulement ce qui est en stock — savoir qu'un objet est a zero est
+   exactement l'information qu'on vient chercher. */
+window.__invQ = window.__invQ || '';
+window.__invOuv = window.__invOuv || {};
 
-function inventaireSheet(onglet){
-  if(onglet)window.__invOnglet=onglet;
-  var o=window.__invOnglet;
-  var bt=function(cle,ic,lib){
-    var on=o===cle;
-    return '<span onclick="inventaireSheet(\''+cle+'\')" style="display:inline-flex;align-items:center;gap:7px;cursor:pointer;'
-      +'font-size:14px;font-weight:700;padding:9px 16px;border-radius:9px;user-select:none;'
-      +(on?'background:linear-gradient(180deg,#FFB552,#FF8C1A);color:#0A0A0C;border:1px solid #FF8C1A':'background:#17171d;color:#d2d2d9;border:1px solid rgba(255,255,255,.14)')
-      +'"><i class='+ic+'></i>'+lib+'</span>';
-  };
-  var barre='<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px">'
-    +bt('recap','vgi-bar-chart','Qui détient quoi')+bt('fiche','vgi-search','Fiche d\'un objet')+'</div>';
+/* Qui detient l'objet, raretes comprises. Les cles de rarete (id|R#epique) sont
+   des entrees distinctes du stock : les ignorer donnait « personne » sur une arme
+   pourtant presente. */
+function invDetenteurs(id){
+  var out=[];
+  (S.members||[]).forEach(function(m){
+    var inv=S.inv[m]||{};
+    Object.keys(inv).forEach(function(k){
+      if(k!==id&&baseId(k)!==id)return;
+      var q=+inv[k]||0;if(q<=0)return;
+      var r=rarOf(k), meta=r?rarMeta(r):null;
+      out.push({membre:m,qty:q,rar:r,rarLabel:meta?meta[1]:'',rarColor:meta?meta[2]:''});
+    });
+  });
+  return out.sort(function(a,b){return b.qty-a.qty;});
+}
 
+function inventaireSheet(){
   openSheet('<h3 style="font-size:19px"><i class=vgi-bank></i> Inventaire de la guilde</h3>'
-    +barre+'<div id="invCorps"></div>'
+    +'<div class="hint">Cherche un objet : sa disponibilité, et qui le détient. Clique une ligne pour voir les coffres.</div>'
+    +'<input class="inp" id="invq" placeholder="ex. Glaive, Aigue Marine, Perles…" value="'+esc(window.__invQ||'')+'" oninput="invRecherche(this.value)" style="width:100%;margin-bottom:10px;font-size:15px;padding:12px 14px">'
+    +'<div id="invRes" style="max-height:58vh;overflow:auto"></div>'
     +'<div class="toolbar" style="justify-content:flex-end;margin:10px 0 0"><button class="btn" onclick="closeSheet()">Fermer</button></div>');
   invCorps();
+  var f=document.getElementById('invq');if(f)f.focus();
 }
+
+/* La frappe ne redessine QUE les resultats : le champ garde le focus. */
+function invRecherche(v){window.__invQ=v;invCorps();}
+function invOuvrir(id){window.__invOuv[id]=!window.__invOuv[id];invCorps();}
 
 function invCorps(){
-  var el=document.getElementById('invCorps');if(!el)return;
-  if(window.__invOnglet==='fiche'){
-    el.innerHTML='<div class="hint">Tape un nom : où il est, qui l\'a, qui le vend, les crafts, le farm et les derniers mouvements.</div>'
-      +'<input class="inp" id="isq" placeholder="ex. Catalyseur Bubble…" oninput="itemSearchFilter(this.value)" style="width:100%;margin-bottom:10px;font-size:15px;padding:12px 14px">'
-      +'<div id="isres" style="max-height:56vh;overflow:auto"></div>';
-    itemSearchFilter('');
-    var f=document.getElementById('isq');if(f)f.focus();
-  }else{
-    var me=(window.__agUser||'').trim();
-    /* Barre d'outils fixe, resultats dans #recRes : la recherche ne redessine
-       que les resultats, le champ garde donc le focus a chaque frappe. */
-    el.innerHTML='<div class="hint">Le contenu de chaque coffre, membre par membre. Cherche un objet ou une catégorie.</div>'
-      +'<input class="inp" id="recq" placeholder="ex. Glaive, Perles, Carnet d\'Arcanes…" value="'+esc(window.__invQ||'')+'" oninput="invRecherche(this.value)" style="width:100%;margin-bottom:9px;font-size:15px;padding:12px 14px">'
-      +'<div class="toolbar" style="margin:0 0 10px;flex-wrap:wrap">'
-      +(me?'<button class="btn '+(window.__invMine?'o':'')+' sm" onclick="invMine('+(window.__invMine?'false':'true')+')"><i class=vgi-hand-point></i> '+(window.__invMine?'Voir tous les coffres':'Mes objets seulement')+'</button>':'')
-      +'<button class="btn sm" onclick="invToutPlier(false)"><i class=vgi-chevron-down></i> Tout déplier</button>'
-      +'<button class="btn sm" onclick="invToutPlier(true)"><i class=vgi-chevron-right></i> Tout replier</button></div>'
-      +'<div id="recRes" style="max-height:54vh;overflow:auto"></div>';
-    var r=document.getElementById('recRes');if(r)r.innerHTML=recapCorps(window.__invMine);
-    var f=document.getElementById('recq');if(f&&window.__invQ)f.focus();
-  }
-}
-
-/* Bascule « mes objets » / tous les coffres, sans reconstruire la fenetre. */
-function invMine(v){window.__invMine=!!v;invCorps();}
-
-/* ─── Récap : un seul écran (recherche + replis + regroupement) ──────────
-   Avant : une liste a plat par membre, sans recherche ni repli — illisible des
-   qu'un coffre contenait vingt objets. Ici la recherche porte sur le nom, la
-   categorie, la classe ET le membre, et les objets sont regroupes par categorie
-   des qu'il y en a plusieurs dans la meme (sinon le titre de groupe serait du
-   bruit pour une seule ligne). */
-window.__invQ = window.__invQ || '';
-window.__invPlie = window.__invPlie || {};
-/* Categories dont on a demande l'affichage complet (cle = membre|categorie). */
-window.__invTout = window.__invTout || {};
-
-/* Icone d'un objet. img() ne sait pas rendre un data-URI (il teste le '/' de
-   tete), or les objets crees a la main stockent leur image dans icData : sans ce
-   resolveur, ces objets s'affichaient sans vignette. */
-function recapIcone(it){
-  var d=it&&it.icData;
-  if(d)return '<img src="'+d+'" alt="" style="width:22px;height:22px;object-fit:contain;flex:none">';
-  var ic=it&&it.ic;
-  var src=ic?(ICONS[ic]||(String(ic).charAt(0)==='/'?ic:'')):'';
-  return src?'<img src="'+src+'" alt="" style="width:22px;height:22px;object-fit:contain;flex:none">'
-            :'<span style="width:22px;height:22px;flex:none"></span>';
-}
-
-/* Lignes d'un coffre, cle de rarete resolue vers l'objet de base. */
-function recapLignes(inv, nameOf){
-  return Object.keys(inv).filter(function(id){return (+inv[id]||0)>0;}).map(function(id){
-    var base=baseId(id), r=rarOf(id);
-    var it=nameOf[id]||nameOf[base]||{};
-    var meta=r?rarMeta(r):null;
-    return {nom:(it.item||base.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim()||'Sans catégorie',
-            ic:recapIcone(it),
-            rar:r,rarLabel:meta?meta[1]:(r||''),rarColor:meta?meta[2]:'var(--text-muted)',qty:+inv[id]};
-  });
-}
-
-function recapCorps(mineOnly){
-  var me=(window.__agUser||'').toLowerCase().trim();
-  var members=S.members||[];
-  if(mineOnly&&me)members=members.filter(function(m){return m.toLowerCase().trim()===me;});
-  var nameOf={};(catalog()||[]).forEach(function(it){nameOf[it.id]=it;});
+  var el=document.getElementById('invRes');if(!el)return;
   var q=(window.__invQ||'').toLowerCase().trim();
+  var items=(catalog()||[]).filter(function(it){
+    return !q||(((it.item||'')+' '+(it.classe||'')+' '+(it.cat||'')).toLowerCase().indexOf(q)>=0);
+  }).sort(function(a,b){return (a.item||'').localeCompare(b.item||'','fr');}).slice(0,60);
 
-  var corps=members.map(function(m){
-    var lignes=recapLignes(S.inv[m]||{},nameOf);
-    /* La recherche porte sur l'OBJET et sa categorie seulement. Le membre est
-       deja une section et la classe est deja sur la ligne : les chercher
-       n'apportait rien et brouillait les resultats. */
-    if(q)lignes=lignes.filter(function(x){
-      return (x.nom+' '+x.cat).toLowerCase().indexOf(q)>=0;});
-    if(q&&!lignes.length)return '';
+  if(!items.length){el.innerHTML='<div class="empty">Aucun objet ne correspond.</div>';return;}
 
-    var isMe=!!me&&m.toLowerCase().trim()===me;
-    var total=lignes.reduce(function(s,x){return s+x.qty;},0);
-    /* Un repli explicite gagne toujours ; sinon une recherche deplie d'office. */
-    var plie=(window.__invPlie[m]!==undefined)?window.__invPlie[m]:!(q||isMe);
+  el.innerHTML=items.map(function(it){
+    /* Le total vient des DETENTEURS, pas de totalGuild() : celui-ci ne somme que
+       la cle nue et annoncait donc « epuise » sur une arme rangee par rarete,
+       alors que le detail juste en dessous la montrait. Une seule source, les
+       deux chiffres ne peuvent plus se contredire. */
+    var det=invDetenteurs(it.id);
+    var total=det.reduce(function(a,d){return a+d.qty;},0);
+    var dispo=total>0, ouv=!!window.__invOuv[it.id];
+    var lignesDet=ouv?(det.length?det.map(function(d){
+      return '<div style="display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0 3px 31px">'
+        +(d.membre===S.mainCoffre?'<i class=vgi-landmark></i>':'<i class=vgi-user></i>')
+        +'<span style="flex:1;min-width:0">'+esc(d.membre)
+        +(d.rar?' <span style="font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;border:1px solid '+d.rarColor+';color:'+d.rarColor+';background:'+d.rarColor+'22">'+esc(d.rarLabel)+'</span>':'')
+        +'</span><b style="color:var(--gold)">×'+fmt(d.qty)+'</b></div>';
+    }).join(''):'<div class="mut" style="font-size:12.5px;padding:3px 0 3px 31px">Aucun coffre ne le contient.</div>'):'';
 
-    var parCat={};lignes.forEach(function(x){(parCat[x.cat]=parCat[x.cat]||[]).push(x);});
-    var cats=Object.keys(parCat).sort(function(a,b){return a.localeCompare(b,'fr');});
-
-    var ligneHtml=function(x){
-      return '<div style="display:flex;align-items:center;gap:9px;font-size:14px;padding:5px 0">'
-        +x.ic
-        +'<span style="flex:1;min-width:0"><b style="font-weight:600">'+esc(x.nom)+'</b>'
-        +(x.rar?' <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;white-space:nowrap;border:1px solid '+x.rarColor+';color:'+x.rarColor+';background:'+x.rarColor+'22">'+esc(x.rarLabel)+'</span>':'')
-        +(x.cls?' <span class="mut" style="font-size:11.5px">'+esc(x.cls)+'</span>':'')
-        +'</span><b style="color:var(--gold);font-size:15px;white-space:nowrap">×'+fmt(x.qty)+'</b></div>';
-    };
-
-    var dedans=cats.length?cats.map(function(c){
-      var l=parCat[c];
-      /* On n'affiche que les 3 premiers : la fenetre tenait sur plusieurs ecrans
-         alors qu'on veut la lire d'un coup. Le reste s'ouvre a la demande, et une
-         recherche montre tout (on a deja restreint le resultat soi-meme). */
-      var cle=m+'|'+c, tout=q||window.__invTout[cle], caches=l.length-3;
-      var vus=tout?l:l.slice(0,3);
-      /* Titre de groupe seulement s'il regroupe vraiment : pour un objet seul,
-         il ajouterait une ligne sans rien apprendre. */
-      var titre=l.length>1
-        ? '<div class="mut" style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin:8px 0 2px;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:3px">'+esc(c)+' <span style="color:var(--orange)">'+l.length+'</span></div>'
-        : '<div class="mut" style="font-size:11px;margin:6px 0 0">'+esc(c)+'</div>';
-      return titre+vus.map(ligneHtml).join('')
-        +((!tout&&caches>0)?'<div onclick="invTout(\''+sq(cle)+'\')" style="cursor:pointer;font-size:11.5px;font-weight:700;color:var(--orange);padding:4px 0 2px">+ '+caches+' autre'+(caches>1?'s':'')+'</div>':'')
-        +((tout&&!q&&l.length>3)?'<div onclick="invTout(\''+sq(cle)+'\')" style="cursor:pointer;font-size:11.5px;color:var(--text-muted);padding:4px 0 2px">Réduire</div>':'');
-    }).join('') : '<div class="mut" style="font-size:12.5px">Coffre vide.</div>';
-
-    return '<div class="ocard" style="margin-bottom:10px;padding:0'+(isMe?';border-color:var(--orange)':'')+'">'
-      +'<div onclick="invPlier(\''+sq(m)+'\')" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;user-select:none">'
-      +'<i class=vgi-'+(plie?'chevron-right':'chevron-down')+' style="color:var(--orange)"></i>'
-      +(m===S.mainCoffre?'<i class=vgi-landmark></i>':'<i class=vgi-user></i>')
-      +'<b style="font-size:15px">'+esc(m)+'</b>'
-      +(isMe?' <span class="pill" style="background:var(--orange);color:#0a0a0c"><i class=vgi-hand-point></i> Mes objets</span>':'')
-      +'<span class="n" style="margin-left:auto;font-size:12px">'+lignes.length+' items · '+fmt(total)+' u.</span></div>'
-      +(plie?'':'<div style="padding:0 13px 12px">'+dedans+'</div>')+'</div>';
+    return '<div style="border-bottom:1px solid rgba(255,255,255,.06)">'
+      +'<div onclick="invOuvrir(\''+sq(it.id)+'\')" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 4px;user-select:none">'
+      +'<i class=vgi-'+(ouv?'chevron-down':'chevron-right')+' style="color:var(--orange);flex:none"></i>'
+      +'<span style="flex:none;width:24px;height:24px;display:flex;align-items:center;justify-content:center">'+itemAsset(it)+'</span>'
+      +'<span style="flex:1;min-width:0"><div style="font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(it.item)+'</div>'
+      +'<div class="mut" style="font-size:11.5px">'+esc((it.cat||'').trim())+(it.classe?' · '+esc(it.classe):'')+'</div></span>'
+      /* Disponibilite d'un coup d'oeil : c'est la question posee. */
+      +'<span style="flex:none;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;'
+      +(dispo?'border:1px solid var(--green);color:var(--green);background:rgba(74,222,128,.11)':'border:1px solid rgba(255,255,255,.14);color:var(--text-muted)')
+      +'">'+(dispo?'×'+fmt(total):'épuisé')+'</span></div>'
+      +(ouv?'<div style="padding:0 4px 8px">'+lignesDet+'</div>':'')+'</div>';
   }).join('');
-
-  if(!corps)corps='<div class="mut" style="font-size:13px;padding:10px 2px">'
-    /* Message aligne sur la portee reelle de la recherche : elle ne cherche plus
-       les coffres, l'annoncer serait faux. On rappelle aussi que seuls les objets
-       en stock apparaissent — sinon une recherche vide passe pour un bug. */
-    +(q?'Aucun objet en stock ne correspond à « '+esc(window.__invQ)+' ». Seuls les objets présents dans un coffre sont listés.':'Aucun coffre à afficher.')+'</div>';
-  return corps;
 }
 
-/* Recherche : on ne redessine QUE les resultats, sinon le champ perdrait le focus. */
-function invRecherche(v){window.__invQ=v;var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
-function invPlier(m){window.__invPlie[m]=!( (window.__invPlie[m]!==undefined)?window.__invPlie[m]:false );var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
-function invTout(cle){window.__invTout[cle]=!window.__invTout[cle];var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
-function invToutPlier(v){(S.members||[]).forEach(function(m){window.__invPlie[m]=!!v;});var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
-
-/* Conserve pour les anciens appels : ouvre le panneau sur le bon sous-onglet. */
-function recapSheet(mineOnly){window.__invMine=!!mineOnly;inventaireSheet('recap');}
+/* Conserve pour les anciens appels : tout ouvre le meme ecran. */
+function recapSheet(){inventaireSheet();}
+function itemSearchSheet(){inventaireSheet();}
 function sortByOrder(arr){const o=S.order||[];return arr.slice().sort(function(a,b){var ia=o.indexOf(a.id),ib=o.indexOf(b.id);return (ia<0?1e9:ia)-(ib<0?1e9:ib);});}
 function moveItem(id,dir){var all=sortByOrder(catalog());var it=all.find(function(x){return x.id===id;});if(!it)return;var cat=(it.cat||'').trim();var sibs=all.filter(function(x){return (x.cat||'').trim()===cat;});var i=sibs.findIndex(function(x){return x.id===id;}),j=i+dir;if(j<0||j>=sibs.length)return;S.order=all.map(function(x){return x.id;});var a=S.order.indexOf(id),b=S.order.indexOf(sibs[j].id);var t=S.order[a];S.order[a]=S.order[b];S.order[b]=t;save();render();}
 function bankBody(){const cats=sortByOrder(catalog());const isTotal=S.cur==='__total__';
@@ -397,7 +317,6 @@ function itemDetail(id){var it=(catalog()||[]).find(function(x){return x.id===id
   html+=sect('<i class=vgi-clipboard></i> Derniers mouvements',moves.length?'<div style="display:flex;flex-direction:column;gap:2px;max-height:150px;overflow:auto">'+moves.map(function(e){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:11.5px"><span class="mut">'+new Date(e.ts).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' · '+esc(e.member)+(e.by?' · '+esc(e.by):'')+'</span><span style="font-weight:700;color:'+(e.delta>=0?'var(--green)':'var(--red)')+'">'+(e.delta>=0?'+':'')+e.delta+'</span></div>';}).join('')+'</div>':'<div class="mut" style="font-size:12px">Aucun mouvement enregistré.</div>');
   html+='<div class="toolbar" style="justify-content:flex-end;margin:12px 0 0"><button class="btn" onclick="closeSheet()">Fermer</button></div>';
   openSheet(html);}
-function itemSearchSheet(){openSheet('<h3><i class=vgi-search></i> Fiche d\'un objet</h3><div class="hint">Tape un nom : où il est, qui l\'a, qui le vend, les crafts, le farm et les derniers mouvements.</div><input class="inp" id="isq" placeholder="ex. Catalyseur Bubble…" oninput="itemSearchFilter(this.value)" style="width:100%;margin-bottom:10px"><div id="isres" style="max-height:52vh;overflow:auto"></div><div class="toolbar" style="justify-content:flex-end;margin:8px 0 0"><button class="btn" onclick="closeSheet()">Fermer</button></div>');itemSearchFilter('');var f=document.getElementById('isq');if(f)f.focus();}
 function itemSearchFilter(qv){var q=(qv||'').toLowerCase().trim();var items=(catalog()||[]).filter(function(it){return !q||(((it.item||'')+' '+(it.classe||'')+' '+(it.cat||'')).toLowerCase().indexOf(q)>=0);}).sort(function(a,b){return (a.item||'').localeCompare(b.item||'','fr');}).slice(0,40);var el=document.getElementById('isres');if(!el)return;el.innerHTML=items.length?items.map(function(it){return '<div class="it" onclick="itemDetail(\''+sq(it.id)+'\')" style="cursor:pointer"><div class="logo">'+itemAsset(it)+'</div><div class="nm"><div class="a">'+esc(it.item)+'</div><div class="b">'+(it.classe?esc(it.classe):esc((it.cat||'').trim()))+'</div></div><span class="mut" style="font-size:11px;white-space:nowrap">total ×'+fmt(totalGuild(it.id))+'</span></div>';}).join(''):'<div class="empty">Aucun objet.</div>';}
 
 /* ============ DONJONS ============ */

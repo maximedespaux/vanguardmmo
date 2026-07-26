@@ -162,36 +162,105 @@ function invCorps(){
     itemSearchFilter('');
     var f=document.getElementById('isq');if(f)f.focus();
   }else{
-    el.innerHTML=recapCorps(window.__invMine);
+    var me=(window.__agUser||'').trim();
+    /* Barre d'outils fixe, resultats dans #recRes : la recherche ne redessine
+       que les resultats, le champ garde donc le focus a chaque frappe. */
+    el.innerHTML='<div class="hint">Le contenu de chaque coffre, membre par membre. Cherche un objet, une catégorie, une classe ou un pseudo.</div>'
+      +'<input class="inp" id="recq" placeholder="ex. Glaive, Perles, Templier, ibeats…" value="'+esc(window.__invQ||'')+'" oninput="invRecherche(this.value)" style="width:100%;margin-bottom:9px;font-size:15px;padding:12px 14px">'
+      +'<div class="toolbar" style="margin:0 0 10px;flex-wrap:wrap">'
+      +(me?'<button class="btn '+(window.__invMine?'o':'')+' sm" onclick="invMine('+(window.__invMine?'false':'true')+')"><i class=vgi-hand-point></i> '+(window.__invMine?'Voir tous les coffres':'Mes objets seulement')+'</button>':'')
+      +'<button class="btn sm" onclick="invToutPlier(false)"><i class=vgi-chevron-down></i> Tout déplier</button>'
+      +'<button class="btn sm" onclick="invToutPlier(true)"><i class=vgi-chevron-right></i> Tout replier</button></div>'
+      +'<div id="recRes" style="max-height:54vh;overflow:auto"></div>';
+    var r=document.getElementById('recRes');if(r)r.innerHTML=recapCorps(window.__invMine);
+    var f=document.getElementById('recq');if(f&&window.__invQ)f.focus();
   }
 }
 
 /* Bascule « mes objets » / tous les coffres, sans reconstruire la fenetre. */
 function invMine(v){window.__invMine=!!v;invCorps();}
 
-/* Corps du recap, sans la fenetre : reutilise tel quel dans le sous-onglet. */
-function recapCorps(mineOnly){var me=(window.__agUser||'').toLowerCase().trim();var members=S.members||[];if(mineOnly&&me)members=members.filter(function(m){return m.toLowerCase().trim()===me;});var nameOf={};(catalog()||[]).forEach(function(it){nameOf[it.id]=it;});
-  var body=members.map(function(m){var inv=S.inv[m]||{};var items=Object.keys(inv).filter(function(id){return (+inv[id]||0)>0;}).map(function(id){
-      /* Une cle de rarete (id|R#epique) n'existe PAS au catalogue : nameOf[id]
-         etait donc vide et le nom retombait sur le dernier segment de la cle,
-         soit « R#epique » — sans type d'arme ni categorie. On resout l'objet de
-         base et on garde la rarete a part, pour l'afficher proprement. */
-      var base=baseId(id);var r=rarOf(id);
-      var it=nameOf[id]||nameOf[base]||{};
-      var meta=r?rarMeta(r):null;
-      return {nom:(it.item||base.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim(),
-              rar:r,rarLabel:meta?meta[1]:(r||''),rarColor:meta?meta[2]:'var(--text-muted)',qty:+inv[id]};});items.sort(function(a,b){return (a.cat+a.nom).localeCompare(b.cat+b.nom,'fr');});var isMe=!!me&&m.toLowerCase().trim()===me;var total=items.reduce(function(s,x){return s+x.qty;},0);
-    return '<div class="ocard" style="margin-bottom:10px'+(isMe?';border-color:var(--orange)':'')+'"><div class="sec-h" style="margin:0 0 6px">'+(m===S.mainCoffre?'<i class=vgi-landmark></i> ':'<i class=vgi-user></i> ')+esc(m)+(isMe?' <span class="pill" style="background:var(--orange);color:#0a0a0c"><i class=vgi-hand-point></i> Mes objets</span>':'')+' <span class="n">'+items.length+' items · '+fmt(total)+' u.</span></div>'+(items.length?'<div style="display:flex;flex-direction:column;gap:3px">'+items.map(function(x){return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;padding:3px 0"><span style="min-width:0">'
-      +'<b style="font-weight:600">'+esc(x.nom)+'</b>'
-      +(x.rar?' <span style="font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;white-space:nowrap;border:1px solid '+x.rarColor+';color:'+x.rarColor+';background:'+x.rarColor+'22">'+esc(x.rarLabel)+'</span>':'')
-      +(x.cls?' <span class="mut" style="font-size:11px">'+esc(x.cls)+'</span>':'')
-      +(x.cat?'<div class="mut" style="font-size:10.5px">'+esc(x.cat)+'</div>':'')
-      +'</span><b style="color:var(--gold);font-size:14px;white-space:nowrap">×'+fmt(x.qty)+'</b></div>';}).join('')+'</div>':'<div class="mut" style="font-size:12px">Coffre vide.</div>')+'</div>';}).join('');
-  if(mineOnly&&!body)body='<div class="mut" style="font-size:12px;padding:8px 2px">Aucun coffre à ton nom (« '+esc(window.__agUser||'?')+' »). Vérifie que le coffre porte ton pseudo.</div>';
-  var toggle=me?'<button class="btn '+(mineOnly?'o':'')+' sm" onclick="invMine('+(mineOnly?'false':'true')+')">'+(mineOnly?'<i class=vgi-users></i> Voir tous les coffres':'<i class=vgi-hand-point></i> Mes objets seulement')+'</button>':'';
-  return '<div class="hint">Le contenu de chaque coffre, membre par membre. Le tien (« <i class=vgi-hand-point></i> Mes objets ») est surligné.</div>'
-    +'<div class="toolbar" style="margin:0 0 10px">'+toggle+'</div>'
-    +'<div style="max-height:56vh;overflow:auto">'+body+'</div>';}
+/* ─── Récap : un seul écran (recherche + replis + regroupement) ──────────
+   Avant : une liste a plat par membre, sans recherche ni repli — illisible des
+   qu'un coffre contenait vingt objets. Ici la recherche porte sur le nom, la
+   categorie, la classe ET le membre, et les objets sont regroupes par categorie
+   des qu'il y en a plusieurs dans la meme (sinon le titre de groupe serait du
+   bruit pour une seule ligne). */
+window.__invQ = window.__invQ || '';
+window.__invPlie = window.__invPlie || {};
+
+/* Lignes d'un coffre, cle de rarete resolue vers l'objet de base. */
+function recapLignes(inv, nameOf){
+  return Object.keys(inv).filter(function(id){return (+inv[id]||0)>0;}).map(function(id){
+    var base=baseId(id), r=rarOf(id);
+    var it=nameOf[id]||nameOf[base]||{};
+    var meta=r?rarMeta(r):null;
+    return {nom:(it.item||base.split('|').pop()),cls:it.classe||'',cat:(it.cat||'').trim()||'Sans catégorie',
+            rar:r,rarLabel:meta?meta[1]:(r||''),rarColor:meta?meta[2]:'var(--text-muted)',qty:+inv[id]};
+  });
+}
+
+function recapCorps(mineOnly){
+  var me=(window.__agUser||'').toLowerCase().trim();
+  var members=S.members||[];
+  if(mineOnly&&me)members=members.filter(function(m){return m.toLowerCase().trim()===me;});
+  var nameOf={};(catalog()||[]).forEach(function(it){nameOf[it.id]=it;});
+  var q=(window.__invQ||'').toLowerCase().trim();
+
+  var corps=members.map(function(m){
+    var lignes=recapLignes(S.inv[m]||{},nameOf);
+    /* Le membre reste visible si SON nom correspond, meme si aucun objet ne
+       correspond : sinon chercher un pseudo ne renverrait rien. */
+    var surMembre=q&&m.toLowerCase().indexOf(q)>=0;
+    if(q&&!surMembre)lignes=lignes.filter(function(x){
+      return (x.nom+' '+x.cat+' '+x.cls+' '+x.rarLabel).toLowerCase().indexOf(q)>=0;});
+    if(q&&!surMembre&&!lignes.length)return '';
+
+    var isMe=!!me&&m.toLowerCase().trim()===me;
+    var total=lignes.reduce(function(s,x){return s+x.qty;},0);
+    /* Un repli explicite gagne toujours ; sinon une recherche deplie d'office. */
+    var plie=(window.__invPlie[m]!==undefined)?window.__invPlie[m]:!(q||isMe);
+
+    var parCat={};lignes.forEach(function(x){(parCat[x.cat]=parCat[x.cat]||[]).push(x);});
+    var cats=Object.keys(parCat).sort(function(a,b){return a.localeCompare(b,'fr');});
+
+    var ligneHtml=function(x){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;padding:5px 0">'
+        +'<span style="min-width:0"><b style="font-weight:600">'+esc(x.nom)+'</b>'
+        +(x.rar?' <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;white-space:nowrap;border:1px solid '+x.rarColor+';color:'+x.rarColor+';background:'+x.rarColor+'22">'+esc(x.rarLabel)+'</span>':'')
+        +(x.cls?' <span class="mut" style="font-size:11.5px">'+esc(x.cls)+'</span>':'')
+        +'</span><b style="color:var(--gold);font-size:15px;white-space:nowrap">×'+fmt(x.qty)+'</b></div>';
+    };
+
+    var dedans=cats.length?cats.map(function(c){
+      var l=parCat[c];
+      /* Titre de groupe seulement s'il regroupe vraiment : pour un objet seul,
+         il ajouterait une ligne sans rien apprendre. */
+      var titre=l.length>1
+        ? '<div class="mut" style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;margin:8px 0 2px;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:3px">'+esc(c)+' <span style="color:var(--orange)">'+l.length+'</span></div>'
+        : '<div class="mut" style="font-size:11px;margin:6px 0 0">'+esc(c)+'</div>';
+      return titre+l.map(ligneHtml).join('');
+    }).join('') : '<div class="mut" style="font-size:12.5px">Coffre vide.</div>';
+
+    return '<div class="ocard" style="margin-bottom:10px;padding:0'+(isMe?';border-color:var(--orange)':'')+'">'
+      +'<div onclick="invPlier(\''+sq(m)+'\')" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:11px 13px;user-select:none">'
+      +'<i class=vgi-'+(plie?'chevron-right':'chevron-down')+' style="color:var(--orange)"></i>'
+      +(m===S.mainCoffre?'<i class=vgi-landmark></i>':'<i class=vgi-user></i>')
+      +'<b style="font-size:15px">'+esc(m)+'</b>'
+      +(isMe?' <span class="pill" style="background:var(--orange);color:#0a0a0c"><i class=vgi-hand-point></i> Mes objets</span>':'')
+      +'<span class="n" style="margin-left:auto;font-size:12px">'+lignes.length+' items · '+fmt(total)+' u.</span></div>'
+      +(plie?'':'<div style="padding:0 13px 12px">'+dedans+'</div>')+'</div>';
+  }).join('');
+
+  if(!corps)corps='<div class="mut" style="font-size:13px;padding:10px 2px">'
+    +(q?'Aucun objet ni coffre ne correspond à « '+esc(window.__invQ)+' ».':'Aucun coffre à afficher.')+'</div>';
+  return corps;
+}
+
+/* Recherche : on ne redessine QUE les resultats, sinon le champ perdrait le focus. */
+function invRecherche(v){window.__invQ=v;var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
+function invPlier(m){window.__invPlie[m]=!( (window.__invPlie[m]!==undefined)?window.__invPlie[m]:false );var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
+function invToutPlier(v){(S.members||[]).forEach(function(m){window.__invPlie[m]=!!v;});var el=document.getElementById('recRes');if(el)el.innerHTML=recapCorps(window.__invMine);}
 
 /* Conserve pour les anciens appels : ouvre le panneau sur le bon sous-onglet. */
 function recapSheet(mineOnly){window.__invMine=!!mineOnly;inventaireSheet('recap');}

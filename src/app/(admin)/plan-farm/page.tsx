@@ -224,6 +224,12 @@ export default function PlanFarmPage() {
           </div>
           <button onClick={() => toutOuvrir(true)} style={{ ...INPUT, cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>Tout déplier</button>
           <button onClick={() => toutOuvrir(false)} style={{ ...INPUT, cursor: "pointer", fontWeight: 600, whiteSpace: "nowrap" }}>Tout replier</button>
+          {/* A portee de main : on consulte ce qui manque, on va deposer.
+              `coffre=moi` est resolu cote AirGuild depuis le compte connecte,
+              la page n'a pas a connaitre le pseudo. */}
+          <Link href="/coffre?tab=bank&coffre=moi" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}>
+            <Icon name="package" size={15} /> Déposer dans mon coffre
+          </Link>
         </div>
 
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 11 }}>
@@ -311,15 +317,21 @@ export default function PlanFarmPage() {
                     style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10, padding: "11px 13px 11px 5px", background: "none", border: "none", color: "var(--text)", cursor: "pointer", textAlign: "left" }}
                   >
                     <Icon name={ouvert ? "chevron-down" : "chevron-right"} size={14} style={{ color: "var(--orange)", flexShrink: 0 }} />
-                    <span style={{ fontWeight: 600, fontSize: 13.5, flexShrink: 0 }}>{g.cat}</span>
-                    <span style={{ fontSize: 11.5, color: "var(--text-muted)", flexShrink: 0 }}>{g.list.length} obj.</span>
-                    {/* La barre porte l'information : on voit d'un coup d'œil où en est chaque catégorie. */}
-                    {/* Colonne de largeur stable et barre centrée : les sections
-                        s'alignent les unes sous les autres au lieu de flotter. */}
-                    <span style={{ flex: 1, minWidth: 60, maxWidth: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {/* Le nom prend la place restante, puis barre, pourcentage et
+                        manque en colonnes de largeur FIXE calees a DROITE : c'est
+                        ce qui les aligne d'une ligne a l'autre. Avant, la barre
+                        suivait le nom et demarrait donc a un endroit different
+                        selon la longueur du libelle. */}
+                    <span style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "baseline", gap: 7 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.cat}</span>
+                      <span style={{ fontSize: 11.5, color: "var(--text-muted)", flexShrink: 0 }}>{g.list.length} obj.</span>
+                    </span>
+                    <span style={{ width: 150, flexShrink: 0, display: "flex", alignItems: "center" }}>
                       <Bar pc={g.pc} />
                     </span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: col(g.pc), width: 38, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{g.pc}%</span>
+                    {/* La barre porte l'information : on voit d'un coup d'œil où en est chaque catégorie. */}
+
                     <span style={{ fontSize: 12, fontWeight: 700, color: "var(--red)", width: 66, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>−{g.manque.toLocaleString("fr-FR")}</span>
                   </button>
                   </div>
@@ -335,17 +347,6 @@ export default function PlanFarmPage() {
         </>
       )}
 
-      {/* Deux destinations distinctes : deposer dans SON coffre (le geste courant)
-          ou gerer le stock de la guilde. `coffre=moi` est resolu cote AirGuild
-          depuis le compte connecte, la page n'a pas a connaitre le pseudo. */}
-      <div style={{ marginTop: 22, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-        <Link href="/coffre?tab=bank&coffre=moi" className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7 }}>
-          <Icon name="package" size={15} /> Déposer dans mon coffre
-        </Link>
-        <Link href="/coffre" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", fontSize: 13, fontWeight: 600 }}>
-          <Icon name="vault" size={15} /> Gérer le stock du coffre
-        </Link>
-      </div>
     </div>
   );
 }

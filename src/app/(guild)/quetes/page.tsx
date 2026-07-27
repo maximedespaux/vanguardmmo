@@ -12,7 +12,32 @@ import type { ObjetCoffre } from "@/lib/coffre";
 import type { Source } from "@/lib/ouFarmer";
 
 type ObjetAFarmer = ObjetCoffre & { sources?: Source[]; besoin?: "fort" | "moyen" | "ok" };
-type Objectif = { id: string; titre: string; cible: number; fait: number; unite: string | null; termineAt: string | null };
+type Objectif = { id: string; titre: string; cible: number; fait: number; unite: string | null; detail: string | null; termineAt: string | null };
+
+/** Les mêmes réglages que la commande sur mesure de la boutique : une arme se
+ *  demande par sa rareté, son +N, son perçage et son éveil — sans ça, « Épée
+ *  Yggdrasil » ne désigne pas une pièce mais une famille. */
+const RARETES = ["Rare", "Épique", "Légendaire", "Pré-myth."];
+const ELEMENTS = ["Fulgur", "Volcano", "Océane"];
+const RANGS_EVEIL = ["R1", "R2", "R3", "R4"];
+const STATS_EVEIL = ["Force", "Endurance", "Dextérité", "Intelligence", "Dégâts critiques", "Attaque", "PV max", "MP max"];
+const MOTS_EQUIP = /(arme|ep[ée]e|épée|hache|marteau|arc\b|arbal[èe]te|baguette|b[âa]ton|grimoire|bouclier|tenue|casque|gants?|bottes?|cape|collier|anneau|boucles?|masque|mantra)/i;
+/** Une pièce qui s'équipe se configure ; un matériau se compte, point. */
+const estEquipement = (o: { classe?: string | null; item: string }) => !!o.classe || MOTS_EQUIP.test(o.item);
+
+type Reglages = { rarete: string; up: string; percage: string; element: string; eveilRang: string; eveilStat: string; qte: string };
+const REGLAGES_VIDES: Reglages = { rarete: "", up: "", percage: "", element: "", eveilRang: "", eveilStat: "", qte: "1" };
+
+/** Ce que je vais chercher, en une ligne — c'est ce texte qu'on relit dans la
+ *  to-do list, et celui qu'on montrera au staff au moment du dépôt. */
+function resumerReglages(r: Reglages): string {
+  const bouts: string[] = [];
+  if (r.rarete) bouts.push(r.rarete);
+  if (Number(r.up) > 0) bouts.push(`+${Number(r.up)}`);
+  if (Number(r.percage) > 0 || r.element) bouts.push(`perçage ${Number(r.percage) || ""}${r.element ? ` ${r.element}` : ""}`.trim());
+  if (r.eveilRang || r.eveilStat) bouts.push(`éveil ${[r.eveilRang, r.eveilStat].filter(Boolean).join(" ")}`);
+  return bouts.join(" · ");
+}
 
 /**
  * QUÊTE GUILDE — ce dont la guilde a besoin, et ce que ça rapporte.
@@ -147,6 +172,11 @@ export default function QuetesPage() {
   /** Recherche et catégories dépliées de l'onglet « Quêtes secondaires ». */
   const [qFarm, setQFarm] = useState("");
   const [catsOuvertes, setCatsOuvertes] = useState<Record<string, boolean>>({});
+  /** Le choix d'une quête ne s'ouvre qu'à la demande : le reste du temps, cet
+   *  onglet doit montrer CE QUE J'AI À FAIRE, pas un catalogue de 264 lignes. */
+  const [choixOuvert, setChoixOuvert] = useState(false);
+  /** Les précisions de la pièce en cours de choix (rareté, +N, perçage, éveil). */
+  const [reglages, setReglages] = useState<Reglages>(REGLAGES_VIDES);
 
   const deposer = async (o: ObjetAFarmer) => {
     const n = Number(depot[o.id]);
@@ -170,13 +200,29 @@ export default function QuetesPage() {
   useEffect(() => { chargerObjectifs(); }, [chargerObjectifs]);
 
   /** Je m'engage — envers moi-même. Aucun XP : sinon il suffirait de cocher. */
+  /** Ouvrir la fiche d'un objet, réglages remis à zéro : on configure la pièce
+   *  qu'on regarde, jamais celle d'avant. */
+  const ouvrirFiche = (o: ObjetAFarmer) => {
+    const deja = objetOuvert === o.id;
+    setObjetOuvert(deja ? null : o.id);
+    if (!deja) setReglages({ ...REGLAGES_VIDES, qte: String(estEquipement(o) ? 1 : o.manque || 1) });
+  };
+
   const seLancer = async (o: ObjetAFarmer) => {
+    const detail = estEquipement(o) ? resumerReglages(reglages) : "";
+    setChoixOuvert(false);
+    setObjetOuvert(null);
     await fetch("/api/objectifs", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      // La cible part de ce qui manque quand on le connaît ; un membre, qui ne
-      // voit pas les stocks, part de 1 et ajuste avec ses boutons.
-      body: JSON.stringify({ titre: o.classe ? `${o.item} (${o.classe})` : o.item, cible: o.manque || 1, itemRef: o.id, unite: o.unit }),
+      body: JSON.stringify({
+        titre: o.classe ? `${o.item} (${o.classe})` : o.item,
+        // La quantité vient du champ : ce qui manque au coffre est une valeur
+        // par défaut, pas une obligation — et un membre ne voit pas ce chiffre.
+        cible: Math.max(1, Number(reglages.qte) || 1),
+        itemRef: o.id, unite: o.unit, detail,
+      }),
     });
+    setReglages(REGLAGES_VIDES);
     setOnglet("farm");
     chargerObjectifs();
   };
@@ -387,6 +433,9 @@ export default function QuetesPage() {
             <div className="glass-card fx-card" style={{ padding: 16 }}>
               <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
                 <Icon name="target" size={14} />Ce que je farme
+                <span style={{ marginLeft: "auto", fontSize: 11, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)" }}>
+                  {enCours.filter((o) => o.fait >= o.cible).length} / {enCours.length} terminée{enCours.length > 1 ? "s" : ""}
+                </span>
               </div>
               <div style={{ display: "grid", gap: 9 }}>
                 {enCours.map((o) => {
@@ -394,7 +443,17 @@ export default function QuetesPage() {
                   return (
                     <div key={o.id} style={{ padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 7 }}>
-                        <b style={{ fontSize: 13.5 }}>{o.titre}</b>
+                        {/* La case, c'est le geste de la to-do list : cocher =
+                            j'ai fini. Le reste (les paliers) sert à dire « j'y
+                            suis à moitié » sans mentir sur la fin. */}
+                        <button onClick={() => majObjectif({ id: o.id, fait: pc >= 100 ? 0 : o.cible })} title={pc >= 100 ? "Rouvrir" : "Marquer comme fait"}
+                          style={{ width: 20, height: 20, flexShrink: 0, borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                            border: `1.5px solid ${pc >= 100 ? "var(--green)" : "var(--border)"}`,
+                            background: pc >= 100 ? "var(--green)" : "transparent", color: "#0b0b0d" }}>
+                          {pc >= 100 && <Icon name="check" size={13} />}
+                        </button>
+                        <b style={{ fontSize: 13.5, textDecoration: pc >= 100 ? "line-through" : "none", color: pc >= 100 ? "var(--text-muted)" : "var(--text)" }}>{o.titre}</b>
+                        {o.detail && <span style={{ fontSize: 11.5, color: "var(--gold)", padding: "2px 8px", borderRadius: 20, border: "1px solid var(--gold)" }}>{o.detail}</span>}
                         <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{lisible(o.fait, o.unite)} / {lisible(o.cible, o.unite)}</span>
                         <button onClick={() => majObjectif({ id: o.id, supprimer: true })}
                           style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: "inherit" }}>
@@ -405,16 +464,23 @@ export default function QuetesPage() {
                         <div style={{ width: `${pc}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s" }} />
                       </div>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {[1, 10, 50].map((n) => (
-                          <button key={n} onClick={() => majObjectif({ id: o.id, fait: o.fait + n })}
-                            style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 11.5, fontFamily: "inherit" }}>
-                            +{n}
-                          </button>
-                        ))}
-                        <button onClick={() => majObjectif({ id: o.id, fait: o.cible })}
-                          style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
-                          C&apos;est fait
-                        </button>
+                        {/* Où j'en suis, en un clic. Des paliers plutôt qu'un
+                            champ : on sait rarement au caillou près, mais on
+                            sait toujours si on en est à la moitié. 100 % tombe
+                            pile sur la cible, sans arrondi. */}
+                        {[25, 50, 75, 100].map((n) => {
+                          const valeur = n === 100 ? o.cible : Math.max(1, Math.round((o.cible * n) / 100));
+                          const atteint = o.fait >= valeur;
+                          return (
+                            <button key={n} onClick={() => majObjectif({ id: o.id, fait: valeur })}
+                              style={{ padding: "5px 12px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit",
+                                border: `1px solid ${atteint ? "var(--green)" : "var(--border)"}`,
+                                background: atteint ? "rgba(74,222,128,.12)" : "var(--bg-2)",
+                                color: atteint ? "var(--green)" : "var(--text)" }}>
+                              {n} %
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -423,12 +489,17 @@ export default function QuetesPage() {
             </div>
           )}
 
-          <div className="glass-card fx-card" style={{ padding: 16 }}>
+          <button className="vg-btn" onClick={() => setChoixOuvert((o) => !o)} style={{ justifySelf: "start" }}>
+            <Icon name={choixOuvert ? "chevron-down" : "plus"} size={15} />
+            {choixOuvert ? "Fermer la liste" : "Choisir une quête secondaire"}
+          </button>
+
+          {choixOuvert && <div className="glass-card fx-card" style={{ padding: 16 }}>
             <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
               <Icon name="sprout-farm" size={14} />Choisir une quête secondaire
             </div>
             <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 12 }}>
-              Ce qui manque au coffre. Clique une ligne pour voir où l&apos;objet tombe, puis mets-la dans ta liste.
+              Ce qui manque au coffre. Pour une arme ou une pièce d&apos;armure, tu peux préciser la rareté, le +N, le perçage et l&apos;éveil avant de l&apos;ajouter.
             </div>
             <input value={qFarm} onChange={(e) => setQFarm(e.target.value)} placeholder="Chercher un objet ou une catégorie…"
               style={{ ...inp, width: "100%", marginBottom: 10 }} />
@@ -458,8 +529,9 @@ export default function QuetesPage() {
                   const pc = Math.min(100, Math.round((o.stock / Math.max(1, o.target)) * 100));
                   return (
                     <div key={o.id} style={{ borderRadius: 10, background: "var(--bg-3)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}` }}>
-                      <button onClick={() => setObjetOuvert(ouvert ? null : o.id)}
-                        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 11px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--text)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 8px 0 0" }}>
+                      <button onClick={() => ouvrirFiche(o)}
+                        style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, padding: "8px 11px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--text)" }}>
                         <span style={{ width: 28, height: 28, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           {o.icon ? <img src={o.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <Icon name="package" size={14} style={{ color: "var(--text-muted)" }} />}
@@ -489,6 +561,16 @@ export default function QuetesPage() {
                         )}
                         <Icon name={ouvert ? "chevron-down" : "chevron-right"} size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                       </button>
+                      {/* Le geste principal ne se cache pas derrière un
+                          dépliage : « choisir » est ce qu'on vient faire ici. */}
+                      <button onClick={() => ouvrirFiche(o)} title="Mettre dans mes quêtes secondaires"
+                        style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                          border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`,
+                          background: ouvert ? "rgba(255,140,26,.14)" : "var(--bg-2)",
+                          color: ouvert ? "var(--orange)" : "var(--text)" }}>
+                        <Icon name="plus" size={13} />{estEquipement(o) ? "Choisir" : "Ajouter"}
+                      </button>
+                      </div>
 
                       {ouvert && (
                         <div style={{ padding: "0 11px 11px", display: "grid", gap: 9 }}>
@@ -512,13 +594,75 @@ export default function QuetesPage() {
                               <Icon name="vault" size={13} /> Ajouter à mon coffre
                             </button>
                           </div>}
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          {/* Quelle pièce, exactement. Tout est facultatif :
+                              on ne sait pas toujours d'avance, et une quête
+                              vague vaut mieux qu'une quête pas prise. */}
+                          {estEquipement(o) && (
+                            <div style={{ display: "grid", gap: 8, padding: "10px 11px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
+                              <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>La pièce que je vise (facultatif)</div>
+
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Rareté</span>
+                                {RARETES.map((r) => (
+                                  <button key={r} onClick={() => setReglages((p) => ({ ...p, rarete: p.rarete === r ? "" : r }))}
+                                    style={{ padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit",
+                                      border: `1px solid ${reglages.rarete === r ? "var(--orange)" : "var(--border)"}`,
+                                      background: reglages.rarete === r ? "rgba(255,140,26,.14)" : "transparent",
+                                      color: reglages.rarete === r ? "var(--orange)" : "var(--text-muted)" }}>
+                                    {r}
+                                  </button>
+                                ))}
+                              </div>
+
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Amélio.</span>
+                                <select value={reglages.up} onChange={(e) => setReglages((p) => ({ ...p, up: e.target.value }))}
+                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
+                                  <option value="">+ ?</option>
+                                  {Array.from({ length: 21 }, (_, i) => i).map((n) => <option key={n} value={n}>+{n}</option>)}
+                                </select>
+                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8 }}>Perçage</span>
+                                <select value={reglages.percage} onChange={(e) => setReglages((p) => ({ ...p, percage: e.target.value }))}
+                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
+                                  <option value="">—</option>
+                                  {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} trou{n > 1 ? "s" : ""}</option>)}
+                                </select>
+                                <select value={reglages.element} onChange={(e) => setReglages((p) => ({ ...p, element: e.target.value }))}
+                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
+                                  <option value="">élément…</option>
+                                  {ELEMENTS.map((e2) => <option key={e2} value={e2}>{e2}</option>)}
+                                </select>
+                              </div>
+
+                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Éveil</span>
+                                <select value={reglages.eveilRang} onChange={(e) => setReglages((p) => ({ ...p, eveilRang: e.target.value }))}
+                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
+                                  <option value="">rang…</option>
+                                  {RANGS_EVEIL.map((r) => <option key={r} value={r}>{r}</option>)}
+                                </select>
+                                <select value={reglages.eveilStat} onChange={(e) => setReglages((p) => ({ ...p, eveilStat: e.target.value }))}
+                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
+                                  <option value="">statistique…</option>
+                                  {STATS_EVEIL.map((s) => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                              </div>
+
+                              {resumerReglages(reglages) && (
+                                <div style={{ fontSize: 12, color: "var(--gold)" }}>
+                                  Je cherche : <b>{o.item}</b> — {resumerReglages(reglages)}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                            <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Combien</span>
+                            <input type="number" min={1} value={reglages.qte} aria-label="Quantité visée"
+                              onChange={(e) => setReglages((p) => ({ ...p, qte: e.target.value }))}
+                              style={{ ...inp, width: 100, padding: "8px 11px", fontSize: 13 }} />
                             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5 }} onClick={() => seLancer(o)}>
-                              <Icon name="target" size={14} />Je m&apos;y mets
-                            </button>
-                            <button onClick={() => { setOnglet("miennes"); bouger(o.id, o.manque); setQ(o.item); }}
-                              style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
-                              Demander de l&apos;aide
+                              <Icon name="target" size={14} />Ajouter à ma liste
                             </button>
                           </div>
                         </div>
@@ -532,7 +676,7 @@ export default function QuetesPage() {
                 })}
               </div>
             )}
-          </div>
+          </div>}
         </div>
       )}
 

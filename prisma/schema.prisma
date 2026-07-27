@@ -818,6 +818,10 @@ model ObjectifFarm {
   /// Ce qui est déjà ramassé, mis à jour par le membre lui-même.
   fait    Int    @default(0)
   unite   String?
+  /// La pièce EXACTE visée, quand ça compte : « Légendaire +10 · perçage
+  /// Fulgur · éveil R2 Attaque ». Une arme sans ces précisions n'est pas la
+  /// même quête — autant l'écrire une fois plutôt que s'en souvenir.
+  detail  String?
 
   createdAt  DateTime  @default(now())
   termineAt  DateTime?

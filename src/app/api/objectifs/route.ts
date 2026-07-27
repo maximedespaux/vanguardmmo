@@ -7,7 +7,7 @@ import { canAccessGuild } from "@/config/roles";
  * Mes objectifs de farm — un suivi pour soi, pas une promesse aux autres.
  *
  * GET    → les miens, en cours d'abord.
- * POST   → { titre, cible, itemRef?, unite? } : je m'y mets.
+ * POST   → { titre, cible, itemRef?, unite?, detail? } : je m'y mets.
  * PATCH  → { id, fait? , termine? } : j'avance, ou j'arrête.
  *
  * Rien n'est vérifié par personne : c'est un pense-bête. C'est aussi pour ça
@@ -44,6 +44,7 @@ export async function POST(req: Request) {
       cible: Math.max(1, Math.min(999999, Math.floor(Number(b?.cible) || 1))),
       itemRef: b?.itemRef ? String(b.itemRef).slice(0, 160) : null,
       unite: b?.unite === "slot" ? "slot" : b?.unite === "unitaire" ? "unitaire" : null,
+      detail: b?.detail ? String(b.detail).trim().slice(0, 200) || null : null,
     },
   });
   return NextResponse.json(o, { status: 201 });

@@ -42,6 +42,10 @@ const NAV: Item[] = [
     // Le suivi des dettes parle des MEMBRES (qui doit quoi a qui), pas du stock :
     // sa place est avec le GuildViewer, pas dans l'espace marchand.
     { label: "Suivi des dettes", href: "/gestion-dettes", access: "admin" },
+    // Rattachees ici et plus bas : ces pages EXISTAIENT sans aucun lien dans la
+    // nav — on ne pouvait y arriver qu'en tapant l'URL. C'est la premiere cause
+    // du sentiment de se perdre : des ecrans qu'on ne sait pas atteindre.
+    { label: "Absences", href: "/absences", access: "guild" },
   ] },
 
   { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [
@@ -51,13 +55,20 @@ const NAV: Item[] = [
   { label: "PvE", href: "/donjons", icon: "skull", access: "guild", sub: [
     { label: "Donjons", href: "/donjons" },
     { label: "World Boss", href: "/worldboss" },
+    { label: "World Boss — gestion", href: "/gestion-worldboss", access: "admin" },
     { label: "Échanges PNJ", href: "/echanges" },
   ] },
 
   // Tout le pilotage du bot est regroupe sur « Bot Discord » : creneaux recurrents,
   // events du jeu, World Boss et annonces s'y gerent via ses onglets, plutot que
   // d'occuper quatre entrees de navigation distinctes.
-  { label: "Bot Discord", href: "/discord", icon: "discord", access: "admin" },
+  { label: "Bot Discord", href: "/discord", icon: "discord", access: "admin", sub: [
+    { label: "Pilotage du bot", href: "/discord", access: "admin" },
+    // Ces deux pages existaient sans lien : on ne pouvait les ouvrir qu'en
+    // connaissant l'URL, alors qu'elles pilotent des envois Discord.
+    { label: "Annonce", href: "/annonce", access: "admin" },
+    { label: "Events du jeu", href: "/events", access: "admin" },
+  ] },
 ];
 
 

@@ -11,7 +11,7 @@ import { rangDe, rangSuivant } from "@/lib/rangs";
 import type { ObjetCoffre } from "@/lib/coffre";
 import type { Source } from "@/lib/ouFarmer";
 
-type ObjetAFarmer = ObjetCoffre & { sources?: Source[] };
+type ObjetAFarmer = ObjetCoffre & { sources?: Source[]; besoin?: "fort" | "moyen" | "ok" };
 type Objectif = { id: string; titre: string; cible: number; fait: number; unite: string | null; termineAt: string | null };
 
 /**
@@ -144,6 +144,9 @@ export default function QuetesPage() {
   const [objectifs, setObjectifs] = useState<Objectif[]>([]);
   /** Ce que je m'apprête à déposer, par objet. */
   const [depot, setDepot] = useState<Record<string, string>>({});
+  /** Recherche et catégories dépliées de l'onglet « Quêtes secondaires ». */
+  const [qFarm, setQFarm] = useState("");
+  const [catsOuvertes, setCatsOuvertes] = useState<Record<string, boolean>>({});
 
   const deposer = async (o: ObjetAFarmer) => {
     const n = Number(depot[o.id]);
@@ -170,6 +173,8 @@ export default function QuetesPage() {
   const seLancer = async (o: ObjetAFarmer) => {
     await fetch("/api/objectifs", {
       method: "POST", headers: { "Content-Type": "application/json" },
+      // La cible part de ce qui manque quand on le connaît ; un membre, qui ne
+      // voit pas les stocks, part de 1 et ajuste avec ses boutons.
       body: JSON.stringify({ titre: o.classe ? `${o.item} (${o.classe})` : o.item, cible: o.manque || 1, itemRef: o.id, unite: o.unit }),
     });
     setOnglet("farm");
@@ -206,7 +211,20 @@ export default function QuetesPage() {
   const couvertes = ouvertes.filter((x) => x.reste === 0);
   // Le plan de farm, vu par la guilde : ce qui manque au coffre, sans les
   // chiffres de gestion. Les coffres eux-mêmes restent au staff.
-  const manquants = catalogue.filter((o) => o.manque > 0).slice(0, 40);
+  const manquants = catalogue.filter((o) => (o.besoin ? o.besoin !== "ok" : o.manque > 0));
+  // Regroupé par catégorie, la plus en retard en tête : 264 objets à plat ne se
+  // lisent pas, et on cherche presque toujours dans UNE famille à la fois.
+  const rechercheFarm = qFarm.trim().toLowerCase();
+  const groupesFarm = Object.values(
+    manquants
+      .filter((o) => !rechercheFarm || (o.item + " " + o.cat + " " + o.classe).toLowerCase().includes(rechercheFarm))
+      .reduce<Record<string, { cat: string; objets: ObjetAFarmer[]; manque: number }>>((acc, o) => {
+        const cat = o.cat || "Divers";
+        (acc[cat] ??= { cat, objets: [], manque: 0 }).objets.push(o);
+        acc[cat].manque += o.manque;
+        return acc;
+      }, {})
+  ).sort((a, b) => b.manque - a.manque);
   const enCours = objectifs.filter((o) => !o.termineAt);
   /** Une confirmation en attente est la seule chose qui BLOQUE quelqu'un d'autre. */
   const aConfirmer = miennes.reduce((s, x) => s + x.contributions.filter((c) => c.statut === "annonce").length, 0);
@@ -245,7 +263,7 @@ export default function QuetesPage() {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {([
           ["principales", "target", `Quêtes principales${aFaire.length ? ` (${aFaire.length})` : ""}`],
-          ...(estStaff ? [["farm", "sprout-farm", `Quêtes secondaires${manquants.length ? ` (${manquants.length})` : ""}`] as const] : []),
+          ["farm", "sprout-farm", `Quêtes secondaires${enCours.length ? ` (${enCours.length})` : ""}`],
           ["miennes", "clipboard", `Mes requêtes${miennes.length ? ` (${miennes.length})` : ""}`],
           ["reglees", "check", "Réglées"],
         ] as const).map(([k, ic, l]) => (
@@ -348,6 +366,23 @@ export default function QuetesPage() {
         <div style={{ display: "grid", gap: 14 }}>
           {/* Ce que JE me suis engagé à ramener. En tête, parce que c'est la
               seule chose ici qui demande une action de ma part aujourd'hui. */}
+          <div className="glass-card fx-card" style={{ padding: 16 }}>
+            <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 6, display: "flex", alignItems: "center", gap: 7 }}>
+              <Icon name="target" size={14} />Mes quêtes secondaires
+            </div>
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Une quête principale, c&apos;est quelqu&apos;un qui attend quelque chose de toi.
+              Une quête <b style={{ color: "var(--text)" }}>secondaire</b>, c&apos;est ce que <b style={{ color: "var(--text)" }}>tu</b> décides
+              de farmer — pour toi, ou pour renflouer le coffre.
+              <br />
+              À quoi ça sert : tu choisis une fois, et tu retrouves ta liste à chaque connexion au lieu
+              de rouvrir le plan de farm en te demandant ce que tu voulais faire. La barre te dit où tu
+              en es, la ligne te dit dans quel donjon aller. {estStaff
+                ? "Et tu déposes ce que tu as ramené sans rouvrir l'AirGuild."
+                : "Quand tu as fini, préviens le staff : c'est lui qui enregistre le dépôt, et c'est ce dépôt qui te donne ton XP."}
+            </div>
+          </div>
+
           {enCours.length > 0 && (
             <div className="glass-card fx-card" style={{ padding: 16 }}>
               <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
@@ -390,16 +425,35 @@ export default function QuetesPage() {
 
           <div className="glass-card fx-card" style={{ padding: 16 }}>
             <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
-              <Icon name="sprout-farm" size={14} />Quêtes secondaires — ce qui manque au coffre
+              <Icon name="sprout-farm" size={14} />Choisir une quête secondaire
             </div>
             <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 12 }}>
-              Clique une ligne pour voir où l&apos;objet tombe, déposer ce que tu as ramené, ou demander de l&apos;aide.
+              Ce qui manque au coffre. Clique une ligne pour voir où l&apos;objet tombe, puis mets-la dans ta liste.
             </div>
-            {manquants.length === 0 ? (
-              <div style={{ fontSize: 13, color: "var(--green)" }}>Tout est au-dessus du seuil. Rien à farmer.</div>
+            <input value={qFarm} onChange={(e) => setQFarm(e.target.value)} placeholder="Chercher un objet ou une catégorie…"
+              style={{ ...inp, width: "100%", marginBottom: 10 }} />
+
+            {groupesFarm.length === 0 ? (
+              <div style={{ fontSize: 13, color: rechercheFarm ? "var(--text-muted)" : "var(--green)" }}>
+                {rechercheFarm ? "Rien ne correspond." : "Tout est au-dessus du seuil. Rien à farmer."}
+              </div>
             ) : (
-              <div style={{ display: "grid", gap: 5 }}>
-                {manquants.map((o) => {
+              <div style={{ display: "grid", gap: 7 }}>
+                {groupesFarm.map((g) => {
+                  // Une recherche déplie d'office : sinon on cherche un objet
+                  // pour ne trouver qu'une catégorie fermée.
+                  const ouverteCat = catsOuvertes[g.cat] ?? !!rechercheFarm;
+                  return (
+                  <div key={g.cat}>
+                    <button onClick={() => setCatsOuvertes((p) => ({ ...p, [g.cat]: !ouverteCat }))}
+                      style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 11px", borderRadius: 9, cursor: "pointer", fontFamily: "inherit", textAlign: "left", border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)" }}>
+                      <Icon name={ouverteCat ? "chevron-down" : "chevron-right"} size={13} style={{ color: "var(--text-muted)" }} />
+                      <b style={{ fontSize: 13 }}>{g.cat}</b>
+                      <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{g.objets.length} objet{g.objets.length > 1 ? "s" : ""}</span>
+{estStaff && <b style={{ marginLeft: "auto", color: "var(--red)", fontSize: 12.5 }}>−{g.manque.toLocaleString("fr-FR")}</b>}
+                    </button>
+                    {ouverteCat && <div style={{ display: "grid", gap: 5, marginTop: 5, paddingLeft: 10 }}>
+                {g.objets.map((o) => {
                   const ouvert = objetOuvert === o.id;
                   const pc = Math.min(100, Math.round((o.stock / Math.max(1, o.target)) * 100));
                   return (
@@ -416,13 +470,23 @@ export default function QuetesPage() {
                           </span>
                           <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>{o.cat}</span>
                         </span>
-                        <span style={{ width: 90, flexShrink: 0 }}>
-                          <span style={{ display: "block", height: 6, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden" }}>
-                            <span style={{ display: "block", width: `${pc}%`, height: "100%", background: pc >= 80 ? "var(--green)" : pc >= 40 ? "var(--gold)" : "var(--red)" }} />
+                        {estStaff ? (
+                          <>
+                            <span style={{ width: 90, flexShrink: 0 }}>
+                              <span style={{ display: "block", height: 6, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden" }}>
+                                <span style={{ display: "block", width: `${pc}%`, height: "100%", background: pc >= 80 ? "var(--green)" : pc >= 40 ? "var(--gold)" : "var(--red)" }} />
+                              </span>
+                              <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)", marginTop: 3, textAlign: "right" }}>{o.stock}/{o.target}</span>
+                            </span>
+                            <b style={{ flexShrink: 0, color: "var(--red)", fontSize: 12.5, width: 62, textAlign: "right" }}>−{o.manque.toLocaleString("fr-FR")}</b>
+                          </>
+                        ) : (
+                          /* Le membre voit l'URGENCE, pas les stocks : ce qu'il
+                             lui faut pour choisir, sans l'état du coffre. */
+                          <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 20, border: `1px solid ${o.besoin === "fort" ? "var(--red)" : "var(--gold)"}`, color: o.besoin === "fort" ? "var(--red)" : "var(--gold)" }}>
+                            {o.besoin === "fort" ? "en priorité" : "utile"}
                           </span>
-                          <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)", marginTop: 3, textAlign: "right" }}>{o.stock}/{o.target}</span>
-                        </span>
-                        <b style={{ flexShrink: 0, color: "var(--red)", fontSize: 12.5, width: 62, textAlign: "right" }}>−{o.manque.toLocaleString("fr-FR")}</b>
+                        )}
                         <Icon name={ouvert ? "chevron-down" : "chevron-right"} size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                       </button>
 
@@ -436,8 +500,9 @@ export default function QuetesPage() {
                           </div>
                           {/* Dépôt rapide : même stock que l'AirGuild, saisi
                               depuis la ligne « il en manque 900 » plutôt qu'en
-                              rouvrant l'app pour retrouver l'objet. */}
-                          <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
+                              rouvrant l'app. Réservé au staff, comme les coffres :
+                              un membre suit ce qu'il farme, il ne l'enregistre pas. */}
+                          {estStaff && <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
                             <input type="number" min={1} value={depot[o.id] ?? ""}
                               onChange={(ev) => setDepot((p) => ({ ...p, [o.id]: ev.target.value }))}
                               placeholder="j'en ai ramené…" aria-label="Quantité déposée"
@@ -446,7 +511,7 @@ export default function QuetesPage() {
                               style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit" }}>
                               <Icon name="vault" size={13} /> Ajouter à mon coffre
                             </button>
-                          </div>
+                          </div>}
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5 }} onClick={() => seLancer(o)}>
                               <Icon name="target" size={14} />Je m&apos;y mets
@@ -459,6 +524,10 @@ export default function QuetesPage() {
                         </div>
                       )}
                     </div>
+                  );
+                })}
+                    </div>}
+                  </div>
                   );
                 })}
               </div>

@@ -7,6 +7,7 @@ import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
+import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { useCardFx } from "@/components/VgFx";
@@ -60,6 +61,10 @@ export function EcranEconomie() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
   const [sending, setSending] = useState(false);
+  /** Deux façons de demander, deux panneaux : ce qui dort au coffre, et ce qui
+   *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
+   *  mesure invisible — il n'a pas de ligne dans le stock. */
+  const [panneau, setPanneau] = useState<"stock" | "surMesure">("stock");
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";
@@ -116,21 +121,18 @@ export function EcranEconomie() {
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
-      {/* L'objet SUR MESURE ne se trouve pas dans une liste : il se monte. Le
-          dire ici, c'est la seule façon que quelqu'un pense à le faire. */}
-      <Link href="/builder" style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 15px", marginBottom: 16, borderRadius: 12, textDecoration: "none", background: "linear-gradient(90deg, rgba(255,140,26,.14), rgba(255,140,26,.03))", border: "1px solid rgba(255,140,26,.45)" }}>
-        <Icon name="shirt" size={20} style={{ color: "var(--orange)", flexShrink: 0 }} />
-        <span style={{ flex: 1, minWidth: 0 }}>
-          <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: "var(--orange)" }}>Tu veux un objet précis, avec ses stats ?</span>
-          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)" }}>
-            Monte-le dans le builder (rareté, +9, sertissage, perçage) et demande-le : le staff verra exactement la pièce voulue.
-          </span>
-        </span>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)", whiteSpace: "nowrap" }}>Ouvrir le builder →</span>
-      </Link>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        {([["stock", "cart", "Acheter au coffre"], ["surMesure", "hammer", "Objet sur mesure"]] as const).map(([k, ic, l]) => (
+          <button key={k} onClick={() => setPanneau(k)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${panneau === k ? "var(--orange)" : "var(--border)"}`, background: panneau === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: panneau === k ? "var(--orange)" : "var(--text-muted)" }}>
+            <Icon name={ic} size={15} />{l}
+          </button>
+        ))}
+      </div>
 
-      {/* ── BOUTIQUE ── */}
-      <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
+      {panneau === "surMesure" && <ObjetSurMesure onEnvoye={load} />}
+
+      {panneau === "stock" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
@@ -217,7 +219,7 @@ export function EcranEconomie() {
             <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff, qui répond dans la conversation. Profil avec personnage requis.</div>
           </div>
         </div>
-      </div>
+      </div>}
 
       <style>{`@media(max-width:760px){.shop-layout{grid-template-columns:1fr !important}}`}</style>
     </div>

@@ -129,6 +129,7 @@ export default function QuetesPage() {
 
   /** Ce que je m'apprête à apporter, par quête. */
   const [apport, setApport] = useState<Record<string, string>>({});
+  const [onglet, setOnglet] = useState<"principales" | "miennes" | "reglees">("principales");
 
   const agir = async (id: string, action: string, extra: Record<string, unknown> = {}) => {
     const r = await fetch(`/api/quetes/${id}`, {
@@ -139,8 +140,18 @@ export default function QuetesPage() {
     charger();
   };
 
+  // Trois vues pour trois questions différentes : « qu'est-ce que je peux
+  // faire pour la guilde ? », « où en sont MES demandes ? », « qu'est-ce qui
+  // a bougé ? ». Mélangées, on ne répondait bien à aucune des trois.
   const ouvertes = quetes.filter((x) => x.statut === "ouverte");
   const closes = quetes.filter((x) => x.statut === "livree" || x.statut === "annulee");
+  const miennes = quetes.filter((x) => !!moi && x.auteur.id === moi && x.statut === "ouverte");
+  // Les quêtes des autres d'abord : c'est là qu'on peut aider. Les siennes ont
+  // leur onglet, et y attendre un volontaire ne demande aucune action.
+  const aFaire = ouvertes.filter((x) => !moi || x.auteur.id !== moi);
+  /** Une confirmation en attente est la seule chose qui BLOQUE quelqu'un d'autre. */
+  const aConfirmer = miennes.reduce((s, x) => s + x.contributions.filter((c) => c.statut === "annonce").length, 0);
+  const liste = onglet === "principales" ? aFaire : onglet === "miennes" ? miennes : closes;
   const niveau = prog?.moi.niveau ?? 1;
   const rang = rangDe(niveau);
   const suivant = rangSuivant(niveau);
@@ -255,15 +266,48 @@ export default function QuetesPage() {
       </div>
 
       {/* ── Le tableau des quêtes ── */}
-      <h2 className="font-heading" style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>À faire</h2>
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        {([
+          ["principales", "target", `Quêtes principales${aFaire.length ? ` (${aFaire.length})` : ""}`],
+          ["miennes", "clipboard", `Mes requêtes${miennes.length ? ` (${miennes.length})` : ""}`],
+          ["reglees", "check", "Réglées"],
+        ] as const).map(([k, ic, l]) => (
+          <button key={k} onClick={() => setOnglet(k)}
+            style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${onglet === k ? "var(--orange)" : "var(--border)"}`, background: onglet === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: onglet === k ? "var(--orange)" : "var(--text-muted)" }}>
+            <Icon name={ic} size={15} />{l}
+            {/* Une confirmation qui attend bloque celui qui a livré : elle se
+                signale même quand on regarde un autre onglet. */}
+            {k === "miennes" && aConfirmer > 0 && (
+              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--green)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {aConfirmer}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
       {!pret ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Chargement…</div>
-        : ouvertes.length === 0 ? (
+        : liste.length === 0 ? (
           <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
-            Personne n&apos;a besoin de rien pour l&apos;instant. C&apos;est bon signe.
+            {onglet === "principales" ? "Personne n'a besoin de rien pour l'instant. C'est bon signe."
+              : onglet === "miennes" ? "Tu n'as rien demandé. Le formulaire est juste au-dessus."
+              : "Rien de réglé ces derniers jours."}
           </div>
         ) : (
           <div className="vg-stagger" style={{ display: "grid", gap: 10 }}>
-            {ouvertes.map((x) => {
+            {liste.map((x) => {
+              // Une quête close n'a plus d'action : on la montre en résumé.
+              if (x.statut !== "ouverte") {
+                return (
+                  <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
+                    <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c }} />
+                    <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
+                    {x.statut === "livree" && x.contributions.length > 0 && (
+                      <>· livré par <b style={{ color: "var(--text)" }}>{[...new Set(x.contributions.map((c) => c.par.nom))].join(", ")}</b></>
+                    )}
+                    <span style={{ marginLeft: "auto" }}>{new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}</span>
+                  </div>
+                );
+              }
               const jeSuisAuteur = !!moi && x.auteur.id === moi;
               const e = ETAT[x.statut];
               const pcConfirme = Math.min(100, Math.round((x.confirme / Math.max(1, x.quantite)) * 100));
@@ -369,23 +413,6 @@ export default function QuetesPage() {
           </div>
         )}
 
-      {closes.length > 0 && (
-        <>
-          <h2 className="font-heading" style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, margin: "22px 0 10px" }}>Réglées récemment</h2>
-          <div style={{ display: "grid", gap: 6 }}>
-            {closes.map((x) => (
-              <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
-                <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c }} />
-                <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
-                {x.statut === "livree" && x.contributions.length > 0 && (
-                  <>· livré par <b style={{ color: "var(--text)" }}>{[...new Set(x.contributions.map((c) => c.par.nom))].join(", ")}</b></>
-                )}
-                <span style={{ marginLeft: "auto" }}>{new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }

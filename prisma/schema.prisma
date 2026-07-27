@@ -621,6 +621,12 @@ model BankRequest {
   status      BankRequestStatus @default(PENDING)
   prixPublic  BigInt?           // fixé par l'admin à l'acceptation
   prixFinal   BigInt?           // total = prix unitaire × quantité (plus de remise)
+  /// Comment la demande est payée : "perins" (règle par défaut) ou "troc".
+  /// Ne bascule sur "troc" QUE si le détenteur l'a accepté — sans son accord
+  /// explicite, un paiement en objets n'existe pas. Un troc ne renseigne pas
+  /// `prixFinal` : il n'y a pas de somme à réclamer, et laisser un montant
+  /// ferait croire à une dette en périns.
+  modePaiement String           @default("perins")
   debtId      String?           // dette créée si issue = dette
   decidedBy   String?
   adminNote   String?
@@ -694,6 +700,12 @@ model RequestMessage {
   /// Montant proposé quand `kind` vaut "offer". Null sinon — une négociation
   /// doit porter un chiffre exploitable, pas un prix noyé dans une phrase.
   amount        Int?
+  /// Comment on paie : "perins" (défaut) ou "troc". Porté par l'offre et non
+  /// par la requête, parce que c'est justement ce qui se négocie : un troc
+  /// proposé n'engage personne tant qu'il n'a pas été accepté.
+  /// Sur un troc, `amount` reste la valeur ESTIMÉE des objets — sans chiffre,
+  /// deux paniers d'objets ne sont pas comparables.
+  mode          String?
   /// Offre acceptée : fige l'accord. Une offre acceptée ne se renégocie pas,
   /// c'est ce qui donne sa valeur au « oui ».
   acceptedAt    DateTime?

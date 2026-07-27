@@ -14,6 +14,8 @@ import { Icon } from "@/components/Icon";
 export type MsgFil = {
   id: string; kind: string; author: string | null; body: string; createdAt: string;
   amount: number | null; acceptedAt: string | null; userId: string | null;
+  /** "perins" (défaut) ou "troc" sur une offre. */
+  mode?: string | null;
 };
 
 const fmt = (n: number | string | null) => (n == null ? "?" : Number(n).toLocaleString("fr-FR"));
@@ -38,6 +40,9 @@ export function Fil({
   const [fil, setFil] = useState<MsgFil[]>([]);
   const [msg, setMsg] = useState("");
   const [offre, setOffre] = useState("");
+  // Périns par défaut : la règle de la guilde, pas un réglage à retrouver.
+  const [mode, setMode] = useState<"perins" | "troc">("perins");
+  const [contre, setContre] = useState("");
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
   const bas = useRef<HTMLDivElement>(null);
@@ -93,8 +98,12 @@ export function Fil({
 
       {prixConvenu && (
         <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", marginBottom: 12, borderRadius: 9, border: "1px solid var(--green)", background: "rgba(74,222,128,.08)" }}>
-          <Icon name="check" size={16} style={{ color: "var(--green)" }} />
-          <span style={{ fontWeight: 700, fontSize: 13.5, color: "var(--green)" }}>Prix convenu : {fmt(prixConvenu.amount)} périns</span>
+          <Icon name={prixConvenu.mode === "troc" ? "swap" : "check"} size={16} style={{ color: "var(--green)" }} />
+          <span style={{ fontWeight: 700, fontSize: 13.5, color: "var(--green)" }}>
+            {prixConvenu.mode === "troc"
+              ? <>Échange en objets convenu <span style={{ fontWeight: 400 }}>— valeur estimée {fmt(prixConvenu.amount)} périns</span></>
+              : <>Prix convenu : {fmt(prixConvenu.amount)} périns</>}
+          </span>
         </div>
       )}
 
@@ -115,18 +124,24 @@ export function Fil({
           }
           if (m.kind === "offer") {
             const aMoi = m.userId === moiId;
+            const troc = m.mode === "troc";
             return (
               <div key={m.id} style={{ padding: 11, borderRadius: 10, border: `1px solid ${m.acceptedAt ? "var(--green)" : "var(--gold)"}`, background: m.acceptedAt ? "rgba(74,222,128,.08)" : "rgba(255,181,82,.08)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-                  <Icon name="coins" size={15} style={{ color: m.acceptedAt ? "var(--green)" : "var(--gold)" }} />
-                  <b style={{ fontSize: 14 }}>{fmt(m.amount)} périns</b>
+                  <Icon name={troc ? "swap" : "coins"} size={15} style={{ color: m.acceptedAt ? "var(--green)" : "var(--gold)" }} />
+                  <b style={{ fontSize: 14 }}>{troc ? "Échange en objets" : `${fmt(m.amount)} périns`}</b>
+                  {/* Sur un troc, le chiffre reste affiché mais comme une estimation :
+                      c'est ce qui permet de comparer, pas une somme à payer. */}
+                  {troc && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>≈ {fmt(m.amount)} périns</span>}
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>proposé par {m.author}</span>
                   {m.acceptedAt && <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>accepté</span>}
                   {/* On n'accepte pas sa propre offre : ce serait s'accorder un
-                      prix tout seul. Le serveur le refuse aussi. */}
-                  {!m.acceptedAt && !aMoi && (
+                      prix tout seul. Et plus rien ne s'accepte une fois l'accord
+                      conclu — les offres précédentes ne sont plus que l'historique
+                      de la négociation. Le serveur refuse les deux cas. */}
+                  {!m.acceptedAt && !aMoi && !prixConvenu && (
                     <button className="vg-btn" onClick={() => envoyer({ accept: m.id })} style={{ marginLeft: "auto", padding: "6px 13px", fontSize: 12.5 }}>
-                      Accepter ce prix
+                      {troc ? "Accepter cet échange" : "Accepter ce prix"}
                     </button>
                   )}
                 </div>
@@ -156,16 +171,46 @@ export function Fil({
       {/* La négociation est ouverte aux DEUX parties : un prix imposé n'est pas
           négocié. Le staff propose, le demandeur peut contre-proposer. */}
       {negociation && !prixConvenu && (
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", paddingTop: 11, borderTop: "1px solid var(--border)" }}>
-          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-            {estStaff ? "Proposer un prix" : offreVive ? "Contre-proposer" : "Proposer un prix"} :
-          </span>
-          <input type="number" min={1} value={offre} onChange={(e) => setOffre(e.target.value)} placeholder="périns"
-            style={{ width: 130, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13.5 }} />
-          <button onClick={() => Number(offre) > 0 && envoyer({ offer: Number(offre) }).then((ok) => ok && setOffre(""))}
-            style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
-            Proposer
-          </button>
+        <div style={{ display: "grid", gap: 9, paddingTop: 11, borderTop: "1px solid var(--border)" }}>
+          {/* Périns d'abord, toujours sélectionné au départ : c'est la règle de la
+              guilde. Le troc est possible, mais il se demande — d'où un second
+              bouton, et non une case cochée d'avance. */}
+          <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+              {estStaff ? "Proposer" : offreVive ? "Contre-proposer" : "Proposer"} :
+            </span>
+            {([["perins", "coins", "Périns"], ["troc", "swap", "Troc"]] as const).map(([k, ic, l]) => (
+              <button key={k} onClick={() => setMode(k)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit", border: `1px solid ${mode === k ? "var(--gold)" : "var(--border)"}`, background: mode === k ? "rgba(255,181,82,.12)" : "var(--bg-3)", color: mode === k ? "var(--gold)" : "var(--text-muted)" }}>
+                <Icon name={ic} size={12} />{l}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="number" min={1} value={offre} onChange={(e) => setOffre(e.target.value)}
+              placeholder={mode === "troc" ? "valeur estimée" : "périns"}
+              style={{ width: 140, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13.5 }} />
+            {mode === "troc" && (
+              <input value={contre} onChange={(e) => setContre(e.target.value)} placeholder="Ce que tu donnes en échange…"
+                style={{ flex: 1, minWidth: 170, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13.5, fontFamily: "inherit" }} />
+            )}
+            <button
+              onClick={() => {
+                if (!(Number(offre) > 0)) { setErreur("Indique un montant, même estimé — sans chiffre, une offre ne se compare pas."); return; }
+                if (mode === "troc" && !contre.trim()) { setErreur("Dis ce que tu donnes en échange : un troc sans objets ne veut rien dire."); return; }
+                envoyer({ offer: Number(offre), mode, body: contre.trim() || undefined }).then((ok) => { if (ok) { setOffre(""); setContre(""); } });
+              }}
+              style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", fontWeight: 600, fontSize: 12.5, cursor: "pointer" }}>
+              Proposer
+            </button>
+          </div>
+
+          {mode === "troc" && (
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+              <Icon name="info" size={12} />Le paiement en objets n&apos;est valable que si le détenteur l&apos;accepte. Sans son accord, la demande reste en périns.
+            </div>
+          )}
         </div>
       )}
     </div>

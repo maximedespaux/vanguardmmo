@@ -41,6 +41,8 @@ export type Conversation = {
   ton: "attente" | "encours" | "fini" | "stop";
   avec: string;
   enLigne: boolean;
+  /** "perins" (règle par défaut) ou "troc" — visible sans ouvrir, comme le prix. */
+  paiement: "perins" | "troc";
   dernier: Apercu | null;
   nonLus: number;
   /** Horodatage de tri : dernier message, sinon création de la demande. */
@@ -102,7 +104,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, createdAt: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, createdAt: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
@@ -164,6 +166,9 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       ton: etat.t,
       avec,
       enLigne: enLigne(jeSuisDebiteur ? presence.get((d.creditor ?? "").toLowerCase()) : d.user?.lastSeenAt),
+      // Une dette est un montant en périns par construction : le troc s'arrête
+      // à la boutique, une fois la dette née il y a une somme à rembourser.
+      paiement: "perins",
       dernier: dernier.get(filId) ?? null,
       nonLus: nonLus.get(filId) ?? 0,
       quand: (dernier.get(filId)?.quand ?? d.createdAt.toISOString()),
@@ -186,6 +191,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       // Le staff est un collectif, pas une personne : afficher « en ligne » pour
       // lui laisserait croire qu'un officier précis est devant l'écran.
       enLigne: false,
+      paiement: r.modePaiement === "troc" ? "troc" : "perins",
       dernier: dernier.get(filId) ?? null,
       nonLus: nonLus.get(filId) ?? 0,
       quand: (dernier.get(filId)?.quand ?? r.createdAt.toISOString()),

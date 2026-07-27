@@ -50,9 +50,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const moi = a.auth.user.username ?? "?";
 
   // ── Accepter une offre ────────────────────────────────────────────────
-  // Une offre acceptée fige le prix sur la requête : sans cette écriture,
-  // l'accord ne vivrait que dans une phrase du fil et le staff devrait le
-  // ressaisir à la main, avec le risque de se tromper de chiffre.
+  // Une offre acceptée fige l'accord sur la requête : sans cette écriture, il
+  // ne vivrait que dans une phrase du fil et le staff devrait le ressaisir à la
+  // main, avec le risque de se tromper de chiffre.
   if (b?.accept) {
     const offre = await prisma.requestMessage.findFirst({
       where: { id: String(b.accept), bankRequestId: id, kind: "offer", acceptedAt: null },
@@ -62,23 +62,68 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     if (offre.userId === a.auth.user.id) {
       return NextResponse.json({ error: "L'autre partie doit accepter ton offre." }, { status: 403 });
     }
-    await prisma.requestMessage.update({ where: { id: offre.id }, data: { acceptedAt: new Date() } });
-    await prisma.bankRequest.update({ where: { id }, data: { prixFinal: BigInt(offre.amount) } });
-    await prisma.requestMessage.create({
-      data: { bankRequestId: id, kind: "system", body: `${moi} a accepté le prix de ${offre.amount.toLocaleString("fr-FR")} périns.` },
+    // Un accord ne se double pas : les offres plus anciennes restent affichées
+    // comme historique, mais accepter la deuxième écraserait silencieusement le
+    // prix déjà convenu — et personne ne saurait lequel fait foi.
+    const dejaConclu = await prisma.requestMessage.findFirst({
+      where: { bankRequestId: id, kind: "offer", acceptedAt: { not: null } },
+      select: { id: true },
     });
-    return NextResponse.json({ ok: true, accepte: offre.amount });
+    if (dejaConclu) {
+      return NextResponse.json({ error: "Un accord a déjà été conclu sur cette demande." }, { status: 409 });
+    }
+
+    const troc = offre.mode === "troc";
+    // Le troc n'est pas un droit : il se paie en objets, donc c'est celui qui
+    // REMET l'objet qui doit dire oui. Si le staff a proposé le troc, son accord
+    // est déjà donné ; sinon il doit être celui qui accepte. Sans cette règle,
+    // deux membres pourraient convenir entre eux d'un paiement que le détenteur
+    // n'a jamais voulu.
+    const offrantEstStaff = offre.userId
+      ? await prisma.user
+          .findUnique({ where: { id: offre.userId }, select: { role: true } })
+          .then((u) => (u ? canAccessAdmin(u.role) : false))
+      : true;
+    if (troc && !estStaff && !offrantEstStaff) {
+      return NextResponse.json(
+        { error: "Un paiement en objets doit être accepté par le détenteur." },
+        { status: 403 }
+      );
+    }
+
+    await prisma.requestMessage.update({ where: { id: offre.id }, data: { acceptedAt: new Date() } });
+    // Un troc ne renseigne pas `prixFinal` : il n'y a aucune somme à réclamer, et
+    // un montant inscrit là se lirait comme une dette en périns.
+    await prisma.bankRequest.update({
+      where: { id },
+      data: troc ? { modePaiement: "troc", prixFinal: null } : { modePaiement: "perins", prixFinal: BigInt(offre.amount) },
+    });
+    await prisma.requestMessage.create({
+      data: {
+        bankRequestId: id,
+        kind: "system",
+        body: troc
+          ? `${moi} a accepté un échange en objets (valeur estimée ${offre.amount.toLocaleString("fr-FR")} périns).`
+          : `${moi} a accepté le prix de ${offre.amount.toLocaleString("fr-FR")} périns.`,
+      },
+    });
+    return NextResponse.json({ ok: true, accepte: offre.amount, mode: troc ? "troc" : "perins" });
   }
 
   // ── Proposer un prix ──────────────────────────────────────────────────
+  // Périns par défaut : le troc se demande, il ne se suppose pas.
   if (b?.offer != null) {
     const montant = Math.max(0, Math.floor(Number(b.offer) || 0));
     if (montant <= 0) return NextResponse.json({ error: "Montant invalide." }, { status: 400 });
+    const troc = b?.mode === "troc";
+    const detail = b.body ? ` — ${String(b.body).slice(0, 300)}` : ".";
     await prisma.requestMessage.create({
       data: {
         bankRequestId: id, userId: a.auth.user.id, author: moi, kind: "offer", amount: montant,
-        body: `${estStaff ? "Le staff propose" : `${moi} propose`} ${montant.toLocaleString("fr-FR")} périns` +
-          (b.body ? ` — ${String(b.body).slice(0, 300)}` : "."),
+        mode: troc ? "troc" : "perins",
+        body: troc
+          ? `${estStaff ? "Le staff propose" : `${moi} propose`} un échange en objets, estimé à ${montant.toLocaleString("fr-FR")} périns${detail}`
+          : `${estStaff ? "Le staff propose" : `${moi} propose`} ${montant.toLocaleString("fr-FR")} périns${detail}`,
       },
     });
     return NextResponse.json({ ok: true });

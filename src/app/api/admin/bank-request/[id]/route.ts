@@ -74,19 +74,47 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     return NextResponse.json(ser(r));
   }
 
+  // Un accord conclu dans le fil s'impose à la décision : une offre acceptée ne
+  // se renégocie pas, c'est ce qui donne sa valeur au « oui ». Recalculer aux
+  // paliers reviendrait à effacer l'accord sans le dire à personne.
+  const accord = await prisma.requestMessage.findFirst({
+    where: { bankRequestId: id, kind: "offer", acceptedAt: { not: null } },
+    orderBy: { acceptedAt: "desc" },
+    select: { amount: true, mode: true },
+  });
+  const troc = row.modePaiement === "troc" || accord?.mode === "troc";
+  const quantite = BigInt(Math.max(1, row.quantity));
+
+  // Réglée en objets : il n'y a aucune somme à réclamer, donc rien à mettre en
+  // dette. La refuser franchement vaut mieux qu'inventer un montant en périns.
+  if (troc && b.action === "dette") {
+    return NextResponse.json(
+      { error: "Cette demande est réglée en objets : il n'y a pas de somme à mettre en dette." },
+      { status: 409 }
+    );
+  }
+
   // Prix AUTO depuis les paliers du dépôt (membre si l'acheteur est de la guilde, sinon public). Un prix saisi manuellement reste prioritaire.
   const buyer = await prisma.user.findUnique({ where: { id: row.userId }, select: { role: true } });
   const isMemberBuyer = !!(buyer && canAccessGuild(buyer.role));
   const auto = await autoTierPrice(row.item, isMemberBuyer);
   const manual = Math.max(0, Math.floor(Number(b.prixPublic) || 0));
-  const prixPublic = BigInt(manual > 0 ? manual : Math.round(auto.price));
-  if (prixPublic <= 0n) return NextResponse.json({ error: "Aucun prix : fixe un palier au dépôt de l'objet (ou saisis un prix)." }, { status: 400 });
+  // Le montant négocié est un TOTAL (c'est ce qu'on lit dans le fil) ; le prix
+  // unitaire n'en est que la trace.
+  const negocie = !troc && accord?.amount ? BigInt(accord.amount) : null;
+  const prixPublic = negocie ? negocie / quantite : BigInt(manual > 0 ? manual : Math.round(auto.price));
+  if (!troc && prixPublic <= 0n) return NextResponse.json({ error: "Aucun prix : fixe un palier au dépôt de l'objet (ou saisis un prix)." }, { status: 400 });
+  const prixFinal = negocie ?? prixPublic * quantite;
   const caution = BigInt(Math.max(0, Math.floor(Number(b.caution) || auto.caution || 0)));
 
   if (b.action === "achat") {
-    const prixFinal = prixPublic * BigInt(row.quantity); // total = prix unitaire × quantité (plus de remise)
-    const r = await prisma.bankRequest.update({ where: { id }, data: { status: "ACCEPTE_ACHAT", prixPublic, prixFinal, decidedBy: a.user.username, adminNote } });
-    await audit(a.user.username, "banque.ACHAT", id, `${label} — ${prixFinal}`);
+    const r = await prisma.bankRequest.update({
+      where: { id },
+      data: troc
+        ? { status: "ACCEPTE_ACHAT", modePaiement: "troc", prixPublic: null, prixFinal: null, decidedBy: a.user.username, adminNote }
+        : { status: "ACCEPTE_ACHAT", prixPublic, prixFinal, decidedBy: a.user.username, adminNote },
+    });
+    await audit(a.user.username, "banque.ACHAT", id, `${label} — ${troc ? "troc" : prixFinal}`);
     await coffreDebit(row.item, row.quantity, `Achat banque → ${row.username}`, a.user.username);
     return NextResponse.json(ser(r));
   }
@@ -97,7 +125,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       data: {
         userId: row.userId,
         type: row.kind === "PERINS" ? "PENYA" : "ITEM",
-        amount: prixPublic * BigInt(row.quantity),
+        amount: prixFinal,
         caution,
         item: row.item,
         reason: `Boutique — ${label}${holder ? ` (dû à ${holder})` : ""}`,
@@ -106,8 +134,8 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
         decidedBy: a.user.username,
       },
     });
-    const r = await prisma.bankRequest.update({ where: { id }, data: { status: "ACCEPTE_DETTE", prixPublic, prixFinal: prixPublic * BigInt(row.quantity), debtId: debt.id, decidedBy: a.user.username, adminNote } });
-    await audit(a.user.username, "banque.DETTE", id, `${label} — dette ${prixPublic}`);
+    const r = await prisma.bankRequest.update({ where: { id }, data: { status: "ACCEPTE_DETTE", prixPublic, prixFinal, debtId: debt.id, decidedBy: a.user.username, adminNote } });
+    await audit(a.user.username, "banque.DETTE", id, `${label} — dette ${prixFinal}`);
     await coffreDebit(row.item, row.quantity, `Dette banque → ${row.username}`, a.user.username);
     return NextResponse.json(ser(r));
   }

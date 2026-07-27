@@ -144,6 +144,13 @@ export default function MessagesPage() {
                     {/* Pastille de présence : savoir si ça sert d'attendre une réponse maintenant. */}
                     <span style={{ width: 7, height: 7, borderRadius: 4, flexShrink: 0, background: c.enLigne ? "var(--green)" : "var(--border)" }} />
                     <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.avec}</span>
+                    {/* Le troc est l'exception : on ne l'annonce que quand il a été
+                        accepté, sinon la ligne dirait un accord qui n'existe pas. */}
+                    {c.paiement === "troc" && (
+                      <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 6px", borderRadius: 6, border: "1px solid var(--gold)", color: "var(--gold)", fontWeight: 600, fontSize: 10 }}>
+                        <Icon name="swap" size={9} />troc
+                      </span>
+                    )}
                     <span style={{ marginLeft: "auto", flexShrink: 0, color: TONS[c.ton], fontWeight: 600 }}>{c.etat}</span>
                   </div>
 

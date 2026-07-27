@@ -51,6 +51,10 @@ export default function BanquePage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [payAmt, setPayAmt] = useState<Record<string, string>>({});
   const [engDate, setEngDate] = useState<Record<string, string>>({});
+  /** Fil ouvert (id de dette), son contenu, et le message en cours de frappe. */
+  const [filOuvert, setFilOuvert] = useState<string | null>(null);
+  const [fil, setFil] = useState<{ id: string; kind: string; author: string | null; body: string; createdAt: string }[]>([]);
+  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   // ── Boutique ──
@@ -92,6 +96,21 @@ export default function BanquePage() {
     const j = await r.json().catch(() => ({}));
     if (r.ok) { setEngDate(p => ({ ...p, [id]: "" })); flash("Engagement enregistré — le détenteur en est informé."); load(); }
     else flash(j.error ?? "Erreur");
+  };
+
+  /** Ouvre/ferme le fil d'une dette et charge son contenu. */
+  const ouvrirFil = async (id: string) => {
+    if (filOuvert === id) { setFilOuvert(null); return; }
+    setFilOuvert(id); setFil([]); setMsg("");
+    try { const r = await fetch(`/api/debts/${id}/fil`); if (r.ok) setFil(await r.json()); } catch {}
+  };
+  const envoyerMsg = async (id: string) => {
+    const texte = msg.trim();
+    if (!texte) return;
+    const r = await fetch(`/api/debts/${id}/fil`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: texte }) });
+    if (!r.ok) return flash("Message non envoyé.");
+    setMsg("");
+    try { const g = await fetch(`/api/debts/${id}/fil`); if (g.ok) setFil(await g.json()); } catch {}
   };
 
   const deleteDebt = async (id: string) => {
@@ -337,6 +356,45 @@ export default function BanquePage() {
                           </div>
                         </div>
                       )}
+                      {/* Fil : discussion et journal au meme endroit. Remplace le
+                          salon Discord — les evenements systeme (engagement,
+                          versement) s'y inscrivent aussi, donc l'historique se lit
+                          d'un bloc au lieu d'etre reparti entre deux outils. */}
+                      <div style={{ marginTop: 9 }}>
+                        <button onClick={() => ouvrirFil(d.id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === d.id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
+                          <Icon name={filOuvert === d.id ? "chevron-down" : "chevron-right"} size={12} />
+                          <Icon name="message" size={13} />Discussion et historique
+                        </button>
+                        {filOuvert === d.id && (
+                          <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
+                            <div style={{ maxHeight: 220, overflow: "auto", display: "grid", gap: 7, marginBottom: 9 }}>
+                              {fil.length === 0 && <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Rien pour l&apos;instant. Écris ici pour convenir de la remise ou du remboursement.</div>}
+                              {fil.map(m => m.kind === "system" ? (
+                                /* Un fait enregistre par le systeme, pas une parole :
+                                   il porte un liseré et aucun auteur, pour qu'on ne
+                                   le prenne pas pour l'avis de quelqu'un. */
+                                <div key={m.id} style={{ fontSize: 12, color: "var(--text-muted)", borderLeft: "2px solid var(--orange)", paddingLeft: 9 }}>
+                                  {m.body}
+                                  <span style={{ opacity: .7 }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
+                                </div>
+                              ) : (
+                                <div key={m.id} style={{ fontSize: 13 }}>
+                                  <b style={{ color: "var(--orange)" }}>{m.author}</b>
+                                  <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
+                                  <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display: "flex", gap: 7 }}>
+                              <input value={msg} onChange={e => setMsg(e.target.value)}
+                                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerMsg(d.id); } }}
+                                placeholder="Écrire un message…" style={{ ...inp, flex: 1, fontSize: 13 }} />
+                              <button className="vg-btn" onClick={() => envoyerMsg(d.id)} style={{ padding: "8px 14px", fontSize: 12.5 }}>Envoyer</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* Engagement : c'est le client qui donne la date, une fois
                           l'objet remis. Tant qu'elle manque, aucun suivi de retard
                           n'est possible — d'ou la demande bien visible. */}

@@ -53,6 +53,57 @@ export type Reglages = {
 
 const sansAccent = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
+/**
+ * Les réglages d'un emplacement, à la source : c'est la table de vérité, et
+ * tout le reste y mène. Le coffre y arrive par le nom de l'objet, la commande
+ * sur mesure par le slot du builder — mais les règles ne sont écrites qu'ici.
+ *
+ * `artefact` : une arme Éternelle ou Yggdrasil monte à +20 et ouvre douze
+ * perçages (weaponPanelImpl) ; les autres plafonnent à +10 et dix.
+ * `rarete` : ne concerne que les armes, et pas toutes (voir reglagesPour).
+ */
+export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?: boolean; label?: string } = {}): Reglages {
+  const art = !!o.artefact;
+  const base = { slot, label: o.label ?? slot, rarete: false, upMax: 0, etoiles: false, percage: null, eveil: false, scroll: false, elementMax: 0 } as Reglages;
+  switch (slot) {
+    case "weapon":
+      return { ...base, label: o.label ?? "Arme", rarete: o.rarete !== false, upMax: art ? 20 : 10, etoiles: art,
+        percage: { max: art ? 12 : 10, cartes: CARTES_ARME }, eveil: true, scroll: true, elementMax: 20 };
+    case "shield":
+      return { ...base, label: o.label ?? "Bouclier", upMax: 10, percage: { max: 10, cartes: CARTES_ARME }, eveil: true, elementMax: 20 };
+    case "suit":
+      return { ...base, label: o.label ?? "Tenue", upMax: 10, percage: { max: 4, cartes: CARTES_TENUE }, eveil: true, scroll: true, elementMax: 20 };
+    case "armor":
+      // « Cette pièce n'a ni perçage ni élément » — armorPanel du builder.
+      return { ...base, label: o.label ?? "Armure", upMax: 10, eveil: true, scroll: true };
+    case "jewel":
+      // jewelPanel : jusqu'à +30 (aProtect lunaire), et l'éveil, rien d'autre.
+      return { ...base, label: o.label ?? "Bijou", upMax: 30, eveil: true };
+    case "cape":
+      return { ...base, label: o.label ?? "Cape", eveil: true };
+    case "fashion":
+      return { ...base, label: o.label ?? "Fashion", upMax: 10 };
+  }
+}
+
+/** Le slot du builder (weapon, ring1, fhead…) ramené à une famille de réglages. */
+export function slotDepuisBuilder(clef: string): SlotFlyff | null {
+  const s = clef.replace(/[0-9]/g, "");
+  if (s === "weapon") return "weapon";
+  if (s === "shield") return "shield";
+  if (s === "suit") return "suit";
+  if (["helmet", "gauntlet", "boots"].includes(s)) return "armor";
+  if (["ring", "earring", "necklace"].includes(s)) return "jewel";
+  if (s === "cape") return "cape";
+  if (["fashion", "fhead", "ftop", "fhand", "ffoot"].includes(s)) return "fashion";
+  // Mantra, masque, fée, familier, ramasseur : le builder n'y règle rien de
+  // ce qu'on sait décrire ici.
+  return null;
+}
+
+/** Les tiers qui passent en artefact, comme dans weaponPanelImpl. */
+export const estTierArtefact = (tier?: string | null) => /yggdrasil|eternel/.test(sansAccent(tier ?? ""));
+
 /** Les armes du coffre, par leur nom court (le coffre ne dit que « Epee »). */
 const ARMES = [
   "epee", "glaive", "hache", "doloire", "marteau", "arc", "arbalete", "baguette",
@@ -94,31 +145,18 @@ export function reglagesPour(o: { item: string; cat: string; rarete?: boolean })
 
   const artefact = estArtefactable(o.cat ?? "");
 
-  if (estArme && nom.includes("bouclier")) {
-    return { slot: "shield", label: "Bouclier", rarete: false, upMax: 10, etoiles: false,
-      percage: { max: 10, cartes: CARTES_ARME }, eveil: true, scroll: false, elementMax: 20 };
-  }
-  if (estArme && ARMES.some((a) => nom.includes(a))) {
-    return { slot: "weapon", label: "Arme", rarete: o.rarete !== false, upMax: artefact ? 20 : 10, etoiles: artefact,
-      percage: { max: artefact ? 12 : 10, cartes: CARTES_ARME }, eveil: true, scroll: true, elementMax: 20 };
-  }
+  if (estArme && nom.includes("bouclier")) return reglagesDeSlot("shield");
+  if (estArme && ARMES.some((a) => nom.includes(a))) return reglagesDeSlot("weapon", { artefact, rarete: o.rarete !== false });
   if (estStuff && (nom.includes("armure") || nom.includes("tenue") || nom.includes("pectoral") || nom.includes("robe"))) {
-    return { slot: "suit", label: "Tenue", rarete: false, upMax: 10, etoiles: false,
-      percage: { max: 4, cartes: CARTES_TENUE }, eveil: true, scroll: true, elementMax: 20 };
+    return reglagesDeSlot("suit");
   }
   if (estStuff && (nom.includes("casque") || nom.includes("gants") || nom.includes("bottes"))) {
-    // « Cette pièce n'a ni perçage ni élément » — armorPanel du builder.
-    return { slot: "armor", label: nom.includes("casque") ? "Casque" : nom.includes("gants") ? "Gants" : "Bottes",
-      rarete: false, upMax: 10, etoiles: false, percage: null, eveil: true, scroll: true, elementMax: 0 };
+    return reglagesDeSlot("armor", { label: nom.includes("casque") ? "Casque" : nom.includes("gants") ? "Gants" : "Bottes" });
   }
   if (estBijou && (nom.includes("anneau") || nom.includes("boucle") || nom.includes("collier"))) {
-    // jewelPanel : jusqu'à +30 (aProtect lunaire), et l'éveil, rien d'autre.
-    return { slot: "jewel", label: nom.includes("anneau") ? "Anneau" : nom.includes("boucle") ? "Boucles" : "Collier",
-      rarete: false, upMax: 30, etoiles: false, percage: null, eveil: true, scroll: false, elementMax: 0 };
+    return reglagesDeSlot("jewel", { label: nom.includes("anneau") ? "Anneau" : nom.includes("boucle") ? "Boucles" : "Collier" });
   }
-  if (nom.includes("cape")) {
-    return { slot: "cape", label: "Cape", rarete: false, upMax: 0, etoiles: false, percage: null, eveil: true, scroll: false, elementMax: 0 };
-  }
+  if (nom.includes("cape")) return reglagesDeSlot("cape");
   return null;
 }
 

@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { BulleObjet } from "@/components/BulleObjet";
 import type { SpecObjet } from "@/lib/specObjet";
+import { ReglagesPiece } from "@/components/ReglagesPiece";
+import {
+  reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, CHOIX_VIDE, type ChoixPiece,
+} from "@/lib/specsFlyff";
 
 /**
  * Commander un objet qui n'existe pas encore en stock.
@@ -35,18 +39,6 @@ const SLOTS: { clef: string; label: string }[] = [
   { clef: "ramasseur", label: "Ramasseur" }, { clef: "fashion", label: "Fashion" },
 ];
 
-/** Mêmes clés et couleurs que le coffre : une Épique doit être épique partout. */
-const RARETES = [
-  { clef: "", label: "Sans rareté" },
-  { clef: "Rare", label: "Rare" },
-  { clef: "Épique", label: "Épique" },
-  { clef: "Légendaire", label: "Légendaire" },
-  { clef: "Pré-myth.", label: "Pré-mythique" },
-];
-const ELEMENTS_PERCAGE = ["", "Fulgur", "Volcano", "Océane"];
-const STATS_EVEIL = ["", "Force", "Endurance", "Dextérité", "Intelligence", "Dégâts critiques", "Attaque", "PV max", "MP max"];
-const RANGS_EVEIL = ["", "R1", "R2", "R3", "R4"];
-
 const champ: React.CSSProperties = {
   background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9,
   padding: "9px 11px", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: "100%",
@@ -60,14 +52,10 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   const [q, setQ] = useState("");
   const [choisi, setChoisi] = useState<ItemBrut | null>(null);
 
-  // Configuration demandée. Volontairement courte : c'est une COMMANDE, pas le
-  // builder — au-delà de ces réglages, la phrase libre dit mieux les choses.
-  const [rarete, setRarete] = useState("");
-  const [up, setUp] = useState("0");
-  const [percage, setPercage] = useState("0");
-  const [element, setElement] = useState("");
-  const [eveilRang, setEveilRang] = useState("");
-  const [eveilStat, setEveilStat] = useState("");
+  // Configuration demandée. Les réglages ouverts dépendent de la PIÈCE : une
+  // arme se perce et se rend rare, un casque non, un anneau monte à +30. La
+  // table est celle du builder (lib/specsFlyff), pas une deuxième liste.
+  const [choix, setChoix] = useState<ChoixPiece>(CHOIX_VIDE);
   const [prix, setPrix] = useState("");
   const [note, setNote] = useState("");
   /** Pseudo EN JEU : la remise se fait par courrier dans le jeu. */
@@ -103,23 +91,39 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     return (t ? base.filter((i) => i.n.toLowerCase().includes(t)) : base).slice(0, 24);
   }, [items, slot, q]);
 
+  /** Ce que le jeu permet sur cette pièce — rien de plus, rien de moins. */
+  const reglages = useMemo(() => {
+    const s = slotDepuisBuilder(slot);
+    if (!s) return null;
+    return reglagesDeSlot(s, {
+      artefact: estTierArtefact(choisi?.tier),
+      label: SLOTS.find((x) => x.clef === slot)?.label ?? s,
+    });
+  }, [slot, choisi]);
+
   /** La spec, reconstruite à chaque frappe : c'est elle qu'on envoie ET qu'on montre. */
   const spec: SpecObjet | null = useMemo(() => {
     if (!choisi) return null;
     const puces: string[] = [];
-    if (rarete) puces.push(rarete);
+    if (choix.rarete) puces.push(choix.rarete);
     else if (choisi.tier) puces.push(choisi.tier);
     const lignes: { label: string; valeur: string }[] = [];
-    if (Number(percage) > 0) lignes.push({ label: "Perçage", valeur: `${percage}${element ? ` · ${element}` : ""}` });
-    if (eveilRang) lignes.push({ label: "Éveil", valeur: `${eveilRang}${eveilStat ? ` · ${eveilStat}` : ""}` });
+    if (Number(choix.percage) > 0 || choix.carte) {
+      lignes.push({ label: "Perçage", valeur: `${choix.percage || "?"}${choix.carte ? ` · ${choix.carte}` : ""}` });
+    }
+    if (choix.eveilRang || choix.eveilStat) {
+      lignes.push({ label: "Éveil", valeur: [choix.eveilRang, choix.eveilStat].filter(Boolean).join(" · ") });
+    }
+    if (choix.scrollStat) lignes.push({ label: "Scroll", valeur: `${choix.scrollStat}${Number(choix.scrollNiv) > 0 ? ` +${choix.scrollNiv}` : ""}` });
+    if (choix.element) lignes.push({ label: "Élément", valeur: `${choix.element}${Number(choix.elementNiv) > 0 ? ` +${choix.elementNiv}` : ""}` });
     return {
       nom: choisi.n,
       slot: SLOTS.find((s) => s.clef === slot)?.label ?? slot,
       icone: (choisi.ic && icones[choisi.ic]) || null,
       couleur: choisi.col ?? null,
-      tier: rarete || choisi.tier || null,
-      up: Number(up) || null,
-      etoiles: null,
+      tier: choix.rarete || choisi.tier || null,
+      up: Number(choix.up) || null,
+      etoiles: Number(choix.etoiles) || null,
       classe: choisi.cls ?? null,
       niveau: choisi.lv ?? null,
       prestige: choisi.pr ?? null,
@@ -127,10 +131,12 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
       puces,
       lignes,
     };
-  }, [choisi, slot, icones, rarete, up, percage, element, eveilRang, eveilStat]);
+  }, [choisi, slot, icones, choix]);
 
+  // Le titre de la demande dit la pièce EXACTE : c'est lui que le détenteur lit
+  // dans sa liste, avant d'ouvrir la bulle.
   const nomComplet = spec
-    ? `${spec.nom}${spec.up ? ` +${spec.up}` : ""}${spec.tier ? ` (${spec.tier})` : ""}`
+    ? `${spec.nom}${resumerPiece(choix) ? ` — ${resumerPiece(choix)}` : ""}`
     : "";
 
   const ajouter = () => {
@@ -170,7 +176,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     }
     setEnvoi(false);
     if (!ok) { setEtat({ ok: false, msg: dernierMessage || "Aucune demande envoyée." }); return; }
-    setPanier([]); setChoisi(null); setNote(""); setPrix("");
+    setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix("");
     setEtat({ ok: true, msg: `${ok} demande(s) envoyée(s) — la suite se règle dans la conversation.` });
     onEnvoye?.();
   };
@@ -188,7 +194,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
         {/* ── Choix de l'objet ── */}
         <div>
           <div style={{ display: "flex", gap: 8, marginBottom: 9, flexWrap: "wrap" }}>
-            <select value={slot} onChange={(e) => { setSlot(e.target.value); setChoisi(null); }} style={{ ...champ, width: "auto", minWidth: 140 }} aria-label="Emplacement">
+            <select value={slot} onChange={(e) => { setSlot(e.target.value); setChoisi(null); setChoix(CHOIX_VIDE); }} style={{ ...champ, width: "auto", minWidth: 140 }} aria-label="Emplacement">
               {SLOTS.map((s) => <option key={s.clef} value={s.clef}>{s.label}</option>)}
             </select>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher un objet…" style={{ ...champ, flex: 1, minWidth: 150 }} />
@@ -199,7 +205,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
             {liste.map((i) => {
               const actif = choisi?.id === i.id;
               return (
-                <button key={i.id} onClick={() => setChoisi(i)}
+                <button key={i.id} onClick={() => { setChoisi(i); setChoix(CHOIX_VIDE); }}
                   style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 9px", borderRadius: 9, cursor: "pointer", textAlign: "left", fontFamily: "inherit", border: `1px solid ${actif ? "var(--orange)" : "transparent"}`, background: actif ? "rgba(255,140,26,.1)" : "var(--bg-3)", color: "var(--text)" }}>
                   <span style={{ width: 26, height: 26, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -216,37 +222,17 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
             })}
           </div>
 
-          {/* ── Réglages ── */}
-          {choisi && (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 9, marginTop: 13, paddingTop: 13, borderTop: "1px solid var(--border)" }}>
-              <label><span style={etiquette}>Rareté</span>
-                <select value={rarete} onChange={(e) => setRarete(e.target.value)} style={champ}>
-                  {RARETES.map((r) => <option key={r.clef} value={r.clef}>{r.label}</option>)}
-                </select>
-              </label>
-              <label><span style={etiquette}>Amélioration</span>
-                <input type="number" min={0} max={20} value={up} onChange={(e) => setUp(e.target.value)} style={champ} />
-              </label>
-              <label><span style={etiquette}>Perçage</span>
-                <input type="number" min={0} max={12} value={percage} onChange={(e) => setPercage(e.target.value)} style={champ} />
-              </label>
-              <label><span style={etiquette}>Élément</span>
-                <select value={element} onChange={(e) => setElement(e.target.value)} style={champ}>
-                  {ELEMENTS_PERCAGE.map((e) => <option key={e} value={e}>{e || "aucun"}</option>)}
-                </select>
-              </label>
-              <label><span style={etiquette}>Éveil</span>
-                <select value={eveilRang} onChange={(e) => setEveilRang(e.target.value)} style={champ}>
-                  {RANGS_EVEIL.map((r) => <option key={r} value={r}>{r || "aucun"}</option>)}
-                </select>
-              </label>
-              <label><span style={etiquette}>Stat d&apos;éveil</span>
-                <select value={eveilStat} onChange={(e) => setEveilStat(e.target.value)} style={champ}>
-                  {STATS_EVEIL.map((s) => <option key={s} value={s}>{s || "aucune"}</option>)}
-                </select>
-              </label>
+          {/* ── Réglages ── Le même panneau que les quêtes secondaires : on
+              n'ouvre que ce qui existe sur cette pièce-là. */}
+          {choisi && (reglages ? (
+            <div style={{ marginTop: 13, paddingTop: 13, borderTop: "1px solid var(--border)" }}>
+              <ReglagesPiece reglages={reglages} choix={choix} onChange={setChoix} nom={choisi.n} />
             </div>
-          )}
+          ) : (
+            <div style={{ marginTop: 13, paddingTop: 13, borderTop: "1px solid var(--border)", fontSize: 12, color: "var(--text-muted)" }}>
+              Rien à régler sur cette pièce : dis le reste dans la précision, en dessous.
+            </div>
+          ))}
         </div>
 
         {/* ── Aperçu et envoi ── */}

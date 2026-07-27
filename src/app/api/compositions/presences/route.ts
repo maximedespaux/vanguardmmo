@@ -4,6 +4,7 @@ import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
 import { normaliserCompo, CRENEAUX, type Creneau } from "@/lib/compositions";
 import { BAREME, donnerXp } from "@/lib/xp";
+import { BAREME_CREDITS, bougerCredits } from "@/lib/credits";
 
 /**
  * POST /api/compositions/presences — le staff confirme qui était VRAIMENT là.
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
     if (!compte) continue;
     // Une même soirée confirmée deux fois ne paie qu'une fois.
     await donnerXp(compte.id, "presence", BAREME.presence, `Présent aux Chambres Secrètes — ${libelle}`, `cs:${jour}:${creneau}:${compte.id}`);
+    await bougerCredits(compte.id, BAREME_CREDITS.presence, `Présent aux Chambres Secrètes — ${libelle}`, `cs:${jour}:${creneau}:${compte.id}`);
     credites += 1;
   }
   return NextResponse.json({ credites });

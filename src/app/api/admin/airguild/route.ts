@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
 import { donnerXp, pointsDepot } from "@/lib/xp";
+import { BAREME_CREDITS, bougerCredits } from "@/lib/credits";
 
 // État complet de l'AirGuild (app d'iBeats) — un seul blob JSON partagé (modèle AirGuildState).
 
@@ -155,10 +156,19 @@ async function crediterDepots(avant: unknown, apres: unknown): Promise<void> {
   for (const { membre, id, gain, manque } of gains) {
     const compte = comptes.find((c) => c.username.toLowerCase() === membre.toLowerCase());
     if (!compte) continue;
+    const points = pointsDepot(gain, manque);
+    // Les crédits suivent l'XP : un dépôt qui comble un manque en rapporte
+    // davantage, exactement pour la même raison.
+    await bougerCredits(
+      compte.id,
+      Math.floor(points / BAREME_CREDITS.parPointsDepot),
+      `${gain} × objet #${id} déposé au coffre`,
+      `depot:${jour}:${membre}:${id}:${qte(invB, membre, id)}`
+    );
     await donnerXp(
       compte.id,
       "depot",
-      pointsDepot(gain, manque),
+      points,
       `${gain} × objet #${id} déposé au coffre`,
       // Une même montée, rejouée le même jour, ne paie qu'une fois : l'app
       // sauvegarde en continu, un renvoi du même état ne doit rien créer.

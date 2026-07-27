@@ -4,115 +4,124 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { AvatarCadre } from "@/components/AvatarCadre";
+import { rangDe, rangSuivant } from "@/lib/rangs";
 import type { ObjetCoffre } from "@/lib/coffre";
 
 /**
- * Quêtes : ce dont la guilde a besoin, et qui s'en charge.
+ * QUÊTE GUILDE — ce dont la guilde a besoin, et ce que ça rapporte.
  *
- * Le plan de farm dit ce qui manque, mais pas QUI s'en occupe — donc chacun
- * suppose que quelqu'un d'autre le fera. Ici un nom est attaché au besoin, et
- * c'est le demandeur qui clôt en confirmant la réception : lui seul sait.
+ * Le principe qui tient tout : on ne paie pas ce qu'on demande, on le mérite.
+ * Aider donne de l'XP (ce qu'on a fait) et des crédits (ce qu'on peut demander
+ * en retour). Le bandeau du haut montre les deux en permanence — sans ça, la
+ * boucle ne se voit pas et personne ne joue.
+ *
+ * Le demandeur, et lui seul, confirme la réception : c'est ce qui rend la
+ * récompense du livreur incontestable.
  */
 type Personne = { id: string; nom: string; avatar: string | null };
 type Quete = {
-  id: string; titre: string; quantite: number; note: string | null; manque: number | null; itemRef: string | null; unite: string | null;
+  id: string; titre: string; quantite: number; note: string | null; manque: number | null;
+  itemRef: string | null; unite: string | null;
   statut: "ouverte" | "prise" | "livree" | "annulee";
   auteur: Personne; preneur: Personne | null; createdAt: string; livreeAt: string | null;
 };
+type Progression = {
+  moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number };
+  credits: { solde: number; gagnes: number; depenses: number };
+};
 
-const ETAT: Record<Quete["statut"], { l: string; c: string }> = {
-  ouverte: { l: "Cherche un volontaire", c: "var(--gold)" },
-  prise: { l: "En cours", c: "var(--orange)" },
-  livree: { l: "Livrée", c: "var(--green)" },
-  annulee: { l: "Annulée", c: "var(--text-muted)" },
+const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "hand-point" | "check" | "x" }> = {
+  ouverte: { l: "Cherche un volontaire", c: "var(--gold)", ic: "target" },
+  prise: { l: "En cours", c: "var(--orange)", ic: "hand-point" },
+  livree: { l: "Livrée", c: "var(--green)", ic: "check" },
+  annulee: { l: "Annulée", c: "var(--text-muted)", ic: "x" },
 };
 
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "10px 12px", color: "var(--text)", fontSize: 13.5, fontFamily: "inherit" };
+const pas: React.CSSProperties = { width: 26, height: 28, borderRadius: 7, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 15, lineHeight: 1 };
 
-function Avatar({ p }: { p: Personne | null }) {
-  if (p?.avatar) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={p.avatar} alt="" style={{ width: 22, height: 22, borderRadius: 11, objectFit: "cover", flexShrink: 0 }} />;
-  }
-  return <span style={{ width: 22, height: 22, borderRadius: 11, flexShrink: 0, background: "var(--bg-2)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="user" size={12} /></span>;
-}
+/** « 12 slots » ou « 400 unités » : 1 slot = 9 999 unités, le mot compte. */
+const lisible = (n: number, unite: string | null) =>
+  `${n.toLocaleString("fr-FR")}${unite === "slot" ? ` slot${n > 1 ? "s" : ""}` : unite === "unitaire" ? ` unité${n > 1 ? "s" : ""}` : ""}`;
 
 export default function QuetesPage() {
   useCardFx();
   const { data: session } = useSession();
-  const moi = (session?.user as { id?: string } | undefined)?.id;
+  const moi = (session?.user as { id?: string; image?: string } | undefined)?.id;
+  const monAvatar = (session?.user as { image?: string } | undefined)?.image ?? null;
 
   const [quetes, setQuetes] = useState<Quete[]>([]);
-  const [titre, setTitre] = useState("");
-  const [quantite, setQuantite] = useState("1");
+  const [prog, setProg] = useState<Progression | null>(null);
   const [note, setNote] = useState("");
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
 
-  // Catalogue du coffre : chargé une fois, filtré à la frappe.
+  // ── Catalogue du coffre : on demande ce qui existe, avec ses chiffres ──
   const [catalogue, setCatalogue] = useState<ObjetCoffre[]>([]);
-  const [choisi, setChoisi] = useState<ObjetCoffre | null>(null);
-  /** « 12 slots » ou « 400 unités » : 1 slot = 9 999 unités, le mot compte. */
-  const quantiteLisible = (n: number, unite: string | null) =>
-    `${n.toLocaleString("fr-FR")}${unite === "slot" ? ` slot${n > 1 ? "s" : ""}` : unite === "unitaire" ? ` unité${n > 1 ? "s" : ""}` : ""}`;
-  const [listeOuverte, setListeOuverte] = useState(false);
+  const [q, setQ] = useState("");
+  /** Quantités choisies, par objet. Vide = 0 : rien n'est demandé par défaut. */
+  const [panier, setPanier] = useState<Record<string, number>>({});
+
+  const charger = useCallback(async () => {
+    const [a, b] = await Promise.all([
+      fetch("/api/quetes").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]);
+    if (a) setQuetes(a);
+    if (b) setProg({ moi: b.moi, credits: b.credits });
+    setPret(true);
+  }, []);
+  useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t); }, [charger]);
   useEffect(() => {
     fetch("/api/catalogue").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCatalogue(d.items ?? [])).catch(() => {});
   }, []);
 
-  const suggestions = useMemo(() => {
-    const q = titre.trim().toLowerCase();
-    // Sans recherche, on montre ce qui manque le plus : c'est la réponse à
-    // « qu'est-ce que je peux faire d'utile ? », posée sans mot-clé.
-    const base = q
-      ? catalogue.filter((o) => (o.item + " " + o.cat + " " + o.classe).toLowerCase().includes(q))
-      : catalogue.filter((o) => o.manque > 0);
-    return base.slice(0, 8);
-  }, [catalogue, titre]);
-
-  const prendreObjet = (o: ObjetCoffre) => {
-    setChoisi(o);
-    setTitre(o.classe ? `${o.item} (${o.classe})` : o.item);
-    // La quantité proposée est ce qu'il manque : le chiffre utile, pas 1.
-    if (o.manque > 0) setQuantite(String(o.manque));
-    setListeOuverte(false);
-  };
-
-  const charger = useCallback(async () => {
-    try { const r = await fetch("/api/quetes"); if (r.ok) setQuetes(await r.json()); } catch { /* silencieux */ }
-    setPret(true);
-  }, []);
-  useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t); }, [charger]);
-
-  // Le formulaire est pré-rempli quand on arrive du plan de farm
-  // (`/quetes?item=Griffe&manque=12`) : la quête part de ce qui manque
-  // vraiment, sans avoir à recopier le nom de l'objet.
-  const [prefill, setPrefill] = useState<{ itemRef?: string; manque?: number }>({});
+  // Arrivée depuis le plan de farm : l'objet visé est déjà dans la recherche.
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const item = p.get("item");
-    if (item) {
-      setTitre(item);
-      const manque = Number(p.get("manque"));
-      if (Number.isFinite(manque) && manque > 0) setQuantite(String(manque));
-      setPrefill({ itemRef: p.get("ref") ?? undefined, manque: Number.isFinite(manque) ? manque : undefined });
-    }
+    if (item) setQ(item);
   }, []);
 
-  const creer = async () => {
-    if (!titre.trim()) { setErreur("Dis ce dont tu as besoin."); return; }
+  const listeObjets = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    // Sans recherche : ce qui manque le plus. C'est la réponse à « je peux
+    // demander quoi d'utile ? » posée sans mot-clé.
+    const base = t
+      ? catalogue.filter((o) => (o.item + " " + o.cat + " " + o.classe).toLowerCase().includes(t))
+      : catalogue.filter((o) => o.manque > 0);
+    return base.slice(0, 10);
+  }, [catalogue, q]);
+
+  const choisis = Object.entries(panier).filter(([, n]) => n > 0);
+  const objetDe = (id: string) => catalogue.find((o) => o.id === id);
+  const bouger = (id: string, n: number) => setPanier((p) => {
+    const v = Math.max(0, Math.min(99999, Math.round(n) || 0));
+    const c = { ...p };
+    if (v <= 0) delete c[id]; else c[id] = v;
+    return c;
+  });
+
+  const demander = async () => {
+    if (!choisis.length) { setErreur("Choisis au moins un objet, avec une quantité."); return; }
     if (!note.trim()) { setErreur("Indique la raison : c'est ce qui décide quelqu'un à s'en charger."); return; }
+    setEnvoi(true);
     const r = await fetch("/api/quetes", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        titre, quantite: Number(quantite) || 1, note,
-        // L'objet du catalogue prime sur le pré-remplissage venu du plan de farm.
-        ...(choisi ? { itemRef: choisi.id, manque: choisi.manque, unite: choisi.unit } : prefill),
+        note,
+        items: choisis.map(([id, n]) => {
+          const o = objetDe(id);
+          return { titre: o?.classe ? `${o.item} (${o.classe})` : o?.item ?? id, quantite: n, itemRef: id, unite: o?.unit, manque: o?.manque };
+        }),
       }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) { setErreur(j.error ?? `Création refusée (erreur ${r.status}).`); return; }
-    setTitre(""); setQuantite("1"); setNote(""); setErreur(""); setPrefill({}); setChoisi(null);
+    setEnvoi(false);
+    if (!r.ok) { setErreur(j.error ?? `Demande refusée (erreur ${r.status}).`); return; }
+    setPanier({}); setNote(""); setErreur("");
     charger();
   };
 
@@ -121,138 +130,181 @@ export default function QuetesPage() {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) setErreur(j.error ?? `Action refusée (erreur ${r.status}).`); else setErreur("");
+    setErreur(r.ok ? "" : (j.error ?? `Action refusée (erreur ${r.status}).`));
     charger();
   };
 
-  const ouvertes = quetes.filter((q) => q.statut === "ouverte" || q.statut === "prise");
-  const closes = quetes.filter((q) => q.statut === "livree" || q.statut === "annulee");
+  const ouvertes = quetes.filter((x) => x.statut === "ouverte" || x.statut === "prise");
+  const closes = quetes.filter((x) => x.statut === "livree" || x.statut === "annulee");
+  const niveau = prog?.moi.niveau ?? 1;
+  const rang = rangDe(niveau);
+  const suivant = rangSuivant(niveau);
+  const pc = prog ? Math.min(100, Math.round((prog.moi.dansNiveau / prog.moi.pourNiveau) * 100)) : 0;
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader icon="target" title="Quêtes" subtitle="Ce dont la guilde a besoin, et qui s'en charge. Celui qui a demandé confirme la réception — c'est ce qui donne l'XP au livreur." />
+    <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
+      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin. Aider rapporte de l'XP et des crédits ; demander en dépense — c'est ce qui fait que ça ne va pas dans un seul sens." />
+
+      {/* ── Bandeau de progression : la boucle du jeu, toujours à l'écran ── */}
+      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 18, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+        <AvatarCadre src={monAvatar} niveau={niveau} taille={64} montrerRang />
+
+        <div style={{ flex: "1 1 260px", minWidth: 220 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
+            <span className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: rang.couleur }}>Niveau {niveau}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{(prog?.moi.total ?? 0).toLocaleString("fr-FR")} XP</span>
+            <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)" }}>
+              {suivant ? `${suivant.nom} au niveau ${suivant.seuil}` : "rang maximal atteint"}
+            </span>
+          </div>
+          <div style={{ height: 8, borderRadius: 5, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden", margin: "7px 0 5px" }}>
+            <div style={{ width: `${pc}%`, height: "100%", background: `linear-gradient(90deg, ${rang.couleur}, var(--orange))`, transition: "width .4s var(--ease,ease)" }} />
+          </div>
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{rang.obtention}</div>
+        </div>
+
+        {/* Les crédits : ce qu'on peut demander parce qu'on a donné. */}
+        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+          <Compteur valeur={prog?.credits.solde ?? 0} label="crédits" principal />
+          <Compteur valeur={prog?.credits.gagnes ?? 0} label="gagnés en aidant" />
+          <Compteur valeur={prog?.credits.depenses ?? 0} label="dépensés" />
+        </div>
+      </div>
 
       {erreur && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--red)" }}>{erreur}</div>}
 
-      {/* ── Demander ── */}
-      {/* z-index : la liste de suggestions déborde sur les cartes suivantes,
-          qui sont peintes après elle sans cela. */}
-      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 20, position: "relative", zIndex: 5 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
-          <Icon name="plus" size={14} />J&apos;ai besoin de quelque chose
+      {/* ── Demander de l'aide ── */}
+      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 22 }}>
+        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
+          <Icon name="plus" size={14} />Demander de l&apos;aide
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 11 }}>
+          Cherche dans le coffre, mets une quantité sur ce qu&apos;il te faut. Tout est à 0 tant que tu n&apos;as rien demandé.
         </div>
 
-        {/* Le champ cherche dans les objets du coffre : on voit le stock et ce
-            qu'il manque au seuil AVANT de demander. En texte libre, on ne
-            savait ni ce que la guilde possède, ni comment l'objet s'appelle
-            exactement — deux quêtes pour le même objet mal orthographié. */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
-          <div style={{ flex: "2 1 260px", minWidth: 220, position: "relative" }}>
-            <input
-              value={titre}
-              onChange={(e) => { setTitre(e.target.value); setChoisi(null); setListeOuverte(true); }}
-              onFocus={() => setListeOuverte(true)}
-              placeholder="Cherche un objet du coffre, ou écris librement…"
-              style={{ ...inp, width: "100%" }}
-            />
-            {listeOuverte && suggestions.length > 0 && (
-              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 30, maxHeight: 280, overflowY: "auto", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 16px 40px rgba(0,0,0,.5)", padding: 5 }}>
-                {suggestions.map((o) => (
-                  <button key={o.id} onClick={() => prendreObjet(o)}
-                    style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left", padding: "7px 9px", borderRadius: 8, border: "none", background: "transparent", color: "var(--text)", cursor: "pointer", fontFamily: "inherit" }}>
-                    <span style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 7, background: "var(--bg-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      {o.icon ? <img src={o.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <Icon name="package" size={14} style={{ color: "var(--text-muted)" }} />}
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
-                      </span>
-                      <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>{o.cat}</span>
-                    </span>
-                    <span style={{ flexShrink: 0, textAlign: "right" }}>
-                      <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{o.stock}/{o.target}</span>
-                      {o.manque > 0
-                        ? <span style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--red)" }}>−{o.manque}</span>
-                        : <span style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>au seuil</span>}
-                    </span>
-                  </button>
-                ))}
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher un objet…" style={{ ...inp, width: "100%", marginBottom: 10 }} />
+
+        <div style={{ display: "grid", gap: 5, maxHeight: 320, overflowY: "auto", marginBottom: 12 }}>
+          {listeObjets.length === 0 && (
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)", padding: "14px 4px" }}>
+              {catalogue.length ? "Aucun objet ne correspond." : "Catalogue en cours de chargement…"}
+            </div>
+          )}
+          {listeObjets.map((o) => {
+            const n = panier[o.id] ?? 0;
+            return (
+              <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 10, background: n ? "rgba(255,140,26,.07)" : "var(--bg-3)", border: `1px solid ${n ? "var(--orange)" : "var(--border)"}` }}>
+                <span style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 8, background: "var(--bg-2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {o.icon ? <img src={o.icon} alt="" style={{ width: 25, height: 25, objectFit: "contain" }} /> : <Icon name="package" size={15} style={{ color: "var(--text-muted)" }} />}
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
+                  </span>
+                  <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>
+                    {o.cat} · coffre {o.stock}/{o.target}
+                    {o.manque > 0 && <b style={{ color: "var(--red)" }}> — il en manque {o.manque}</b>}
+                  </span>
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                  <button onClick={() => bouger(o.id, n - 1)} style={pas} aria-label={`Moins de ${o.item}`}>−</button>
+                  <input value={n} onChange={(e) => bouger(o.id, +e.target.value || 0)} inputMode="numeric"
+                    style={{ ...inp, width: 62, textAlign: "center", padding: "6px 4px", fontSize: 13 }} aria-label={`Quantité de ${o.item}`} />
+                  <button onClick={() => bouger(o.id, n + 1)} style={pas} aria-label={`Plus de ${o.item}`}>＋</button>
+                  {o.manque > 0 && (
+                    <button onClick={() => bouger(o.id, o.manque)} title="Demander tout ce qui manque au seuil"
+                      style={{ ...pas, width: "auto", padding: "0 9px", fontSize: 11, color: "var(--text-muted)" }}>
+                      manque
+                    </button>
+                  )}
+                </span>
               </div>
-            )}
-          </div>
-          <input type="number" min={1} value={quantite} onChange={(e) => setQuantite(e.target.value)} placeholder="quantité" style={{ ...inp, width: 110 }} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi tu en as besoin *" style={{ ...inp, flex: "2 1 180px" }} />
-          <button className="vg-btn" onClick={creer}>Demander</button>
+            );
+          })}
         </div>
 
-        {choisi && (
-          <div style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {choisi.icon && <img src={choisi.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />}
-            <b>{choisi.item}</b>
-            <span style={{ color: "var(--text-muted)" }}>{choisi.cat}{choisi.classe ? ` · ${choisi.classe}` : ""}</span>
-            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
-              coffre : <b style={{ color: "var(--text)" }}>{choisi.stock}</b> / {choisi.target}
-              {choisi.manque > 0 && <b style={{ color: "var(--red)" }}> — il en manque {choisi.manque}</b>}
-            </span>
+        {choisis.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 11 }}>
+            {choisis.map(([id, n]) => {
+              const o = objetDe(id);
+              return (
+                <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 20, border: "1px solid var(--orange)", background: "rgba(255,140,26,.1)", fontSize: 12 }}>
+                  <b style={{ color: "var(--orange)" }}>{lisible(n, o?.unit ?? null)}</b> {o?.item ?? id}
+                  <button onClick={() => bouger(id, 0)} aria-label="Retirer" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex" }}>
+                    <Icon name="x" size={11} />
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi tu en as besoin *" style={{ ...inp, flex: "1 1 240px" }} />
+          <button className="vg-btn" onClick={demander} disabled={envoi || !choisis.length}
+            style={{ opacity: envoi || !choisis.length ? .5 : 1, cursor: envoi || !choisis.length ? "default" : "pointer" }}>
+            {envoi ? "Envoi…" : choisis.length > 1 ? `Demander ${choisis.length} objets` : "Demander"}
+          </button>
+        </div>
       </div>
 
-      {/* ── En cours ── */}
+      {/* ── Le tableau des quêtes ── */}
       <h2 className="font-heading" style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>À faire</h2>
       {!pret ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Chargement…</div>
         : ouvertes.length === 0 ? (
-          <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
-            Aucune quête en cours. Demande ce dont tu as besoin — quelqu&apos;un s&apos;en chargera.
+          <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+            Personne n&apos;a besoin de rien pour l&apos;instant. C&apos;est bon signe.
           </div>
         ) : (
-          <div style={{ display: "grid", gap: 9 }}>
-            {ouvertes.map((q) => {
-              // `moi` peut manquer (session pas encore lue, mode dev) : sans le
-              // vérifier, `undefined === undefined` ferait passer tout le monde
-              // pour le preneur, et « Je ne peux plus » s'afficherait sur les
-              // quêtes de tous les autres.
-              const jeSuisAuteur = !!moi && q.auteur.id === moi;
-              const jeSuisPreneur = !!moi && q.preneur?.id === moi;
+          <div className="vg-stagger" style={{ display: "grid", gap: 10 }}>
+            {ouvertes.map((x) => {
+              const jeSuisAuteur = !!moi && x.auteur.id === moi;
+              const jeSuisPreneur = !!moi && x.preneur?.id === moi;
+              const e = ETAT[x.statut];
               return (
-                <div key={q.id} className="glass-card fx-card" style={{ padding: 14 }}>
+                <div key={x.id} className="glass-card fx-card" style={{ padding: 14, borderLeft: `3px solid ${e.c}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                    <Icon name="target" size={16} style={{ color: "var(--orange)" }} />
-                    <span className="font-heading" style={{ fontSize: 15, fontWeight: 700 }}>{quantiteLisible(q.quantite, q.unite)} × {q.titre}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: ETAT[q.statut].c }}>{ETAT[q.statut].l}</span>
-                    {/* Le lien avec le plan de farm, figé à l'ouverture : c'est la
-                        raison d'être de la quête, pas un compteur à rafraîchir. */}
-                    {q.manque != null && q.manque > 0 && (
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {q.manque} au seuil</span>
+                    <Icon name={e.ic} size={16} style={{ color: e.c }} />
+                    <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700 }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: e.c }}>{e.l}</span>
+                    {x.manque != null && x.manque > 0 && (
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
                     )}
+                    <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <Icon name="medal" size={12} />+100 XP · +3 crédits
+                    </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
-                    <Avatar p={q.auteur} />demandé par <b style={{ color: "var(--text)" }}>{q.auteur.nom}</b>
-                    {q.preneur && <><span>·</span><Avatar p={q.preneur} />pris par <b style={{ color: "var(--text)" }}>{q.preneur.nom}</b></>}
-                    {q.note && <span>· {q.note}</span>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
+                    <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} niveau={1} taille={22} />
+                    demandé par <b style={{ color: "var(--text)" }}>{x.auteur.nom}</b>
+                    {x.preneur && (
+                      <>
+                        <span>·</span>
+                        <AvatarCadre src={x.preneur.avatar} nom={x.preneur.nom} niveau={1} taille={22} />
+                        pris par <b style={{ color: "var(--text)" }}>{x.preneur.nom}</b>
+                      </>
+                    )}
                   </div>
+                  {x.note && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6, fontStyle: "italic" }}>« {x.note} »</div>}
 
                   <div style={{ display: "flex", gap: 8, marginTop: 11, flexWrap: "wrap" }}>
-                    {q.statut === "ouverte" && !jeSuisAuteur && (
-                      <button className="vg-btn" onClick={() => agir(q.id, "prendre")} style={{ padding: "8px 15px", fontSize: 12.5 }}>Je m&apos;en charge</button>
+                    {x.statut === "ouverte" && !jeSuisAuteur && (
+                      <button className="vg-btn" onClick={() => agir(x.id, "prendre")} style={{ padding: "8px 15px", fontSize: 12.5 }}>Je m&apos;en charge</button>
                     )}
                     {jeSuisPreneur && (
-                      <button onClick={() => agir(q.id, "abandonner")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Je ne peux plus</button>
+                      <button onClick={() => agir(x.id, "abandonner")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Je ne peux plus</button>
                     )}
-                    {/* Confirmer la réception est réservé au demandeur : c'est ce
-                        qui rend l'XP du livreur incontestable. */}
-                    {jeSuisAuteur && q.preneur && (
-                      <button onClick={() => agir(q.id, "livrer")} style={{ padding: "8px 15px", borderRadius: 9, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    {jeSuisAuteur && x.preneur && (
+                      <button onClick={() => agir(x.id, "livrer")} style={{ padding: "8px 15px", borderRadius: 9, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <Icon name="check" size={14} />J&apos;ai bien reçu
                       </button>
                     )}
                     {jeSuisAuteur && (
-                      <button onClick={() => agir(q.id, "annuler")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Annuler</button>
+                      <button onClick={() => agir(x.id, "annuler")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Annuler</button>
                     )}
-                    {q.statut === "ouverte" && jeSuisAuteur && (
+                    {x.statut === "ouverte" && jeSuisAuteur && (
                       <span style={{ fontSize: 11.5, color: "var(--text-muted)", alignSelf: "center" }}>En attente d&apos;un volontaire.</span>
                     )}
                   </div>
@@ -262,22 +314,32 @@ export default function QuetesPage() {
           </div>
         )}
 
-      {/* ── Réglées ── */}
       {closes.length > 0 && (
         <>
           <h2 className="font-heading" style={{ fontSize: 14, textTransform: "uppercase", letterSpacing: 1, margin: "22px 0 10px" }}>Réglées récemment</h2>
           <div style={{ display: "grid", gap: 6 }}>
-            {closes.map((q) => (
-              <div key={q.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
-                <Icon name={q.statut === "livree" ? "check" : "x"} size={13} style={{ color: ETAT[q.statut].c }} />
-                <span style={{ color: "var(--text)" }}>{quantiteLisible(q.quantite, q.unite)} × {q.titre}</span>
-                {q.preneur && q.statut === "livree" && <>· livré par <b style={{ color: "var(--text)" }}>{q.preneur.nom}</b></>}
-                <span style={{ marginLeft: "auto" }}>{new Date(q.livreeAt ?? q.createdAt).toLocaleDateString("fr-FR")}</span>
+            {closes.map((x) => (
+              <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
+                <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c }} />
+                <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
+                {x.preneur && x.statut === "livree" && <>· livré par <b style={{ color: "var(--text)" }}>{x.preneur.nom}</b></>}
+                <span style={{ marginLeft: "auto" }}>{new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}</span>
               </div>
             ))}
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/** Un chiffre du bandeau. Le solde est mis en avant : c'est celui qui décide. */
+function Compteur({ valeur, label, principal = false }: { valeur: number; label: string; principal?: boolean }) {
+  const couleur = principal ? (valeur > 0 ? "var(--green)" : valeur < 0 ? "var(--red)" : "var(--gold)") : "var(--text)";
+  return (
+    <div style={{ minWidth: 92, padding: "9px 13px", borderRadius: 11, background: "var(--bg-3)", border: `1px solid ${principal ? "var(--orange)" : "var(--border)"}`, textAlign: "center" }}>
+      <div className="font-heading" style={{ fontSize: principal ? 22 : 17, fontWeight: 700, color: couleur, lineHeight: 1.1 }}>{valeur}</div>
+      <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 3 }}>{label}</div>
     </div>
   );
 }

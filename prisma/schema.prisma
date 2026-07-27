@@ -108,6 +108,7 @@ model User {
   debts         Debt[]
   snapshots     BuildSnapshot[]
   xp            XpEvent[]
+  credits       CreditEvent[]
   quetes        Quete[]  @relation("QueteAuteur")
   quetesPrises  Quete[]  @relation("QuetePreneur")
 }
@@ -635,6 +636,12 @@ model BankRequest {
   /// Nullable : les requêtes du panier n'en ont pas, et un `db push` de prod ne
   /// doit jamais buter sur les lignes existantes.
   spec        Json?
+  /// Crédits d'entraide dépensés par cette demande, et solde AU MOMENT où elle a
+  /// été faite. Figés : c'est ce qui permet au staff de voir, six mois plus tard,
+  /// si le membre demandait plus qu'il ne donnait — un solde recalculé aujourd'hui
+  /// ne dirait rien de ce jour-là.
+  cout        Int      @default(0)
+  soldeAvant  Int      @default(0)
   status      BankRequestStatus @default(PENDING)
   prixPublic  BigInt?           // fixé par l'admin à l'acceptation
   prixFinal   BigInt?           // total = prix unitaire × quantité (plus de remise)
@@ -770,6 +777,31 @@ model Quete {
 
   @@index([statut, createdAt])
   @@index([auteurId])
+}
+
+/// Crédit d'entraide : ce qu'on a gagné en aidant, ce qu'on dépense en demandant.
+///
+/// Remplace le système de dettes, jugé trop lourd. Le principe tient en une
+/// phrase : on ne paie pas ce qu'on demande, on le MÉRITE. Aider crédite,
+/// demander débite, et le solde dit à quel point on rend ce qu'on prend.
+///
+/// Journal plutôt que compteur, pour la même raison que l'XP : un solde qui ne
+/// s'explique pas ne se conteste pas non plus, et le staff doit pouvoir voir
+/// d'où vient chaque point.
+model CreditEvent {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Positif = gagné en aidant, négatif = dépensé en demandant.
+  delta  Int
+  /// En clair, lisible sans recouper une autre table.
+  motif  String
+  /// Empreinte de l'événement d'origine : une même livraison ne crédite qu'une fois.
+  refId  String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 /// Un gain d'XP, gardé au détail plutôt qu'ajouté à un compteur.

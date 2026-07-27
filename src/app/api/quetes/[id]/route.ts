@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessGuild } from "@/config/roles";
 import { BAREME, donnerXp } from "@/lib/xp";
+import { BAREME_CREDITS, bougerCredits } from "@/lib/credits";
 import { QUETE_AVEC, serialiserQuete } from "@/lib/quetes";
 
 /**
@@ -60,8 +61,11 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       where: { id }, data: { statut: "livree", livreeAt: new Date() }, include: QUETE_AVEC,
     });
     await donnerXp(q.preneurId, "quete", BAREME.quete, `Quête livrée : ${q.quantite} × ${q.titre}`, `quete:${q.id}`);
+    // Livrer donne aussi des crédits : c'est ce qui permettra de demander à son
+    // tour. L'XP mesure ce qu'on a fait, les crédits ce qu'on peut demander.
+    await bougerCredits(q.preneurId, BAREME_CREDITS.quete, `Quête livrée : ${q.titre}`, `quete:${q.id}`);
     await prisma.notification
-      .create({ data: { userId: q.preneurId, type: "QUETE", title: "Livraison confirmée", body: `${a.user.username} a reçu « ${q.titre} » — +${BAREME.quete} XP.`, link: "/dashboard" } })
+      .create({ data: { userId: q.preneurId, type: "QUETE", title: "Livraison confirmée", body: `${a.user.username} a reçu « ${q.titre} » — +${BAREME.quete} XP et +${BAREME_CREDITS.quete} crédits.`, link: "/dashboard" } })
       .catch(() => null);
     return NextResponse.json(serialiserQuete(maj));
   }

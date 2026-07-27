@@ -1,5 +1,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+
+/**
+ * Ouvre le fil d'une requête à sa création : un premier message système qui
+ * rappelle ce qui est demandé, et invite à négocier. Le fil doit préexister à la
+ * discussion — attendre qu'on ait « quelque chose à dire » revient à ne jamais
+ * l'ouvrir, et la négociation repart alors sur un autre outil.
+ */
+async function ouvrirFilRequete(
+  bankRequestId: string, demandeur: string, item: string | null, qty: number, prix?: number | null
+) {
+  const estime = prix ? ` — estimé à ${(prix * qty).toLocaleString("fr-FR")} périns` : "";
+  await prisma.requestMessage
+    .create({
+      data: {
+        bankRequestId,
+        kind: "system",
+        body: `${demandeur} demande ${qty} × ${item ?? "des périns"}${estime}. Le prix peut se négocier ici.`,
+      },
+    })
+    .catch(() => null);
+}
 import { apiAuth } from "@/lib/access";
 
 const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, prixFinal: r.prixFinal?.toString() ?? null });
@@ -67,7 +88,7 @@ export async function POST(req: Request) {
     for (const it of b.items.slice(0, 40)) {
       const name = (it?.name ?? "").toString().slice(0, 200).trim();
       if (!name) continue;
-      await prisma.bankRequest.create({
+      const cree = await prisma.bankRequest.create({
         data: {
           userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
           kind: "ITEM", item: name, quantity: Math.max(1, Math.floor(Number(it.quantity) || 1)),
@@ -77,6 +98,10 @@ export async function POST(req: Request) {
           reason: `Boutique · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
         },
       });
+      // Le fil s'ouvre AVEC la demande : il doit exister avant qu'on ait quelque
+      // chose à s'y dire, sinon personne ne pense à l'ouvrir et la négociation
+      // repart sur un autre outil.
+      await ouvrirFilRequete(cree.id, a.user.username, name, cree.quantity, cree.priceEach);
       count++;
     }
     await notifyHolders(b.items.map((it: any) => it?.name ?? ""), a.user.username, a.user.id);
@@ -95,6 +120,7 @@ export async function POST(req: Request) {
       characterName: (b.characterName ?? "").toString().slice(0, 80).trim() || null,
     },
   });
+  await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);
   if (kind !== "PERINS" && item) await notifyHolders([item], a.user.username, a.user.id);
   return NextResponse.json(ser(r), { status: 201 });
 }

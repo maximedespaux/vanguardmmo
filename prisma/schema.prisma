@@ -685,7 +685,13 @@ model RequestMessage {
   /// Pseudo figé à l'écriture : un membre peut changer de nom, le fil ne doit pas
   /// se réécrire tout seul.
   author        String?
-  kind          String   @default("chat") // "chat" | "system"
+  kind          String   @default("chat") // "chat" | "system" | "offer"
+  /// Montant proposé quand `kind` vaut "offer". Null sinon — une négociation
+  /// doit porter un chiffre exploitable, pas un prix noyé dans une phrase.
+  amount        Int?
+  /// Offre acceptée : fige l'accord. Une offre acceptée ne se renégocie pas,
+  /// c'est ce qui donne sa valeur au « oui ».
+  acceptedAt    DateTime?
   body          String
   createdAt     DateTime @default(now())
 

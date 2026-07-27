@@ -46,17 +46,50 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if ("error" in a) return a.error;
 
   const b = await req.json().catch(() => ({}));
+  const estStaff = canAccessAdmin(a.auth.user.role);
+  const moi = a.auth.user.username ?? "?";
+
+  // ── Accepter une offre ────────────────────────────────────────────────
+  // Une offre acceptée fige le prix sur la requête : sans cette écriture,
+  // l'accord ne vivrait que dans une phrase du fil et le staff devrait le
+  // ressaisir à la main, avec le risque de se tromper de chiffre.
+  if (b?.accept) {
+    const offre = await prisma.requestMessage.findFirst({
+      where: { id: String(b.accept), bankRequestId: id, kind: "offer", acceptedAt: null },
+    });
+    if (!offre?.amount) return NextResponse.json({ error: "Offre introuvable ou déjà traitée." }, { status: 409 });
+    // On n'accepte pas sa propre offre : ce serait s'accorder un prix tout seul.
+    if (offre.userId === a.auth.user.id) {
+      return NextResponse.json({ error: "L'autre partie doit accepter ton offre." }, { status: 403 });
+    }
+    await prisma.requestMessage.update({ where: { id: offre.id }, data: { acceptedAt: new Date() } });
+    await prisma.bankRequest.update({ where: { id }, data: { prixFinal: BigInt(offre.amount) } });
+    await prisma.requestMessage.create({
+      data: { bankRequestId: id, kind: "system", body: `${moi} a accepté le prix de ${offre.amount.toLocaleString("fr-FR")} périns.` },
+    });
+    return NextResponse.json({ ok: true, accepte: offre.amount });
+  }
+
+  // ── Proposer un prix ──────────────────────────────────────────────────
+  if (b?.offer != null) {
+    const montant = Math.max(0, Math.floor(Number(b.offer) || 0));
+    if (montant <= 0) return NextResponse.json({ error: "Montant invalide." }, { status: 400 });
+    await prisma.requestMessage.create({
+      data: {
+        bankRequestId: id, userId: a.auth.user.id, author: moi, kind: "offer", amount: montant,
+        body: `${estStaff ? "Le staff propose" : `${moi} propose`} ${montant.toLocaleString("fr-FR")} périns` +
+          (b.body ? ` — ${String(b.body).slice(0, 300)}` : "."),
+      },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── Message simple ────────────────────────────────────────────────────
   const texte = String(b?.body ?? "").trim().slice(0, 2000);
   if (!texte) return NextResponse.json({ error: "Message vide." }, { status: 400 });
 
   await prisma.requestMessage.create({
-    data: {
-      bankRequestId: id,
-      userId: a.auth.user.id,
-      author: a.auth.user.username ?? "?",
-      kind: "chat",
-      body: texte,
-    },
+    data: { bankRequestId: id, userId: a.auth.user.id, author: moi, kind: "chat", body: texte },
   });
 
   // Sans Discord, la notification du site est le seul signal. Le staff écrit au

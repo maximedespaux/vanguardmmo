@@ -327,10 +327,16 @@ export default function BanquePage() {
                       {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn</div>}
                       {first.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(first.prixPublic)}</b> périn — voir l'onglet « Dettes ».</div>}
                       {first.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {first.adminNote}</div>}
-                      {/* Le fil remplace le salon d'échange que le bot ouvrait pour
-                          chaque demande. Attaché au PREMIER article du panier :
-                          un panier est une seule demande, une seule discussion. */}
-                      <PanneauFil kind="bank-request" id={first.id} />
+                      {/* La négociation a sa propre page : marchander dans un
+                          panneau replié au fond d'une carte est intenable, et le
+                          lien est partageable. Le panneau reste pour un coup d'œil
+                          rapide sans quitter la liste. */}
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 9 }}>
+                        <a href={`/requetes/${first.id}`} className="vg-btn" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", fontSize: 12.5 }}>
+                          <Icon name="message" size={14} /> Discuter et négocier
+                        </a>
+                        {first.prixFinal && <span style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700 }}>Prix convenu : {fmt(first.prixFinal)}</span>}
+                      </div>
                     </div>
                   );
                 })}

@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { demanderPermission, jouerCarillon, notifierNavigateur, permissionNotif, reglerSon, sonActif, type EtatPermission } from "@/lib/alerte";
 
 type Notif = { id: string; type: string; title: string; body: string | null; link: string | null; read: boolean; createdAt: string };
 
@@ -13,21 +14,74 @@ type Notif = { id: string; type: string; title: string; body: string | null; lin
  * un second va-et-vient permanent pour afficher un simple compteur serait payé
  * sur toutes les pages.
  */
+
+/** Cadence du guet. On interroge aussi onglet caché : c'est précisément là que
+ *  la notification du navigateur sert à quelque chose. */
+const PAS_GUET = 20000;
+
 export function Alertes() {
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
   const [fils, setFils] = useState(0);
   const [open, setOpen] = useState(false);
+  const [perm, setPerm] = useState<EtatPermission>("absent");
+  const [son, setSon] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
+  /** Ce qu'on avait déjà vu passer : sans ce repère, le premier chargement
+   *  sonnerait pour des notifications vieilles de trois jours. */
+  const connues = useRef<Set<string> | null>(null);
 
-  const load = async () => {
-    try { const r = await fetch("/api/notifications"); if (r.ok) { const d = await r.json(); setItems(d.items ?? []); setUnread(d.unread ?? 0); setFils(d.fils ?? 0); } } catch { /* silencieux */ }
-  };
-  useEffect(() => { load(); const t = setInterval(load, 45000); return () => clearInterval(t); }, []);
+  useEffect(() => { setPerm(permissionNotif()); setSon(sonActif()); }, []);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch("/api/notifications");
+      if (!r.ok) return;
+      const d = await r.json();
+      const liste: Notif[] = d.items ?? [];
+      setItems(liste); setUnread(d.unread ?? 0); setFils(d.fils ?? 0);
+
+      if (connues.current === null) {
+        connues.current = new Set(liste.map((n) => n.id));
+        return; // premier tour : on prend acte, on ne réveille personne
+      }
+      const nouvelles = liste.filter((n) => !n.read && !connues.current!.has(n.id));
+      liste.forEach((n) => connues.current!.add(n.id));
+      if (!nouvelles.length) return;
+
+      jouerCarillon();
+      // Une seule notification même à trois arrivées d'un coup : trois pop-ups
+      // empilées se ferment sans être lues.
+      const n = nouvelles[0];
+      notifierNavigateur(
+        nouvelles.length > 1 ? `${nouvelles.length} nouvelles alertes` : n.title,
+        nouvelles.length > 1 ? `Dont « ${n.title} »` : (n.body ?? ""),
+        nouvelles.length > 1 ? "/messages" : n.link
+      );
+    } catch { /* silencieux */ }
+  }, []);
+
+  useEffect(() => {
+    load();
+    const t = setInterval(load, PAS_GUET);
+    // Retour sur l'onglet : on rafraîchit sans attendre le prochain tour, sinon
+    // on regarde un compteur périmé pendant vingt secondes.
+    const revenu = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", revenu);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", revenu); };
+  }, [load]);
+
   useEffect(() => {
     const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  const activerNavigateur = async () => {
+    const p = await demanderPermission();
+    setPerm(p);
+    if (p === "granted") notifierNavigateur("Alertes activées", "Vanguard te préviendra ici, même sur un autre onglet.", "/messages");
+  };
+  const basculerSon = () => { const v = !son; setSon(v); reglerSon(v); if (v) jouerCarillon(); };
 
   const toggle = async () => {
     const willOpen = !open; setOpen(willOpen);
@@ -54,6 +108,31 @@ export function Alertes() {
       {open && (
         <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 320, maxWidth: "90vw", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,.5)", zIndex: 200, overflow: "hidden" }}>
           <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)", fontFamily: "'Rubik',sans-serif" }}>Notifications</div>
+
+          {/* Réglages des alertes, ici plutôt que dans une page de paramètres :
+              c'est en voyant la cloche qu'on se demande pourquoi on n'a rien su. */}
+          <div style={{ padding: "9px 14px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            {perm === "granted" ? (
+              <span style={{ fontSize: 11.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Icon name="check" size={12} />Alertes du navigateur activées
+              </span>
+            ) : perm === "denied" ? (
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Icon name="ban" size={12} />Alertes bloquées — à rouvrir dans le navigateur
+              </span>
+            ) : perm === "default" ? (
+              <button onClick={activerNavigateur}
+                style={{ fontSize: 11.5, fontWeight: 600, fontFamily: "inherit", padding: "5px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--orange)", background: "rgba(255,140,26,.12)", color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Icon name="bell" size={12} />Être prévenu même sur un autre onglet
+              </button>
+            ) : null}
+
+            <button onClick={basculerSon} title={son ? "Couper le son" : "Remettre le son"}
+              style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: son ? "var(--orange)" : "var(--text-muted)", padding: 2, display: "flex" }}>
+              <Icon name={son ? "megaphone" : "ban"} size={14} />
+            </button>
+          </div>
+
           <div style={{ maxHeight: 360, overflowY: "auto" }}>
             {items.length === 0 ? (
               <div style={{ padding: 22, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Aucune notification.</div>

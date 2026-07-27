@@ -64,7 +64,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           type: "DEBT_MESSAGE",
           title: "Nouveau message sur une dette",
           body: `${a.auth.user.username ?? "Quelqu'un"} t'a écrit.`,
-          link: "/dettes",
+          // Droit sur la conversation : un lien vers la page des dettes obligeait
+          // à retrouver soi-même la bonne carte, puis à déplier le fil.
+          link: `/messages?fil=debt:${id}`,
         },
       })
       .catch(() => null);

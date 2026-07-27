@@ -103,7 +103,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           type: "REQ_MESSAGE",
           title: "Réponse sur ta demande",
           body: `${a.auth.user.username ?? "Le staff"} t'a répondu à propos de « ${a.req.item ?? "ta demande"} ».`,
-          link: "/dettes",
+          // Droit sur la conversation : la notification amène là où on répond.
+          link: `/messages?fil=req:${id}`,
         },
       })
       .catch(() => null);
@@ -119,7 +120,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
           type: "REQ_MESSAGE",
           title: "Message sur une demande",
           body: `${a.req.username} a écrit à propos de « ${a.req.item ?? "sa demande"} ».`,
-          link: "/gestion-dettes",
+          link: `/messages?fil=req:${id}`,
         })),
       })
       .catch(() => null);

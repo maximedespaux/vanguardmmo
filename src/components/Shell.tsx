@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { Icon, type IconName } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
-import { NotificationBell } from "@/components/NotificationBell";
+import { Alertes } from "@/components/Alertes";
 
 // ── Navigation v2 — bandeau supérieur (sections + sous-sections en déroulants) ──
 type Sub = { label: string; href: string; access?: "public" | "guild" | "admin" };
@@ -30,6 +30,10 @@ const NAV: Item[] = [
 
   { label: "AirGuild", href: "/dettes", icon: "vault", access: "public", sub: [
     { label: "Boutique", href: "/dettes", access: "public" },
+    // Depuis que Discord ne relaie plus rien, les echanges vivent sur le site :
+    // ils ont droit a leur entree, sans quoi on ne les retrouve qu'en rouvrant
+    // la demande dont ils sont partis.
+    { label: "Messages", href: "/messages", access: "public" },
     { label: "Coffres & crafts", href: "/coffre", access: "admin" },
     { label: "Plan de farm", href: "/plan-farm", access: "admin" },
   ] },
@@ -79,7 +83,7 @@ const PAGE_BG: Record<string, string> = {
   "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
-  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild",
+  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque",
 };
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
@@ -127,7 +131,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="vg-top-user">
           {(session || DEV_ALL) ? (
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <NotificationBell />
+              <Alertes />
               <ProfilePanel devAll={DEV_ALL} />
             </div>
           ) : (pathname !== "/histoire" && pathname !== "/candidature") ? (

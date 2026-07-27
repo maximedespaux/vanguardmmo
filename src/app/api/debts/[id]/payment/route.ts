@@ -78,7 +78,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         body: soldee
           ? `${detenteur} a enregistré ton dernier remboursement pour « ${objet} ». Ta dette est soldée.`
           : `${detenteur} a enregistré ${fmt(montant)} périns pour « ${objet} ». Reste ${fmt(reste)} périns.`,
-        link: "/dettes",
+        link: `/messages?fil=debt:${debt.id}`,
       },
     })
     .catch(() => null);

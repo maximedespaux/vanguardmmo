@@ -88,6 +88,11 @@ model User {
   /// Date de la 1re connexion constatée en tant que membre du serveur Discord.
   /// Sert de niveau d'accès intermédiaire (candidat) : voir canAccessVerified.
   verifiedAt   DateTime?
+  /// Dernier signe de vie sur le site, rafraîchi au plus une fois par tranche de
+  /// quelques minutes. Sert à dire « en ligne » dans la messagerie : sans Discord,
+  /// on ne sait plus si l'autre partie est devant son écran, et on attend une
+  /// réponse qui ne viendra pas avant demain.
+  lastSeenAt   DateTime?
   prefs        UserPref[]
   discordRoles  String[] @default([])      // IDs bruts des rôles Discord (gating fin)
   isActive      Boolean  @default(true)
@@ -697,4 +702,20 @@ model RequestMessage {
 
   @@index([debtId, createdAt])
   @@index([bankRequestId, createdAt])
+}
+
+/// Jusqu'où un membre a lu un fil. Sans ce repère, « non lu » n'a aucun sens :
+/// on ne peut pas distinguer un message qui vient d'arriver d'un message vu
+/// trois fois, et la boîte de réception n'est plus qu'une liste de tout.
+model RequestRead {
+  userId String
+  /// Fil visé, préfixé : "debt:<id>" ou "req:<id>". Une seule colonne plutôt que
+  /// deux champs nullables, parce qu'en Postgres deux NULL ne s'égalent pas :
+  /// un couple (userId, debtId?, bankRequestId?) ne peut pas être rendu unique
+  /// et on accumulerait plusieurs marqueurs pour un même fil.
+  filId      String
+  lastSeenAt DateTime @default(now())
+
+  @@id([userId, filId])
+  @@index([userId])
 }

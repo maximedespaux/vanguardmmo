@@ -19,15 +19,36 @@ async function devUser(): Promise<User> {
   });
 }
 
+/**
+ * Signe de vie, pour le « en ligne » de la messagerie.
+ *
+ * Écrit au plus une fois par PAS_PRESENCE : cette fonction est traversée par
+ * chaque requête du site, une écriture à chaque fois transformerait un simple
+ * affichage de page en écriture en base. Jamais attendu et jamais bloquant —
+ * personne ne doit voir une page échouer parce qu'on n'a pas pu noter sa
+ * présence.
+ */
+const PAS_PRESENCE = 3 * 60_000;
+function marquerPresence(user: User) {
+  const vu = (user as User & { lastSeenAt?: Date | null }).lastSeenAt;
+  if (vu && Date.now() - new Date(vu).getTime() < PAS_PRESENCE) return;
+  void prisma.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+}
+
 /** Récupère l'utilisateur connecté (depuis la base), ou null. Ne redirige pas. */
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    if (DEV_ALL) return devUser();
-    return null;
+    if (!DEV_ALL) return null;
+    // Le compte de dev suit le même chemin que les autres, présence comprise :
+    // sans cela, « en ligne » ne serait vérifiable qu'une fois en production.
+    const dev = await devUser();
+    marquerPresence(dev);
+    return dev;
   }
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user && DEV_ALL) return devUser();
+  if (user) marquerPresence(user);
   return user;
 }
 

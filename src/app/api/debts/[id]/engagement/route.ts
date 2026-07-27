@@ -86,7 +86,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         type: "DEBT_DUEDATE",
         title: "Engagement enregistré",
         body: `Tu t'es engagé à rembourser ${detenteur} pour « ${objet} » avant le ${quand}.`,
-        link: "/dettes",
+        link: `/messages?fil=debt:${debt.id}`,
       },
     })
     .catch(() => null);

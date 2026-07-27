@@ -407,3 +407,16 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
 .dash-stat-link:hover .dash-stat-arrow{opacity:1;transform:translateX(0)}
 .dash-stat-link:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.dash-stat-arrow{transition:none}}
+
+/* ─── Boîte de reception : liste a gauche, conversation a droite ─────────────
+   Sur petit ecran les deux colonnes ne tiennent pas cote a cote : on n'en montre
+   qu'une a la fois, celle qu'on regarde, et le bouton « Conversations » fait le
+   chemin inverse. Piloté par data-vue, donc sans mesurer la fenetre en JS. */
+.msg-layout{grid-template-columns:340px 1fr}
+.msg-retour{display:none}
+@media(max-width:900px){
+  .msg-layout{grid-template-columns:1fr}
+  .msg-layout[data-vue="fil"] .msg-liste{display:none}
+  .msg-layout[data-vue="liste"] .msg-fil{display:none}
+  .msg-retour{display:inline-flex}
+}

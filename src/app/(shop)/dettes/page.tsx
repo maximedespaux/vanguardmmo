@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
+import { Fil } from "@/components/Fil";
 import { canAccessGuild } from "@/config/roles";
 import { enRetard, joursDeRetard, progressionDette, resteDette, totauxDettes } from "@/lib/dettes";
 import { useCardFx } from "@/components/VgFx";
@@ -51,10 +52,8 @@ export default function BanquePage() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [payAmt, setPayAmt] = useState<Record<string, string>>({});
   const [engDate, setEngDate] = useState<Record<string, string>>({});
-  /** Fil ouvert (id de dette), son contenu, et le message en cours de frappe. */
+  /** Fil déplié (id de dette) — le contenu est géré par le composant Fil. */
   const [filOuvert, setFilOuvert] = useState<string | null>(null);
-  const [fil, setFil] = useState<{ id: string; kind: string; author: string | null; body: string; createdAt: string }[]>([]);
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   // ── Boutique ──
@@ -81,6 +80,13 @@ export default function BanquePage() {
   };
   const loadShop = async () => { try { const r = await fetch("/api/shop"); if (r.ok) { const d = await r.json(); setShop(d.items ?? []); setCats(d.cats ?? []); } } catch {} };
   useEffect(() => { load(); loadShop(); }, []);
+  // Arrivée depuis la boîte de réception (`/dettes?fil=<id>`) : on ouvre l'onglet
+  // et le fil visés. Sans cela, « Voir la demande » déposait le lecteur sur la
+  // boutique, à lui de retrouver la bonne carte.
+  useEffect(() => {
+    const fil = new URLSearchParams(window.location.search).get("fil");
+    if (fil) { setTab("dettes"); setFilOuvert(fil); }
+  }, []);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3500); };
 
   const pay = async (id: string, amount: number) => {
@@ -97,61 +103,6 @@ export default function BanquePage() {
     if (r.ok) { setEngDate(p => ({ ...p, [id]: "" })); flash("Engagement enregistré — le détenteur en est informé."); load(); }
     else flash(j.error ?? "Erreur");
   };
-
-  /**
-   * Fil d'une dette OU d'une requête boutique : même panneau, seule la base de
-   * l'URL change. Deux composants séparés auraient divergé au premier ajustement.
-   */
-  const urlFil = (kind: "debts" | "bank-request", id: string) => `/api/${kind}/${id}/fil`;
-  const ouvrirFil = async (kind: "debts" | "bank-request", id: string) => {
-    if (filOuvert === id) { setFilOuvert(null); return; }
-    setFilOuvert(id); setFil([]); setMsg("");
-    try { const r = await fetch(urlFil(kind, id)); if (r.ok) setFil(await r.json()); } catch {}
-  };
-  const envoyerMsg = async (kind: "debts" | "bank-request", id: string) => {
-    const texte = msg.trim();
-    if (!texte) return;
-    const r = await fetch(urlFil(kind, id), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: texte }) });
-    if (!r.ok) return flash("Message non envoyé.");
-    setMsg("");
-    try { const g = await fetch(urlFil(kind, id)); if (g.ok) setFil(await g.json()); } catch {}
-  };
-
-  /** Panneau de fil, réutilisé tel quel par les dettes et les requêtes. */
-  const PanneauFil = ({ kind, id }: { kind: "debts" | "bank-request"; id: string }) => (
-    <div style={{ marginTop: 9 }}>
-      <button onClick={() => ouvrirFil(kind, id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
-        <Icon name={filOuvert === id ? "chevron-down" : "chevron-right"} size={12} />
-        <Icon name="message" size={13} />Discussion et historique
-      </button>
-      {filOuvert === id && (
-        <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-          <div style={{ maxHeight: 220, overflow: "auto", display: "grid", gap: 7, marginBottom: 9 }}>
-            {fil.length === 0 && <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Rien pour l&apos;instant. Écris ici pour convenir de la remise ou du remboursement.</div>}
-            {fil.map(m => m.kind === "system" ? (
-              /* Un fait enregistré par le système, pas une parole : liseré et
-                 aucun auteur, pour qu'on ne le prenne pas pour l'avis de quelqu'un. */
-              <div key={m.id} style={{ fontSize: 12, color: "var(--text-muted)", borderLeft: "2px solid var(--orange)", paddingLeft: 9 }}>
-                {m.body}<span style={{ opacity: .7 }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
-              </div>
-            ) : (
-              <div key={m.id} style={{ fontSize: 13 }}>
-                <b style={{ color: "var(--orange)" }}>{m.author}</b>
-                <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
-                <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 7 }}>
-            <input value={msg} onChange={e => setMsg(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerMsg(kind, id); } }}
-              placeholder="Écrire un message…" style={{ ...inp, flex: 1, fontSize: 13 }} />
-            <button className="vg-btn" onClick={() => envoyerMsg(kind, id)} style={{ padding: "8px 14px", fontSize: 12.5 }}>Envoyer</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 
   const deleteDebt = async (id: string) => {
     if (!window.confirm("Supprimer définitivement cette dette de l'historique ?\nCette action est irréversible.")) return;
@@ -355,7 +306,7 @@ export default function BanquePage() {
               const mien = totauxDettes(list.filter(d => d.role !== "detenteur"));
               const tenu = totauxDettes(list.filter(d => d.role === "detenteur"));
               const bloc = (t: ReturnType<typeof totauxDettes>, titre: string, couleur: string) => t.nb === 0 ? null : (
-                <div style={{ flex: "1 1 220px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
+                <div key={titre} style={{ flex: "1 1 220px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
                   <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .6, color: "var(--text-muted)", marginBottom: 6 }}>{titre}</div>
                   <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: couleur }}>{fmt(t.reste)}<span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}> restant sur {fmt(t.du)}</span></div>
                   <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
@@ -409,8 +360,21 @@ export default function BanquePage() {
                       {/* Fil : discussion et journal au même endroit. Remplace le
                           salon Discord — les événements système (engagement,
                           versement) s'y inscrivent aussi, donc l'historique se lit
-                          d'un bloc au lieu d'être réparti entre deux outils. */}
-                      <PanneauFil kind="debts" id={d.id} />
+                          d'un bloc au lieu d'être réparti entre deux outils.
+                          Le rendu vient du composant partagé avec la boîte de
+                          réception : trois copies du même panneau auraient
+                          divergé au premier ajustement. */}
+                      <div style={{ marginTop: 9 }}>
+                        <button onClick={() => setFilOuvert(o => (o === d.id ? null : d.id))} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === d.id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
+                          <Icon name={filOuvert === d.id ? "chevron-down" : "chevron-right"} size={12} />
+                          <Icon name="message" size={13} />Discussion et historique
+                        </button>
+                        {filOuvert === d.id && (
+                          <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
+                            <Fil type="dette" id={d.id} moiId={(session?.user as { id?: string })?.id} hauteur="220px" />
+                          </div>
+                        )}
+                      </div>
 
                       {/* Engagement : c'est le client qui donne la date, une fois
                           l'objet remis. Tant qu'elle manque, aucun suivi de retard

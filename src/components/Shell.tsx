@@ -65,6 +65,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           {espaces.map((e) => {
             const active = e.liens.some((l) => isActive(l.href));
+            // Une entrée « directe » n'a pas de menu : elle mène à sa page.
+            if (e.direct) {
+              return (
+                <div key={e.label} className="vg-top-item">
+                  <Link href={e.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
+                    <Icon name={e.icon} size={16} />{e.label}
+                  </Link>
+                </div>
+              );
+            }
             return (
               <div key={e.label} className="vg-top-item">
                 <Link href={e.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>

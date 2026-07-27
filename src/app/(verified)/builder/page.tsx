@@ -28,11 +28,12 @@ export default async function BuilderPage({
           .vg-page{max-width:none!important;padding:0!important}
         `}</style>
       )}
+      {/* Le pont vers la boutique EN HAUT : monté sous le builder, personne ne
+          le voyait — la page fait plusieurs écrans de haut. Absent en iframe :
+          la candidature n'a rien à commander. */}
+      {!enIframe && <DemanderObjet />}
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
       <BuilderRunner embed={enIframe} />
-      {/* Le pont vers la boutique : demander la pièce EXACTE qu'on vient de
-          monter. Absent en iframe — la candidature n'a rien à commander. */}
-      {!enIframe && <DemanderObjet />}
     </div>
   );
 }

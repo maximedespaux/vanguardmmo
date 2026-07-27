@@ -226,6 +226,7 @@ export default function MessagesPage() {
                 moiId={moi?.id}
                 estStaff={estStaff}
                 negociation={courante.type === "requete"}
+                cout={courante.cout}
                 hauteur="46vh"
                 onActivite={charger}
               />

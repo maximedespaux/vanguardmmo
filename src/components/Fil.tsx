@@ -24,7 +24,7 @@ const fmt = (n: number | string | null) => (n == null ? "?" : Number(n).toLocale
 const PAS_RAFRAICHISSEMENT = 15000;
 
 export function Fil({
-  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", onActivite,
+  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", cout, onActivite,
 }: {
   type: "dette" | "requete";
   id: string;
@@ -33,6 +33,8 @@ export function Fil({
   /** Les requêtes se négocient (offres de prix) ; une dette, non : son montant est fixé. */
   negociation?: boolean;
   hauteur?: string;
+  /** Coût en crédits de la demande — affiché à tous, ajustable par le staff. */
+  cout?: number;
   /** Prévient le parent qu'il y a du nouveau (la boîte de réception s'en sert pour se remettre à jour). */
   onActivite?: () => void;
 }) {
@@ -40,6 +42,7 @@ export function Fil({
   const [fil, setFil] = useState<MsgFil[]>([]);
   const [msg, setMsg] = useState("");
   const [offre, setOffre] = useState("");
+  const [nouveauCout, setNouveauCout] = useState("");
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
   const bas = useRef<HTMLDivElement>(null);
@@ -92,6 +95,33 @@ export function Fil({
   return (
     <div>
       {erreur && <div style={{ marginBottom: 10, fontSize: 12.5, color: "var(--red)" }}>{erreur}</div>}
+
+      {/* Ce que la demande coûte en crédits d'entraide. Le staff peut le
+          corriger quand le prix estimé au panier ne colle pas : la différence
+          est rendue ou reprise, et le fil garde la trace. */}
+      {negociation && cout != null && (
+        <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 12px", marginBottom: 10, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", flexWrap: "wrap" }}>
+          <Icon name="coins" size={14} style={{ color: "var(--gold)" }} />
+          <span style={{ fontSize: 12.5 }}>Coût : <b style={{ color: "var(--gold)" }}>{cout} crédit{cout > 1 ? "s" : ""}</b></span>
+          {estStaff && (
+            <span style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+              <input type="number" min={0} value={nouveauCout} onChange={(e) => setNouveauCout(e.target.value)}
+                placeholder="ajuster" aria-label="Nouveau coût en crédits"
+                style={{ width: 90, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 9px", color: "var(--text)", fontSize: 12.5 }} />
+              <button
+                onClick={() => {
+                  const n = Number(nouveauCout);
+                  if (!Number.isFinite(n) || n < 0) { setErreur("Indique un coût."); return; }
+                  if (!window.confirm(`Fixer le coût de cette demande à ${n} crédit(s) ?\nLa différence est rendue ou reprise au demandeur.`)) return;
+                  envoyer({ cout: n }).then((ok) => { if (ok) setNouveauCout(""); });
+                }}
+                style={{ padding: "6px 11px", borderRadius: 8, border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit" }}>
+                Ajuster
+              </button>
+            </span>
+          )}
+        </div>
+      )}
 
       {prixConvenu && (
         <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", marginBottom: 12, borderRadius: 9, border: "1px solid var(--green)", background: "rgba(74,222,128,.08)" }}>

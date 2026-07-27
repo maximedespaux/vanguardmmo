@@ -45,6 +45,8 @@ export type Conversation = {
   paiement: "perins" | "troc";
   /** L'objet exact demandé, quand la demande vient du builder. */
   spec: unknown;
+  /** Coût en crédits d'entraide de la demande. */
+  cout: number;
   /** Le détail marchand en une ligne (souhait, prix) — ce que montrait la carte
    *  de « Mes demandes » avant que les deux écrans n'en fassent qu'un. */
   detail: string | null;
@@ -81,7 +83,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, createdAt: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, cout: true, createdAt: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
@@ -138,6 +140,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       enLigne: false,
       paiement: r.modePaiement === "troc" ? "troc" : "perins",
       spec: r.spec ?? null,
+      cout: r.cout,
       detail: [
         r.reason?.replace(/^Boutique · /, "") ?? null,
         r.prixFinal ? `${Number(r.prixFinal).toLocaleString("fr-FR")} périns` : null,

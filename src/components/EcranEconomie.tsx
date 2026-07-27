@@ -116,6 +116,19 @@ export function EcranEconomie() {
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
+      {/* L'objet SUR MESURE ne se trouve pas dans une liste : il se monte. Le
+          dire ici, c'est la seule façon que quelqu'un pense à le faire. */}
+      <Link href="/builder" style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 15px", marginBottom: 16, borderRadius: 12, textDecoration: "none", background: "linear-gradient(90deg, rgba(255,140,26,.14), rgba(255,140,26,.03))", border: "1px solid rgba(255,140,26,.45)" }}>
+        <Icon name="shirt" size={20} style={{ color: "var(--orange)", flexShrink: 0 }} />
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: "var(--orange)" }}>Tu veux un objet précis, avec ses stats ?</span>
+          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)" }}>
+            Monte-le dans le builder (rareté, +9, sertissage, perçage) et demande-le : le staff verra exactement la pièce voulue.
+          </span>
+        </span>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)", whiteSpace: "nowrap" }}>Ouvrir le builder →</span>
+      </Link>
+
       {/* ── BOUTIQUE ── */}
       <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>

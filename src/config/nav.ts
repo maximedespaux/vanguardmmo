@@ -34,6 +34,12 @@ export type Espace = {
   href: string;
   acces: Acces;
   liens: Lien[];
+  /**
+   * Entrée qui mène DIRECTEMENT à sa page, sans menu déroulant. Réservé à ce
+   * qu'on ouvre tous les jours : un déroulant à une seule ligne ajoute un clic
+   * pour rien, et enterre justement ce qu'on veut mettre en avant.
+   */
+  direct?: boolean;
 };
 
 export const ESPACES: Espace[] = [
@@ -55,6 +61,16 @@ export const ESPACES: Espace[] = [
     ],
   },
   {
+    label: "Quête Guilde",
+    icon: "target",
+    href: "/quetes",
+    acces: "guild",
+    direct: true,
+    liens: [
+      { label: "Quête Guilde", href: "/quetes", icon: "target", desc: "Ce dont la guilde a besoin, et ce que ça rapporte." },
+    ],
+  },
+  {
     label: "Économie",
     icon: "coins",
     href: "/boutique",
@@ -62,7 +78,6 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Les objets du coffre commun, à l'achat ou en dette." },
       { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Ce que tu as demandé, son état, et la discussion qui va avec." },
-      { label: "Quêtes", href: "/quetes", icon: "target", desc: "Ce dont la guilde a besoin, et qui s'en charge.", acces: "guild" },
       { label: "Coffre & crafts", href: "/coffre", icon: "vault", desc: "Le stock réel de la guilde, coffre par coffre.", acces: "admin" },
       { label: "Plan de farm", href: "/plan-farm", icon: "sprout-farm", desc: "Ce qui manque au seuil, par catégorie.", acces: "admin" },
     ],

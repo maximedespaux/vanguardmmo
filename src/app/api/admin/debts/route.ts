@@ -3,9 +3,12 @@ import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
+import { sansBigInt } from "@/lib/json";
 
 const STATUSES = ["REQUESTED", "PENDING_VALIDATION", "ACCEPTED", "REFUSED", "REPAID", "CANCELLED"] as const;
-const ser = (d: any) => ({ ...d, amount: Number(d.amount), payments: d.payments?.map((p: any) => ({ ...p, amount: Number(p.amount) })) });
+// Tous les BigInt, pas seulement `amount` : `caution` manquait, et la route
+// répondait 500 dès qu'une dette existait (voir src/lib/json.ts).
+const ser = <T>(d: T) => sansBigInt(d);
 
 // GET /api/admin/debts?status=&userId= — toutes les dettes
 export async function GET(req: Request) {

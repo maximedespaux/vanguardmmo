@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
+import { sansBigInt } from "@/lib/json";
 
-// Sérialise les BigInt (amount) en nombre pour le JSON.
-function ser(d: any) {
-  return { ...d, amount: Number(d.amount), payments: d.payments?.map((p: any) => ({ ...p, amount: Number(p.amount) })) };
-}
+// Sérialise les BigInt (amount, caution, versements) en nombres pour le JSON.
+// Champ par champ, `caution` avait été oubliée : la route répondait 500 dès
+// qu'une dette existait, et la page affichait « Aucune dette » sans un mot.
+const ser = <T>(d: T) => sansBigInt(d);
 
 // GET /api/debts — les dettes de l'utilisateur courant
 export async function GET() {

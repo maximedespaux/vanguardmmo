@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { canAccessAdmin } from "@/config/roles";
-import { posterDansSalon, envoyerMP, COULEURS } from "@/lib/discord";
+import { ecrireSysteme } from "@/lib/fil";
 
 /**
  * POST /api/debts/[id]/payment — enregistre un remboursement REÇU.  { amount, note }
@@ -83,39 +83,20 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     })
     .catch(() => null);
 
-  // ── Trace 2 : le post de décision Discord de la requête ───────────────────
-  const embed = {
-    title: soldee ? "Dette soldée" : "Remboursement enregistré",
-    color: soldee ? COULEURS.vert : COULEURS.orange,
-    description:
-      `**${debt.user?.username ?? "Le membre"}** → **${detenteur}**\n` + `Objet : **${objet}**`,
-    fields: [
-      { name: "Reçu", value: `${fmt(montant)} périns`, inline: true },
-      { name: "Total remboursé", value: `${fmt(paye)} / ${fmt(debt.amount)}`, inline: true },
-      { name: "Restant", value: soldee ? "— soldée —" : `${fmt(reste)} périns`, inline: true },
-      ...(b.note ? [{ name: "Note", value: String(b.note).slice(0, 300) }] : []),
-    ],
-    footer: { text: `Saisi par ${auth.user.username ?? "?"}` },
-    timestamp: new Date().toISOString(),
-  };
-  if (debt.channelId) await posterDansSalon(debt.channelId, { embeds: [embed] });
-
-  // ── Trace 3 : message privé au débiteur ──────────────────────────────────
-  if (debt.user?.discordId) {
-    await envoyerMP(debt.user.discordId, {
-      embeds: [
-        {
-          title: soldee ? "Ta dette est soldée" : "Ton remboursement a été enregistré",
-          color: soldee ? COULEURS.vert : COULEURS.orange,
-          description: soldee
-            ? `**${detenteur}** a enregistré ton dernier remboursement pour « ${objet} ». Tout est réglé, merci !`
-            : `**${detenteur}** a enregistré **${fmt(montant)} périns** pour « ${objet} ».\n` +
-              `Il te reste **${fmt(reste)} périns** à rembourser.`,
-          footer: { text: "Vanguard · suivi des dettes" },
-        },
-      ],
-    });
-  }
+  // ── Trace 2 : le fil de la dette ────────────────────────────────────────
+  // Discord est coupé. Le fil devient l'historique consultable : qui a saisi
+  // quoi, quand, et ce qu'il reste. Le détail chiffré compte — « remboursement
+  // enregistré » sans montant obligerait à recouper avec la liste.
+  await ecrireSysteme(
+    debt.id,
+    soldee
+      ? `${detenteur} a enregistré ${fmt(montant)} périns reçus de ${debt.user?.username ?? "le membre"} ` +
+        `pour « ${objet} ». Total ${fmt(paye)} / ${fmt(debt.amount)} — dette soldée.` +
+        (b.note ? ` Note : ${String(b.note).slice(0, 300)}` : "")
+      : `${detenteur} a enregistré ${fmt(montant)} périns reçus de ${debt.user?.username ?? "le membre"} ` +
+        `pour « ${objet} ». Total ${fmt(paye)} / ${fmt(debt.amount)}, reste ${fmt(reste)}.` +
+        (b.note ? ` Note : ${String(b.note).slice(0, 300)}` : "")
+  );
 
   return NextResponse.json({ ok: true, paye: Number(paye), reste: Number(reste), soldee });
 }

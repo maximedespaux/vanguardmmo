@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { posterDansSalon, COULEURS } from "@/lib/discord";
+import { ecrireSysteme } from "@/lib/fil";
 
 /** Un engagement au-delà de ce délai n'est plus un engagement. */
 const JOURS_MAX = 180;
@@ -69,26 +69,14 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const detenteur = debt.creditor ?? "le détenteur";
   const montant = Number(debt.amount).toLocaleString("fr-FR");
 
-  // Le détenteur est un pseudo, pas un compte : on ne peut pas lui écrire en
-  // privé. Le post de décision est l'endroit où lui et le staff suivent la
-  // requête — c'est donc là que l'engagement doit apparaître.
-  if (debt.channelId) {
-    await posterDansSalon(debt.channelId, {
-      embeds: [{
-        title: "Engagement de remboursement",
-        color: COULEURS.orange,
-        description:
-          `**${debt.user?.username ?? "Le membre"}** s'engage à rembourser **${detenteur}** ` +
-          `pour « ${objet} ».`,
-        fields: [
-          { name: "Montant", value: `${montant} périns`, inline: true },
-          { name: "Au plus tard le", value: quand, inline: true },
-        ],
-        footer: { text: "Vanguard · suivi des dettes" },
-        timestamp: new Date().toISOString(),
-      }],
-    });
-  }
+  // Discord est coupé : l'engagement s'inscrit dans le fil de la dette, où le
+  // détenteur et le staff le retrouvent. C'est ce fil qui remplace le post de
+  // décision — sans lui, l'engagement ne laisserait aucune trace consultable.
+  await ecrireSysteme(
+    debt.id,
+    `${debt.user?.username ?? "Le membre"} s'engage à rembourser ${detenteur} pour « ${objet} » ` +
+      `(${montant} périns) au plus tard le ${quand}.`
+  );
 
   // Trace sur le site, visible par le débiteur dans ses notifications.
   await prisma.notification

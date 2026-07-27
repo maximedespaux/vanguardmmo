@@ -350,6 +350,7 @@ model Debt {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   payments      DebtPayment[]
+  messages      RequestMessage[]
   @@index([userId])
   @@index([status])
 }
@@ -667,4 +668,27 @@ model UserPref {
   updatedAt DateTime @updatedAt
 
   @@id([userId, key])
+}
+
+/// Fil de discussion ET journal d'une demande (dette ou requête boutique).
+/// Remplace le salon d'échange Discord : la conversation et les événements
+/// système vivent au même endroit, donc l'historique reste lisible d'un bloc.
+/// `kind` distingue un message humain d'un fait enregistré par le système —
+/// mélanger les deux sans le dire rendrait le fil impossible à interpréter.
+model RequestMessage {
+  id            String   @id @default(cuid())
+  debtId        String?
+  debt          Debt?    @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  bankRequestId String?
+  /// Auteur : null pour un message du système.
+  userId        String?
+  /// Pseudo figé à l'écriture : un membre peut changer de nom, le fil ne doit pas
+  /// se réécrire tout seul.
+  author        String?
+  kind          String   @default("chat") // "chat" | "system"
+  body          String
+  createdAt     DateTime @default(now())
+
+  @@index([debtId, createdAt])
+  @@index([bankRequestId, createdAt])
 }

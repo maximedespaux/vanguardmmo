@@ -34,8 +34,11 @@ export async function GET() {
       // de gestion. On coupe ici plutôt qu'à l'affichage — sinon les chiffres
       // voyagent quand même dans la réponse, et il suffit de l'ouvrir.
       const besoin = o.manque <= 0 ? "ok" : o.manque >= o.target / 2 ? "fort" : "moyen";
-      const commun = { id: o.id, item: o.item, cat: o.cat, classe: o.classe, icon: o.icon, unit: o.unit, besoin, sources: sourcesDe(o.item) };
-      return staff ? { ...o, ...commun } : { ...commun, stock: 0, target: 0, manque: 0, rarete: false, premyth: 0, manquePremyth: 0 };
+      // `rarete` reste public : ce n'est pas un stock mais une caractéristique
+      // de l'objet (une arme a des paliers de rareté, un marteau non), et c'est
+      // ce qui décide des réglages proposés quand on prend la pièce en quête.
+      const commun = { id: o.id, item: o.item, cat: o.cat, classe: o.classe, icon: o.icon, unit: o.unit, rarete: o.rarete, besoin, sources: sourcesDe(o.item) };
+      return staff ? { ...o, ...commun } : { ...commun, stock: 0, target: 0, manque: 0, premyth: 0, manquePremyth: 0 };
     });
   return NextResponse.json({
     items: tries,

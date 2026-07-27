@@ -10,34 +10,13 @@ import { AvatarCadre } from "@/components/AvatarCadre";
 import { rangDe, rangSuivant } from "@/lib/rangs";
 import type { ObjetCoffre } from "@/lib/coffre";
 import type { Source } from "@/lib/ouFarmer";
+import {
+  reglagesPour, resumerPiece, CHOIX_VIDE, RARETES, RANGS_EVEIL, STATS_EVEIL,
+  STATS_SCROLL, ELEMENTS, type ChoixPiece,
+} from "@/lib/specsFlyff";
 
 type ObjetAFarmer = ObjetCoffre & { sources?: Source[]; besoin?: "fort" | "moyen" | "ok" };
 type Objectif = { id: string; titre: string; cible: number; fait: number; unite: string | null; detail: string | null; termineAt: string | null };
-
-/** Les mêmes réglages que la commande sur mesure de la boutique : une arme se
- *  demande par sa rareté, son +N, son perçage et son éveil — sans ça, « Épée
- *  Yggdrasil » ne désigne pas une pièce mais une famille. */
-const RARETES = ["Rare", "Épique", "Légendaire", "Pré-myth."];
-const ELEMENTS = ["Fulgur", "Volcano", "Océane"];
-const RANGS_EVEIL = ["R1", "R2", "R3", "R4"];
-const STATS_EVEIL = ["Force", "Endurance", "Dextérité", "Intelligence", "Dégâts critiques", "Attaque", "PV max", "MP max"];
-const MOTS_EQUIP = /(arme|ep[ée]e|épée|hache|marteau|arc\b|arbal[èe]te|baguette|b[âa]ton|grimoire|bouclier|tenue|casque|gants?|bottes?|cape|collier|anneau|boucles?|masque|mantra)/i;
-/** Une pièce qui s'équipe se configure ; un matériau se compte, point. */
-const estEquipement = (o: { classe?: string | null; item: string }) => !!o.classe || MOTS_EQUIP.test(o.item);
-
-type Reglages = { rarete: string; up: string; percage: string; element: string; eveilRang: string; eveilStat: string; qte: string };
-const REGLAGES_VIDES: Reglages = { rarete: "", up: "", percage: "", element: "", eveilRang: "", eveilStat: "", qte: "1" };
-
-/** Ce que je vais chercher, en une ligne — c'est ce texte qu'on relit dans la
- *  to-do list, et celui qu'on montrera au staff au moment du dépôt. */
-function resumerReglages(r: Reglages): string {
-  const bouts: string[] = [];
-  if (r.rarete) bouts.push(r.rarete);
-  if (Number(r.up) > 0) bouts.push(`+${Number(r.up)}`);
-  if (Number(r.percage) > 0 || r.element) bouts.push(`perçage ${Number(r.percage) || ""}${r.element ? ` ${r.element}` : ""}`.trim());
-  if (r.eveilRang || r.eveilStat) bouts.push(`éveil ${[r.eveilRang, r.eveilStat].filter(Boolean).join(" ")}`);
-  return bouts.join(" · ");
-}
 
 /**
  * QUÊTE GUILDE — ce dont la guilde a besoin, et ce que ça rapporte.
@@ -69,6 +48,21 @@ const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "chec
   livree: { l: "Complète", c: "var(--green)", ic: "check" },
   annulee: { l: "Annulée", c: "var(--text-muted)", ic: "x" },
 };
+
+/** L'état de saisie d'une pièce, plus la quantité visée. */
+type Choix = ChoixPiece & { qte: string };
+const CHOIX_DEPART: Choix = { ...CHOIX_VIDE, qte: "1" };
+
+/** Une ligne de réglage : l'étiquette, puis les commandes. */
+const ligneReglage: React.CSSProperties = { display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" };
+const etiquette: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)", width: 62, flexShrink: 0 };
+const mini: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 9px", color: "var(--text)", fontSize: 12.5, fontFamily: "inherit" };
+const pastille = (actif: boolean): React.CSSProperties => ({
+  padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit",
+  border: `1px solid ${actif ? "var(--orange)" : "var(--border)"}`,
+  background: actif ? "rgba(255,140,26,.14)" : "transparent",
+  color: actif ? "var(--orange)" : "var(--text-muted)",
+});
 
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "10px 12px", color: "var(--text)", fontSize: 13.5, fontFamily: "inherit" };
 const pas: React.CSSProperties = { width: 26, height: 28, borderRadius: 7, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 15, lineHeight: 1 };
@@ -175,8 +169,8 @@ export default function QuetesPage() {
   /** Le choix d'une quête ne s'ouvre qu'à la demande : le reste du temps, cet
    *  onglet doit montrer CE QUE J'AI À FAIRE, pas un catalogue de 264 lignes. */
   const [choixOuvert, setChoixOuvert] = useState(false);
-  /** Les précisions de la pièce en cours de choix (rareté, +N, perçage, éveil). */
-  const [reglages, setReglages] = useState<Reglages>(REGLAGES_VIDES);
+  /** Les précisions de la pièce en cours de choix (rareté, +N, perçage, éveil…). */
+  const [choix, setChoix] = useState<Choix>(CHOIX_DEPART);
 
   const deposer = async (o: ObjetAFarmer) => {
     const n = Number(depot[o.id]);
@@ -205,11 +199,11 @@ export default function QuetesPage() {
   const ouvrirFiche = (o: ObjetAFarmer) => {
     const deja = objetOuvert === o.id;
     setObjetOuvert(deja ? null : o.id);
-    if (!deja) setReglages({ ...REGLAGES_VIDES, qte: String(estEquipement(o) ? 1 : o.manque || 1) });
+    if (!deja) setChoix({ ...CHOIX_DEPART, qte: String(reglagesPour(o) ? 1 : o.manque || 1) });
   };
 
   const seLancer = async (o: ObjetAFarmer) => {
-    const detail = estEquipement(o) ? resumerReglages(reglages) : "";
+    const detail = reglagesPour(o) ? resumerPiece(choix) : "";
     setChoixOuvert(false);
     setObjetOuvert(null);
     await fetch("/api/objectifs", {
@@ -218,11 +212,11 @@ export default function QuetesPage() {
         titre: o.classe ? `${o.item} (${o.classe})` : o.item,
         // La quantité vient du champ : ce qui manque au coffre est une valeur
         // par défaut, pas une obligation — et un membre ne voit pas ce chiffre.
-        cible: Math.max(1, Number(reglages.qte) || 1),
+        cible: Math.max(1, Number(choix.qte) || 1),
         itemRef: o.id, unite: o.unit, detail,
       }),
     });
-    setReglages(REGLAGES_VIDES);
+    setChoix(CHOIX_DEPART);
     setOnglet("farm");
     chargerObjectifs();
   };
@@ -499,7 +493,7 @@ export default function QuetesPage() {
               <Icon name="sprout-farm" size={14} />Choisir une quête secondaire
             </div>
             <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 12 }}>
-              Ce qui manque au coffre. Pour une arme ou une pièce d&apos;armure, tu peux préciser la rareté, le +N, le perçage et l&apos;éveil avant de l&apos;ajouter.
+              Ce qui manque au coffre. Sur une pièce d&apos;équipement, tu peux préciser ce que le jeu permet dessus — une arme se perce et se rend rare, un casque non.
             </div>
             <input value={qFarm} onChange={(e) => setQFarm(e.target.value)} placeholder="Chercher un objet ou une catégorie…"
               style={{ ...inp, width: "100%", marginBottom: 10 }} />
@@ -568,7 +562,7 @@ export default function QuetesPage() {
                           border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`,
                           background: ouvert ? "rgba(255,140,26,.14)" : "var(--bg-2)",
                           color: ouvert ? "var(--orange)" : "var(--text)" }}>
-                        <Icon name="plus" size={13} />{estEquipement(o) ? "Choisir" : "Ajouter"}
+                        <Icon name="plus" size={13} />{reglagesPour(o) ? "Choisir" : "Ajouter"}
                       </button>
                       </div>
 
@@ -594,72 +588,119 @@ export default function QuetesPage() {
                               <Icon name="vault" size={13} /> Ajouter à mon coffre
                             </button>
                           </div>}
-                          {/* Quelle pièce, exactement. Tout est facultatif :
-                              on ne sait pas toujours d'avance, et une quête
-                              vague vaut mieux qu'une quête pas prise. */}
-                          {estEquipement(o) && (
-                            <div style={{ display: "grid", gap: 8, padding: "10px 11px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-                              <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>La pièce que je vise (facultatif)</div>
-
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Rareté</span>
-                                {RARETES.map((r) => (
-                                  <button key={r} onClick={() => setReglages((p) => ({ ...p, rarete: p.rarete === r ? "" : r }))}
-                                    style={{ padding: "4px 10px", borderRadius: 20, cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit",
-                                      border: `1px solid ${reglages.rarete === r ? "var(--orange)" : "var(--border)"}`,
-                                      background: reglages.rarete === r ? "rgba(255,140,26,.14)" : "transparent",
-                                      color: reglages.rarete === r ? "var(--orange)" : "var(--text-muted)" }}>
-                                    {r}
-                                  </button>
-                                ))}
+                          {/* Quelle pièce, exactement — et seulement ce que le
+                              jeu permet sur celle-là : un casque ne se perce
+                              pas, un anneau monte à +30, l'éveil est R1 ou R2.
+                              Les règles viennent du builder (lib/specsFlyff). */}
+                          {(() => {
+                            const r = reglagesPour(o);
+                            if (!r) return null;
+                            const maj = (k: keyof Choix, v: string) => setChoix((p) => ({ ...p, [k]: v }));
+                            return (
+                            <div style={{ display: "grid", gap: 9, padding: "10px 11px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
+                              <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
+                                {r.label} — la pièce que je vise (facultatif)
                               </div>
 
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Amélio.</span>
-                                <select value={reglages.up} onChange={(e) => setReglages((p) => ({ ...p, up: e.target.value }))}
-                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
-                                  <option value="">+ ?</option>
-                                  {Array.from({ length: 21 }, (_, i) => i).map((n) => <option key={n} value={n}>+{n}</option>)}
-                                </select>
-                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8 }}>Perçage</span>
-                                <select value={reglages.percage} onChange={(e) => setReglages((p) => ({ ...p, percage: e.target.value }))}
-                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
-                                  <option value="">—</option>
-                                  {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} trou{n > 1 ? "s" : ""}</option>)}
-                                </select>
-                                <select value={reglages.element} onChange={(e) => setReglages((p) => ({ ...p, element: e.target.value }))}
-                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
-                                  <option value="">élément…</option>
-                                  {ELEMENTS.map((e2) => <option key={e2} value={e2}>{e2}</option>)}
-                                </select>
-                              </div>
+                              {r.rarete && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Rareté</span>
+                                  {RARETES.map((x) => (
+                                    <button key={x} onClick={() => maj("rarete", choix.rarete === x ? "" : x)} style={pastille(choix.rarete === x)}>{x}</button>
+                                  ))}
+                                </div>
+                              )}
 
-                              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 62 }}>Éveil</span>
-                                <select value={reglages.eveilRang} onChange={(e) => setReglages((p) => ({ ...p, eveilRang: e.target.value }))}
-                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
-                                  <option value="">rang…</option>
-                                  {RANGS_EVEIL.map((r) => <option key={r} value={r}>{r}</option>)}
-                                </select>
-                                <select value={reglages.eveilStat} onChange={(e) => setReglages((p) => ({ ...p, eveilStat: e.target.value }))}
-                                  style={{ ...inp, padding: "6px 9px", fontSize: 12.5 }}>
-                                  <option value="">statistique…</option>
-                                  {STATS_EVEIL.map((s) => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                              </div>
+                              {r.upMax > 0 && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Amélio.</span>
+                                  <select value={choix.up} onChange={(e) => maj("up", e.target.value)} style={mini}>
+                                    <option value="">+ ?</option>
+                                    {Array.from({ length: r.upMax + 1 }, (_, i) => i).map((n) => <option key={n} value={n}>+{n}</option>)}
+                                  </select>
+                                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>max +{r.upMax}</span>
+                                  {r.etoiles && Number(choix.up) > 10 && (
+                                    <>
+                                      <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8 }}>Étoiles</span>
+                                      {[1, 2, 3].map((n) => (
+                                        <button key={n} onClick={() => maj("etoiles", choix.etoiles === String(n) ? "" : String(n))} style={pastille(choix.etoiles === String(n))}>
+                                          {"★".repeat(n)}
+                                        </button>
+                                      ))}
+                                    </>
+                                  )}
+                                </div>
+                              )}
 
-                              {resumerReglages(reglages) && (
+                              {r.percage && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Perçage</span>
+                                  <select value={choix.percage} onChange={(e) => maj("percage", e.target.value)} style={mini}>
+                                    <option value="">—</option>
+                                    {Array.from({ length: r.percage.max }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+                                  </select>
+                                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>sur {r.percage.max}</span>
+                                  <select value={choix.carte} onChange={(e) => maj("carte", e.target.value)} style={mini}>
+                                    <option value="">carte…</option>
+                                    {r.percage.cartes.map((c) => <option key={c} value={c}>{c}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {r.eveil && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Éveil</span>
+                                  {RANGS_EVEIL.map((x) => (
+                                    <button key={x} onClick={() => maj("eveilRang", choix.eveilRang === x ? "" : x)} style={pastille(choix.eveilRang === x)}>{x}</button>
+                                  ))}
+                                  <select value={choix.eveilStat} onChange={(e) => maj("eveilStat", e.target.value)} style={mini}>
+                                    <option value="">statistique…</option>
+                                    {STATS_EVEIL.map((s) => <option key={s} value={s}>{s}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {r.scroll && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Scroll</span>
+                                  <select value={choix.scrollStat} onChange={(e) => maj("scrollStat", e.target.value)} style={mini}>
+                                    <option value="">stat…</option>
+                                    {STATS_SCROLL.map((s) => <option key={s} value={s}>{s}</option>)}
+                                  </select>
+                                  <select value={choix.scrollNiv} onChange={(e) => maj("scrollNiv", e.target.value)} style={mini}>
+                                    <option value="">+ ?</option>
+                                    {[1, 2, 3, 4].map((n) => <option key={n} value={n}>+{n}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {r.elementMax > 0 && (
+                                <div style={ligneReglage}>
+                                  <span style={etiquette}>Élément</span>
+                                  <select value={choix.element} onChange={(e) => maj("element", e.target.value)} style={mini}>
+                                    <option value="">aucun</option>
+                                    {ELEMENTS.map((el) => <option key={el} value={el}>{el}</option>)}
+                                  </select>
+                                  <select value={choix.elementNiv} onChange={(e) => maj("elementNiv", e.target.value)} style={mini}>
+                                    <option value="">+ ?</option>
+                                    {Array.from({ length: r.elementMax }, (_, i) => i + 1).map((n) => <option key={n} value={n}>+{n}</option>)}
+                                  </select>
+                                </div>
+                              )}
+
+                              {resumerPiece(choix) && (
                                 <div style={{ fontSize: 12, color: "var(--gold)" }}>
-                                  Je cherche : <b>{o.item}</b> — {resumerReglages(reglages)}
+                                  Je cherche : <b>{o.item}</b>{o.classe ? ` (${o.classe})` : ""} — {resumerPiece(choix)}
                                 </div>
                               )}
                             </div>
-                          )}
+                            );
+                          })()}
 
                           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                             <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Combien</span>
-                            <input type="number" min={1} value={reglages.qte} aria-label="Quantité visée"
-                              onChange={(e) => setReglages((p) => ({ ...p, qte: e.target.value }))}
+                            <input type="number" min={1} value={choix.qte} aria-label="Quantité visée"
+                              onChange={(e) => setChoix((p) => ({ ...p, qte: e.target.value }))}
                               style={{ ...inp, width: 100, padding: "8px 11px", fontSize: 13 }} />
                             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5 }} onClick={() => seLancer(o)}>
                               <Icon name="target" size={14} />Ajouter à ma liste

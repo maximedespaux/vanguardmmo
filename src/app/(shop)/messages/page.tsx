@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
+import { BulleObjet } from "@/components/BulleObjet";
+import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessAdmin } from "@/config/roles";
 import type { Role } from "@prisma/client";
 import type { Conversation } from "@/lib/messagerie";
@@ -39,7 +41,7 @@ function quandCourt(iso: string) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
 
-type Filtre = "tous" | "nonlus" | "requete" | "dette";
+type Filtre = "tous" | "nonlus";
 
 export default function MessagesPage() {
   const { data: session } = useSession();
@@ -84,8 +86,6 @@ export default function MessagesPage() {
     const texte = q.trim().toLowerCase();
     return convs.filter((c) => {
       if (filtre === "nonlus" && c.nonLus === 0) return false;
-      if (filtre === "requete" && c.type !== "requete") return false;
-      if (filtre === "dette" && c.type !== "dette") return false;
       if (!texte) return true;
       return (c.titre + " " + c.avec + " " + (c.dernier?.corps ?? "")).toLowerCase().includes(texte);
     });
@@ -106,8 +106,8 @@ export default function MessagesPage() {
     <div style={{ padding: "24px 22px 60px", maxWidth: 1180, margin: "0 auto" }}>
       <PageHeader
         icon="message"
-        title="Messages"
-        subtitle="Toutes tes conversations — demandes de la boutique et dettes — au même endroit, la plus récente en haut."
+        title="Mes demandes & messages"
+        subtitle="Chaque demande EST une conversation : son état, son prix et la discussion, au même endroit."
       />
 
       <div className="msg-layout" data-vue={ouvert ? "fil" : "liste"} style={{ display: "grid", gap: 14, alignItems: "start" }}>
@@ -118,7 +118,7 @@ export default function MessagesPage() {
             style={{ width: "100%", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13, marginBottom: 9 }}
           />
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            {([["tous", "Tout"], ["nonlus", `Non lus${totalNonLus ? ` (${totalNonLus})` : ""}`], ["requete", "Boutique"], ["dette", "Dettes"]] as const).map(([k, l]) => (
+            {([["tous", "Tout"], ["nonlus", `Non lus${totalNonLus ? ` (${totalNonLus})` : ""}`]] as const).map(([k, l]) => (
               <button key={k} onClick={() => setFiltre(k)}
                 style={{ padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
                 {l}
@@ -149,7 +149,7 @@ export default function MessagesPage() {
                 <button key={c.filId} onClick={() => ouvrir(c)}
                   style={{ textAlign: "left", display: "grid", gap: 4, padding: "9px 11px", borderRadius: 10, cursor: "pointer", border: `1px solid ${actif ? "var(--orange)" : "transparent"}`, background: actif ? "rgba(255,140,26,.10)" : c.nonLus ? "rgba(255,140,26,.05)" : "var(--bg-3)", color: "var(--text)", fontFamily: "inherit" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <Icon name={c.type === "dette" ? "coins" : "cart"} size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
+                    <Icon name="cart" size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>{c.titre}</span>
                     <span style={{ fontSize: 10.5, color: "var(--text-muted)", flexShrink: 0 }}>{quandCourt(c.quand)}</span>
                   </div>
@@ -208,17 +208,14 @@ export default function MessagesPage() {
                     avec <b style={{ color: "var(--text)" }}>{courante.avec}</b>
                     {courante.enLigne && <span style={{ color: "var(--green)" }}>· en ligne</span>}
                     <span style={{ color: TONS[courante.ton], fontWeight: 600 }}>· {courante.etat}</span>
+                    {courante.detail && <span>· {courante.detail}</span>}
                   </div>
                 </div>
-                {/* Pour une requête, la conversation EST la demande : renvoyer
-                    ailleurs ne ferait que sortir de la page. Une dette, elle, a
-                    des chiffres et des versements à voir. */}
-                {courante.type === "dette" && (
-                  <Link href={courante.lien} style={{ fontSize: 12, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5, textDecoration: "none", flexShrink: 0 }}>
-                    Voir la dette <Icon name="chevron-right" size={12} />
-                  </Link>
-                )}
               </div>
+
+              {/* L'objet demandé, à l'écran pendant qu'on répond : c'est de ÇA
+                  qu'on parle, et le staff n'a pas à le reconstituer de mémoire. */}
+              {(() => { const s = specDepuisJson(courante.spec); return s ? <div style={{ marginBottom: 12 }}><BulleObjet spec={s} /></div> : null; })()}
 
               {/* Le fil est le même composant partout : la boîte de réception ne
                   redéfinit ni l'envoi, ni la négociation, ni le marquage « lu ». */}

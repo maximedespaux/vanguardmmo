@@ -165,62 +165,8 @@ export const DEBT_STATUS: Record<string, { fr: string; color: number }> = {
 const DEBT_TYPE_FR: Record<string, string> = { PENYA: "Penya", ITEM: "Objet", RESSOURCE: "Ressource", SERVICE: "Service" };
 const DEBT_ACTIONS: Record<string, string> = { accept: "ACCEPTED", refuse: "REFUSED", repaid: "REPAID" };
 
-export function debtDecisionEmbed(d: any): EmbedBuilder {
-  const st = DEBT_STATUS[d.status] ?? { fr: d.status, color: GREY };
-  const amount = Number(d.amount || 0);
-  const e = new EmbedBuilder()
-    .setColor(st.color)
-    .setTitle(`💰 Demande de dette — ${d.user?.username ?? d.characterName ?? "membre"}`)
-    .addFields(
-      { name: "Type", value: DEBT_TYPE_FR[d.type] ?? d.type, inline: true },
-      { name: "Statut", value: st.fr, inline: true },
-    );
-  if (amount > 0) e.addFields({ name: "Montant", value: `${amount.toLocaleString("fr-FR")} penya`, inline: true });
-  if (d.item) e.addFields({ name: "Objet", value: String(d.item), inline: true });
-  if (d.characterName) e.addFields({ name: "Personnage", value: String(d.characterName), inline: true });
-  if (d.reason) e.addFields({ name: "Raison", value: String(d.reason).slice(0, 1024) });
-  if (d.dueDate) e.addFields({ name: "Échéance", value: new Date(d.dueDate).toLocaleDateString("fr-FR"), inline: true });
-  if (d.decidedBy) e.addFields({ name: "Décision", value: `par **${d.decidedBy}**${d.adminNote ? ` — ${d.adminNote}` : ""}` });
-  e.setFooter({ text: `réf. ${String(d.id).slice(-6)}` }).setTimestamp(new Date(d.updatedAt || d.createdAt));
-  return e;
-}
 
-export function debtDecisionButtons(d: any): ActionRowBuilder<ButtonBuilder>[] {
-  if (d.status === "PENDING_VALIDATION" || d.status === "REQUESTED") {
-    return [new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId(`dbt:accept:${d.id}`).setLabel("Accepter").setEmoji("✅").setStyle(ButtonStyle.Success),
-      new ButtonBuilder().setCustomId(`dbt:refuse:${d.id}`).setLabel("Refuser").setEmoji("❌").setStyle(ButtonStyle.Danger),
-    )];
-  }
-  if (d.status === "ACCEPTED") {
-    return [new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder().setCustomId(`dbt:repaid:${d.id}`).setLabel("Marquer remboursée").setEmoji("💰").setStyle(ButtonStyle.Primary),
-    )];
-  }
-  return [];
-}
 
-/** Poste une demande de dette dans le salon Décision (tag « Dettes »). */
-export async function postDebtDecision(client: Client, debt: any) {
-  const res = await postToDecision(client, `Dette — ${debt.user?.username ?? debt.characterName ?? "membre"}`, debtDecisionEmbed(debt), debtDecisionButtons(debt), "dette");
-  if (res) await prisma.debt.update({ where: { id: debt.id }, data: { channelId: res.channelId, messageId: res.messageId } });
-  return res;
-}
-
-/** Applique une décision staff sur une dette (accept/refuse/repaid). Renvoie la dette (avec user). */
-export async function applyDebtDecision(client: Client, debtId: string, action: string, actor: string) {
-  const status = DEBT_ACTIONS[action];
-  if (!status) return null;
-  const debt = await prisma.debt.update({ where: { id: debtId }, data: { status: status as any, decidedBy: actor }, include: { user: true } });
-  await prisma.auditLog.create({ data: { actor, action: `dette.${status}`, target: debt.id, detail: `${DEBT_TYPE_FR[debt.type] ?? debt.type} ${Number(debt.amount).toLocaleString("fr-FR")}` } }).catch(() => {});
-  await editDecision(client, debt.channelId, debt.messageId, debtDecisionEmbed(debt), debtDecisionButtons(debt));
-  return debt;
-}
-
-// ════════════════════════════════════════════════════════════
-//  BANQUE — requête d'objet (achat ou dette), même salon « Décision »
-//  Le prix se fixe sur le SITE (achat/dette). Discord = notification + refus rapide.
-// ════════════════════════════════════════════════════════════
 export const BANK_STATUS: Record<string, { fr: string; color: number }> = {
   PENDING:       { fr: "🟠 En attente", color: ORANGE },
   ACCEPTE_ACHAT: { fr: "🟢 Achat accepté", color: GREEN },
@@ -431,8 +377,8 @@ export async function applyBankAccept(client: Client, idOrBatch: string, mode: "
     if (mode === "dette") {
       const owners = await resolveOwners([r.item || ""]); // #6 — créancier = le détenteur qui fournit
       const holder = owners.slice().sort((a, b) => b.qty - a.qty)[0]?.name || "Guilde";
-      const debt = await prisma.debt.create({ data: { userId: r.userId, type: r.kind === "PERINS" ? "PENYA" : "ITEM", amount: total, caution: BigInt(Math.max(0, Math.round(tier.caution))), item: r.item, reason: `Boutique — ${r.item} ×${r.quantity}${holder !== "Guilde" ? ` (dû à ${holder})` : ""}`, status: "ACCEPTED", creditor: holder, decidedBy: actor } });
-      await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_DETTE", prixPublic: unit, prixFinal: total, debtId: debt.id, decidedBy: actor, discordSynced: false } });
+      // Le système de dettes a été retiré : une requête ne peut plus être
+      // acceptée « en dette ». Seul l'achat subsiste.
     } else {
       await prisma.bankRequest.update({ where: { id: r.id }, data: { status: "ACCEPTE_ACHAT", prixPublic: unit, prixFinal: total, decidedBy: actor, discordSynced: false } });
     }

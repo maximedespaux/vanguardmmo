@@ -39,8 +39,8 @@ const features: [IconName, string, string][] = [
   ["map", "Wiki des 23 donjons", "Drops, PV, prestige et élément + suivi quotidien de tes runs et world boss."],
   ["graduation", "Guide de progression", "Le guide complet par palier de prestige pour ne jamais rester bloqué."],
   ["puzzle", "Compositions", "Chambres Secrètes optimales avec présences, et Guild Siege en équipe libre."],
-  ["vault", "Coffre & banque", "Parcours le coffre, demande un objet ou une dette, suis tes remboursements."],
-  ["users", "Suivi de guilde", "Dashboard temps réel : membres, persos, builds publiés, dettes et activité."],
+  ["vault", "Coffre & boutique", "Parcours le coffre, demande un objet, et discute-en directement avec le staff."],
+  ["users", "Suivi de guilde", "Dashboard temps réel : membres, persos, builds publiés et activité."],
 ];
 
 export default function HistoirePage() {

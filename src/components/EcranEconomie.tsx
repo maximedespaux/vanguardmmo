@@ -6,13 +6,12 @@ import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
+import { BulleObjet } from "@/components/BulleObjet";
+import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
-import { enRetard, joursDeRetard, progressionDette, resteDette, totauxDettes } from "@/lib/dettes";
 import { useCardFx } from "@/components/VgFx";
 
-type Pay = { id: string; amount: number; note: string | null; createdAt: string; recordedBy?: string | null };
-type Debt = { id: string; type: string; amount: number; item: string | null; reason: string | null; status: string; adminNote: string | null; payments: Pay[]; createdAt: string; creditor?: string | null; dueDate?: string | null; debtorName?: string | null; role?: "debiteur" | "detenteur" };
-type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null };
+type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null; spec?: unknown };
 type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number };
 type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; tiersByRarity?: Record<string, Tiers> | null; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
 // Raretés d'armes (mêmes clés/couleurs que le coffre AirGuild).
@@ -29,15 +28,9 @@ const priceFor = (s: Shop, member: boolean, rarete?: string | null) => {
   return t ? (member ? t.mem : t.pub) : s.price;
 };
 
-const DEBT_STATUS: Record<string, { l: string; c: string }> = {
-  REQUESTED: { l: "Demandée", c: "var(--text-muted)" }, PENDING_VALIDATION: { l: "À valider", c: "var(--gold)" },
-  ACCEPTED: { l: "Acceptée", c: "var(--blue)" }, REFUSED: { l: "Refusée", c: "var(--red)" },
-  REPAID: { l: "Remboursée", c: "var(--green)" }, CANCELLED: { l: "Annulée", c: "var(--text-muted)" },
-};
 const REQ_STATUS: Record<string, { l: string; c: string }> = {
   PENDING: { l: "En attente", c: "var(--gold)" },
   ACCEPTE_ACHAT: { l: "Achat accepté", c: "var(--green)" },
-  ACCEPTE_DETTE: { l: "Dette accordée", c: "var(--blue)" },
   REFUSE: { l: "Refusée", c: "var(--red)" }, ANNULE: { l: "Annulée", c: "var(--text-muted)" },
 };
 const KIND_LABEL: Record<string, string> = { OBJET_IG: "Objet IG", ITEM: "Items", PERINS: "Périns" };
@@ -45,40 +38,19 @@ const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid
 const stepBtn: React.CSSProperties = { width: 24, height: 26, borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 14 };
 const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocaleString("fr-FR"));
 
-/** Une page par tâche — le modèle d'AirBuilder : choisir, puis faire. */
-export type Vue = "boutique" | "demandes" | "dettes";
-
-const VUES: { id: Vue; href: string; icon: IconName; label: string }[] = [
-  { id: "boutique", href: "/boutique", icon: "cart", label: "Boutique" },
-  { id: "demandes", href: "/demandes", icon: "clipboard", label: "Mes demandes" },
-  { id: "dettes", href: "/dettes", icon: "coins", label: "Mes dettes" },
-];
-
-const ENTETE: Record<Vue, { titre: string; sous: string; icon: IconName }> = {
-  boutique: { titre: "Boutique", icon: "cart", sous: "Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande." },
-  demandes: { titre: "Mes demandes", icon: "clipboard", sous: "Ce que tu as demandé au coffre, son état, et la discussion avec le staff." },
-  dettes: { titre: "Mes dettes", icon: "coins", sous: "Ce que tu dois, tes échéances et tes remboursements." },
-};
-
 /**
- * L'écran d'économie : boutique, demandes et dettes.
- *
- * Les trois vues partagent les mêmes données (catalogue, requêtes, dettes) et
- * les mêmes actions — un seul composant, trois pages. Elles avaient une seule
- * URL avec des onglets : deux entrées de menu tombaient alors sur la même
- * adresse et s'allumaient ensemble, ce qui n'aide pas quelqu'un qui cherche où
- * il est.
+ * Deux écrans seulement, désormais : la boutique et la conversation qui suit.
+ * Le système de dettes a été retiré — trop lourd pour ce qu'il rendait — et
+ * avec lui le verrou qui bloquait les demandes, les relances et les paliers de
+ * caution. Ce qui reste est ce que la guilde utilisait vraiment : on demande un
+ * objet du coffre, le staff répond, on s'arrange dans le fil.
  */
-export function EcranEconomie({ vue }: { vue: Vue }) {
+
+export function EcranEconomie() {
   // Halo suivant le curseur + léger relief sur les panneaux (.fx-card), comme
   // sur l'accueil et le dashboard. Un seul écouteur délégué pour toute la page.
   useCardFx();
   const [reqs, setReqs] = useState<Req[]>([]);
-  const [debts, setDebts] = useState<Debt[]>([]);
-  const [payAmt, setPayAmt] = useState<Record<string, string>>({});
-  const [engDate, setEngDate] = useState<Record<string, string>>({});
-  /** Fil déplié (id de dette) — le contenu est géré par le composant Fil. */
-  const [filOuvert, setFilOuvert] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
   // ── Boutique ──
@@ -88,11 +60,6 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
   const [sending, setSending] = useState(false);
-  // La vue vient de l'URL (une page par tâche) ; seul l'historique des dettes
-  // reste un repli local : c'est le même sujet, pas une autre tâche.
-  const [historique, setHistorique] = useState(false);
-  const tab: "boutique" | "requetes" | "dettes" | "rembourse" =
-    vue === "dettes" ? (historique ? "rembourse" : "dettes") : vue === "demandes" ? "requetes" : "boutique";
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";
@@ -101,42 +68,17 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
   const load = async () => {
     setLoading(true);
     try {
-      const [a, b] = await Promise.all([fetch("/api/bank-request"), fetch("/api/debts")]);
+      const a = await fetch("/api/bank-request");
       if (a.ok) setReqs(await a.json());
-      if (b.ok) setDebts(await b.json());
     } catch {}
     setLoading(false);
   };
   const loadShop = async () => { try { const r = await fetch("/api/shop"); if (r.ok) { const d = await r.json(); setShop(d.items ?? []); setCats(d.cats ?? []); } } catch {} };
   useEffect(() => { load(); loadShop(); }, []);
-  // Arrivée depuis la boîte de réception (`/dettes?fil=<id>`) : on déplie le fil
-  // visé. Sans cela, « Voir la dette » déposait le lecteur en haut d'une liste.
-  useEffect(() => {
-    const fil = new URLSearchParams(window.location.search).get("fil");
-    if (fil) setFilOuvert(fil);
-  }, []);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3500); };
 
-  const pay = async (id: string, amount: number) => {
-    if (!amount || amount <= 0) return flash("Entre un montant à rembourser (> 0).");
-    const r = await fetch(`/api/debts/${id}/payment`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount }) });
-    if (r.ok) { setPayAmt(p => ({ ...p, [id]: "" })); flash("Remboursement enregistré"); load(); } else flash("Erreur");
-  };
 
-  /** Le debiteur s'engage sur une date de remboursement (une seule fois). */
-  const engager = async (id: string, dueDate: string) => {
-    if (!dueDate) return flash("Choisis une date de remboursement.");
-    const r = await fetch(`/api/debts/${id}/engagement`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dueDate }) });
-    const j = await r.json().catch(() => ({}));
-    if (r.ok) { setEngDate(p => ({ ...p, [id]: "" })); flash("Engagement enregistré — le détenteur en est informé."); load(); }
-    else flash(j.error ?? "Erreur");
-  };
 
-  const deleteDebt = async (id: string) => {
-    if (!window.confirm("Supprimer définitivement cette dette de l'historique ?\nCette action est irréversible.")) return;
-    const r = await fetch(`/api/debts/${id}`, { method: "DELETE" });
-    if (r.ok) { flash("Dette supprimée"); load(); } else flash("Erreur — suppression refusée.");
-  };
 
   // ── Panier ──
   // Clé de panier : "itemId" pour un objet simple, "itemId::rareté" pour une arme (une entrée par rareté).
@@ -148,18 +90,17 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
   const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember, rarOf(id)) * cart[id] : 0); }, 0);
-  const submitCart = async (mode: "achat" | "dette") => {
+  const submitCart = async () => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique Garçon ou Fille pour chaque Stuff avant d'envoyer.");
-    // #5 — respecter les choix « Vendre » / « Dette » fixés au dépôt de chaque objet.
-    if (mode === "achat") { const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.v === false); if (bad) return flash(`« ${bad.item} » est proposé en dette uniquement (pas d'achat direct).`); }
-    if (mode === "dette") { if (!isMember) return flash("La dette est réservée aux membres de la guilde."); const bad = cartIds.map(byId).find(it => it && it.tiers && it.tiers.d === false); if (bad) return flash(`« ${bad.item} » n'est pas disponible en dette.`); }
+      // Le palier « dette uniquement » n'a plus de sens : tout se demande, le
+    // staff décide au cas par cas dans la conversation.
     setSending(true);
     const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember, rk), cat: it.cat }; });
-    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, mode }) });
+    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items }) });
     setSending(false);
-    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s) en ${mode === "dette" ? "dette" : "achat"}. Le staff va valider.`); load(); }
+    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s). Le staff va répondre dans la conversation.`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
@@ -171,34 +112,12 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Une tuile d'icône plutôt que la bannière : elle dit « Banque » alors que
           tout le reste dit « Boutique ». */}
-      <PageHeader icon={ENTETE[vue].icon} title={ENTETE[vue].titre} subtitle={ENTETE[vue].sous} />
+      <PageHeader icon="cart" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — la suite se règle dans la conversation." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
-      {/* Trois pages, trois adresses : le menu peut enfin dire où l'on est.
-          Avec des onglets, « Boutique » et « Mes dettes » pointaient sur la même
-          URL et s'allumaient ensemble. */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
-        {VUES.map((v) => {
-          const actif = v.id === vue;
-          const compte = v.id === "demandes" ? reqs.length : v.id === "dettes" ? debts.filter(d => d.status !== "REPAID").length : 0;
-          return (
-            <Link key={v.id} href={v.href} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${actif ? "var(--orange)" : "var(--border)"}`, background: actif ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: actif ? "var(--orange)" : "var(--text-muted)" }}>
-              <Icon name={v.icon} size={15} />{v.label}{compte ? ` (${compte})` : ""}
-            </Link>
-          );
-        })}
-        {/* L'historique n'est pas une tâche à part : c'est la même page, repliée. */}
-        {vue === "dettes" && (
-          <button onClick={() => setHistorique(h => !h)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${historique ? "var(--green)" : "var(--border)"}`, background: historique ? "rgba(74,222,128,.12)" : "var(--bg-3)", color: historique ? "var(--green)" : "var(--text-muted)" }}>
-            <Icon name="check" size={15} />Remboursées{debts.filter(d => d.status === "REPAID").length ? ` (${debts.filter(d => d.status === "REPAID").length})` : ""}
-          </button>
-        )}
-      </div>
-
       {/* ── BOUTIQUE ── */}
-      {tab === "boutique" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
+      <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
@@ -221,7 +140,7 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{s.tiers && !s.tiers.v ? " · dette uniquement" : ""}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -280,222 +199,13 @@ export function EcranEconomie({ vue }: { vue: Vue }) {
             )}
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns</b></div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={() => submitCart("achat")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander en achat</button>
-              {isMember && <button onClick={() => submitCart("dette")} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--orange)", background: "rgba(255,140,26,0.12)", color: "var(--orange)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="edit" size={15} /> Demander en dette</button>}
+              <button onClick={() => submitCart()} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander ces objets</button>
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff qui valide (achat ou dette). Profil avec personnage requis.</div>
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff, qui répond dans la conversation. Profil avec personnage requis.</div>
           </div>
         </div>
-      </div>}
+      </div>
 
-      {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div> : (
-        <>
-          {tab === "requetes" && (
-            <section style={{ marginBottom: 22 }}>
-              <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Mes requêtes</h2>
-              {reqs.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>Aucune requête en cours.</div> : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {reqGroups.map(g => {
-                  const first = g.items[0];
-                  const st = REQ_STATUS[first.status] ?? REQ_STATUS.PENDING;
-                  const total = g.items.reduce((s, r) => s + (r.priceEach || 0) * r.quantity, 0);
-                  const multi = g.items.length > 1;
-                  return (
-                    <div key={g.key} className="glass-card fx-card" style={{ padding: 14 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span className="font-heading" style={{ fontWeight: 700 }}>{multi ? <><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 5 }} />Panier — {g.items.length} articles</> : (first.item ?? "Périns")}{!multi && first.quantity > 1 ? <span style={{ color: "var(--text-muted)" }}> ×{first.quantity}</span> : null}</span>
-                        {total > 0 && <span style={{ color: "var(--gold)", fontSize: 13 }}>~{fmt(total)} périns</span>}
-                        <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
-                      </div>
-                      {multi && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13, color: "var(--text-muted)", borderTop: "1px solid var(--border)", paddingTop: 8, marginTop: 8 }}>
-                          {g.items.map(it => (
-                            <div key={it.id} style={{ display: "flex", gap: 8 }}>
-                              <span style={{ flex: 1, minWidth: 0 }}>{it.cat ? <span style={{ opacity: .65 }}>[{it.cat}] </span> : null}{it.item} ×{it.quantity}</span>
-                              {it.priceEach ? <span style={{ color: "var(--gold)" }}>~{fmt(it.priceEach * it.quantity)}</span> : null}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {!multi && first.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{first.reason}</div>}
-                      {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn</div>}
-                      {first.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(first.prixPublic)}</b> périn — voir l'onglet « Dettes ».</div>}
-                      {first.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {first.adminNote}</div>}
-                      {/* La discussion s'ouvre ICI. Elle avait sa propre page, et
-                          c'était le reproche : on recevait une notification, on
-                          cliquait, on atterrissait ailleurs, et il fallait revenir
-                          pour faire quoi que ce soit d'autre. Tout se passe
-                          désormais sans quitter la boutique. */}
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 9 }}>
-                        <button onClick={() => setFilOuvert(o => (o === first.id ? null : first.id))}
-                          className="vg-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", fontSize: 12.5 }}>
-                          <Icon name={filOuvert === first.id ? "chevron-down" : "message"} size={14} />
-                          {filOuvert === first.id ? "Fermer la discussion" : "Discuter et négocier"}
-                        </button>
-                        {first.prixFinal && <span style={{ fontSize: 12.5, color: "var(--green)", fontWeight: 700 }}>Prix convenu : {fmt(first.prixFinal)}</span>}
-                      </div>
-                      {filOuvert === first.id && (
-                        <div style={{ marginTop: 9, padding: 12, borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-                          <Fil type="requete" id={first.id} moiId={(session?.user as { id?: string })?.id}
-                            estStaff={canAccessAdmin(role)} negociation hauteur="300px" onActivite={load} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              )}
-            </section>
-          )}
-
-          {(tab === "dettes" || tab === "rembourse") && (() => { const list = debts.filter(d => tab === "rembourse" ? d.status === "REPAID" : d.status !== "REPAID"); return (
-          <section>
-            <h2 className="font-heading" style={{ fontSize: 14, color: "var(--text)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{tab === "rembourse" ? "Dettes remboursées" : "Mes dettes"}</h2>
-
-            {/* Totaux. Separes par role : ce que JE dois et ce qu'on ME doit sont
-                deux sommes qu'il ne faut surtout pas melanger. */}
-            {tab === "dettes" && list.length > 0 && (() => {
-              const mien = totauxDettes(list.filter(d => d.role !== "detenteur"));
-              const tenu = totauxDettes(list.filter(d => d.role === "detenteur"));
-              const bloc = (t: ReturnType<typeof totauxDettes>, titre: string, couleur: string) => t.nb === 0 ? null : (
-                <div key={titre} style={{ flex: "1 1 220px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .6, color: "var(--text-muted)", marginBottom: 6 }}>{titre}</div>
-                  <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: couleur }}>{fmt(t.reste)}<span style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 400 }}> restant sur {fmt(t.du)}</span></div>
-                  <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4 }}>
-                    {t.nb} dette{t.nb > 1 ? "s" : ""} · {fmt(t.paye)} déjà remboursé
-                    {t.enRetard > 0 && <span style={{ color: "var(--red)", fontWeight: 700 }}> · {t.enRetard} en retard</span>}
-                  </div>
-                </div>
-              );
-              const blocs = [bloc(mien, "Ce que je dois", "var(--gold)"), bloc(tenu, "Ce qu'on me doit", "var(--green)")].filter(Boolean);
-              return blocs.length ? <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>{blocs}</div> : null;
-            })()}
-            {list.length === 0 ? <div className="glass-card fx-card" style={{ padding: 22, textAlign: "center", color: "var(--text-muted)" }}>{tab === "rembourse" ? "Aucune dette remboursée pour l'instant." : "Aucune dette en cours."}</div> : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {list.map(d => {
-                  const st = DEBT_STATUS[d.status] ?? DEBT_STATUS.REQUESTED;
-                  const paid = d.payments.reduce((s, p) => s + p.amount, 0);
-                  const retard = enRetard(d);
-                  const jours = joursDeRetard(d);
-                  const pct = progressionDette(d);
-                  return (
-                    <div key={d.id} className="glass-card fx-card" style={{ padding: 14 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <span className="font-heading" style={{ fontWeight: 700 }}>{fmt(d.amount)} {d.type === "PENYA" ? "périn" : d.type.toLowerCase()}</span>
-                        {d.item && <span style={{ color: "var(--text-muted)", fontSize: 13 }}>· {d.item}</span>}
-                        {retard && (
-                          <span title={`Échéance dépassée de ${jours} jour${jours > 1 ? "s" : ""}`}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--red)", background: "rgba(248,113,113,.12)", color: "var(--red)" }}>
-                            <Icon name="alert" size={12} />En retard de {jours} j
-                          </span>
-                        )}
-                        <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
-                        {canDelete && <button onClick={() => deleteDebt(d.id)} title="Supprimer cette dette de l'historique (Vanguard)" style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--red)", background: "rgba(248,113,113,.1)", color: "var(--red)", cursor: "pointer", fontSize: 13, lineHeight: 1, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={15} /></button>}
-                      </div>
-                      {d.role === "detenteur" && d.debtorName && (
-                        <div style={{ fontSize: 12, marginTop: 5, color: "var(--orange)", display: "flex", alignItems: "center", gap: 6 }}>
-                          <Icon name="user" size={13} /><b>{d.debtorName}</b> te doit cette somme
-                        </div>
-                      )}
-                      {d.reason && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 5 }}>{d.reason}</div>}
-                      {paid > 0 && (
-                        <div style={{ marginTop: 7 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                            <span style={{ color: "var(--green)" }}>Remboursé : {fmt(paid)} / {fmt(d.amount)}</span>
-                            <span style={{ color: "var(--text-muted)" }}>reste {fmt(resteDette(d))}</span>
-                          </div>
-                          <div style={{ height: 6, borderRadius: 4, background: "var(--bg-3)", overflow: "hidden" }}>
-                            <div style={{ width: `${pct}%`, height: "100%", borderRadius: 4, background: pct >= 100 ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s" }} />
-                          </div>
-                        </div>
-                      )}
-                      {/* Fil : discussion et journal au même endroit. Remplace le
-                          salon Discord — les événements système (engagement,
-                          versement) s'y inscrivent aussi, donc l'historique se lit
-                          d'un bloc au lieu d'être réparti entre deux outils.
-                          Le rendu vient du composant partagé avec la boîte de
-                          réception : trois copies du même panneau auraient
-                          divergé au premier ajustement. */}
-                      <div style={{ marginTop: 9 }}>
-                        <button onClick={() => setFilOuvert(o => (o === d.id ? null : d.id))} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === d.id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
-                          <Icon name={filOuvert === d.id ? "chevron-down" : "chevron-right"} size={12} />
-                          <Icon name="message" size={13} />Discussion et historique
-                        </button>
-                        {filOuvert === d.id && (
-                          <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-                            <Fil type="dette" id={d.id} moiId={(session?.user as { id?: string })?.id} hauteur="220px" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Engagement : c'est le client qui donne la date, une fois
-                          l'objet remis. Tant qu'elle manque, aucun suivi de retard
-                          n'est possible — d'ou la demande bien visible. */}
-                      {d.role !== "detenteur" && d.status === "ACCEPTED" && !d.dueDate && (
-                        <div style={{ marginTop: 9, padding: 11, borderRadius: 9, background: "rgba(255,140,26,.08)", border: "1px solid rgba(255,140,26,.32)" }}>
-                          <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)", display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                            <Icon name="calendar" size={13} />Engage-toi sur une date de remboursement
-                          </div>
-                          <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 8 }}>
-                            Une date approximative suffit, mais elle t&apos;engage : {d.creditor ?? "le détenteur"} et le staff la verront. Elle ne se modifie plus ensuite.
-                          </div>
-                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                            <input type="date" value={engDate[d.id] ?? ""} onChange={e => setEngDate(p => ({ ...p, [d.id]: e.target.value }))}
-                              min={new Date().toISOString().slice(0, 10)}
-                              max={new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10)}
-                              style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", fontFamily: "inherit", fontSize: 13 }} />
-                            <button onClick={() => engager(d.id, engDate[d.id] ?? "")} className="vg-btn" style={{ padding: "7px 14px", fontSize: 12.5 }}>Je m&apos;engage</button>
-                          </div>
-                        </div>
-                      )}
-                      {d.dueDate && (
-                        <div style={{ fontSize: 12, marginTop: 5, color: retard ? "var(--red)" : "var(--gold)", display: "flex", alignItems: "center", gap: 6 }}>
-                          <Icon name="calendar" size={13} />Remboursement promis pour le {new Date(d.dueDate).toLocaleDateString("fr-FR")}
-                        </div>
-                      )}
-                      {/* Historique : chaque remboursement, avec qui l'a saisi. C'est la
-                          trace qui permet au detenteur et au staff de suivre sans discussion. */}
-                      {d.payments.length > 0 && (
-                        <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px dashed var(--border)", display: "flex", flexDirection: "column", gap: 4 }}>
-                          {d.payments.map(p => (
-                            <div key={p.id} style={{ fontSize: 11.5, color: "var(--text-muted)", display: "flex", gap: 8, flexWrap: "wrap" }}>
-                              <Icon name="check" size={12} style={{ color: "var(--green)" }} />
-                              <b style={{ color: "var(--green)" }}>{fmt(p.amount)} périns</b>
-                              <span>· {new Date(p.createdAt).toLocaleDateString("fr-FR")}</span>
-                              {p.recordedBy && <span>· saisi par {p.recordedBy}</span>}
-                              {p.note && <span>· {p.note}</span>}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Le remboursement est saisi par le DETENTEUR de l'objet (ou le
-                          staff), pas par le debiteur : il attesterait de son propre
-                          paiement. On n'affiche donc le champ qu'aux personnes autorisees. */}
-                      {d.status === "ACCEPTED" && (() => {
-                        const reste = Math.max(0, d.amount - paid);
-                        const jeSuisDetenteur = d.role === "detenteur";
-                        if (!jeSuisDetenteur && !canDelete) return (
-                          <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 9, display: "flex", alignItems: "center", gap: 7 }}>
-                            <Icon name="info" size={13} />
-                            {d.creditor ? <>C&apos;est <b style={{ color: "var(--text)" }}>{d.creditor}</b> qui enregistre les remboursements reçus.</> : "Le détenteur de l'objet enregistre les remboursements reçus."}
-                          </div>
-                        );
-                        return (
-                        <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
-                          <input type="number" min={1} max={reste} placeholder="Montant reçu…" value={payAmt[d.id] ?? ""} onChange={e => setPayAmt(p => ({ ...p, [d.id]: e.target.value }))} style={{ width: 150, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13 }} />
-                          <button onClick={() => pay(d.id, Math.min(reste, Number(payAmt[d.id]) || 0))} style={{ padding: "7px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="coins" size={14} /> J&apos;ai reçu</button>
-                          <button onClick={() => setPayAmt(p => ({ ...p, [d.id]: String(reste) }))} style={{ padding: "7px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12 }}>Tout ({fmt(reste)})</button>
-                        </div>
-                        ); })()}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-          ); })()}
-        </>
-      )}
       <style>{`@media(max-width:760px){.shop-layout{grid-template-columns:1fr !important}}`}</style>
     </div>
   );

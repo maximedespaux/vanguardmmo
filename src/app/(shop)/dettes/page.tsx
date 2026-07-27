@@ -1,7 +1,10 @@
-"use client";
-import { EcranEconomie } from "@/components/EcranEconomie";
+import { redirect } from "next/navigation";
 
-/** Mes dettes. L'adresse ne change pas : tous les liens déjà envoyés y mènent. */
+/**
+ * Le système de dettes a été retiré (trop lourd pour ce qu'il rendait).
+ * L'adresse reste vivante : elle a circulé dans des notifications et des
+ * messages, et une page morte se lit comme un site cassé.
+ */
 export default function DettesPage() {
-  return <EcranEconomie vue="dettes" />;
+  redirect("/boutique");
 }

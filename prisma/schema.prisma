@@ -196,6 +196,13 @@ model Absence {
   @@index([userId])
 }
 
+// ─── RETIRÉ DU SITE : le système de dettes ──────────────────
+// Décidé le 2026-07-27 (« c'est trop lourd, on retire tout »). Les modèles
+// Debt / DebtPayment / GuildDebt / BankTransaction restent DÉCLARÉS pour que
+// leurs tables — et les dettes déjà enregistrées — survivent à un `db push`.
+// Plus aucune page ni route ne les lit : les supprimer effacerait l'historique
+// de la guilde sans possibilité de retour, ce qui n'a pas été demandé.
+
 // ─── TRANSACTION / DETTE (système coffre & entraide) ────────
 model BankTransaction {
   id           String            @id @default(cuid())
@@ -621,6 +628,13 @@ model BankRequest {
   cat         String?           // catégorie boutique (récap consolidé)
   priceEach   Int?              // prix unitaire estimé (récap)
   batchId     String?           // regroupe les items d'un même panier = 1 transaction
+  /// L'objet EXACT demandé, tel que monté dans le builder : rareté, niveau
+  /// d'amélioration, sertissage, perçage… Sans lui, la requête ne portait qu'un
+  /// nom et une quantité, et le détenteur devait deviner de quelle version on
+  /// parlait — une Hache +0 et une Hache +9 percée n'ont rien à voir.
+  /// Nullable : les requêtes du panier n'en ont pas, et un `db push` de prod ne
+  /// doit jamais buter sur les lignes existantes.
+  spec        Json?
   status      BankRequestStatus @default(PENDING)
   prixPublic  BigInt?           // fixé par l'admin à l'acceptation
   prixFinal   BigInt?           // total = prix unitaire × quantité (plus de remise)
@@ -730,7 +744,12 @@ model Quete {
   auteur   User   @relation("QueteAuteur", fields: [auteurId], references: [id], onDelete: Cascade)
   titre    String
   quantite Int    @default(1)
-  note     String?
+  /// « slot » ou « unitaire » — repris du catalogue. 1 slot = 9 999 unités : sans
+  /// cette précision, « 400 » ne veut rien dire et personne ne sait quoi farmer.
+  unite    String?
+  /// La raison est OBLIGATOIRE : c'est elle qui décide quelqu'un à s'en charger,
+  /// et elle évite les demandes lancées sans y penser.
+  note     String
   /// Clé de l'objet dans le catalogue AirGuild (« Stuff - Yggdrasil|Templier|Casque »),
   /// quand la quête porte sur un objet suivi au coffre plutôt qu'un texte libre.
   /// C'est elle qui permet de retrouver l'icône, la catégorie et le seuil.

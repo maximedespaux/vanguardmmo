@@ -37,13 +37,18 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const titre = String(b?.titre ?? "").trim().slice(0, 120);
   if (!titre) return NextResponse.json({ error: "Dis ce dont tu as besoin." }, { status: 400 });
+  // La raison décide quelqu'un à s'en charger : sans elle, une quête n'est
+  // qu'une ligne de plus dans une liste que personne ne prend.
+  const note = String(b?.note ?? "").trim().slice(0, 300);
+  if (!note) return NextResponse.json({ error: "Explique à quoi ça va servir : c'est ce qui donne envie de s'en charger." }, { status: 400 });
 
   const quete = await prisma.quete.create({
     data: {
       auteurId: m.user.id,
       titre,
       quantite: Math.max(1, Math.min(9999, Math.floor(Number(b?.quantite) || 1))),
-      note: b?.note ? String(b.note).slice(0, 300) : null,
+      note,
+      unite: b?.unite === "slot" ? "slot" : b?.unite === "unitaire" ? "unitaire" : null,
       itemRef: b?.itemRef ? String(b.itemRef).slice(0, 160) : null,
       manque: Number.isFinite(Number(b?.manque)) ? Math.max(0, Number(b.manque)) : null,
     },

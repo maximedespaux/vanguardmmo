@@ -9,8 +9,7 @@ import { useCardFx } from "@/components/VgFx";
 type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number; weapon?: any; armor?: any; jewelry?: any; pets?: any; cards?: any };
 type Spec = { id: string; type: string; score: number };
 type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; gearProfiles: Gear[]; specializations: Spec[] };
-type DebtLite = { id: string; item: string | null; amount: number; status: string };
-type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; debts: DebtLite[]; _count: { transactions: number; absences: number } };
+type Member = { id: string; username: string; avatar?: string | null; role: string; isActive: boolean; characters: Char[]; _count: { transactions: number; absences: number } };
 
 const ROLE_META: Record<string, { icon: IconName; label: string; color: string }> = {
   DIRECTION: { icon: "shield", label: "Direction", color: "var(--red)" },
@@ -89,7 +88,7 @@ export default function GuildViewerPage() {
 
       {/* Hub admin — tout relié depuis le GuildViewer (#26) */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
-        {([["/coffre", "vault", "AirGuild (coffre)"], ["/gestion-dettes", "landmark", "Banque (gestion)"], ["/plan-farm", "sprout", "Plan de farm"], ["/candidatures", "clipboard", "Candidatures"], ["/gestion-worldboss", "dragon", "World Boss"]] as const).map(([href, ic, label]) => (
+        {([["/coffre", "vault", "AirGuild (coffre)"], ["/plan-farm", "sprout", "Plan de farm"], ["/candidatures", "clipboard", "Candidatures"], ["/gestion-worldboss", "dragon", "World Boss"]] as const).map(([href, ic, label]) => (
           <a key={href} href={href} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, fontSize: 13, fontWeight: 600, fontFamily: "'Rubik',sans-serif", textDecoration: "none", color: "var(--text)", background: "var(--bg-3)", border: "1px solid var(--border)" }} className="gv-hublink"><Icon name={ic} size={15} />{label}</a>
         ))}
       </div>
@@ -142,7 +141,6 @@ export default function GuildViewerPage() {
                 </div>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {miniStat("users", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
-                  {miniStat("coins", u.debts.length, "dette", u.debts.length ? "var(--red)" : "var(--text-muted)")}
                   {miniStat("ban", u._count.absences, "abs.", u._count.absences ? "var(--gold)" : "var(--text-muted)")}
                   <button onClick={() => openHist(u.id)} title="Historique des builds — 10 dernières versions sauvegardées" style={{ fontSize: 11, fontWeight: 700, cursor: "pointer", color: histUser === u.id ? "#000" : "var(--text-muted)", background: histUser === u.id ? "var(--orange)" : "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 11px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="clock" size={14} />Versions{histUser === u.id ? " ▲" : ""}</button>
                 </div>
@@ -187,11 +185,6 @@ export default function GuildViewerPage() {
                       </div>
                     );
                   })}
-                </div>
-              )}
-              {u.debts.length > 0 && (
-                <div style={{ margin: "0 17px 15px", padding: "9px 13px", background: "rgba(248,113,113,.07)", border: "1px solid color-mix(in srgb, var(--red) 35%, transparent)", borderRadius: 10, fontSize: 12, color: "var(--text-muted)" }}>
-                  <b style={{ color: "var(--red)", display: "inline-flex", alignItems: "center", gap: 5, verticalAlign: "-3px" }}><Icon name="coins" size={13} />Dettes :</b> {u.debts.map((d) => `${d.item || "objet"} (${d.amount.toLocaleString("fr-FR")} périn)`).join(" · ")}
                 </div>
               )}
             </div>

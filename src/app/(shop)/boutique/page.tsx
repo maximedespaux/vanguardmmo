@@ -1,7 +1,7 @@
 "use client";
 import { EcranEconomie } from "@/components/EcranEconomie";
 
-/** Le catalogue du coffre et le panier. Voir EcranEconomie pour le pourquoi. */
+/** Le catalogue du coffre et le panier. */
 export default function BoutiquePage() {
-  return <EcranEconomie vue="boutique" />;
+  return <EcranEconomie />;
 }

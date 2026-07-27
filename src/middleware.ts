@@ -7,8 +7,8 @@ import { DEV_ALL } from "@/lib/devAccess";
 // Niveau intermédiaire : membre du serveur Discord suffit. /builder en fait
 // partie car la candidature exige un build — un candidat doit pouvoir le créer.
 const VERIFIED_PREFIXES = ["/builder"];
-const GUILD_PREFIXES = ["/dashboard", "/personnages", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/dettes", "/echanges", "/parametres"];
-const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/gestion-dettes", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
+const GUILD_PREFIXES = ["/dashboard", "/personnages", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/quetes", "/parametres"];
+const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
@@ -42,7 +42,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*", "/personnages/:path*", "/builder/:path*", "/prestige/:path*",
     "/donjons/:path*", "/astuces/:path*", "/compositions/:path*", "/worldboss/:path*",
-    "/dettes/:path*", "/echanges/:path*", "/parametres/:path*",
-    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/gestion-dettes/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
+    "/quetes/:path*", "/parametres/:path*",
+    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
   ],
 };

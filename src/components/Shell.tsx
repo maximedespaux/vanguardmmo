@@ -16,11 +16,11 @@ import { Alertes } from "@/components/Alertes";
 // Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
 // (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
 const PAGE_BG: Record<string, string> = {
-  "/coffre": "airguild", "/dettes": "banque", "/gestion-dettes": "guildviewer", "/guildviewer": "guildviewer",
+  "/coffre": "airguild", "/guildviewer": "guildviewer",
   "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
-  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
+  "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
   "/boutique": "banque", "/demandes": "banque", "/sommaire": "guildviewer",
 };
 export function Shell({ children }: { children: React.ReactNode }) {

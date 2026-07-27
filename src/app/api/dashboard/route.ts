@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { totauxDettes } from "@/lib/dettes";
 
 // GET /api/dashboard — chiffres de la guilde + priorités intelligentes.
 // Lit uniquement les modèles existants (aucune migration requise).
@@ -16,7 +15,6 @@ export async function GET() {
     buildsCount,
     classGroups,
     roleGroups,
-    debts,
     absences,
     coffre,
     applications,
@@ -32,11 +30,6 @@ export async function GET() {
     prisma.gearProfile.count(),
     prisma.character.groupBy({ by: ["class"], _count: { _all: true } }),
     prisma.user.groupBy({ by: ["role"], _count: { _all: true } }),
-    // dueDate + payments sont necessaires pour reperer les retards et le reste a
-    // rembourser (cf. lib/dettes). Sans eux, seul le total pretee etait connu.
-    prisma.debt.findMany({
-      select: { id: true, amount: true, status: true, dueDate: true, creditor: true, payments: { select: { amount: true } } },
-    }),
     prisma.absence.findMany({ select: { id: true, status: true, startDate: true, endDate: true } }),
     prisma.coffreItem.findMany({ select: { item: true, stockTotal: true, target: true } }),
     prisma.application.findMany({ select: { id: true, status: true, createdAt: true } }),
@@ -67,16 +60,6 @@ export async function GET() {
   // ── Rôles ──
   const roles = roleGroups.map((g) => ({ role: g.role, count: g._count._all }));
 
-  // ── Dettes (Debt v2) ──
-  const debtsOngoing = debts.filter((t) => ["REQUESTED", "PENDING_VALIDATION", "ACCEPTED"].includes(t.status));
-  const debtsRepaid = debts.filter((t) => t.status === "REPAID");
-  const debtsToValidate = debts.filter((t) => t.status === "PENDING_VALIDATION");
-  const debtsOngoingAmount = debtsOngoing.reduce((s, t) => s + Number(t.amount), 0);
-  // Regles communes a la page /dettes : « en retard » doit vouloir dire la meme
-  // chose des deux cotes.
-  const suivi = totauxDettes(debts);
-  const debtsOverdue = suivi.enRetard;
-  const debtsRemaining = suivi.reste;
 
   // ── Absences en cours ──
   const absencesActive = absences.filter(
@@ -105,10 +88,6 @@ export async function GET() {
   const priorities: Prio[] = [];
   if (appsPending)
     priorities.push({ level: "haute", label: "candidature(s) en attente", count: appsPending, href: "/candidatures" });
-  if (debtsOverdue)
-    priorities.push({ level: "haute", label: "dette(s) en retard de remboursement", count: debtsOverdue, href: "/gestion-dettes" });
-  if (debtsToValidate.length)
-    priorities.push({ level: "haute", label: "dette(s) en attente de validation", count: debtsToValidate.length, href: "/gestion-dettes" });
   if (wbSoon)
     priorities.push({ level: "haute", label: "World Boss imminent (< 1h)", count: 1, href: "/worldboss" });
   if (charsWithoutBuild.length)
@@ -126,10 +105,6 @@ export async function GET() {
     members: { total: membersTotal, active: membersActive, inactive: membersInactive, roles },
     characters: { total: charsTotal, mains, secondaries, withoutBuild: charsWithoutBuild.length, classes },
     builds: { total: buildsCount, withoutBuild: charsWithoutBuild.length },
-    debts: {
-      ongoing: debtsOngoing.length, repaid: debtsRepaid.length, toValidate: debtsToValidate.length,
-      ongoingAmount: debtsOngoingAmount, overdue: debtsOverdue, remaining: debtsRemaining,
-    },
     absences: { active: absencesActive, pending: absencesPending },
     coffre: { under: coffreUnder.length, total: coffre.length, topDeficits: coffreTop },
     candidatures: { pending: appsPending, waiting: appsWaiting, total: applications.length },

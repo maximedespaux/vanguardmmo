@@ -10,20 +10,18 @@ import { prisma } from "@/lib/prisma";
  * Sans ce garde-fou, on récompenserait l'annonce et pas le geste.
  */
 
-export type SourceXp = "depot" | "quete" | "presence" | "dette";
+export type SourceXp = "depot" | "quete" | "presence";
 
 export const SOURCES: Record<SourceXp, { label: string; icon: string }> = {
   depot: { label: "Dépôts au coffre", icon: "vault" },
   quete: { label: "Quêtes livrées", icon: "target" },
   presence: { label: "Chambres Secrètes", icon: "users" },
-  dette: { label: "Dettes soldées à temps", icon: "coins" },
 };
 
 /**
- * Barème. Les valeurs disent ce que la guilde estime rare : une dette
- * remboursée dans les temps vaut cher parce qu'elle est difficile et qu'elle
- * n'arrive qu'une fois ; une présence vaut moins mais revient deux fois par
- * semaine, donc elle pèse à la longue.
+ * Barème. Les valeurs disent ce que la guilde estime rare : une quête livrée
+ * demande d'aller farmer pour quelqu'un d'autre ; une présence vaut moins mais
+ * revient deux fois par semaine, donc elle pèse à la longue.
  */
 export const BAREME = {
   /** Par unité déposée qui MANQUAIT au seuil du plan de farm. */
@@ -34,7 +32,6 @@ export const BAREME = {
   depotMax: 300,
   quete: 100,
   presence: 50,
-  dette: 200,
 } as const;
 
 /**

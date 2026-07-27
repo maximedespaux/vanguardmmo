@@ -10,8 +10,8 @@ import { commands } from "./commands/index.js";
 import { startScheduler } from "./scheduler.js";
 import { registerReactionRoles } from "./lib/reactionroles.js";
 import { prisma } from "./lib/prisma.js";
-import { debtEmbed, debtButtons, dm, refreshDebtMessage } from "./lib/debts.js";
-import { applyApplicationDecision, applyDebtDecision, applyBankRefuse, applyBankAccept } from "./lib/decisions.js";
+import { applyApplicationDecision, applyBankRefuse, applyBankAccept } from "./lib/decisions.js";
+import { dm } from "./lib/mp.js";
 import { applyExchangeDecision, applyHolderDecision } from "./lib/exchange.js";
 import { toggleRole } from "./lib/buttonroles.js";
 import { refreshGiveaway } from "./lib/giveaways.js";
@@ -56,9 +56,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.isButton()) {
     const id = interaction.customId;
     try {
-      if (id.startsWith("debt:")) await handleDebtButton(interaction);
-      else if (id.startsWith("dbt:")) await handleDebtDecision(interaction);
-      else if (id.startsWith("app:")) await handleAppDecision(interaction);
+      if (id.startsWith("app:")) await handleAppDecision(interaction);
       else if (id.startsWith("bank:")) await handleBankDecision(interaction);
       else if (id.startsWith("exch:")) await handleExchangeDecision(interaction);
       else if (id.startsWith("hold:")) await handleHolderDecision(interaction);
@@ -86,37 +84,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ─── Boutons des dettes (pair-à-pair) ───
-async function handleDebtButton(interaction: any) {
-  const [, action, debtId] = interaction.customId.split(":");
-  const d = await prisma.guildDebt.findUnique({ where: { id: debtId } });
-  if (!d) { await interaction.reply({ content: "Cette dette n'existe plus.", ephemeral: true }); return; }
-  const uid = interaction.user.id;
-
-  if ((action === "paid" || action === "cancel") && uid !== d.debtorId) {
-    await interaction.reply({ content: "Seul le débiteur peut faire ça.", ephemeral: true }); return;
-  }
-  if ((action === "confirm" || action === "reject") && uid !== d.creditorId) {
-    await interaction.reply({ content: "Seul le créancier peut confirmer ou refuser.", ephemeral: true }); return;
-  }
-
-  let updated = d;
-  if (action === "paid") {
-    updated = await prisma.guildDebt.update({ where: { id: d.id }, data: { status: "PENDING_CONFIRM" } });
-    await dm(interaction.client, d.creditorId, { content: `📩 **${d.debtorName}** déclare avoir réglé : **${d.itemName || d.itemRef} ×${d.quantity}**. Confirme ci-dessous.`, embeds: [debtEmbed(updated)], components: debtButtons(updated) as any });
-  } else if (action === "cancel") {
-    updated = await prisma.guildDebt.update({ where: { id: d.id }, data: { status: "CANCELLED" } });
-  } else if (action === "confirm") {
-    updated = await prisma.guildDebt.update({ where: { id: d.id }, data: { status: "SETTLED", settledAt: new Date() } });
-    await dm(interaction.client, d.debtorId, { content: `✅ **${d.creditorName}** a confirmé le remboursement de **${d.itemName || d.itemRef} ×${d.quantity}**. Dette soldée !` });
-  } else if (action === "reject") {
-    updated = await prisma.guildDebt.update({ where: { id: d.id }, data: { status: "OPEN" } });
-    await dm(interaction.client, d.debtorId, { content: `👎 **${d.creditorName}** indique que la dette **${d.itemName || d.itemRef} ×${d.quantity}** n'est pas encore réglée.` });
-  }
-  await refreshDebtMessage(interaction.client, updated);
-  await interaction.reply({ content: "✅ C'est noté.", ephemeral: true });
-}
-
 // ─── Boutons de décision (candidatures) — staff uniquement ───
 async function handleAppDecision(interaction: any) {
   const [, action, appId] = interaction.customId.split(":");
@@ -137,24 +104,6 @@ async function handleAppDecision(interaction: any) {
   };
   await dm(interaction.client, app.discordId, { content: NOTE[updated.status] ?? "Le statut de ta candidature a été mis à jour." });
   await interaction.reply({ content: `✅ Candidature de **${app.username}** → **${updated.status}**.`, ephemeral: true });
-}
-
-// ─── Boutons de décision (dettes membre↔guilde) — staff uniquement ───
-async function handleDebtDecision(interaction: any) {
-  const [, action, debtId] = interaction.customId.split(":");
-  const member = interaction.member as GuildMember | null;
-  if (!isStaff(member)) { await interaction.reply({ content: "⛔ Réservé au staff (bras droits / owners).", ephemeral: true }); return; }
-  const debt = await prisma.debt.findUnique({ where: { id: debtId } });
-  if (!debt) { await interaction.reply({ content: "Cette dette n'existe plus.", ephemeral: true }); return; }
-  const updated = await applyDebtDecision(interaction.client, debtId, action, interaction.user.username);
-  if (!updated) { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
-  const NOTE: Record<string, string> = {
-    ACCEPTED: "✅ Ta demande de dette à **Vanguard** a été **acceptée**.",
-    REFUSED: "❌ Ta demande de dette à **Vanguard** n'a pas été retenue.",
-    REPAID: "🔵 Ta dette à **Vanguard** est marquée **remboursée**. Merci !",
-  };
-  await dm(interaction.client, updated.user.discordId, { content: NOTE[updated.status] ?? "Le statut de ta dette a été mis à jour." });
-  await interaction.reply({ content: `✅ Dette de **${updated.user.username}** → **${updated.status}**.`, ephemeral: true });
 }
 
 // ─── Bouton « Refuser » d'une requête Banque — staff uniquement ───

@@ -1,7 +1,10 @@
-"use client";
-import { EcranEconomie } from "@/components/EcranEconomie";
+import { redirect } from "next/navigation";
 
-/** Mes demandes au coffre, et la discussion qui va avec. */
+/**
+ * « Mes demandes » et « Messages » étaient deux écrans pour une seule chose :
+ * une demande EST une conversation. On garde l'adresse — elle a pu être
+ * partagée — mais elle mène désormais à la page unique.
+ */
 export default function DemandesPage() {
-  return <EcranEconomie vue="demandes" />;
+  redirect("/messages");
 }

@@ -55,8 +55,8 @@ async function coffreDebit(itemName: string | null, qty: number, reason: string,
 }
 
 // PATCH /api/admin/bank-request/[id] — décision admin
-//  body : { action: "refuse" | "achat" | "dette", prixPublic?, adminNote? }
-//  achat = prix public ; dette = prix public complet (crée une Debt).
+//  body : { action: "refuse" | "achat", prixPublic?, adminNote? }
+//  Le système de dettes a été retiré : une demande est acceptée ou refusée.
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const a = await apiRole(ADMIN_ROLES); if ("error" in a) return a.error;
@@ -85,15 +85,6 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const troc = row.modePaiement === "troc" || accord?.mode === "troc";
   const quantite = BigInt(Math.max(1, row.quantity));
 
-  // Réglée en objets : il n'y a aucune somme à réclamer, donc rien à mettre en
-  // dette. La refuser franchement vaut mieux qu'inventer un montant en périns.
-  if (troc && b.action === "dette") {
-    return NextResponse.json(
-      { error: "Cette demande est réglée en objets : il n'y a pas de somme à mettre en dette." },
-      { status: 409 }
-    );
-  }
-
   // Prix AUTO depuis les paliers du dépôt (membre si l'acheteur est de la guilde, sinon public). Un prix saisi manuellement reste prioritaire.
   const buyer = await prisma.user.findUnique({ where: { id: row.userId }, select: { role: true } });
   const isMemberBuyer = !!(buyer && canAccessGuild(buyer.role));
@@ -116,27 +107,6 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     });
     await audit(a.user.username, "banque.ACHAT", id, `${label} — ${troc ? "troc" : prixFinal}`);
     await coffreDebit(row.item, row.quantity, `Achat banque → ${row.username}`, a.user.username);
-    return NextResponse.json(ser(r));
-  }
-
-  if (b.action === "dette") {
-    const holder = await resolveHolder(row.item); // #6 — créancier = le détenteur qui fournit l'objet
-    const debt = await prisma.debt.create({
-      data: {
-        userId: row.userId,
-        type: row.kind === "PERINS" ? "PENYA" : "ITEM",
-        amount: prixFinal,
-        caution,
-        item: row.item,
-        reason: `Boutique — ${label}${holder ? ` (dû à ${holder})` : ""}`,
-        status: "ACCEPTED",
-        creditor: holder ?? "Guilde",
-        decidedBy: a.user.username,
-      },
-    });
-    const r = await prisma.bankRequest.update({ where: { id }, data: { status: "ACCEPTE_DETTE", prixPublic, prixFinal, debtId: debt.id, decidedBy: a.user.username, adminNote } });
-    await audit(a.user.username, "banque.DETTE", id, `${label} — dette ${prixFinal}`);
-    await coffreDebit(row.item, row.quantity, `Dette banque → ${row.username}`, a.user.username);
     return NextResponse.json(ser(r));
   }
 

@@ -12,11 +12,10 @@ import { ORANGE, CRON_TZ } from "./lib/helpers.js";
 // Module partage avec le site : c'est lui qui garantit la forme du blob des
 // Chambres Secretes, donc la fiabilite de l'effectif annonce ici.
 import { normaliserCompo, presencesDu, resumeManques, type Creneau } from "@/lib/compositions";
-import { postApplicationDecision, postDebtDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
+import { postApplicationDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
 import { openDiscussion } from "./lib/exchange.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
-import { dm } from "./lib/debts.js";
 
 async function sendTo(client: Client, channelId: string, payload: any) {
   if (!channelId) return;
@@ -180,18 +179,6 @@ async function relayNewApplications(client: Client) {
   }
 }
 
-// ─── Relais des demandes de DETTE créées sur le site ────────
-async function relayNewDebts(client: Client) {
-  if (!CHANNELS.decision) return;
-  const fresh = await prisma.debt.findMany({
-    where: { status: { in: ["REQUESTED", "PENDING_VALIDATION"] }, messageId: null },
-    include: { user: true },
-    orderBy: { createdAt: "asc" },
-    take: 10,
-  });
-  for (const debt of fresh) await postDebtDecision(client, debt).catch((e) => console.error("relay dette:", e));
-}
-
 // ─── Relais des requêtes BANQUE créées sur le site ──────────
 async function relayBankRequests(client: Client) {
   if (!CHANNELS.decision) return;
@@ -255,71 +242,6 @@ async function closeFinishedExchanges(client: Client) {
   }
 }
 
-// ─── Rappel d'échéance des dettes acceptées ─────────────────
-async function remindDebts(client: Client) {
-  const now = new Date();
-  const soon = new Date(Date.now() + 48 * 3600_000);   // échéance dans <48h ou dépassée
-  const dayAgo = new Date(Date.now() - 24 * 3600_000); // un rappel par 24h max
-  const debts = await prisma.debt.findMany({
-    where: {
-      status: "ACCEPTED",
-      dueDate: { not: null, lte: soon },
-      OR: [{ remindedAt: null }, { remindedAt: { lt: dayAgo } }],
-    },
-    include: { user: true },
-  });
-  if (debts.length === 0) return;
-
-  for (const d of debts) {
-    const due = d.dueDate as Date;
-    const when = due.toLocaleDateString("fr-FR");
-    const amount = Number(d.amount).toLocaleString("fr-FR");
-    const obj = d.item ? ` / ${d.item}` : "";
-    // Notification sur le SITE, plus de message prive : Discord est coupe pour
-    // les dettes. Le rappel lui-meme est conserve — c'est le seul signal
-    // automatique du suivi, le perdre aurait laisse les echeances passer sans
-    // que personne ne le remarque.
-    await prisma.notification
-      .create({
-        data: {
-          userId: d.userId,
-          type: "DEBT_DUE",
-          title: due < now ? "Dette arrivée à échéance" : "Échéance proche",
-          body:
-            due < now
-              ? `Ta dette de ${amount} périns${obj} est arrivée à échéance le ${when}. Pense à la régler.`
-              : `Ta dette de ${amount} périns${obj} arrive à échéance le ${when}.`,
-          link: "/dettes",
-        },
-      })
-      .catch(() => null);
-  }
-  await prisma.debt.updateMany({ where: { id: { in: debts.map((d) => d.id) } }, data: { remindedAt: now } });
-
-  // Recap des retards pour le staff, sur le site lui aussi.
-  const overdue = debts.filter((d) => (d.dueDate as Date) < now);
-  if (overdue.length) {
-    const staff = await prisma.user.findMany({
-      where: { role: { in: ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"] } },
-      select: { id: true },
-    });
-    const resume = overdue
-      .map((d) => `${d.user.username} — ${Number(d.amount).toLocaleString("fr-FR")} périns`)
-      .join(" · ");
-    await prisma.notification
-      .createMany({
-        data: staff.map((u) => ({
-          userId: u.id,
-          type: "DEBT_OVERDUE",
-          title: `${overdue.length} dette(s) en retard`,
-          body: resume.slice(0, 500),
-          link: "/gestion-dettes",
-        })),
-      })
-      .catch(() => null);
-  }
-}
-
 // ─── Synchro périodique des RANGS (GuildViewer à jour) ──────
 //  Lit les rôles Discord en live et met à jour User.role en base, sans
 //  attendre que le membre se reconnecte. Prudent : n'écrase JAMAIS tout
@@ -353,7 +275,6 @@ export function startScheduler(client: Client) {
   // ─── Boutique & dettes : Discord est COUPE ────────────────────────────
   // Decision de Maxime : tout se passe sur le site, pour ne plus jongler entre
   // deux outils. Les crons qui relayaient les demandes, ouvraient un salon
-  // d'echange et le fermaient sont donc retires (relayNewDebts,
   // relayBankRequests, syncDecidedBankRequests, openDiscussions,
   // closeFinishedExchanges). Leur remplacant est le fil de discussion du site
   // (RequestMessage + /api/*/[id]/fil), qui porte la conversation ET le journal.
@@ -362,7 +283,6 @@ export function startScheduler(client: Client) {
   // notification sur le site. Une echeance qui approche doit encore alerter —
   // la supprimer avec le reste aurait fait disparaitre le seul rappel
   // automatique du suivi des dettes.
-  cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);
   // Pilotage depuis le site : cache des salons + consommation de la file de commandes.

@@ -51,7 +51,6 @@ export const ESPACES: Espace[] = [
       { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages et qui vient." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige et ce qu'il rapporte." },
-      { label: "Échanges PNJ", href: "/echanges", icon: "swap", desc: "Ce que les PNJ acceptent, et contre quoi." },
       { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
     ],
   },
@@ -62,10 +61,8 @@ export const ESPACES: Espace[] = [
     acces: "public",
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Les objets du coffre commun, à l'achat ou en dette." },
-      { label: "Mes demandes", href: "/demandes", icon: "clipboard", desc: "Ce que tu as demandé, son état, et la discussion." },
-      { label: "Messages", href: "/messages", icon: "message", desc: "Toutes tes conversations : demandes et dettes." },
+      { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Ce que tu as demandé, son état, et la discussion qui va avec." },
       { label: "Quêtes", href: "/quetes", icon: "target", desc: "Ce dont la guilde a besoin, et qui s'en charge.", acces: "guild" },
-      { label: "Mes dettes", href: "/dettes", icon: "receipt", desc: "Ce que tu dois, tes échéances, tes remboursements." },
       { label: "Coffre & crafts", href: "/coffre", icon: "vault", desc: "Le stock réel de la guilde, coffre par coffre.", acces: "admin" },
       { label: "Plan de farm", href: "/plan-farm", icon: "sprout-farm", desc: "Ce qui manque au seuil, par catégorie.", acces: "admin" },
     ],
@@ -78,7 +75,6 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff." },
       { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." },
-      { label: "Suivi des dettes", href: "/gestion-dettes", icon: "receipt", desc: "Qui doit quoi à qui, et les retards." },
       { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Planifier les passages et suivre les participations." },
       { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." },
       { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Écrire un message à toute la guilde sur Discord." },

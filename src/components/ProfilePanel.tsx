@@ -20,7 +20,7 @@ const ROLE_META: Record<string, { label: string; color: string; badge: string }>
 const SHORTCUTS: { icon: IconName; label: string; href: string }[] = [
   { icon: "users", label: "Mes personnages", href: "/personnages" },
   { icon: "sword", label: "Mon build", href: "/builder" },
-  { icon: "coins", label: "Mes dettes", href: "/dettes" },
+  { icon: "message", label: "Mes demandes", href: "/messages" },
   { icon: "moon", label: "Mes absences", href: "/absences" },
 ];
 

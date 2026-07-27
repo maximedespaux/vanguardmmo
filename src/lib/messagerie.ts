@@ -3,18 +3,18 @@ import { canAccessAdmin } from "@/config/roles";
 import type { Role, User } from "@prisma/client";
 
 /**
- * Boîte de réception : toutes les conversations d'un membre en une seule liste.
+ * Boîte de réception : toutes les demandes d'un membre, vues comme des
+ * conversations.
  *
- * Jusqu'ici un fil vivait ENFERMÉ dans sa carte de demande : il fallait déjà
- * savoir que la demande existait pour retrouver ce qui s'y était dit. C'est
- * l'inverse d'une messagerie. Ici on part de la conversation, pas de l'objet.
+ * Un fil vivait ENFERMÉ dans sa carte de demande : il fallait déjà savoir que
+ * la demande existait pour retrouver ce qui s'y était dit. C'est l'inverse
+ * d'une messagerie. Ici on part de la conversation.
  *
- * Dettes et requêtes boutique sont mélangées volontairement : de l'extérieur
- * c'est la même chose — quelqu'un attend une réponse de moi, ou moi de lui.
+ * Les dettes ont disparu de cette liste avec le système lui-même ; la clé de
+ * fil reste préfixée, parce que les marqueurs de lecture déjà posés le sont.
  */
 
 /** Clé d'un fil, préfixée : c'est elle qui porte le marqueur de lecture. */
-export const clefDette = (id: string) => `debt:${id}`;
 export const clefRequete = (id: string) => `req:${id}`;
 
 /** En ligne = vu il y a moins de 5 min (le signe de vie s'écrit toutes les 3 min). */
@@ -31,7 +31,7 @@ export type Apercu = {
 
 export type Conversation = {
   filId: string;
-  type: "dette" | "requete";
+  type: "requete";
   id: string;
   /** Sur quoi porte la conversation — l'objet, pas le numéro de dossier. */
   titre: string;
@@ -43,20 +43,16 @@ export type Conversation = {
   enLigne: boolean;
   /** "perins" (règle par défaut) ou "troc" — visible sans ouvrir, comme le prix. */
   paiement: "perins" | "troc";
+  /** L'objet exact demandé, quand la demande vient du builder. */
+  spec: unknown;
+  /** Le détail marchand en une ligne (souhait, prix) — ce que montrait la carte
+   *  de « Mes demandes » avant que les deux écrans n'en fassent qu'un. */
+  detail: string | null;
   dernier: Apercu | null;
   nonLus: number;
   /** Horodatage de tri : dernier message, sinon création de la demande. */
   quand: string;
   lien: string;
-};
-
-const ETAT_DETTE: Record<string, { l: string; t: Conversation["ton"] }> = {
-  REQUESTED: { l: "Demandée", t: "attente" },
-  PENDING_VALIDATION: { l: "En attente de validation", t: "attente" },
-  ACCEPTED: { l: "En cours de remboursement", t: "encours" },
-  REPAID: { l: "Remboursée", t: "fini" },
-  REFUSED: { l: "Refusée", t: "stop" },
-  CANCELLED: { l: "Annulée", t: "stop" },
 };
 
 const ETAT_REQUETE: Record<string, { l: string; t: Conversation["ton"] }> = {
@@ -81,66 +77,39 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   const staff = canAccessAdmin(user.role as Role);
   const pseudo = (user.username ?? "").trim();
 
-  // Mes dettes : celles que je dois, et celles dont je suis le détenteur (comparé
-  // au pseudo, comme partout ailleurs sur les dettes — le détenteur n'est pas
-  // toujours un compte du site).
-  //
-  // Le staff ne récupère PAS ici toutes les dettes de la guilde : ce serait
-  // déverser la situation financière de chacun dans la boîte de tous les
-  // officiers. La vue d'ensemble a déjà sa page, /gestion-dettes.
-  const dettes = await prisma.debt.findMany({
-    where: pseudo
-      ? { OR: [{ userId: user.id }, { creditor: { equals: pseudo, mode: "insensitive" } }] }
-      : { userId: user.id },
-    select: {
-      id: true, userId: true, item: true, type: true, status: true, creditor: true, createdAt: true,
-      user: { select: { username: true, lastSeenAt: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
-
   // Requêtes boutique : les miennes ; et pour le staff, TOUTES — c'est lui
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, createdAt: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, createdAt: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
 
-  const idsDettes = dettes.map((d) => d.id);
   const idsRequetes = requetes.map((r) => r.id);
-  if (!idsDettes.length && !idsRequetes.length) return [];
+  if (!idsRequetes.length) return [];
 
-  const [messages, marqueurs, detenteurs] = await Promise.all([
+  const [messages, marqueurs] = await Promise.all([
     prisma.requestMessage.findMany({
-      where: { OR: [{ debtId: { in: idsDettes } }, { bankRequestId: { in: idsRequetes } }] },
+      where: { bankRequestId: { in: idsRequetes } },
       orderBy: { createdAt: "desc" },
       take: MAX_MESSAGES,
-      select: { id: true, debtId: true, bankRequestId: true, userId: true, author: true, kind: true, body: true, createdAt: true },
+      select: { id: true, bankRequestId: true, userId: true, author: true, kind: true, body: true, createdAt: true },
     }),
     prisma.requestRead.findMany({
       where: { userId: user.id },
       select: { filId: true, lastSeenAt: true },
     }),
-    // Présence des détenteurs : ils ne sont désignés que par un pseudo sur la
-    // dette, il faut donc les retrouver par leur nom pour savoir s'ils sont là.
-    prisma.user.findMany({
-      where: { username: { in: dettes.map((d) => d.creditor ?? "").filter(Boolean) } },
-      select: { username: true, lastSeenAt: true },
-    }),
   ]);
 
   const vuLe = new Map(marqueurs.map((m) => [m.filId, m.lastSeenAt.getTime()]));
-  const presence = new Map(detenteurs.map((u) => [u.username.toLowerCase(), u.lastSeenAt]));
 
   // Un seul passage sur les messages : le premier vu pour un fil est le dernier
   // écrit (tri décroissant), les suivants ne servent qu'au compte des non-lus.
   const dernier = new Map<string, Apercu>();
   const nonLus = new Map<string, number>();
   for (const m of messages) {
-    const filId = m.debtId ? clefDette(m.debtId) : m.bankRequestId ? clefRequete(m.bankRequestId) : null;
+    const filId = m.bankRequestId ? clefRequete(m.bankRequestId) : null;
     if (!filId) continue;
     if (!dernier.has(filId)) {
       dernier.set(filId, { auteur: m.author, corps: m.body, kind: m.kind, quand: m.createdAt.toISOString() });
@@ -151,30 +120,6 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   }
 
   const conversations: Conversation[] = [];
-
-  for (const d of dettes) {
-    const filId = clefDette(d.id);
-    const jeSuisDebiteur = d.userId === user.id;
-    const etat = ETAT_DETTE[d.status] ?? { l: d.status, t: "attente" as const };
-    const avec = jeSuisDebiteur ? (d.creditor ?? "le staff") : (d.user?.username ?? "un membre");
-    conversations.push({
-      filId,
-      type: "dette",
-      id: d.id,
-      titre: d.item ? `Dette — ${d.item}` : d.type === "PENYA" ? "Dette de périns" : "Dette",
-      etat: etat.l,
-      ton: etat.t,
-      avec,
-      enLigne: enLigne(jeSuisDebiteur ? presence.get((d.creditor ?? "").toLowerCase()) : d.user?.lastSeenAt),
-      // Une dette est un montant en périns par construction : le troc s'arrête
-      // à la boutique, une fois la dette née il y a une somme à rembourser.
-      paiement: "perins",
-      dernier: dernier.get(filId) ?? null,
-      nonLus: nonLus.get(filId) ?? 0,
-      quand: (dernier.get(filId)?.quand ?? d.createdAt.toISOString()),
-      lien: `/dettes?fil=${d.id}`,
-    });
-  }
 
   for (const r of requetes) {
     const filId = clefRequete(r.id);
@@ -192,6 +137,11 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       // lui laisserait croire qu'un officier précis est devant l'écran.
       enLigne: false,
       paiement: r.modePaiement === "troc" ? "troc" : "perins",
+      spec: r.spec ?? null,
+      detail: [
+        r.reason?.replace(/^Boutique · /, "") ?? null,
+        r.prixFinal ? `${Number(r.prixFinal).toLocaleString("fr-FR")} périns` : null,
+      ].filter(Boolean).join(" · ") || null,
       dernier: dernier.get(filId) ?? null,
       nonLus: nonLus.get(filId) ?? 0,
       quand: (dernier.get(filId)?.quand ?? r.createdAt.toISOString()),

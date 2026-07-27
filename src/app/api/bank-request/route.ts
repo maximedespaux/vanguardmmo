@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { specDepuisJson } from "@/lib/specObjet";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -67,21 +68,10 @@ export async function POST(req: Request) {
   const charCount = await prisma.character.count({ where: { userId: a.user.id } });
   if (charCount === 0) return NextResponse.json({ error: "Complète d'abord ton profil (au moins un personnage) pour faire une requête." }, { status: 400 });
 
-  // ── Verrou dette : pas de nouvelle requête tant qu'une dette accordée n'est pas remboursée. ──
-  const outstanding = await prisma.debt.findFirst({
-    where: { userId: a.user.id, status: { in: ["ACCEPTED", "PENDING_VALIDATION"] } },
-    orderBy: { createdAt: "asc" }, select: { amount: true, item: true },
-  });
-  if (outstanding) {
-    const quoi = outstanding.item ? ` (${outstanding.item})` : "";
-    return NextResponse.json({ error: `Tu dois d'abord rembourser ta dette en cours${quoi} avant de refaire une requête à la boutique.` }, { status: 403 });
-  }
-
   const b = await req.json();
 
   // ── Panier boutique : plusieurs articles d'un coup (souhait achat ou dette) ──
   if (Array.isArray(b.items) && b.items.length) {
-    const mode = b.mode === "dette" ? "dette" : "achat";
     // Un panier = une transaction → même batchId pour tous les articles (récap consolidé + 1 seul message Discord)
     const batchId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `b${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
     let count = 0;
@@ -95,7 +85,7 @@ export async function POST(req: Request) {
           cat: (it?.cat ?? "").toString().slice(0, 60).trim() || null,
           priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
           batchId,
-          reason: `Boutique · souhait : ${mode === "dette" ? "dette" : "achat direct"}`,
+          reason: "Boutique · demande d'objet",
         },
       });
       // Le fil s'ouvre AVEC la demande : il doit exister avant qu'on ait quelque
@@ -118,6 +108,10 @@ export async function POST(req: Request) {
       kind, item, quantity: Math.max(1, Math.floor(Number(b.quantity) || 1)),
       reason: (b.reason ?? "").toString().slice(0, 500).trim() || null,
       characterName: (b.characterName ?? "").toString().slice(0, 80).trim() || null,
+      // L'objet exact venu du builder. Normalisé AVANT d'entrer en base : ce qui
+      // arrive est du JSON écrit par un client, il ne doit jamais être stocké tel
+      // quel pour être réaffiché à quelqu'un d'autre.
+      spec: specDepuisJson(b.spec) ?? undefined,
     },
   });
   await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);

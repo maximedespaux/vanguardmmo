@@ -15,7 +15,7 @@ import type { ObjetCoffre } from "@/lib/coffre";
  */
 type Personne = { id: string; nom: string; avatar: string | null };
 type Quete = {
-  id: string; titre: string; quantite: number; note: string | null; manque: number | null; itemRef: string | null;
+  id: string; titre: string; quantite: number; note: string | null; manque: number | null; itemRef: string | null; unite: string | null;
   statut: "ouverte" | "prise" | "livree" | "annulee";
   auteur: Personne; preneur: Personne | null; createdAt: string; livreeAt: string | null;
 };
@@ -52,6 +52,9 @@ export default function QuetesPage() {
   // Catalogue du coffre : chargé une fois, filtré à la frappe.
   const [catalogue, setCatalogue] = useState<ObjetCoffre[]>([]);
   const [choisi, setChoisi] = useState<ObjetCoffre | null>(null);
+  /** « 12 slots » ou « 400 unités » : 1 slot = 9 999 unités, le mot compte. */
+  const quantiteLisible = (n: number, unite: string | null) =>
+    `${n.toLocaleString("fr-FR")}${unite === "slot" ? ` slot${n > 1 ? "s" : ""}` : unite === "unitaire" ? ` unité${n > 1 ? "s" : ""}` : ""}`;
   const [listeOuverte, setListeOuverte] = useState(false);
   useEffect(() => {
     fetch("/api/catalogue").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCatalogue(d.items ?? [])).catch(() => {});
@@ -98,16 +101,17 @@ export default function QuetesPage() {
 
   const creer = async () => {
     if (!titre.trim()) { setErreur("Dis ce dont tu as besoin."); return; }
+    if (!note.trim()) { setErreur("Indique la raison : c'est ce qui décide quelqu'un à s'en charger."); return; }
     const r = await fetch("/api/quetes", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         titre, quantite: Number(quantite) || 1, note,
         // L'objet du catalogue prime sur le pré-remplissage venu du plan de farm.
-        ...(choisi ? { itemRef: choisi.id, manque: choisi.manque } : prefill),
+        ...(choisi ? { itemRef: choisi.id, manque: choisi.manque, unite: choisi.unit } : prefill),
       }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) { setErreur(j.error ?? "Création refusée."); return; }
+    if (!r.ok) { setErreur(j.error ?? `Création refusée (erreur ${r.status}).`); return; }
     setTitre(""); setQuantite("1"); setNote(""); setErreur(""); setPrefill({}); setChoisi(null);
     charger();
   };
@@ -117,7 +121,7 @@ export default function QuetesPage() {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) setErreur(j.error ?? "Action refusée."); else setErreur("");
+    if (!r.ok) setErreur(j.error ?? `Action refusée (erreur ${r.status}).`); else setErreur("");
     charger();
   };
 
@@ -178,7 +182,7 @@ export default function QuetesPage() {
             )}
           </div>
           <input type="number" min={1} value={quantite} onChange={(e) => setQuantite(e.target.value)} placeholder="quantité" style={{ ...inp, width: 110 }} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi / pour quand (facultatif)" style={{ ...inp, flex: "2 1 180px" }} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi tu en as besoin *" style={{ ...inp, flex: "2 1 180px" }} />
           <button className="vg-btn" onClick={creer}>Demander</button>
         </div>
 
@@ -216,7 +220,7 @@ export default function QuetesPage() {
                 <div key={q.id} className="glass-card fx-card" style={{ padding: 14 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <Icon name="target" size={16} style={{ color: "var(--orange)" }} />
-                    <span className="font-heading" style={{ fontSize: 15, fontWeight: 700 }}>{q.quantite} × {q.titre}</span>
+                    <span className="font-heading" style={{ fontSize: 15, fontWeight: 700 }}>{quantiteLisible(q.quantite, q.unite)} × {q.titre}</span>
                     <span style={{ fontSize: 11.5, fontWeight: 700, color: ETAT[q.statut].c }}>{ETAT[q.statut].l}</span>
                     {/* Le lien avec le plan de farm, figé à l'ouverture : c'est la
                         raison d'être de la quête, pas un compteur à rafraîchir. */}
@@ -266,7 +270,7 @@ export default function QuetesPage() {
             {closes.map((q) => (
               <div key={q.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
                 <Icon name={q.statut === "livree" ? "check" : "x"} size={13} style={{ color: ETAT[q.statut].c }} />
-                <span style={{ color: "var(--text)" }}>{q.quantite} × {q.titre}</span>
+                <span style={{ color: "var(--text)" }}>{quantiteLisible(q.quantite, q.unite)} × {q.titre}</span>
                 {q.preneur && q.statut === "livree" && <>· livré par <b style={{ color: "var(--text)" }}>{q.preneur.nom}</b></>}
                 <span style={{ marginLeft: "auto" }}>{new Date(q.livreeAt ?? q.createdAt).toLocaleDateString("fr-FR")}</span>
               </div>

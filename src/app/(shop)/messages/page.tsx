@@ -52,11 +52,17 @@ export default function MessagesPage() {
   const [filtre, setFiltre] = useState<Filtre>("tous");
   const [q, setQ] = useState("");
 
+  // Un échec ne doit PAS se lire « aucune conversation » : c'est exactement ce
+  // qui a caché pendant des semaines le 500 des dettes. Une liste vide est une
+  // information, une panne en est une autre.
+  const [panne, setPanne] = useState("");
+
   const charger = useCallback(async () => {
     try {
       const r = await fetch("/api/messages");
-      if (r.ok) setConvs((await r.json()).conversations ?? []);
-    } catch { /* silencieux : la liste se retentera au prochain tour */ }
+      if (r.ok) { setConvs((await r.json()).conversations ?? []); setPanne(""); }
+      else setPanne(`Impossible de charger tes conversations (erreur ${r.status}).`);
+    } catch { setPanne("Impossible de joindre le serveur."); }
     setPret(true);
   }, []);
 
@@ -122,7 +128,15 @@ export default function MessagesPage() {
 
           <div style={{ display: "grid", gap: 5, maxHeight: "62vh", overflowY: "auto" }}>
             {!pret && <div style={{ fontSize: 13, color: "var(--text-muted)", padding: 14 }}>Chargement…</div>}
-            {pret && liste.length === 0 && (
+            {pret && panne && (
+              <div style={{ fontSize: 12.5, color: "var(--red)", padding: "18px 12px", textAlign: "center", lineHeight: 1.5 }}>
+                {panne}
+                <div style={{ color: "var(--text-muted)", marginTop: 6 }}>
+                  Ce n&apos;est pas « aucune conversation » : le serveur n&apos;a pas répondu.
+                </div>
+              </div>
+            )}
+            {pret && !panne && liste.length === 0 && (
               <div style={{ fontSize: 12.5, color: "var(--text-muted)", padding: "18px 12px", textAlign: "center" }}>
                 {convs.length === 0
                   ? "Aucune conversation. Elles s'ouvrent quand tu fais une demande à la boutique ou qu'une dette est enregistrée."
@@ -196,9 +210,14 @@ export default function MessagesPage() {
                     <span style={{ color: TONS[courante.ton], fontWeight: 600 }}>· {courante.etat}</span>
                   </div>
                 </div>
-                <Link href={courante.lien} style={{ fontSize: 12, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5, textDecoration: "none", flexShrink: 0 }}>
-                  Voir la demande <Icon name="chevron-right" size={12} />
-                </Link>
+                {/* Pour une requête, la conversation EST la demande : renvoyer
+                    ailleurs ne ferait que sortir de la page. Une dette, elle, a
+                    des chiffres et des versements à voir. */}
+                {courante.type === "dette" && (
+                  <Link href={courante.lien} style={{ fontSize: 12, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5, textDecoration: "none", flexShrink: 0 }}>
+                    Voir la dette <Icon name="chevron-right" size={12} />
+                  </Link>
+                )}
               </div>
 
               {/* Le fil est le même composant partout : la boîte de réception ne

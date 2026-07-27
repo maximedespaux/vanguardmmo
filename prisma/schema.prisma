@@ -731,8 +731,10 @@ model Quete {
   titre    String
   quantite Int    @default(1)
   note     String?
-  /// Objet du catalogue AirGuild, quand la quête est née du plan de farm.
-  itemId   Int?
+  /// Clé de l'objet dans le catalogue AirGuild (« Stuff - Yggdrasil|Templier|Casque »),
+  /// quand la quête porte sur un objet suivi au coffre plutôt qu'un texte libre.
+  /// C'est elle qui permet de retrouver l'icône, la catégorie et le seuil.
+  itemRef  String?
   /// Ce qui manquait au seuil à l'ouverture. Figé : c'est la raison d'être de
   /// la quête au moment où elle a été lancée, pas un compteur à recalculer.
   manque   Int?

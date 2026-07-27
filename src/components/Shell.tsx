@@ -4,81 +4,14 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
-import { Icon, type IconName } from "@/components/Icon";
+import { ESPACES, HORS_ESPACES, type Acces } from "@/config/nav";
+import { Icon } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
 import { Alertes } from "@/components/Alertes";
 
-// ── Navigation v2 — bandeau supérieur (sections + sous-sections en déroulants) ──
-type Sub = { label: string; href: string; access?: "public" | "guild" | "admin" };
-type Item = { label: string; href: string; icon: IconName; access: "public" | "guild" | "admin"; sub?: Sub[] };
-
-// Navigation organisee autour des TROIS outils de la guilde, chacun regroupant ce
-// qui le concerne, au lieu d'une liste plate ou « Dashboard », « Boutique » et
-// « GuildViewer » vivaient separement :
-//   AirBuilder  -> creer et partager les builds
-//   AirGuild    -> l'economie (coffres, boutique, crafts, farm)
-//   GuildViewer -> les membres (tableau de bord, fiches, compositions)
-// Events et Annonces ont quitte la navigation : ils se pilotent depuis Discord.
-const NAV: Item[] = [
-  { label: "Accueil", href: "/histoire", icon: "book", access: "public" },
-  { label: "Candidature", href: "/candidature", icon: "user-plus", access: "public" },
-
-  { label: "AirBuilder", href: "/builder", icon: "shirt", access: "guild", sub: [
-    { label: "Mes builds", href: "/builder" },
-    { label: "Mes personnages", href: "/personnages" },
-  ] },
-
-  { label: "AirGuild", href: "/dettes", icon: "vault", access: "public", sub: [
-    { label: "Boutique", href: "/dettes", access: "public" },
-    // Depuis que Discord ne relaie plus rien, les echanges vivent sur le site :
-    // ils ont droit a leur entree, sans quoi on ne les retrouve qu'en rouvrant
-    // la demande dont ils sont partis.
-    { label: "Messages", href: "/messages", access: "public" },
-    // Les quetes sont ouvertes a toute la guilde, alors que le plan de farm
-    // reste au staff : c'est ce qui permet a un membre de prendre un besoin en
-    // charge sans avoir acces aux chiffres du coffre.
-    { label: "Quêtes", href: "/quetes", access: "guild" },
-    { label: "Coffres & crafts", href: "/coffre", access: "admin" },
-    { label: "Plan de farm", href: "/plan-farm", access: "admin" },
-  ] },
-
-  { label: "GuildViewer", href: "/dashboard", icon: "users", access: "guild", sub: [
-    { label: "Tableau de bord", href: "/dashboard", access: "guild" },
-    { label: "Membres & builds", href: "/guildviewer", access: "admin" },
-    { label: "Compositions", href: "/compositions", access: "guild" },
-    { label: "Candidatures", href: "/candidatures", access: "admin" },
-    // Le suivi des dettes parle des MEMBRES (qui doit quoi a qui), pas du stock :
-    // sa place est avec le GuildViewer, pas dans l'espace marchand.
-    { label: "Suivi des dettes", href: "/gestion-dettes", access: "admin" },
-    // Rattachees ici et plus bas : ces pages EXISTAIENT sans aucun lien dans la
-    // nav — on ne pouvait y arriver qu'en tapant l'URL. C'est la premiere cause
-    // du sentiment de se perdre : des ecrans qu'on ne sait pas atteindre.
-    { label: "Absences", href: "/absences", access: "guild" },
-  ] },
-
-  { label: "Guides", href: "/astuces", icon: "compass", access: "guild", sub: [
-    { label: "Guide de progression", href: "/astuces" },
-    { label: "Prestige", href: "/prestige" },
-  ] },
-  { label: "PvE", href: "/donjons", icon: "skull", access: "guild", sub: [
-    { label: "Donjons", href: "/donjons" },
-    { label: "World Boss", href: "/worldboss" },
-    { label: "World Boss — gestion", href: "/gestion-worldboss", access: "admin" },
-    { label: "Échanges PNJ", href: "/echanges" },
-  ] },
-
-  // Tout le pilotage du bot est regroupe sur « Bot Discord » : creneaux recurrents,
-  // events du jeu, World Boss et annonces s'y gerent via ses onglets, plutot que
-  // d'occuper quatre entrees de navigation distinctes.
-  { label: "Bot Discord", href: "/discord", icon: "discord", access: "admin", sub: [
-    { label: "Pilotage du bot", href: "/discord", access: "admin" },
-    // Ces deux pages existaient sans lien : on ne pouvait les ouvrir qu'en
-    // connaissant l'URL, alors qu'elles pilotent des envois Discord.
-    { label: "Annonce", href: "/annonce", access: "admin" },
-    { label: "Events du jeu", href: "/events", access: "admin" },
-  ] },
-];
-
+// ── Navigation v3 — trois espaces nommés par la TÂCHE, définis dans config/nav ──
+// Le regroupement seul ne suffisait pas : chaque entrée porte une ligne qui dit
+// ce qu'on y trouve, parce que « AirGuild » ou « GuildViewer » ne le disent pas.
 
 // Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
 // (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
@@ -88,6 +21,7 @@ const PAGE_BG: Record<string, string> = {
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
   "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
+  "/boutique": "banque", "/demandes": "banque", "/sommaire": "guildviewer",
 };
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
@@ -96,9 +30,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const DEV_ALL = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1"; // dev local uniquement (jamais en prod)
   const userRole = (session?.user as any)?.role ?? "RECRUE";
   const bgKey = PAGE_BG[pathname] ?? "";
-  const has = (a: string) => (DEV_ALL ? true : a === "public" ? true : a === "guild" ? canAccessGuild(userRole) : canAccessAdmin(userRole));
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
-  const items = NAV.filter((it) => has(it.access) && !(it.href === "/candidature" && canAccessGuild(userRole)));
+  const has = (a: Acces) => (DEV_ALL ? true : a === "public" ? true : a === "guild" ? canAccessGuild(userRole) : canAccessAdmin(userRole));
+  // Le `?tab=` des liens (« Mes dettes ») ne fait pas partie de l'adresse d'une page.
+  const chemin = (href: string) => href.split("?")[0];
+  const isActive = (href: string) => pathname === chemin(href) || pathname.startsWith(chemin(href) + "/");
+
+  const horsEspaces = HORS_ESPACES.filter(
+    (l) => has(l.acces ?? "public") && !(l.href === "/candidature" && canAccessGuild(userRole))
+  );
+  // Un espace dont toutes les entrées sont hors de portée n'a rien à montrer.
+  const espaces = ESPACES.map((e) => ({ ...e, liens: e.liens.filter((l) => has(l.acces ?? e.acces)) }))
+    .filter((e) => has(e.acces) && e.liens.length > 0);
 
   return (
     <div className="vg-shell">
@@ -113,23 +55,46 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <button className="vg-top-burger" onClick={() => setNavOpen((o) => !o)} aria-label="Menu"><Icon name="menu" size={19} /></button>
 
         <nav className={`vg-top-nav ${navOpen ? "open" : ""}`}>
-          {items.map((it) => {
-            const active = isActive(it.href) || (it.sub?.some((s) => isActive(s.href)) ?? false);
+          {horsEspaces.map((l) => (
+            <div key={l.href} className="vg-top-item">
+              <Link href={l.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${isActive(l.href) ? "active" : ""}`}>
+                <Icon name={l.icon} size={16} />{l.label}
+              </Link>
+            </div>
+          ))}
+
+          {espaces.map((e) => {
+            const active = e.liens.some((l) => isActive(l.href));
             return (
-              <div key={it.href} className="vg-top-item">
-                <Link href={it.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
-                  <Icon name={it.icon} size={16} />{it.label}{it.sub ? <Icon name="chevron-down" size={13} style={{ opacity: .7 }} /> : null}
+              <div key={e.label} className="vg-top-item">
+                <Link href={e.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
+                  <Icon name={e.icon} size={16} />{e.label}<Icon name="chevron-down" size={13} style={{ opacity: .7 }} />
                 </Link>
-                {it.sub && (
-                  <div className="vg-dropdown">
-                    {it.sub.filter((s) => has(s.access ?? it.access)).map((s) => (
-                      <Link key={s.href} href={s.href} onClick={() => setNavOpen(false)} className={`vg-drop-link ${isActive(s.href) ? "active" : ""}`}>{s.label}</Link>
-                    ))}
-                  </div>
-                )}
+                {/* Chaque entrée dit ce qu'on y trouve. C'est ce qui manquait :
+                    un menu de noms d'outils oblige à ouvrir pour comprendre. */}
+                <div className="vg-dropdown vg-mega">
+                  {e.liens.map((l) => (
+                    <Link key={l.href} href={l.href} onClick={() => setNavOpen(false)} className={`vg-mega-link ${isActive(l.href) ? "active" : ""}`}>
+                      <span className="vg-mega-ic"><Icon name={l.icon} size={15} /></span>
+                      <span className="vg-mega-txt">
+                        <span className="vg-mega-l">{l.label}</span>
+                        <span className="vg-mega-d">{l.desc}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
               </div>
             );
           })}
+
+          {/* Le filet : quand on ne sait pas sous quel espace chercher, une page
+              montre tout d'un coup. C'est aussi ce qui rattrape les pages qu'on
+              n'ouvre qu'une fois par an. */}
+          <div className="vg-top-item">
+            <Link href="/sommaire" onClick={() => setNavOpen(false)} className={`vg-top-link ${isActive("/sommaire") ? "active" : ""}`} title="Toutes les pages du site">
+              <Icon name="grid" size={16} /><span className="vg-top-som">Tout</span>
+            </Link>
+          </div>
         </nav>
 
         <div className="vg-top-user">

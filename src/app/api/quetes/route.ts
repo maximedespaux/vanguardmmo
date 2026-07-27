@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       titre,
       quantite: Math.max(1, Math.min(9999, Math.floor(Number(b?.quantite) || 1))),
       note: b?.note ? String(b.note).slice(0, 300) : null,
-      itemId: Number.isFinite(Number(b?.itemId)) ? Number(b.itemId) : null,
+      itemRef: b?.itemRef ? String(b.itemRef).slice(0, 160) : null,
       manque: Number.isFinite(Number(b?.manque)) ? Math.max(0, Number(b.manque)) : null,
     },
     include: QUETE_AVEC,

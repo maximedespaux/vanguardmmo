@@ -104,7 +104,7 @@ function Ligne({ d }: { d: FarmItem }) {
       {/* Le plan de farm dit ce qui manque ; il ne dit pas qui s'en occupe, donc
           chacun suppose que quelqu'un d'autre le fera. Une quête attache un nom
           au besoin — et elle part d'ici, avec le chiffre déjà rempli. */}
-      <Link href={`/quetes?item=${encodeURIComponent(d.item)}&manque=${d.manque}`} title="Ouvrir une quête pour cet objet"
+      <Link href={`/quetes?item=${encodeURIComponent(d.item)}&ref=${encodeURIComponent(d.id)}&manque=${d.manque}`} title="Ouvrir une quête pour cet objet"
         style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--text-muted)", padding: 2 }}>
         <Icon name="target" size={13} />
       </Link>

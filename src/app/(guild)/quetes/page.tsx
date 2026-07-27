@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import type { ObjetCoffre } from "@/lib/coffre";
 
 /**
  * Quêtes : ce dont la guilde a besoin, et qui s'en charge.
@@ -14,7 +15,7 @@ import { useCardFx } from "@/components/VgFx";
  */
 type Personne = { id: string; nom: string; avatar: string | null };
 type Quete = {
-  id: string; titre: string; quantite: number; note: string | null; manque: number | null;
+  id: string; titre: string; quantite: number; note: string | null; manque: number | null; itemRef: string | null;
   statut: "ouverte" | "prise" | "livree" | "annulee";
   auteur: Personne; preneur: Personne | null; createdAt: string; livreeAt: string | null;
 };
@@ -48,6 +49,32 @@ export default function QuetesPage() {
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
 
+  // Catalogue du coffre : chargé une fois, filtré à la frappe.
+  const [catalogue, setCatalogue] = useState<ObjetCoffre[]>([]);
+  const [choisi, setChoisi] = useState<ObjetCoffre | null>(null);
+  const [listeOuverte, setListeOuverte] = useState(false);
+  useEffect(() => {
+    fetch("/api/catalogue").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCatalogue(d.items ?? [])).catch(() => {});
+  }, []);
+
+  const suggestions = useMemo(() => {
+    const q = titre.trim().toLowerCase();
+    // Sans recherche, on montre ce qui manque le plus : c'est la réponse à
+    // « qu'est-ce que je peux faire d'utile ? », posée sans mot-clé.
+    const base = q
+      ? catalogue.filter((o) => (o.item + " " + o.cat + " " + o.classe).toLowerCase().includes(q))
+      : catalogue.filter((o) => o.manque > 0);
+    return base.slice(0, 8);
+  }, [catalogue, titre]);
+
+  const prendreObjet = (o: ObjetCoffre) => {
+    setChoisi(o);
+    setTitre(o.classe ? `${o.item} (${o.classe})` : o.item);
+    // La quantité proposée est ce qu'il manque : le chiffre utile, pas 1.
+    if (o.manque > 0) setQuantite(String(o.manque));
+    setListeOuverte(false);
+  };
+
   const charger = useCallback(async () => {
     try { const r = await fetch("/api/quetes"); if (r.ok) setQuetes(await r.json()); } catch { /* silencieux */ }
     setPret(true);
@@ -57,7 +84,7 @@ export default function QuetesPage() {
   // Le formulaire est pré-rempli quand on arrive du plan de farm
   // (`/quetes?item=Griffe&manque=12`) : la quête part de ce qui manque
   // vraiment, sans avoir à recopier le nom de l'objet.
-  const [prefill, setPrefill] = useState<{ itemId?: number; manque?: number }>({});
+  const [prefill, setPrefill] = useState<{ itemRef?: string; manque?: number }>({});
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const item = p.get("item");
@@ -65,7 +92,7 @@ export default function QuetesPage() {
       setTitre(item);
       const manque = Number(p.get("manque"));
       if (Number.isFinite(manque) && manque > 0) setQuantite(String(manque));
-      setPrefill({ itemId: Number(p.get("itemId")) || undefined, manque: Number.isFinite(manque) ? manque : undefined });
+      setPrefill({ itemRef: p.get("ref") ?? undefined, manque: Number.isFinite(manque) ? manque : undefined });
     }
   }, []);
 
@@ -73,11 +100,15 @@ export default function QuetesPage() {
     if (!titre.trim()) { setErreur("Dis ce dont tu as besoin."); return; }
     const r = await fetch("/api/quetes", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ titre, quantite: Number(quantite) || 1, note, ...prefill }),
+      body: JSON.stringify({
+        titre, quantite: Number(quantite) || 1, note,
+        // L'objet du catalogue prime sur le pré-remplissage venu du plan de farm.
+        ...(choisi ? { itemRef: choisi.id, manque: choisi.manque } : prefill),
+      }),
     });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { setErreur(j.error ?? "Création refusée."); return; }
-    setTitre(""); setQuantite("1"); setNote(""); setErreur(""); setPrefill({});
+    setTitre(""); setQuantite("1"); setNote(""); setErreur(""); setPrefill({}); setChoisi(null);
     charger();
   };
 
@@ -100,16 +131,69 @@ export default function QuetesPage() {
       {erreur && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--red)" }}>{erreur}</div>}
 
       {/* ── Demander ── */}
-      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 20 }}>
+      {/* z-index : la liste de suggestions déborde sur les cartes suivantes,
+          qui sont peintes après elle sans cela. */}
+      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 20, position: "relative", zIndex: 5 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name="plus" size={14} />J&apos;ai besoin de quelque chose
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ce qu'il te faut (objet, ressource…)" style={{ ...inp, flex: "2 1 240px" }} />
+
+        {/* Le champ cherche dans les objets du coffre : on voit le stock et ce
+            qu'il manque au seuil AVANT de demander. En texte libre, on ne
+            savait ni ce que la guilde possède, ni comment l'objet s'appelle
+            exactement — deux quêtes pour le même objet mal orthographié. */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", position: "relative" }}>
+          <div style={{ flex: "2 1 260px", minWidth: 220, position: "relative" }}>
+            <input
+              value={titre}
+              onChange={(e) => { setTitre(e.target.value); setChoisi(null); setListeOuverte(true); }}
+              onFocus={() => setListeOuverte(true)}
+              placeholder="Cherche un objet du coffre, ou écris librement…"
+              style={{ ...inp, width: "100%" }}
+            />
+            {listeOuverte && suggestions.length > 0 && (
+              <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 30, maxHeight: 280, overflowY: "auto", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 10, boxShadow: "0 16px 40px rgba(0,0,0,.5)", padding: 5 }}>
+                {suggestions.map((o) => (
+                  <button key={o.id} onClick={() => prendreObjet(o)}
+                    style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left", padding: "7px 9px", borderRadius: 8, border: "none", background: "transparent", color: "var(--text)", cursor: "pointer", fontFamily: "inherit" }}>
+                    <span style={{ width: 28, height: 28, flexShrink: 0, borderRadius: 7, background: "var(--bg-3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {o.icon ? <img src={o.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <Icon name="package" size={14} style={{ color: "var(--text-muted)" }} />}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
+                      </span>
+                      <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>{o.cat}</span>
+                    </span>
+                    <span style={{ flexShrink: 0, textAlign: "right" }}>
+                      <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{o.stock}/{o.target}</span>
+                      {o.manque > 0
+                        ? <span style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--red)" }}>−{o.manque}</span>
+                        : <span style={{ display: "block", fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>au seuil</span>}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <input type="number" min={1} value={quantite} onChange={(e) => setQuantite(e.target.value)} placeholder="quantité" style={{ ...inp, width: 110 }} />
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi / pour quand (facultatif)" style={{ ...inp, flex: "2 1 200px" }} />
+          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Pourquoi / pour quand (facultatif)" style={{ ...inp, flex: "2 1 180px" }} />
           <button className="vg-btn" onClick={creer}>Demander</button>
         </div>
+
+        {choisi && (
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginTop: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {choisi.icon && <img src={choisi.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} />}
+            <b>{choisi.item}</b>
+            <span style={{ color: "var(--text-muted)" }}>{choisi.cat}{choisi.classe ? ` · ${choisi.classe}` : ""}</span>
+            <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>
+              coffre : <b style={{ color: "var(--text)" }}>{choisi.stock}</b> / {choisi.target}
+              {choisi.manque > 0 && <b style={{ color: "var(--red)" }}> — il en manque {choisi.manque}</b>}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── En cours ── */}

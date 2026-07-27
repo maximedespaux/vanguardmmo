@@ -420,3 +420,22 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
   .msg-layout[data-vue="liste"] .msg-fil{display:none}
   .msg-retour{display:inline-flex}
 }
+
+/* ─── Menus qui EXPLIQUENT (nav v3) ────────────────────────────────────────
+   Un menu de noms d'outils oblige a ouvrir la page pour savoir ce qu'elle
+   fait. Chaque entree porte donc une ligne de description : c'est elle, plus
+   que le regroupement, qui repond a « il y a trop de pages, on s'y perd ». */
+.vg-mega{min-width:330px;padding:6px}
+.vg-mega-link{display:flex;align-items:flex-start;gap:10px;padding:9px 11px;border-radius:9px;text-decoration:none;color:var(--text);transition:background .14s}
+.vg-mega-link:hover{background:rgba(255,140,26,.1)}
+.vg-mega-link.active{background:rgba(255,140,26,.13)}
+.vg-mega-ic{width:28px;height:28px;flex-shrink:0;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--orange)}
+.vg-mega-link.active .vg-mega-ic{border-color:var(--orange)}
+.vg-mega-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.vg-mega-l{font-size:13px;font-weight:600;line-height:1.25}
+.vg-mega-link.active .vg-mega-l{color:var(--orange)}
+.vg-mega-d{font-size:11px;color:var(--text-muted);line-height:1.3;white-space:normal}
+@media(max-width:768px){
+  .vg-mega{min-width:0;padding:2px 0 6px 10px}
+  .vg-mega-d{display:none}   /* en menu deroule sur mobile, la liste prime sur l'explication */
+}

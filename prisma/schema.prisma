@@ -108,6 +108,7 @@ model User {
   debts         Debt[]
   snapshots     BuildSnapshot[]
   xp            XpEvent[]
+  objectifs     ObjectifFarm[]
   quetes        Quete[]  @relation("QueteAuteur")
   contributions QueteContribution[]
 }
@@ -796,6 +797,32 @@ model QueteContribution {
 
   @@index([queteId])
   @@index([userId])
+}
+
+/// Un objectif de farm que quelqu'un se donne à lui-même.
+///
+/// Le plan de farm dit ce qui manque à la guilde ; il ne dit pas ce que MOI je
+/// me suis engagé à ramener, ni où j'en suis. Sans ça, on ouvre la page, on
+/// choisit un objet, on l'oublie en jouant, et on recommence le lendemain.
+///
+/// Personne d'autre n'est concerné : c'est un pense-bête, pas une promesse.
+/// Une quête reste le bon outil quand on attend quelque chose de quelqu'un.
+model ObjectifFarm {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Clé du catalogue AirGuild, quand l'objectif vient du plan de farm.
+  itemRef String?
+  titre   String
+  cible   Int    @default(1)
+  /// Ce qui est déjà ramassé, mis à jour par le membre lui-même.
+  fait    Int    @default(0)
+  unite   String?
+
+  createdAt  DateTime  @default(now())
+  termineAt  DateTime?
+
+  @@index([userId, termineAt])
 }
 
 /// Un gain d'XP, gardé au détail plutôt qu'ajouté à un compteur.

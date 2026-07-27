@@ -4,9 +4,15 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { canAccessAdmin } from "@/config/roles";
+import type { Role } from "@prisma/client";
 import { AvatarCadre } from "@/components/AvatarCadre";
 import { rangDe, rangSuivant } from "@/lib/rangs";
 import type { ObjetCoffre } from "@/lib/coffre";
+import type { Source } from "@/lib/ouFarmer";
+
+type ObjetAFarmer = ObjetCoffre & { sources?: Source[] };
+type Objectif = { id: string; titre: string; cible: number; fait: number; unite: string | null; termineAt: string | null };
 
 /**
  * QUÊTE GUILDE — ce dont la guilde a besoin, et ce que ça rapporte.
@@ -50,6 +56,10 @@ export default function QuetesPage() {
   useCardFx();
   const { data: session } = useSession();
   const moi = (session?.user as { id?: string; image?: string } | undefined)?.id;
+  // Les quêtes secondaires touchent aux coffres : elles restent au staff, comme
+  // les coffres eux-mêmes.
+  const estStaff = canAccessAdmin(((session?.user as { role?: Role } | undefined)?.role ?? "RECRUE") as Role)
+    || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   const monAvatar = (session?.user as { image?: string } | undefined)?.image ?? null;
 
   const [quetes, setQuetes] = useState<Quete[]>([]);
@@ -60,7 +70,7 @@ export default function QuetesPage() {
   const [envoi, setEnvoi] = useState(false);
 
   // ── Catalogue du coffre : on demande ce qui existe, avec ses chiffres ──
-  const [catalogue, setCatalogue] = useState<ObjetCoffre[]>([]);
+  const [catalogue, setCatalogue] = useState<ObjetAFarmer[]>([]);
   const [q, setQ] = useState("");
   /** Quantités choisies, par objet. Vide = 0 : rien n'est demandé par défaut. */
   const [panier, setPanier] = useState<Record<string, number>>({});
@@ -128,7 +138,47 @@ export default function QuetesPage() {
 
   /** Ce que je m'apprête à apporter, par quête. */
   const [apport, setApport] = useState<Record<string, string>>({});
-  const [onglet, setOnglet] = useState<"principales" | "miennes" | "reglees">("principales");
+  const [onglet, setOnglet] = useState<"principales" | "farm" | "miennes" | "reglees">("principales");
+  /** Objet déplié dans « Que farmer » : où le trouver, et quoi en faire. */
+  const [objetOuvert, setObjetOuvert] = useState<string | null>(null);
+  const [objectifs, setObjectifs] = useState<Objectif[]>([]);
+  /** Ce que je m'apprête à déposer, par objet. */
+  const [depot, setDepot] = useState<Record<string, string>>({});
+
+  const deposer = async (o: ObjetAFarmer) => {
+    const n = Number(depot[o.id]);
+    if (!Number.isFinite(n) || n <= 0) { setErreur("Indique la quantité que tu as ramenée."); return; }
+    const r = await fetch("/api/coffre/depot", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ itemRef: o.id, quantite: n }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { setErreur(j.error ?? `Dépôt refusé (erreur ${r.status}).`); return; }
+    setErreur("");
+    setDepot((p) => ({ ...p, [o.id]: "" }));
+    // Le stock a bougé : on relit le catalogue plutôt que de le deviner.
+    fetch("/api/catalogue").then((x) => (x.ok ? x.json() : null)).then((d) => d && setCatalogue(d.items ?? [])).catch(() => {});
+    charger();
+  };
+
+  const chargerObjectifs = useCallback(async () => {
+    const r = await fetch("/api/objectifs");
+    if (r.ok) setObjectifs(await r.json());
+  }, []);
+  useEffect(() => { chargerObjectifs(); }, [chargerObjectifs]);
+
+  /** Je m'engage — envers moi-même. Aucun XP : sinon il suffirait de cocher. */
+  const seLancer = async (o: ObjetAFarmer) => {
+    await fetch("/api/objectifs", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titre: o.classe ? `${o.item} (${o.classe})` : o.item, cible: o.manque || 1, itemRef: o.id, unite: o.unit }),
+    });
+    setOnglet("farm");
+    chargerObjectifs();
+  };
+  const majObjectif = async (corps: Record<string, unknown>) => {
+    await fetch("/api/objectifs", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps) });
+    chargerObjectifs();
+  };
   /** Quête dépliée dans la liste des réglées : qui a apporté quoi. */
   const [detail, setDetail] = useState<string | null>(null);
 
@@ -154,6 +204,10 @@ export default function QuetesPage() {
   // rejoint « Réglées », où le demandeur voit ce qu'il lui reste à confirmer.
   const aFaire = ouvertes.filter((x) => (!moi || x.auteur.id !== moi) && x.reste > 0);
   const couvertes = ouvertes.filter((x) => x.reste === 0);
+  // Le plan de farm, vu par la guilde : ce qui manque au coffre, sans les
+  // chiffres de gestion. Les coffres eux-mêmes restent au staff.
+  const manquants = catalogue.filter((o) => o.manque > 0).slice(0, 40);
+  const enCours = objectifs.filter((o) => !o.termineAt);
   /** Une confirmation en attente est la seule chose qui BLOQUE quelqu'un d'autre. */
   const aConfirmer = miennes.reduce((s, x) => s + x.contributions.filter((c) => c.statut === "annonce").length, 0);
   const liste = onglet === "principales" ? aFaire : onglet === "miennes" ? miennes : [...couvertes, ...closes];
@@ -191,6 +245,7 @@ export default function QuetesPage() {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
         {([
           ["principales", "target", `Quêtes principales${aFaire.length ? ` (${aFaire.length})` : ""}`],
+          ...(estStaff ? [["farm", "sprout-farm", `Quêtes secondaires${manquants.length ? ` (${manquants.length})` : ""}`] as const] : []),
           ["miennes", "clipboard", `Mes requêtes${miennes.length ? ` (${miennes.length})` : ""}`],
           ["reglees", "check", "Réglées"],
         ] as const).map(([k, ic, l]) => (
@@ -289,7 +344,130 @@ export default function QuetesPage() {
 
       )}
 
-      {!pret ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Chargement…</div>
+      {onglet === "farm" && (
+        <div style={{ display: "grid", gap: 14 }}>
+          {/* Ce que JE me suis engagé à ramener. En tête, parce que c'est la
+              seule chose ici qui demande une action de ma part aujourd'hui. */}
+          {enCours.length > 0 && (
+            <div className="glass-card fx-card" style={{ padding: 16 }}>
+              <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
+                <Icon name="target" size={14} />Ce que je farme
+              </div>
+              <div style={{ display: "grid", gap: 9 }}>
+                {enCours.map((o) => {
+                  const pc = Math.min(100, Math.round((o.fait / Math.max(1, o.cible)) * 100));
+                  return (
+                    <div key={o.id} style={{ padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 7 }}>
+                        <b style={{ fontSize: 13.5 }}>{o.titre}</b>
+                        <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{lisible(o.fait, o.unite)} / {lisible(o.cible, o.unite)}</span>
+                        <button onClick={() => majObjectif({ id: o.id, supprimer: true })}
+                          style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: "inherit" }}>
+                          abandonner
+                        </button>
+                      </div>
+                      <div style={{ height: 8, borderRadius: 5, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden", marginBottom: 8 }}>
+                        <div style={{ width: `${pc}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s" }} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {[1, 10, 50].map((n) => (
+                          <button key={n} onClick={() => majObjectif({ id: o.id, fait: o.fait + n })}
+                            style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 11.5, fontFamily: "inherit" }}>
+                            +{n}
+                          </button>
+                        ))}
+                        <button onClick={() => majObjectif({ id: o.id, fait: o.cible })}
+                          style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
+                          C&apos;est fait
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="glass-card fx-card" style={{ padding: 16 }}>
+            <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
+              <Icon name="sprout-farm" size={14} />Quêtes secondaires — ce qui manque au coffre
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 12 }}>
+              Clique une ligne pour voir où l&apos;objet tombe, déposer ce que tu as ramené, ou demander de l&apos;aide.
+            </div>
+            {manquants.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--green)" }}>Tout est au-dessus du seuil. Rien à farmer.</div>
+            ) : (
+              <div style={{ display: "grid", gap: 5 }}>
+                {manquants.map((o) => {
+                  const ouvert = objetOuvert === o.id;
+                  const pc = Math.min(100, Math.round((o.stock / Math.max(1, o.target)) * 100));
+                  return (
+                    <div key={o.id} style={{ borderRadius: 10, background: "var(--bg-3)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}` }}>
+                      <button onClick={() => setObjetOuvert(ouvert ? null : o.id)}
+                        style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "8px 11px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--text)" }}>
+                        <span style={{ width: 28, height: 28, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          {o.icon ? <img src={o.icon} alt="" style={{ width: 24, height: 24, objectFit: "contain" }} /> : <Icon name="package" size={14} style={{ color: "var(--text-muted)" }} />}
+                        </span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
+                          </span>
+                          <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>{o.cat}</span>
+                        </span>
+                        <span style={{ width: 90, flexShrink: 0 }}>
+                          <span style={{ display: "block", height: 6, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden" }}>
+                            <span style={{ display: "block", width: `${pc}%`, height: "100%", background: pc >= 80 ? "var(--green)" : pc >= 40 ? "var(--gold)" : "var(--red)" }} />
+                          </span>
+                          <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)", marginTop: 3, textAlign: "right" }}>{o.stock}/{o.target}</span>
+                        </span>
+                        <b style={{ flexShrink: 0, color: "var(--red)", fontSize: 12.5, width: 62, textAlign: "right" }}>−{o.manque.toLocaleString("fr-FR")}</b>
+                        <Icon name={ouvert ? "chevron-down" : "chevron-right"} size={12} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                      </button>
+
+                      {ouvert && (
+                        <div style={{ padding: "0 11px 11px", display: "grid", gap: 9 }}>
+                          <div style={{ fontSize: 12 }}>
+                            <span style={{ color: "var(--text-muted)" }}>Où le trouver : </span>
+                            {o.sources?.length
+                              ? o.sources.map((s) => `${s.donjon}${s.niveau ? ` (${s.niveau})` : ""}`).join(" · ")
+                              : <span style={{ color: "var(--text-muted)" }}>pas de donjon connu — demande à la guilde.</span>}
+                          </div>
+                          {/* Dépôt rapide : même stock que l'AirGuild, saisi
+                              depuis la ligne « il en manque 900 » plutôt qu'en
+                              rouvrant l'app pour retrouver l'objet. */}
+                          <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
+                            <input type="number" min={1} value={depot[o.id] ?? ""}
+                              onChange={(ev) => setDepot((p) => ({ ...p, [o.id]: ev.target.value }))}
+                              placeholder="j'en ai ramené…" aria-label="Quantité déposée"
+                              style={{ ...inp, width: 150, padding: "8px 11px", fontSize: 13 }} />
+                            <button onClick={() => deposer(o)}
+                              style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit" }}>
+                              <Icon name="vault" size={13} /> Ajouter à mon coffre
+                            </button>
+                          </div>
+                          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5 }} onClick={() => seLancer(o)}>
+                              <Icon name="target" size={14} />Je m&apos;y mets
+                            </button>
+                            <button onClick={() => { setOnglet("miennes"); bouger(o.id, o.manque); setQ(o.item); }}
+                              style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
+                              Demander de l&apos;aide
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {onglet !== "farm" && (!pret ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Chargement…</div>
         : liste.length === 0 ? (
           <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
             {onglet === "principales" ? "Personne n'a besoin de rien pour l'instant. C'est bon signe."
@@ -458,7 +636,7 @@ export default function QuetesPage() {
               );
             })}
           </div>
-        )}
+        ))}
 
     </div>
   );

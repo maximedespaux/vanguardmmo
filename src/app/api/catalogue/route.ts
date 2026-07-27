@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { canAccessGuild } from "@/config/roles";
 import { etatCoffre } from "@/lib/coffre";
+import { sourcesDe } from "@/lib/ouFarmer";
 
 /**
  * Le catalogue du coffre, pour les membres de la guilde.
@@ -22,7 +23,11 @@ export async function GET() {
   const { items } = await etatCoffre();
   // Les plus en retard d'abord : c'est ce qu'on veut voir en haut d'un
   // sélecteur qui sert à décider quoi farmer.
-  const tries = [...items].sort((x, y) => y.manque - x.manque || x.item.localeCompare(y.item));
+  const tries = [...items]
+    .sort((x, y) => y.manque - x.manque || x.item.localeCompare(y.item))
+    // « Où aller » vient du même catalogue, lu à l'envers : les donjons
+    // listent leur butin, on en déduit où tombe chaque objet.
+    .map((o) => ({ ...o, sources: sourcesDe(o.item) }));
   return NextResponse.json({
     items: tries,
     cats: Array.from(new Set(tries.map((i) => i.cat).filter(Boolean))).sort(),

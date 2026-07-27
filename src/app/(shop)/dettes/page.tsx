@@ -98,20 +98,60 @@ export default function BanquePage() {
     else flash(j.error ?? "Erreur");
   };
 
-  /** Ouvre/ferme le fil d'une dette et charge son contenu. */
-  const ouvrirFil = async (id: string) => {
+  /**
+   * Fil d'une dette OU d'une requête boutique : même panneau, seule la base de
+   * l'URL change. Deux composants séparés auraient divergé au premier ajustement.
+   */
+  const urlFil = (kind: "debts" | "bank-request", id: string) => `/api/${kind}/${id}/fil`;
+  const ouvrirFil = async (kind: "debts" | "bank-request", id: string) => {
     if (filOuvert === id) { setFilOuvert(null); return; }
     setFilOuvert(id); setFil([]); setMsg("");
-    try { const r = await fetch(`/api/debts/${id}/fil`); if (r.ok) setFil(await r.json()); } catch {}
+    try { const r = await fetch(urlFil(kind, id)); if (r.ok) setFil(await r.json()); } catch {}
   };
-  const envoyerMsg = async (id: string) => {
+  const envoyerMsg = async (kind: "debts" | "bank-request", id: string) => {
     const texte = msg.trim();
     if (!texte) return;
-    const r = await fetch(`/api/debts/${id}/fil`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: texte }) });
+    const r = await fetch(urlFil(kind, id), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body: texte }) });
     if (!r.ok) return flash("Message non envoyé.");
     setMsg("");
-    try { const g = await fetch(`/api/debts/${id}/fil`); if (g.ok) setFil(await g.json()); } catch {}
+    try { const g = await fetch(urlFil(kind, id)); if (g.ok) setFil(await g.json()); } catch {}
   };
+
+  /** Panneau de fil, réutilisé tel quel par les dettes et les requêtes. */
+  const PanneauFil = ({ kind, id }: { kind: "debts" | "bank-request"; id: string }) => (
+    <div style={{ marginTop: 9 }}>
+      <button onClick={() => ouvrirFil(kind, id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
+        <Icon name={filOuvert === id ? "chevron-down" : "chevron-right"} size={12} />
+        <Icon name="message" size={13} />Discussion et historique
+      </button>
+      {filOuvert === id && (
+        <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
+          <div style={{ maxHeight: 220, overflow: "auto", display: "grid", gap: 7, marginBottom: 9 }}>
+            {fil.length === 0 && <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Rien pour l&apos;instant. Écris ici pour convenir de la remise ou du remboursement.</div>}
+            {fil.map(m => m.kind === "system" ? (
+              /* Un fait enregistré par le système, pas une parole : liseré et
+                 aucun auteur, pour qu'on ne le prenne pas pour l'avis de quelqu'un. */
+              <div key={m.id} style={{ fontSize: 12, color: "var(--text-muted)", borderLeft: "2px solid var(--orange)", paddingLeft: 9 }}>
+                {m.body}<span style={{ opacity: .7 }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
+              </div>
+            ) : (
+              <div key={m.id} style={{ fontSize: 13 }}>
+                <b style={{ color: "var(--orange)" }}>{m.author}</b>
+                <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
+                <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 7 }}>
+            <input value={msg} onChange={e => setMsg(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerMsg(kind, id); } }}
+              placeholder="Écrire un message…" style={{ ...inp, flex: 1, fontSize: 13 }} />
+            <button className="vg-btn" onClick={() => envoyerMsg(kind, id)} style={{ padding: "8px 14px", fontSize: 12.5 }}>Envoyer</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   const deleteDebt = async (id: string) => {
     if (!window.confirm("Supprimer définitivement cette dette de l'historique ?\nCette action est irréversible.")) return;
@@ -287,6 +327,10 @@ export default function BanquePage() {
                       {first.status === "ACCEPTE_ACHAT" && <div style={{ fontSize: 13, color: "var(--green)", marginTop: 5 }}>Prix : <b>{fmt(first.prixFinal)}</b> périn</div>}
                       {first.status === "ACCEPTE_DETTE" && <div style={{ fontSize: 13, color: "var(--blue)", marginTop: 5 }}>Dette de <b>{fmt(first.prixPublic)}</b> périn — voir l'onglet « Dettes ».</div>}
                       {first.adminNote && <div style={{ fontSize: 12, color: "var(--gold)", marginTop: 4 }}>Note staff : {first.adminNote}</div>}
+                      {/* Le fil remplace le salon d'échange que le bot ouvrait pour
+                          chaque demande. Attaché au PREMIER article du panier :
+                          un panier est une seule demande, une seule discussion. */}
+                      <PanneauFil kind="bank-request" id={first.id} />
                     </div>
                   );
                 })}
@@ -356,44 +400,11 @@ export default function BanquePage() {
                           </div>
                         </div>
                       )}
-                      {/* Fil : discussion et journal au meme endroit. Remplace le
-                          salon Discord — les evenements systeme (engagement,
+                      {/* Fil : discussion et journal au même endroit. Remplace le
+                          salon Discord — les événements système (engagement,
                           versement) s'y inscrivent aussi, donc l'historique se lit
-                          d'un bloc au lieu d'etre reparti entre deux outils. */}
-                      <div style={{ marginTop: 9 }}>
-                        <button onClick={() => ouvrirFil(d.id)} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: filOuvert === d.id ? "var(--orange)" : "var(--text-muted)", cursor: "pointer" }}>
-                          <Icon name={filOuvert === d.id ? "chevron-down" : "chevron-right"} size={12} />
-                          <Icon name="message" size={13} />Discussion et historique
-                        </button>
-                        {filOuvert === d.id && (
-                          <div style={{ marginTop: 8, padding: 11, borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-                            <div style={{ maxHeight: 220, overflow: "auto", display: "grid", gap: 7, marginBottom: 9 }}>
-                              {fil.length === 0 && <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Rien pour l&apos;instant. Écris ici pour convenir de la remise ou du remboursement.</div>}
-                              {fil.map(m => m.kind === "system" ? (
-                                /* Un fait enregistre par le systeme, pas une parole :
-                                   il porte un liseré et aucun auteur, pour qu'on ne
-                                   le prenne pas pour l'avis de quelqu'un. */
-                                <div key={m.id} style={{ fontSize: 12, color: "var(--text-muted)", borderLeft: "2px solid var(--orange)", paddingLeft: 9 }}>
-                                  {m.body}
-                                  <span style={{ opacity: .7 }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
-                                </div>
-                              ) : (
-                                <div key={m.id} style={{ fontSize: 13 }}>
-                                  <b style={{ color: "var(--orange)" }}>{m.author}</b>
-                                  <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleDateString("fr-FR")}</span>
-                                  <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
-                                </div>
-                              ))}
-                            </div>
-                            <div style={{ display: "flex", gap: 7 }}>
-                              <input value={msg} onChange={e => setMsg(e.target.value)}
-                                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerMsg(d.id); } }}
-                                placeholder="Écrire un message…" style={{ ...inp, flex: 1, fontSize: 13 }} />
-                              <button className="vg-btn" onClick={() => envoyerMsg(d.id)} style={{ padding: "8px 14px", fontSize: 12.5 }}>Envoyer</button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                          d'un bloc au lieu d'être réparti entre deux outils. */}
+                      <PanneauFil kind="debts" id={d.id} />
 
                       {/* Engagement : c'est le client qui donne la date, une fois
                           l'objet remis. Tant qu'elle manque, aucun suivi de retard

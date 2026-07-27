@@ -275,21 +275,48 @@ async function remindDebts(client: Client) {
     const when = due.toLocaleDateString("fr-FR");
     const amount = Number(d.amount).toLocaleString("fr-FR");
     const obj = d.item ? ` / ${d.item}` : "";
-    await dm(client, d.user.discordId, {
-      content: due < now
-        ? `⏰ Rappel : ta dette envers **Vanguard** (**${amount} penya**${obj}) est **arrivée à échéance** (${when}). Pense à la régler. 🙏`
-        : `⏳ Rappel : ta dette envers **Vanguard** (**${amount} penya**${obj}) arrive à échéance le **${when}**.`,
-    });
+    // Notification sur le SITE, plus de message prive : Discord est coupe pour
+    // les dettes. Le rappel lui-meme est conserve — c'est le seul signal
+    // automatique du suivi, le perdre aurait laisse les echeances passer sans
+    // que personne ne le remarque.
+    await prisma.notification
+      .create({
+        data: {
+          userId: d.userId,
+          type: "DEBT_DUE",
+          title: due < now ? "Dette arrivée à échéance" : "Échéance proche",
+          body:
+            due < now
+              ? `Ta dette de ${amount} périns${obj} est arrivée à échéance le ${when}. Pense à la régler.`
+              : `Ta dette de ${amount} périns${obj} arrive à échéance le ${when}.`,
+          link: "/dettes",
+        },
+      })
+      .catch(() => null);
   }
   await prisma.debt.updateMany({ where: { id: { in: debts.map((d) => d.id) } }, data: { remindedAt: now } });
 
-  // Récap staff des dettes en retard
+  // Recap des retards pour le staff, sur le site lui aussi.
   const overdue = debts.filter((d) => (d.dueDate as Date) < now);
-  if (overdue.length && CHANNELS.staff) {
-    const ping = ROLE_OFFICIER ? `<@&${ROLE_OFFICIER}> ` : "";
-    const lines = overdue.map((d) => `• **${d.user.username}** — ${Number(d.amount).toLocaleString("fr-FR")} penya (échéance ${(d.dueDate as Date).toLocaleDateString("fr-FR")})`);
-    const embed = new EmbedBuilder().setColor(ORANGE).setTitle(`💰 ${overdue.length} dette(s) en retard`).setDescription(lines.join("\n")).setFooter({ text: "À suivre côté Banque" });
-    await sendTo(client, CHANNELS.staff, { content: ping, embeds: [embed] });
+  if (overdue.length) {
+    const staff = await prisma.user.findMany({
+      where: { role: { in: ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"] } },
+      select: { id: true },
+    });
+    const resume = overdue
+      .map((d) => `${d.user.username} — ${Number(d.amount).toLocaleString("fr-FR")} périns`)
+      .join(" · ");
+    await prisma.notification
+      .createMany({
+        data: staff.map((u) => ({
+          userId: u.id,
+          type: "DEBT_OVERDUE",
+          title: `${overdue.length} dette(s) en retard`,
+          body: resume.slice(0, 500),
+          link: "/gestion-dettes",
+        })),
+      })
+      .catch(() => null);
   }
 }
 
@@ -323,11 +350,18 @@ export function startScheduler(client: Client) {
   cron.schedule("0 */2 * * *", () => remindApplications(client).catch(console.error), CRON_TZ);
   // Relais des nouvelles candidatures (site → salon Décision) toutes les 2 minutes.
   cron.schedule("*/2 * * * *", () => relayNewApplications(client).catch(console.error), CRON_TZ);
-  cron.schedule("*/2 * * * *", () => relayNewDebts(client).catch(console.error), CRON_TZ);
-  cron.schedule("*/2 * * * *", () => relayBankRequests(client).catch(console.error), CRON_TZ);
-  cron.schedule("*/2 * * * *", () => syncDecidedBankRequests(client).catch(console.error), CRON_TZ); // rafraîchit l'embed après décision sur le site
-  cron.schedule("*/2 * * * *", () => openDiscussions(client).catch(console.error), CRON_TZ);          // ouvre le salon de discussion dès la requête (si CHANNEL_EXCHANGE_CATEGORY configuré)
-  cron.schedule("*/1 * * * *", () => closeFinishedExchanges(client).catch(console.error), CRON_TZ);  // supprime les salons d'échange terminés (Remis/Refusé)
+  // ─── Boutique & dettes : Discord est COUPE ────────────────────────────
+  // Decision de Maxime : tout se passe sur le site, pour ne plus jongler entre
+  // deux outils. Les crons qui relayaient les demandes, ouvraient un salon
+  // d'echange et le fermaient sont donc retires (relayNewDebts,
+  // relayBankRequests, syncDecidedBankRequests, openDiscussions,
+  // closeFinishedExchanges). Leur remplacant est le fil de discussion du site
+  // (RequestMessage + /api/*/[id]/fil), qui porte la conversation ET le journal.
+  //
+  // remindDebts est CONSERVE mais n'envoie plus de message prive : il pose une
+  // notification sur le site. Une echeance qui approche doit encore alerter —
+  // la supprimer avec le reste aurait fait disparaitre le seul rappel
+  // automatique du suivi des dettes.
   cron.schedule("0 */6 * * *", () => remindDebts(client).catch(console.error), CRON_TZ);
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);

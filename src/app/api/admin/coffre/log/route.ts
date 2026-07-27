@@ -35,5 +35,8 @@ export async function POST(req: NextRequest) {
   const mv = await prisma.coffreMouvement.create({
     data: { itemId, item: String(b.item).slice(0, 120), delta, type, reason: b?.reason ? String(b.reason).slice(0, 160) : null, byUser: g.user.username ?? "?" },
   });
+  // Pas d'XP ici : le vrai stock vit dans l'état AirGuild (inventaire par
+  // membre), et c'est sa sauvegarde qui constate les dépôts. Deux sources
+  // d'XP pour un même geste finiraient par payer deux fois.
   return NextResponse.json(mv);
 }

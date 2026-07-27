@@ -34,6 +34,10 @@ const NAV: Item[] = [
     // ils ont droit a leur entree, sans quoi on ne les retrouve qu'en rouvrant
     // la demande dont ils sont partis.
     { label: "Messages", href: "/messages", access: "public" },
+    // Les quetes sont ouvertes a toute la guilde, alors que le plan de farm
+    // reste au staff : c'est ce qui permet a un membre de prendre un besoin en
+    // charge sans avoir acces aux chiffres du coffre.
+    { label: "Quêtes", href: "/quetes", access: "guild" },
     { label: "Coffres & crafts", href: "/coffre", access: "admin" },
     { label: "Plan de farm", href: "/plan-farm", access: "admin" },
   ] },
@@ -83,7 +87,7 @@ const PAGE_BG: Record<string, string> = {
   "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
-  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque",
+  "/echanges": "sup2", "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
 };
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();

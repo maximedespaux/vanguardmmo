@@ -3,6 +3,7 @@ import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { canAccessAdmin } from "@/config/roles";
 import { ecrireSysteme } from "@/lib/fil";
+import { BAREME, donnerXp } from "@/lib/xp";
 
 /**
  * POST /api/debts/[id]/payment — enregistre un remboursement REÇU.  { amount, note }
@@ -66,6 +67,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const fmt = (n: bigint) => Number(n).toLocaleString("fr-FR");
   const objet = debt.item ?? "un objet";
   const detenteur = debt.creditor ?? "Le détenteur";
+
+  // XP : rembourser dans les temps est ce qu'il y a de plus difficile à tenir,
+  // et c'est constaté par le détenteur — jamais déclaré par le débiteur. Sans
+  // date promise, on ne récompense rien : il n'y avait pas d'échéance à tenir.
+  if (soldee && debt.dueDate && new Date() <= debt.dueDate) {
+    await donnerXp(debt.userId, "dette", BAREME.dette, `Dette « ${objet} » soldée avant l'échéance`, `dette:${debt.id}`);
+  }
 
   // ── Trace 1 : notification sur le site, pour le débiteur ──────────────────
   // Un échec ici ne doit jamais annuler le remboursement déjà enregistré.

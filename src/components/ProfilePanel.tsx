@@ -28,7 +28,15 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const { data: session } = useSession();
   const u = session?.user as any;
   const [open, setOpen] = useState(false);
+  const [xp, setXp] = useState<{ total: number; niveau: number; dansNiveau: number; pourNiveau: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Chargé à l'ouverture seulement : le niveau n'a pas besoin d'être suivi en
+  // continu, et le panneau est fermé la plupart du temps.
+  useEffect(() => {
+    if (!open || xp) return;
+    fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).then((d) => d?.moi && setXp(d.moi)).catch(() => {});
+  }, [open, xp]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +71,23 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
               <span style={{ fontSize: 10.5, fontWeight: 700, color: r.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{r.label}{dev ? " · dev" : ""}</span>
             </div>
           </div>
+
+          {/* Progression : le niveau vit ici, sous le nom, parce que c'est là
+              qu'on regarde qui on est. Le détail (d'où viennent les points, qui
+              mène) est sur le tableau de bord — un panneau déroulant n'est pas
+              l'endroit pour lire un classement. */}
+          {xp && (
+            <Link href="/dashboard" onClick={() => setOpen(false)} style={{ display: "block", padding: "11px 16px", borderBottom: "1px solid var(--border)", textDecoration: "none", color: "inherit" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 6 }}>
+                <span className="font-heading" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)" }}>Niveau {xp.niveau}</span>
+                <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{xp.total.toLocaleString("fr-FR")} XP</span>
+                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)" }}>{xp.dansNiveau} / {xp.pourNiveau}</span>
+              </div>
+              <div style={{ height: 5, borderRadius: 3, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden" }}>
+                <div style={{ width: `${Math.min(100, Math.round((xp.dansNiveau / xp.pourNiveau) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)" }} />
+              </div>
+            </Link>
+          )}
 
           {u?.discordId && (
             <div style={{ padding: "10px 16px", fontSize: 11, color: "var(--text-muted)", display: "flex", gap: 6, alignItems: "center", borderBottom: "1px solid var(--border)" }}>

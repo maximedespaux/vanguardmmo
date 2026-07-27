@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
+import { donnerXp, pointsDepot } from "@/lib/xp";
 
 // État complet de l'AirGuild (app d'iBeats) — un seul blob JSON partagé (modèle AirGuildState).
 
@@ -73,10 +74,95 @@ export async function PUT(req: NextRequest) {
   const g = await guard(); if ("error" in g) return g.error;
   const data = await req.json().catch(() => null);
   if (data == null || typeof data !== "object") return NextResponse.json({ error: "data invalide" }, { status: 400 });
+
+  // L'état d'AVANT, lu avant de l'écraser : c'est la seule façon de savoir ce
+  // qui vient d'entrer au coffre. Le stock réel vit ici, par membre — pas dans
+  // la table CoffreItem, restée déconnectée.
+  const precedent = await prisma.airGuildState.findUnique({ where: { id: "main" } }).catch(() => null);
+
   await prisma.airGuildState.upsert({
     where: { id: "main" },
     create: { id: "main", data: data as object },
     update: { data: data as object },
   });
+
+  // XP de dépôt, hors du chemin critique : la sauvegarde du coffre est déjà
+  // faite, une récompense qui échoue ne doit rien annuler.
+  void crediterDepots(precedent?.data, data).catch(() => {});
   return NextResponse.json({ ok: true });
+}
+
+// ── XP de dépôt ────────────────────────────────────────────────────────────
+const inventaire = (etat: unknown): Record<string, Record<string, number>> => {
+  const inv = (etat as { inv?: unknown } | null)?.inv;
+  return inv && typeof inv === "object" && !Array.isArray(inv) ? (inv as Record<string, Record<string, number>>) : {};
+};
+const qte = (inv: Record<string, Record<string, number>>, membre: string, id: string) => Number(inv[membre]?.[id]) || 0;
+
+/** Seuil « vert » d'un objet, tel que réglé dans l'AirGuild. Défaut aligné sur
+ *  le cas courant du plan de farm — approximatif à dessein : il pondère un
+ *  score de jeu, il ne tient pas une comptabilité. */
+const seuilDe = (etat: unknown, id: string): number => {
+  const t = (etat as { thresh?: Record<string, { ok?: number }> } | null)?.thresh?.[id]?.ok;
+  return Number.isFinite(Number(t)) && Number(t) > 0 ? Number(t) : 10;
+};
+
+/**
+ * Récompense ce qui est ENTRÉ au coffre depuis la dernière sauvegarde.
+ *
+ * Deux garde-fous, sans quoi le compteur ne voudrait rien dire :
+ *  - on ne paie qu'à hauteur de l'entrée NETTE sur l'objet (tous coffres
+ *    confondus). Déplacer un objet du coffre d'un membre vers un autre ne crée
+ *    pas de richesse, donc pas d'XP ;
+ *  - ce qui manquait au seuil vaut trois fois plus que le surplus : le plan de
+ *    farm dit ce dont la guilde a besoin, l'XP doit dire la même chose.
+ */
+async function crediterDepots(avant: unknown, apres: unknown): Promise<void> {
+  const invA = inventaire(avant);
+  const invB = inventaire(apres);
+  if (!Object.keys(invA).length) return; // premier enregistrement : aucun passé, donc aucun dépôt constatable
+
+  const membres = Array.from(new Set([...Object.keys(invA), ...Object.keys(invB)]));
+  const objets = new Set<string>();
+  for (const m of membres) for (const id of Object.keys(invB[m] ?? {})) objets.add(id);
+
+  const gains: { membre: string; id: string; gain: number; manque: number }[] = [];
+  for (const id of objets) {
+    const totalA = membres.reduce((s, m) => s + qte(invA, m, id), 0);
+    const totalB = membres.reduce((s, m) => s + qte(invB, m, id), 0);
+    let net = totalB - totalA;
+    if (net <= 0) continue;
+    const manque = Math.max(0, seuilDe(apres, id) - totalA);
+    for (const m of membres) {
+      if (net <= 0) break;
+      const g = qte(invB, m, id) - qte(invA, m, id);
+      if (g <= 0) continue;
+      const paye = Math.min(g, net);
+      net -= paye;
+      gains.push({ membre: m, id, gain: paye, manque });
+    }
+  }
+  if (!gains.length) return;
+
+  // Les coffres sont nommés par pseudo : on les rattache aux comptes comme
+  // partout ailleurs (dettes, présences). Un coffre sans compte ne rapporte
+  // rien à personne — et ce n'est pas grave, c'est le coffre de la guilde.
+  const comptes = await prisma.user.findMany({
+    where: { username: { in: Array.from(new Set(gains.map((x) => x.membre))) } },
+    select: { id: true, username: true },
+  });
+  const jour = new Date().toISOString().slice(0, 10);
+  for (const { membre, id, gain, manque } of gains) {
+    const compte = comptes.find((c) => c.username.toLowerCase() === membre.toLowerCase());
+    if (!compte) continue;
+    await donnerXp(
+      compte.id,
+      "depot",
+      pointsDepot(gain, manque),
+      `${gain} × objet #${id} déposé au coffre`,
+      // Une même montée, rejouée le même jour, ne paie qu'une fois : l'app
+      // sauvegarde en continu, un renvoi du même état ne doit rien créer.
+      `depot:${jour}:${membre}:${id}:${qte(invB, membre, id)}`
+    );
+  }
 }

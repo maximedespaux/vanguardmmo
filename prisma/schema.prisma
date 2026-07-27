@@ -107,6 +107,9 @@ model User {
   transactions  BankTransaction[]
   debts         Debt[]
   snapshots     BuildSnapshot[]
+  xp            XpEvent[]
+  quetes        Quete[]  @relation("QueteAuteur")
+  quetesPrises  Quete[]  @relation("QuetePreneur")
 }
 
 // ─── HISTORIQUE DES BUILDS (10 dernières versions par membre, pour le GuildViewer) ───
@@ -714,6 +717,61 @@ model RequestMessage {
 
   @@index([debtId, createdAt])
   @@index([bankRequestId, createdAt])
+}
+
+/// Une quête : un membre demande des objets, un autre s'en charge.
+///
+/// Ce que le plan de farm ne dit pas, c'est QUI s'occupe de quoi : il liste ce
+/// qui manque, et chacun suppose que quelqu'un d'autre s'en occupe. Une quête
+/// nomme le volontaire, et le demandeur — seul à savoir s'il a reçu — la clôt.
+model Quete {
+  id       String @id @default(cuid())
+  auteurId String
+  auteur   User   @relation("QueteAuteur", fields: [auteurId], references: [id], onDelete: Cascade)
+  titre    String
+  quantite Int    @default(1)
+  note     String?
+  /// Objet du catalogue AirGuild, quand la quête est née du plan de farm.
+  itemId   Int?
+  /// Ce qui manquait au seuil à l'ouverture. Figé : c'est la raison d'être de
+  /// la quête au moment où elle a été lancée, pas un compteur à recalculer.
+  manque   Int?
+
+  /// "ouverte" | "prise" | "livree" | "annulee"
+  statut    String    @default("ouverte")
+  preneurId String?
+  preneur   User?     @relation("QuetePreneur", fields: [preneurId], references: [id], onDelete: SetNull)
+  priseAt   DateTime?
+  livreeAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([statut, createdAt])
+  @@index([auteurId])
+}
+
+/// Un gain d'XP, gardé au détail plutôt qu'ajouté à un compteur.
+///
+/// Un simple total ne se vérifie pas : personne ne peut dire d'où viennent ses
+/// points, ni retirer les bons si une confirmation était fausse. Le journal
+/// permet les deux, et il fait office de fil d'activité du membre.
+model XpEvent {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "depot" | "quete" | "presence" | "dette"
+  source String
+  points Int
+  /// Ce qui a valu les points, en clair — lisible sans recouper une autre table.
+  detail String?
+  /// Empreinte de l'événement d'origine, unique : une présence confirmée deux
+  /// fois, ou un versement enregistré en double, ne doit pas payer deux fois.
+  refId  String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 /// Jusqu'où un membre a lu un fil. Sans ce repère, « non lu » n'a aucun sens :

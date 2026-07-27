@@ -76,6 +76,16 @@ export default function CompositionsPage() {
   };
   const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => sauver({ signups: next, slotMeta: meta });
 
+  /** Le staff atteste de la venue : c'est ce constat, et lui seul, qui donne l'XP. */
+  const confirmerPresences = async (creneau: Creneau, label: string, combien: number) => {
+    if (!window.confirm(`Confirmer que les ${combien} membre(s) encore listés étaient présents (${label}) ?\nRetire d'abord les absents avec la croix.`)) return;
+    const r = await fetch("/api/compositions/presences", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creneau }),
+    });
+    const j = await r.json().catch(() => ({}));
+    window.alert(r.ok ? `${j.credites ?? 0} membre(s) crédités.` : (j.error ?? "Confirmation refusée."));
+  };
+
   /** « Je serai la » : une bascule par personnage et par creneau. */
   const basculerPresence = (creneau: Creneau, char: { name: string; class: string }) => {
     const deja = presences.some(p => p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase());
@@ -180,6 +190,17 @@ export default function CompositionsPage() {
                   {manques.length === 0
                     ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
                     : <span style={{ fontSize: 11.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
+
+                  {/* Confirmation APRÈS coup : « je serai là » est une annonce, pas
+                      une venue. Le staff retire d'abord les absents avec la croix,
+                      puis valide ce qui reste — c'est ce qui rend l'XP méritée. */}
+                  {isAdmin && liste.length > 0 && (
+                    <button onClick={() => confirmerPresences(cr.id, cr.label, liste.length)}
+                      title="Crédite l'XP de présence aux membres encore listés"
+                      style={{ marginLeft: "auto", fontSize: 11.5, fontWeight: 600, padding: "5px 11px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <Icon name="medal" size={12} />Ils étaient là
+                    </button>
+                  )}
                 </div>
 
                 {myChars.length === 0 ? (

@@ -101,6 +101,13 @@ function Ligne({ d }: { d: FarmItem }) {
       </span>
       <span style={{ fontSize: 11.5, fontWeight: 700, color: col(pc), width: 34, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>{pc}%</span>
       <span title="à farmer" style={{ fontWeight: 700, fontSize: 13, color: "var(--red)", width: 56, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>−{d.manque.toLocaleString("fr-FR")}</span>
+      {/* Le plan de farm dit ce qui manque ; il ne dit pas qui s'en occupe, donc
+          chacun suppose que quelqu'un d'autre le fera. Une quête attache un nom
+          au besoin — et elle part d'ici, avec le chiffre déjà rempli. */}
+      <Link href={`/quetes?item=${encodeURIComponent(d.item)}&manque=${d.manque}`} title="Ouvrir une quête pour cet objet"
+        style={{ flexShrink: 0, display: "flex", alignItems: "center", color: "var(--text-muted)", padding: 2 }}>
+        <Icon name="target" size={13} />
+      </Link>
     </div>
   );
 }

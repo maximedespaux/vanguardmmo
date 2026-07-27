@@ -12,15 +12,15 @@ import { canAccessAdmin } from "@/config/roles";
  * se remarque au feeling, six mois trop tard.
  *
  * Rien n'est calculé ici qui ne soit déjà écrit ailleurs : on relit les mêmes
- * journaux (demandes, crédits, XP, décisions), on les met dans le même ordre.
+ * journaux (demandes, XP, décisions), on les met dans le même ordre.
  */
 export type LigneJournal = {
   id: string;
   quand: string;
-  type: "demande" | "credit" | "xp" | "decision";
+  type: "demande" | "xp" | "decision";
   qui: string;
   quoi: string;
-  /** Chiffre marquant de la ligne (coût, delta de crédits, points). */
+  /** Chiffre marquant de la ligne (points d'XP). */
   valeur: number | null;
 };
 
@@ -31,15 +31,11 @@ export async function GET(req: Request) {
 
   const membre = new URL(req.url).searchParams.get("membre")?.trim() ?? "";
 
-  const [demandes, credits, xp, audits, comptes] = await Promise.all([
+  const [demandes, xp, audits, comptes] = await Promise.all([
     prisma.bankRequest.findMany({
       where: membre ? { username: { contains: membre, mode: "insensitive" } } : {},
-      select: { id: true, username: true, item: true, quantity: true, status: true, cout: true, soldeAvant: true, createdAt: true },
+      select: { id: true, username: true, item: true, quantity: true, status: true, createdAt: true },
       orderBy: { createdAt: "desc" }, take: 150,
-    }),
-    prisma.creditEvent.findMany({
-      orderBy: { createdAt: "desc" }, take: 150,
-      select: { id: true, userId: true, delta: true, motif: true, createdAt: true },
     }),
     prisma.xpEvent.findMany({
       orderBy: { createdAt: "desc" }, take: 150,
@@ -55,12 +51,8 @@ export async function GET(req: Request) {
   const lignes: LigneJournal[] = [
     ...demandes.map((d) => ({
       id: `req:${d.id}`, quand: d.createdAt.toISOString(), type: "demande" as const, qui: d.username,
-      quoi: `demande ${d.quantity} × ${d.item ?? "?"} — ${d.status.toLowerCase()} (solde avant : ${d.soldeAvant})`,
-      valeur: -d.cout,
-    })),
-    ...credits.filter((c) => gardeMembre(nom(c.userId))).map((c) => ({
-      id: `cred:${c.id}`, quand: c.createdAt.toISOString(), type: "credit" as const, qui: nom(c.userId),
-      quoi: c.motif, valeur: c.delta,
+      quoi: `demande ${d.quantity} × ${d.item ?? "?"} — ${d.status.toLowerCase()}`,
+      valeur: null,
     })),
     ...xp.filter((x) => gardeMembre(nom(x.userId))).map((x) => ({
       id: `xp:${x.id}`, quand: x.createdAt.toISOString(), type: "xp" as const, qui: nom(x.userId),
@@ -73,18 +65,17 @@ export async function GET(req: Request) {
   ].sort((x, y) => y.quand.localeCompare(x.quand)).slice(0, 300);
 
   // Le tableau qui répond à la question posée : qui prend plus qu'il ne donne.
+  // L'XP mesure ce qui est DONNÉ (dépôts, quêtes livrées, présences), le nombre
+  // de demandes ce qui est PRIS. Les deux côte à côte suffisent à repérer un
+  // déséquilibre — c'est ce qu'on regardait, pas un solde à la virgule près.
   const parMembre = comptes
-    .map((c) => {
-      const g = credits.filter((x) => x.userId === c.id);
-      return {
-        nom: c.username,
-        gagnes: g.filter((x) => x.delta > 0).reduce((s, x) => s + x.delta, 0),
-        depenses: g.filter((x) => x.delta < 0).reduce((s, x) => s - x.delta, 0),
-        demandes: demandes.filter((d) => d.username === c.username).length,
-      };
-    })
-    .filter((m) => m.gagnes || m.depenses || m.demandes)
-    .sort((m, n) => (m.gagnes - m.depenses) - (n.gagnes - n.depenses));
+    .map((c) => ({
+      nom: c.username,
+      donne: xp.filter((x) => x.userId === c.id).reduce((s, x) => s + x.points, 0),
+      demandes: demandes.filter((d) => d.username === c.username).length,
+    }))
+    .filter((m) => m.donne || m.demandes)
+    .sort((m, n) => m.donne - m.demandes * 100 - (n.donne - n.demandes * 100));
 
   return NextResponse.json({ lignes, parMembre });
 }

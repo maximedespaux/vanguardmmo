@@ -21,7 +21,7 @@ const PAGE_BG: Record<string, string> = {
   "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
   "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
   "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
-  "/boutique": "banque", "/demandes": "banque", "/sommaire": "guildviewer", "/journal": "guildviewer",
+  "/boutique": "banque", "/demandes": "banque", "/sommaire": "guildviewer", "/journal": "guildviewer", "/statistiques": "guildviewer",
 };
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();

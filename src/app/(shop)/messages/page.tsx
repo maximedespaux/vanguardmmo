@@ -209,6 +209,16 @@ export default function MessagesPage() {
                     {courante.enLigne && <span style={{ color: "var(--green)" }}>· en ligne</span>}
                     <span style={{ color: TONS[courante.ton], fontWeight: 600 }}>· {courante.etat}</span>
                     {courante.detail && <span>· {courante.detail}</span>}
+                    {/* Combien de fois ce membre a demandé. Cliquable pour le
+                        staff : c'est le premier réflexe quand une demande
+                        paraît de trop, et le journal a déjà tout l'historique. */}
+                    {courante.demandesDeLAuteur > 0 && (estStaff ? (
+                      <Link href={`/journal?membre=${encodeURIComponent(courante.avec)}`} style={{ color: "var(--orange)", textDecoration: "none" }}>
+                        · {courante.demandesDeLAuteur} demande{courante.demandesDeLAuteur > 1 ? "s" : ""} au total →
+                      </Link>
+                    ) : (
+                      <span>· {courante.demandesDeLAuteur} demande{courante.demandesDeLAuteur > 1 ? "s" : ""} au total</span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -226,7 +236,6 @@ export default function MessagesPage() {
                 moiId={moi?.id}
                 estStaff={estStaff}
                 negociation={courante.type === "requete"}
-                cout={courante.cout}
                 hauteur="46vh"
                 onActivite={charger}
               />

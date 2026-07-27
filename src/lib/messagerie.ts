@@ -45,8 +45,9 @@ export type Conversation = {
   paiement: "perins" | "troc";
   /** L'objet exact demandé, quand la demande vient du builder. */
   spec: unknown;
-  /** Coût en crédits d'entraide de la demande. */
-  cout: number;
+  /** Combien de demandes ce membre a déjà faites — de quoi juger sans quitter
+   *  la conversation, et point d'entrée vers son historique. */
+  demandesDeLAuteur: number;
   /** Le détail marchand en une ligne (souhait, prix) — ce que montrait la carte
    *  de « Mes demandes » avant que les deux écrans n'en fassent qu'un. */
   detail: string | null;
@@ -83,7 +84,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, cout: true, createdAt: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, characterName: true, createdAt: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
@@ -121,6 +122,11 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
     if (m.createdAt.getTime() > (vuLe.get(filId) ?? 0)) nonLus.set(filId, (nonLus.get(filId) ?? 0) + 1);
   }
 
+  // Combien de fois chacun a demandé : compté une fois pour toute la liste
+  // plutôt qu'une requête par conversation.
+  const parAuteur = new Map<string, number>();
+  for (const r of requetes) parAuteur.set(r.userId, (parAuteur.get(r.userId) ?? 0) + 1);
+
   const conversations: Conversation[] = [];
 
   for (const r of requetes) {
@@ -140,8 +146,10 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       enLigne: false,
       paiement: r.modePaiement === "troc" ? "troc" : "perins",
       spec: r.spec ?? null,
-      cout: r.cout,
+      demandesDeLAuteur: parAuteur.get(r.userId) ?? 0,
       detail: [
+        // Le pseudo en jeu d'abord : c'est ce qu'il faut pour envoyer le courrier.
+        r.characterName ? `courrier à ${r.characterName}` : null,
         r.reason?.replace(/^Boutique · /, "") ?? null,
         r.prixFinal ? `${Number(r.prixFinal).toLocaleString("fr-FR")} périns` : null,
       ].filter(Boolean).join(" · ") || null,

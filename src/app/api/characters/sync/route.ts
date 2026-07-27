@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
-import { BAREME_CREDITS, bougerCredits } from "@/lib/credits";
 
 // Le builder envoie les classes en clair ("Arcaniste") → on normalise vers l'enum.
 const CLASSES = ["TEMPLIER", "SPADASSIN", "ARCANISTE", "ENVOUTEUR", "ARBALETRIER", "SYLPHIDE", "PRIMAT", "CHANOINE"];
@@ -74,23 +73,6 @@ export async function POST(req: Request) {
       }
     }
   });
-  // Un personnage dont le TANK **et** le DPS sont montés vaut un crédit : c'est
-  // ce qui permet au staff de l'accompagner, et ça ne coûte au joueur qu'un
-  // moment de rangement. Une fois par personnage — l'empreinte porte le nom du
-  // perso, pas la date, pour que republier son build ne rapporte pas en boucle.
-  void crediterBuildsComplets(a.user.id, chars).catch(() => {});
   return NextResponse.json({ ok: true, count: chars.length });
 }
 
-async function crediterBuildsComplets(userId: string, chars: unknown[]): Promise<void> {
-  for (const c of chars as { name?: string; stuffs?: { name?: string; equipped?: Record<string, unknown> }[] }[]) {
-    const nom = String(c?.name ?? "").slice(0, 40);
-    const stuffs = Array.isArray(c?.stuffs) ? c.stuffs : [];
-    // « Monté » veut dire équipé, pas seulement nommé : un stuff vide ne compte
-    // pas, sinon les trois emplacements créés d'office suffiraient à toucher.
-    const garni = (n: string) =>
-      stuffs.some((s) => String(s?.name ?? "").toUpperCase().includes(n) && Object.keys(s?.equipped ?? {}).length >= 5);
-    if (!nom || !garni("TANK") || !garni("DPS")) continue;
-    await bougerCredits(userId, BAREME_CREDITS.buildComplet, `Build TANK + DPS publié : ${nom}`, `build:${userId}:${nom.toLowerCase()}`);
-  }
-}

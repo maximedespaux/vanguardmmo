@@ -11,10 +11,12 @@ import type { ObjetCoffre } from "@/lib/coffre";
 /**
  * QUÊTE GUILDE — ce dont la guilde a besoin, et ce que ça rapporte.
  *
- * Le principe qui tient tout : on ne paie pas ce qu'on demande, on le mérite.
- * Aider donne de l'XP (ce qu'on a fait) et des crédits (ce qu'on peut demander
- * en retour). Le bandeau du haut montre les deux en permanence — sans ça, la
- * boucle ne se voit pas et personne ne joue.
+ * Le principe qui tient tout : ce qu'on apporte se voit. Aider fait monter le
+ * niveau et le rang, et le bandeau du haut le montre en permanence — sans ça,
+ * la boucle ne se voit pas et personne ne joue.
+ *
+ * Les crédits d'entraide ont été retirés le 2026-07-27 : un compteur de plus à
+ * comprendre pour ce que l'XP et le journal du staff disaient déjà.
  *
  * Le demandeur, et lui seul, confirme la réception : c'est ce qui rend la
  * récompense du livreur incontestable.
@@ -29,10 +31,7 @@ type Quete = {
   /** Ce qui est reçu, ce qui est promis, ce qui manque encore. */
   contributions: Apport[]; confirme: number; annonce: number; reste: number;
 };
-type Progression = {
-  moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number };
-  credits: { solde: number; gagnes: number; depenses: number };
-};
+type Progression = { moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number } };
 
 const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "check" | "x" }> = {
   ouverte: { l: "En cours", c: "var(--gold)", ic: "target" },
@@ -72,7 +71,7 @@ export default function QuetesPage() {
       fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
     if (a) setQuetes(a);
-    if (b) setProg({ moi: b.moi, credits: b.credits });
+    if (b) setProg({ moi: b.moi });
     setPret(true);
   }, []);
   useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t); }, [charger]);
@@ -130,6 +129,8 @@ export default function QuetesPage() {
   /** Ce que je m'apprête à apporter, par quête. */
   const [apport, setApport] = useState<Record<string, string>>({});
   const [onglet, setOnglet] = useState<"principales" | "miennes" | "reglees">("principales");
+  /** Quête dépliée dans la liste des réglées : qui a apporté quoi. */
+  const [detail, setDetail] = useState<string | null>(null);
 
   const agir = async (id: string, action: string, extra: Record<string, unknown> = {}) => {
     const r = await fetch(`/api/quetes/${id}`, {
@@ -148,10 +149,14 @@ export default function QuetesPage() {
   const miennes = quetes.filter((x) => !!moi && x.auteur.id === moi && x.statut === "ouverte");
   // Les quêtes des autres d'abord : c'est là qu'on peut aider. Les siennes ont
   // leur onglet, et y attendre un volontaire ne demande aucune action.
-  const aFaire = ouvertes.filter((x) => !moi || x.auteur.id !== moi);
+  // Une quête dont tout est PROMIS n'attend plus de volontaire : elle sort de
+  // « à faire », sinon on la relit dix fois sans rien pouvoir y faire. Elle
+  // rejoint « Réglées », où le demandeur voit ce qu'il lui reste à confirmer.
+  const aFaire = ouvertes.filter((x) => (!moi || x.auteur.id !== moi) && x.reste > 0);
+  const couvertes = ouvertes.filter((x) => x.reste === 0);
   /** Une confirmation en attente est la seule chose qui BLOQUE quelqu'un d'autre. */
   const aConfirmer = miennes.reduce((s, x) => s + x.contributions.filter((c) => c.statut === "annonce").length, 0);
-  const liste = onglet === "principales" ? aFaire : onglet === "miennes" ? miennes : closes;
+  const liste = onglet === "principales" ? aFaire : onglet === "miennes" ? miennes : [...couvertes, ...closes];
   const niveau = prog?.moi.niveau ?? 1;
   const rang = rangDe(niveau);
   const suivant = rangSuivant(niveau);
@@ -159,7 +164,7 @@ export default function QuetesPage() {
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
-      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin. Aider rapporte de l'XP et des crédits ; demander en dépense — c'est ce qui fait que ça ne va pas dans un seul sens." />
+      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin, et qui s'en charge. Aider fait monter ton niveau ; celui qui a demandé confirme la réception." />
 
       {/* ── Bandeau de progression : la boucle du jeu, toujours à l'écran ── */}
       <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 18, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
@@ -179,17 +184,34 @@ export default function QuetesPage() {
           <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{rang.obtention}</div>
         </div>
 
-        {/* Les crédits : ce qu'on peut demander parce qu'on a donné. */}
-        <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
-          <Compteur valeur={prog?.credits.solde ?? 0} label="crédits" principal />
-          <Compteur valeur={prog?.credits.gagnes ?? 0} label="gagnés en aidant" />
-          <Compteur valeur={prog?.credits.depenses ?? 0} label="dépensés" />
-        </div>
       </div>
 
       {erreur && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--red)" }}>{erreur}</div>}
 
-      {/* ── Demander de l'aide ── */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
+        {([
+          ["principales", "target", `Quêtes principales${aFaire.length ? ` (${aFaire.length})` : ""}`],
+          ["miennes", "clipboard", `Mes requêtes${miennes.length ? ` (${miennes.length})` : ""}`],
+          ["reglees", "check", "Réglées"],
+        ] as const).map(([k, ic, l]) => (
+          <button key={k} onClick={() => setOnglet(k)}
+            style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${onglet === k ? "var(--orange)" : "var(--border)"}`, background: onglet === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: onglet === k ? "var(--orange)" : "var(--text-muted)" }}>
+            <Icon name={ic} size={15} />{l}
+            {/* Une confirmation qui attend bloque celui qui a livré : elle se
+                signale même quand on regarde un autre onglet. */}
+            {k === "miennes" && aConfirmer > 0 && (
+              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--green)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                {aConfirmer}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {/* Demander vit dans « Mes requêtes » : sur l'onglet principal, ce qu'on
+          vient chercher c'est ce que la guilde attend de nous, pas un
+          formulaire. Le mettre en tête poussait les quêtes sous la ligne de
+          flottaison — on ne voyait plus ce qu'il y avait à faire. */}
+      {onglet === "miennes" && (
       <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 22 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
           <Icon name="plus" size={14} />Demander de l&apos;aide
@@ -265,26 +287,8 @@ export default function QuetesPage() {
         </div>
       </div>
 
-      {/* ── Le tableau des quêtes ── */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-        {([
-          ["principales", "target", `Quêtes principales${aFaire.length ? ` (${aFaire.length})` : ""}`],
-          ["miennes", "clipboard", `Mes requêtes${miennes.length ? ` (${miennes.length})` : ""}`],
-          ["reglees", "check", "Réglées"],
-        ] as const).map(([k, ic, l]) => (
-          <button key={k} onClick={() => setOnglet(k)}
-            style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${onglet === k ? "var(--orange)" : "var(--border)"}`, background: onglet === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: onglet === k ? "var(--orange)" : "var(--text-muted)" }}>
-            <Icon name={ic} size={15} />{l}
-            {/* Une confirmation qui attend bloque celui qui a livré : elle se
-                signale même quand on regarde un autre onglet. */}
-            {k === "miennes" && aConfirmer > 0 && (
-              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--green)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                {aConfirmer}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      )}
+
       {!pret ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Chargement…</div>
         : liste.length === 0 ? (
           <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
@@ -295,16 +299,52 @@ export default function QuetesPage() {
         ) : (
           <div className="vg-stagger" style={{ display: "grid", gap: 10 }}>
             {liste.map((x) => {
-              // Une quête close n'a plus d'action : on la montre en résumé.
-              if (x.statut !== "ouverte") {
+              // Une quête close, ou entièrement promise, n'appelle plus de
+              // volontaire : résumé d'une ligne. Sauf pour son auteur, qui a
+              // encore des réceptions à confirmer — il la retrouve entière
+              // dans « Mes requêtes ».
+              if (x.statut !== "ouverte" || (onglet === "reglees" && x.reste === 0)) {
+                const ouvert = detail === x.id;
                 return (
-                  <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
-                    <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c }} />
-                    <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
-                    {x.statut === "livree" && x.contributions.length > 0 && (
-                      <>· livré par <b style={{ color: "var(--text)" }}>{[...new Set(x.contributions.map((c) => c.par.nom))].join(", ")}</b></>
+                  <div key={x.id} style={{ borderRadius: 10, background: "var(--bg-3)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}` }}>
+                    {/* Cliquable : le résumé dit QUI a livré, le dépliage dit
+                        combien chacun a apporté. La deuxième question ne se pose
+                        pas toujours — mais quand elle se pose, il faut y répondre
+                        sans aller fouiller le journal du staff. */}
+                    <button onClick={() => setDetail(ouvert ? null : x.id)}
+                      style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "10px 12px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, color: "var(--text-muted)", textAlign: "left" }}>
+                      <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c, flexShrink: 0 }} />
+                      <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
+                      {x.statut === "ouverte" && <span style={{ color: "var(--orange)" }}>· tout est promis, en attente de réception</span>}
+                      {x.statut === "livree" && x.contributions.length > 0 && (
+                        <>· livré par <b style={{ color: "var(--text)" }}>{[...new Set(x.contributions.map((c) => c.par.nom))].join(", ")}</b></>
+                      )}
+                      <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
+                        {new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}
+                        <Icon name={ouvert ? "chevron-down" : "chevron-right"} size={12} />
+                      </span>
+                    </button>
+                    {ouvert && (
+                      <div style={{ padding: "0 12px 11px", display: "grid", gap: 5 }}>
+                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                          demandé par <b style={{ color: "var(--text)" }}>{x.auteur.nom}</b>{x.note ? ` — « ${x.note} »` : ""}
+                        </div>
+                        {x.contributions.length === 0 ? (
+                          <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Personne n&apos;a contribué.</div>
+                        ) : x.contributions.map((c) => (
+                          <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+                            <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
+                            <b>{c.par.nom}</b>
+                            <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
+                              {c.statut === "confirme" ? "a livré" : "avait promis"} {lisible(c.quantite, x.unite)}
+                            </span>
+                            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-muted)" }}>
+                              {Math.round((c.quantite / Math.max(1, x.quantite)) * 100)} % de la quête
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                    <span style={{ marginLeft: "auto" }}>{new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}</span>
                   </div>
                 );
               }
@@ -321,9 +361,6 @@ export default function QuetesPage() {
                     {x.manque != null && x.manque > 0 && (
                       <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
                     )}
-                    <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      <Icon name="medal" size={12} />récompense au prorata de ce que tu apportes
-                    </span>
                   </div>
 
                   {/* La barre dit ce qui est REÇU (plein) et ce qui est PROMIS
@@ -387,13 +424,23 @@ export default function QuetesPage() {
                           onChange={(ev) => setApport((p) => ({ ...p, [x.id]: ev.target.value }))}
                           placeholder={`jusqu'à ${x.reste}`} aria-label="Ce que j'apporte"
                           style={{ ...inp, width: 130, padding: "8px 11px", fontSize: 13 }} />
+                        {/* Une part du RESTE, pas de la quantité totale : c'est ce
+                            qu'on peut encore prendre. 100 % tombe pile dessus,
+                            sans arrondi — sinon il resterait une unité orpheline
+                            que personne ne pense à venir chercher. */}
+                        {[25, 50, 75, 100].map((pct) => (
+                          <button key={pct}
+                            onClick={() => setApport((p) => ({
+                              ...p,
+                              [x.id]: String(pct === 100 ? x.reste : Math.max(1, Math.round((x.reste * pct) / 100))),
+                            }))}
+                            style={{ padding: "7px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
+                            {pct} %
+                          </button>
+                        ))}
                         <button className="vg-btn" style={{ padding: "8px 15px", fontSize: 12.5 }}
                           onClick={() => agir(x.id, "contribuer", { quantite: Number(apport[x.id]) || x.reste })}>
                           J&apos;apporte
-                        </button>
-                        <button onClick={() => agir(x.id, "contribuer", { quantite: x.reste })}
-                          style={{ padding: "8px 13px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
-                          Je prends tout
                         </button>
                       </>
                     )}
@@ -417,13 +464,3 @@ export default function QuetesPage() {
   );
 }
 
-/** Un chiffre du bandeau. Le solde est mis en avant : c'est celui qui décide. */
-function Compteur({ valeur, label, principal = false }: { valeur: number; label: string; principal?: boolean }) {
-  const couleur = principal ? (valeur > 0 ? "var(--green)" : valeur < 0 ? "var(--red)" : "var(--gold)") : "var(--text)";
-  return (
-    <div style={{ minWidth: 92, padding: "9px 13px", borderRadius: 11, background: "var(--bg-3)", border: `1px solid ${principal ? "var(--orange)" : "var(--border)"}`, textAlign: "center" }}>
-      <div className="font-heading" style={{ fontSize: principal ? 22 : 17, fontWeight: 700, color: couleur, lineHeight: 1.1 }}>{valeur}</div>
-      <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 3 }}>{label}</div>
-    </div>
-  );
-}

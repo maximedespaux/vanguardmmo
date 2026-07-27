@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessGuild } from "@/config/roles";
 import { BAREME, donnerXp } from "@/lib/xp";
-import { BAREME_CREDITS, bougerCredits } from "@/lib/credits";
 import { QUETE_AVEC, serialiserQuete } from "@/lib/quetes";
 
 /**
@@ -84,9 +83,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     // Plancher à 1 point : un petit apport reste un apport, pas rien.
     const part = Math.min(1, c.quantite / Math.max(1, q.quantite));
     const xp = Math.max(1, Math.round(BAREME.quete * part));
-    const credits = Math.max(1, Math.round(BAREME_CREDITS.quete * part));
     await donnerXp(c.userId, "quete", xp, `Quête : ${c.quantite} × ${q.titre} livré`, `quete:${c.id}`);
-    await bougerCredits(c.userId, credits, `Quête : ${c.quantite} × ${q.titre} livré`, `quete:${c.id}`);
 
     // La quête se ferme quand le compte y est. Personne n'a à penser à la clore.
     const total = vue.confirme + c.quantite;
@@ -98,7 +95,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       .create({
         data: {
           userId: c.userId, type: "QUETE", title: "Livraison confirmée",
-          body: `${a.user.username} a reçu tes ${c.quantite} × ${q.titre} — +${xp} XP et +${credits} crédit${credits > 1 ? "s" : ""}.`,
+          body: `${a.user.username} a reçu tes ${c.quantite} × ${q.titre} — +${xp} XP.`,
           link: "/quetes",
         },
       })

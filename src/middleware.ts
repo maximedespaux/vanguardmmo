@@ -8,7 +8,7 @@ import { DEV_ALL } from "@/lib/devAccess";
 // partie car la candidature exige un build — un candidat doit pouvoir le créer.
 const VERIFIED_PREFIXES = ["/builder"];
 const GUILD_PREFIXES = ["/dashboard", "/personnages", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/quetes", "/parametres"];
-const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
+const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
@@ -43,6 +43,6 @@ export const config = {
     "/dashboard/:path*", "/personnages/:path*", "/builder/:path*", "/prestige/:path*",
     "/donjons/:path*", "/astuces/:path*", "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/parametres/:path*",
-    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
+    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
   ],
 };

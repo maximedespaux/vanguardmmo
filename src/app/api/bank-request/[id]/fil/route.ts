@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 import { canAccessAdmin } from "@/config/roles";
-import { bougerCredits, coutEnCredits, PERINS_PAR_CREDIT } from "@/lib/credits";
 
 /**
  * Fil d'une requête boutique : GET pour lire, POST pour écrire.
@@ -19,7 +18,7 @@ async function acces(id: string) {
   if ("error" in auth) return { error: auth.error };
   const req = await prisma.bankRequest.findUnique({
     where: { id },
-    select: { id: true, userId: true, username: true, item: true, cout: true },
+    select: { id: true, userId: true, username: true, item: true },
   });
   if (!req) return { error: NextResponse.json({ error: "introuvable" }, { status: 404 }) };
   if (req.userId !== auth.user.id && !canAccessAdmin(auth.user.role)) {
@@ -49,37 +48,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const b = await req.json().catch(() => ({}));
   const estStaff = canAccessAdmin(a.auth.user.role);
   const moi = a.auth.user.username ?? "?";
-
-  // ── Ajuster le coût en crédits (staff) ────────────────────────────────
-  // Le coût est calculé sur le prix ESTIMÉ par le membre au moment du panier.
-  // Quand ce prix ne colle pas — objet sous-évalué, quantité mal comptée — le
-  // staff corrige ici plutôt que d'accepter en silence : la différence est
-  // rendue ou reprise, et le fil garde trace du pourquoi.
-  if (b?.cout != null) {
-    if (!estStaff) return NextResponse.json({ error: "Seul le staff ajuste le coût." }, { status: 403 });
-    const nouveau = Math.max(0, Math.floor(Number(b.cout) || 0));
-    const ecart = nouveau - a.req.cout;
-    if (!ecart) return NextResponse.json({ ok: true, cout: nouveau });
-    await prisma.bankRequest.update({ where: { id }, data: { cout: nouveau } });
-    await bougerCredits(a.req.userId, -ecart, `Coût ajusté par ${moi} : ${a.req.item ?? "demande"}`, `req:${id}:ajust:${nouveau}`);
-    await prisma.requestMessage.create({
-      data: {
-        bankRequestId: id, kind: "system",
-        body: `${moi} a ajusté le coût de la demande : ${a.req.cout} → ${nouveau} crédit${nouveau > 1 ? "s" : ""}` +
-          (b.raison ? ` — ${String(b.raison).slice(0, 200)}` : ` (≈ ${(nouveau * PERINS_PAR_CREDIT).toLocaleString("fr-FR")} périns).`),
-      },
-    });
-    await prisma.notification
-      .create({
-        data: {
-          userId: a.req.userId, type: "REQ_MESSAGE", title: "Coût de ta demande ajusté",
-          body: `${moi} a fixé le coût à ${nouveau} crédit${nouveau > 1 ? "s" : ""} pour « ${a.req.item ?? "ta demande"} ».`,
-          link: `/messages?fil=req:${id}`,
-        },
-      })
-      .catch(() => null);
-    return NextResponse.json({ ok: true, cout: nouveau });
-  }
 
   // ── Accepter une offre ────────────────────────────────────────────────
   // Une offre acceptée fige l'accord sur la requête : sans cette écriture, il
@@ -126,20 +94,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     await prisma.requestMessage.update({ where: { id: offre.id }, data: { acceptedAt: new Date() } });
     // Un troc ne renseigne pas `prixFinal` : il n'y a aucune somme à réclamer, et
     // un montant inscrit là se lirait comme une dette en périns.
-    // Le prix convenu commande le coût en crédits : 1 crédit ≈ 1 000 périns.
-    // Garder le coût du panier après une négociation ferait payer un prix pour
-    // un autre. Un troc ne coûte rien en crédits : il se paie en objets.
-    const coutAccorde = troc ? 0 : coutEnCredits(offre.amount);
-    const ecart = coutAccorde - a.req.cout;
     await prisma.bankRequest.update({
       where: { id },
       data: troc
-        ? { modePaiement: "troc", prixFinal: null, cout: 0 }
-        : { modePaiement: "perins", prixFinal: BigInt(offre.amount), cout: coutAccorde },
+        ? { modePaiement: "troc", prixFinal: null }
+        : { modePaiement: "perins", prixFinal: BigInt(offre.amount) },
     });
-    if (ecart) {
-      await bougerCredits(a.req.userId, -ecart, `Prix convenu : ${a.req.item ?? "demande"}`, `req:${id}:accord:${coutAccorde}`);
-    }
     await prisma.requestMessage.create({
       data: {
         bankRequestId: id,

@@ -90,7 +90,8 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff." },
       { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." },
-      { label: "Journal", href: "/journal", icon: "list", desc: "Qui demande, qui aide : de quoi repérer un déséquilibre." },
+      { label: "Statistiques", href: "/statistiques", icon: "bar-chart", desc: "Qui porte l'entraide, et si l'activité monte ou descend." },
+      { label: "Journal", href: "/journal", icon: "list", desc: "Le détail, événement par événement, filtrable par membre." },
       { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Planifier les passages et suivre les participations." },
       { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." },
       { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Écrire un message à toute la guilde sur Discord." },

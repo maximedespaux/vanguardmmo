@@ -61,6 +61,10 @@ export function EcranEconomie() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
   const [sending, setSending] = useState(false);
+  /** Pseudo EN JEU : c'est là que l'objet part par courrier. Pré-rempli avec
+   *  le personnage principal — le retaper à chaque demande est une corvée. */
+  const [perso, setPerso] = useState("");
+  const [mesPersos, setMesPersos] = useState<{ name: string; isMain: boolean }[]>([]);
   /** Deux façons de demander, deux panneaux : ce qui dort au coffre, et ce qui
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
@@ -80,6 +84,13 @@ export function EcranEconomie() {
   };
   const loadShop = async () => { try { const r = await fetch("/api/shop"); if (r.ok) { const d = await r.json(); setShop(d.items ?? []); setCats(d.cats ?? []); } } catch {} };
   useEffect(() => { load(); loadShop(); }, []);
+  useEffect(() => {
+    fetch("/api/characters").then((r) => (r.ok ? r.json() : [])).then((cs: { name: string; isMain: boolean }[]) => {
+      setMesPersos(cs ?? []);
+      const principal = cs?.find((c) => c.isMain) ?? cs?.[0];
+      if (principal) setPerso(principal.name);
+    }).catch(() => {});
+  }, []);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 3500); };
 
 
@@ -99,11 +110,12 @@ export function EcranEconomie() {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique Garçon ou Fille pour chaque Stuff avant d'envoyer.");
+    if (!perso.trim()) return flash("Indique ton pseudo en jeu : c'est là que l'objet sera envoyé par courrier.");
       // Le palier « dette uniquement » n'a plus de sens : tout se demande, le
     // staff décide au cas par cas dans la conversation.
     setSending(true);
     const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember, rk), cat: it.cat }; });
-    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items }) });
+    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim() }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s). Le staff va répondre dans la conversation.`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
@@ -213,6 +225,18 @@ export function EcranEconomie() {
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns</b></div>
+            {/* Le pseudo EN JEU, juste au-dessus du bouton : c'est la dernière
+                chose qu'on vérifie avant d'envoyer, et l'objet part par courrier. */}
+            <div style={{ marginBottom: 9 }}>
+              <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
+              {mesPersos.length > 1 ? (
+                <select value={perso} onChange={(e) => setPerso(e.target.value)} style={{ ...inp, width: "100%" }}>
+                  {mesPersos.map((c) => <option key={c.name} value={c.name}>{c.name}{c.isMain ? " (principal)" : ""}</option>)}
+                </select>
+              ) : (
+                <input value={perso} onChange={(e) => setPerso(e.target.value)} placeholder="ton personnage en jeu" style={{ ...inp, width: "100%" }} />
+              )}
+            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={() => submitCart()} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander ces objets</button>
             </div>

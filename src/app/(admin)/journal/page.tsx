@@ -12,22 +12,13 @@ import { useCardFx } from "@/components/VgFx";
  * l'ordre, pour vérifier un cas précis plutôt que de croire un ressenti.
  */
 type Ligne = {
-  id: string; quand: string; type: "demande" | "credit" | "xp" | "decision";
+  id: string; quand: string; type: "demande" | "xp" | "decision";
   qui: string; quoi: string; valeur: number | null;
 };
-type Membre = { nom: string; gagnes: number; depenses: number; demandes: number };
-
-/** Le solde en toutes lettres. Recopié ici plutôt qu'importé de lib/credits :
- *  ce module-là parle à Prisma, et une page cliente n'a rien à en tirer. */
-function lireSolde(n: number): { texte: string; ton: "bon" | "neutre" | "dette" } {
-  if (n > 0) return { texte: `${n} crédit${n > 1 ? "s" : ""} d'avance`, ton: "bon" };
-  if (n === 0) return { texte: "à l'équilibre", ton: "neutre" };
-  return { texte: `${-n} de plus reçu que donné`, ton: "dette" };
-}
+type Membre = { nom: string; donne: number; demandes: number };
 
 const TYPE: Record<Ligne["type"], { l: string; c: string; ic: IconName }> = {
   demande: { l: "Demande", c: "var(--orange)", ic: "cart" },
-  credit: { l: "Crédits", c: "var(--gold)", ic: "coins" },
   xp: { l: "XP", c: "var(--green)", ic: "medal" },
   decision: { l: "Décision", c: "var(--blue)", ic: "shield-check" },
 };
@@ -37,6 +28,11 @@ export default function JournalPage() {
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [membres, setMembres] = useState<Membre[]>([]);
   const [membre, setMembre] = useState("");
+  // Arrivée depuis la messagerie (`/journal?membre=X`) : le filtre est déjà posé.
+  useEffect(() => {
+    const m = new URLSearchParams(window.location.search).get("membre");
+    if (m) setMembre(m);
+  }, []);
   const [filtre, setFiltre] = useState<"" | Ligne["type"]>("");
   const [pret, setPret] = useState(false);
 
@@ -59,25 +55,23 @@ export default function JournalPage() {
           <Icon name="swap" size={14} />Équilibre donner / recevoir
         </div>
         <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 11 }}>
-          Les plus en déficit d&apos;abord. Un solde négatif n&apos;est pas une faute — c&apos;est une conversation à avoir.
+          Les plus en déficit d&apos;abord : beaucoup demandé, peu donné. Ce n&apos;est pas une faute — c&apos;est une conversation à avoir.
         </div>
         {membres.length === 0 ? (
           <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Rien à afficher pour l&apos;instant.</div>
         ) : (
           <div style={{ display: "grid", gap: 5 }}>
             {membres.slice(0, 12).map((m) => {
-              const s = m.gagnes - m.depenses;
-              const l = lireSolde(s);
-              const couleur = l.ton === "bon" ? "var(--green)" : l.ton === "dette" ? "var(--red)" : "var(--text-muted)";
+              // Pas de solde à la virgule : deux chiffres côte à côte suffisent
+              // à voir qui prend sans rendre. Le jugement reste humain.
+              const couleur = m.donne === 0 && m.demandes > 0 ? "var(--red)" : m.donne > 0 ? "var(--green)" : "var(--text-muted)";
               return (
                 <div key={m.nom} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5 }}>
                   <button onClick={() => setMembre(m.nom)} style={{ fontWeight: 700, color: "var(--text)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit", fontSize: 12.5 }}>
                     {m.nom}
                   </button>
                   <span style={{ color: "var(--text-muted)" }}>{m.demandes} demande{m.demandes > 1 ? "s" : ""}</span>
-                  <span style={{ marginLeft: "auto", color: "var(--green)" }}>+{m.gagnes}</span>
-                  <span style={{ color: "var(--red)" }}>−{m.depenses}</span>
-                  <b style={{ color: couleur, minWidth: 150, textAlign: "right" }}>{l.texte}</b>
+                  <b style={{ marginLeft: "auto", color: couleur }}>{m.donne.toLocaleString("fr-FR")} XP donné</b>
                 </div>
               );
             })}
@@ -89,7 +83,7 @@ export default function JournalPage() {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         <input value={membre} onChange={(e) => setMembre(e.target.value)} placeholder="Filtrer par membre…"
           style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13, minWidth: 200 }} />
-        {([["", "Tout"], ["demande", "Demandes"], ["credit", "Crédits"], ["xp", "XP"], ["decision", "Décisions"]] as const).map(([k, l]) => (
+        {([["", "Tout"], ["demande", "Demandes"], ["xp", "XP donné"], ["decision", "Décisions"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setFiltre(k)}
             style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit", border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
             {l}

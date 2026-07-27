@@ -110,7 +110,7 @@ model User {
   xp            XpEvent[]
   credits       CreditEvent[]
   quetes        Quete[]  @relation("QueteAuteur")
-  quetesPrises  Quete[]  @relation("QuetePreneur")
+  contributions QueteContribution[]
 }
 
 // ─── HISTORIQUE DES BUILDS (10 dernières versions par membre, pour le GuildViewer) ───
@@ -765,18 +765,44 @@ model Quete {
   /// la quête au moment où elle a été lancée, pas un compteur à recalculer.
   manque   Int?
 
-  /// "ouverte" | "prise" | "livree" | "annulee"
+  /// "ouverte" | "livree" | "annulee"
   statut    String    @default("ouverte")
-  preneurId String?
-  preneur   User?     @relation("QuetePreneur", fields: [preneurId], references: [id], onDelete: SetNull)
-  priseAt   DateTime?
   livreeAt  DateTime?
+
+  /// Ce que chacun apporte. Une quête n'appartient à personne : 400 médailles
+  /// ne se farment pas seul, et réserver la quête au premier volontaire
+  /// décourageait les quatre suivants.
+  contributions QueteContribution[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([statut, createdAt])
   @@index([auteurId])
+}
+
+/// Ce qu'un membre apporte sur une quête.
+///
+/// Deux temps, et c'est tout l'intérêt : le contributeur ANNONCE ce qu'il
+/// apporte (les autres voient donc ce qui est déjà couvert et ne farment pas
+/// en double), puis le demandeur CONFIRME la réception. La récompense tombe à
+/// la confirmation, jamais à l'annonce — sinon on paierait l'intention.
+model QueteContribution {
+  id       String @id @default(cuid())
+  queteId  String
+  quete    Quete  @relation(fields: [queteId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Quantité apportée par cette contribution.
+  quantite Int    @default(1)
+  /// "annonce" | "confirme"
+  statut   String @default("annonce")
+
+  createdAt  DateTime  @default(now())
+  confirmeAt DateTime?
+
+  @@index([queteId])
+  @@index([userId])
 }
 
 /// Crédit d'entraide : ce qu'on a gagné en aidant, ce qu'on dépense en demandant.

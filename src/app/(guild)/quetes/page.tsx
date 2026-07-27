@@ -20,21 +20,23 @@ import type { ObjetCoffre } from "@/lib/coffre";
  * récompense du livreur incontestable.
  */
 type Personne = { id: string; nom: string; avatar: string | null };
+type Apport = { id: string; quantite: number; statut: "annonce" | "confirme"; par: Personne };
 type Quete = {
   id: string; titre: string; quantite: number; note: string | null; manque: number | null;
   itemRef: string | null; unite: string | null;
-  statut: "ouverte" | "prise" | "livree" | "annulee";
-  auteur: Personne; preneur: Personne | null; createdAt: string; livreeAt: string | null;
+  statut: "ouverte" | "livree" | "annulee";
+  auteur: Personne; createdAt: string; livreeAt: string | null;
+  /** Ce qui est reçu, ce qui est promis, ce qui manque encore. */
+  contributions: Apport[]; confirme: number; annonce: number; reste: number;
 };
 type Progression = {
   moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number };
   credits: { solde: number; gagnes: number; depenses: number };
 };
 
-const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "hand-point" | "check" | "x" }> = {
-  ouverte: { l: "Cherche un volontaire", c: "var(--gold)", ic: "target" },
-  prise: { l: "En cours", c: "var(--orange)", ic: "hand-point" },
-  livree: { l: "Livrée", c: "var(--green)", ic: "check" },
+const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "check" | "x" }> = {
+  ouverte: { l: "En cours", c: "var(--gold)", ic: "target" },
+  livree: { l: "Complète", c: "var(--green)", ic: "check" },
   annulee: { l: "Annulée", c: "var(--text-muted)", ic: "x" },
 };
 
@@ -125,16 +127,19 @@ export default function QuetesPage() {
     charger();
   };
 
-  const agir = async (id: string, action: string) => {
+  /** Ce que je m'apprête à apporter, par quête. */
+  const [apport, setApport] = useState<Record<string, string>>({});
+
+  const agir = async (id: string, action: string, extra: Record<string, unknown> = {}) => {
     const r = await fetch(`/api/quetes/${id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }),
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, ...extra }),
     });
     const j = await r.json().catch(() => ({}));
     setErreur(r.ok ? "" : (j.error ?? `Action refusée (erreur ${r.status}).`));
     charger();
   };
 
-  const ouvertes = quetes.filter((x) => x.statut === "ouverte" || x.statut === "prise");
+  const ouvertes = quetes.filter((x) => x.statut === "ouverte");
   const closes = quetes.filter((x) => x.statut === "livree" || x.statut === "annulee");
   const niveau = prog?.moi.niveau ?? 1;
   const rang = rangDe(niveau);
@@ -260,52 +265,102 @@ export default function QuetesPage() {
           <div className="vg-stagger" style={{ display: "grid", gap: 10 }}>
             {ouvertes.map((x) => {
               const jeSuisAuteur = !!moi && x.auteur.id === moi;
-              const jeSuisPreneur = !!moi && x.preneur?.id === moi;
               const e = ETAT[x.statut];
+              const pcConfirme = Math.min(100, Math.round((x.confirme / Math.max(1, x.quantite)) * 100));
+              const pcPromis = Math.min(100 - pcConfirme, Math.round((x.annonce / Math.max(1, x.quantite)) * 100));
+              const monApport = x.contributions.find((c) => c.par.id === moi && c.statut === "annonce");
               return (
                 <div key={x.id} className="glass-card fx-card" style={{ padding: 14, borderLeft: `3px solid ${e.c}` }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                     <Icon name={e.ic} size={16} style={{ color: e.c }} />
                     <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700 }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: e.c }}>{e.l}</span>
                     {x.manque != null && x.manque > 0 && (
                       <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
                     )}
                     <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      <Icon name="medal" size={12} />+100 XP · +3 crédits
+                      <Icon name="medal" size={12} />récompense au prorata de ce que tu apportes
                     </span>
                   </div>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
+                  {/* La barre dit ce qui est REÇU (plein) et ce qui est PROMIS
+                      (hachuré) : sans le second, quatre personnes farment la
+                      même chose sans le savoir. */}
+                  <div style={{ margin: "10px 0 6px" }}>
+                    <div style={{ height: 10, borderRadius: 6, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden", display: "flex" }}>
+                      <div style={{ width: `${pcConfirme}%`, background: "linear-gradient(90deg,#4ADE80,#22c55e)", transition: "width .4s var(--ease,ease)" }} />
+                      <div style={{ width: `${pcPromis}%`, background: "repeating-linear-gradient(45deg,rgba(255,140,26,.55),rgba(255,140,26,.55) 5px,rgba(255,140,26,.22) 5px,rgba(255,140,26,.22) 10px)", transition: "width .4s var(--ease,ease)" }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 11.5, marginTop: 5 }}>
+                      <span style={{ color: "var(--green)" }}><b>{x.confirme}</b> reçu</span>
+                      {x.annonce > 0 && <span style={{ color: "var(--orange)" }}><b>{x.annonce}</b> promis</span>}
+                      <span style={{ color: x.reste ? "var(--text-muted)" : "var(--green)" }}>
+                        {x.reste ? <>reste <b>{lisible(x.reste, x.unite)}</b></> : "tout est couvert"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
                     <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} niveau={1} taille={22} />
                     demandé par <b style={{ color: "var(--text)" }}>{x.auteur.nom}</b>
-                    {x.preneur && (
-                      <>
-                        <span>·</span>
-                        <AvatarCadre src={x.preneur.avatar} nom={x.preneur.nom} niveau={1} taille={22} />
-                        pris par <b style={{ color: "var(--text)" }}>{x.preneur.nom}</b>
-                      </>
-                    )}
                   </div>
                   {x.note && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6, fontStyle: "italic" }}>« {x.note} »</div>}
 
-                  <div style={{ display: "flex", gap: 8, marginTop: 11, flexWrap: "wrap" }}>
-                    {x.statut === "ouverte" && !jeSuisAuteur && (
-                      <button className="vg-btn" onClick={() => agir(x.id, "prendre")} style={{ padding: "8px 15px", fontSize: 12.5 }}>Je m&apos;en charge</button>
+                  {/* Qui apporte quoi. Le demandeur confirme apport par apport :
+                      c'est lui qui sait ce qu'il a reçu. */}
+                  {x.contributions.length > 0 && (
+                    <div style={{ display: "grid", gap: 5, marginTop: 10, paddingTop: 9, borderTop: "1px dashed var(--border)" }}>
+                      {x.contributions.map((c) => (
+                        <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+                          <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
+                          <b>{c.par.nom}</b>
+                          <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
+                            {c.statut === "confirme" ? "a livré" : "apporte"} {lisible(c.quantite, x.unite)}
+                          </span>
+                          {c.statut === "confirme" && <Icon name="check" size={12} style={{ color: "var(--green)" }} />}
+                          <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                            {jeSuisAuteur && c.statut === "annonce" && (
+                              <button onClick={() => agir(x.id, "confirmer", { contributionId: c.id })}
+                                style={{ padding: "5px 11px", borderRadius: 8, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontWeight: 600, fontSize: 11.5, fontFamily: "inherit" }}>
+                                J&apos;ai bien reçu
+                              </button>
+                            )}
+                            {!!moi && c.par.id === moi && c.statut === "annonce" && (
+                              <button onClick={() => agir(x.id, "retirer", { contributionId: c.id })}
+                                style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 11.5, fontFamily: "inherit" }}>
+                                Retirer
+                              </button>
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 11, flexWrap: "wrap", alignItems: "center" }}>
+                    {!jeSuisAuteur && x.reste > 0 && !monApport && (
+                      <>
+                        <input type="number" min={1} max={x.reste} value={apport[x.id] ?? ""}
+                          onChange={(ev) => setApport((p) => ({ ...p, [x.id]: ev.target.value }))}
+                          placeholder={`jusqu'à ${x.reste}`} aria-label="Ce que j'apporte"
+                          style={{ ...inp, width: 130, padding: "8px 11px", fontSize: 13 }} />
+                        <button className="vg-btn" style={{ padding: "8px 15px", fontSize: 12.5 }}
+                          onClick={() => agir(x.id, "contribuer", { quantite: Number(apport[x.id]) || x.reste })}>
+                          J&apos;apporte
+                        </button>
+                        <button onClick={() => agir(x.id, "contribuer", { quantite: x.reste })}
+                          style={{ padding: "8px 13px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
+                          Je prends tout
+                        </button>
+                      </>
                     )}
-                    {jeSuisPreneur && (
-                      <button onClick={() => agir(x.id, "abandonner")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Je ne peux plus</button>
-                    )}
-                    {jeSuisAuteur && x.preneur && (
-                      <button onClick={() => agir(x.id, "livrer")} style={{ padding: "8px 15px", borderRadius: 9, border: "1px solid var(--green)", background: "transparent", color: "var(--green)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 6 }}>
-                        <Icon name="check" size={14} />J&apos;ai bien reçu
-                      </button>
+                    {!jeSuisAuteur && x.reste === 0 && (
+                      <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Tout est couvert — rien à apporter.</span>
                     )}
                     {jeSuisAuteur && (
-                      <button onClick={() => agir(x.id, "annuler")} style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5 }}>Annuler</button>
-                    )}
-                    {x.statut === "ouverte" && jeSuisAuteur && (
-                      <span style={{ fontSize: 11.5, color: "var(--text-muted)", alignSelf: "center" }}>En attente d&apos;un volontaire.</span>
+                      <button onClick={() => agir(x.id, "annuler")}
+                        style={{ padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
+                        Annuler ma demande
+                      </button>
                     )}
                   </div>
                 </div>
@@ -322,7 +377,9 @@ export default function QuetesPage() {
               <div key={x.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5, color: "var(--text-muted)" }}>
                 <Icon name={ETAT[x.statut].ic} size={13} style={{ color: ETAT[x.statut].c }} />
                 <span style={{ color: "var(--text)" }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
-                {x.preneur && x.statut === "livree" && <>· livré par <b style={{ color: "var(--text)" }}>{x.preneur.nom}</b></>}
+                {x.statut === "livree" && x.contributions.length > 0 && (
+                  <>· livré par <b style={{ color: "var(--text)" }}>{[...new Set(x.contributions.map((c) => c.par.nom))].join(", ")}</b></>
+                )}
                 <span style={{ marginLeft: "auto" }}>{new Date(x.livreeAt ?? x.createdAt).toLocaleDateString("fr-FR")}</span>
               </div>
             ))}

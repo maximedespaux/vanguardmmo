@@ -23,7 +23,7 @@ export async function GET() {
   // Les quêtes closes restent visibles un temps : on veut voir que ça a bougé,
   // pas ouvrir une page vide dès que tout est livré.
   const quetes = await prisma.quete.findMany({
-    where: { OR: [{ statut: { in: ["ouverte", "prise"] } }, { livreeAt: { gte: new Date(Date.now() - 14 * 864e5) } }] },
+    where: { OR: [{ statut: "ouverte" }, { livreeAt: { gte: new Date(Date.now() - 14 * 864e5) } }] },
     include: QUETE_AVEC,
     orderBy: [{ statut: "asc" }, { createdAt: "desc" }],
     take: 120,

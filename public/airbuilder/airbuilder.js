@@ -279,7 +279,7 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const byTier={};items.forEach(it=>{const g=grpKey?(it[grpKey]||'—'):'';(byTier[g]=byTier[g]||[]).push(it);});
   const pick=`<input class="srch" placeholder="${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
     <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${esc(it.n)}${it.sex?' ('+it.sex+')':''}<div style="font-size:10px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:10px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
-  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?('<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>'+(e.cfg?'<span class="pill" onclick="maximizeSlot(\''+slot+'\')" title="Mettre tous les niveaux de cette pièce au max"><i class=vgi-zap></i> Max</span>':'')+'<span class="pill dem" onclick="vgDemanderPiece()" title="Faire une demande a la guilde pour CETTE piece, avec ses reglages"><i class=vgi-cart></i> Demander cet objet</span>'):'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
+  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
 function equip(id){if(window.__VIEW)return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
 function equipFam(id,n){if(window.__VIEW)return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
@@ -295,9 +295,40 @@ function removeItem(){delete ST().eq[pickSlot];render();closePick();}
  * configuration complete, et on ne veut pas d'un aller-retour serveur pour un
  * geste qui n'engage encore a rien.
  */
-function vgDemanderPiece(){
+/**
+ * « Acheter un objet » — la liste des pieces montees sur ce stuff.
+ *
+ * Demander une piece se decidait depuis l'ecran de reglages d'un emplacement :
+ * il fallait deja savoir laquelle, et l'ouvrir. On part desormais du build —
+ * on voit ses pieces, on choisit celle qu'on veut se faire fournir.
+ */
+function vgAcheterPiece(){
   if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
-  var slot=pickSlot,e=E(slot);
+  var eq=ST().eq||{};
+  var slots=Object.keys(eq).filter(function(s){return eq[s]&&eq[s].item;});
+  var lignes=slots.map(function(s){
+    var e=eq[s];var lbl=(SLOTS[s]&&SLOTS[s].lbl)||s;
+    var c=e.cfg||{};var bouts=[];
+    if(c.tier&&c.tier!=='Commun')bouts.push(c.tier);
+    if(c.up)bouts.push('+'+c.up);
+    if(c.pierceEl)bouts.push(c.pierceEl);
+    if(c.evL)bouts.push('éveil '+c.evL);
+    return '<div class="itl" onclick="vgDemanderPiece(\''+s+'\')" style="cursor:pointer">'
+      +(e.item.ic&&IC[e.item.ic]?'<img src="'+IC[e.item.ic]+'">':'<i class=vgi-package></i>')
+      +'<div class="n" style="color:'+(e.item.col||'#cfd2dc')+'">'+esc(e.item.n)
+      +'<div style="font-size:10.5px;color:var(--mut)">'+esc(lbl)+(bouts.length?' · '+esc(bouts.join(' · ')):'')+'</div></div>'
+      +'<span class="pill dem"><i class=vgi-cart></i> Demander</span></div>';
+  }).join('');
+  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:560px;padding:22px">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px">'+VGI('cart',{size:16})+' Acheter un objet de mon build</div>'
+    +'<div class="mut" style="font-size:11.5px;margin-bottom:12px">Choisis une pièce : elle part vers la boutique avec ses réglages (rareté, +N, perçage, éveil), et tu ajustes avant d\'envoyer ta demande.</div>'
+    +(lignes||'<div class="mut" style="font-size:13px;padding:8px 0">Ce stuff est vide — équipe au moins une pièce.</div>')
+    +'<div class="sheet-foot" style="margin-top:14px"><span></span><span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>'
+    +'</div></div>';
+}
+function vgDemanderPiece(slotDemande){
+  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
+  var slot=slotDemande||pickSlot,e=E(slot);
   if(!e||!e.item){agToast('Équipe d\'abord une pièce dans cet emplacement.',false);return;}
   var c=e.cfg||{};
   var ouverts=(c.pn!=null)?c.pn:((c.pierce||[]).filter(function(x){return x;}).length);

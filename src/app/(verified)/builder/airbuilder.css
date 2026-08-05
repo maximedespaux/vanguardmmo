@@ -18,7 +18,10 @@
 .stab{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:6px 12px;cursor:pointer;font-family:Rubik;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
 .stab.on{border-color:var(--gold);background:#221d0a;color:var(--gold)}
 .stab .x{color:var(--mut);font-size:10px}.stab .x:hover{color:var(--red)}
-.saddp{background:var(--bg3);border:1px dashed var(--border);border-radius:9px;padding:6px 11px;cursor:pointer;color:var(--mut);font-size:12px}
+/* Mêmes police et graisse que les onglets de stuff : ces boutons vivent sur la
+   même ligne, une fonte differente les faisait passer pour du texte.        */
+.saddp{background:var(--bg3);border:1px dashed var(--border);border-radius:9px;padding:6px 11px;cursor:pointer;color:var(--mut);
+  font-family:Rubik,sans-serif;font-weight:600;font-size:12px;display:inline-flex;align-items:center;gap:6px}
 .saddp:hover{border-color:var(--gold);color:var(--gold)}
 .setup .f{display:flex;flex-direction:column;gap:3px}.setup label{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding-left:2px}
 .setup select,.setup input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 9px;font-size:13px}
@@ -92,6 +95,16 @@
 .sheet-foot .pill.dem{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400;font-weight:700}
 .sheet-foot .pill.dem:hover{filter:brightness(1.06)}
 .actions-top .btn{padding:9px 16px;font-size:12.5px;border-radius:10px}
+/* Les boutons secondaires se lisaient a peine : gris sur gris. On remonte le
+   contraste du fond et du texte, et l'icone passe en orange pour accrocher
+   l'oeil sans transformer chaque bouton en bouton principal.                 */
+.actions-top .btn.ghost{background:#1b1b23;border-color:rgba(255,255,255,.17);color:#eaeaf0;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.actions-top .btn.ghost svg{color:var(--orange)}
+.actions-top .btn.ghost:hover{background:#22222c;border-color:var(--orange);color:#fff}
+/* L'aide est une aide : un point d'interrogation en bout de ligne, pas un
+   bouton de la meme importance que « vider » ou « acheter ».                 */
+.actions-top .btn-aide{margin-left:auto;padding:9px 12px;border-radius:50%}
+@media(max-width:560px){ .actions-top .btn-aide{margin-left:0;flex:0 0 auto} }
 @media(max-width:560px){ .actions-top .btn{flex:1 1 auto;justify-content:center} }
 .actions .btn{padding:13px 28px;border-radius:12px;font-size:13.5px;transition:transform .13s,box-shadow .13s,filter .13s}
 .actions .btn:not(.ghost){background:linear-gradient(180deg,#FFC061,#FF8C1A);color:#2a1400;box-shadow:0 6px 20px rgba(255,140,26,.42)}

@@ -12,8 +12,9 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="actions actions-top">
     <button class="btn ghost" onclick="vgMesPersos()">${ico("users", { size: 16 })} Mes personnages</button>
     <button class="btn ghost" onclick="resetChar()">${ico("rotate-ccw", { size: 16 })} Vider ce stuff</button>
+    <button class="btn ghost" onclick="vgAcheterPiece()">${ico("cart", { size: 16 })} Acheter un objet</button>
     <button class="btn" onclick="vgPartager()">${ico("link", { size: 16 })} Partager le build</button>
-    <button class="btn ghost" onclick="vgSaveHelp()">${ico("info", { size: 16 })} Comment ça marche ?</button>
+    <button class="btn ghost btn-aide" onclick="vgSaveHelp()" title="Comment marchent la sauvegarde, les versions et la publication ?" aria-label="Comment ça marche ?">${ico("info", { size: 17 })}</button>
   </div>
 
   <div class="buildhead">

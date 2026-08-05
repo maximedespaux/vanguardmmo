@@ -104,15 +104,15 @@ export default function StatistiquesPage() {
         </div>
 
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, minWidth: 640 }}>
+          <table className="vg-table-membres" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
             <thead>
               <tr style={{ color: "var(--text-muted)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8 }}>
                 <th style={{ textAlign: "left", padding: "6px 8px" }}>Membre</th>
                 <th style={{ textAlign: "right", padding: "6px 8px" }}>XP donné</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>Dépôts</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>Quêtes</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>CS</th>
-                <th style={{ textAlign: "right", padding: "6px 8px" }}>Objets livrés</th>
+                <th className="vg-col-sec" style={{ textAlign: "right", padding: "6px 8px" }}>Dépôts</th>
+                <th className="vg-col-sec" style={{ textAlign: "right", padding: "6px 8px" }}>Quêtes</th>
+                <th className="vg-col-sec" style={{ textAlign: "right", padding: "6px 8px" }}>CS</th>
+                <th className="vg-col-sec" style={{ textAlign: "right", padding: "6px 8px" }}>Objets livrés</th>
                 <th style={{ textAlign: "right", padding: "6px 8px" }}>Demandes</th>
                 <th style={{ padding: "6px 8px" }} />
               </tr>
@@ -130,10 +130,10 @@ export default function StatistiquesPage() {
                     </span>
                   </td>
                   <td style={{ textAlign: "right", padding: "8px", fontWeight: 700, color: m.xp ? "var(--green)" : "var(--text-muted)" }}>{m.xp.toLocaleString("fr-FR")}</td>
-                  <td style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.depots || "—"}</td>
-                  <td style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.quetes || "—"}</td>
-                  <td style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.presences || "—"}</td>
-                  <td style={{ textAlign: "right", padding: "8px", color: "var(--gold)" }}>{m.unitesApportees || "—"}</td>
+                  <td className="vg-col-sec" style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.depots || "—"}</td>
+                  <td className="vg-col-sec" style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.quetes || "—"}</td>
+                  <td className="vg-col-sec" style={{ textAlign: "right", padding: "8px", color: "var(--text-muted)" }}>{m.presences || "—"}</td>
+                  <td className="vg-col-sec" style={{ textAlign: "right", padding: "8px", color: "var(--gold)" }}>{m.unitesApportees || "—"}</td>
                   <td style={{ textAlign: "right", padding: "8px", color: m.demandes && !m.xp ? "var(--red)" : "var(--text)" }}>{m.demandes || "—"}</td>
                   <td style={{ padding: "8px", textAlign: "right" }}>
                     <Link href={`/journal?membre=${encodeURIComponent(m.nom)}`} style={{ color: "var(--orange)", textDecoration: "none", fontSize: 11.5, whiteSpace: "nowrap" }}>

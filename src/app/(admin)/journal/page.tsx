@@ -66,7 +66,7 @@ export default function JournalPage() {
               // à voir qui prend sans rendre. Le jugement reste humain.
               const couleur = m.donne === 0 && m.demandes > 0 ? "var(--red)" : m.donne > 0 ? "var(--green)" : "var(--text-muted)";
               return (
-                <div key={m.nom} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5 }}>
+                <div key={m.nom} className="vg-ligne-dense" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5 }}>
                   <button onClick={() => setMembre(m.nom)} style={{ fontWeight: 700, color: "var(--text)", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit", fontSize: 12.5 }}>
                     {m.nom}
                   </button>
@@ -99,7 +99,7 @@ export default function JournalPage() {
             {visibles.map((l) => {
               const t = TYPE[l.type];
               return (
-                <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5 }}>
+                <div key={l.id} className="vg-ligne-dense" style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 11px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12.5 }}>
                   <Icon name={t.ic} size={13} style={{ color: t.c, flexShrink: 0 }} />
                   <span style={{ color: t.c, fontWeight: 600, minWidth: 62, flexShrink: 0 }}>{t.l}</span>
                   <b style={{ minWidth: 110, flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l.qui}</b>

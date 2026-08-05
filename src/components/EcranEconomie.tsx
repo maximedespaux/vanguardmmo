@@ -178,9 +178,9 @@ export function EcranEconomie() {
                   )}
                 </div>
                 {isWeapon && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 44 }}>
+                  <div className="vg-rarete-liste" style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 44 }}>
                     {raritys.map(rk => { const m = RARITY_META[rk]; if (!m) return null; const key = `${s.id}::${rk}`; const q = cart[key] || 0; const stk = s.rarities![rk]; return (
-                      <div key={rk} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div key={rk} className="vg-ligne-dense" style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14`, minWidth: 78 }}>{m.l}</span>
                         <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>stock {stk}</span>
                         {/* Le prix de CETTE rareté : c'est la seule information qui

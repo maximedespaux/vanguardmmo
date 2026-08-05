@@ -288,6 +288,33 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
    conteneur en overflow-x:auto, qui n'est pas concerné.                     */
 .vg-shell,.vg-main{max-width:100vw;overflow-x:clip}
 
+/* ── Téléphone : les lignes denses passent sur deux niveaux ───────────────
+   Une ligne « icône · type · pseudo · texte · valeur · date » tient sur un
+   écran large grâce à des largeurs minimales. À 375 px ces minimums
+   s'additionnent au-delà de l'écran et le texte sort du cadre. On les annule
+   et on autorise le retour à la ligne : rien n'est tronqué, tout se lit.     */
+@media(max-width:560px){
+  .vg-ligne-dense{flex-wrap:wrap;row-gap:3px}
+  .vg-ligne-dense > *{min-width:0 !important;max-width:100%}
+  /* Colonne secondaire d'un tableau : utile au bureau, superflue au téléphone
+     où elle rend le tableau illisible. Le détail reste dans le journal.      */
+  .vg-col-sec{display:none}
+  /* Les raretés d'une arme : le retrait qui les aligne sous l'icône coûte
+     44 px, soit un huitième de l'écran. On le rend à la lecture.            */
+  .vg-rarete-liste{padding-left:0 !important}
+  /* L'en-tête de page mange un tiers du premier écran au téléphone : on le
+     resserre sans rien retirer, le contenu doit apparaître sans défiler.    */
+  .vg-pagehead{padding:15px 16px;margin-bottom:16px}
+  .vg-pagehead-row{gap:11px}
+  .vg-pagehead-ic{width:44px;height:44px;font-size:22px;border-radius:11px}
+  .vg-pagehead-title{font-size:19px;letter-spacing:1px}
+  .vg-pagehead-sub{font-size:12.5px;margin-top:3px}
+}
+/* Le tableau des membres garde sa largeur confortable au bureau ; au téléphone
+   il se réduit avec les colonnes qui restent, au lieu de forcer un défilement. */
+.vg-table-membres{min-width:640px}
+@media(max-width:560px){ .vg-table-membres{min-width:0} }
+
 /* ── Cartes : relief au survol, plus net et cohérent ─────────────────────── */
 .glass-card{transition:transform var(--t-mid) var(--ease),box-shadow var(--t-mid) var(--ease),border-color var(--t-mid) var(--ease)}
 .glass-card:hover{box-shadow:var(--el-3),0 0 0 1px var(--glow-1);border-color:rgba(var(--orange-rgb),.32)}

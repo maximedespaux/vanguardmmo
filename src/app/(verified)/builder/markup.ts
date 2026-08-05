@@ -7,12 +7,19 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="topbar"><div class="brand">Air<span>Builder</span></div><div class="step">Crée, équipe et compare tes builds</div><div class="savechip" id="vgSaveChip" title="Tes changements sont enregistrés automatiquement. Chaque changement écrase l'état précédent (pas d'annulation) — clique « Publier » pour garder une version restaurable.">${ico("check", { size: 13 })} Sauvegarde &amp; publication auto</div>
     <div class="ptabs" id="ptabs" style="margin-left:auto"></div></div>
 
+  <!-- Les actions en TÊTE : vider un stuff et partager son build sont des
+       gestes qu'on cherche avant de faire défiler, pas après. -->
+  <div class="actions actions-top">
+    <button class="btn ghost" onclick="resetChar()">${ico("rotate-ccw", { size: 16 })} Vider ce stuff</button>
+    <button class="btn" onclick="vgPartager()">${ico("link", { size: 16 })} Partager le build</button>
+    <button class="btn ghost" onclick="vgSaveHelp()">${ico("info", { size: 16 })} Comment ça marche ?</button>
+  </div>
+
   <div class="buildhead">
     <div class="buildhead-main">
       <div class="setup" id="setup"></div>
       <div class="stuffbar" id="stuffbar"></div>
     </div>
-    <aside class="sharebox" id="sharebox"></aside>
   </div>
 
   <div class="doll">
@@ -29,10 +36,5 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="note" id="famnote" style="display:none"></div>
   <div class="stats" id="stats"></div>
   <div class="panel" id="carnetsPanel"></div>
-  <div class="actions">
-    <button class="btn ghost" onclick="vgSaveHelp()">${ico("info", { size: 17 })} Comment ça marche ?</button>
-    <button class="btn ghost" onclick="resetChar()">${ico("rotate-ccw", { size: 17 })} Vider ce stuff</button>
-    <button class="btn" onclick="vgSavePersos()">${ico("upload", { size: 17 })} Publier maintenant</button>
-  </div>
 </div>
 <div id="modalRoot"></div>`;

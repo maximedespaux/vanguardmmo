@@ -46,6 +46,27 @@ const champ: React.CSSProperties = {
 };
 const etiquette: React.CSSProperties = { display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 };
 
+/**
+ * Le dépôt laissé par l'AirBuilder, lu UNE fois pour toute la page.
+ *
+ * On le sort du composant à dessein : React remonte les composants en
+ * développement (StrictMode), et un dépôt lu puis effacé dans un effet
+ * disparaissait avant le second montage — la pièce était perdue en route.
+ * Ici, la valeur survit au remontage ; le localStorage, lui, est vidé
+ * immédiatement pour que la pièce ne revienne pas à la visite suivante.
+ */
+type DepotPiece = { slot?: string; itemId?: string; nom?: string; choix?: Partial<ChoixPiece> };
+let DEPOT: DepotPiece | null | undefined;
+function lireDepot(): DepotPiece | null {
+  if (DEPOT !== undefined) return DEPOT;
+  try {
+    const brut = localStorage.getItem("vg_demande_piece");
+    localStorage.removeItem("vg_demande_piece");
+    DEPOT = brut ? (JSON.parse(brut) as DepotPiece) : null;
+  } catch { DEPOT = null; }
+  return DEPOT;
+}
+
 export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   const [items, setItems] = useState<Record<string, ItemBrut[]>>({});
   const [icones, setIcones] = useState<Record<string, string>>({});
@@ -76,6 +97,32 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
       setIcones(d.IC ?? {});
     }).catch(() => {});
   }, []);
+
+  /**
+   * Une pièce envoyée depuis l'AirBuilder (« Demander cet objet »).
+   *
+   * Elle transite par le localStorage : une URL ne tiendrait pas la
+   * configuration complète. On attend que le catalogue soit chargé pour
+   * retrouver l'objet, puis on efface le dépôt — sinon la même pièce
+   * reviendrait à chaque visite de la boutique.
+   */
+  const [reprise, setReprise] = useState<string | null>(null);
+  useEffect(() => {
+    if (!Object.keys(items).length) return;
+    const d = lireDepot();
+    if (!d) return;
+    // weapon2 → weapon, ring1 → ring, fhead → fashion : le sélecteur de la
+    // boutique parle en familles, le builder en emplacements.
+    const brutSlot = String(d.slot ?? "").replace(/[0-9]/g, "");
+    const s = ["fhead", "ftop", "fhand", "ffoot"].includes(brutSlot) ? "fashion" : brutSlot;
+    const liste = items[s] ?? [];
+    const trouve = liste.find((i) => String(i.id) === String(d.itemId)) ?? liste.find((i) => i.n === d.nom);
+    if (!trouve) return;
+    setSlot(s);
+    setChoisi(trouve);
+    setChoix({ ...CHOIX_VIDE, ...(d.choix ?? {}) });
+    setReprise(trouve.n);
+  }, [items]);
 
   const liste = useMemo(() => {
     const base = items[slot] ?? [];
@@ -181,6 +228,13 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
       <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 13 }}>
         Compose exactement la pièce que tu veux. La demande part avec sa bulle : le détenteur voit la version demandée, améliorations comprises.
       </div>
+
+      {reprise && (
+        <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 13, padding: "9px 12px", borderRadius: 10, background: "rgba(255,140,26,.1)", border: "1px solid rgba(255,140,26,.34)", fontSize: 12.5 }}>
+          <Icon name="shirt" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <span><b>{reprise}</b> reprise de ton build, avec ses réglages. Ajuste si besoin, puis ajoute-la à ta demande.</span>
+        </div>
+      )}
 
       <div className="shop-layout" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 14 }}>
         {/* ── Choix de l'objet ── */}

@@ -84,6 +84,15 @@
 .btn{background:var(--orange);color:#000;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:Rubik;text-transform:uppercase;letter-spacing:1px}
 .btn.ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
 .actions{display:flex;justify-content:center;gap:12px;margin-top:20px}
+/* En tête : les actions se voient sans faire défiler, et restent discretes —
+   c'est le stuff qui doit occuper l'ecran, pas les boutons.                  */
+.actions-top{justify-content:flex-start;margin:0 0 12px;flex-wrap:wrap}
+/* « Demander cet objet » : le seul bouton de la fiche qui engage la guilde —
+   il ne se confond pas avec « Retirer » ou « Max ».                          */
+.sheet-foot .pill.dem{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400;font-weight:700}
+.sheet-foot .pill.dem:hover{filter:brightness(1.06)}
+.actions-top .btn{padding:9px 16px;font-size:12.5px;border-radius:10px}
+@media(max-width:560px){ .actions-top .btn{flex:1 1 auto;justify-content:center} }
 .actions .btn{padding:13px 28px;border-radius:12px;font-size:13.5px;transition:transform .13s,box-shadow .13s,filter .13s}
 .actions .btn:not(.ghost){background:linear-gradient(180deg,#FFC061,#FF8C1A);color:#2a1400;box-shadow:0 6px 20px rgba(255,140,26,.42)}
 .actions .btn:not(.ghost):hover{transform:translateY(-2px);box-shadow:0 11px 30px rgba(255,140,26,.62);filter:brightness(1.07)}

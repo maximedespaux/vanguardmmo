@@ -81,7 +81,7 @@ function render(){
   document.getElementById('petbar').innerHTML=LAYOUT.pets.map(slotHTML).join('');
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${c.cls} · Niv ${c.lvl} · P${c.prestige}`;
-  renderFamNote();renderCarnets();renderShareBox();
+  renderFamNote();renderCarnets();
   }catch(err){console.error('[AirBuilder] rendu partiel ignoré (donnée corrompue)',err);}
   save();vgDD();
 }
@@ -246,53 +246,92 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const byTier={};items.forEach(it=>{const g=grpKey?(it[grpKey]||'—'):'';(byTier[g]=byTier[g]||[]).push(it);});
   const pick=`<input class="srch" placeholder="${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
     <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${esc(it.n)}${it.sex?' ('+it.sex+')':''}<div style="font-size:10px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:10px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
-  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?('<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>'+(e.cfg?'<span class="pill" onclick="maximizeSlot(\''+slot+'\')" title="Mettre tous les niveaux de cette pièce au max"><i class=vgi-zap></i> Max</span>':'')):'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
+  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?('<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>'+(e.cfg?'<span class="pill" onclick="maximizeSlot(\''+slot+'\')" title="Mettre tous les niveaux de cette pièce au max"><i class=vgi-zap></i> Max</span>':'')+'<span class="pill dem" onclick="vgDemanderPiece()" title="Faire une demande a la guilde pour CETTE piece, avec ses reglages"><i class=vgi-cart></i> Demander cet objet</span>'):'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
 function equip(id){if(window.__VIEW)return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
 function equipFam(id,n){if(window.__VIEW)return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
 function setRank(r){if(_ro())return;const e=E('familier');if(e){e.rank=r;render();drawPick('');}}
 function famRune(v){const e=E('familier');if(e){e.rune=v;render();drawPick('');}}
 function removeItem(){delete ST().eq[pickSlot];render();closePick();}
+/**
+ * « Demander cet objet » : la piece equipee part vers la boutique, avec ce
+ * qu'on a regle dessus (rarete, +N, percage, eveil, scroll, element).
+ *
+ * On ne transporte que des DONNEES, jamais du HTML : la bulle est redessinee
+ * cote site. Le relais est le localStorage — une URL ne tiendrait pas la
+ * configuration complete, et on ne veut pas d'un aller-retour serveur pour un
+ * geste qui n'engage encore a rien.
+ */
+function vgDemanderPiece(){
+  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
+  var slot=pickSlot,e=E(slot);
+  if(!e||!e.item){agToast('Equipe d\'abord une piece dans cet emplacement.',false);return;}
+  var c=e.cfg||{};
+  var ouverts=(c.pn!=null)?c.pn:((c.pierce||[]).filter(function(x){return x;}).length);
+  var d={slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
+    rarete:(c.tier&&c.tier!=='Commun')?c.tier:'',
+    up:c.up?String(c.up):'',etoiles:c.stars?String(c.stars):'',
+    percage:ouverts?String(ouverts):'',carte:c.pierceEl||'',
+    eveilRang:c.evL||'',eveilStat:c.evS||'',
+    scrollStat:c.scrS||'',scrollNiv:c.scrL?String(c.scrL):'',
+    element:c.elemType||'',elementNiv:c.elemLvl?String(c.elemLvl):''}};
+  try{localStorage.setItem('vg_demande_piece',JSON.stringify(d));}
+  catch(err){agToast('Stockage indisponible — ouvre la boutique et compose la piece a la main.',false);return;}
+  location.href='/boutique?piece=1';
+}
 function exportBuild(){try{const c=C();const st=ST();const data={name:c.name,stuff:st.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,equipped:Object.fromEntries(Object.entries(st.eq||{}).filter(([k,e])=>e&&e.item).map(([k,e])=>[k,{name:e.item.n,id:e.item.id,rank:e.rank}])),carnets:(c.carnets||[]).map(i=>CARNETS[i]&&CARNETS[i].nom).filter(Boolean),stats:(()=>{try{return totals();}catch(e){return {};}})()};
   try{localStorage.setItem('vg_build_export',JSON.stringify(data));}catch(e){}if(window.__embed){try{window.parent&&window.parent.postMessage({type:'vg_build',data:data},'*');}catch(e){}return;}const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(c.name||'build')+'_'+(st.name||'stuff')+'.json';a.click();agToast('Build exporté ',true);}catch(err){try{var cc=C()||{};if(window.__embed&&window.parent)window.parent.postMessage({type:'vg_build',data:{name:cc.name||'Perso',cls:cc.cls||'',prestige:cc.prestige||1,equipped:{},stats:{}}},'*');else agToast('Build validé (données partielles)',true);}catch(e){}}}
 // ── Vanguard : sauvegarde de TOUS les persos du builder vers le site (base) ──
 function vgCollectBuilds(){var oc=state.cur;var out=state.chars.map(function(c,ci){var os=c.curStuff;var stuffs=(c.stuffs||[]).map(function(s,si){state.cur=ci;c.curStuff=si;var stats={};try{stats=totals();}catch(e){}return {name:s.name,equipped:Object.fromEntries(Object.entries(s.eq||{}).map(function(p){var e=p[1];return [p[0],{name:e&&e.item&&e.item.n,id:e&&e.item&&e.item.id,rank:e&&e.rank}];})),stats:stats};});c.curStuff=os;return {name:c.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,carnets:(c.carnets||[]).map(function(i){return CARNETS[i]&&CARNETS[i].nom;}).filter(Boolean),stuffs:stuffs};});state.cur=oc;return out;}
 function vgSavePersos(){if(window.__VIEW){agToast('Mode lecture seule — build d\'un autre membre.',false);return;}if(window.__refSave){agToast('Build de référence — enregistré automatiquement dans la composition.',true);return;}agConfirm('Forcer la publication maintenant ?\n\nTes persos sont déjà publiés automatiquement à la guilde (GuildViewer · Compositions · Dashboard) à chaque changement — tu n\'as rien à faire.\n\nCe bouton force juste une mise à jour immédiate + crée un point de restauration.',function(){fetch('/api/builder-state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({blob:state,snapshot:true})}).catch(function(){});fetch('/api/characters/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chars:vgCollectBuilds()})}).then(function(r){return r.ok?r.json():Promise.reject(r);}).then(function(d){agToast(''+((d&&d.count)||'Tes')+' perso(s) publié(s) + version créée — visibles dans le GuildViewer / Compositions / Dashboard.',true);}).catch(function(){agToast('Erreur de publication — es-tu bien connecté au site ?',false);});});}
 function vgSaveHelp(){agInfo('<i class=vgi-save></i> Comment marche la sauvegarde de l\'AirBuilder ?\n\n• SAUVEGARDE AUTOMATIQUE : chaque changement est enregistré tout seul. Aucun bouton à cliquer pour ne rien perdre.\n\n• <i class=vgi-alert></i> Chaque changement ÉCRASE le précédent : pas d\'annulation (si tu vides ou rééquipes un stuff, l\'ancien état est remplacé).\n\n• <i class=vgi-clock></i> VERSIONS AUTOMATIQUES : un point de restauration est créé tout seul régulièrement (≈ toutes les 10 min d\'édition). Tu peux en restaurer une via le GuildViewer.\n\n• <i class=vgi-upload></i> PUBLICATION AUTOMATIQUE : tes persos sont envoyés à la guilde (GuildViewer · Compositions · Dashboard) tout seuls — plus besoin de cliquer. Le bouton « Publier maintenant » force juste une mise à jour immédiate.');}
-// ── Partage du build (public/privé) — comme DofusBook ──
-// ── Encadré de partage (haut à droite) : bascule public/privé + lien copiable ──
-// Remplace l'ancienne modale : l'état du partage est visible en permanence.
-function renderShareBox(){var el=document.getElementById('sharebox');if(!el)return;
-  // Lecture seule (build d'un autre membre) ou build de référence : rien à partager.
-  if(window.__VIEW||window.__embed){el.innerHTML='';return;}
-  var s=window.__share;
-  if(!s){el.innerHTML='<h4>'+VGI('link',{size:15})+' Partager mon build</h4><div class="shmini">Chargement…</div>';
-    if(!window.__shFetch){window.__shFetch=true;
-      fetch('/api/builder-share').then(function(r){return r.ok?r.json():null;}).then(function(j){
-        window.__share=j||{shareId:null,public:false};window.__shFetch=false;renderShareBox();
-      }).catch(function(){window.__shFetch=false;window.__share={shareId:null,public:false};renderShareBox();});}
-    return;}
-  var link=s.shareId?(location.origin+'/build/'+s.shareId):'';var pub=!!s.public;
-  el.innerHTML='<h4>'+VGI('link',{size:15})+' Partager mon build</h4>'
-   +'<div class="shmini">En <b>public</b>, toute personne ayant le lien peut consulter ce build en lecture seule. En privé, le lien cesse de fonctionner.</div>'
-   +'<div class="shseg" role="group" aria-label="Visibilité du build">'
-     +'<button type="button" class="'+(pub?'':'on')+'" aria-pressed="'+(!pub)+'" onclick="vgShareSet(0)">'+VGI('lock',{size:14})+' Privé</button>'
-     +'<button type="button" class="'+(pub?'on':'')+'" aria-pressed="'+pub+'" onclick="vgShareSet(1)">'+VGI('eye',{size:14})+' Public</button>'
-   +'</div>'
-   +'<div class="shrow"><input class="shlink" id="__shlink" readonly value="'+(link?esc(link):'')+'" placeholder="Passe en public pour obtenir le lien" aria-label="Lien de partage de ton build">'
-     +'<button type="button" class="shbtn" onclick="vgShareCopy()" title="Copier le lien" aria-label="Copier le lien de partage">'+VGI('clipboard',{size:14})+'</button></div>'
-   +'<div class="shstate'+(pub?' pub':'')+'">'+VGI(pub?'check':'lock',{size:13})+' '+(pub?'Partage public actif':'Build privé — visible par toi seul')+'</div>';}
-// Bascule la visibilité. L'API génère le shareId au premier passage en public.
+// ── Partage du build : un lien, créé au clic ──────────────────────────────
+// Avant, l'encadré occupait 316 px en permanence et interrogeait l'API à chaque
+// rendu. Le partage est pourtant un geste rare : on monte un stuff dix fois, on
+// le montre une. Il vit donc dans une fenêtre, et RIEN n'est écrit en base tant
+// que le joueur n'a pas demandé son lien.
+function vgPartager(){
+  if(window.__VIEW||window.__embed){agToast('Mode lecture seule — build d\'un autre membre.',false);return;}
+  if(window.__share){vgPartagerVue();return;}
+  // Premier appel : on lit l'état (lecture seule, aucune écriture).
+  vgPartagerVue(true);
+  fetch('/api/builder-share').then(function(r){return r.ok?r.json():null;}).then(function(j){
+    window.__share=j||{shareId:null,public:false};vgPartagerVue();
+  }).catch(function(){window.__share={shareId:null,public:false};vgPartagerVue();});
+}
+function vgPartagerVue(chargement){
+  var s=window.__share||{};var pub=!!s.public&&!!s.shareId;
+  var lien=s.shareId?(location.origin+'/build/'+s.shareId):'';
+  var corps;
+  if(chargement){corps='<div class="mut" style="font-size:13px">Chargement…</div>';}
+  else if(pub){
+    corps='<div class="shmini" style="margin-bottom:11px">Ton build est visible par les membres qui ont ce lien. Il reste en lecture seule.</div>'
+      +'<div class="shrow"><input class="shlink" id="__shlink" readonly value="'+esc(lien)+'" aria-label="Lien de partage">'
+      +'<button type="button" class="shbtn" onclick="vgShareCopy()" aria-label="Copier le lien">'+VGI('clipboard',{size:14})+'</button></div>'
+      +'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'
+      +'<span class="pill" onclick="vgShareSet(0)">'+VGI('lock',{size:13})+' Rendre privé</span>'
+      +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>';
+  } else {
+    corps='<div class="shmini" style="margin-bottom:14px">Personne ne peut voir ce build. Génère un lien quand tu veux le montrer — rien n\'est enregistré avant ton clic. Le lien reste réservé aux membres du serveur.</div>'
+      +'<div style="display:flex;gap:10px;justify-content:flex-end">'
+      +'<span class="pill" onclick="agClose(0)">Annuler</span>'
+      +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="vgShareSet(1)">'+VGI('link',{size:13})+' Générer le lien</span></div>';
+  }
+  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:460px;padding:22px">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+VGI('link',{size:16})+' Partager mon build</div>'
+    +corps+'</div></div>';
+}
+// Bascule la visibilité. L'API génère le shareId au premier partage.
 function vgShareSet(pub){if(window.__VIEW)return;pub=!!pub;
-  var cur=window.__share||{};if(!!cur.public===pub&&cur.shareId)return;
   fetch('/api/builder-share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({public:pub})})
    .then(function(r){return r.ok?r.json():null;}).then(function(s){
       if(!s)return agToast('Erreur : partage non modifié.',false);
-      window.__share={shareId:s.shareId,public:pub};renderShareBox();
-      agToast(pub?'Partage public activé':'Build repassé en privé',true);
+      window.__share={shareId:s.shareId,public:pub};
+      agToast(pub?'Lien de partage créé':'Build repassé en privé',true);
+      vgPartagerVue();
    }).catch(function(){agToast('Erreur réseau : partage non modifié.',false);});}
 function vgShareCopy(){var i=document.getElementById('__shlink');
-  if(!i||!i.value)return agToast('Passe le build en public pour obtenir un lien.',false);
+  if(!i||!i.value)return agToast('Génère d\'abord ton lien.',false);
   function done(){agToast('Lien copié',true);}
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(i.value).then(done).catch(function(){i.select();done();});}
   else{try{i.select();document.execCommand('copy');done();}catch(e){agToast('Copie impossible — sélectionne le lien à la main.',false);}}}

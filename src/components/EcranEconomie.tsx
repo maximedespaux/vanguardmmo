@@ -74,6 +74,14 @@ export function EcranEconomie() {
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
   const [panneau, setPanneau] = useState<"stock" | "surMesure">("stock");
+  // Arrivée depuis l'AirBuilder (« Demander cet objet ») : la pièce attend dans
+  // le panneau sur mesure, autant l'ouvrir. Sans ça, le joueur atterrissait sur
+  // le catalogue du coffre et sa pièce restait invisible.
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("piece")) {
+      setPanneau("surMesure");
+    }
+  }, []);
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";

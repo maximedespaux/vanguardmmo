@@ -1,7 +1,9 @@
 import "@/app/(verified)/builder/airbuilder.css";
 import { SharedBuildViewer } from "./SharedBuildViewer";
 
-// Vue PUBLIQUE d'un build partagé (lisible sans login si le build est public).
+// Vue d'un build partagé. Réservée aux membres du serveur Discord comme le
+// reste du site : un build dit la classe, le stuff et le niveau de quelqu'un —
+// ça se montre entre membres, pas à internet.
 export default async function SharedBuildPage({ params }: { params: Promise<{ shareId: string }> }) {
   const { shareId } = await params;
   return (

@@ -14,7 +14,12 @@ import { obtenirInvitation } from "@/lib/discord";
  */
 export async function GET() {
   const url = await obtenirInvitation();
+  // Un échec ne se met PAS en cache : sinon le visiteur qui tombe pendant une
+  // panne Discord garde un écran sans bouton « Rejoindre » pendant dix minutes,
+  // alors que c'est devenu la première étape obligatoire de la connexion.
   return NextResponse.json({ url }, {
-    headers: { "Cache-Control": "public, max-age=600, s-maxage=3600" },
+    headers: {
+      "Cache-Control": url ? "public, max-age=600, s-maxage=3600" : "no-store",
+    },
   });
 }

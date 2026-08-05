@@ -18,6 +18,31 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: { signIn: "/login", error: "/login" },
   callbacks: {
+    /**
+     * Le serveur Discord est la porte d'entrée, pas une option.
+     *
+     * Avant, un compte Discord quelconque ouvrait une session : le joueur
+     * atterrissait sur un site à moitié vide sans comprendre qu'il lui manquait
+     * une étape. On refuse donc la connexion tant qu'il n'a pas rejoint le
+     * serveur, et /login l'invite AVANT de proposer de se connecter.
+     *
+     * Le seul appel qui prouve l'appartenance est celui-ci : il n'aboutit que
+     * si le joueur est membre. Une panne de l'API (autre chose qu'un 404) ne
+     * bloque personne — getCurrentUser retranchera plus tard s'il le faut.
+     */
+    async signIn({ account }) {
+      if (!GUILD_ID || !account?.access_token) return true;
+      try {
+        const res = await fetch(`https://discord.com/api/users/@me/guilds/${GUILD_ID}/member`, {
+          headers: { Authorization: `Bearer ${account.access_token}` },
+        });
+        if (res.ok) return true;
+        if (res.status === 404) return "/login?error=join";
+        return true; // 401/429/5xx : problème de notre côté, pas du joueur
+      } catch {
+        return true;
+      }
+    },
     // À la connexion : on lit les rôles Discord EN LIVE, on calcule le rôle, et on UPSERT le User en base.
     async jwt({ token, account, profile }) {
       if (account?.access_token && profile) {

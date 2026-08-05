@@ -35,6 +35,35 @@ function marquerPresence(user: User) {
   void prisma.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
 }
 
+/**
+ * Membre du serveur Discord ? C'est le socle de tout accès au site.
+ *
+ * Il n'y a plus de palier « connecté mais pas sur le serveur » : il ne donnait
+ * rien de plus que le rôle Vérifié(e) et faisait croire à un accès qui n'en
+ * était pas un. On refuse donc la session AVANT qu'elle serve à quoi que ce
+ * soit — ici plutôt qu'au cas par cas, parce que tout le site passe par
+ * getCurrentUser et qu'un verrou oublié sur une route serait une porte ouverte.
+ *
+ * Trois preuves acceptées, de la plus fiable à la plus faible : le rôle de
+ * guilde (un membre est évidemment sur le serveur), `verifiedAt` (constaté à la
+ * connexion), le rôle Discord Vérifié(e). Aucune ne suffit seule : le bot peut
+ * manquer de MANAGE_ROLES, et `verifiedAt` n'existe pas sur les vieux comptes.
+ */
+async function estVerifie(u: User): Promise<boolean> {
+  const v = u as User & { verifiedAt?: Date | null };
+  if (canAccessVerified(v.role, v.discordRoles ?? [], v.verifiedAt)) return true;
+
+  // Rien en base : on demande à Discord plutôt que d'éjecter quelqu'un dont la
+  // seule faute est de s'être connecté avant la mise en place du verrou.
+  const membre = await estMembreDuServeur(v.discordId);
+  if (membre === false) return false;
+  if (membre === null) return true; // Discord injoignable : on ne punit pas une panne
+
+  await prisma.user.update({ where: { id: v.id }, data: { verifiedAt: new Date() } }).catch(() => {});
+  void attribuerRole(v.discordId, ROLE_VERIFIE_ID);
+  return true;
+}
+
 /** Récupère l'utilisateur connecté (depuis la base), ou null. Ne redirige pas. */
 export async function getCurrentUser(): Promise<User | null> {
   const session = await getServerSession(authOptions);
@@ -48,7 +77,11 @@ export async function getCurrentUser(): Promise<User | null> {
   }
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   if (!user && DEV_ALL) return devUser();
-  if (user) marquerPresence(user);
+  if (!user) return null;
+  // Une session émise avant ce verrou, ou un membre qui a quitté le serveur,
+  // ne vaut pas mieux qu'une absence de session.
+  if (!(await estVerifie(user))) return null;
+  marquerPresence(user);
   return user;
 }
 
@@ -69,26 +102,15 @@ export async function requireGuild(): Promise<User> {
   return user;
 }
 /**
- * Membre du serveur Discord (pas forcément de la guilde en jeu).
- * Utilisé par /builder : un candidat doit pouvoir construire son build,
- * puisque la candidature le lui demande.
+ * Membre du serveur Discord — ce qui est désormais vrai de toute session.
+ *
+ * Le contrôle a été remonté dans getCurrentUser : on ne peut plus être connecté
+ * sans être sur le serveur. La fonction reste, parce qu'elle DIT ce que la page
+ * exige (le builder est ouvert aux candidats, pas seulement à la guilde), et
+ * que ce serait une régression silencieuse de le laisser deviner.
  */
 export async function requireVerified(): Promise<User> {
-  const user = await requireAuth();
-  const u = user as User & { verifiedAt?: Date | null };
-  if (canAccessVerified(u.role, u.discordRoles ?? [], u.verifiedAt)) return user;
-
-  // Rien en base : soit le joueur n'est pas sur le serveur, soit il s'est
-  // connecte AVANT la mise en place de ce verrou (verifiedAt n'est ecrit qu'a la
-  // connexion). On demande a Discord plutot que d'ejecter quelqu'un dont la
-  // seule faute est de ne pas s'etre reconnecte.
-  const membre = await estMembreDuServeur(u.discordId);
-  if (membre === false) redirect("/login?error=discord");
-  if (membre === null) return user; // Discord injoignable : on ne punit pas une panne
-
-  await prisma.user.update({ where: { id: u.id }, data: { verifiedAt: new Date() } }).catch(() => {});
-  void attribuerRole(u.discordId, ROLE_VERIFIE_ID);
-  return user;
+  return requireAuth();
 }
 
 export async function requireAdmin(): Promise<User> {

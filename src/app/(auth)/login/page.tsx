@@ -7,6 +7,10 @@ import { Icon, type IconName } from "@/components/Icon";
 
 // Messages amicaux par code d'erreur (auth NextAuth + accès par rôle).
 const ERRORS: Record<string, { icon: IconName; title: string; msg: string; access?: boolean; invite?: boolean }> = {
+  // La connexion elle-même a été refusée : le compte Discord existe, mais le
+  // joueur n'est pas sur le serveur. C'est le cas le plus fréquent, et le seul
+  // qui se règle en un clic — d'où l'invitation mise en avant.
+  join:          { icon: "discord", title: "Rejoins d'abord le serveur", msg: "Le site s'ouvre aux membres du serveur Discord Vanguard. Rejoins-le, puis reviens te connecter : ton rôle Vérifié(e) sera posé automatiquement.", access: true, invite: true },
   // Niveau intermediaire : il suffit d'etre sur le serveur Discord (pas d'etre
   // membre de la guilde). C'est le cas du builder, qu'un candidat doit pouvoir
   // utiliser. On en profite pour inviter : c'est aussi comme ca que le serveur
@@ -26,19 +30,22 @@ function LoginCard() {
   const info = code ? (ERRORS[code] ?? ERRORS.default) : null;
 
   // L'invitation est produite par le bot (voir obtenirInvitation) : rien a
-  // coller a la main, et le lien ne peut pas devenir obsolete. On ne la demande
-  // que si le message affiche en a besoin. Absente = pas de bouton, jamais de
-  // lien mort.
+  // coller a la main, et le lien ne peut pas devenir obsolete. On la demande
+  // TOUJOURS, parce qu'elle est desormais la premiere etape et non un rattrapage.
+  // Absente = pas de bouton, jamais de lien mort.
   const [invite, setInvite] = useState("");
   useEffect(() => {
-    if (!info?.invite) return;
     let vivant = true;
-    fetch("/api/discord/invite")
+    // no-store : le lien est l'étape 1 d'un parcours obligatoire. Une réponse
+    // vide gardée en cache par le navigateur laisserait la page sans bouton
+    // alors que l'invitation est redevenue disponible. Le coût est nul — le
+    // serveur, lui, garde l'invitation en mémoire une heure.
+    fetch("/api/discord/invite", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => { if (vivant && j?.url) setInvite(String(j.url)); })
       .catch(() => { /* pas d'invitation : on n'affiche rien */ });
     return () => { vivant = false; };
-  }, [info?.invite]);
+  }, []);
 
   return (
     <div className="lg-wrap">
@@ -52,22 +59,27 @@ function LoginCard() {
             <div className="lg-alert-txt"><strong>{info.title}</strong><span>{info.msg}</span></div>
           </div>
         ) : (
-          <div className="lg-sub">Connexion via Discord — réservé aux membres de la guilde.</div>
+          <div className="lg-sub">Le site s&apos;ouvre aux membres du serveur Discord Vanguard. Deux étapes, une fois pour toutes.</div>
         )}
 
-        {info?.invite && invite && (
-          <a className="lg-discord" href={invite} target="_blank" rel="noopener noreferrer" style={{ marginBottom: 10 }}>
-            <Icon name="discord" size={19} />Rejoindre le serveur Vanguard
+        {/* L'ordre compte : on rejoint le serveur, PUIS on se connecte. La
+            connexion d'un joueur absent du serveur est refusée — la lui
+            proposer en premier, c'était l'envoyer dans le mur. */}
+        {invite && (
+          <a className="lg-step lg-discord" href={invite} target="_blank" rel="noopener noreferrer">
+            {!info && <span className="lg-num">1</span>}
+            <Icon name="discord" size={19} />Rejoindre le Discord
           </a>
         )}
 
-        <button className="lg-discord" onClick={() => signIn("discord", { callbackUrl: "/" })}>
+        <button className={`lg-step ${invite ? "lg-secondary" : "lg-discord"}`} onClick={() => signIn("discord", { callbackUrl: "/" })}>
+          {invite && !info && <span className="lg-num">2</span>}
           <svg viewBox="0 0 127.14 96.36" aria-hidden="true"><path fill="currentColor" d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" /></svg>
-          {info?.access ? "Se connecter avec un autre compte" : "Se connecter avec Discord"}
+          {info?.access ? "Se connecter avec un autre compte" : invite ? "J'y suis — me connecter" : "Se connecter avec Discord"}
         </button>
 
         <Link href="/histoire" className="lg-back">← Retour à l&apos;accueil</Link>
-        <div className="lg-fine">On lit seulement ton identité et ton rôle Discord pour débloquer ton espace.</div>
+        <div className="lg-fine">On lit seulement ton identité et ton rôle Discord pour débloquer ton espace. Le rôle <b>Vérifié(e)</b> est posé automatiquement à ta première connexion.</div>
       </div>
 
       <style>{`
@@ -93,6 +105,16 @@ function LoginCard() {
           background:linear-gradient(180deg,#FFB552,#FF8C1A);box-shadow:0 8px 24px rgba(255,140,26,.4);transition:transform .14s,box-shadow .14s}
         .lg-discord:hover{transform:translateY(-2px);box-shadow:0 12px 34px rgba(255,140,26,.58)}
         .lg-discord svg{width:21px;height:21px;flex-shrink:0}
+        .lg-step{text-decoration:none}
+        .lg-step + .lg-step{margin-top:10px}
+        .lg-num{width:22px;height:22px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;
+          font-size:12px;font-weight:700;background:rgba(0,0,0,.22);color:inherit;margin-right:-3px}
+        .lg-secondary{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;padding:14px;border-radius:13px;cursor:pointer;
+          font-family:'Rubik',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.8px;
+          color:var(--text);background:transparent;border:1px solid var(--border);transition:border-color .14s,color .14s}
+        .lg-secondary:hover{border-color:var(--orange);color:var(--orange)}
+        .lg-secondary svg{width:21px;height:21px;flex-shrink:0}
+        .lg-secondary .lg-num{background:var(--bg-3)}
         .lg-back{display:inline-block;margin-top:16px;color:var(--text-muted);font-size:13px;text-decoration:none;transition:color .15s}
         .lg-back:hover{color:var(--orange)}
         .lg-fine{font-family:'Athiti',sans-serif;color:var(--text-muted);font-size:11px;margin-top:16px;line-height:1.5;opacity:.75}

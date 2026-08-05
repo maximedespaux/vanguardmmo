@@ -1,9 +1,10 @@
 import { Shell } from "@/components/Shell";
-import { requireAuth } from "@/lib/access";
-// Boutique : accessible à TOUT membre connecté (Discord), y compris hors guilde.
-// Le catalogue exige donc une connexion (requireAuth redirige les visiteurs anonymes),
-// mais pas un rôle de guilde — les non-membres voient le prix public.
+import { requireVerified } from "@/lib/access";
+// Boutique : ouverte à tout membre du SERVEUR Discord, y compris hors guilde —
+// les non-membres de guilde voient le prix public. Depuis que la connexion d'un
+// non-membre est refusée (lib/auth.ts), « connecté » et « vérifié » désignent
+// la même chose : on garde requireVerified, qui dit l'exigence réelle.
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  await requireAuth(); // redirige vers /login si non connecté
+  await requireVerified(); // redirige vers /login si non connecté
   return <Shell>{children}</Shell>;
 }

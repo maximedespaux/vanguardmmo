@@ -4,10 +4,12 @@ import { getToken } from "next-auth/jwt";
 import { DEV_ALL } from "@/lib/devAccess";
 
 // Routes par niveau d'accès (doivent rester alignées avec la nav de Shell.tsx).
-// Niveau intermédiaire : membre du serveur Discord suffit. /builder en fait
-// partie car la candidature exige un build — un candidat doit pouvoir le créer.
-const VERIFIED_PREFIXES = ["/builder"];
-const GUILD_PREFIXES = ["/dashboard", "/personnages", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/quetes", "/parametres"];
+// Niveau d'entrée : être membre du serveur Discord — ce qui est vrai de toute
+// session depuis que la connexion d'un non-membre est refusée (lib/auth.ts).
+// On y range ce qui est ouvert hors guilde : le builder (la candidature exige
+// un build) et l'économie (la boutique est ouverte aux non-membres de guilde).
+const VERIFIED_PREFIXES = ["/builder", "/boutique", "/messages", "/sommaire"];
+const GUILD_PREFIXES = ["/dashboard", "/personnages", "/prestige", "/donjons", "/astuces", "/compositions", "/worldboss", "/quetes", "/absences"];
 const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -32,7 +34,7 @@ export async function middleware(req: NextRequest) {
   // qui tranche. Sans ca, tout candidat deja connecte serait ejecte le jour du
   // deploiement jusqu'a ce qu'il se reconnecte.
   if (needsVerified && token.verifie === false && !GUILD_ROLES.includes(role)) {
-    return NextResponse.redirect(new URL("/login?error=discord", req.url));
+    return NextResponse.redirect(new URL("/login?error=join", req.url));
   }
   return NextResponse.next();
 }
@@ -42,7 +44,8 @@ export const config = {
   matcher: [
     "/dashboard/:path*", "/personnages/:path*", "/builder/:path*", "/prestige/:path*",
     "/donjons/:path*", "/astuces/:path*", "/compositions/:path*", "/worldboss/:path*",
-    "/quetes/:path*", "/parametres/:path*",
+    "/quetes/:path*", "/absences/:path*",
+    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*",
     "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
   ],
 };

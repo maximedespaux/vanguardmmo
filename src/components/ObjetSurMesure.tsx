@@ -4,6 +4,7 @@ import { Icon } from "@/components/Icon";
 import { BulleObjet } from "@/components/BulleObjet";
 import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
+import { ChampPseudo } from "@/components/ChampPseudo";
 import {
   reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, CHOIX_VIDE, type ChoixPiece,
 } from "@/lib/specsFlyff";
@@ -60,7 +61,6 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   const [note, setNote] = useState("");
   /** Pseudo EN JEU : la remise se fait par courrier dans le jeu. */
   const [perso, setPerso] = useState("");
-  const [mesPersos, setMesPersos] = useState<{ name: string; isMain: boolean }[]>([]);
 
   const [envoi, setEnvoi] = useState(false);
   const [etat, setEtat] = useState<{ msg: string; ok: boolean } | null>(null);
@@ -68,14 +68,6 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
    *  part — d'où une liste ici, et une demande par pièce à l'arrivée. */
   const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; note: string }[]>([]);
-
-  useEffect(() => {
-    fetch("/api/characters").then((r) => (r.ok ? r.json() : [])).then((cs: { name: string; isMain: boolean }[]) => {
-      setMesPersos(cs ?? []);
-      const principal = cs?.find((c) => c.isMain) ?? cs?.[0];
-      if (principal) setPerso(principal.name);
-    }).catch(() => {});
-  }, []);
 
   useEffect(() => {
     fetch("/airbuilder/data.json").then((r) => (r.ok ? r.json() : null)).then((d) => {
@@ -283,13 +275,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               </div>
               <label style={{ display: "block", marginBottom: 9 }}>
                 <span style={etiquette}>Pseudo en jeu *</span>
-                {mesPersos.length > 1 ? (
-                  <select value={perso} onChange={(e) => setPerso(e.target.value)} style={champ}>
-                    {mesPersos.map((c) => <option key={c.name} value={c.name}>{c.name}{c.isMain ? " (principal)" : ""}</option>)}
-                  </select>
-                ) : (
-                  <input value={perso} onChange={(e) => setPerso(e.target.value)} placeholder="ton personnage en jeu" style={champ} />
-                )}
+                <ChampPseudo valeur={perso} onChange={setPerso} style={champ} />
               </label>
               <button className="vg-btn" onClick={envoyer} disabled={envoi} style={{ width: "100%", justifyContent: "center", opacity: envoi ? .6 : 1 }}>
                 {envoi ? "Envoi…" : `Demander ${panier.length > 1 ? `ces ${panier.length} objets` : "cet objet"}`}

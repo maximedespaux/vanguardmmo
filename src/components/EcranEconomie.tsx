@@ -10,6 +10,7 @@ import { BulleObjet } from "@/components/BulleObjet";
 import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
+import { ChampPseudo } from "@/components/ChampPseudo";
 import { useCardFx } from "@/components/VgFx";
 
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null; spec?: unknown };
@@ -233,13 +234,7 @@ export function EcranEconomie() {
                 chose qu'on vérifie avant d'envoyer, et l'objet part par courrier. */}
             <div style={{ marginBottom: 9 }}>
               <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
-              {mesPersos.length > 1 ? (
-                <select value={perso} onChange={(e) => setPerso(e.target.value)} style={{ ...inp, width: "100%" }}>
-                  {mesPersos.map((c) => <option key={c.name} value={c.name}>{c.name}{c.isMain ? " (principal)" : ""}</option>)}
-                </select>
-              ) : (
-                <input value={perso} onChange={(e) => setPerso(e.target.value)} placeholder="ton personnage en jeu" style={{ ...inp, width: "100%" }} />
-              )}
+              <ChampPseudo valeur={perso} onChange={setPerso} style={{ ...inp, width: "100%" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={() => submitCart()} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander ces objets</button>

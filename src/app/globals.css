@@ -269,6 +269,25 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
   .vg-top-burger{margin-left:auto;order:2}
 }
 
+/* ── Téléphone : la barre du haut doit TENIR dans 375 px ──────────────────
+   Elle débordait de 80 px : logo 42 + titre 20px lettré + burger + badge de
+   rang + pseudo + chevron. Le débordement décalait toute la page vers la
+   droite — c'est ce qu'on ressentait comme « la page qui glisse ».
+   On coupe ce qui se déduit : le pseudo (on est sur SON téléphone) et un peu
+   de taille. Rien ne disparaît de la navigation.                            */
+@media(max-width:560px){
+  .vg-topnav{padding:0 11px;gap:8px;height:60px}
+  .vg-top-logo{width:34px;height:34px}
+  .vg-top-title{font-size:16px;letter-spacing:1px}
+  .vg-top-burger{width:36px;height:36px}
+  .vg-prof-nom{display:none}
+  .vg-top-nav{top:54px}
+}
+/* Filet de sécurité : plus rien ne peut décaler la page latéralement. Le
+   défilement horizontal légitime (un tableau large) vit dans son propre
+   conteneur en overflow-x:auto, qui n'est pas concerné.                     */
+.vg-shell,.vg-main{max-width:100vw;overflow-x:clip}
+
 /* ── Cartes : relief au survol, plus net et cohérent ─────────────────────── */
 .glass-card{transition:transform var(--t-mid) var(--ease),box-shadow var(--t-mid) var(--ease),border-color var(--t-mid) var(--ease)}
 .glass-card:hover{box-shadow:var(--el-3),0 0 0 1px var(--glow-1);border-color:rgba(var(--orange-rgb),.32)}

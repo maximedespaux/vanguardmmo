@@ -20,6 +20,10 @@ const RARITY_META: Record<string, { l: string; c: string }> = {
   rare: { l: "Rare", c: "#4EA8FF" }, epique: { l: "Épique", c: "#C77DFF" },
   legendaire: { l: "Légendaire", c: "#FF8C1A" }, premyth: { l: "Pré-myth.", c: "#FF5C8A" },
 };
+/** L'ordre du jeu, du plus commun au plus rare. Les clés arrivaient dans
+ *  l'ordre où le coffre avait été parcouru — on lisait « Pré-myth. » avant
+ *  « Légendaire », ce qui ne veut rien dire pour un joueur. */
+const ORDRE_RARETE = ["rare", "epique", "legendaire", "premyth"];
 // Prix affiché selon le statut : membre de guilde → prix membre ; public → prix public.
 // Prix applicable : si une rareté est précisée et qu'un tarif existe pour elle, il
 // PRIME sur le tarif de l'objet — une Hache Rare et une Hache Pré-myth. n'ont pas
@@ -155,7 +159,7 @@ export function EcranEconomie() {
             {shop.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Le coffre commun est vide pour l'instant — reviens quand le staff l'aura rempli.</div> :
              filtered.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 22, textAlign: "center" }}>Aucun article ne correspond à ta recherche.</div> :
              filtered.map(s => {
-              const raritys = s.rarities ? Object.keys(s.rarities) : [];
+              const raritys = s.rarities ? ORDRE_RARETE.filter((k) => k in s.rarities!) : [];
               const isWeapon = raritys.length > 0;
               const inCart = isWeapon ? raritys.reduce((t, rk) => t + (cart[`${s.id}::${rk}`] || 0), 0) : (cart[s.id] || 0);
               return (

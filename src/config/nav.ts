@@ -53,11 +53,22 @@ export const ESPACES: Espace[] = [
       { label: "Mon build", href: "/builder", icon: "shirt", desc: "Monte ton stuff sur AirBuilder et partage-le." },
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, leur classe et leur build." },
       { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes, présences et consignes." },
-      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances, leur niveau et ce qu'elles rapportent." },
       { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages et qui vient." },
+      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
+    ],
+  },
+  {
+    // Ouvert à tout le monde, connecté ou non : c'est de la connaissance du
+    // JEU, pas de l'activité de la guilde. C'est aussi par là qu'un joueur de
+    // passage découvre Vanguard — d'où des pages indexables.
+    label: "Le jeu",
+    icon: "compass",
+    href: "/donjons",
+    acces: "public",
+    liens: [
+      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances, leur niveau et ce qu'elles rapportent." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige et ce qu'il rapporte." },
-      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
     ],
   },
   {

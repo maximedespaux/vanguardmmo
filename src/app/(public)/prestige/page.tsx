@@ -6,6 +6,7 @@ import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { EncartRejoindre } from "@/components/EncartRejoindre";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 // Icône d'une ressource : vraie image si présente (override connu, ou PNG déposé dans
@@ -239,6 +240,7 @@ export default function PrestigePage() {
         .pr-grid>*:nth-child(2){animation-delay:.03s}.pr-grid>*:nth-child(3){animation-delay:.06s}.pr-grid>*:nth-child(4){animation-delay:.09s}.pr-grid>*:nth-child(5){animation-delay:.12s}.pr-grid>*:nth-child(6){animation-delay:.15s}.pr-grid>*:nth-child(7){animation-delay:.18s}.pr-grid>*:nth-child(8){animation-delay:.21s}.pr-grid>*:nth-child(9){animation-delay:.24s}
         @media(prefers-reduced-motion:reduce){.pr-grid>*{animation:none}}
       `}</style>
+      <EncartRejoindre />
     </div>
   );
 }

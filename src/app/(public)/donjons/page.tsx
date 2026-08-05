@@ -7,6 +7,7 @@ import { vgToast } from "@/components/Dialogs";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { EncartRejoindre } from "@/components/EncartRejoindre";
 
 type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
 const DG_KEY = "vanguard_donjons_daily";
@@ -179,6 +180,7 @@ export default function DonjonsPage() {
         )}
       </>)}
       </div>
+      <EncartRejoindre />
     </div>
   );
 }

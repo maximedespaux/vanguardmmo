@@ -169,6 +169,39 @@ function agPrompt(msg,def,onOk){window.__agP=onOk;document.getElementById('modal
 function agPClose(go){var f=window.__agP;window.__agP=null;var el=document.getElementById('__agPI');var v=go&&el?el.value:null;document.getElementById('modalRoot').innerHTML='';if(go&&f)f(v);}
 function delStuff(i){if(_ro())return;if(C().stuffs.length<=1)return;agConfirm('Supprimer ce stuff ?',function(){C().stuffs.splice(i,1);if(C().curStuff>=C().stuffs.length)C().curStuff=C().stuffs.length-1;render();});}
 function addChar(){if(_ro())return;charForm();}
+/**
+ * « Mes personnages » — la liste complete, dans le builder.
+ *
+ * Les onglets du haut suffisent pour basculer, pas pour DECIDER : ils ne disent
+ * ni le niveau, ni le prestige, ni quels stuffs sont reellement montes. C'est
+ * pourtant ce qu'on regarde quand on revient apres deux semaines. La fiche le
+ * dit d'un coup d'oeil, et renvoie au site pour ce qui n'appartient qu'a la
+ * guilde : le perso principal, les specialisations.
+ */
+function vgMesPersos(){
+  var lignes=state.chars.map(function(c,i){
+    var stuffs=(c.stuffs||[]).filter(function(s){return s.eq&&Object.keys(s.eq).some(function(k){return s.eq[k]&&s.eq[k].item;});});
+    var img=IC['class_'+String(c.cls||'').toLowerCase()];
+    return '<div class="itl" onclick="vgOuvrirPerso('+i+')" style="cursor:pointer'+(i===state.cur?';border:2px solid var(--orange);background:rgba(255,140,26,.10)':'')+'">'
+      +(img?'<img src="'+img+'">':'<i class=vgi-user></i>')
+      +'<div class="n">'+esc(c.name)
+      +'<div style="font-size:10.5px;color:var(--mut)">'+esc(c.cls||'')+' · niv '+(c.lvl||200)+' · P'+(c.prestige||0)
+      +' · '+(stuffs.length?stuffs.map(function(s){return esc(s.name);}).join(', '):'aucun stuff monté')+'</div></div>'
+      +(state.chars.length>1?'<span class="pill rm" onclick="event.stopPropagation();vgSupprPerso('+i+')" title="Supprimer"><i class=vgi-trash></i></span>':'')
+      +'</div>';
+  }).join('');
+  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:560px;padding:22px">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px">'+VGI('users',{size:16})+' Mes personnages</div>'
+    +'<div class="mut" style="font-size:11.5px;margin-bottom:12px">Clique un perso pour l\'ouvrir. Ils sont publiés à la guilde automatiquement — compositions, GuildViewer, tableau de bord.</div>'
+    +(lignes||'<div class="mut" style="font-size:13px;padding:8px 0">Aucun personnage pour l\'instant.</div>')
+    +'<div class="sheet-foot" style="margin-top:14px">'
+    +'<span class="pill" onclick="agClose(0);addChar()">'+VGI('plus',{size:13})+' Nouveau personnage</span>'
+    +'<a class="pill" href="/personnages" style="text-decoration:none">'+VGI('settings',{size:13})+' Gerer sur le site</a>'
+    +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>'
+    +'</div></div>';
+}
+function vgOuvrirPerso(i){agClose(0);switchChar(i);}
+function vgSupprPerso(i){agClose(0);delChar(i);}
 function charForm(){if(_ro())return;window.__cfCls='Arcaniste';window.__cfSex='G';document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" id="cfSheet" style="width:620px;max-width:94vw;padding:22px"><style>#cfSheet input{width:100%;box-sizing:border-box;background:#0f0f15;border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:10px 12px;color:#ece9f1;font-family:inherit;font-size:14px;font-weight:500;outline:none;box-shadow:none;-webkit-appearance:none;-moz-appearance:textfield;appearance:none;transition:border-color .14s,box-shadow .14s}#cfSheet input::placeholder{color:#6f6f78}#cfSheet input:focus{border-color:#FF8C1A;background:#14141b;box-shadow:0 0 0 3px rgba(255,140,26,.15)}#cfSheet input[type=number]::-webkit-inner-spin-button,#cfSheet input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}#cfSheet label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9a9aa3;margin-bottom:6px}#cfSheet .cfsx{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 15px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0f0f15;color:#ededf2;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .14s,background .14s,color .14s;user-select:none}#cfSheet .cfsx:hover{border-color:rgba(255,255,255,.25);color:#fff}#cfSheet .cfsx.on{background:linear-gradient(180deg,#FFB552,#FF8C1A);border-color:#FF8C1A;color:#0A0A0C}#cfSheet .cfsx .sx{display:inline-flex;align-items:center}#cfSheet .cfsx .sx svg{width:17px;height:17px;display:block}#cfSheet .cfsx[data-s="G"] .sx{color:#5fa8ee}#cfSheet .cfsx[data-s="F"] .sx{color:#ef8fc4}#cfSheet .cfsx.on .sx{color:#0A0A0C}#cfSheet .clssel{max-width:none;flex-wrap:nowrap}#cfSheet .ci{width:46px;height:46px;border-radius:9px;box-sizing:border-box;flex:none}#cfSheet .ci img{width:42px;height:42px}#cfSheet .cfbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,box-shadow .15s,transform .12s,filter .15s;user-select:none;font-family:inherit}#cfSheet .cfbtn svg{width:16px;height:16px}#cfSheet .cfbtn.ghost{background:#17171d;border-color:rgba(255,255,255,.14);color:#d2d2d9}#cfSheet .cfbtn.ghost:hover{background:#1e1e26;border-color:rgba(255,255,255,.3);color:#fff}#cfSheet .cfbtn.primary{background:linear-gradient(180deg,#FFB552,#FF8C1A);color:#0A0A0C;box-shadow:0 4px 14px rgba(255,140,26,.30)}#cfSheet .cfbtn.primary:hover{filter:brightness(1.05);box-shadow:0 7px 20px rgba(255,140,26,.45);transform:translateY(-1px)}#cfSheet .cfbtn.primary:active{transform:translateY(0)}</style><div style="font-weight:700;font-size:16px;margin-bottom:14px"><i class=vgi-orb></i> Nouveau personnage</div><div style="display:flex;gap:18px;flex-wrap:wrap"><div style="flex:1;min-width:395px"><div class="f" style="margin-bottom:10px"><label>Classe</label><div class="clssel" id="cfClsSel">${CLASSES.map(x=>`<div class="ci ${x==='Arcaniste'?'on':''}" data-c="${x}" title="${x}" onclick="cfPickCls('${x}')">${IC['class_'+x.toLowerCase()]?`<img src="${IC['class_'+x.toLowerCase()]}">`:x[0]}</div>`).join('')}</div><div id="cfClsRecap" style="font-size:11.5px;color:var(--orange,#ff8c1a);margin-top:7px;font-weight:600"><i class=vgi-check></i> Classe : Arcaniste</div></div><div class="f" style="margin-bottom:12px"><label>Nom du personnage</label><input class="inp" id="cfName" placeholder="ex. Daiisuke" style="width:100%"></div><div class="f" style="margin-bottom:12px"><label>Sexe</label><div style="display:flex;gap:8px"><span class="cfsx on" data-s="G" onclick="cfPickSex('G')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5.5"/><path d="M14 10L20 4M15 4H20V9"/></svg></span> Garçon</span><span class="cfsx" data-s="F" onclick="cfPickSex('F')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5.5"/><path d="M12 13.5V22M8.5 18.5H15.5"/></svg></span> Fille</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><div class="f" style="flex:1;min-width:90px"><label>Niveau</label><input class="inp" id="cfLvl" type="number" value="200" min="1" max="200" style="width:100%"></div><div class="f" style="flex:1;min-width:90px"><label>Prestige</label><input class="inp" id="cfPrest" type="number" value="3" min="0" max="12" style="width:100%"></div></div></div><div style="width:155px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff06;border:1px solid #ffffff10;border-radius:10px;padding:8px;min-height:200px"><img id="cfRender" alt="" style="max-width:100%;max-height:210px;object-fit:contain"><div class="mut" style="font-size:10px;margin-top:4px;text-align:center">aperçu (classe + sexe)</div></div></div><div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)"><span class="cfbtn ghost" onclick="agClose(0)">Annuler</span><span class="cfbtn primary" onclick="doCharForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Créer le perso</span></div></div></div>`;var n=document.getElementById('cfName');if(n)n.focus();cfUpdateRender();}
 function cfUpdateRender(){var cls=window.__cfCls||'Arcaniste',sex=window.__cfSex||'G';var im=document.getElementById('cfRender');if(im){var src=(typeof CHARIMG!=='undefined'&&(CHARIMG[cls+'|'+sex]||CHARIMG[cls+'|G']))||'';im.src=src;im.style.display=src?'block':'none';}var r=document.getElementById('cfClsRecap');if(r)r.innerHTML='<i class=vgi-check></i> Classe : '+esc(cls)+' '+(sex==='F'?'<i class=vgi-female></i>':'<i class=vgi-male></i>');}
 function cfPickCls(x){window.__cfCls=x;var s=document.getElementById('cfClsSel');if(s)Array.prototype.forEach.call(s.children,function(d){d.classList.toggle('on',d.getAttribute('data-c')===x);});cfUpdateRender();}
@@ -265,7 +298,7 @@ function removeItem(){delete ST().eq[pickSlot];render();closePick();}
 function vgDemanderPiece(){
   if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
   var slot=pickSlot,e=E(slot);
-  if(!e||!e.item){agToast('Equipe d\'abord une piece dans cet emplacement.',false);return;}
+  if(!e||!e.item){agToast('Équipe d\'abord une pièce dans cet emplacement.',false);return;}
   var c=e.cfg||{};
   var ouverts=(c.pn!=null)?c.pn:((c.pierce||[]).filter(function(x){return x;}).length);
   var d={slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
@@ -276,7 +309,7 @@ function vgDemanderPiece(){
     scrollStat:c.scrS||'',scrollNiv:c.scrL?String(c.scrL):'',
     element:c.elemType||'',elementNiv:c.elemLvl?String(c.elemLvl):''}};
   try{localStorage.setItem('vg_demande_piece',JSON.stringify(d));}
-  catch(err){agToast('Stockage indisponible — ouvre la boutique et compose la piece a la main.',false);return;}
+  catch(err){agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.',false);return;}
   location.href='/boutique?piece=1';
 }
 function exportBuild(){try{const c=C();const st=ST();const data={name:c.name,stuff:st.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,equipped:Object.fromEntries(Object.entries(st.eq||{}).filter(([k,e])=>e&&e.item).map(([k,e])=>[k,{name:e.item.n,id:e.item.id,rank:e.rank}])),carnets:(c.carnets||[]).map(i=>CARNETS[i]&&CARNETS[i].nom).filter(Boolean),stats:(()=>{try{return totals();}catch(e){return {};}})()};

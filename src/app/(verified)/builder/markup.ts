@@ -10,6 +10,7 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <!-- Les actions en TÊTE : vider un stuff et partager son build sont des
        gestes qu'on cherche avant de faire défiler, pas après. -->
   <div class="actions actions-top">
+    <button class="btn ghost" onclick="vgMesPersos()">${ico("users", { size: 16 })} Mes personnages</button>
     <button class="btn ghost" onclick="resetChar()">${ico("rotate-ccw", { size: 16 })} Vider ce stuff</button>
     <button class="btn" onclick="vgPartager()">${ico("link", { size: 16 })} Partager le build</button>
     <button class="btn ghost" onclick="vgSaveHelp()">${ico("info", { size: 16 })} Comment ça marche ?</button>

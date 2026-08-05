@@ -8,6 +8,7 @@ import { ESPACES, HORS_ESPACES, type Acces } from "@/config/nav";
 import { Icon } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
 import { Alertes } from "@/components/Alertes";
+import { AccueilPersonnages } from "@/components/AccueilPersonnages";
 
 // ── Navigation v3 — trois espaces nommés par la TÂCHE, définis dans config/nav ──
 // Le regroupement seul ne suffisait pas : chaque entrée porte une ligne qui dit
@@ -120,6 +121,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </header>
 
       <main className="vg-main" data-bg={bgKey}><div key={pathname} className="vg-page">{children}</div></main>
+
+      {/* Première connexion d'un membre de la guilde : on lui fait déclarer ses
+          personnages avant qu'il ne se demande pourquoi rien ne le concerne. */}
+      <AccueilPersonnages />
     </div>
   );
 }

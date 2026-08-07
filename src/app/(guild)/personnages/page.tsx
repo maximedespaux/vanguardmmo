@@ -78,7 +78,7 @@ export default function PersonnagesPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader icon="users" title="Mes Personnages" subtitle="Crée d'abord ton personnage (nom, classe, prestige, niveau), puis configure un ou plusieurs stuffs (DPS / Tank / Hybride). Le Suivi & axes utilisera ces personnages." />
+      <PageHeader icon="users" title="Mes Personnages" subtitle="Crée d'abord ton personnage (nom, classe, prestige, niveau), puis configure un ou plusieurs stuffs (DPS / Tank / Hybride). Ce sont eux qu'on retrouve dans les compositions, les présences et les demandes." />
 
       {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>{toast.ok && <Icon name="check" size={15} />}{toast.msg}</div>}
 

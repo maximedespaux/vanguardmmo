@@ -179,7 +179,7 @@ export default function MessagesPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--text-muted)" }}>
                     {/* Pastille de présence : savoir si ça sert d'attendre une réponse maintenant. */}
                     <span style={{ width: 7, height: 7, borderRadius: 4, flexShrink: 0, background: c.enLigne ? "var(--green)" : "var(--border)" }} />
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.avec}</span>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 0 }}>{c.avec}</span>
                     {/* Le troc est l'exception : on ne l'annonce que quand il a été
                         accepté, sinon la ligne dirait un accord qui n'existe pas. */}
                     {c.paiement === "troc" && (

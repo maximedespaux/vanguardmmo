@@ -459,6 +459,15 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
    qu'une a la fois, celle qu'on regarde, et le bouton « Conversations » fait le
    chemin inverse. Piloté par data-vue, donc sans mesurer la fenetre en JS. */
 .msg-layout{grid-template-columns:340px 1fr}
+/* Un enfant de grille ne descend jamais sous la largeur de son contenu
+   (min-width:auto) : un titre de demande un peu long elargissait la colonne des
+   conversations au-dela de l'ecran, et toute la page partait en travers — sur
+   telephone on lisait « Glaive - Templier (Pre-myt… » avec l'etat coupe hors
+   cadre. Les deux colonnes ont donc le droit de retrecir, et les lignes
+   coupent proprement. */
+.msg-layout>*{min-width:0}
+.msg-liste button{min-width:0;max-width:100%;overflow:hidden}
+.msg-liste button>*{min-width:0}
 .msg-retour{display:none}
 @media(max-width:900px){
   .msg-layout{grid-template-columns:1fr}

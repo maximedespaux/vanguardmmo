@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { Pseudo } from "@/components/Pseudo";
 import { DEVISES, prixMixte } from "@/lib/monnaies";
 
 /**
@@ -182,7 +183,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
       {v.detenteur ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
           <Pastille enLigne={v.detenteur.membre.enLigne} />
-          <b style={{ fontSize: 13.5 }}>{v.detenteur.membre.nom}</b>
+          <b style={{ fontSize: 13.5 }}><Pseudo nom={v.detenteur.membre.nom} /></b>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>s&apos;en occupe</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--gold)", fontWeight: 700 }}>
             {/* Les deux pièces quand le paiement est mixte : on voit ce qu'on
@@ -218,7 +219,9 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
         <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 10 }}>
           Personne ne s&apos;en occupe pour l&apos;instant.
           {v.detenteursPossibles.length > 0 && (
-            <> Au coffre : <b style={{ color: "var(--text)" }}>{v.detenteursPossibles.map((d) => `${d.pseudo} (${d.quantite})`).join(", ")}</b>.</>
+            <> Au coffre : {v.detenteursPossibles.map((d, i) => (
+              <span key={d.pseudo}>{i > 0 ? ", " : ""}<b style={{ color: "var(--text)" }}><Pseudo nom={d.pseudo} /></b> ({d.quantite})</span>
+            ))}.</>
           )}
           {/* Ce que l'acheteur a annoncé pouvoir sortir : le vendeur compose son
               tarif en le sachant, au lieu de poser la question dans le fil. */}
@@ -240,7 +243,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <Pastille enLigne={v.demandeur.enLigne} />
                 <span style={{ color: "var(--text-muted)" }}>Client :</span>
-                <b>{v.demandeur.nom}</b>
+                <b><Pseudo nom={v.demandeur.nom} /></b>
                 <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>{presence(v.demandeur.enLigne, v.demandeur.vuLe)}</span>
               </span>
             )}
@@ -248,7 +251,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <Pastille enLigne={v.detenteur.membre.enLigne} />
                 <span style={{ color: "var(--text-muted)" }}>Vendeur :</span>
-                <b>{v.detenteur.membre.nom}</b>
+                <b><Pseudo nom={v.detenteur.membre.nom} /></b>
                 <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>{presence(v.detenteur.membre.enLigne, v.detenteur.membre.vuLe)}</span>
               </span>
             )}
@@ -420,7 +423,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <span style={{ color: "var(--text-muted)" }}>Aussi disponibles : </span>
           {autres.map((o) => (
             <span key={o.id} style={{ marginRight: 10 }}>
-              <b>{o.membre.nom}</b> — {prixMixte(o.prix, o.prixAp, o.tauxAp)}{o.reglement === "dette" ? " à crédit" : ""}
+              <b><Pseudo nom={o.membre.nom} /></b> — {prixMixte(o.prix, o.prixAp, o.tauxAp)}{o.reglement === "dette" ? " à crédit" : ""}
             </span>
           ))}
         </div>

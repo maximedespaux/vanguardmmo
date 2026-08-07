@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { Pseudo } from "@/components/Pseudo";
 
 /**
  * Un fil de discussion, dette ou requête boutique.
@@ -173,7 +174,7 @@ export function Fil({
                   {/* Sur un troc, le chiffre reste affiché mais comme une estimation :
                       c'est ce qui permet de comparer, pas une somme à payer. */}
                   {troc && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>≈ {fmt(m.amount)} périns</span>}
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>proposé par {m.author}</span>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>proposé par {m.author ? <Pseudo nom={m.author} /> : "—"}</span>
                   {m.acceptedAt && <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>accepté</span>}
                   {refuse && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{m.refusedAt ? "refusé" : "non retenu"}</span>}
                   {!m.acceptedAt && !refuse && aMoi && (
@@ -201,7 +202,7 @@ export function Fil({
           }
           return (
             <div key={m.id} style={{ fontSize: 13.5 }}>
-              <b style={{ color: "var(--orange)" }}>{m.author}</b>
+              <b style={{ color: "var(--orange)" }}>{m.author ? <Pseudo nom={m.author} /> : null}</b>
               <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleString("fr-FR")}</span>
               <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
             </div>

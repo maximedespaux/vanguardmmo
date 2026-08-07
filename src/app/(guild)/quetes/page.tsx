@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
+import { Pseudo } from "@/components/Pseudo";
 import { useCardFx } from "@/components/VgFx";
 import { canAccessAdmin } from "@/config/roles";
 import type { Role } from "@prisma/client";
@@ -669,14 +670,14 @@ export default function QuetesPage() {
                     {ouvert && (
                       <div style={{ padding: "0 12px 11px", display: "grid", gap: 5 }}>
                         <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                          demandé par <b style={{ color: "var(--text)" }}>{x.auteur.nom}</b>{x.note ? ` — « ${x.note} »` : ""}
+                          demandé par <b style={{ color: "var(--text)" }}><Pseudo nom={x.auteur.nom} /></b>{x.note ? ` — « ${x.note} »` : ""}
                         </div>
                         {x.contributions.length === 0 ? (
                           <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Personne n&apos;a contribué.</div>
                         ) : x.contributions.map((c) => (
                           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                             <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
-                            <b>{c.par.nom}</b>
+                            <b><Pseudo nom={c.par.nom} /></b>
                             <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                               {c.statut === "confirme" ? "a livré" : "avait promis"} {lisible(c.quantite, x.unite)}
                             </span>
@@ -732,7 +733,7 @@ export default function QuetesPage() {
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
                     <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} niveau={1} taille={22} />
-                    demandé par <b style={{ color: "var(--text)" }}>{x.auteur.nom}</b>
+                    demandé par <b style={{ color: "var(--text)" }}><Pseudo nom={x.auteur.nom} /></b>
                   </div>
                   {x.note && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6, fontStyle: "italic" }}>« {x.note} »</div>}
 
@@ -743,7 +744,7 @@ export default function QuetesPage() {
                       {x.contributions.map((c) => (
                         <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                           <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
-                          <b>{c.par.nom}</b>
+                          <b><Pseudo nom={c.par.nom} /></b>
                           <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                             {c.statut === "confirme" ? "a livré" : "apporte"} {lisible(c.quantite, x.unite)}
                           </span>

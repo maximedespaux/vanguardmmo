@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
+import { Pseudo } from "@/components/Pseudo";
 import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
 import { specDepuisJson } from "@/lib/specObjet";
@@ -257,7 +258,8 @@ export default function MessagesPage() {
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <span style={{ width: 7, height: 7, borderRadius: 4, background: courante.enLigne ? "var(--green)" : "var(--border)" }} />
-                    avec <b style={{ color: "var(--text)" }}>{courante.avec}</b>
+                    {/* « Staff Vanguard » est un collectif : il n'a pas de fiche. */}
+                    avec <b style={{ color: "var(--text)" }}>{courante.jeSuisLAuteur ? courante.avec : <Pseudo nom={courante.avec} />}</b>
                     {courante.enLigne && <span style={{ color: "var(--green)" }}>· en ligne</span>}
                     <span style={{ color: TONS[courante.ton], fontWeight: 600 }}>· {courante.etat}</span>
                     {courante.detail && <span>· {courante.detail}</span>}

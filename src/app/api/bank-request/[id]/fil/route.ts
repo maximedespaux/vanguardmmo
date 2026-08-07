@@ -112,11 +112,67 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     return NextResponse.json({ ok: true, accepte: offre.amount, mode: troc ? "troc" : "perins" });
   }
 
+  // ── Refuser une offre ─────────────────────────────────────────────────
+  // Sans « non », une négociation n'existe pas : on ne pouvait qu'accepter ou
+  // laisser traîner, et les prix s'empilaient sans qu'on sache lequel tenait.
+  if (b?.refuse) {
+    const offre = await prisma.requestMessage.findFirst({
+      where: { id: String(b.refuse), bankRequestId: id, kind: "offer", acceptedAt: null, refusedAt: null },
+    });
+    if (!offre) return NextResponse.json({ error: "Offre introuvable ou déjà traitée." }, { status: 409 });
+    if (offre.userId === a.auth.user.id) {
+      return NextResponse.json({ error: "C'est ton offre — retire-la en en proposant une autre." }, { status: 403 });
+    }
+    await prisma.requestMessage.update({ where: { id: offre.id }, data: { refusedAt: new Date() } });
+    await prisma.requestMessage.create({
+      data: {
+        bankRequestId: id, kind: "system",
+        body: `${moi} a refusé ${(offre.amount ?? 0).toLocaleString("fr-FR")} périns. À toi de proposer autre chose.`,
+      },
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   // ── Proposer un prix ──────────────────────────────────────────────────
   // Périns par défaut : le troc se demande, il ne se suppose pas.
   if (b?.offer != null) {
     const montant = Math.max(0, Math.floor(Number(b.offer) || 0));
     if (montant <= 0) return NextResponse.json({ error: "Montant invalide." }, { status: 400 });
+
+    // Une négociation avance par tours. Tant que MON offre est sur la table,
+    // c'est à l'autre de répondre : sans cette règle, on empilait trois prix
+    // d'affilée et personne ne savait plus lequel comptait.
+    const enAttente = await prisma.requestMessage.findFirst({
+      where: { bankRequestId: id, kind: "offer", acceptedAt: null, refusedAt: null },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, userId: true, createdAt: true, amount: true },
+    });
+    if (enAttente?.userId === a.auth.user.id) {
+      return NextResponse.json(
+        { error: `Ton offre de ${(enAttente.amount ?? 0).toLocaleString("fr-FR")} périns attend une réponse.` },
+        { status: 409 },
+      );
+    }
+
+    // Cinq minutes entre deux propositions : le temps de la réflexion, pas
+    // celui d'une enchère à sens unique.
+    const DELAI = 5 * 60_000;
+    const mienne = await prisma.requestMessage.findFirst({
+      where: { bankRequestId: id, kind: "offer", userId: a.auth.user.id },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    const attente = mienne ? DELAI - (Date.now() - mienne.createdAt.getTime()) : 0;
+    if (attente > 0) {
+      return NextResponse.json(
+        { error: `Encore ${Math.ceil(attente / 60_000)} min avant de proposer un nouveau prix.` },
+        { status: 429 },
+      );
+    }
+
+    // Contre-proposer, c'est refuser : l'offre d'en face sort de la table.
+    if (enAttente) await prisma.requestMessage.update({ where: { id: enAttente.id }, data: { refusedAt: new Date() } });
+
     const troc = b?.mode === "troc";
     const detail = b.body ? ` — ${String(b.body).slice(0, 300)}` : ".";
     await prisma.requestMessage.create({

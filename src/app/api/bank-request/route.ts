@@ -23,6 +23,7 @@ async function ouvrirFilRequete(
     .catch(() => null);
 }
 import { apiAuth } from "@/lib/access";
+import { annoncerVente } from "@/lib/ventes";
 
 const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, prixFinal: r.prixFinal?.toString() ?? null });
 
@@ -100,6 +101,9 @@ export async function POST(req: Request) {
       // chose à s'y dire, sinon personne ne pense à l'ouvrir et la négociation
       // repart sur un autre outil.
       await ouvrirFilRequete(cree.id, a.user.username, name, cree.quantity, cree.priceEach);
+      // Le salon des ventes prévient les détenteurs sur leur téléphone ; le
+      // site reste l'endroit où l'on prend la commande.
+      void annoncerVente(cree.id);
       count++;
     }
     await notifyHolders(b.items.map((it: any) => it?.name ?? ""), a.user.username, a.user.id);
@@ -123,6 +127,9 @@ export async function POST(req: Request) {
     },
   });
   await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);
-  if (kind !== "PERINS" && item) await notifyHolders([item], a.user.username, a.user.id);
+  if (kind !== "PERINS" && item) {
+    await notifyHolders([item], a.user.username, a.user.id);
+    void annoncerVente(r.id);
+  }
   return NextResponse.json(ser(r), { status: 201 });
 }

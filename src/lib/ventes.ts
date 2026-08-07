@@ -1,0 +1,248 @@
+import { prisma } from "@/lib/prisma";
+
+/**
+ * Une vente entre deux membres : qui détient l'objet, qui s'engage à le
+ * fournir, et où en est la remise.
+ *
+ * Ce qui manquait : une demande partait « au staff ». Le staff n'est personne —
+ * on ne pouvait donc afficher ni sa présence, ni savoir s'il avait vraiment
+ * l'objet, ni décrémenter le bon coffre à la remise. Et comme le stock est
+ * éclaté entre les coffres des membres, deux personnes pouvaient livrer la
+ * même arme sans le savoir.
+ *
+ * Le stock vit dans `AirGuildState.data.inv[pseudo][itemRef]` — le même endroit
+ * que l'app AirGuild écrit. On ne tient JAMAIS une copie à côté : c'est comme
+ * ça que la table CoffreItem s'était retrouvée déconnectée du vrai stock.
+ */
+
+export type Detenteur = { pseudo: string; quantite: number };
+
+/** Sans accents ni casse : « Épée » et « epee » désignent le même objet. */
+const plat = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+/**
+ * Retrouve la CLÉ de coffre derrière le libellé d'une demande.
+ *
+ * Une demande porte « Glaive - Templier (Épique) » — ce que le membre a lu à
+ * l'écran. Le coffre, lui, range sous « Armes - Yggdrasil|Templier|Glaive|
+ * R#epique ». Comparer les deux directement ne trouvait jamais personne, et la
+ * demande semblait n'avoir aucun détenteur alors que trois membres l'avaient.
+ *
+ * On passe donc par le catalogue, qui porte les deux : son `item` est le
+ * libellé, son `id` est la clé.
+ */
+export async function clefDeCoffre(libelle: string): Promise<string | null> {
+  if (!libelle) return null;
+  if (libelle.includes("|")) return libelle;              // déjà une clé
+  const nu = plat(libelle.replace(/\s*\([^)]*\)\s*$/, ""));  // « (Épique) » n'est pas dans le nom
+  const { etatCoffre } = await import("@/lib/coffre");
+  const { items } = await etatCoffre();
+  const exact = items.find((o) => plat(o.item) === nu);
+  if (exact) return exact.id;
+  // Repli : le libellé peut avoir été recopié avec la classe accolée.
+  const partiel = items.find((o) => nu.startsWith(plat(o.item)) || plat(o.item).startsWith(nu));
+  return partiel ? partiel.id : null;
+}
+
+type EtatCoffre = { inv?: Record<string, Record<string, number>>; members?: string[] };
+
+async function lireEtat(): Promise<{ etat: Record<string, unknown>; inv: Record<string, Record<string, number>> }> {
+  const row = await prisma.airGuildState.findUnique({ where: { id: "main" } });
+  const etat = (row?.data ?? {}) as Record<string, unknown>;
+  const inv = ((etat as EtatCoffre).inv ?? {}) as Record<string, Record<string, number>>;
+  return { etat, inv };
+}
+
+/**
+ * Qui possède cet objet, et combien — du mieux fourni au moins fourni.
+ *
+ * Une arme est rangée par rareté (`id|R#legendaire`) : demander « Épée » sans
+ * préciser doit trouver les détenteurs de toutes ses raretés, sinon la demande
+ * la plus courante ne trouve personne.
+ */
+export async function detenteursDe(itemRef: string): Promise<Detenteur[]> {
+  const clef = await clefDeCoffre(itemRef);
+  if (!clef) return [];
+  const { inv } = await lireEtat();
+  const base = clef.split("|R#")[0];
+  const out: Detenteur[] = [];
+  for (const [pseudo, coffre] of Object.entries(inv)) {
+    if (!coffre || typeof coffre !== "object") continue;
+    let n = 0;
+    for (const [rangee, valeur] of Object.entries(coffre)) {
+      // Toutes les raretés de la même arme comptent : le demandeur veut
+      // l'objet, la rareté se négocie dans la conversation.
+      if (rangee.split("|R#")[0] === base) n += Number(valeur) || 0;
+    }
+    if (n > 0) out.push({ pseudo, quantite: n });
+  }
+  return out.sort((a, b) => b.quantite - a.quantite);
+}
+
+/**
+ * Sort l'objet du coffre du vendeur — l'inverse exact du dépôt.
+ *
+ * Sans ça, une vente laissait le stock inchangé : la boutique continuait
+ * d'afficher un objet déjà parti, et la demande suivante tombait dans le vide.
+ * On ne descend jamais sous zéro : mieux vaut un stock à 0 qu'un stock négatif
+ * qui ferait mentir tous les totaux.
+ */
+export async function retirerDuCoffre(pseudo: string, itemRef: string, quantite: number): Promise<{ avant: number; apres: number }> {
+  const { etat, inv } = await lireEtat();
+  const coffre = inv[pseudo] ?? {};
+  const avant = Number(coffre[itemRef]) || 0;
+  const apres = Math.max(0, avant - Math.max(1, Math.floor(quantite)));
+  const data = { ...etat, inv: { ...inv, [pseudo]: { ...coffre, [itemRef]: apres } } } as object;
+  await prisma.airGuildState.upsert({ where: { id: "main" }, create: { id: "main", data }, update: { data } });
+  return { avant, apres };
+}
+
+/** En ligne = vu il y a moins de 5 min (le signe de vie s'écrit toutes les 3 min). */
+export const SEUIL_EN_LIGNE = 5 * 60_000;
+export const estEnLigne = (vu: Date | null | undefined) =>
+  !!vu && Date.now() - new Date(vu).getTime() < SEUIL_EN_LIGNE;
+
+export type OffreVue = {
+  id: string;
+  membre: { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
+  prix: number | null;
+  aObjet: boolean;
+  statut: string;
+  moi: boolean;
+};
+
+export type VenteVue = {
+  requestId: string;
+  /** Le détenteur retenu, s'il y en a un. */
+  detenteur: OffreVue | null;
+  offres: OffreVue[];
+  /** Ceux qui ont l'objet au coffre mais ne se sont pas encore prononcés. */
+  detenteursPossibles: Detenteur[];
+  rendezVous: string | null;
+  /** Ce que le demandeur voit de l'autre côté, et réciproquement. */
+  demandeur: { id: string; nom: string; enLigne: boolean } | null;
+  /** Tarif de référence AirGuild, pour situer les prix proposés. */
+  prixReference: number | null;
+};
+
+const vueOffre = (
+  o: { id: string; prix: bigint | null; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
+  moiId?: string,
+): OffreVue => ({
+  id: o.id,
+  membre: {
+    id: o.user.id,
+    nom: o.user.username,
+    avatar: o.user.avatar ? `https://cdn.discordapp.com/avatars/${o.user.discordId}/${o.user.avatar}.png?size=64` : null,
+    enLigne: estEnLigne(o.user.lastSeenAt),
+    vuLe: o.user.lastSeenAt ? o.user.lastSeenAt.toISOString() : null,
+  },
+  prix: o.prix == null ? null : Number(o.prix),
+  aObjet: o.aObjet,
+  statut: o.statut,
+  moi: !!moiId && o.userId === moiId,
+});
+
+/** L'état complet d'une vente, tel que les deux parties doivent le voir. */
+export async function vueVente(requestId: string, moiId?: string): Promise<VenteVue | null> {
+  const req = await prisma.bankRequest.findUnique({
+    where: { id: requestId },
+    select: {
+      id: true, item: true, detenteurId: true, rendezVous: true, priceEach: true, userId: true,
+      offres: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true, prix: true, aObjet: true, statut: true, userId: true,
+          user: { select: { id: true, username: true, avatar: true, discordId: true, lastSeenAt: true } },
+        },
+      },
+    },
+  });
+  if (!req) return null;
+
+  const offres = req.offres.filter((o) => o.statut !== "retiree").map((o) => vueOffre(o, moiId));
+  const detenteur = offres.find((o) => o.membre.id === req.detenteurId) ?? null;
+
+  // Ceux qui ont l'objet sans s'être prononcés : c'est à eux que le salon des
+  // ventes s'adresse, et c'est ce qui dit si l'attente est normale ou non.
+  const possibles = req.item ? await detenteursDe(req.item) : [];
+  const dejaVus = new Set(offres.map((o) => o.membre.nom.toLowerCase()));
+  const detenteursPossibles = possibles.filter((d) => !dejaVus.has(d.pseudo.toLowerCase()));
+
+  const demandeur = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, username: true, lastSeenAt: true },
+  });
+
+  return {
+    requestId: req.id,
+    detenteur,
+    offres,
+    detenteursPossibles,
+    rendezVous: req.rendezVous ? req.rendezVous.toISOString() : null,
+    demandeur: demandeur ? { id: demandeur.id, nom: demandeur.username, enLigne: estEnLigne(demandeur.lastSeenAt) } : null,
+    prixReference: req.priceEach ?? null,
+  };
+}
+
+/* ─── Le salon des ventes ──────────────────────────────────────────────────
+   Une demande qui n'existe que sur le site attend qu'on pense à l'ouvrir. Le
+   salon, lui, se voit sur le téléphone. Il ne remplace pas le site : il y
+   renvoie, et c'est le site qui tranche. Le message est ensuite MODIFIÉ quand
+   quelqu'un prend la commande — c'est ce qui rend impossible de prendre un
+   objet sans que personne ne le sache.                                       */
+
+/** Salon 🏦・ventes. Surchargeable par .env pour un autre serveur. */
+const SALON_VENTES = process.env.CHANNEL_VENTES || "1515100678467485866";
+const SITE = process.env.NEXTAUTH_URL || "https://vanguardhub.fr";
+
+function embedVente(d: { id: string; item: string | null; quantity: number; username: string }, detenteurs: Detenteur[], pris?: { par: string; prix: number | null }) {
+  const qui = detenteurs.length
+    ? detenteurs.map((x) => `${x.pseudo} (${x.quantite})`).join(" · ")
+    : "personne au coffre";
+  return {
+    embeds: [{
+      title: pris ? `Pris en charge — ${d.item ?? "objet"}` : `Demande — ${d.item ?? "objet"}`,
+      description: pris
+        ? `**${pris.par}** s'en occupe${pris.prix ? ` pour **${pris.prix.toLocaleString("fr-FR")} périns**` : ""}.\nLes autres détenteurs n'ont plus à s'en soucier.`
+        : `**${d.username}** demande **${d.quantity} × ${d.item ?? "objet"}**.\nAu coffre : ${qui}.\nPremier qui la prend sur le site l'obtient.`,
+      color: pris ? 0x4ade80 : 0xff8c1a,
+      url: `${SITE}/requetes/${d.id}`,
+      footer: { text: pris ? "Tout se règle sur le site" : "Ouvre le lien pour la prendre" },
+    }],
+  };
+}
+
+/** Annonce une nouvelle demande. Silencieux si Discord n'est pas configuré. */
+export async function annoncerVente(requestId: string): Promise<void> {
+  try {
+    const d = await prisma.bankRequest.findUnique({
+      where: { id: requestId },
+      select: { id: true, item: true, quantity: true, username: true, venteMessageId: true },
+    });
+    if (!d?.item || d.venteMessageId) return;
+    const { posterEtRetenir } = await import("@/lib/discord");
+    const messageId = await posterEtRetenir(SALON_VENTES, embedVente(d, await detenteursDe(d.item)));
+    if (messageId) await prisma.bankRequest.update({ where: { id: requestId }, data: { venteMessageId: messageId } });
+  } catch { /* le salon est un relais, jamais un point de passage obligé */ }
+}
+
+/** Met l'annonce à jour : « pris par X ». */
+export async function majAnnonceVente(requestId: string): Promise<void> {
+  try {
+    const d = await prisma.bankRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true, item: true, quantity: true, username: true, venteMessageId: true, detenteurId: true,
+        offres: { where: { statut: "retenue" }, select: { prix: true, user: { select: { username: true } } } },
+      },
+    });
+    if (!d?.venteMessageId || !d.item) return;
+    const retenue = d.offres[0];
+    const pris = d.detenteurId && retenue
+      ? { par: retenue.user.username, prix: retenue.prix == null ? null : Number(retenue.prix) }
+      : undefined;
+    const { modifierMessage } = await import("@/lib/discord");
+    await modifierMessage(SALON_VENTES, d.venteMessageId, embedVente(d, await detenteursDe(d.item), pris));
+  } catch { /* idem : une annonce ratée ne bloque pas la vente */ }
+}

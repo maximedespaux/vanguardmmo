@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
-import { canAccessAdmin } from "@/config/roles";
+import { canAccessAdmin, canAccessGuild } from "@/config/roles";
 import type { Role } from "@prisma/client";
+import { BandeauVente } from "@/components/BandeauVente";
 
 /**
  * Page d'une requête boutique : la négociation en plein écran.
@@ -29,6 +30,9 @@ export default function RequetePage({ params }: { params: Promise<{ id: string }
       </Link>
 
       <div className="glass-card fx-card" style={{ padding: 16 }}>
+        {/* Qui fournit l'objet vient AVANT ce qu'on s'est dit : la conversation
+            ne sert à rien tant que personne n'est en face. */}
+        <BandeauVente id={id} moiId={moi?.id} estStaff={moi?.role ? canAccessAdmin(moi.role) : false} deLaGuilde={(moi?.role ? canAccessGuild(moi.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1"} />
         <Fil type="requete" id={id} moiId={moi?.id} estStaff={moi?.role ? canAccessAdmin(moi.role) : false} negociation />
       </div>
     </div>

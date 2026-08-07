@@ -7,9 +7,10 @@ import { Icon } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
 import { specDepuisJson } from "@/lib/specObjet";
-import { canAccessAdmin } from "@/config/roles";
+import { canAccessAdmin, canAccessGuild } from "@/config/roles";
 import type { Role } from "@prisma/client";
 import type { Conversation } from "@/lib/messagerie";
+import { BandeauVente } from "@/components/BandeauVente";
 
 /**
  * Boîte de réception : toutes les conversations au même endroit.
@@ -47,6 +48,8 @@ export default function MessagesPage() {
   const { data: session } = useSession();
   const moi = session?.user as { id?: string; role?: Role } | undefined;
   const estStaff = moi?.role ? canAccessAdmin(moi.role) : false;
+  // Fournir un objet suppose d'en avoir au coffre : c'est réservé à la guilde.
+  const deLaGuilde = (moi?.role ? canAccessGuild(moi.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
 
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [pret, setPret] = useState(false);
@@ -229,6 +232,10 @@ export default function MessagesPage() {
 
               {/* Le fil est le même composant partout : la boîte de réception ne
                   redéfinit ni l'envoi, ni la négociation, ni le marquage « lu ». */}
+              {courante.type === "requete" && (
+                <BandeauVente key={`v:${courante.id}`} id={courante.id} moiId={moi?.id}
+                  estStaff={estStaff} deLaGuilde={deLaGuilde} />
+              )}
               <Fil
                 key={courante.filId}
                 type={courante.type}

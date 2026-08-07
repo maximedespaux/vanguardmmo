@@ -20,11 +20,39 @@ function entete(): Record<string, string> | null {
 
 /** Poste un message dans un salon (ou un fil : l'identifiant d'un fil est un salon). */
 export async function posterDansSalon(salonId: string, payload: unknown): Promise<boolean> {
+  return !!(await posterEtRetenir(salonId, payload));
+}
+
+/**
+ * Poste et renvoie l'IDENTIFIANT du message, pour pouvoir le modifier ensuite.
+ * `posterDansSalon` reste la porte d'entrée quand on n'a rien à réviser.
+ */
+export async function posterEtRetenir(salonId: string, payload: unknown): Promise<string | null> {
   const h = entete();
-  if (!h || !salonId) return false;
+  if (!h || !salonId) return null;
   try {
     const r = await fetch(`${API}/channels/${salonId}/messages`, {
       method: "POST", headers: h, body: JSON.stringify(payload),
+    });
+    if (!r.ok) return null;
+    const m = (await r.json()) as { id?: string };
+    return m?.id ?? null;
+  } catch { return null; }
+}
+
+/**
+ * Modifie un message déjà posté (PATCH).
+ *
+ * C'est ce qui permet à l'annonce du salon des ventes de rester vraie : elle
+ * passe de « qui la prend ? » à « pris par X » sur le même message, au lieu
+ * d'empiler des messages qui se contredisent.
+ */
+export async function modifierMessage(salonId: string, messageId: string, payload: unknown): Promise<boolean> {
+  const h = entete();
+  if (!h || !salonId || !messageId) return false;
+  try {
+    const r = await fetch(`${API}/channels/${salonId}/messages/${messageId}`, {
+      method: "PATCH", headers: h, body: JSON.stringify(payload),
     });
     return r.ok;
   } catch { return false; }

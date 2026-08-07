@@ -13,7 +13,7 @@ import { Icon } from "@/components/Icon";
  */
 export type MsgFil = {
   id: string; kind: string; author: string | null; body: string; createdAt: string;
-  amount: number | null; acceptedAt: string | null; userId: string | null;
+  amount: number | null; acceptedAt: string | null; refusedAt?: string | null; userId: string | null;
   /** "perins" (défaut) ou "troc" sur une offre. */
   mode?: string | null;
 };
@@ -86,7 +86,7 @@ export function Fil({
   const envoyerTexte = () => { if (msg.trim()) envoyer({ body: msg }).then((ok) => ok && setMsg("")); };
 
   /** Dernière offre encore ouverte : c'est la seule sur laquelle on peut agir. */
-  const offreVive = [...fil].reverse().find((m) => m.kind === "offer" && !m.acceptedAt);
+  const offreVive = [...fil].reverse().find((m) => m.kind === "offer" && !m.acceptedAt && !m.refusedAt);
   const prixConvenu = fil.find((m) => m.kind === "offer" && m.acceptedAt);
 
   return (
@@ -122,24 +122,39 @@ export function Fil({
           if (m.kind === "offer") {
             const aMoi = m.userId === moiId;
             const troc = m.mode === "troc";
+            // Trois états, trois lectures : en attente (doré), accepté (vert),
+            // refusé ou dépassé (éteint). Avant, tout était doré et dix prix
+            // semblaient également valables.
+            const refuse = !!m.refusedAt;
+            const teinte = m.acceptedAt ? "var(--green)" : refuse ? "var(--border)" : "var(--gold)";
             return (
-              <div key={m.id} style={{ padding: 11, borderRadius: 10, border: `1px solid ${m.acceptedAt ? "var(--green)" : "var(--gold)"}`, background: m.acceptedAt ? "rgba(74,222,128,.08)" : "rgba(255,181,82,.08)" }}>
+              <div key={m.id} style={{ padding: 11, borderRadius: 10, opacity: refuse ? .55 : 1, border: `1px solid ${teinte}`, background: m.acceptedAt ? "rgba(74,222,128,.08)" : refuse ? "transparent" : "rgba(255,181,82,.08)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-                  <Icon name={troc ? "swap" : "coins"} size={15} style={{ color: m.acceptedAt ? "var(--green)" : "var(--gold)" }} />
-                  <b style={{ fontSize: 14 }}>{troc ? "Échange en objets" : `${fmt(m.amount)} périns`}</b>
+                  <Icon name={troc ? "swap" : "coins"} size={15} style={{ color: teinte }} />
+                  <b style={{ fontSize: 14, textDecoration: refuse ? "line-through" : "none" }}>{troc ? "Échange en objets" : `${fmt(m.amount)} périns`}</b>
                   {/* Sur un troc, le chiffre reste affiché mais comme une estimation :
                       c'est ce qui permet de comparer, pas une somme à payer. */}
                   {troc && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>≈ {fmt(m.amount)} périns</span>}
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>proposé par {m.author}</span>
                   {m.acceptedAt && <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>accepté</span>}
+                  {refuse && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>refusé</span>}
+                  {!m.acceptedAt && !refuse && aMoi && (
+                    <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>en attente de sa réponse</span>
+                  )}
                   {/* On n'accepte pas sa propre offre : ce serait s'accorder un
                       prix tout seul. Et plus rien ne s'accepte une fois l'accord
                       conclu — les offres précédentes ne sont plus que l'historique
                       de la négociation. Le serveur refuse les deux cas. */}
-                  {!m.acceptedAt && !aMoi && !prixConvenu && (
-                    <button className="vg-btn" onClick={() => envoyer({ accept: m.id })} style={{ marginLeft: "auto", padding: "6px 13px", fontSize: 12.5 }}>
-                      {troc ? "Accepter cet échange" : "Accepter ce prix"}
-                    </button>
+                  {!m.acceptedAt && !refuse && !aMoi && !prixConvenu && (
+                    <span style={{ marginLeft: "auto", display: "flex", gap: 7 }}>
+                      <button onClick={() => envoyer({ refuse: m.id })}
+                        style={{ padding: "6px 13px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit" }}>
+                        Refuser
+                      </button>
+                      <button className="vg-btn" onClick={() => envoyer({ accept: m.id })} style={{ padding: "6px 13px", fontSize: 12.5 }}>
+                        {troc ? "Accepter cet échange" : "Accepter ce prix"}
+                      </button>
+                    </span>
                   )}
                 </div>
                 {m.body && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 5 }}>{m.body}</div>}

@@ -730,6 +730,11 @@ model OffreVente {
   aObjet    Boolean     @default(false)
   /// proposee | retenue | retiree
   statut    String      @default("proposee")
+  /// Un officier a regardé et dit oui. Ce n'est PAS un verrou : la vente avance
+  /// sans attendre, sinon une demande dormirait jusqu'à ce qu'un staff passe.
+  /// C'est une caution — le client voit qu'un tiers a validé l'échange.
+  valideePar String?
+  valideeLe  DateTime?
   createdAt DateTime    @default(now())
   Debt      Debt?       @relation(fields: [debtId], references: [id])
   debtId    String?

@@ -113,6 +113,8 @@ export type OffreVue = {
   devise: string;
   /** "comptant" | "dette" */
   reglement: string;
+  /** Un officier a regardé et dit oui — une caution, pas un verrou. */
+  validee: boolean;
   aObjet: boolean;
   statut: string;
   moi: boolean;
@@ -142,7 +144,7 @@ export type VenteVue = {
 };
 
 const vueOffre = (
-  o: { id: string; prix: bigint | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
+  o: { id: string; prix: bigint | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; valideePar: string | null; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
   moiId?: string,
 ): OffreVue => ({
   id: o.id,
@@ -158,6 +160,7 @@ const vueOffre = (
   tauxAp: o.tauxAp,
   devise: o.devise,
   reglement: o.reglement,
+  validee: !!o.valideePar,
   aObjet: o.aObjet,
   statut: o.statut,
   moi: !!moiId && o.userId === moiId,
@@ -173,7 +176,8 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
-          id: true, prix: true, prixAp: true, tauxAp: true, devise: true, reglement: true, aObjet: true, statut: true, userId: true,
+          id: true, prix: true, prixAp: true, tauxAp: true, devise: true, reglement: true, valideePar: true,
+          aObjet: true, statut: true, userId: true,
           user: { select: { id: true, username: true, avatar: true, discordId: true, lastSeenAt: true } },
         },
       },
@@ -241,6 +245,17 @@ export async function prevenir(userId: string, titre: string, corps: string, lie
       }],
     });
   } catch { /* un MP fermé ne doit jamais bloquer une vente */ }
+}
+
+/**
+ * Prévient tout le staff. Une candidature à fournir un objet doit remonter :
+ * le staff n'a pas à valider pour que ça avance — la vente n'attend pas — mais
+ * il doit pouvoir regarder, se joindre, ou dire non.
+ */
+export async function prevenirStaff(titre: string, corps: string, lien: string, saufId?: string): Promise<void> {
+  const { ADMIN_ROLES } = await import("@/config/roles");
+  const staff = await prisma.user.findMany({ where: { role: { in: ADMIN_ROLES } }, select: { id: true } });
+  await Promise.all(staff.filter((u) => u.id !== saufId).map((u) => prevenir(u.id, titre, corps, lien)));
 }
 
 /* ─── Le salon des ventes ──────────────────────────────────────────────────

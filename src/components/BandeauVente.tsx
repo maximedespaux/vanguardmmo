@@ -14,7 +14,7 @@ import { DEVISES, prixMixte } from "@/lib/monnaies";
  * ici — stock du coffre compris.
  */
 type Membre = { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
-type Offre = { id: string; membre: Membre; prix: number | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; moi: boolean };
+type Offre = { id: string; membre: Membre; prix: number | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; validee: boolean; aObjet: boolean; statut: string; moi: boolean };
 type Vente = {
   requestId: string;
   detenteur: Offre | null;
@@ -150,6 +150,11 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <span style={{ fontSize: 11.5, padding: "2px 9px", borderRadius: 20, border: `1px solid ${v.detenteur.aObjet ? "var(--green)" : "var(--border)"}`, color: v.detenteur.aObjet ? "var(--green)" : "var(--text-muted)" }}>
             {v.detenteur.aObjet ? "objet vérifié" : "objet pas encore vérifié"}
           </span>
+          {v.detenteur.validee && (
+            <span style={{ fontSize: 11.5, fontWeight: 700, padding: "2px 9px", borderRadius: 20, border: "1px solid var(--green)", color: "var(--green)" }}>
+              validé par le staff
+            </span>
+          )}
         </div>
       ) : (
         <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 10 }}>
@@ -265,7 +270,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
             )}
             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5, opacity: occupe ? .6 : 1 }} disabled={occupe}
               onClick={() => agir("prendre", { prix: prix || (Number(ap) ? "" : v.prixReference), prixAp: ap, tauxAp: taux, reglement: credit ? "dette" : "comptant" })}>
-              <Icon name="check" size={14} />{v.detenteur ? "Je peux aussi le fournir" : "Je m'en occupe"}
+              <Icon name="check" size={14} />{v.detenteur ? "Je peux aussi le fournir" : "Je souhaite m'en occuper"}
             </button>
           </>
         )}
@@ -283,10 +288,21 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
             </button>
           </>
         )}
+        {/* Le staff regarde, se joint, ou dit non. Il ne bloque rien : la vente
+            a déjà commencé — sinon une demande dormirait jusqu'à ce qu'un
+            officier passe. */}
         {estStaff && !jeSuisDetenteur && v.detenteur && (
-          <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe} onClick={() => agir("liberer")}>
-            Libérer la demande
-          </button>
+          <>
+            {!v.detenteur.validee && (
+              <button style={bouton} disabled={occupe} onClick={() => agir("valider")}>
+                <Icon name="shield" size={13} />Valider cet échange
+              </button>
+            )}
+            <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe}
+              onClick={() => { if (confirm("Refuser cette prise en charge ? La demande repartira aux autres détenteurs.")) agir("liberer"); }}>
+              Refuser
+            </button>
+          </>
         )}
         {/* Clore appartient à celui qui a demandé : lui seul sait s'il en a
             encore besoin. Une demande morte restait « en attente » pour

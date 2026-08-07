@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { detenteursDe, majAnnonceVente, prevenir, retirerDuCoffre, vueVente } from "@/lib/ventes";
+import { detenteursDe, majAnnonceVente, prevenir, prevenirStaff, retirerDuCoffre, vueVente } from "@/lib/ventes";
 import { donnerXp } from "@/lib/xp";
 import { sansBigInt } from "@/lib/json";
 import { prixMixte } from "@/lib/monnaies";
@@ -96,7 +96,45 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
           `/messages?fil=req:${id}`,
         );
       }
+      // Le staff est prévenu de la candidature — pour regarder, se joindre, ou
+      // dire non. Il ne BLOQUE rien : la vente avance sans l'attendre, sinon une
+      // demande dormirait jusqu'à ce qu'un officier passe.
+      void prevenirStaff(
+        libre ? `${a.user.username} veut fournir un objet` : `${a.user.username} se propose aussi`,
+        `${dem.item ?? "Objet"} pour ${dem.username} — ${prixMixte(prix, prixAp, tauxAp)}${reglement === "dette" ? " à crédit" : ""}.`,
+        `/messages?fil=req:${id}`,
+        a.user.id,
+      );
       void majAnnonceVente(id);
+      return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
+    }
+
+    /**
+     * Le staff cautionne l'échange. Ce n'est pas une autorisation — la vente
+     * n'a pas attendu — mais le client voit qu'un tiers a regardé.
+     */
+    case "valider": {
+      if (!estStaff) return NextResponse.json({ error: "Réservé au staff." }, { status: 403 });
+      const offre = await prisma.offreVente.findFirst({ where: { requestId: id, statut: "retenue" } });
+      if (!offre) return NextResponse.json({ error: "Personne ne s'en occupe encore." }, { status: 400 });
+      await prisma.offreVente.update({
+        where: { id: offre.id },
+        data: { valideePar: a.user.id, valideeLe: new Date() },
+      });
+      await prevenir(
+        offre.userId,
+        `${a.user.username} a validé ton échange`,
+        `${dem.item ?? "L'objet"} — tu peux y aller.`,
+        `/messages?fil=req:${id}`,
+      );
+      if (dem.userId !== a.user.id) {
+        await prevenir(
+          dem.userId,
+          "Ton échange est validé par le staff",
+          `${dem.item ?? "L'objet"} — ${a.user.username} a vérifié la transaction.`,
+          `/messages?fil=req:${id}`,
+        );
+      }
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 

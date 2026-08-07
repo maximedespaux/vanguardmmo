@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
+import { StrategieCS } from "@/components/StrategieCS";
 import { classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, presencesSeance, prochaineSeance, type CompoState, type Creneau, type Presence, type Seance } from "@/lib/compositions";
 
 import type { Signup } from "@/lib/compositions";
@@ -18,7 +19,7 @@ export default function CompositionsPage() {
   const su = session?.user as { discordName?: string; username?: string; name?: string; role?: string } | undefined;
   const meName = su?.discordName ?? su?.username ?? session?.user?.name ?? "Moi";
   const isAdmin = (su?.role ? ADMIN_ROLES.includes(su.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
-  const [tab, setTab] = useState<"cs" | "gvg">("cs");
+  const [tab, setTab] = useState<"cs" | "strat" | "gvg">("cs");
   const [signups, setSignups] = useState<Signup[]>([]);
   const [myChars, setMyChars] = useState<{ id: string; name: string; class: string }[]>([]);
   const [info, setInfo] = useState<Slot | null>(null);
@@ -59,9 +60,10 @@ export default function CompositionsPage() {
       const e = normaliserCompo(d);
       setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
       setCharge(true);
-      // Le texte des consignes n'est plus affiche ici (il aura sa page), mais on
-      // le garde en memoire : chaque enregistrement renvoie l'etat ENTIER, et
-      // l'oublier reviendrait a l'effacer pour tout le monde.
+      // Le texte des anciennes consignes n'est plus edite ici, mais il reste
+      // renvoye a chaque enregistrement : l'etat part EN ENTIER, l'oublier
+      // reviendrait a l'effacer pour tout le monde. La page Strategie le
+      // propose comme point de depart tant qu'il n'a pas ete repris.
       setInstructions(e.instructions);
     }).catch(() => {});
   }, []);
@@ -221,6 +223,7 @@ export default function CompositionsPage() {
       <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Compositions" subtitle="La composition optimale des Chambres Secrètes (à respecter pour la cohésion) et le Guild Siege (libre)." />
       <div className="vg-subtabs">
         <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="key" size={15} /> Chambre Secrète</button>
+        <button onClick={() => setTab("strat")} className={`vg-subtab ${tab === "strat" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="book" size={15} /> Stratégie</button>
         <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="sword" size={15} /> Guild Siege</button>
       </div>
 
@@ -386,7 +389,13 @@ export default function CompositionsPage() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
           </>)}
         </div>
-      </>) : (
+      </>
+      ) : tab === "strat" ? (
+        /* Le déroulé et les placements, à côté de la composition qu'ils
+           expliquent — mais pas dans la même page : on vient ici pour lire,
+           on allait là-bas pour s'inscrire, et les deux se gênaient. */
+        <StrategieCS isAdmin={isAdmin} texteExistant={instructions} />
+      ) : (
         <div style={{ ...card, textAlign: "center", padding: 40 }}>
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="sword" size={44} /></div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>

@@ -18,6 +18,7 @@ type Membre = { id: string; nom: string; avatar: string | null; enLigne: boolean
 type Offre = { id: string; membre: Membre; prix: number | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; validee: boolean; aObjet: boolean; statut: string; moi: boolean };
 type Vente = {
   requestId: string;
+  statut: string;
   detenteur: Offre | null;
   offres: Offre[];
   detenteursPossibles: { pseudo: string; quantite: number }[];
@@ -117,6 +118,42 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
 
   const bouton: React.CSSProperties = { display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: occupe ? "default" : "pointer", fontSize: 12.5, fontWeight: 600, fontFamily: "inherit", opacity: occupe ? .6 : 1 };
   const champ: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 11px", color: "var(--text)", fontSize: 13, fontFamily: "inherit" };
+
+  /**
+   * Une demande close ne se re-pilote pas.
+   *
+   * Le bandeau ignorait le statut : apres « Echange fait » ou « Abandonner », il
+   * se redessinait a l'identique, boutons compris. On cliquait, le serveur
+   * faisait son travail, et rien a l'ecran ne disait que c'etait fini — donc on
+   * recliquait. Il dit maintenant ce qui s'est passe, et se tait sur le reste.
+   */
+  const fait = v.statut === "REMIS";
+  const abandonnee = v.statut === "ANNULE" || v.statut === "REFUSE";
+  if (fait || abandonnee) {
+    return (
+      <div className="glass-card" style={{ padding: "12px 14px", marginBottom: 12, borderColor: fait ? "rgba(74,222,128,.32)" : "var(--border)", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <Icon name={fait ? "check" : "x"} size={15} style={{ color: fait ? "var(--green)" : "var(--text-muted)" }} />
+        <b className="font-heading" style={{ fontSize: 13.5, letterSpacing: .4, color: fait ? "var(--green)" : "var(--text-muted)" }}>
+          {fait ? "Échange terminé" : "Demande abandonnée"}
+        </b>
+        {fait && v.detenteur && (
+          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+            remis par <b style={{ color: "var(--text)" }}>{v.detenteur.membre.nom}</b>
+            {(v.detenteur.prix || v.detenteur.prixAp) ? <> — <b style={{ color: "var(--gold)" }}>{prixMixte(v.detenteur.prix, v.detenteur.prixAp, v.detenteur.tauxAp)}</b>{v.detenteur.reglement === "dette" ? " à crédit" : ""}</> : null}
+          </span>
+        )}
+        {/* Un « Abandonner » cliqué de travers ne doit pas obliger a tout
+            refaire. Rien n'a bouge dans les coffres : c'est reversible. */}
+        {abandonnee && (jeSuisDemandeur || estStaff) && (
+          <button style={{ ...bouton, marginLeft: "auto" }} disabled={occupe}
+            onClick={() => agir("rouvrir").then(() => onClos?.())}>
+            <Icon name="rotate-ccw" size={13} />Rouvrir
+          </button>
+        )}
+        {erreur && <span style={{ fontSize: 12, color: "var(--red)" }}>{erreur}</span>}
+      </div>
+    );
+  }
 
   return (
     <div className="glass-card" style={{ padding: 14, marginBottom: 12, borderColor: v.detenteur ? "rgba(74,222,128,.32)" : "rgba(255,140,26,.3)" }}>
@@ -316,7 +353,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               <Icon name="package" size={13} />{v.detenteur?.aObjet ? "Je ne l'ai plus" : "J'ai bien l'objet"}
             </button>
             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5, opacity: occupe ? .6 : 1 }} disabled={occupe}
-              onClick={() => { if (confirm("Confirmer l'échange ? L'objet sortira de ton coffre.")) agir("vendu"); }}>
+              onClick={() => { if (confirm("Confirmer l'échange ? L'objet sortira de ton coffre.")) agir("vendu").then(() => onClos?.()); }}>
               <Icon name="check" size={14} />Échange fait
             </button>
             <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe} onClick={() => agir("liberer")}>

@@ -354,6 +354,24 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return NextResponse.json({ ok: true });
     }
 
+    /**
+     * Rouvrir une demande abandonnée. Un clic malheureux sur « Abandonner » la
+     * fermait pour de bon : il fallait tout refaire. Réservé aux demandes
+     * annulées — « échange fait » a sorti l'objet d'un coffre, ça ne se défait
+     * pas d'un bouton.
+     */
+    case "rouvrir": {
+      if (!estDemandeur && !estStaff) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      if (dem.status !== "ANNULE" && dem.status !== "REFUSE")
+        return NextResponse.json({ error: "Seule une demande abandonnée se rouvre." }, { status: 400 });
+      await prisma.bankRequest.update({ where: { id }, data: { status: "PENDING" } });
+      await prisma.requestMessage.create({
+        data: { bankRequestId: id, kind: "system", body: `${a.user.username} a rouvert cette demande.` },
+      });
+      void majAnnonceVente(id);
+      return NextResponse.json({ ok: true });
+    }
+
     default:
       return NextResponse.json({ error: "Action inconnue." }, { status: 400 });
   }

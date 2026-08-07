@@ -122,6 +122,10 @@ export type OffreVue = {
 
 export type VenteVue = {
   requestId: string;
+  /** REMIS / ANNULE / REFUSE = la demande est close. Sans ce statut, l'écran
+   *  continuait d'afficher « Échange fait » et « Abandonner » sur une demande
+   *  deja reglee : on cliquait, et rien ne finissait jamais. */
+  statut: string;
   /** Le détenteur retenu, s'il y en a un. */
   detenteur: OffreVue | null;
   offres: OffreVue[];
@@ -183,7 +187,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
   const req = await prisma.bankRequest.findUnique({
     where: { id: requestId },
     select: {
-      id: true, item: true, detenteurId: true, rendezVous: true, rendezVousPar: true, rendezVousOk: true,
+      id: true, item: true, detenteurId: true, rendezVous: true, rendezVousPar: true, rendezVousOk: true, status: true,
       priceEach: true, userId: true, modePaiement: true, kind: true, reason: true, queteId: true, quantity: true,
       offres: {
         orderBy: { createdAt: "asc" },
@@ -214,6 +218,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
 
   return {
     requestId: req.id,
+    statut: req.status,
     detenteur,
     offres,
     detenteursPossibles,

@@ -7,7 +7,7 @@ import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
 import {
-  reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, CHOIX_VIDE, type ChoixPiece,
+  reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, resumerEmplacements, CHOIX_VIDE, type ChoixPiece,
 } from "@/lib/specsFlyff";
 
 /**
@@ -157,6 +157,14 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     }
     if (choix.scrollStat) lignes.push({ label: "Scroll", valeur: `${choix.scrollStat}${Number(choix.scrollNiv) > 0 ? ` +${choix.scrollNiv}` : ""}` });
     if (choix.element) lignes.push({ label: "Élément", valeur: `${choix.element}${Number(choix.elementNiv) > 0 ? ` +${choix.elementNiv}` : ""}` });
+    // Le sertissage fait la moitié de la valeur d'une arme : il doit voyager
+    // avec la demande, sinon le détenteur livre une lame vide.
+    const dia = resumerEmplacements(choix.diamants);
+    if (dia) lignes.push({ label: "Sertissage", valeur: dia });
+    const holo = resumerEmplacements(choix.holo);
+    if (holo) lignes.push({ label: "Holo", valeur: holo });
+    const gem = resumerEmplacements(choix.gemmes);
+    if (gem) lignes.push({ label: "Gemmes", valeur: gem });
     return {
       nom: choisi.n,
       slot: SLOTS.find((s) => s.clef === slot)?.label ?? slot,

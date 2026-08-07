@@ -1,6 +1,6 @@
 "use client";
 import type { Reglages, ChoixPiece } from "@/lib/specsFlyff";
-import { RARETES, RANGS_EVEIL, STATS_EVEIL, STATS_SCROLL, ELEMENTS, resumerPiece } from "@/lib/specsFlyff";
+import { RARETES, RANGS_EVEIL, STATS_EVEIL, STATS_SCROLL, ELEMENTS, STATS_DIAMANT, STATS_HOLO, STATS_GEMME, resumerPiece } from "@/lib/specsFlyff";
 
 /**
  * Décrire la pièce exacte qu'on veut — rareté, +N, étoiles, perçage, éveil,
@@ -30,6 +30,14 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
   nom?: string;
 }) {
   const maj = (k: keyof ChoixPiece, v: string) => onChange({ ...choix, [k]: v });
+  /** Un emplacement de sertissage ou de gemme : la liste est creuse, on ne la
+   *  remplit que là où l'on a une exigence. */
+  const majEmplacement = (k: "diamants" | "holo" | "gemmes", i: number, v: string) => {
+    const l = [...(choix[k] ?? [])];
+    while (l.length <= i) l.push("");
+    l[i] = v;
+    onChange({ ...choix, [k]: l });
+  };
   const bascule = (k: keyof ChoixPiece, v: string) => maj(k, choix[k] === v ? "" : v);
 
   return (
@@ -122,6 +130,64 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
             <option value="">+ ?</option>
             {Array.from({ length: r.elementMax }, (_, i) => i + 1).map((n) => <option key={n} value={n}>+{n}</option>)}
           </select>
+        </div>
+      )}
+
+      {/* ── Sertissage et gemmes ────────────────────────────────────────────
+          Il manquait, alors que c'est la moitié de la valeur d'une arme : on
+          commandait « Arbalète Mythique +20 » sans jamais dire ce qu'il y avait
+          dedans. Un emplacement laissé vide veut dire « peu importe » — on ne
+          force personne à remplir les cinq. */}
+      {r.sertissage && (
+        <div style={{ display: "grid", gap: 6 }}>
+          <div style={ligne}>
+            <span style={etiquette}>Sertissage</span>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+              {Array.from({ length: r.sertissage.diamants }, (_, i) => (
+                <select key={i} value={choix.diamants?.[i] ?? ""} onChange={(e) => majEmplacement("diamants", i, e.target.value)}
+                  style={{ ...mini, fontSize: 11.5 }} aria-label={`Diamant ${i + 1}`} title={`Diamant ${i + 1}`}>
+                  <option value="">Diamant {i + 1}</option>
+                  {STATS_DIAMANT.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              ))}
+            </div>
+          </div>
+          {/* Les holographiques n'existent qu'en artefact : on le dit au lieu de
+              les cacher, sinon on les cherche. */}
+          {/* Comme dans le builder : les holos n'existent qu'au-delà de +10. */}
+          {r.sertissage.holo > 0 && Number(choix.up) > 10 ? (
+            <div style={ligne}>
+              <span style={{ ...etiquette, color: "var(--purple)" }}>Holo</span>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                {Array.from({ length: r.sertissage.holo }, (_, i) => (
+                  <select key={i} value={choix.holo?.[i] ?? ""} onChange={(e) => majEmplacement("holo", i, e.target.value)}
+                    style={{ ...mini, fontSize: 11.5, borderColor: choix.holo?.[i] ? "var(--purple)" : "var(--border)" }} aria-label={`Diamant holographique ${i + 1}`}>
+                    <option value="">Holo {i + 1}</option>
+                    {STATS_HOLO.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ fontSize: 10.5, color: "var(--text-muted)", paddingLeft: 62 }}>
+              Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).
+            </div>
+          )}
+        </div>
+      )}
+
+      {r.gemmes > 0 && (
+        <div style={ligne}>
+          <span style={etiquette}>Gemmes</span>
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+            {Array.from({ length: r.gemmes }, (_, i) => (
+              <select key={i} value={choix.gemmes?.[i] ?? ""} onChange={(e) => majEmplacement("gemmes", i, e.target.value)}
+                style={{ ...mini, fontSize: 11.5 }} aria-label={`Gemme ${i + 1}`}>
+                <option value="">Gemme {i + 1}</option>
+                {STATS_GEMME.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            ))}
+          </div>
         </div>
       )}
 

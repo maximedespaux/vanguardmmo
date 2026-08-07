@@ -27,6 +27,12 @@ export const STATS_EVEIL = ["Force", "Endurance", "Dextérité", "Intelligence",
 export const STATS_SCROLL = ["Force", "Endurance", "Dextérité", "Intelligence"] as const;
 /** Élément de l'arme (≠ carte de perçage), data.json → ELEMENTS. */
 export const ELEMENTS = ["Feu", "Eau", "Vent", "Terre", "Électricité"] as const;
+/** Sertissage d'une arme : 5 diamants, data.json → DIASTATS. */
+export const STATS_DIAMANT = ["Intelligence", "Endurance", "Force", "Dextérité", "Syphon de vie", "Dégâts JcJ", "Attaque", "Défense", "PV max"] as const;
+/** Les 3 diamants HOLOGRAPHIQUES ne se débloquent qu'en artefact (+11 à +20) — data.json → HOLOSTATS. */
+export const STATS_HOLO = ["Intelligence +33", "Endurance +33", "Force +33", "Dextérité +33", "Dégâts JcJ +15"] as const;
+/** Gemmes de fashion : 4 emplacements, data.json → GEMC (noms uniques). */
+export const STATS_GEMME = ["Force", "Endurance", "Dextérité", "Intelligence", "Attaque", "Dégâts magiques", "Dégâts critiques", "Dégâts magiques %", "Heal Rate", "PV max", "Défense"] as const;
 /** Cartes de perçage : arme et bouclier d'un côté, tenue de l'autre. */
 export const CARTES_ARME = ["Feu", "Eau", "Terre", "Foudre"] as const;
 export const CARTES_TENUE = ["Fulgur", "Volcano", "Océane"] as const;
@@ -49,6 +55,11 @@ export type Reglages = {
   scroll: boolean;
   /** Niveau d'élément maximum, ou 0 si la pièce n'en porte pas. */
   elementMax: number;
+  /** Sertissage : diamants, et diamants holographiques quand la pièce passe en
+   *  artefact. Réservé aux armes, comme dans weaponPanelImpl. */
+  sertissage: { diamants: number; holo: number } | null;
+  /** Emplacements de gemmes — les fashions, et elles seules (fashionPanel). */
+  gemmes: number;
 };
 
 const sansAccent = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
@@ -64,11 +75,14 @@ const sansAccent = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-
  */
 export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?: boolean; label?: string } = {}): Reglages {
   const art = !!o.artefact;
-  const base = { slot, label: o.label ?? slot, rarete: false, upMax: 0, etoiles: false, percage: null, eveil: false, scroll: false, elementMax: 0 } as Reglages;
+  const base = { slot, label: o.label ?? slot, rarete: false, upMax: 0, etoiles: false, percage: null, eveil: false, scroll: false, elementMax: 0, sertissage: null, gemmes: 0 } as Reglages;
   switch (slot) {
     case "weapon":
       return { ...base, label: o.label ?? "Arme", rarete: o.rarete !== false, upMax: art ? 20 : 10, etoiles: art,
-        percage: { max: art ? 12 : 10, cartes: CARTES_ARME }, eveil: true, scroll: true, elementMax: 20 };
+        percage: { max: art ? 12 : 10, cartes: CARTES_ARME }, eveil: true, scroll: true, elementMax: 20,
+        // Les 3 holographiques se débloquent en artefact : on les propose là où
+        // le builder les propose, pas ailleurs.
+        sertissage: { diamants: 5, holo: art ? 3 : 0 } };
     case "shield":
       return { ...base, label: o.label ?? "Bouclier", upMax: 10, percage: { max: 10, cartes: CARTES_ARME }, eveil: true, elementMax: 20 };
     case "suit":
@@ -82,7 +96,7 @@ export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?
     case "cape":
       return { ...base, label: o.label ?? "Cape", eveil: true };
     case "fashion":
-      return { ...base, label: o.label ?? "Fashion", upMax: 10 };
+      return { ...base, label: o.label ?? "Fashion", upMax: 10, gemmes: 4 };
   }
 }
 
@@ -167,12 +181,24 @@ export type ChoixPiece = {
   eveilRang: string; eveilStat: string;
   scrollStat: string; scrollNiv: string;
   element: string; elementNiv: string;
+  /** Une entrée par emplacement, vide = « peu importe ». */
+  diamants: string[]; holo: string[]; gemmes: string[];
 };
 
 export const CHOIX_VIDE: ChoixPiece = {
   rarete: "", up: "", etoiles: "", percage: "", carte: "",
   eveilRang: "", eveilStat: "", scrollStat: "", scrollNiv: "", element: "", elementNiv: "",
+  diamants: [], holo: [], gemmes: [],
 };
+
+/** Les emplacements renseignés, regroupés : « 2× Force, Attaque ». */
+export function resumerEmplacements(l: string[] | undefined): string {
+  const remplis = (l ?? []).filter(Boolean);
+  if (!remplis.length) return "";
+  const n: Record<string, number> = {};
+  for (const x of remplis) n[x] = (n[x] ?? 0) + 1;
+  return Object.entries(n).map(([k, v]) => (v > 1 ? `${v}× ${k}` : k)).join(", ");
+}
 
 /**
  * La pièce visée en une ligne — c'est ce texte qu'on relit dans la to-do list,
@@ -188,5 +214,11 @@ export function resumerPiece(c: ChoixPiece): string {
   if (c.eveilRang || c.eveilStat) bouts.push(`éveil ${[c.eveilRang, c.eveilStat].filter(Boolean).join(" ")}`);
   if (c.scrollStat) bouts.push(`scroll ${c.scrollStat}${Number(c.scrollNiv) > 0 ? ` +${Number(c.scrollNiv)}` : ""}`);
   if (c.element) bouts.push(`élément ${c.element}${Number(c.elementNiv) > 0 ? ` +${Number(c.elementNiv)}` : ""}`);
+  const dia = resumerEmplacements(c.diamants);
+  if (dia) bouts.push(`sertissage ${dia}`);
+  const holo = resumerEmplacements(c.holo);
+  if (holo) bouts.push(`holo ${holo}`);
+  const gem = resumerEmplacements(c.gemmes);
+  if (gem) bouts.push(`gemmes ${gem}`);
   return bouts.join(" · ");
 }

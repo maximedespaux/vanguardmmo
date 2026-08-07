@@ -80,22 +80,70 @@ export async function detenteursDe(itemRef: string): Promise<Detenteur[]> {
 }
 
 /**
- * Sort l'objet du coffre du vendeur — l'inverse exact du dépôt.
+ * Sort l'objet du coffre d'un membre, ou l'y remet — l'inverse exact du dépôt.
  *
- * Sans ça, une vente laissait le stock inchangé : la boutique continuait
- * d'afficher un objet déjà parti, et la demande suivante tombait dans le vide.
+ * Deux pièges, et le second faisait que RIEN ne bougeait :
+ *  — le coffre est rangé par CLÉ de catalogue (« Armes - Yggdrasil|Templier|Glaive »),
+ *    pas par libellé de demande (« Glaive - Templier (Pré-myth.) »). On passait
+ *    le libellé : la ligne n'existait pas, le stock restait intact, et on créait
+ *    au passage une entrée fantôme à 0 ;
+ *  — une arme est rangée par rareté (`clé|R#épique`) : il faut piocher dans les
+ *    rangées que ce membre possède vraiment, de la mieux fournie à la moins.
+ *
  * On ne descend jamais sous zéro : mieux vaut un stock à 0 qu'un stock négatif
  * qui ferait mentir tous les totaux.
  */
-export async function retirerDuCoffre(pseudo: string, itemRef: string, quantite: number): Promise<{ avant: number; apres: number }> {
+export async function bougerCoffre(pseudo: string, itemRef: string, delta: number, rangeeVoulue?: string | null): Promise<{ avant: number; apres: number; rangee: string } | null> {
+  const clef = await clefDeCoffre(itemRef);
+  if (!clef || !pseudo) return null;
   const { etat, inv } = await lireEtat();
-  const coffre = inv[pseudo] ?? {};
-  const avant = Number(coffre[itemRef]) || 0;
-  const apres = Math.max(0, avant - Math.max(1, Math.floor(quantite)));
-  const data = { ...etat, inv: { ...inv, [pseudo]: { ...coffre, [itemRef]: apres } } } as object;
+  const coffre = { ...(inv[pseudo] ?? {}) };
+  const base = clef.split("|R#")[0];
+  const rangees = Object.keys(coffre)
+    .filter((r) => r.split("|R#")[0] === base)
+    .sort((a, b) => (Number(coffre[b]) || 0) - (Number(coffre[a]) || 0));
+  const avant = rangees.reduce((t, r) => t + (Number(coffre[r]) || 0), 0);
+
+  let touchee = rangeeVoulue || clef;
+  if (delta < 0) {
+    // On pioche d'abord dans la rangée demandée si elle est fournie (la rareté
+    // que le client a demandée), sinon dans la mieux garnie.
+    const ordre = rangeeVoulue && (Number(coffre[rangeeVoulue]) || 0) > 0
+      ? [rangeeVoulue, ...rangees.filter((r) => r !== rangeeVoulue)]
+      : rangees;
+    let reste = Math.min(avant, -delta);
+    for (const r of ordre) {
+      if (reste <= 0) break;
+      const q = Number(coffre[r]) || 0;
+      if (q <= 0) continue;
+      const pris = Math.min(q, reste);
+      coffre[r] = q - pris;
+      reste -= pris;
+      touchee = r;
+    }
+  } else if (delta > 0) {
+    // On rend EXACTEMENT là où c'était parti : une arme est rangée par rareté,
+    // et créditer la première rangée venue transformait une Pré-mythique en
+    // Épique sans que personne ne s'en aperçoive.
+    const cible = rangeeVoulue || rangees[0] || clef;
+    coffre[cible] = (Number(coffre[cible]) || 0) + delta;
+    touchee = cible;
+  }
+
+  const apres = Object.keys(coffre)
+    .filter((r) => r.split("|R#")[0] === base)
+    .reduce((t, r) => t + (Number(coffre[r]) || 0), 0);
+  const data = { ...etat, inv: { ...inv, [pseudo]: coffre } } as object;
   await prisma.airGuildState.upsert({ where: { id: "main" }, create: { id: "main", data }, update: { data } });
-  return { avant, apres };
+  return { avant, apres, rangee: touchee };
 }
+
+/** Réserver l'objet : il sort du coffre dès qu'un détenteur prend la commande. */
+export const retirerDuCoffre = (pseudo: string, itemRef: string, quantite: number) =>
+  bougerCoffre(pseudo, itemRef, -Math.max(1, Math.floor(quantite)));
+/** Le rendre — dans la rangée d'où il était parti. */
+export const rendreAuCoffre = (pseudo: string, itemRef: string, quantite: number, rangee?: string | null) =>
+  bougerCoffre(pseudo, itemRef, Math.max(1, Math.floor(quantite)), rangee);
 
 /** En ligne = vu il y a moins de 5 min (le signe de vie s'écrit toutes les 3 min). */
 export const SEUIL_EN_LIGNE = 5 * 60_000;

@@ -750,6 +750,14 @@ model OffreVente {
 
   @@unique([requestId, userId])
   @@index([requestId])
+  /// La rangée exacte d'où l'objet est sorti (« …|Glaive|R#premyth ») : une arme
+  /// est rangée par rareté, et rendre au hasard ferait revenir une Épique là où
+  /// une Pré-mythique était partie.
+  reserveClef String?
+  /// L'objet est SORTI du coffre de ce détenteur, mis de côté pour cette demande.
+  /// Réservé dès qu'il prend la commande : sans ça, deux acheteurs se voyaient
+  /// promettre le même objet, et le coffre affichait un stock déjà vendu.
+  reserve   Boolean  @default(false)
 }
 
 // Notification sur le SITE (cloche 🔔) — ex. « X veut ton Glaive » adressé à un détenteur.

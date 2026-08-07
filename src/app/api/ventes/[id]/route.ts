@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { detenteursDe, majAnnonceVente, prevenir, prevenirStaff, retirerDuCoffre, vueVente } from "@/lib/ventes";
+import { detenteursDe, majAnnonceVente, prevenir, prevenirStaff, rendreAuCoffre, retirerDuCoffre, vueVente } from "@/lib/ventes";
 import { donnerXp } from "@/lib/xp";
 import { sansBigInt } from "@/lib/json";
 import { prixMixte } from "@/lib/monnaies";
@@ -19,6 +19,26 @@ import { prixMixte } from "@/lib/monnaies";
  * GET  → l'état complet, pour les deux parties.
  * POST → { action: "prendre" | "liberer" | "objet" | "rendezVous" | "enLigne" | "vendu" }
  */
+
+/**
+ * Remet au coffre ce qu'une prise de commande en avait sorti.
+ *
+ * Réserver sans jamais rendre viderait le coffre à chaque désistement : la
+ * réserve n'est pas une vente, c'est une mise de côté.
+ */
+async function rendreLaReserve(id: string, item: string | null, quantite: number): Promise<void> {
+  if (!item) return;
+  const reservee = await prisma.offreVente.findFirst({
+    where: { requestId: id, reserve: true },
+    select: { id: true, reserveClef: true, user: { select: { username: true } } },
+  });
+  if (!reservee) return;
+  await rendreAuCoffre(reservee.user.username, item, quantite, reservee.reserveClef).catch(() => null);
+  await prisma.offreVente.update({ where: { id: reservee.id }, data: { reserve: false, reserveClef: null } });
+  await prisma.requestMessage.create({
+    data: { bankRequestId: id, kind: "system", body: `${quantite} × ${item} remis au coffre de ${reservee.user.username}.` },
+  }).catch(() => null);
+}
 
 /** Deux « je suis en jeu » à moins de dix minutes disent la même chose. */
 const DELAI_EN_JEU = 10 * 60_000;
@@ -91,6 +111,27 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
       if (libre) {
         await prisma.bankRequest.update({ where: { id }, data: { detenteurId: a.user.id } });
+        /**
+         * L'objet sort du coffre MAINTENANT, pas à la remise.
+         *
+         * C'est le détenteur qui conclut la commande : à partir du moment où il
+         * la prend, l'objet lui est réservé. Le laisser au coffre le montrait
+         * encore disponible dans la boutique, et un deuxième acheteur pouvait se
+         * le faire promettre. Il y retourne si le vendeur se désiste ou si la
+         * demande est abandonnée.
+         */
+        if (dem.item) {
+          const bouge = await retirerDuCoffre(a.user.username, dem.item, dem.quantity || 1).catch(() => null);
+          if (bouge) {
+            await prisma.offreVente.updateMany({ where: { requestId: id, userId: a.user.id }, data: { reserve: true, reserveClef: bouge.rangee } });
+            await prisma.requestMessage.create({
+              data: {
+                bankRequestId: id, kind: "system",
+                body: `${dem.quantity || 1} × ${dem.item} sorti du coffre de ${a.user.username} et réservé pour cette demande.`,
+              },
+            });
+          }
+        }
         // Le demandeur doit l'apprendre sans avoir à revenir voir.
         await prevenir(
           dem.userId,
@@ -182,9 +223,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     /** Se désister : la demande repart aux autres détenteurs. */
     case "liberer": {
       if (!estDetenteur && !estStaff) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      await rendreLaReserve(id, dem.item, dem.quantity || 1);
       await prisma.offreVente.updateMany({
         where: { requestId: id, userId: dem.detenteurId ?? a.user.id },
-        data: { statut: "retiree" },
+        data: { statut: "retiree", reserve: false },
       });
       await prisma.bankRequest.update({ where: { id }, data: { detenteurId: null, rendezVous: null } });
       void majAnnonceVente(id);
@@ -345,10 +387,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
       // On retire sur la clé que ce vendeur possède réellement : une arme est
       // rangée par rareté, et retirer sur la clé nue ne toucherait rien.
-      const miens = await detenteursDe(dem.item);
+      // Déjà sorti du coffre à la prise de commande : on ne le retire pas deux
+      // fois. Il ne reste à le faire que pour une remise conclue sans réservation
+      // (une demande reprise par le staff, par exemple).
+      const dejaReserve = await prisma.offreVente.findFirst({ where: { requestId: id, statut: "retenue", reserve: true }, select: { id: true } });
+      const miens = dejaReserve ? [] : await detenteursDe(dem.item);
       const aLObjet = vendeur && miens.some((d) => d.pseudo.toLowerCase() === vendeur.username.toLowerCase());
       let stock: { avant: number; apres: number } | null = null;
       if (vendeur && aLObjet) stock = await retirerDuCoffre(vendeur.username, dem.item, quantite);
+      if (dejaReserve) await prisma.offreVente.update({ where: { id: dejaReserve.id }, data: { reserve: false } });
 
       // Achat ou dette : la demande garde la nature de la transaction, c'est
       // elle qu'on relira dans six mois pour savoir qui doit quoi.
@@ -389,7 +436,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         where: { id },
         data: { status: abandon ? "ANNULE" : "REMIS", detenteurId: null, rendezVous: null },
       });
-      await prisma.offreVente.updateMany({ where: { requestId: id, statut: "retenue" }, data: { statut: "retiree" } });
+      // Ce qui avait été mis de côté n'a plus de raison de l'être.
+      if (abandon) await rendreLaReserve(id, dem.item, dem.quantity || 1);
+      await prisma.offreVente.updateMany({ where: { requestId: id, statut: "retenue" }, data: { statut: "retiree", reserve: false } });
       await prisma.requestMessage.create({
         data: {
           bankRequestId: id, kind: "system",

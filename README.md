@@ -9,7 +9,7 @@ ce qui se passe sur le site se retrouve sur Discord, et inversement.
 
 *Vanguard ne cherche pas le nombre mais la présence : **Discord et vocal obligatoires**.
 Les outils de ce dépôt existent pour servir ça — préparer les Chambres Secrètes,
-suivre les progressions et équiper les membres, sans paperasse.*
+faire circuler les objets entre membres et suivre les progressions, sans paperasse.*
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
@@ -31,75 +31,173 @@ flowchart LR
     V["🌍 Visiteur / Candidat"] --> UI
 
     subgraph SITE["🌐 Site — Next.js 15"]
-        UI["27 pages<br/>(App Router)"] --> API["Routes API<br/>(35 endpoints)"]
+        UI["33 pages<br/>(App Router)"] --> API["51 routes API"]
         AUTH["NextAuth<br/>OAuth Discord"]
     end
 
-    API --> DB[("🗄️ PostgreSQL<br/>Prisma — 30 modèles")]
+    API --> DB[("🗄️ PostgreSQL<br/>Prisma — 39 modèles")]
 
     subgraph BOT["🤖 Bot — discord.js 14"]
-        CMD["14 commandes slash"]
-        CRON["Planificateur<br/>(node-cron)"]
-        DEC["Salon décisions<br/>(boutons 1 clic)"]
+        CMD["Commandes slash"]
+        CRON["Rappels programmés"]
+        DEC["Salon décisions"]
     end
 
-    CMD --> DB
-    CRON --> DB
-    DEC --> DB
-
-    AUTH <--> DIS["💬 Serveur Discord<br/>Vanguard"]
-    CMD --> DIS
-    CRON --> DIS
-    DEC --> DIS
+    BOT --> DB
+    DB --> BOT
+    AUTH -.->|"rôles Discord"| API
+    BOT --> DISCORD["💬 Serveur Discord"]
 ```
 
-- **Connexion Discord** (OAuth) : le rôle Discord du membre détermine ses accès sur le site — vérifié **côté serveur** à 3 niveaux (middleware, layouts, API).
-- **Une seule base** : le site écrit, le bot lit (et inversement). Aucun doublon de données.
-- **Tout en français**, pensé pour la guilde.
+La base est le **point de rendez-vous** : le site écrit, le bot lit (et inversement).
+Aucun des deux n'appelle l'autre en direct — c'est ce qui permet de redémarrer
+l'un sans casser l'autre.
 
 ---
 
-## ✨ Le site
+## 🗺️ Les cinq espaces
 
-### 🌍 Public
-| Page | Rôle |
-|---|---|
-| **Histoire** | Vitrine de la guilde : présentation, objectifs, fonctionnalités |
-| **Candidature** | Recrutement en 4 étapes (profil, spés avec choix des classes, stuff via le Builder intégré, récap) — transmis au staff sur Discord, et le build réalisé est **repris automatiquement sur le compte** du candidat une fois accepté |
+La navigation est rangée **par tâche**, pas par table. Chaque espace ouvre sur
+ce qu'on vient y faire (`src/config/nav.ts`).
 
-### ⚔️ Espace membre
-| Page | Rôle |
-|---|---|
-| **Dashboard** | Vue d'ensemble temps réel : membres, persos, dettes, coffre, candidatures, world boss |
-| **AirBuilder** | Créateur de build complet (équipement, perçage, sertissage, runes, sets, fées, familiers…) avec **sauvegarde & publication automatiques**, versions archivées, multi-persos et multi-stuffs (DPS / Tank / Hybride) |
-| **Chambres Secrètes** | Compositions d'équipe **partagées** : plusieurs candidats par poste, sélection ★ par le staff, **builds de référence consultables par poste** (édités par le staff admin), postes renommables |
-| **Banque** | Parcourir le coffre, panier, demandes d'achat (−20 %) ou de dette, suivi des remboursements |
-| **Personnages** | Ses persos (classe, prestige, niveau) et profils de stuff |
-| **Guides & Prestige** | Guide de progression par palier + **calculateur de prestige** (ressources cumulées entre deux paliers) |
-| **Donjons / World Boss** | Wiki des 23 donjons, suivi des runs, présence aux world boss |
-| **Échanges / Absences / Paramètres** | Échanges PNJ du serveur, déclaration d'absences, préférences |
+| Espace | Accès | Pages |
+|---|---|---|
+| ⚔️ **Jouer** | membre | Mes personnages · AirBuilder · Compositions · World Boss · Mes absences |
+| 🧭 **Le jeu** | public | Donjons · Guide de progression · Prestige |
+| 🎯 **Quête Guilde** | membre | Quêtes principales, secondaires, mes requêtes |
+| 🪙 **Économie** | public → staff | Boutique · Mes demandes & messages · Coffre · Crafts · Base des objets · Plan de farm |
+| 🛡️ **Guilde** | staff | Membres & builds · Candidatures · Statistiques · Journal · World Boss · Bot Discord · Annonce · Events |
 
-### 🛡️ Espace staff
-| Page | Rôle |
-|---|---|
-| **GuildViewer** | Suivi complet des membres : persos, classes, **builds publiés** (avec historique de versions), activité |
-| **AirGuild (coffre)** | Coffre de guilde par membre : dépôts, **catégories personnalisables** (création, image, réorganisation par glisser-déposer), fiche détaillée par objet, journal des mouvements, **calculateur de craft** |
-| **Plan de farm** | Ce qui manque au coffre pour atteindre les seuils, calculé sur le stock réel |
-| **Banque (gestion)** | Traiter les requêtes, fixer les prix, valider les remboursements |
-| **Candidatures** | Examiner et décider (accepter / refuser / entretien / attente) |
-| **Discord & Événements** | Piloter le bot depuis le site (embeds, giveaways, panneau de classes) et programmer les **événements récurrents du jeu** que le bot annonce tout seul |
-| **World Boss (gestion) / Annonces** | Fiches de boss, planification, annonces en embed |
+Hors espaces : **Accueil** (histoire), **Candidature**, **Connexion**.
+
+---
+
+## 🔁 Le cycle d'une demande
+
+C'est le cœur du site. Une demande **est** une conversation : son état, son prix
+et la discussion vivent au même endroit (`/messages`).
+
+Deux natures, deux façons d'y répondre — et l'écran le dit avant qu'on ouvre :
+
+```mermaid
+flowchart TD
+    A["🛒 Boutique — panier"] -->|"origine: achat"| D
+    B["📦 Objet sur mesure"] -->|"origine: requête"| D
+    D["Demande + conversation"] --> E{"Quelqu'un l'a<br/>au coffre ?"}
+
+    E -->|"oui"| F["Les détenteurs se coordonnent<br/>onglet « Entre nous »"]
+    E -->|"non"| G["🎯 Quête de guilde<br/>plusieurs membres contribuent"]
+
+    F --> H["Un détenteur prend la commande"]
+    H --> I["🔒 L'objet SORT du coffre<br/>et lui est réservé"]
+    I --> J["Négociation du prix<br/>puis rendez-vous"]
+    J --> K["✅ Échange fait"]
+    I -.->|"se désiste / demande abandonnée"| L["↩️ Retour au coffre<br/>dans sa rangée exacte"]
+
+    G --> M["Contributions annoncées<br/>puis confirmées"]
+    M --> K
+```
+
+**Pourquoi l'objet sort du coffre dès la prise** : c'est le détenteur qui conclut.
+Tant que l'objet y restait, la boutique le montrait disponible et un second
+acheteur pouvait se le faire promettre. Chaque mouvement laisse une ligne en
+français dans la conversation.
+
+Le prix suit le même principe : **le vendeur annonce son tarif en premier**, une
+seule offre est active à la fois, un refus est explicite, et il y a un délai de
+5 min entre deux propositions. Le paiement se fait en **périns**, en **Airpoints**
+ou dans les deux — l'acheteur annonce ce qu'il peut sortir dès la demande.
+
+---
+
+## ⚔️ Les Chambres Secrètes
+
+Une seule séance se prépare à la fois : **la prochaine**. Les fenêtres
+s'enchaînent sans trou, et une annonce ne vaut que pour la fenêtre où elle a été
+faite — tout se remet à zéro d'une séance à l'autre.
+
+```mermaid
+flowchart LR
+    A["dimanche 21 h"] -->|"on prépare"| B["🗓️ MERCREDI"]
+    B --> C["mercredi 21 h 30"]
+    C -->|"on prépare"| D["🗓️ DIMANCHE"]
+    D --> A
+```
+
+- **Composition** — 12 postes (dont 2 optionnels) répartis en tanks, DPS physique,
+  DPS magique. Plusieurs candidats par poste ; le staff choisit le titulaire ★.
+- **Présence** — une pop-up la demande à l'arrivée, une fois par séance. La
+  composition est une **cible, pas un plafond** : on voit ce qui manque *et* qui
+  est en plus, et le staff retient qui joue.
+- **Stratégie** — un sous-onglet que le staff compose lui-même en blocs (titre,
+  paragraphe, image importée ou liée).
+
+---
+
+## 🏦 Coffre, crafts et base des objets
+
+Le stock réel vit dans l'**AirGuild** (`public/airguild/`), coffre par membre.
+Trois onglets, trois rôles :
+
+```mermaid
+flowchart LR
+    S["⚙️ Base des objets<br/>(la source)"] --> C["🔨 Crafts<br/>(recettes)"]
+    S --> B["🏦 Coffre<br/>(stock par membre)"]
+    B --> C
+    C --> F["🌱 Plan de farm<br/>(ce qui manque au seuil)"]
+    B --> BQ["🛒 Boutique"]
+    S --> BQ
+```
+
+Un ingrédient de recette **désigne** un objet de la base par son identifiant : il
+ne le décrit pas. Son nom, son icône et son unité se lisent sur la base et la
+suivent. Un objet qui manque s'ajoute **à la base**, jamais dans la recette.
+
+---
+
+## 🎯 Quête Guilde
+
+Ce qu'un membre demande dans « Mes requêtes » devient une **quête principale**
+que toute la guilde voit et peut prendre à plusieurs. Chacun annonce ce qu'il
+apporte (personne ne farme deux fois la même chose), le demandeur confirme à la
+réception.
+
+Une requête d'objet que personne n'a au coffre peut basculer en quête d'un clic —
+et les deux restent reliées : **« Suivre dans les quêtes → »** depuis la
+conversation, **« Requête objet → »** depuis la quête.
+
+---
+
+## 👤 La fiche d'un membre
+
+Partout où un pseudo s'affiche, il se clique. La fiche dit depuis quand il est
+là, son rang, ses personnages (cliquables → build en **lecture seule**), et
+surtout son bilan :
+
+| Ce qu'il a acheté | Ce qu'il a demandé | Ce qu'il a rendu |
+|---|---|---|
+| boutique, avec les statuts | requêtes objet + quêtes ouvertes | quêtes aidées, objets fournis |
+
+Le volet marchand (ventes conclues, périns et Airpoints encaissés, engagements en
+cours, achats à crédit) est **réservé au staff** — le serveur ne l'envoie même
+pas aux autres.
 
 ---
 
 ## 🤖 Le bot
 
-**14 commandes slash** (`/candidature`, `/dette`, `/dettes`, `/dette-payer`, `/coffre`, `/mesperso`, `/absence`, `/giveaway`, `/embed`, `/boutonrole`, `/rolereaction`, `/panneau-classes`, `/aide`…) et surtout des **automatismes** :
+**14 commandes slash** et surtout des **automatismes** :
 
-- **Salon décisions** : chaque candidature, demande de dette ou requête banque arrive en embed avec des boutons — le staff décide **en 1 clic**, le membre est prévenu **en message privé**, tout est journalisé.
-- **Rappels intelligents** : candidatures en attente, échéances de dettes (MP au débiteur + récap staff), événements du jeu (annonce + rappel X min avant, configurés depuis le site sans redémarrage).
-- **Rôles en self-service** : panneau de classes à boutons, bouton-rôles et rôle-réactions (façon MEE6, mais maison).
-- **Giveaways** : participation par bouton, tirage et clôture automatiques, reroll.
+- **Salon décisions** : chaque candidature ou demande arrive en embed avec des
+  boutons — le staff décide **en 1 clic**, le membre est prévenu **en message
+  privé**, tout est journalisé.
+- **Rappels** : Chambres Secrètes de la veille avec l'effectif manquant,
+  candidatures en attente, événements du jeu (configurés depuis le site, sans
+  redémarrage).
+- **Salon des ventes** : chaque demande d'objet est annoncée aux détenteurs, et
+  l'annonce se met à jour quand quelqu'un la prend.
+- **Rôles en self-service** : panneau de classes à boutons, bouton-rôles,
+  rôle-réactions. **Giveaways** avec tirage et clôture automatiques.
 
 ```mermaid
 sequenceDiagram
@@ -111,21 +209,20 @@ sequenceDiagram
 
     C->>S: Candidature (4 étapes + build)
     S->>B: Enregistrement
-    S-->>D: Annonce publique (webhook)
     T->>B: Détecte la nouvelle candidature
     T->>D: Embed avec boutons
-    Note over D: Le staff clique :<br/>✅ Accepter · ❌ Refuser · 🎙️ Entretien · ⏳ Attente
+    Note over D: ✅ Accepter · ❌ Refuser<br/>🎙️ Entretien · ⏳ Attente
     D->>T: Décision
     T->>B: Statut + journal d'audit
     T-->>C: Message privé avec le résultat
 ```
 
-Le site peut aussi **commander le bot** (poster un embed, lancer un giveaway, publier le panneau de classes) via une file de commandes en base :
+Le site peut aussi **commander le bot** via une file en base :
 
 ```mermaid
 flowchart LR
-    A["🖥️ Page Discord<br/>(staff, sur le site)"] -->|"enfile une commande"| Q[("File<br/>BotCommand")]
-    Q -->|"lecture toutes les 12 s"| B["🤖 Bot"]
+    A["🖥️ Page Discord<br/>(staff)"] -->|"enfile"| Q[("BotCommand")]
+    Q -->|"lue toutes les 12 s"| B["🤖 Bot"]
     B -->|"poste"| D["💬 Discord"]
     B -->|"met en cache les salons"| G[("GuildChannel")]
     G -->|"alimente les menus"| A
@@ -139,22 +236,51 @@ flowchart LR
 
 | Niveau | Rôles Discord | Ce qu'il ouvre |
 |---|---|---|
-| **Public** | tout le monde | Histoire, candidature, connexion |
-| **Membre** | 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard | Tout l'espace membre |
-| **Staff** | 👑 Vanguard · 🧭 Général · 🔥 Officier | Espace staff + décisions |
-| **Édition des builds de référence (CS)** | 🛡️ Staff admin (Officier → Direction) | Les autres membres consultent |
+| **Public** | tout le monde | Accueil, Le jeu, Boutique (parcourir), candidature |
+| **Vérifié** | membre du serveur Discord | Builder, partage de build |
+| **Membre** | 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard | Jouer, Quête Guilde, demandes |
+| **Staff** | 👑 Vanguard · 🧭 Général · 🔥 Officier | Coffre, Guilde, décisions |
 
-Le gating est fait **côté serveur** (middleware → layouts → API). Les accès refusés redirigent vers `/login` avec un message clair ; pages 404 / erreur personnalisées.
+Le gating est fait **côté serveur** (middleware → layouts → API). Masquer un
+bouton ne suffit jamais : l'API revérifie.
+
+---
+
+## 🗄️ Le modèle, en gros
+
+```mermaid
+erDiagram
+    User ||--o{ Character : "possède"
+    User ||--o{ BankRequest : "demande"
+    User ||--o{ OffreVente : "propose"
+    User ||--o{ Quete : "ouvre"
+    User ||--o{ QueteContribution : "apporte"
+    BankRequest ||--o{ RequestMessage : "conversation"
+    BankRequest ||--o{ OffreVente : "reçoit"
+    BankRequest }o--o| Quete : "peut devenir"
+    Quete ||--o{ QueteContribution : "reçoit"
+    AirGuildState ||--|| Coffre : "blob JSON"
+    CompositionState ||--|| Compositions : "blob JSON"
+```
+
+Deux états vivent en **blob JSON** partagé plutôt qu'en tables : le coffre
+(`AirGuildState`) et les compositions (`CompositionState`). C'est ce qui permet
+aux applications embarquées de les manipuler telles quelles — au prix d'une
+règle stricte : on ne PUT jamais un état partiel, l'écriture remplace tout.
 
 ---
 
 ## 🛠️ Stack
 
-**Next.js 15** (App Router) · **React 18** · **TypeScript 5** · **PostgreSQL 16** + **Prisma 5** · **NextAuth** (OAuth Discord) · **discord.js 14** + **node-cron** · **Docker** (prod)
+**Next.js 15** (App Router) · **React 18** · **TypeScript 5** · **PostgreSQL 16** +
+**Prisma 5** · **NextAuth** (OAuth Discord) · **discord.js 14** + **node-cron** ·
+**Docker** (prod)
 
-**Design** — thème sombre, charte orange/noir. Polices auto-hébergées **Rubik** (titres) · **Athiti** (corps) · **Alef** (accents).
+**Design** — thème sombre, charte orange/noir. Polices auto-hébergées **Rubik**
+(titres) · **Athiti** (corps) · **Alef** (accents).
 
-Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications JavaScript embarquées dans `public/`, branchées à la base via les routes API — synchronisation entre appareils et publication à la guilde incluses.
+Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications
+JavaScript embarquées dans `public/`, branchées à la base via les routes API.
 
 ---
 
@@ -162,58 +288,29 @@ Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications J
 
 ### Icônes : une seule source, deux mondes
 
-Les tracés vivent **uniquement** dans `src/lib/vg-icon-paths.ts` (grille 24×24, `currentColor`).
-Deux consommateurs, générés depuis cette source :
-
-| Contexte | Utilisation |
-|---|---|
-| React | `<Icon name="vault" />` · `<Icon name="vault" framed tone="gold" />` (cadre RPG doré) |
-| Apps vanilla (`airbuilder.js`, `airguild.js`) | `VGI("vault", 16)` pour du SVG, ou `<i class=vgi-vault></i>` |
+Les icônes sont générées depuis `src/lib/vg-icon-paths.ts` :
 
 ```bash
-npm run icons   # après TOUT ajout d'icône : régénère public/icons/vg-icons.{js,css}
+npm run icons     # → public/icons/vg-icons.css + .js
 ```
 
-Pourquoi la forme `<i class=vgi-nom></i>` : dans les apps vanilla les libellés sont
-noyés dans des chaînes aux guillemets mêlés (simples, doubles, gabarits). Cette
-balise ne contient **aucun guillemet** (attribut HTML5 non quoté), elle est donc
-insérable partout sans casser la chaîne.
+- **React** : `<Icon name="sword" size={16} />`
+- **Apps embarquées** : `<i class=vgi-sword></i>`
 
-**Pièges à connaître** (déjà rencontrés) :
-- `agToast` rend son message en `textContent`, `agConfirm`/`agPrompt` passent par `esc()` :
-  **aucune balise** ne doit y être insérée, elle s'afficherait en clair.
-- Une icône **seule** dans son conteneur doit être en `display:block` (règle
-  `:only-child` du CSS généré), sinon la `line-height` du parent la décentre.
+Jamais d'emoji comme icône d'interface, et jamais de SVG copié à la main dans un
+composant : la source est unique.
 
-**Emojis** : bannis du site (les SVG les remplacent), **conservés dans `bot/`** —
-Discord ne sait pas afficher de SVG dans ses embeds.
+### Migrations
 
-### Images
+**Jamais `prisma migrate`** sur ce projet : `npx prisma db push` puis
+`npx prisma generate`. Après un `db push`, **redémarre le serveur de dev** —
+sinon le client Prisma en mémoire ignore les nouveaux champs et répond 500.
 
-```bash
-npm run assets  # convertit public/assets/**.png > 200 Ko en WebP (originaux conservés)
-```
+### Écrire dans un état partagé
 
-Les fonds de page pesaient 1,5–2,8 Mo **par navigation** : la conversion a ramené
-87,7 Mo à 9,2 Mo (−89,5 %). Les références dans le code pointent les `.webp`.
-Exception volontaire : `/assets/items/prestige/<slug>.png` — 1 à 3 Ko, et le
-mécanisme repose sur « déposer un PNG au bon nom pour remplacer une icône ».
-
-### Effets et animations
-
-`src/components/VgFx.tsx` fournit deux hooks posables sur n'importe quelle page
-sans toucher au markup — il suffit d'ajouter une classe :
-
-- `useReveal(ref)` → apparition au défilement des éléments `.vg-reveal`
-- `useCardFx(ref)` → halo suivant le curseur + relief 3D sur les `.fx-card`
-
-> ⚠️ Le défilement est porté par **`.vg-main`**, pas par la fenêtre (`.vg-shell`
-> est en `overflow:hidden`). Écouter `window.scrollY` ne renvoie **jamais rien** :
-> c'est ce qui rendait la parallaxe du hero inopérante. `useReveal` inclut un
-> repli, car un élément raté par l'`IntersectionObserver` resterait invisible
-> **définitivement**.
-
-Tout le décoratif est coupé sous `prefers-reduced-motion`.
+`AirGuildState` et `CompositionState` sont remplacés **en bloc**. Lire d'abord,
+écrire ensuite, et ne jamais envoyer un état qu'on n'a pas fini de charger : une
+composition entière s'est déjà perdue comme ça (protections en place depuis).
 
 ---
 
@@ -224,11 +321,11 @@ Tout le décoratif est coupé sous `prefers-reduced-motion`.
 npm install
 
 # 2) Variables d'environnement
-cp .env.example .env        # puis remplis les valeurs (voir ci-dessous)
+cp .env.example .env        # puis remplis les valeurs
 
 # 3) Base de données (PostgreSQL via Docker, port hôte 5434)
 docker compose up -d
-npm run db:push             # crée les tables
+npm run db:push
 npm run db:seed             # (optionnel) données du coffre
 
 # 4) Le site
@@ -239,7 +336,8 @@ npm run bot:deploy          # enregistre les commandes slash (une fois)
 npm run bot
 ```
 
-> 💡 **Mode dev** : `DEV_ALL_ACCESS=1` + `NEXT_PUBLIC_DEV_ALL_ACCESS=1` dans `.env` simulent un compte Direction sans connexion Discord. **Jamais en production.**
+> 💡 **Mode dev** : `DEV_ALL_ACCESS=1` + `NEXT_PUBLIC_DEV_ALL_ACCESS=1` simulent un
+> compte Direction sans connexion Discord. **Jamais en production.**
 
 ---
 
@@ -249,13 +347,13 @@ npm run bot
 |---|---|---|
 | Base | `DATABASE_URL` | Connexion PostgreSQL (partagée site + bot) |
 | Site | `NEXTAUTH_URL` · `NEXTAUTH_SECRET` | URL publique + secret de session |
-| OAuth | `DISCORD_CLIENT_ID` · `DISCORD_CLIENT_SECRET` | Application Discord (connexion) |
-| Bot | `DISCORD_BOT_TOKEN` · `DISCORD_GUILD_ID` | Token du bot + id du serveur |
-| Salons | `CHANNEL_DECISION` · `CHANNEL_CANDIDATURES` · `CHANNEL_STAFF` · `CHANNEL_EVENTS` · `DISCORD_CANDIDATURES_WEBHOOK` | Où le bot poste (décisions & candidatures : salon **forum** accepté) |
-| Rôles | `ROLE_DIRECTION` … `ROLE_GUARD` · `ROLE_CLASSE_SPADASSIN` … `ROLE_CLASSE_CHANOINE` | Ids des rangs et des 8 classes |
+| OAuth | `DISCORD_CLIENT_ID` · `DISCORD_CLIENT_SECRET` | Application Discord |
+| Bot | `DISCORD_BOT_TOKEN` · `DISCORD_GUILD_ID` | Token + id du serveur |
+| Salons | `CHANNEL_DECISION` · `CHANNEL_CANDIDATURES` · `CHANNEL_STAFF` · `CHANNEL_EVENTS` · `CHANNEL_VENTES` · `CHANNEL_EXCHANGE_CATEGORY` | Où le bot poste |
+| Rôles | `ROLE_DIRECTION` … `ROLE_GUARD` · `ROLE_CLASSE_*` | Ids des rangs et des 8 classes |
 | Dev | `DEV_ALL_ACCESS` · `NEXT_PUBLIC_DEV_ALL_ACCESS` | Bypass local uniquement |
 
-Le détail commenté est dans **`.env.example`** (dev) et **`.env.prod.example`** (prod).
+Le détail commenté est dans **`.env.example`** et **`.env.prod.example`**.
 
 ---
 
@@ -263,32 +361,37 @@ Le détail commenté est dans **`.env.example`** (dev) et **`.env.prod.example`*
 
 ```
 src/app/
-  (public)/  histoire · candidature
-  (auth)/    login
-  (guild)/   dashboard · builder (+ /builder/<membre>) · personnages
-             compositions (+ build de référence par poste) · dettes (banque)
-             donjons · worldboss · prestige · astuces (guides)
-             echanges · absences · parametres
-  (admin)/   guildviewer · coffre (AirGuild) · plan-farm · gestion-dettes
-             candidatures · gestion-worldboss · annonce · discord · events
-  api/       35 endpoints (auth, characters, builder-state, compositions,
-             coffre, airguild, debts, bank-request, events, admin…)
+  (public)/   histoire · candidature · donjons · astuces · prestige
+  (auth)/     login
+  (verified)/ builder (+ /builder/<membre> lecture seule) · build/<lien>
+  (guild)/    personnages · compositions (+ build de référence par poste)
+              quetes · worldboss · absences · dashboard
+  (shop)/     boutique · messages · demandes · dettes · sommaire
+  (admin)/    guildviewer · coffre (AirGuild) · plan-farm · candidatures
+              statistiques · journal · gestion-worldboss · discord
+              annonce · events
+  api/        51 routes (auth, characters, builder-state, compositions,
+              coffre, ventes, bank-request, messages, membres, quetes…)
 
-bot/         commandes, planificateur, salon décisions   → bot/README.md
-prisma/      schéma (30 modèles) + seed du coffre
-public/      moteurs AirBuilder & AirGuild (données + icônes)
+src/lib/      ventes · messagerie · compositions · strategie · quetes
+              specsFlyff · monnaies · coffre · xp · discord…
+bot/          commandes, planificateur, salon décisions → bot/README.md
+prisma/       schéma (39 modèles) + seed du coffre
+public/       moteurs AirBuilder & AirGuild (données + icônes)
 ```
 
-Pour comprendre l'authentification, les niveaux d'accès et le modèle de données : **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
+Pour l'authentification, les niveaux d'accès et le modèle de données :
+**[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
 
 ---
 
 ## 🌐 Déploiement
 
-La prod tourne en **Docker** sur un VPS : conteneurs `db` (PostgreSQL), `web` (site), `bot`, avec migration automatique au démarrage, derrière **Nginx Proxy Manager** (domaine + SSL).
+La prod tourne en **Docker** sur un VPS : conteneurs `db` (PostgreSQL), `web`,
+`bot`, avec application du schéma au démarrage, derrière **Nginx Proxy Manager**.
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+cd ~/vanguardmmo && git pull && docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 Le guide pas-à-pas (VPS, SSL, redirect OAuth, sauvegardes) : **[`DEPLOY.md`](DEPLOY.md)**.
@@ -297,9 +400,12 @@ Le guide pas-à-pas (VPS, SSL, redirect OAuth, sauvegardes) : **[`DEPLOY.md`](DE
 
 ## ⚠️ Sécurité
 
-- **`.env` n'est jamais versionné** (`.gitignore`) — seuls `.env.example` / `.env.prod.example` (vides) le sont.
-- **Régénérer** `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN` et `NEXTAUTH_SECRET` avant toute mise en production s'ils ont circulé en clair.
-- Tous les contrôles d'accès sont **serveur** : masquer un bouton ne suffit jamais, l'API revérifie.
+- **`.env` n'est jamais versionné** — seuls `.env.example` / `.env.prod.example` le sont.
+- **Régénérer** `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN` et `NEXTAUTH_SECRET`
+  s'ils ont circulé en clair.
+- Tous les contrôles d'accès sont **serveur**, y compris les quantités du coffre
+  et les messages privés entre détenteurs : ce qui ne doit pas être vu n'est pas
+  envoyé, pas seulement caché.
 
 ---
 

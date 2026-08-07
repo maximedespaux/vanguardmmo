@@ -24,6 +24,7 @@ type Vente = {
   demandeur: { id: string; nom: string; enLigne: boolean } | null;
   prixReference: number | null;
   dettePossible: boolean;
+  souhaitPaiement: string;
 };
 
 const fmt = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
@@ -139,6 +140,11 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           Personne ne s&apos;en occupe pour l&apos;instant.
           {v.detenteursPossibles.length > 0 && (
             <> Au coffre : <b style={{ color: "var(--text)" }}>{v.detenteursPossibles.map((d) => `${d.pseudo} (${d.quantite})`).join(", ")}</b>.</>
+          )}
+          {/* Ce que l'acheteur a annoncé pouvoir sortir : le vendeur compose son
+              tarif en le sachant, au lieu de poser la question dans le fil. */}
+          {v.souhaitPaiement !== "perins" && (
+            <> Il paie en <b style={{ color: "var(--gold)" }}>{v.souhaitPaiement === "mixte" ? "périns et Airpoints" : "Airpoints"}</b>.</>
           )}
         </div>
       )}

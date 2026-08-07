@@ -11,6 +11,7 @@ import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
+import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
 import { useCardFx } from "@/components/VgFx";
 
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null; spec?: unknown };
@@ -74,6 +75,7 @@ export function EcranEconomie() {
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
   const [panneau, setPanneau] = useState<"stock" | "surMesure">("stock");
+  const [paiement, setPaiement] = useState<Paiement>("perins");
   // Arrivée depuis l'AirBuilder (« Demander cet objet ») : la pièce attend dans
   // le panneau sur mesure, autant l'ouvrir. Sans ça, le joueur atterrissait sur
   // le catalogue du coffre et sa pièce restait invisible.
@@ -128,7 +130,7 @@ export function EcranEconomie() {
     // staff décide au cas par cas dans la conversation.
     setSending(true);
     const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember, rk), cat: it.cat }; });
-    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim() }) });
+    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s). Le staff va répondre dans la conversation.`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
@@ -240,6 +242,9 @@ export function EcranEconomie() {
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns</b></div>
             {/* Le pseudo EN JEU, juste au-dessus du bouton : c'est la dernière
                 chose qu'on vérifie avant d'envoyer, et l'objet part par courrier. */}
+            <div style={{ marginBottom: 9 }}>
+              <ChoixPaiement valeur={paiement} onChange={setPaiement} />
+            </div>
             <div style={{ marginBottom: 9 }}>
               <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
               <ChampPseudo valeur={perso} onChange={setPerso} style={{ ...inp, width: "100%" }} />

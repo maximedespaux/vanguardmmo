@@ -130,6 +130,8 @@ export type VenteVue = {
   demandeur: { id: string; nom: string; enLigne: boolean } | null;
   /** Tarif de référence AirGuild, pour situer les prix proposés. */
   prixReference: number | null;
+  /** Ce que l'acheteur a annoncé pouvoir payer : "perins" | "airpoints" | "mixte". */
+  souhaitPaiement: string;
   /** La dette n'est ouverte qu'aux membres de la guilde — c'est le DEMANDEUR
    *  qui doit l'être, puisque c'est lui qui devra rembourser. */
   dettePossible: boolean;
@@ -162,7 +164,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
   const req = await prisma.bankRequest.findUnique({
     where: { id: requestId },
     select: {
-      id: true, item: true, detenteurId: true, rendezVous: true, priceEach: true, userId: true,
+      id: true, item: true, detenteurId: true, rendezVous: true, priceEach: true, userId: true, modePaiement: true,
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -197,6 +199,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
     rendezVous: req.rendezVous ? req.rendezVous.toISOString() : null,
     demandeur: demandeur ? { id: demandeur.id, nom: demandeur.username, enLigne: estEnLigne(demandeur.lastSeenAt) } : null,
     prixReference: req.priceEach ?? null,
+    souhaitPaiement: req.modePaiement,
     dettePossible: !!demandeur && canAccessGuild(demandeur.role),
   };
 }

@@ -5,6 +5,7 @@ import { BulleObjet } from "@/components/BulleObjet";
 import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
+import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
 import {
   reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, CHOIX_VIDE, type ChoixPiece,
 } from "@/lib/specsFlyff";
@@ -79,6 +80,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   // table est celle du builder (lib/specsFlyff), pas une deuxième liste.
   const [choix, setChoix] = useState<ChoixPiece>(CHOIX_VIDE);
   const [prix, setPrix] = useState("");
+  const [paiement, setPaiement] = useState<Paiement>("perins");
   const [note, setNote] = useState("");
   /** Pseudo EN JEU : la remise se fait par courrier dans le jeu. */
   const [perso, setPerso] = useState("");
@@ -206,6 +208,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
           // Facultatif : le staff l'ajuste dans la conversation s'il est faux.
           prixEstime: piece.prix,
           characterName: perso.trim(),
+          paiement,
           reason: piece.note ? `Sur mesure — ${piece.note.slice(0, 300)}` : "Objet sur mesure",
           spec: piece.spec,
         }),
@@ -326,6 +329,9 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                     </button>
                   </div>
                 ))}
+              </div>
+              <div style={{ marginBottom: 9 }}>
+                <ChoixPaiement valeur={paiement} onChange={setPaiement} />
               </div>
               <label style={{ display: "block", marginBottom: 9 }}>
                 <span style={etiquette}>Pseudo en jeu *</span>

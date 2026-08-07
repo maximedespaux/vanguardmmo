@@ -94,6 +94,7 @@ export async function POST(req: Request) {
           characterName: perso,
           priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
           batchId,
+          modePaiement: ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins",
           reason: "Boutique · demande d'objet",
         },
       });
@@ -110,6 +111,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, count, batchId }, { status: 201 });
   }
 
+  // Comment l'acheteur souhaite payer. Ce n'est pas un montant : il ne connaît
+  // pas encore le prix, c'est le vendeur qui l'annonce. Mais le détenteur doit
+  // le savoir avant de composer son tarif.
+  const paiement = ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins";
   const kind = ["OBJET_IG", "ITEM", "PERINS"].includes(b.kind) ? b.kind : "OBJET_IG";
   const item = (b.item ?? "").toString().slice(0, 200).trim() || null;
   if (kind !== "PERINS" && !item) return NextResponse.json({ error: "Indique l'objet demandé." }, { status: 400 });
@@ -124,6 +129,7 @@ export async function POST(req: Request) {
       // arrive est du JSON écrit par un client, il ne doit jamais être stocké tel
       // quel pour être réaffiché à quelqu'un d'autre.
       spec: specDepuisJson(b.spec) ?? undefined,
+      modePaiement: paiement,
     },
   });
   await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);

@@ -139,6 +139,20 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const montant = Math.max(0, Math.floor(Number(b.offer) || 0));
     if (montant <= 0) return NextResponse.json({ error: "Montant invalide." }, { status: 400 });
 
+    // Un prix convenu ferme la négociation : le serveur refusait bien
+    // d'ACCEPTER une seconde offre, mais laissait en proposer d'autres — on
+    // continuait donc de marchander un accord déjà conclu.
+    const conclu = await prisma.requestMessage.findFirst({
+      where: { bankRequestId: id, kind: "offer", acceptedAt: { not: null } },
+      select: { amount: true },
+    });
+    if (conclu) {
+      return NextResponse.json(
+        { error: `Le prix est convenu (${(conclu.amount ?? 0).toLocaleString("fr-FR")} périns).` },
+        { status: 409 },
+      );
+    }
+
     // Une négociation avance par tours. Tant que MON offre est sur la table,
     // c'est à l'autre de répondre : sans cette règle, on empilait trois prix
     // d'affilée et personne ne savait plus lequel comptait.

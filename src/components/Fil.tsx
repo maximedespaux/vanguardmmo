@@ -125,7 +125,10 @@ export function Fil({
             // Trois états, trois lectures : en attente (doré), accepté (vert),
             // refusé ou dépassé (éteint). Avant, tout était doré et dix prix
             // semblaient également valables.
-            const refuse = !!m.refusedAt;
+            // Une offre non retenue s'éteint aussi quand un prix est convenu :
+            // sinon elle reste dorée à côté de l'accord, comme si elle attendait
+            // encore une réponse.
+            const refuse = !!m.refusedAt || (!!prixConvenu && !m.acceptedAt);
             const teinte = m.acceptedAt ? "var(--green)" : refuse ? "var(--border)" : "var(--gold)";
             return (
               <div key={m.id} style={{ padding: 11, borderRadius: 10, opacity: refuse ? .55 : 1, border: `1px solid ${teinte}`, background: m.acceptedAt ? "rgba(74,222,128,.08)" : refuse ? "transparent" : "rgba(255,181,82,.08)" }}>
@@ -137,7 +140,7 @@ export function Fil({
                   {troc && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>≈ {fmt(m.amount)} périns</span>}
                   <span style={{ fontSize: 12, color: "var(--text-muted)" }}>proposé par {m.author}</span>
                   {m.acceptedAt && <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)" }}>accepté</span>}
-                  {refuse && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>refusé</span>}
+                  {refuse && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{m.refusedAt ? "refusé" : "non retenu"}</span>}
                   {!m.acceptedAt && !refuse && aMoi && (
                     <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>en attente de sa réponse</span>
                   )}

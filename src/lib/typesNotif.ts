@@ -17,6 +17,7 @@ const FAMILLES: Record<string, FamilleNotif> = {
   QUETE: { label: "Quête", icone: "target", couleur: "#4ADE80" },
   quete: { label: "Quête", icone: "target", couleur: "#4ADE80" },
   vente: { label: "Échange", icone: "swap", couleur: "#FF8C1A" },
+  vente_enjeu: { label: "Échange", icone: "swap", couleur: "#FF8C1A" },
   bank_request: { label: "Boutique", icone: "cart", couleur: "#FFD24A" },
   demande: { label: "Requête objet", icone: "package", couleur: "#C77DFF" },
   requete: { label: "Requête objet", icone: "package", couleur: "#C77DFF" },

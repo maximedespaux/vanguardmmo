@@ -74,6 +74,10 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
   const [rdv, setRdv] = useState("");
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState("");
+  /** Ce que le serveur a répondu quand tout va bien — « c'est signalé ». */
+  const [info, setInfo] = useState("");
+  /** Dernier « je suis là » envoyé : le bouton se verrouille derrière. */
+  const [signaleLe, setSignaleLe] = useState(0);
 
   const charger = useCallback(async () => {
     try {
@@ -91,18 +95,22 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
   }, [charger]);
 
   const agir = async (action: string, corps: Record<string, unknown> = {}) => {
-    setOccupe(true); setErreur("");
+    setOccupe(true); setErreur(""); setInfo("");
+    let j: Record<string, unknown> = {};
     try {
       const r = await fetch(`/api/ventes/${id}`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, ...corps }),
       });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) setErreur(j.error ?? "Action refusée.");
-      else if (j.requestId) setV(j);
-      else charger();
+      j = await r.json().catch(() => ({}));
+      if (!r.ok) setErreur((j.error as string) ?? "Action refusée.");
+      else {
+        if (typeof j.message === "string") setInfo(j.message);
+        if (j.requestId) setV(j as unknown as Vente); else charger();
+      }
     } catch { setErreur("Réseau indisponible."); }
     setOccupe(false);
+    return j;
   };
 
   if (!v) return null;
@@ -111,6 +119,8 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
   const nomDe = (id: string | null) =>
     !id ? null : id === v.demandeur?.id ? v.demandeur.nom : v.detenteur?.membre.id === id ? v.detenteur.membre.nom : null;
 
+  /** Dix minutes de silence après un signal : c'est le même délai côté serveur. */
+  const signale = Date.now() - signaleLe < 10 * 60_000;
   const jeSuisDemandeur = !!moiId && v.demandeur?.id === moiId;
   const jeSuisDetenteur = !!v.detenteur?.moi;
   const jePeuxPrendre = !!deLaGuilde && !jeSuisDemandeur && !jeSuisDetenteur;
@@ -276,11 +286,21 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               <button style={bouton} disabled={occupe || !rdv} onClick={() => agir("rendezVous", { quand: rdv })}>
                 <Icon name="calendar" size={13} />{v.rendezVous ? "Proposer une autre heure" : "Proposer cette heure"}
               </button>
-              {/* « En ligne » se confondait avec le site : ce qui compte, c'est
-                  d'être connecté au JEU, là où l'échange se fait. */}
-              <button style={bouton} disabled={occupe} onClick={() => agir("enLigne")}>
-                <Icon name="zap" size={13} />Je suis en jeu, maintenant
-              </button>
+              {/* On convient d'abord d'une heure ; « je suis connecté » ne sert
+                  qu'ensuite, pour dire qu'on y est. Et quand c'est tout de
+                  suite, un seul geste pose l'heure ET prévient — au lieu de
+                  deux notifications pour la même intention. */}
+              {!v.rendezVous ? (
+                <button style={bouton} disabled={occupe || signale} onClick={() => agir("maintenant").then(() => setSignaleLe(Date.now()))}>
+                  <Icon name="zap" size={13} />{signale ? "C'est signalé" : "C'est maintenant"}
+                </button>
+              ) : (
+                <button style={bouton} disabled={occupe || signale}
+                  title={signale ? "Déjà signalé — laisse-lui le temps de voir" : "Prévient l'autre que tu es connecté au jeu"}
+                  onClick={() => agir("enLigne").then(() => setSignaleLe(Date.now()))}>
+                  <Icon name={signale ? "check" : "zap"} size={13} />{signale ? "Signalé" : "Je suis connecté"}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -407,6 +427,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
       )}
 
       {erreur && <div style={{ marginTop: 8, fontSize: 12, color: "var(--red)" }}>{erreur}</div>}
+      {info && <div style={{ marginTop: 8, fontSize: 12, color: "var(--green)", display: "flex", alignItems: "center", gap: 6 }}><Icon name="check" size={12} />{info}</div>}
     </div>
   );
 }

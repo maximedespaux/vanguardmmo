@@ -252,8 +252,14 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
  * MP porte donc toujours le lien vers la conversation — c'est là qu'on répond,
  * pas dans le MP.
  */
-export async function prevenir(userId: string, titre: string, corps: string, lien: string): Promise<void> {
-  await prisma.notification.create({ data: { userId, type: "vente", title: titre, body: corps, link: lien } }).catch(() => {});
+/**
+ * Prévient quelqu'un sur le site ET par MP Discord.
+ *
+ * `type` sert aussi de repère : une notification déjà posée est ce qui permet
+ * de ne pas renvoyer deux fois la même (cf. « je suis en jeu »).
+ */
+export async function prevenir(userId: string, titre: string, corps: string, lien: string, type = "vente"): Promise<void> {
+  await prisma.notification.create({ data: { userId, type, title: titre, body: corps, link: lien } }).catch(() => {});
   try {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { discordId: true } });
     if (!u?.discordId) return;

@@ -245,8 +245,8 @@ export default function CandidaturePage() {
       <div className="glass-card fx-card" style={{ padding: 32, marginTop: 20 }}>
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name="shield" size={46} /></div>
         <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres</h2>
-        <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour ou jeter un œil au dashboard.</p>
-        <a href="/dashboard" className="vg-btn" style={{ textDecoration: "none" }}>→ Aller au Dashboard</a>
+        <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour.</p>
+        <a href="/personnages" className="vg-btn" style={{ textDecoration: "none" }}>→ Mes personnages</a>
       </div>
     </div>
   );

@@ -73,11 +73,10 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
           </div>
 
           {/* Progression : le niveau vit ici, sous le nom, parce que c'est là
-              qu'on regarde qui on est. Le détail (d'où viennent les points, qui
-              mène) est sur le tableau de bord — un panneau déroulant n'est pas
-              l'endroit pour lire un classement. */}
+              qu'on regarde qui on est. Ce n'est plus un lien — il menait au
+              tableau de bord, qui a quitté la navigation. */}
           {xp && (
-            <Link href="/dashboard" onClick={() => setOpen(false)} style={{ display: "block", padding: "11px 16px", borderBottom: "1px solid var(--border)", textDecoration: "none", color: "inherit" }}>
+            <div style={{ display: "block", padding: "11px 16px", borderBottom: "1px solid var(--border)", color: "inherit" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 6 }}>
                 <span className="font-heading" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)" }}>Niveau {xp.niveau}</span>
                 <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{xp.total.toLocaleString("fr-FR")} XP</span>
@@ -86,7 +85,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
               <div style={{ height: 5, borderRadius: 3, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden" }}>
                 <div style={{ width: `${Math.min(100, Math.round((xp.dansNiveau / xp.pourNiveau) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)" }} />
               </div>
-            </Link>
+            </div>
           )}
 
           {u?.discordId && (

@@ -20,6 +20,9 @@ import { prixMixte } from "@/lib/monnaies";
  * POST → { action: "prendre" | "liberer" | "objet" | "rendezVous" | "enLigne" | "vendu" }
  */
 
+/** Deux « je suis en jeu » à moins de dix minutes disent la même chose. */
+const DELAI_EN_JEU = 10 * 60_000;
+
 async function chargerDemande(id: string) {
   return prisma.bankRequest.findUnique({
     where: { id },
@@ -258,18 +261,72 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
-    /** « Je suis en jeu, maintenant » : la présence passive ne suffit pas à faire venir l'autre. */
+    /**
+     * « Je suis en jeu, maintenant » : la présence passive ne suffit pas à faire
+     * venir l'autre.
+     *
+     * Une fois, pas dix. Rien n'empêchait de recliquer, et chaque clic partait
+     * en notification ET en MP Discord : trois « est en jeu » identiques à la
+     * suite, pour une information qui n'a pas changé. La notification déjà
+     * posée fait donc office de verrou — le geste est sans effet pendant dix
+     * minutes, et on le dit plutôt que de faire semblant.
+     */
     case "enLigne": {
       if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
       const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
       if (!autre) return NextResponse.json({ error: "Personne en face pour l'instant." }, { status: 400 });
+      const lien = `/messages?fil=req:${id}`;
+      const recent = await prisma.notification.findFirst({
+        where: { userId: autre, type: "vente_enjeu", link: lien, createdAt: { gt: new Date(Date.now() - DELAI_EN_JEU) } },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      });
+      if (recent) {
+        const minutes = Math.max(1, Math.round((Date.now() - recent.createdAt.getTime()) / 60_000));
+        return NextResponse.json({ ok: true, deja: true, message: `Déjà signalé il y a ${minutes} min — laisse-lui le temps de voir.` });
+      }
       await prevenir(
         autre,
         `${a.user.username} est en jeu`,
         `Pour ${dem.item ?? "l'objet"} — connecte-toi, c'est le moment.`,
-        `/messages?fil=req:${id}`,
+        lien,
+        "vente_enjeu",
       );
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true, message: "C'est signalé — l'autre reçoit une notification et un MP." });
+    }
+
+    /**
+     * « C'est maintenant » : le rendez-vous, c'est tout de suite.
+     *
+     * Proposer une heure puis annoncer qu'on est en jeu, c'était deux gestes et
+     * surtout DEUX notifications pour une seule intention. Ici l'heure est
+     * posée et l'autre prévenu une fois — avec le même verrou de dix minutes
+     * que « je suis connecté ».
+     */
+    case "maintenant": {
+      if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
+      if (!autre) return NextResponse.json({ error: "Personne en face pour l'instant." }, { status: 400 });
+      const lien = `/messages?fil=req:${id}`;
+      const recent = await prisma.notification.findFirst({
+        where: { userId: autre, type: "vente_enjeu", link: lien, createdAt: { gt: new Date(Date.now() - DELAI_EN_JEU) } },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      });
+      await prisma.bankRequest.update({
+        where: { id },
+        data: { rendezVous: new Date(), rendezVousPar: a.user.id, rendezVousOk: false },
+      });
+      if (!recent) {
+        await prevenir(
+          autre,
+          `${a.user.username} est en jeu, maintenant`,
+          `Pour ${dem.item ?? "l'objet"} — il propose de le faire tout de suite.`,
+          lien,
+          "vente_enjeu",
+        );
+      }
+      return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
     /**

@@ -46,13 +46,14 @@ export const ESPACES: Espace[] = [
   {
     label: "Jouer",
     icon: "sword",
-    href: "/dashboard",
+    // Le tableau de bord n'ouvre plus l'espace : il redisait les statistiques
+    // sans rien apporter, et personne n'y allait pour jouer.
+    href: "/personnages",
     acces: "guild",
     liens: [
-      { label: "Tableau de bord", href: "/dashboard", icon: "gauge", desc: "Ta progression, et l'état de la guilde d'un coup d'œil." },
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, leur classe et leur build." },
       { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Tes personnages et leur stuff, piece par piece." },
-      { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes, présences et consignes." },
+      { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes, présences et stratégie." },
       { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages et qui vient." },
       { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
     ],

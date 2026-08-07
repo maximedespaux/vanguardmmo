@@ -33,6 +33,14 @@
 /* Vider fait partie des outils du stuff — c'est la qu'on gere les stuffs — mais
    c'est le seul qui detruit : liseré rouge au survol, pas avant.            */
 .saddp.danger:hover{border-color:var(--red);color:var(--red)}
+/* Le mode d'emploi : des sections, pas un pave. */
+.sheet.aide .aidettl{font-family:Rubik,sans-serif;font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.sheet.aide .aidesub{font-size:11.5px;color:var(--mut);margin-bottom:8px}
+.sheet.aide .aidesec{display:flex;gap:11px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
+.sheet.aide .aidesec>svg{color:var(--orange);flex:none;margin-top:2px}
+.sheet.aide .aidesec h4{font-family:Rubik,sans-serif;font-weight:700;font-size:13.5px;margin:0 0 3px}
+.sheet.aide .aidesec p{font-size:12.5px;line-height:1.55;color:var(--mut);margin:0}
+.sheet.aide .aidesec b{color:var(--text)}
 /* « Acheter un objet » vit sur le pantin, seul : c'est la qu'on regarde ses
    pieces, et ca n'a rien a voir avec les reglages du build.                 */
 .dollbuy{position:absolute;top:-17px;right:14px;z-index:2;display:inline-flex;align-items:center;gap:8px;

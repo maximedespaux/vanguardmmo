@@ -1,7 +1,14 @@
 
+/* Les champs, listes et boutons natifs n'heritent PAS de la police du parent :
+   sans cette regle, chaque nouveau champ repart en Times/Arial au milieu d'une
+   interface en Rubik. On la pose une fois, pour tout le builder.            */
+.abx input,.abx select,.abx textarea,.abx button,.abx .pill,.abx .srch,.abx .itl,.abx .n,.abx .mini,.abx .mut{
+  font-family:Rubik,sans-serif}
+.abx .cc-card,.abx .cb,.abx .lbl{font-family:Rubik,sans-serif}
+
 :root{--bg:#0e0e12;--bg2:#16161d;--bg3:#1e1e27;--border:#2c2c36;--text:#e8e8ee;--mut:#9a9aa8;--orange:#FF8C1A;--gold:#FFD24A;--green:#4ADE80;--blue:#4EA8FF;--purple:#C77DFF;--red:#F87171;}
 .abx *{box-sizing:border-box}
-.abx{margin:0;background-color:#0b0b10;background-image:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(255,140,26,.16),transparent 60%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.08),transparent 46%),linear-gradient(rgba(9,9,13,.8),rgba(9,9,13,.9)),url('/assets/site/bg/sup2.webp');background-size:auto,auto,auto,cover;background-position:center;background-repeat:no-repeat;color:var(--text);font-family:Inter,sans-serif;padding-bottom:34px}
+.abx{margin:0;background-color:#0b0b10;background-image:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(255,140,26,.16),transparent 60%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.08),transparent 46%),linear-gradient(rgba(9,9,13,.8),rgba(9,9,13,.9)),url('/assets/site/bg/sup2.webp');background-size:auto,auto,auto,cover;background-position:center;background-repeat:no-repeat;color:var(--text);font-family:'Athiti',sans-serif;padding-bottom:34px}
 .wrap{max-width:1280px;margin:0 auto;padding:14px}
 .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .brand{font-family:Rubik;font-weight:700;font-size:21px;color:var(--text);letter-spacing:1.6px;text-transform:uppercase}
@@ -47,6 +54,10 @@
 .dollttl{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-family:Rubik;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:#1a1410;border:1px solid #3a2c16;color:var(--gold);padding:3px 16px;border-radius:14px}
 .colL,.colR{display:flex;flex-direction:column;gap:10px}
 .rowT,.rowB{grid-column:1 / -1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+/* Le nom de la categorie, une fois pour la rangee — plutot que repete entre
+   parentheses derriere chacune des quatre pieces.                           */
+.rowB .rowttl{flex-basis:100%;text-align:center;font-family:Rubik,sans-serif;font-weight:700;font-size:10px;
+  letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
 .petbar{grid-column:1 / -1;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px;padding-top:10px;border-top:1px dashed #34343f}
 .center{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:360px}
 .center .silwrap{width:212px;min-height:360px;background:radial-gradient(circle at 50% 28%,#23232e,#0d0d12);border:1px solid #2a2a34;border-radius:12px;display:flex;flex-direction:column;align-items:center;position:relative;box-shadow:inset 0 0 24px #000a;padding:12px 8px 8px;overflow:hidden}

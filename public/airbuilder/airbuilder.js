@@ -21,7 +21,9 @@ const SLOTS={
  // ico = nom d'icône Vanguard, utilisé seulement si SLOTIC n'a pas de visuel pour ce slot.
  weapon:{lbl:'Arme',ico:'sword'}, weapon2:{lbl:'Arme 2',ico:'sword',pool:'weapon'}, shield:{lbl:'Bouclier',ico:'shield'}, mantra:{lbl:'Mantra',ico:'scroll'}, cape:{lbl:'Cape',ico:'cape'}, masque:{lbl:'Masque',ico:'mask'},
  helmet:{lbl:'Casque',ico:'helmet'}, suit:{lbl:'Tenue',ico:'shirt-armor'}, gauntlet:{lbl:'Gants',ico:'gloves'}, boots:{lbl:'Bottes',ico:'boots'},
- fhead:{lbl:'Tête (fashion)',ico:'hat',pool:'fashion'}, ftop:{lbl:'Haut (fashion)',ico:'shirt',pool:'fashion'}, fhand:{lbl:'Gants (fashion)',ico:'gloves',pool:'fashion'}, ffoot:{lbl:'Bottes (fashion)',ico:'boots',pool:'fashion'},
+ // « Fashion » est la CATEGORIE des quatre pieces, pas leur nom : le titre de
+ // la rangee le dit une fois, chaque piece garde le sien.
+ fhead:{lbl:'Tête',ico:'hat',pool:'fashion'}, ftop:{lbl:'Haut',ico:'shirt',pool:'fashion'}, fhand:{lbl:'Gants',ico:'gloves',pool:'fashion'}, ffoot:{lbl:'Bottes',ico:'boots',pool:'fashion'},
  ramasseur:{lbl:'Ramasseur',ico:'paw'}, familier:{lbl:'Familier',ico:'paw'}, fairy:{lbl:'Fée',ico:'fairy'},
  necklace:{lbl:'Collier',ico:'necklace'}, ring1:{lbl:'Anneau 1',ico:'ring',pool:'ring'}, ring2:{lbl:'Anneau 2',ico:'ring',pool:'ring'}, earring1:{lbl:'Boucle 1',ico:'earring',pool:'earring'}, earring2:{lbl:'Boucle 2',ico:'earring',pool:'earring'}};
 const LAYOUT={top:['ring1','earring1','necklace','earring2','ring2'],right:['helmet','suit','gauntlet','boots'],bottom:['fhead','ftop','fhand','ffoot'],pets:['ramasseur','familier','fairy']};
@@ -81,7 +83,7 @@ function render(){
   document.getElementById('rowT').innerHTML=LAYOUT.top.map(slotHTML).join('');
   document.getElementById('colL').innerHTML=leftCol().map(slotHTML).join('');
   document.getElementById('colR').innerHTML=LAYOUT.right.map(slotHTML).join('');
-  document.getElementById('rowB').innerHTML=LAYOUT.bottom.map(slotHTML).join('');
+  document.getElementById('rowB').innerHTML='<div class="rowttl">Fashion</div>'+LAYOUT.bottom.map(slotHTML).join('');
   document.getElementById('petbar').innerHTML=LAYOUT.pets.map(slotHTML).join('');
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${clsFr(c.cls)} · Niv ${c.lvl} · P${c.prestige}`;
@@ -186,7 +188,7 @@ function agToast(msg,ok){var t=document.createElement('div');
   ic.style.cssText='width:15px;height:15px;flex:none;color:'+(ok===false?'#F87171':'#4ADE80');
   var tx=document.createElement('span');tx.textContent=msg;
   t.appendChild(ic);t.appendChild(tx);
-  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:99999;display:flex;align-items:center;gap:9px;background:#16161c;color:#E8E8EC;border:1px solid '+(ok===false?'#F87171':'#FF8C1A')+';border-radius:10px;padding:11px 18px;font:600 13px/1.4 Inter,system-ui,sans-serif;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.55);opacity:0;transition:opacity .25s,transform .25s';document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);}
+  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:99999;display:flex;align-items:center;gap:9px;background:#16161c;color:#E8E8EC;border:1px solid '+(ok===false?'#F87171':'#FF8C1A')+';border-radius:10px;padding:11px 18px;font:600 13px/1.4 Rubik,system-ui,sans-serif;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.55);opacity:0;transition:opacity .25s,transform .25s';document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);}
 function agPrompt(msg,def,onOk){window.__agP=onOk;document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agPClose(0)"><div class="sheet" style="max-width:400px;padding:22px"><div style="font-size:14px;margin-bottom:12px">'+esc(msg)+'</div><input id="__agPI" class="srch" style="width:100%" value="'+esc(def||'')+'"><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px"><span class="pill" onclick="agPClose(0)">Annuler</span><span class="pill" style="background:#FF8C1A;color:#0A0A0C;font-weight:700" onclick="agPClose(1)">OK</span></div></div></div>';var i=document.getElementById('__agPI');if(i){i.focus();i.select();i.onkeydown=function(e){if(e.key==="Enter")agPClose(1);else if(e.key==="Escape")agPClose(0);};}}
 function agPClose(go){var f=window.__agP;window.__agP=null;var el=document.getElementById('__agPI');var v=go&&el?el.value:null;document.getElementById('modalRoot').innerHTML='';if(go&&f)f(v);}
 function delStuff(i){if(_ro())return;if(C().stuffs.length<=1)return;agConfirm('Supprimer ce stuff ?',function(){C().stuffs.splice(i,1);if(C().curStuff>=C().stuffs.length)C().curStuff=C().stuffs.length-1;render();});}

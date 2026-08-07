@@ -248,7 +248,10 @@ export default function MessagesPage() {
                 <BandeauVente key={`v:${courante.id}`} id={courante.id} moiId={moi?.id}
                   estStaff={estStaff} deLaGuilde={deLaGuilde} onClos={charger} />
               )}
+              {/* Les coulisses n'existent que pour ceux qui vendent : jamais
+                  pour l'auteur de la demande, même s'il est de la guilde. */}
               <Fil
+                coulisses={deLaGuilde && courante.type === "requete" && !courante.jeSuisLAuteur}
                 key={courante.filId}
                 type={courante.type}
                 id={courante.id}

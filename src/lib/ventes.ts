@@ -126,8 +126,12 @@ export type VenteVue = {
   /** Ceux qui ont l'objet au coffre mais ne se sont pas encore prononcés. */
   detenteursPossibles: Detenteur[];
   rendezVous: string | null;
+  /** Qui a proposé l'heure, et si l'autre l'a confirmée. Une heure sans auteur
+   *  ne dit ni qui doit s'y plier, ni si l'autre l'a seulement vue. */
+  rendezVousPar: string | null;
+  rendezVousOk: boolean;
   /** Ce que le demandeur voit de l'autre côté, et réciproquement. */
-  demandeur: { id: string; nom: string; enLigne: boolean } | null;
+  demandeur: { id: string; nom: string; enLigne: boolean; vuLe: string | null } | null;
   /** Tarif de référence AirGuild, pour situer les prix proposés. */
   prixReference: number | null;
   /** Ce que l'acheteur a annoncé pouvoir payer : "perins" | "airpoints" | "mixte". */
@@ -164,7 +168,8 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
   const req = await prisma.bankRequest.findUnique({
     where: { id: requestId },
     select: {
-      id: true, item: true, detenteurId: true, rendezVous: true, priceEach: true, userId: true, modePaiement: true,
+      id: true, item: true, detenteurId: true, rendezVous: true, rendezVousPar: true, rendezVousOk: true,
+      priceEach: true, userId: true, modePaiement: true,
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -197,7 +202,15 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
     offres,
     detenteursPossibles,
     rendezVous: req.rendezVous ? req.rendezVous.toISOString() : null,
-    demandeur: demandeur ? { id: demandeur.id, nom: demandeur.username, enLigne: estEnLigne(demandeur.lastSeenAt) } : null,
+    rendezVousPar: req.rendezVousPar,
+    rendezVousOk: req.rendezVousOk,
+    demandeur: demandeur
+      ? {
+          id: demandeur.id, nom: demandeur.username,
+          enLigne: estEnLigne(demandeur.lastSeenAt),
+          vuLe: demandeur.lastSeenAt ? demandeur.lastSeenAt.toISOString() : null,
+        }
+      : null,
     prixReference: req.priceEach ?? null,
     souhaitPaiement: req.modePaiement,
     dettePossible: !!demandeur && canAccessGuild(demandeur.role),

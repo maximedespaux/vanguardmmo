@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiAuth } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
-import { canAccessAdmin } from "@/config/roles";
+import { canAccessAdmin, canAccessGuild } from "@/config/roles";
 
 /**
  * Fil d'une requête boutique : GET pour lire, POST pour écrire.
@@ -18,13 +18,21 @@ async function acces(id: string) {
   if ("error" in auth) return { error: auth.error };
   const req = await prisma.bankRequest.findUnique({
     where: { id },
-    select: { id: true, userId: true, username: true, item: true },
+    select: { id: true, userId: true, username: true, item: true, detenteurId: true },
   });
   if (!req) return { error: NextResponse.json({ error: "introuvable" }, { status: 404 }) };
-  if (req.userId !== auth.user.id && !canAccessAdmin(auth.user.role)) {
+  const estDetenteur = req.detenteurId === auth.user.id;
+  if (req.userId !== auth.user.id && !canAccessAdmin(auth.user.role) && !estDetenteur) {
     return { error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }) };
   }
-  return { auth, req };
+  /**
+   * Les coulisses : là où les détenteurs décident entre eux qui vend et à quel
+   * prix. Le demandeur n'y a JAMAIS accès, même s'il est de la guilde — c'est de
+   * lui qu'on parle. Le filtrage se fait ici, côté serveur : masquer à l'écran
+   * laisserait les messages voyager dans la réponse.
+   */
+  const coulisses = req.userId !== auth.user.id && (canAccessAdmin(auth.user.role) || canAccessGuild(auth.user.role));
+  return { auth, req, coulisses };
 }
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
@@ -33,7 +41,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
   if ("error" in a) return a.error;
   return NextResponse.json(
     await prisma.requestMessage.findMany({
-      where: { bankRequestId: id },
+      where: { bankRequestId: id, ...(a.coulisses ? {} : { prive: false }) },
       orderBy: { createdAt: "asc" },
       take: 300,
     })
@@ -222,14 +230,17 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const texte = String(b?.body ?? "").trim().slice(0, 2000);
   if (!texte) return NextResponse.json({ error: "Message vide." }, { status: 400 });
 
+  // Un message de coulisses n'existe que si celui qui l'écrit y a droit : le
+  // drapeau vient du client, la permission vient du serveur.
+  const prive = b?.prive === true && a.coulisses;
   await prisma.requestMessage.create({
-    data: { bankRequestId: id, userId: a.auth.user.id, author: moi, kind: "chat", body: texte },
+    data: { bankRequestId: id, userId: a.auth.user.id, author: moi, kind: "chat", body: texte, prive },
   });
 
   // Sans Discord, la notification du site est le seul signal. Le staff écrit au
   // demandeur ; le demandeur écrit au staff, qu'on prévient en bloc — on ne sait
   // pas qui traitera la demande, la prévenir nominativement serait un pari.
-  if (a.req.userId !== a.auth.user.id) {
+  if (a.req.userId !== a.auth.user.id && !prive) {
     await prisma.notification
       .create({
         data: {

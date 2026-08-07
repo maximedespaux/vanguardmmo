@@ -13,7 +13,7 @@ import { Icon } from "@/components/Icon";
  */
 export type MsgFil = {
   id: string; kind: string; author: string | null; body: string; createdAt: string;
-  amount: number | null; acceptedAt: string | null; refusedAt?: string | null; userId: string | null;
+  amount: number | null; acceptedAt: string | null; refusedAt?: string | null; userId: string | null; prive?: boolean;
   /** "perins" (défaut) ou "troc" sur une offre. */
   mode?: string | null;
 };
@@ -24,7 +24,7 @@ const fmt = (n: number | string | null) => (n == null ? "?" : Number(n).toLocale
 const PAS_RAFRAICHISSEMENT = 15000;
 
 export function Fil({
-  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", onActivite,
+  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", onActivite, coulisses = false,
 }: {
   type: "dette" | "requete";
   id: string;
@@ -35,6 +35,9 @@ export function Fil({
   hauteur?: string;
   /** Prévient le parent qu'il y a du nouveau (la boîte de réception s'en sert pour se remettre à jour). */
   onActivite?: () => void;
+  /** Droit d'ouvrir les coulisses — réservé aux détenteurs et au staff, jamais
+   *  au demandeur : c'est de lui qu'on y parle. */
+  coulisses?: boolean;
 }) {
   const url = `/api/${type === "dette" ? "debts" : "bank-request"}/${id}/fil`;
   const [fil, setFil] = useState<MsgFil[]>([]);
@@ -42,6 +45,8 @@ export function Fil({
   const [offre, setOffre] = useState("");
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
+  /** Deux discussions, une seule demande : « client » et « entre nous ». */
+  const [salon, setSalon] = useState<"client" | "prive">("client");
   const bas = useRef<HTMLDivElement>(null);
 
   const filId = `${type === "dette" ? "debt" : "req"}:${id}`;
@@ -83,9 +88,13 @@ export function Fil({
     setErreur(""); await charger(); onActivite?.(); return true;
   };
 
-  const envoyerTexte = () => { if (msg.trim()) envoyer({ body: msg }).then((ok) => ok && setMsg("")); };
+  // Le message part dans le salon ouvert : le serveur revérifie le droit, il ne
+  // se fie pas au drapeau.
+  const envoyerTexte = () => { if (msg.trim()) envoyer({ body: msg, prive: salon === "prive" }).then((ok) => ok && setMsg("")); };
 
   /** Dernière offre encore ouverte : c'est la seule sur laquelle on peut agir. */
+  const visibles = fil.filter((m) => (salon === "prive" ? m.prive : !m.prive));
+  const nbPrives = fil.filter((m) => m.prive).length;
   const offreVive = [...fil].reverse().find((m) => m.kind === "offer" && !m.acceptedAt && !m.refusedAt);
   const prixConvenu = fil.find((m) => m.kind === "offer" && m.acceptedAt);
 
@@ -104,12 +113,38 @@ export function Fil({
         </div>
       )}
 
+      {/* Deux discussions pour une même demande : celle qu'on tient AVEC le
+          client, et celle qu'on tient ENTRE vendeurs pour savoir qui vend et à
+          quel prix. La seconde n'existe que pour ceux qui y ont droit — et le
+          serveur ne l'envoie même pas aux autres. */}
+      {coulisses && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+          {([["client", "Avec le client"], ["prive", `Entre nous${nbPrives ? ` (${nbPrives})` : ""}`]] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setSalon(k)}
+              style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                border: `1px solid ${salon === k ? "var(--orange)" : "var(--border)"}`,
+                background: salon === k ? "rgba(255,140,26,.14)" : "var(--bg-3)",
+                color: salon === k ? "var(--orange)" : "var(--text-muted)" }}>
+              {l}
+            </button>
+          ))}
+        </div>
+      )}
+      {salon === "prive" && (
+        <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, padding: "7px 10px", borderRadius: 8, background: "rgba(255,140,26,.07)", border: "1px solid rgba(255,140,26,.25)" }}>
+          <Icon name="lock" size={12} style={{ verticalAlign: "-1px", marginRight: 5, color: "var(--orange)" }} />
+          Entre détenteurs et staff. <b>Le demandeur ne voit rien de ce qui s&apos;écrit ici.</b>
+        </div>
+      )}
+
       <div style={{ maxHeight: hauteur, overflow: "auto", display: "grid", gap: 10, marginBottom: 13 }}>
         {!pret && <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Chargement…</div>}
-        {pret && fil.length === 0 && !erreur && (
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Aucun message. Écris pour ouvrir la discussion.</div>
+        {pret && visibles.length === 0 && !erreur && (
+          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
+            {salon === "prive" ? "Rien entre vous pour l'instant. Écris ici pour vous mettre d'accord." : "Aucun message. Écris pour ouvrir la discussion."}
+          </div>
         )}
-        {fil.map((m) => {
+        {visibles.map((m) => {
           if (m.kind === "system") {
             // Un fait enregistré, pas une parole : liseré et aucun auteur, pour
             // qu'on ne le prenne pas pour l'avis de quelqu'un.
@@ -178,7 +213,7 @@ export function Fil({
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <input value={msg} onChange={(e) => setMsg(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerTexte(); } }}
-          placeholder="Écrire un message…"
+          placeholder={salon === "prive" ? "Message entre détenteurs…" : "Écrire un message…"}
           style={{ flex: 1, minWidth: 0, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "11px 13px", color: "var(--text)", fontSize: 14, fontFamily: "inherit" }} />
         <button className="vg-btn" onClick={envoyerTexte}>Envoyer</button>
       </div>

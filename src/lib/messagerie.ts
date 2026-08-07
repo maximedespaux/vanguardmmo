@@ -40,6 +40,9 @@ export type Conversation = {
   /** Couleur de l'état : "attente" | "encours" | "fini" | "stop". */
   ton: "attente" | "encours" | "fini" | "stop";
   avec: string;
+  /** C'est MA demande. Les coulisses entre vendeurs ne s'ouvrent jamais à
+   *  l'auteur : c'est de lui qu'on y parle. */
+  jeSuisLAuteur: boolean;
   enLigne: boolean;
   /** "perins" (règle par défaut) ou "troc" — visible sans ouvrir, comme le prix. */
   paiement: "perins" | "troc";
@@ -141,6 +144,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       etat: etat.l,
       ton: etat.t,
       avec: jeSuisDemandeur ? "Staff Vanguard" : r.username,
+      jeSuisLAuteur: jeSuisDemandeur,
       // Le staff est un collectif, pas une personne : afficher « en ligne » pour
       // lui laisserait croire qu'un officier précis est devant l'écran.
       enLigne: false,

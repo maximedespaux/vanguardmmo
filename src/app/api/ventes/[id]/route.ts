@@ -146,7 +146,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
       const quand = b?.quand ? new Date(String(b.quand)) : null;
       if (quand && Number.isNaN(quand.getTime())) return NextResponse.json({ error: "Date invalide." }, { status: 400 });
-      await prisma.bankRequest.update({ where: { id }, data: { rendezVous: quand } });
+      await prisma.bankRequest.update({
+        where: { id },
+        data: { rendezVous: quand, rendezVousPar: quand ? a.user.id : null, rendezVousOk: false },
+      });
       const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
       if (autre && quand) {
         await prevenir(
@@ -159,15 +162,35 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
-    /** « Je suis là, maintenant » : la présence passive ne suffit pas à faire venir l'autre. */
+    /** « Ça me va » : sans confirmation, une heure n'est qu'une proposition. */
+    case "rdvOk": {
+      if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      const d = await prisma.bankRequest.findUnique({ where: { id }, select: { rendezVous: true, rendezVousPar: true } });
+      if (!d?.rendezVous) return NextResponse.json({ error: "Aucune heure proposée." }, { status: 400 });
+      if (d.rendezVousPar === a.user.id) {
+        return NextResponse.json({ error: "C'est toi qui l'as proposée — attends sa réponse." }, { status: 409 });
+      }
+      await prisma.bankRequest.update({ where: { id }, data: { rendezVousOk: true } });
+      if (d.rendezVousPar) {
+        await prevenir(
+          d.rendezVousPar,
+          `${a.user.username} confirme le rendez-vous`,
+          `${dem.item ?? "Objet"} — ${d.rendezVous.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}.`,
+          `/messages?fil=req:${id}`,
+        );
+      }
+      return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
+    }
+
+    /** « Je suis en jeu, maintenant » : la présence passive ne suffit pas à faire venir l'autre. */
     case "enLigne": {
       if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
       const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
       if (!autre) return NextResponse.json({ error: "Personne en face pour l'instant." }, { status: 400 });
       await prevenir(
         autre,
-        `${a.user.username} est en ligne`,
-        `Pour ${dem.item ?? "l'objet"} — c'est le moment de vous retrouver en jeu.`,
+        `${a.user.username} est en jeu`,
+        `Pour ${dem.item ?? "l'objet"} — connecte-toi, c'est le moment.`,
         `/messages?fil=req:${id}`,
       );
       return NextResponse.json({ ok: true });

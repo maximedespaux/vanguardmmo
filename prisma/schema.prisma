@@ -673,8 +673,13 @@ model BankRequest {
   /// dormait — « le staff » n'est pas quelqu'un.
   detenteurId       String?
   /// Rendez-vous convenu en jeu. Deux joueurs qui ne se croisent jamais ne
-  /// concluent rien, et « je suis en ligne » ne se lit qu'au moment où c'est vrai.
+  /// concluent rien, et « je suis en jeu » ne se lit qu'au moment où c'est vrai.
   rendezVous        DateTime?
+  /// Qui l'a proposé (User.id) et si l'autre a dit oui. Une heure affichée sans
+  /// son auteur ne veut rien dire : on ne sait ni qui doit s'y plier, ni si
+  /// l'autre l'a seulement vue.
+  rendezVousPar     String?
+  rendezVousOk      Boolean           @default(false)
   /// Message du salon des ventes, tenu à jour par le bot : c'est lui qui dit
   /// publiquement qui a pris la commande.
   venteMessageId    String?
@@ -800,6 +805,11 @@ model RequestMessage {
   /// Offre acceptée : fige l'accord. Une offre acceptée ne se renégocie pas,
   /// c'est ce qui donne sa valeur au « oui ».
   acceptedAt    DateTime?
+  /// Message des coulisses : visible des détenteurs et du staff, JAMAIS du
+  /// demandeur. Se mettre d'accord sur qui vend et à quel prix est une
+  /// discussion entre vendeurs — la tenir devant l'acheteur la fausse, et la
+  /// tenir ailleurs (Discord) la sort du dossier.
+  prive         Boolean   @default(false)
   /// Offre refusée — explicitement, ou parce que l'autre a contre-proposé.
   /// Sans ce champ, dix prix restaient « en attente » côte à côte et on ne
   /// savait plus lequel était sur la table.

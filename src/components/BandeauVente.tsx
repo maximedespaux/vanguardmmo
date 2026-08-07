@@ -21,13 +21,25 @@ type Vente = {
   offres: Offre[];
   detenteursPossibles: { pseudo: string; quantite: number }[];
   rendezVous: string | null;
-  demandeur: { id: string; nom: string; enLigne: boolean } | null;
+  rendezVousPar: string | null;
+  rendezVousOk: boolean;
+  demandeur: { id: string; nom: string; enLigne: boolean; vuLe: string | null } | null;
   prixReference: number | null;
   dettePossible: boolean;
   souhaitPaiement: string;
 };
 
 const fmt = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
+/** « en jeu » ou « vu il y a 12 min » : une pastille verte ne dit pas depuis quand. */
+const presence = (enLigne: boolean, vuLe: string | null) => {
+  if (enLigne) return "· en ligne";
+  if (!vuLe) return "· jamais vu";
+  const min = Math.round((Date.now() - new Date(vuLe).getTime()) / 60_000);
+  if (min < 60) return `· vu il y a ${min} min`;
+  const h = Math.round(min / 60);
+  return h < 48 ? `· vu il y a ${h} h` : `· vu il y a ${Math.round(h / 24)} j`;
+};
+
 const quand = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString("fr-FR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
 
@@ -90,6 +102,10 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
 
   if (!v) return null;
 
+  /** Le nom derrière un identifiant, pour dire QUI a proposé l'heure. */
+  const nomDe = (id: string | null) =>
+    !id ? null : id === v.demandeur?.id ? v.demandeur.nom : v.detenteur?.membre.id === id ? v.detenteur.membre.nom : null;
+
   const jeSuisDemandeur = !!moiId && v.demandeur?.id === moiId;
   const jeSuisDetenteur = !!v.detenteur?.moi;
   const jePeuxPrendre = !!deLaGuilde && !jeSuisDemandeur && !jeSuisDetenteur;
@@ -149,27 +165,70 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
         </div>
       )}
 
-      {/* ── Le rendez-vous, ou la présence ── */}
+      {/* ── Qui, et quand ──
+          « ibeats · 13:41 » ne disait ni qui proposait l'heure, ni à qui elle
+          s'adressait. On nomme donc les deux rôles, on dit depuis quand chacun
+          n'a pas été vu, et le rendez-vous porte le nom de celui qui l'a
+          proposé — l'autre confirme. */}
       {(jeSuisDemandeur || jeSuisDetenteur || estStaff) && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10, fontSize: 12.5 }}>
-          {v.demandeur && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--text-muted)" }}>
-              <Pastille enLigne={v.demandeur.enLigne} />{v.demandeur.nom}
-            </span>
-          )}
-          {v.rendezVous ? (
-            <span style={{ color: "var(--gold)", fontWeight: 600 }}><Icon name="clock" size={13} /> {quand(v.rendezVous)}</span>
-          ) : null}
+        <div style={{ display: "grid", gap: 8, marginBottom: 10, paddingTop: 9, borderTop: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5 }}>
+            {v.demandeur && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Pastille enLigne={v.demandeur.enLigne} />
+                <span style={{ color: "var(--text-muted)" }}>Client :</span>
+                <b>{v.demandeur.nom}</b>
+                <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>{presence(v.demandeur.enLigne, v.demandeur.vuLe)}</span>
+              </span>
+            )}
+            {v.detenteur && (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <Pastille enLigne={v.detenteur.membre.enLigne} />
+                <span style={{ color: "var(--text-muted)" }}>Vendeur :</span>
+                <b>{v.detenteur.membre.nom}</b>
+                <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>{presence(v.detenteur.membre.enLigne, v.detenteur.membre.vuLe)}</span>
+              </span>
+            )}
+          </div>
+
           {v.detenteur && (
-            <>
-              <input type="datetime-local" value={rdv} onChange={(e) => setRdv(e.target.value)} style={{ ...champ, padding: "6px 9px", fontSize: 12 }} aria-label="Heure du rendez-vous" />
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12.5 }}>
+              {v.rendezVous ? (
+                <>
+                  <span style={{ color: v.rendezVousOk ? "var(--green)" : "var(--gold)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Icon name="clock" size={13} />
+                    {quand(v.rendezVous)}
+                  </span>
+                  <span style={{ color: "var(--text-muted)" }}>
+                    proposé par <b style={{ color: "var(--text)" }}>{nomDe(v.rendezVousPar) ?? "l'autre"}</b>
+                    {v.rendezVousOk ? " · confirmé" : " · en attente de confirmation"}
+                  </span>
+                  {!v.rendezVousOk && v.rendezVousPar !== moiId && (
+                    <button className="vg-btn" style={{ padding: "6px 12px", fontSize: 12, opacity: occupe ? .6 : 1 }} disabled={occupe}
+                      onClick={() => agir("rdvOk")}>
+                      <Icon name="check" size={13} />Ça me va
+                    </button>
+                  )}
+                </>
+              ) : (
+                <span style={{ color: "var(--text-muted)" }}>Aucune heure convenue.</span>
+              )}
+            </div>
+          )}
+
+          {v.detenteur && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <input type="datetime-local" value={rdv} onChange={(e) => setRdv(e.target.value)}
+                style={{ ...champ, padding: "6px 9px", fontSize: 12 }} aria-label="Heure du rendez-vous" />
               <button style={bouton} disabled={occupe || !rdv} onClick={() => agir("rendezVous", { quand: rdv })}>
-                <Icon name="calendar" size={13} />{v.rendezVous ? "Changer l'heure" : "Fixer un rendez-vous"}
+                <Icon name="calendar" size={13} />{v.rendezVous ? "Proposer une autre heure" : "Proposer cette heure"}
               </button>
+              {/* « En ligne » se confondait avec le site : ce qui compte, c'est
+                  d'être connecté au JEU, là où l'échange se fait. */}
               <button style={bouton} disabled={occupe} onClick={() => agir("enLigne")}>
-                <Icon name="zap" size={13} />Je suis en ligne
+                <Icon name="zap" size={13} />Je suis en jeu, maintenant
               </button>
-            </>
+            </div>
           )}
         </div>
       )}

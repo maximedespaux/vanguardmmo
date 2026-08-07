@@ -194,6 +194,45 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return NextResponse.json({ ok: true, stock });
     }
 
+    /**
+     * Clore la demande — réglée ailleurs, ou abandonnée.
+     *
+     * « Échange fait » appartient au détenteur et sort l'objet de SON coffre.
+     * Clore est autre chose : le demandeur n'a plus besoin de l'objet, ou il
+     * l'a eu autrement. Sans ce geste, une demande morte restait « en attente »
+     * pour toujours et polluait la liste de chacun.
+     */
+    case "clore": {
+      if (!estDemandeur && !estStaff) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      const abandon = b?.issue !== "fait";
+      await prisma.bankRequest.update({
+        where: { id },
+        data: { status: abandon ? "ANNULE" : "REMIS", detenteurId: null, rendezVous: null },
+      });
+      await prisma.offreVente.updateMany({ where: { requestId: id, statut: "retenue" }, data: { statut: "retiree" } });
+      await prisma.requestMessage.create({
+        data: {
+          bankRequestId: id, kind: "system",
+          body: abandon
+            ? `${a.user.username} a abandonné cette demande.`
+            : `${a.user.username} a clos cette demande : c'est réglé.`,
+        },
+      });
+      // Celui qui s'en occupait doit l'apprendre : il gardait l'objet de côté.
+      if (dem.detenteurId && dem.detenteurId !== a.user.id) {
+        await prisma.notification.create({
+          data: {
+            userId: dem.detenteurId, type: "vente",
+            title: abandon ? "Demande abandonnée" : "Demande close",
+            body: `${dem.item ?? "L'objet"} — tu peux le remettre en vente.`,
+            link: `/messages?fil=req:${id}`,
+          },
+        });
+      }
+      void majAnnonceVente(id);
+      return NextResponse.json({ ok: true });
+    }
+
     default:
       return NextResponse.json({ error: "Action inconnue." }, { status: 400 });
   }

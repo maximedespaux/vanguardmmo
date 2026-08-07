@@ -42,19 +42,24 @@ function quandCourt(iso: string) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
 
-type Filtre = "tous" | "nonlus";
+/**
+ * Trois façons de chercher, parce qu'on ne cherche pas la même chose :
+ * « à faire » = ce qui attend une action ; « non lus » = ce qui a bougé ;
+ * « clos » = l'archive, qu'on ne veut justement PAS voir le reste du temps.
+ */
+type Filtre = "afaire" | "tous" | "nonlus" | "clos";
 
 export default function MessagesPage() {
   const { data: session } = useSession();
   const moi = session?.user as { id?: string; role?: Role } | undefined;
-  const estStaff = moi?.role ? canAccessAdmin(moi.role) : false;
+  const estStaff = (moi?.role ? canAccessAdmin(moi.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
   // Fournir un objet suppose d'en avoir au coffre : c'est réservé à la guilde.
   const deLaGuilde = (moi?.role ? canAccessGuild(moi.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
 
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [pret, setPret] = useState(false);
   const [ouvert, setOuvert] = useState<string | null>(null);
-  const [filtre, setFiltre] = useState<Filtre>("tous");
+  const [filtre, setFiltre] = useState<Filtre>("afaire");
   const [q, setQ] = useState("");
 
   // Un échec ne doit PAS se lire « aucune conversation » : c'est exactement ce
@@ -88,6 +93,11 @@ export default function MessagesPage() {
   const liste = useMemo(() => {
     const texte = q.trim().toLowerCase();
     return convs.filter((c) => {
+      // Une conversation close n'est plus « à faire » : elle encombrait la
+      // liste alors que l'objet était remis ou la demande abandonnée.
+      const close = c.ton === "fini" || c.ton === "stop";
+      if (filtre === "afaire" && close) return false;
+      if (filtre === "clos" && !close) return false;
       if (filtre === "nonlus" && c.nonLus === 0) return false;
       if (!texte) return true;
       return (c.titre + " " + c.avec + " " + (c.dernier?.corps ?? "")).toLowerCase().includes(texte);
@@ -96,6 +106,8 @@ export default function MessagesPage() {
 
   const courante = convs.find((c) => c.filId === ouvert) ?? null;
   const totalNonLus = convs.reduce((s, c) => s + (c.nonLus > 0 ? 1 : 0), 0);
+  // Ce qui reste sur le feu : ni remis, ni abandonné.
+  const nbAFaire = convs.filter((c) => c.ton !== "fini" && c.ton !== "stop").length;
 
   const ouvrir = (c: Conversation) => {
     setOuvert(c.filId);
@@ -121,7 +133,7 @@ export default function MessagesPage() {
             style={{ width: "100%", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13, marginBottom: 9 }}
           />
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            {([["tous", "Tout"], ["nonlus", `Non lus${totalNonLus ? ` (${totalNonLus})` : ""}`]] as const).map(([k, l]) => (
+            {([["afaire", `À faire${nbAFaire ? ` (${nbAFaire})` : ""}`], ["tous", "Tout"], ["nonlus", `Non lus${totalNonLus ? ` (${totalNonLus})` : ""}`], ["clos", "Clos"]] as const).map(([k, l]) => (
               <button key={k} onClick={() => setFiltre(k)}
                 style={{ padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
                 {l}
@@ -234,7 +246,7 @@ export default function MessagesPage() {
                   redéfinit ni l'envoi, ni la négociation, ni le marquage « lu ». */}
               {courante.type === "requete" && (
                 <BandeauVente key={`v:${courante.id}`} id={courante.id} moiId={moi?.id}
-                  estStaff={estStaff} deLaGuilde={deLaGuilde} />
+                  estStaff={estStaff} deLaGuilde={deLaGuilde} onClos={charger} />
               )}
               <Fil
                 key={courante.filId}

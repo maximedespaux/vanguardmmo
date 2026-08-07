@@ -35,12 +35,14 @@ function Pastille({ enLigne }: { enLigne: boolean }) {
   );
 }
 
-export function BandeauVente({ id, moiId, estStaff, deLaGuilde }: {
+export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
   id: string;
   moiId?: string;
   estStaff?: boolean;
   /** Seuls les membres de la guilde peuvent fournir : le coffre est le leur. */
   deLaGuilde?: boolean;
+  /** Prévient la liste : une demande close change de section. */
+  onClos?: () => void;
 }) {
   const [v, setV] = useState<Vente | null>(null);
   const [prix, setPrix] = useState("");
@@ -174,6 +176,21 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde }: {
           <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe} onClick={() => agir("liberer")}>
             Libérer la demande
           </button>
+        )}
+        {/* Clore appartient à celui qui a demandé : lui seul sait s'il en a
+            encore besoin. Une demande morte restait « en attente » pour
+            toujours et encombrait la liste de tout le monde. */}
+        {(jeSuisDemandeur || estStaff) && (
+          <span style={{ marginLeft: "auto", display: "flex", gap: 7 }}>
+            <button style={bouton} disabled={occupe}
+              onClick={() => { if (confirm("Clore cette demande comme réglée ?")) agir("clore", { issue: "fait" }).then(() => onClos?.()); }}>
+              <Icon name="check" size={13} />C&apos;est réglé
+            </button>
+            <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe}
+              onClick={() => { if (confirm("Abandonner cette demande ?")) agir("clore", { issue: "abandon" }).then(() => onClos?.()); }}>
+              Abandonner
+            </button>
+          </span>
         )}
       </div>
 

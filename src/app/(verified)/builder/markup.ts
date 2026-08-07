@@ -11,8 +11,6 @@ export const BUILDER_MARKUP = `<div class="wrap">
        gestes qu'on cherche avant de faire défiler, pas après. -->
   <div class="actions actions-top">
     <button class="btn ghost" onclick="vgMesPersos()">${ico("users", { size: 16 })} Mes personnages</button>
-    <button class="btn ghost" onclick="resetChar()">${ico("rotate-ccw", { size: 16 })} Vider ce stuff</button>
-    <button class="btn ghost" onclick="vgAcheterPiece()">${ico("cart", { size: 16 })} Acheter un objet</button>
     <button class="btn" onclick="vgPartager()">${ico("link", { size: 16 })} Partager le build</button>
     <button class="btn ghost btn-aide" onclick="vgSaveHelp()" title="Comment marchent la sauvegarde, les versions et la publication ?" aria-label="Comment ça marche ?">${ico("info", { size: 17 })}</button>
   </div>
@@ -26,6 +24,8 @@ export const BUILDER_MARKUP = `<div class="wrap">
 
   <div class="doll">
     <div class="dollttl" id="dollttl">Équipement</div>
+    <!-- Acheter part des pièces qu'on a sous les yeux, pas d'un menu. -->
+    <button type="button" class="dollbuy" onclick="vgAcheterPiece()">${ico("cart", { size: 14 })} Acheter un objet</button>
     <div class="rowT" id="rowT"></div>
     <div class="colL" id="colL"></div>
     <div class="center"><div class="silwrap"><div class="silhead"><div class="cn" id="cn"></div><div class="cc" id="cc"></div></div><img class="charimg" id="charimg" alt=""></div></div>

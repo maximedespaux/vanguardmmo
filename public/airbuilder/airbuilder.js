@@ -7,6 +7,10 @@ const {ITEMS,CARNETS,GEMU,GEMC,IC,FAM,RANKS,LVLMAX,TYPES,MAXB,SLOTIC,MECH,ELEMEN
 const esc=s=>(s||'').toString().replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const imgT=(f,s)=>f&&IC[f]?`<img src="${IC[f]}" width="${s}" height="${s}">`:'';
 const CLASSES=['Templier','Spadassin','Arcaniste','Envouteur','Arbaletrier','Sylphide','Primat','Chanoine'];
+/** Les clés restent sans accent (elles sont écrites dans les sauvegardes) ;
+ *  l'affichage, lui, s'écrit correctement. */
+const CLASSE_FR={Envouteur:'Envoûteur',Arbaletrier:'Arbalétrier'};
+const clsFr=function(c){return CLASSE_FR[c]||c||'';};
 const CKEY={Templier:'templier',Spadassin:'spada',Arcaniste:'arcaniste',Envouteur:'envouteur',Arbaletrier:'arbaletrier',Sylphide:'sylphide',Primat:'primat',Chanoine:'chanoine'};
 // Repli si le PNG de classe manque : nom d'icône Vanguard (cf. public/icons/vg-icons.css).
 const SIL={Templier:'shield',Spadassin:'sword-cross',Arcaniste:'orb',Envouteur:'spiral',Arbaletrier:'bow',Sylphide:'target',Primat:'sparkles',Chanoine:'fist'};
@@ -72,7 +76,7 @@ function render(){
    <div class="f"><label>Sexe</label><select onchange="C().sex=this.value;render()">${['G','F'].map(s=>`<option ${s===c.sex?'selected':''}>${s}</option>`).join('')}</select></div>
    <div class="f"><label>Niveau</label><span style="display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg3)"><button type="button" onclick="setLvl(C().lvl-1)" style="width:26px;height:32px;border:none;background:var(--bg2);color:var(--mut);cursor:pointer;font-size:15px">−</button><input type="text" inputmode="numeric" value="${c.lvl}" onchange="setLvl(this.value)" style="width:48px;height:32px;border:none;background:transparent;color:var(--text);text-align:center;font-size:14px;outline:none"><button type="button" onclick="setLvl(C().lvl+1)" style="width:26px;height:32px;border:none;background:var(--bg2);color:var(--mut);cursor:pointer;font-size:15px"><i class=vgi-plus></i></button></span></div>
    <div class="f"><label>Prestige</label><select onchange="C().prestige=+this.value;render()">${[0,1,2,3,4,5,6,7,8,9,10].map(p=>`<option ${p===c.prestige?'selected':''}>${p}</option>`).join('')}</select></div>`;
-  document.getElementById('stuffbar').innerHTML='<span class="slabel">Stuffs :</span>'+(C().stuffs||[]).map((s,i)=>`<div class="stab ${i===C().curStuff?'on':''}" onclick="switchStuff(${i})" ondblclick="event.stopPropagation();renStuff(${i})" title="Clic : ouvrir · Double-clic : renommer">${esc(s.name)}${(C().stuffs.length>1)?` <span class="x" onclick="event.stopPropagation();delStuff(${i})"><i class=vgi-x></i></span>`:''}</div>`).join('')+'<div class="saddp" onclick="addStuff()">+ Stuff</div>'+((C().stuffs||[]).length?'<div class="saddp" onclick="copyStuff()" title="Crée une copie complète du stuff actuel (mêmes items)"><i class=vgi-clipboard></i> Dupliquer</div>':'')+((C().stuffs||[]).length?'<div class="saddp" onclick="copySheet()" title="Copier certains items (avec leurs modifications) pour les coller sur un autre stuff"><i class=vgi-layers></i> Copier items</div>':'')+((clipGet()&&clipGet().length)?'<div class="saddp" onclick="pasteClip()" title="Coller ici les items copiés" style="border-color:#ff8c1a;color:#ff8c1a;font-weight:700"><i class=vgi-download></i> Coller ('+clipGet().length+')</div>':'');
+  document.getElementById('stuffbar').innerHTML='<span class="slabel">Stuffs :</span>'+(C().stuffs||[]).map((s,i)=>`<div class="stab ${i===C().curStuff?'on':''}" onclick="switchStuff(${i})" ondblclick="event.stopPropagation();renStuff(${i})" title="Clic : ouvrir · Double-clic : renommer">${esc(s.name)}${(C().stuffs.length>1)?` <span class="x" onclick="event.stopPropagation();delStuff(${i})"><i class=vgi-x></i></span>`:''}</div>`).join('')+'<div class="saddp" onclick="addStuff()">+ Stuff</div>'+((C().stuffs||[]).length?'<div class="saddp" onclick="copyStuff()" title="Crée une copie complète du stuff actuel (mêmes items)"><i class=vgi-clipboard></i> Dupliquer</div>':'')+((C().stuffs||[]).length?'<div class="saddp" onclick="copySheet()" title="Copier certains items (avec leurs modifications) pour les coller sur un autre stuff"><i class=vgi-layers></i> Copier items</div>':'')+((clipGet()&&clipGet().length)?'<div class="saddp" onclick="pasteClip()" title="Coller ici les items copiés" style="border-color:#ff8c1a;color:#ff8c1a;font-weight:700"><i class=vgi-download></i> Coller ('+clipGet().length+')</div>':'')+'<div class="saddp danger" onclick="resetChar()" title="Retirer toutes les pièces de ce stuff (les carnets sont conservés)"><i class=vgi-rotate-ccw></i> Vider</div>';
   try{
   document.getElementById('rowT').innerHTML=LAYOUT.top.map(slotHTML).join('');
   document.getElementById('colL').innerHTML=leftCol().map(slotHTML).join('');
@@ -80,7 +84,7 @@ function render(){
   document.getElementById('rowB').innerHTML=LAYOUT.bottom.map(slotHTML).join('');
   document.getElementById('petbar').innerHTML=LAYOUT.pets.map(slotHTML).join('');
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
-  document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${c.cls} · Niv ${c.lvl} · P${c.prestige}`;
+  document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${clsFr(c.cls)} · Niv ${c.lvl} · P${c.prestige}`;
   renderFamNote();renderCarnets();
   }catch(err){console.error('[AirBuilder] rendu partiel ignoré (donnée corrompue)',err);}
   save();vgDD();

@@ -8,7 +8,16 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const sq=s=>String(s).replace(/'/g,"\\'");
 const fmt=n=>(+n||0).toLocaleString('fr-FR');
-function img(ic){return ic?(ICONS[ic]?`<img src="${ICONS[ic]}" alt="">`:(ic.charAt(0)==='/'?`<img src="${ic}" alt="">`:'')):'';}
+/* Une image d'icone peut venir de trois endroits : le sprite Flyff (cle des
+   donnees), un fichier du site (/assets/...), ou une image importee a la main
+   (data:) — voire un lien externe, que la fenetre « Icone » propose depuis
+   toujours sans jamais l'afficher. Les trois derniers finissaient a vide. */
+function img(ic){
+  if(!ic)return '';
+  if(ICONS[ic])return '<img src="'+esc(ICONS[ic])+'" alt="">';
+  if(ic.charAt(0)==='/'||ic.indexOf('data:image')===0||/^https?:\/\//.test(ic))return '<img src="'+esc(ic)+'" alt="">';
+  return '';
+}
 function slotTxt(q){if(typeof q!=='number')return'';const s=q/SLOT;if(s>=1)return(Number.isInteger(s)?s:s.toFixed(1))+' slot'+(s>=2?'s':'');return Math.round(s*100)/100+' slot';}
 const LOGOIDX={};Object.keys(LOGOS).forEach((k,i)=>LOGOIDX[k]=i);
 const ICOIDX={};Object.keys(ICONS).forEach((k,i)=>ICOIDX[k]=i);
@@ -24,8 +33,8 @@ let S=load();
 function canEdit(){return ['VANGUARD','DIRECTION'].indexOf(window.__agRole||'')>=0;} // édition du catalogue réservée Vanguard/Direction
 // Dépôt : chaque staff ne modifie que SON coffre (repéré par pseudo Discord) ; Vanguard/Direction peuvent corriger partout.
 function canDeposit(){var me=(window.__agUser||'').toLowerCase().trim();return canEdit()||(S.cur!=='__total__'&&!!me&&String(S.cur).toLowerCase().trim()===me);}
-function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
-  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},shopMember:'',tab:'bank'};}
+function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};r.iconLib=r.iconLib||[];if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
+  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},iconLib:[],shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
 function vgDD(){
@@ -435,7 +444,31 @@ function craftIcon(c){return (S.craftAssets||{})[c.key]||c.ic;}
 function findCraft(key){return allCrafts().find(function(c){return c.key===key;});}
 // échappe une valeur destinée à un argument de chaîne JS DANS un attribut onclick="" (guillemets doubles) : anti-casse + anti-XSS.
 function sqa(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function galleryRows(fnName,extra){var out='';['Badges','Mantras','Masques'].forEach(function(cat){out+='<div class="sec-h" style="margin:8px 0 4px;font-size:11px">'+cat+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+CRAFT_ASSETS[cat].map(function(p){return '<span class="logo" style="width:40px;height:40px;cursor:pointer;border:2px solid transparent;border-radius:8px;padding:2px" title="'+esc(p.split('/').pop())+'" onclick="'+fnName+'('+extra+',\''+sq(p)+'\')">'+img(p)+'</span>';}).join('')+'</div>';});return out;}
+/* La fenetre « Icone » ne proposait QUE les images livrees avec le site : une
+   selection, sans aucun moyen d'ajouter. Les images importees a la main
+   rejoignent donc « Mes icones » et restent disponibles pour les crafts
+   suivants — comme les assets de categorie dans Parametres. */
+function galleryRows(fnName,extra){var out='';
+  var perso=(S.iconLib||[]);
+  if(perso.length){
+    out+='<div class="sec-h" style="margin:8px 0 4px;font-size:11px">Mes icônes <span class="n">'+perso.length+'</span></div><div style="display:flex;flex-wrap:wrap;gap:6px">'
+      +perso.map(function(p,i){return '<span style="position:relative;display:inline-flex"><span class="logo" style="width:40px;height:40px;cursor:pointer;border:2px solid transparent;border-radius:8px;padding:2px" title="Importée" onclick="'+fnName+'('+extra+',\''+sq(p)+'\')">'+img(p)+'</span>'
+        +'<span title="Retirer de mes icônes" style="position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--mut);font-size:9px;display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="event.stopPropagation();retirerIconeLib('+i+')"><i class=vgi-x></i></span></span>';}).join('')
+      +'</div>';
+  }
+  ['Badges','Mantras','Masques'].forEach(function(cat){out+='<div class="sec-h" style="margin:8px 0 4px;font-size:11px">'+cat+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+CRAFT_ASSETS[cat].map(function(p){return '<span class="logo" style="width:40px;height:40px;cursor:pointer;border:2px solid transparent;border-radius:8px;padding:2px" title="'+esc(p.split('/').pop())+'" onclick="'+fnName+'('+extra+',\''+sq(p)+'\')">'+img(p)+'</span>';}).join('')+'</div>';});
+  return out;}
+/* Importer une image : meme traitement que dans Parametres (fond magenta des
+   sprites retire), et elle est retenue pour la prochaine fois. */
+function importerIcone(key){var f=(document.getElementById('ciF')||{}).files;f=f&&f[0];if(!f)return;
+  var r=new FileReader();r.onload=function(){keyMagenta(r.result,function(clean){
+    S.iconLib=S.iconLib||[];
+    var i=S.iconLib.indexOf(clean);if(i>=0)S.iconLib.splice(i,1);
+    S.iconLib.unshift(clean);if(S.iconLib.length>40)S.iconLib.length=40;
+    setCraftIcon(key,clean);agToast('Icône importée et ajoutée à « Mes icônes ».',true);});};
+  r.readAsDataURL(f);}
+function retirerIconeLib(i){if(!S.iconLib||!S.iconLib[i])return;S.iconLib.splice(i,1);save();
+  var k=window.__iconeCraft;if(k)editCraftIcon(k);}
 //matching amélioré nom d'ingrédient -> objet du coffre (accents/ponctuation ignorés + sous-ensemble de mots)
 function iqNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
 function iqFind(name){var q=iqNorm(name);if(!q)return null;var cat=catalog()||[];var it=cat.find(function(x){return iqNorm(x.item)===q;});if(it)return it;var qt=q.split(' ').filter(Boolean);if(qt.length<2)return null;/* flou uniquement sur les noms à ≥2 mots (ex. « liane ruine prestigieuse » → « Liane de Ruine Prestigieuse ») : tous les mots de l'ingrédient présents dans le nom de l'objet. Pas d'appariement inverse (éviterait qu'un objet générique « Casque » matche « Casque du Berserker »). */return cat.find(function(x){var t=iqNorm(x.item);return t&&qt.every(function(w){return t.indexOf(w)>=0;});})||null;}
@@ -466,7 +499,12 @@ function doAddCraft(){var n=(($('#ncN')||{}).value||'').replace(/["'\\<>&]/g,'')
   if(allCrafts().some(function(c){return c.key===n;})){agToast('Un craft porte déjà ce nom.',false);return;}
   S.customCrafts=S.customCrafts||[];S.customCrafts.push({key:n,group:g,npc:'',ic:'',cost:[]});save();closeSheet();render();openRecipe(n);}
 function delCraft(key){if(!canEdit())return;agConfirm('Supprimer le craft « '+key+' » ?',function(){if((S.customCrafts||[]).some(function(c){return c.key===key;})){S.customCrafts=(S.customCrafts||[]).filter(function(c){return c.key!==key;});}else{S.hiddenCrafts=S.hiddenCrafts||[];if(S.hiddenCrafts.indexOf(key)<0)S.hiddenCrafts.push(key);}if(S.recipes)delete S.recipes[key];if(S.craftAssets)delete S.craftAssets[key];if(S.craftYields)delete S.craftYields[key];save();render();});}
-function editCraftIcon(key){if(!canEdit())return;openSheet('<h3><i class=vgi-image></i> Icône — '+esc(key)+'</h3><div class="hint">Choisis une icône fournie, ou colle un lien.</div>'+galleryRows('setCraftIcon',"'"+sqa(key)+"'")+'<div class="field" style="margin-top:10px"><label>Lien personnalisé (URL ou /chemin)</label><input class="inp" id="ciU" value="'+esc((S.craftAssets||{})[key]||'')+'" placeholder="/assets/... ou https://..."></div><div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="setCraftIcon(\''+sqa(key)+'\',\'\')">Retirer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="setCraftIcon(\''+sqa(key)+'\',((document.getElementById(\'ciU\')||{}).value||\'\').trim())">Enregistrer</button></div></div>');}
+function editCraftIcon(key){if(!canEdit())return;window.__iconeCraft=key;
+  openSheet('<h3><i class=vgi-image></i> Icône — '+esc(key)+'</h3><div class="hint">Choisis une icône fournie, importe la tienne, ou colle un lien.</div>'
+   +'<div class="field"><label>Importer une image</label><input class="inp" type="file" accept="image/*" id="ciF" onchange="importerIcone(\''+sqa(key)+'\')"><div class="mut" style="font-size:10.5px;margin-top:4px">PNG/JPG. Le fond magenta des sprites est retiré tout seul, et l\'image reste dans « Mes icônes » pour les prochains crafts.</div></div>'
+   +galleryRows('setCraftIcon',"'"+sqa(key)+"'")
+   +'<div class="field" style="margin-top:10px"><label>Lien personnalisé (URL ou /chemin)</label><input class="inp" id="ciU" value="'+esc((S.craftAssets||{})[key]||'')+'" placeholder="/assets/... ou https://..."></div>'
+   +'<div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="setCraftIcon(\''+sqa(key)+'\',\'\')">Retirer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="setCraftIcon(\''+sqa(key)+'\',((document.getElementById(\'ciU\')||{}).value||\'\').trim())">Enregistrer</button></div></div>');}
 function setCraftIcon(key,path){S.craftAssets=S.craftAssets||{};if(path){S.craftAssets[key]=path;}else{delete S.craftAssets[key];}save();closeSheet();render();}
 //── Calculateur de craft : recette -> stock du coffre (#Phase C) ──
 function craftBaseOpts(){return ['Σ Total guilde'].concat(S.members||[]);}

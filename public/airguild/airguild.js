@@ -24,8 +24,8 @@ let S=load();
 function canEdit(){return ['VANGUARD','DIRECTION'].indexOf(window.__agRole||'')>=0;} // édition du catalogue réservée Vanguard/Direction
 // Dépôt : chaque staff ne modifie que SON coffre (repéré par pseudo Discord) ; Vanguard/Direction peuvent corriger partout.
 function canDeposit(){var me=(window.__agUser||'').toLowerCase().trim();return canEdit()||(S.cur!=='__total__'&&!!me&&String(S.cur).toLowerCase().trim()===me);}
-function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
-  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},shopMember:'',tab:'bank'};}
+function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
+  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
 function vgDD(){
@@ -331,10 +331,11 @@ function doAddItem(){const cat=$('#ic').value,cl=$('#icl').value.trim(),it=$('#i
   const fin=icData=>{S.custom=S.custom||[];const nid='custom|'+cl+'|'+it+'|'+Date.now();S.custom.push({id:nid,cat,classe:cl,item:it,unit,icData:icData||'',ic:'',prix:0});save();closeSheet();render();
     /* Venu d'une recette : on y retourne avec l'objet tout juste cree deja pose
        sur une ligne — sinon il faudrait rouvrir le craft et le rechercher. */
-    if(rt&&rt.key){window.__retourRecette=null;openRecipe(rt.key);
+    if(rt&&rt.key){window.__retourRecette=null;
+      if(rt.mode==='prestige')openPrestige(rt.key);else openRecipe(rt.key);
       if(rt.cible==='prod')window.__prod.push({id:nid,n:it,q:1});
       else window.__rec.push({id:nid,n:it,q:'',slot:unit==='slot',ic:''});
-      drawRecipe(rt.key);agToast('« '+it+' » ajouté à la base et posé dans la recette.',true);}};
+      redessineEditeur(rt.key);agToast('« '+it+' » ajouté à la base et posé dans la recette.',true);}};
   const f=$('#iimg').files[0];
   if(f){const r=new FileReader();r.onload=()=>keyMagenta(r.result,fin);r.readAsDataURL(f);}else fin('');}
 function rmItem(id,custom){if(custom)S.custom=(S.custom||[]).filter(c=>c.id!==id);else{S.hidden=S.hidden||[];if(!S.hidden.includes(id))S.hidden.push(id);}save();render();}
@@ -487,21 +488,21 @@ function craftCard(c){const cost=craftCost(c);const edited=!!S.recipes[c.key];co
     ${craftProduitsSpeciaux(c)?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="mut">Produit :</span> '+craftProduits(c).map(function(pr){return '<b style="color:var(--gold,#FFB552)">'+esc(pr.q)+' ×</b> '+esc(pr.n);}).join(' · ')+'</div>':''}
     <div class="toolbar" style="margin:8px 0 0;flex-wrap:wrap">${cost.length?`<button class="btn sm o" onclick="craftCalc('${sqa(c.key)}')"><i class=vgi-gauge></i> Calculer</button> `:''}<button class="btn sm" onclick="openRecipe('${sqa(c.key)}')"><i class=vgi-edit></i> Recette</button>${ce?` <button class="btn sm" onclick="editCraftIcon('${sqa(c.key)}')"><i class=vgi-image></i> Icône</button> <button class="btn sm danger" onclick="delCraft('${sqa(c.key)}')"><i class=vgi-trash></i></button>`:''}</div></div>`;}
 function farmReqSection(){var fk=Object.keys(S.farm||{});if(!fk.length)return '';return '<div style="margin-top:6px"><div class="sec-h"><i class=vgi-clipboard></i> Demandes de farm en cours <span class="n">'+fk.length+'</span></div><div class="ogrid">'+fk.map(function(k){var f=S.farm[k];var have=f.have||0;var pc=f.target?Math.min(100,Math.round(have/f.target*100)):0;return '<div class="ocard ing" style="padding:10px;display:block"><div style="display:flex;align-items:center;gap:8px">'+ingIcone(f)+'<div style="flex:1;min-width:0"><div class="a" style="font-weight:600">'+esc(ingNom(f))+'</div><div class="mut" style="font-size:10px">'+esc(f.cat||'')+'</div></div><span class="rm" style="cursor:pointer" onclick="delete S.farm[\''+sq(k)+'\'];save();render()"><i class=vgi-x></i></span></div><div class="mut" style="font-size:11px;margin:5px 0 3px">'+have+' / '+f.target+'</div><div class="prog"><i style="width:'+pc+'%"></i></div><div class="toolbar" style="margin:6px 0 0;gap:4px"><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=Math.max(0,(f.have||0)-1);save();render();}">−</button><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=(f.have||0)+1;save();render();}"><i class=vgi-plus></i></button></div></div>';}).join('')+'</div></div>';}
-function viewCraft(){const O=D.objectifs;
+function viewCraft(){
   const byG={};allCrafts().forEach(c=>{(byG[c.group]=byG[c.group]||[]).push(c);});
   /* Les categories d'origine d'abord, pour garder l'ordre habituel, PUIS toute
      categorie creee a la main. Cette liste etait figee : un craft range dans une
      nouvelle categorie etait bien enregistre mais n'apparaissait nulle part. */
   const groups=['Œufs','Badges','Masques','Mantras','Médailles & reliques'].filter(g=>byG[g])
     .concat(Object.keys(byG).filter(g=>['Œufs','Badges','Masques','Mantras','Médailles & reliques'].indexOf(g)<0).sort());
-  const tiers=Object.keys(O.prestige).sort((a,b)=>+a-+b);
+  const tiers=prestigeTiers();
   return `<div class="legend">Recettes & items. Les <b>ressources</b> en gros volume se comptent en <b>slots</b> (1 = 9 999) ; <b>médailles & reliques</b> à l'unité. Tu peux <b>compléter une recette</b> dès que tu as les infos du guide book.</div>
    ${canEdit()?`<div class="toolbar" style="margin:8px 0"><button class="btn o" onclick="newCraftForm()"><i class=vgi-plus></i> Nouveau craft</button></div>`:''}
    ${farmReqSection()}
    ${groups.map(g=>byG[g]?`<div style="margin-top:6px"><div class="sec-h">${GROUP_EMOJI[g]||''} ${esc(g)} <span class="n">${byG[g].length}</span></div><div class="ogrid">${byG[g].map(craftCard).join('')}</div></div>`:'').join('')}
-   <div style="margin-top:14px"><div class="sec-h"><i class=vgi-trophy></i> Prestige — coût par palier</div><div class="ogrid">${tiers.map(t=>`<div class="ocard"><div class="tierhead">P${+t-1} → P${t}</div>${O.prestige[t].map(ingRow).join('')}</div>`).join('')}</div></div>`;
+   <div style="margin-top:14px"><div class="sec-h"><i class=vgi-trophy></i> Prestige — coût par palier</div><div class="ogrid">${tiers.map(t=>`<div class="ocard"><div class="tierhead">${palierNom(t)}${(S.prestige||{})[t]?' · <span style="color:var(--gold);font-size:11.5px">modifié</span>':''}</div>${prestigeCost(t).map(ingRow).join('')||'<div class="mut" style="font-size:12px;padding:6px 0">Palier à renseigner.</div>'}${canEdit()?`<div class="toolbar" style="margin:8px 0 0"><button class="btn sm" onclick="openPrestige('${sqa(t)}')"><i class=vgi-edit></i> Modifier</button></div>`:''}</div>`).join('')}</div></div>`;
 }
-function openRecipe(key){const base=findCraft(key)||{cost:[]};
+function openRecipe(key){window.__editeur='recette';const base=findCraft(key)||{cost:[]};
   /* On relie au passage les anciennes lignes (un nom seul) a l'objet de la base :
      ce qui n'etait qu'un libelle devient une reference stable des l'ouverture. */
   const cur=(S.recipes[key]||base.cost||[]).map(function(x){var it=ingObjet(x);return {id:it?it.id:'',n:it?it.item:(x.n||''),q:x.q,slot:!!x.slot,ic:it?'':(x.ic||'')};});
@@ -522,7 +523,7 @@ function ouvrirSelecteur(cible,i,key){
    +'<input class="inp" id="poQ" style="width:100%" placeholder="Chercher un objet…" oninput="window.__poQ=this.value;dessineSelecteur()">'
    +'<div id="pocats" style="display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 2px"></div>'
    +'<div id="polist" style="max-height:44vh;overflow:auto"></div>'
-   +'<div class="toolbar" style="justify-content:space-between;margin:12px 0 0"><button class="btn sm" onclick="creerObjetDansLaBase()"><i class=vgi-plus></i> Il n\'existe pas — l\'ajouter à la base</button><button class="btn" onclick="drawRecipe(\''+sqa(key)+'\')">Retour</button></div>');
+   +'<div class="toolbar" style="justify-content:space-between;margin:12px 0 0"><button class="btn sm" onclick="creerObjetDansLaBase()"><i class=vgi-plus></i> Il n\'existe pas — l\'ajouter à la base</button><button class="btn" onclick="redessineEditeur(\''+sqa(key)+'\')">Retour</button></div>');
   dessineSelecteur();var f=document.getElementById('poQ');if(f)f.focus();}
 function dessineSelecteur(){
   var q=iqNorm(window.__poQ||''),c=window.__poCat||'',mots=q.split(' ').filter(Boolean);
@@ -546,11 +547,13 @@ function prendreObjet(id){var it=objetParId(id);if(!it)return;var p=window.__po|
   if(p.cible==='prod'){var l=window.__prod||[];if(!l[p.i])l[p.i]={q:1};l[p.i].id=it.id;l[p.i].n=it.item;}
   /* L'unite vient de la base : c'est elle qui dit si l'objet se compte en slots. */
   else{var r=window.__rec||[];if(!r[p.i])r[p.i]={q:''};r[p.i].id=it.id;r[p.i].n=it.item;r[p.i].ic='';r[p.i].slot=(it.unit==='slot');}
-  drawRecipe(p.key);}
+  redessineEditeur(p.key);}
 /* L'objet manquant se cree dans la base, pas dans la recette : on enregistre le
    travail en cours, on ouvre la base, et doAddItem() ramene ici ensuite. */
 function creerObjetDansLaBase(){var p=window.__po||{};if(!canEdit())return agToast('Ajout réservé au rôle Vanguard.',false);
-  saveRecipe(p.key);window.__retourRecette={key:p.key,cible:p.cible};addItem();}
+  var mode=window.__editeur||'recette';
+  if(mode==='prestige')savePrestige(p.key);else saveRecipe(p.key);
+  window.__retourRecette={key:p.key,cible:p.cible,mode:mode};addItem();}
 /* Le champ « objet » d'une ligne : ce qu'on voit est ce que le calculateur compte. */
 function champObjet(cible,r,i,key){
   var it=ingObjet(r),nom=it?it.item:((r&&r.n)||'');
@@ -582,10 +585,13 @@ function drawRecipe(key){const cur=window.__rec||[];
    +'<div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="delete S.recipes[\''+sqa(key)+'\'];save();closeSheet();render()">Réinitialiser</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveRecipe(\''+sqa(key)+'\')">Enregistrer</button></div></div>');}
 /* On enregistre l'identifiant en plus du nom : le nom reste lisible dans les
    vieux exports, l'identifiant est ce qui fait foi pour le stock. */
-function saveRecipe(key){const cur=(window.__rec||[]).filter(function(r){return (r.id&&objetParId(r.id))||(r.n&&String(r.n).trim());}).map(function(r){
-    var it=ingObjet(r),qn=Number(r.q);
-    return {id:it?it.id:'',n:it?it.item:String(r.n).trim(),q:isNaN(qn)||r.q===''?(r.q||'?'):qn,slot:!!r.slot,ic:it?'':(r.ic||'')};});
-  S.recipes[key]=cur;
+/* Une liste d'objets prete a enregistrer : l'identifiant fait foi, le nom reste
+   lisible dans les vieux exports, et l'icone n'est gardee que pour ce qui n'est
+   pas dans la base. Recettes et paliers de prestige s'enregistrent pareil. */
+function lignesObjets(src){return (src||[]).filter(function(r){return (r.id&&objetParId(r.id))||(r.n&&String(r.n).trim());}).map(function(r){
+  var it=ingObjet(r),qn=Number(r.q);
+  return {id:it?it.id:'',n:it?it.item:String(r.n).trim(),q:isNaN(qn)||r.q===''?(r.q||'?'):qn,slot:!!r.slot,ic:it?'':(r.ic||'')};});}
+function saveRecipe(key){S.recipes[key]=lignesObjets(window.__rec);
   /* Quantite invalide ou absente -> 1 : une recette qui produit « ? » objets
      serait inexploitable par le calcul de cout. */
   var prod=(window.__prod||[]).filter(function(r){return (r.id&&objetParId(r.id))||(r.n&&String(r.n).trim());}).map(function(r){
@@ -594,6 +600,36 @@ function saveRecipe(key){const cur=(window.__rec||[]).filter(function(r){return 
   S.craftYields=S.craftYields||{};
   if(prod.length)S.craftYields[key]=prod;else delete S.craftYields[key];
   save();closeSheet();render();}
+/* Deux editeurs partagent le meme selecteur d'objets : il faut savoir a qui rendre la main. */
+function redessineEditeur(key){if(window.__editeur==='prestige')drawPrestige(key);else drawRecipe(key);}
+/* ── Prestige : les paliers se modifient comme une recette ────────────────────
+   Le cout d'un palier venait d'une table figee dans les donnees : ni corrigeable
+   quand le serveur bouge, ni reliee aux objets de la base — donc pas d'icone
+   juste, et rien a compter. La table d'origine reste le point de depart, toute
+   retouche vit dans l'etat partage, palier par palier. */
+function prestigeTiers(){var o=Object.assign({},((D.objectifs||{}).prestige||{}),(S.prestige||{}));return Object.keys(o).sort(function(a,b){return (+a)-(+b);});}
+function prestigeCost(t){var s=(S.prestige||{})[t];return s||((D.objectifs||{}).prestige||{})[t]||[];}
+function palierNom(t){return 'P'+((+t)-1)+' → P'+(+t);}
+function openPrestige(t){if(!canEdit())return agToast('Modification réservée au rôle Vanguard.',false);
+  window.__editeur='prestige';
+  window.__rec=prestigeCost(t).map(function(x){var it=ingObjet(x);return {id:it?it.id:'',n:it?it.item:(x.n||''),q:x.q,slot:!!x.slot,ic:it?'':(x.ic||'')};});
+  window.__prod=[];drawPrestige(t);}
+function drawPrestige(t){var cur=window.__rec||[];
+  var rows=cur.map(function(r,i){return '<div class="ing" style="flex-wrap:wrap">'+champObjet('rec',r,i,t)
+    +'<input class="inp" style="width:100px;text-align:center" value="'+esc(r.q)+'" oninput="window.__rec['+i+'].q=this.value" placeholder="Qté">'
+    +'<label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px" title="Quantité exprimée en slots (1 slot = 9 999)">slot<input type="checkbox" '+(r.slot?'checked':'')+' onchange="window.__rec['+i+'].slot=this.checked"></label>'
+    +'<span class="rm" style="opacity:.6;cursor:pointer" title="Retirer" onclick="window.__rec.splice('+i+',1);drawPrestige(\''+sqa(t)+'\')"><i class=vgi-x></i></span></div>';}).join('');
+  var orph=cur.filter(function(r){return (r.n||r.id)&&!ingObjet(r);}).length;
+  var alerte=orph?'<div style="font-size:11.5px;color:var(--red);background:#f871711a;border:1px solid #f8717155;border-radius:9px;padding:8px 10px;margin:2px 0 8px;display:flex;align-items:center;gap:7px"><i class=vgi-alert></i><span>'+orph+' objet(s) ne pointent aucune entrée de la base : ils gardent leur ancienne icône et ne seront jamais comptés. Clique dessus pour les relier.</span></div>':'';
+  openSheet('<h3><i class=vgi-trophy></i> Prestige — '+palierNom(t)+'</h3>'
+   +'<div class="hint">Ce que coûte ce palier. Chaque objet <b>se choisit dans la base</b> : son icône et son stock la suivent alors — un badge dont tu ajoutes l\'asset plus tard s\'affichera ici tout seul. Coche « slot » pour les grosses ressources.</div>'+alerte
+   +'<div id="recrows">'+(rows||'<div class="mut" style="font-size:12px">Aucun objet.</div>')+'</div>'
+   +'<div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({id:\'\',n:\'\',q:\'\',slot:false,ic:\'\'});ouvrirSelecteur(\'rec\',window.__rec.length-1,\''+sqa(t)+'\')"><i class=vgi-plus></i> Objet</button></div>'
+   +'<div class="toolbar" style="justify-content:space-between;margin:0">'
+   +((S.prestige||{})[t]?'<button class="btn danger sm" onclick="resetPrestige(\''+sqa(t)+'\')">Table d\'origine</button>':'<span></span>')
+   +'<div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="savePrestige(\''+sqa(t)+'\')">Enregistrer</button></div></div>');}
+function savePrestige(t){S.prestige=S.prestige||{};S.prestige[t]=lignesObjets(window.__rec);save();closeSheet();render();agToast('Palier '+palierNom(t)+' enregistré.',true);}
+function resetPrestige(t){agConfirm('Remettre la table d\'origine pour '+palierNom(t)+' ?',function(){if(S.prestige)delete S.prestige[t];save();closeSheet();render();agToast('Table d\'origine remise.',true);});}
 
 /* ============ BOUTIQUE / DETTE ============ */
 let shopQ='';

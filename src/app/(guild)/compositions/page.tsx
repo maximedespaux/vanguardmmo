@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
-import { CRENEAUX, classeAffichee, classesManquantes, normaliserCompo, type CompoState, type Creneau, type Presence } from "@/lib/compositions";
+import { CRENEAUX, classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, type CompoState, type Creneau, type Presence } from "@/lib/compositions";
 
 import type { Signup } from "@/lib/compositions";
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -93,6 +93,16 @@ export default function CompositionsPage() {
       ? presences.filter(p => !(p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase()))
       : [...presences, { player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau, ts: Date.now() }] });
   };
+  /**
+   * Retenir quelqu'un dans la composition du soir, ou l'en sortir.
+   *
+   * S'annoncer ne bloque personne — on peut etre cinq Primats a lever la main.
+   * C'est ce tri, fait par le staff, qui dit qui joue : la compo est une cible
+   * a atteindre, pas un plafond a l'inscription.
+   */
+  const basculerRetenu = (creneau: Creneau, pseudo: string) => {
+    sauver({ presences: presences.map(p => (p.creneau === creneau && p.pseudo === pseudo ? { ...p, retenu: !p.retenu } : p)) });
+  };
   const lbl = (s: Slot) => slotMeta[s.id]?.label || s.label;
   const nt = (s: Slot) => slotMeta[s.id]?.note ?? s.note;
   const renameSlot = (slot: Slot, label: string, note: string) => { persist(signups, { ...slotMeta, [slot.id]: { label: label || slot.label, note } }); setEditSlot(null); };
@@ -121,7 +131,7 @@ export default function CompositionsPage() {
   const byClass: Record<string, number> = {}; signups.forEach(s => { byClass[s.classe] = (byClass[s.classe] || 0) + 1; });
   const fillPct = Math.round((selectedSlots.size / CS_SLOTS.length) * 100);
 
-  const etatCourant: CompoState = { signups, slotMeta, presences, instructions };
+  const PLACES_CS = nbPlaces(CS_SLOTS);
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
@@ -179,7 +189,11 @@ export default function CompositionsPage() {
 
           {CRENEAUX.map(cr => {
             const liste = presences.filter(p => p.creneau === cr.id);
-            const manques = classesManquantes(etatCourant, cr.id);
+            const retenus = liste.filter(p => p.retenu);
+            const ecarts = ecartsClasse(liste);
+            const manques = ecarts.filter(e => e.manque > 0);
+            const surplus = ecarts.filter(e => e.enPlus > 0);
+            const resteRetenus = ecartsClasse(retenus).filter(e => e.manque > 0);
             return (
               <div key={cr.id} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
@@ -190,6 +204,13 @@ export default function CompositionsPage() {
                   {manques.length === 0
                     ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
                     : <span style={{ fontSize: 11.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
+                  {/* Le surplus n'est pas un probleme : c'est la reserve du soir.
+                      Il disparaissait purement et simplement de l'affichage. */}
+                  {surplus.length > 0 && (
+                    <span title="Plus d'annoncés que de places sur ces classes — le staff départage" style={{ fontSize: 11.5, color: "var(--blue)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <Icon name="arrow-up" size={12} />En plus : {surplus.map(m => `${m.enPlus} ${m.classe}`).join(", ")}
+                    </span>
+                  )}
 
                   {/* Confirmation APRÈS coup : « je serai là » est une annonce, pas
                       une venue. Le staff retire d'abord les absents avec la croix,
@@ -225,18 +246,56 @@ export default function CompositionsPage() {
                   </div>
                 )}
 
+                {/* ── Qui est là, et qui joue ──
+                    S'annoncer n'est pas jouer : on laisse tout le monde lever la
+                    main, meme quand la classe est deja servie, et le staff arrete
+                    ensuite la composition en cliquant les noms. La cible (10
+                    places) se lit en face, elle ne bloque personne. */}
                 {liste.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                    {liste.map(pr => (
-                      <span key={`${pr.creneau}|${pr.pseudo}`} title={`${pr.pseudo} · ${pr.classe} — annoncé par ${pr.player}`}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text)", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 9px" }}>
-                        <ClassLogo name={pr.classe} size={13} />{pr.pseudo}
-                        {(isAdmin || pr.player === meName) && (
-                          <button onClick={() => sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) })}
-                            title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={11} /></button>
-                        )}
+                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 7 }}>
+                      <span style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
+                        Annoncés — {liste.length}
                       </span>
-                    ))}
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: retenus.length >= PLACES_CS ? "var(--green)" : "var(--gold)" }}>
+                        {retenus.length}/{PLACES_CS} retenus
+                      </span>
+                      {isAdmin && (
+                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                          — clique un nom pour le retenir dans la composition
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {liste.map(pr => {
+                        const dedans = !!pr.retenu;
+                        return (
+                          <span key={`${pr.creneau}|${pr.pseudo}`} title={`${pr.pseudo} · ${pr.classe} — annoncé par ${pr.player}${dedans ? " · retenu" : ""}`}
+                            onClick={isAdmin ? () => basculerRetenu(cr.id, pr.pseudo) : undefined}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, cursor: isAdmin ? "pointer" : "default",
+                              color: dedans ? "var(--gold)" : "var(--text)", fontWeight: dedans ? 700 : 400,
+                              background: dedans ? "rgba(255,210,74,.12)" : "var(--bg-2)",
+                              border: `1px solid ${dedans ? "var(--gold)" : "var(--border)"}`, borderRadius: 20, padding: "3px 9px" }}>
+                            {dedans && <Icon name="star" size={11} />}
+                            <ClassLogo name={pr.classe} size={13} />{pr.pseudo}
+                            {(isAdmin || pr.player === meName) && (
+                              <button onClick={e => { e.stopPropagation(); sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) }); }}
+                                title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={11} /></button>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    {retenus.length > 0 && resteRetenus.length > 0 && (
+                      <div style={{ fontSize: 11.5, color: "var(--orange)", marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Icon name="alert" size={12} />Il manque encore {resteRetenus.map(m => `${m.manque} ${m.classe}`).join(", ")} à la composition retenue
+                      </div>
+                    )}
+                    {retenus.length > 0 && resteRetenus.length === 0 && (
+                      <div style={{ fontSize: 11.5, color: "var(--green)", fontWeight: 700, marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                        <Icon name="check" size={12} />Composition complète
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

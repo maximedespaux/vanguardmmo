@@ -43,6 +43,10 @@ export type Presence = {
   classe: string;
   creneau: Creneau;
   ts: number;
+  /** Retenu par le staff pour jouer ce soir-là. La composition n'est pas un
+   *  plafond : tout le monde s'annonce, même si sa classe est déjà servie, et
+   *  c'est ce tri qui dit ensuite qui entre. */
+  retenu?: boolean;
 };
 
 export type CompoState = {
@@ -98,6 +102,7 @@ export function normaliserCompo(raw: unknown): CompoState {
       classe: texte(p.classe, 30),
       creneau: (IDS_CRENEAUX.has(String(p.creneau)) ? String(p.creneau) : "mer") as Creneau,
       ts: typeof p.ts === "number" && isFinite(p.ts) ? p.ts : 0,
+      retenu: p.retenu === true,
     }))
     .filter((p) => {
       if (!p.player || !p.pseudo) return false;
@@ -141,19 +146,48 @@ export function presencesDu(state: CompoState, creneau: Creneau): Presence[] {
   return state.presences.filter((p) => p.creneau === creneau);
 }
 
+/** Ceux que le staff a retenus pour jouer — la composition arrêtée du soir. */
+export function retenusDu(state: CompoState, creneau: Creneau): Presence[] {
+  return presencesDu(state, creneau).filter((p) => p.retenu);
+}
+
+/** Le nombre de places de la composition visée (postes non optionnels). */
+export function nbPlaces(slots: Slot[] = CS_SLOTS): number {
+  return Object.values(effectifRequis(slots)).reduce((a, b) => a + b, 0);
+}
+
+/**
+ * L'écart à la composition visée, classe par classe : ce qui manque, et ce qui
+ * est en plus.
+ *
+ * La composition est une CIBLE, pas un plafond. Personne n'est empêché de
+ * s'annoncer parce que sa classe est déjà servie — mais on ne voyait alors que
+ * le manque, et un cinquième Primat disparaissait du décompte comme s'il
+ * n'existait pas. Les deux se lisent maintenant : le manque dit ce qu'il faut
+ * recruter, le surplus dit qu'il y aura des suppléants à départager.
+ */
+export function ecartsClasse(liste: Presence[], slots: Slot[] = CS_SLOTS): { classe: string; manque: number; enPlus: number }[] {
+  const requis = effectifRequis(slots);
+  const present: Record<string, number> = {};
+  for (const p of liste) present[p.classe] = (present[p.classe] ?? 0) + 1;
+  return [...new Set([...Object.keys(requis), ...Object.keys(present)])]
+    .map((classe) => {
+      const ecart = (present[classe] ?? 0) - (requis[classe] ?? 0);
+      return { classe, manque: ecart < 0 ? -ecart : 0, enPlus: ecart > 0 ? ecart : 0 };
+    })
+    .filter((x) => x.manque > 0 || x.enPlus > 0)
+    .sort((a, b) => b.manque - a.manque || b.enPlus - a.enPlus);
+}
+
 /** Ce qui manque sur un créneau, classe par classe. Vide = effectif au complet. */
 export function classesManquantes(
   state: CompoState,
   creneau: Creneau,
   slots: Slot[] = CS_SLOTS,
 ): { classe: string; manque: number }[] {
-  const requis = effectifRequis(slots);
-  const present: Record<string, number> = {};
-  for (const p of presencesDu(state, creneau)) present[p.classe] = (present[p.classe] ?? 0) + 1;
-  return Object.entries(requis)
-    .map(([classe, n]) => ({ classe, manque: n - (present[classe] ?? 0) }))
+  return ecartsClasse(presencesDu(state, creneau), slots)
     .filter((x) => x.manque > 0)
-    .sort((a, b) => b.manque - a.manque);
+    .map(({ classe, manque }) => ({ classe, manque }));
 }
 
 /**

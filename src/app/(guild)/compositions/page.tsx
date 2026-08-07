@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
-import { CRENEAUX, classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, type CompoState, type Creneau, type Presence } from "@/lib/compositions";
+import { classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, presencesSeance, prochaineSeance, type CompoState, type Creneau, type Presence, type Seance } from "@/lib/compositions";
 
 import type { Signup } from "@/lib/compositions";
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -39,8 +39,19 @@ export default function CompositionsPage() {
    * disponibilité : s'inscrire sur un poste et annoncer sa présence étaient deux
    * saisies séparées pour la même information, donc l'une des deux restait vide.
    */
-  const [dispoChoix, setDispoChoix] = useState<Creneau[] | null>(null);
-  const [aprsInscription, setAprsInscription] = useState<{ slot: Slot; char: { id: string; name: string; class: string } } | null>(null);
+  const [popupPresence, setPopupPresence] = useState(false);
+  /**
+   * La séance qu'on prépare. Calculée côté client seulement : la même page
+   * rendue sur le serveur puis dans le navigateur donnerait deux « dans 2 j »
+   * différents, et React s'en plaindrait à chaque chargement.
+   */
+  const [seance, setSeance] = useState<Seance | null>(null);
+  useEffect(() => {
+    const maj = () => setSeance(prochaineSeance());
+    maj();
+    const t = setInterval(maj, 60_000); // la bascule mercredi 21 h 30 doit se faire seule
+    return () => clearInterval(t);
+  }, []);
 
   // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
@@ -86,13 +97,18 @@ export default function CompositionsPage() {
     window.alert(r.ok ? `${j.credites ?? 0} membre(s) crédités.` : (j.error ?? "Confirmation refusée."));
   };
 
-  /** « Je serai la » : une bascule par personnage et par creneau. */
-  const basculerPresence = (creneau: Creneau, char: { name: string; class: string }) => {
-    const deja = presences.some(p => p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase());
-    sauver({ presences: deja
-      ? presences.filter(p => !(p.creneau === creneau && p.pseudo.toLowerCase() === char.name.toLowerCase()))
-      : [...presences, { player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau, ts: Date.now() }] });
+  /** « Je serai la » : une bascule par personnage, sur la seance preparee. */
+  const basculerPresence = (char: { name: string; class: string }) => {
+    if (!seance) return;
+    const creneau = seance.creneau;
+    const nom = char.name.toLowerCase();
+    const deja = annonces.some(p => p.pseudo.toLowerCase() === nom);
+    // On efface aussi une annonce PERIMEE du meme personnage : garder les deux
+    // ferait remonter l'ancienne date au prochain cycle.
+    const autres = presences.filter(p => !(p.creneau === creneau && p.pseudo.toLowerCase() === nom));
+    sauver({ presences: deja ? autres : [...autres, { player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau, ts: Date.now() }] });
   };
+  const marquerRepondu = () => { if (seance) try { localStorage.setItem(cleReponse(seance), "1"); } catch { /* navigation privee */ } };
   /**
    * Retenir quelqu'un dans la composition du soir, ou l'en sortir.
    *
@@ -108,19 +124,45 @@ export default function CompositionsPage() {
   const renameSlot = (slot: Slot, label: string, note: string) => { persist(signups, { ...slotMeta, [slot.id]: { label: label || slot.label, note } }); setEditSlot(null); };
   const norm = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const removeSignup = (id: string) => persist(signups.filter(s => s.id !== id));
+  /**
+   * Se poser sur un poste ET s'annoncer pour la séance, d'un seul geste.
+   *
+   * C'étaient deux saisies séparées pour la même information — on se mettait
+   * sur un poste sans jamais dire qu'on serait là, et l'effectif restait à zéro
+   * alors que douze personnes s'étaient inscrites.
+   */
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
     // Un perso ne peut être que sur UN poste : on retire son éventuelle inscription ailleurs avant d'ajouter.
-    persist([...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }]);
-    setAprsInscription({ slot, char });
-  };
-
-  /** Enregistre les créneaux annoncés pour ce personnage, en une écriture. */
-  const enregistrerDispos = (char: { name: string; class: string }, creneaux: Creneau[]) => {
+    const prochains = [...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }];
     const nom = char.name.toLowerCase();
-    const autres = presences.filter(p => p.pseudo.toLowerCase() !== nom);
-    sauver({ presences: [...autres, ...creneaux.map(c => ({ player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau: c, ts: Date.now() }))] });
+    const dejaLa = annonces.some(p => p.pseudo.toLowerCase() === nom);
+    if (!seance || dejaLa) { persist(prochains); return; }
+    sauver({
+      signups: prochains,
+      presences: [...presences.filter(p => !(p.creneau === seance.creneau && p.pseudo.toLowerCase() === nom)),
+        { player: meName, pseudo: char.name, classe: classeAffichee(char.class), creneau: seance.creneau, ts: Date.now() }],
+    });
+    marquerRepondu();
   };
-  const selectSignup = (slotId: string, id: string) => persist(signups.map(s => s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
+  /**
+   * Choisir le titulaire d'un poste, c'est le retenir pour la séance.
+   *
+   * C'étaient deux gestes pour la même décision : l'étoile sur le poste et le
+   * clic sur l'annonce. Le compteur « x/10 retenus » ne bougeait donc pas quand
+   * le staff composait poste par poste.
+   */
+  const selectSignup = (slotId: string, id: string) => {
+    const prochains = signups.map(s => (s.slotId === slotId ? { ...s, selected: s.id === id ? !s.selected : false } : s));
+    if (!seance) { persist(prochains); return; }
+    const concernes = signups.filter(s => s.slotId === slotId).map(s => s.pseudo.toLowerCase());
+    const titulaires = new Set(prochains.filter(s => s.selected).map(s => s.pseudo.toLowerCase()));
+    sauver({
+      signups: prochains,
+      presences: presences.map(p => (p.creneau === seance.creneau && concernes.includes(p.pseudo.toLowerCase())
+        ? { ...p, retenu: titulaires.has(p.pseudo.toLowerCase()) }
+        : p)),
+    });
+  };
   const resetAll = () => {
     if (!window.confirm("Réinitialiser toute la composition ? Toutes les inscriptions seront effacées pour tout le monde.")) return;
     sauver({ signups: [], presences: [] }, true); // effacement explicitement voulu
@@ -132,6 +174,44 @@ export default function CompositionsPage() {
   const fillPct = Math.round((selectedSlots.size / CS_SLOTS.length) * 100);
 
   const PLACES_CS = nbPlaces(CS_SLOTS);
+
+  /** « mercredi 12 août · 21 h » — la date, pas seulement le jour de la semaine. */
+  const dateSeance = (d: Date) => `${d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · 21 h`;
+  /** « dans 2 j 4 h », « dans 40 min », « en cours ». */
+  const delai = (d: Date) => {
+    const min = Math.round((d.getTime() - Date.now()) / 60_000);
+    if (min <= 0) return "en cours";
+    if (min < 60) return `dans ${min} min`;
+    const h = Math.floor(min / 60);
+    const j = Math.floor(h / 24);
+    return j > 0 ? `dans ${j} j ${h % 24} h` : `dans ${h} h`;
+  };
+  const cleReponse = (s: Seance) => `vg_cs_presence_${s.creneau}_${s.debut.toISOString().slice(0, 10)}`;
+
+  const etatCourant: CompoState = { signups, slotMeta, presences, instructions };
+  const annonces = seance ? presencesSeance(etatCourant, seance) : [];
+  const retenus = annonces.filter(p => p.retenu);
+  const ecarts = ecartsClasse(annonces);
+  const manques = ecarts.filter(e => e.manque > 0);
+  const surplus = ecarts.filter(e => e.enPlus > 0);
+  const jySuis = annonces.some(p => p.player === meName);
+  const fermerPopup = () => { marquerRepondu(); setPopupPresence(false); };
+
+  /**
+   * On pose la question une fois par séance, à qui n'y a pas déjà répondu.
+   * Une case à cocher au milieu de la page se rate ; une fenêtre qui revient à
+   * chaque visite s'ignore. D'où le repère local, posé aussi par « Pas cette
+   * fois » : refuser EST une réponse.
+   */
+  const dejaDemande = useRef(false);
+  useEffect(() => {
+    if (!seance || !charge || dejaDemande.current) return;
+    dejaDemande.current = true;
+    let repondu = true;
+    try { repondu = localStorage.getItem(cleReponse(seance)) === "1"; } catch { /* navigation privée : on ne harcèle pas */ }
+    if (!repondu && !annonces.some(p => p.player === meName)) setPopupPresence(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seance, charge]);
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
@@ -175,133 +255,53 @@ export default function CompositionsPage() {
           </div>
         )}
 
-        {/* ── Presences ────────────────────────────────────────────────────
-            « Je serai la » par creneau. C'est cette liste que le rappel Discord
-            lit pour annoncer « il manque un Templier » : une bascule par
-            personnage, pour connaitre la classe et pas seulement le nombre. */}
-        <div className="fx-card" style={card}>
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, marginBottom: 4 }}>
-            <Icon name="check" size={17} />Présences
-          </h2>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 14 }}>
-            Annonce tes personnages présents. Le rappel Discord de la veille annonce ce qu&apos;il manque.
-          </p>
-
-          {CRENEAUX.map(cr => {
-            const liste = presences.filter(p => p.creneau === cr.id);
-            const retenus = liste.filter(p => p.retenu);
-            const ecarts = ecartsClasse(liste);
-            const manques = ecarts.filter(e => e.manque > 0);
-            const surplus = ecarts.filter(e => e.enPlus > 0);
-            const resteRetenus = ecartsClasse(retenus).filter(e => e.manque > 0);
-            return (
-              <div key={cr.id} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-                  <span className="font-heading" style={{ fontWeight: 700, fontSize: 14, textTransform: "uppercase", letterSpacing: .6 }}>{cr.label}</span>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 9px" }}>
-                    {liste.length} présent{liste.length > 1 ? "s" : ""}
-                  </span>
-                  {manques.length === 0
-                    ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
-                    : <span style={{ fontSize: 11.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
-                  {/* Le surplus n'est pas un probleme : c'est la reserve du soir.
-                      Il disparaissait purement et simplement de l'affichage. */}
-                  {surplus.length > 0 && (
-                    <span title="Plus d'annoncés que de places sur ces classes — le staff départage" style={{ fontSize: 11.5, color: "var(--blue)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      <Icon name="arrow-up" size={12} />En plus : {surplus.map(m => `${m.enPlus} ${m.classe}`).join(", ")}
-                    </span>
-                  )}
-
-                  {/* Confirmation APRÈS coup : « je serai là » est une annonce, pas
-                      une venue. Le staff retire d'abord les absents avec la croix,
-                      puis valide ce qui reste — c'est ce qui rend l'XP méritée. */}
-                  {isAdmin && liste.length > 0 && (
-                    <button onClick={() => confirmerPresences(cr.id, cr.label, liste.length)}
-                      title="Crédite l'XP de présence aux membres encore listés"
-                      style={{ marginLeft: "auto", fontSize: 11.5, fontWeight: 600, padding: "5px 11px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                      <Icon name="medal" size={12} />Ils étaient là
-                    </button>
-                  )}
-                </div>
-
-                {myChars.length === 0 ? (
-                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Crée un personnage pour annoncer ta présence.</div>
-                ) : (
-                  <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-                    {myChars.map(ch => {
-                      const on = liste.some(p => p.pseudo.toLowerCase() === ch.name.toLowerCase());
-                      return (
-                        <button key={ch.id} onClick={() => basculerPresence(cr.id, ch)}
-                          title={on ? "Retirer ma présence" : "Je serai là avec ce personnage"}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, padding: "6px 12px", borderRadius: 20, cursor: "pointer",
-                            border: `1px solid ${on ? "var(--green)" : "var(--border)"}`,
-                            background: on ? "rgba(74,222,128,.13)" : "var(--bg-2)",
-                            color: on ? "var(--green)" : "var(--text-muted)" }}>
-                          <ClassLogo name={classeAffichee(ch.class)} size={16} />
-                          {ch.name}
-                          <Icon name={on ? "check" : "plus"} size={12} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* ── Qui est là, et qui joue ──
-                    S'annoncer n'est pas jouer : on laisse tout le monde lever la
-                    main, meme quand la classe est deja servie, et le staff arrete
-                    ensuite la composition en cliquant les noms. La cible (10
-                    places) se lit en face, elle ne bloque personne. */}
-                {liste.length > 0 && (
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 7 }}>
-                      <span style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
-                        Annoncés — {liste.length}
-                      </span>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: retenus.length >= PLACES_CS ? "var(--green)" : "var(--gold)" }}>
-                        {retenus.length}/{PLACES_CS} retenus
-                      </span>
-                      {isAdmin && (
-                        <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                          — clique un nom pour le retenir dans la composition
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {liste.map(pr => {
-                        const dedans = !!pr.retenu;
-                        return (
-                          <span key={`${pr.creneau}|${pr.pseudo}`} title={`${pr.pseudo} · ${pr.classe} — annoncé par ${pr.player}${dedans ? " · retenu" : ""}`}
-                            onClick={isAdmin ? () => basculerRetenu(cr.id, pr.pseudo) : undefined}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, cursor: isAdmin ? "pointer" : "default",
-                              color: dedans ? "var(--gold)" : "var(--text)", fontWeight: dedans ? 700 : 400,
-                              background: dedans ? "rgba(255,210,74,.12)" : "var(--bg-2)",
-                              border: `1px solid ${dedans ? "var(--gold)" : "var(--border)"}`, borderRadius: 20, padding: "3px 9px" }}>
-                            {dedans && <Icon name="star" size={11} />}
-                            <ClassLogo name={pr.classe} size={13} />{pr.pseudo}
-                            {(isAdmin || pr.player === meName) && (
-                              <button onClick={e => { e.stopPropagation(); sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) }); }}
-                                title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={11} /></button>
-                            )}
-                          </span>
-                        );
-                      })}
-                    </div>
-                    {retenus.length > 0 && resteRetenus.length > 0 && (
-                      <div style={{ fontSize: 11.5, color: "var(--orange)", marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <Icon name="alert" size={12} />Il manque encore {resteRetenus.map(m => `${m.manque} ${m.classe}`).join(", ")} à la composition retenue
-                      </div>
-                    )}
-                    {retenus.length > 0 && resteRetenus.length === 0 && (
-                      <div style={{ fontSize: 11.5, color: "var(--green)", fontWeight: 700, marginTop: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        <Icon name="check" size={12} />Composition complète
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* ── La prochaine séance ───────────────────────────────────────────
+            Un tableau affichait les deux créneaux en permanence : on préparait
+            dimanche pendant qu'on jouait mercredi, et la question « qui est là
+            ce soir ? » n'avait pas de réponse évidente. On ne prépare qu'une
+            séance — la prochaine — et tout la vise : le compte, ce qui manque,
+            et la question posée en arrivant. */}
+        {seance && (
+          <div className="fx-card" style={{ ...card, borderColor: "rgba(255,140,26,.32)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+              <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
+                <Icon name="calendar" size={17} />Prochaine séance
+              </h2>
+              <span className="font-heading" style={{ fontWeight: 700, fontSize: 15 }}>{dateSeance(seance.debut)}</span>
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{delai(seance.debut)}</span>
+              <button className="vg-btn" onClick={() => setPopupPresence(true)} style={{ marginLeft: "auto", padding: "8px 15px", fontSize: 12.5 }}>
+                <Icon name={jySuis ? "check" : "plus"} size={14} />{jySuis ? "Je suis annoncé·e" : "Je serai là"}
+              </button>
+              {isAdmin && annonces.length > 0 && (
+                <button onClick={() => confirmerPresences(seance.creneau, seance.label, annonces.length)}
+                  title="Crédite l'XP de présence aux membres encore listés"
+                  style={{ fontSize: 11.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <Icon name="medal" size={12} />Ils étaient là
+                </button>
+              )}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 11.5 }}>
+              <span style={{ fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 9px" }}>
+                {annonces.length} annoncé{annonces.length > 1 ? "s" : ""}
+              </span>
+              <span style={{ fontWeight: 700, color: retenus.length >= PLACES_CS ? "var(--green)" : "var(--gold)" }}>
+                {retenus.length}/{PLACES_CS} retenus
+              </span>
+              {manques.length === 0
+                ? <span style={{ fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
+                : <span style={{ color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
+              {/* Le surplus n'est pas un problème : c'est la réserve du soir. */}
+              {surplus.length > 0 && (
+                <span title="Plus d'annoncés que de places sur ces classes — le staff départage" style={{ color: "var(--blue)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <Icon name="arrow-up" size={12} />En plus : {surplus.map(m => `${m.enPlus} ${m.classe}`).join(", ")}
+                </span>
+              )}
+              <span style={{ color: "var(--text-muted)", marginLeft: "auto" }}>
+                Les annonces se font entre {seance.creneau === "mer" ? "dimanche 21 h et mercredi" : "mercredi 21 h 30 et dimanche"} 21 h.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Consignes ────────────────────────────────────────────────────
             Redigees par le staff, lues par tout le monde. Maxime voulait une
@@ -349,7 +349,7 @@ export default function CompositionsPage() {
               <span style={{ marginLeft: "auto", fontSize: 12, color: meta.color, fontWeight: 600 }}>{done}/{slots.length}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(235px,1fr))", gap: 12, padding: 18 }}>
-              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !signups.some(s => s.charId === c.id)); return (
+              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !signups.some(s => s.charId === c.id)); const presentsClasse = annonces.filter(p => norm(p.classe) === norm(slot.classe) && !taken.some(t => t.pseudo.toLowerCase() === p.pseudo.toLowerCase())); return (
                 <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
@@ -357,6 +357,30 @@ export default function CompositionsPage() {
                     {isAdmin && <button onClick={() => setEditSlot(slot)} title="Renommer le poste (titre + desc)" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="edit" size={14} /></button>}
                     <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="eye" size={16} /></button>
                   </div>
+                  {presentsClasse.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
+                    <div style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", marginBottom: 5 }}>
+                      Annoncés en {slot.classe}{isAdmin ? " — clique pour retenir" : ""}
+                    </div>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {presentsClasse.map(pr => {
+                        const dedans = !!pr.retenu;
+                        return (
+                          <span key={pr.pseudo} title={`${pr.pseudo} · annoncé par ${pr.player}${dedans ? " · retenu" : ""}`}
+                            onClick={isAdmin && seance ? () => basculerRetenu(seance.creneau, pr.pseudo) : undefined}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, cursor: isAdmin ? "pointer" : "default",
+                              color: dedans ? "var(--gold)" : "var(--text)", fontWeight: dedans ? 700 : 400,
+                              background: dedans ? "rgba(255,210,74,.12)" : "var(--bg-2)",
+                              border: `1px solid ${dedans ? "var(--gold)" : "var(--border)"}`, borderRadius: 20, padding: "2px 8px" }}>
+                            {dedans && <Icon name="star" size={10} />}{pr.pseudo}
+                            {(isAdmin || pr.player === meName) && (
+                              <button onClick={e => { e.stopPropagation(); sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) }); }}
+                                title="Retirer l'annonce" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={10} /></button>
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>}
                   {taken.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid var(--border)`, display: "flex", flexDirection: "column", gap: 5 }}>
                     {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.selected ? meta.color : "var(--text-muted)", flexShrink: 0 }} />
@@ -369,6 +393,11 @@ export default function CompositionsPage() {
                       ) : (
                         <><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.player}</span></>
                       )}
+                      {/* Etre sur un poste ne dit pas qu'on sera la : les deux se
+                          lisent maintenant sur la meme ligne. */}
+                      {annonces.some(p => p.pseudo.toLowerCase() === t.pseudo.toLowerCase())
+                        ? <span title="Annoncé pour la prochaine séance" style={{ color: "var(--green)", display: "inline-flex" }}><Icon name="check" size={11} /></span>
+                        : <span title="Ne s'est pas encore annoncé pour la prochaine séance" style={{ color: "var(--text-muted)", fontSize: 9 }}>pas annoncé</span>}
                       <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
                         {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="star" size={14} /></button>}
                         {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>}
@@ -432,59 +461,56 @@ export default function CompositionsPage() {
         </div>
       </div>}
 
-      {/* Après une inscription : on demande les créneaux, puis on propose d'en
-          inscrire un autre. Les deux gestes que Maxime enchaîne en pratique.
-          Les créneaux déjà annoncés pour ce personnage sont pré-cochés — on
-          corrige, on ne ressaisit pas. */}
-      {aprsInscription && (() => {
-        const ch = aprsInscription.char;
-        const nom = ch.name.toLowerCase();
-        const dejaLa = CRENEAUX.filter(c => presences.some(p => p.creneau === c.id && p.pseudo.toLowerCase() === nom)).map(c => c.id);
-        const choix = dispoChoix ?? dejaLa;
-        const fermer = () => { setDispoChoix(null); setAprsInscription(null); };
-        const valider = (encore: boolean) => { enregistrerDispos(ch, choix); setDispoChoix(null); setAprsInscription(null); if (!encore) return; };
-        return (
-          <div onClick={fermer} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-            <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, maxWidth: 440, width: "100%" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                <ClassLogo name={classeAffichee(ch.class)} size={26} />
-                <div>
-                  <div className="font-heading" style={{ fontWeight: 700, fontSize: 16 }}>{ch.name}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-muted)" }}>inscrit sur {lbl(aprsInscription.slot)}</div>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "10px 0 9px" }}>
-                Tu seras là quand ? Coche les deux si tu es disponible mercredi <b>et</b> dimanche.
+      {/* ── La question posée en arrivant ─────────────────────────────────
+          Annoncer sa présence était une case à cocher au milieu d'un tableau :
+          on passait devant sans la voir, et l'effectif restait vide jusqu'au
+          rappel Discord de la veille. On la pose donc franchement, une fois par
+          séance — et « Pas cette fois » compte comme une réponse, sinon la
+          fenêtre reviendrait à chaque visite. */}
+      {popupPresence && seance && (
+        <div onClick={fermerPopup} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, maxWidth: 460, width: "100%" }}>
+            <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 17, fontWeight: 700 }}>
+              <Icon name="key" size={17} style={{ color: "var(--orange)" }} />Chambre secrète — {dateSeance(seance.debut)}
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "9px 0 4px" }}>
+              Tu seras là ? Coche les personnages que tu comptes jouer {delai(seance.debut)}.
+            </p>
+            {manques.length > 0 && (
+              <p style={{ fontSize: 12, color: "var(--orange)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+                <Icon name="alert" size={12} />Il manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}
               </p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-                {CRENEAUX.map(cr => {
-                  const on = choix.includes(cr.id);
+            )}
+            {myChars.length === 0 ? (
+              <div style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "10px 0 16px" }}>Crée un personnage dans ton profil pour annoncer ta présence.</div>
+            ) : (
+              <div style={{ display: "flex", gap: 7, flexWrap: "wrap", margin: "10px 0 16px" }}>
+                {myChars.map(ch => {
+                  const on = annonces.some(p => p.pseudo.toLowerCase() === ch.name.toLowerCase());
                   return (
-                    <button key={cr.id} onClick={() => setDispoChoix(on ? choix.filter(x => x !== cr.id) : [...choix, cr.id])}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 700, padding: "9px 15px", borderRadius: 10, cursor: "pointer",
+                    <button key={ch.id} onClick={() => { basculerPresence(ch); marquerRepondu(); }}
+                      title={on ? "Retirer ma présence" : "Je serai là avec ce personnage"}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 700, padding: "8px 13px", borderRadius: 20, cursor: "pointer",
                         border: `1px solid ${on ? "var(--green)" : "var(--border)"}`,
                         background: on ? "rgba(74,222,128,.13)" : "var(--bg-3)",
                         color: on ? "var(--green)" : "var(--text-muted)" }}>
-                      <Icon name={on ? "check" : "plus"} size={13} />{cr.label}
+                      <ClassLogo name={classeAffichee(ch.class)} size={17} />
+                      {ch.name}
+                      <Icon name={on ? "check" : "plus"} size={12} />
                     </button>
                   );
                 })}
               </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
-                <button onClick={fermer} style={{ fontSize: 12.5, padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer" }}>
-                  Plus tard
-                </button>
-                {/* « Un autre personnage » enregistre AUSSI les créneaux : sinon
-                    enchaîner les inscriptions perdrait ce qu'on vient de cocher. */}
-                <button onClick={() => valider(true)} style={{ fontSize: 12.5, fontWeight: 600, padding: "9px 14px", borderRadius: 9, border: "1px solid var(--orange)", background: "transparent", color: "var(--orange)", cursor: "pointer" }}>
-                  Enregistrer et en inscrire un autre
-                </button>
-                <button className="vg-btn" onClick={() => valider(false)}>Terminé</button>
-              </div>
+            )}
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", flexWrap: "wrap" }}>
+              <button onClick={fermerPopup} style={{ fontSize: 12.5, padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer" }}>
+                Pas cette fois
+              </button>
+              <button className="vg-btn" onClick={fermerPopup}>C&apos;est noté</button>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
     </div>
   );
 }

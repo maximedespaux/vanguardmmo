@@ -146,6 +146,64 @@ export function presencesDu(state: CompoState, creneau: Creneau): Presence[] {
   return state.presences.filter((p) => p.creneau === creneau);
 }
 
+/* ── La séance qu'on prépare ─────────────────────────────────────────────────
+   Les deux créneaux s'affichaient côte à côte, en permanence : on organisait
+   dimanche en même temps que mercredi, et une annonce de la semaine passée
+   comptait encore. On ne prépare qu'une séance à la fois — la prochaine — et
+   les fenêtres, décidées avec Maxime, s'enchaînent sans trou :
+     · de dimanche 21h00 à mercredi 21h30 → on prépare le MERCREDI ;
+     · de mercredi 21h30 à dimanche 21h00 → on prépare le DIMANCHE.
+   La demi-heure qui suit 21h le mercredi appartient encore à la séance en
+   cours : on ne bascule pas sur la suivante pendant qu'elle se joue. */
+export type Seance = {
+  creneau: Creneau;
+  /** Le début de la séance visée. */
+  debut: Date;
+  /** Le moment où sa préparation a commencé — ce qui date les annonces valides. */
+  ouverture: Date;
+  label: string;
+};
+
+const minutesSemaine = (d: Date) => d.getDay() * 1440 + d.getHours() * 60 + d.getMinutes();
+const DIM_21H = 0 * 1440 + 21 * 60;
+const MER_FIN = 3 * 1440 + 21 * 60 + 30;
+
+/** La prochaine occurrence de ce jour à cette heure, à partir de `ref`. */
+function versLAvant(ref: Date, jour: number, h: number, m: number): Date {
+  const d = new Date(ref);
+  d.setHours(h, m, 0, 0);
+  while (d.getDay() !== jour || d.getTime() < ref.getTime()) d.setDate(d.getDate() + 1);
+  return d;
+}
+/** La dernière occurrence de ce jour à cette heure, avant `ref`. */
+function versLArriere(ref: Date, jour: number, h: number, m: number): Date {
+  const d = new Date(ref);
+  d.setHours(h, m, 0, 0);
+  while (d.getDay() !== jour || d.getTime() > ref.getTime()) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+export function prochaineSeance(maintenant: Date = new Date()): Seance {
+  const t = minutesSemaine(maintenant);
+  if (t >= DIM_21H && t < MER_FIN) {
+    // −30 min : pendant la séance du mercredi, c'est encore elle la prochaine.
+    const debut = versLAvant(new Date(maintenant.getTime() - 30 * 60_000), 3, 21, 0);
+    return { creneau: "mer", debut, ouverture: versLArriere(debut, 0, 21, 0), label: "Mercredi 21h" };
+  }
+  const debut = versLAvant(maintenant, 0, 21, 0);
+  return { creneau: "dim", debut, ouverture: versLArriere(debut, 3, 21, 30), label: "Dimanche 21h" };
+}
+
+/**
+ * Les annonces qui valent pour CETTE séance : celles faites depuis l'ouverture
+ * de sa préparation. Sans cette borne, un « je serai là » d'il y a trois
+ * semaines gonflait encore l'effectif et le rappel Discord annonçait du monde
+ * qui n'avait rien promis pour ce soir-là.
+ */
+export function presencesSeance(state: CompoState, seance: Seance): Presence[] {
+  return state.presences.filter((p) => p.creneau === seance.creneau && p.ts >= seance.ouverture.getTime());
+}
+
 /** Ceux que le staff a retenus pour jouer — la composition arrêtée du soir. */
 export function retenusDu(state: CompoState, creneau: Creneau): Presence[] {
   return presencesDu(state, creneau).filter((p) => p.retenu);

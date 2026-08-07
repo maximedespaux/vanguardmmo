@@ -100,11 +100,29 @@ function guessType(name){const n=(name||'').toLowerCase();
   if(n.includes('tigre'))return 'Tigre blanc';if(n.includes('lion'))return 'Lion';if(n.includes('lapin'))return 'Lapin';
   if(n.includes('renard'))return 'Renard à neuf queues';if(n.includes('dragon'))return 'Dragon';if(n.includes('licorne'))return 'Licorne';return 'Licorne';}
 
+/**
+ * L'étui d'un carnet, en image.
+ *
+ * C'était une pastille de couleur avec la légende « gris/bleu/rouge » dans le
+ * titre du panneau : il fallait lire une phrase pour comprendre un point de
+ * couleur. L'objet du jeu se reconnaît, lui, du premier coup d'œil.
+ *
+ * Trois fichiers à déposer dans /public/assets/site/etuis :
+ *   etui-1 = Gris (Commun) · etui-2 = Bleu (Rare) · etui-3 = Rouge (Épique &
+ *   Légendaire). Tant qu'ils manquent, on retombe sur la pastille — la page ne
+ *   montre jamais d'image cassée.
+ */
+function etuiHtml(coul,col){
+  var n=coul==='Bleu'?2:(coul==='Rouge'?3:1);
+  var repli="var s=document.createElement('span');s.className='dot';s.style.background='"+col+"';this.replaceWith(s);";
+  return '<img class="etui" src="/assets/site/etuis/etui-'+n+'.webp" alt="" title="Étui '+esc(coul)+'"'
+    +' onerror="if(!this.dataset.png){this.dataset.png=1;this.src=\'/assets/site/etuis/etui-'+n+'.png\';}else{'+repli+'}">';
+}
 function renderCarnets(){const c=C();ST();
-  document.getElementById('carnetsPanel').innerHTML=`<h3><i class=vgi-book></i> Carnets des Arcanes — ${esc(c.name)} <span style="color:var(--mut);font-weight:400;font-size:11px;text-transform:none">(liés au personnage · partagés entre tous ses stuffs · <i class=vgi-star></i> complet = toutes les pages · <i class=vgi-star></i> base = 1 carte de chaque · Étui gris/bleu/rouge = Commun/Rare/Épique-Lég.)</span></h3>
+  document.getElementById('carnetsPanel').innerHTML=`<h3><i class=vgi-book></i> Carnets des Arcanes — ${esc(c.name)} <span style="color:var(--mut);font-weight:400;font-size:11px;text-transform:none">liés au personnage, partagés entre ses stuffs</span></h3>
    <div class="carnets">${CARNETS.map((cn,i)=>{const on=(c.carnets||[]).includes(i);const full=(c.carnetsFull||[]).includes(i);const bonus=full?cn.complet:cn.base;
      return `<div class="carn ${on?'on':''}" style="border-left:3px solid ${cn.col};box-shadow:inset 14px 0 22px -16px ${cn.col}">
-         <div class="cn" onclick="toggleCarnet(${i})"><span class="dot" style="background:${cn.col}" title="Étui ${esc(cn.etui_couleur)}"></span>${esc(cn.nom)}</div>
+         <div class="cn" onclick="toggleCarnet(${i})">${etuiHtml(cn.etui_couleur,cn.col)}${esc(cn.nom)}</div>
          <div style="font-size:9px;color:var(--mut);margin-bottom:4px">Étui ${esc(cn.etui_couleur)} · ${esc(cn.rarete)} · ${cn.tier===1?'1 carte de chaque (set complet)':cn.copies+' carte(s) de chaque'}</div>
          <div class="cc-cards">${cn.cartes.map(ca=>`<span class="cc-card r-${(ca.rarete||'').toLowerCase()}">${esc(ca.nom)}</span>`).join('')}</div>
          ${on&&cn.tier>1?`<div class="seg"><div class="sg ${!full?'on':''}" onclick="setMode(${i},false)"><i class=vgi-star></i> Base</div><div class="sg ${full?'on':''}" onclick="setMode(${i},true)"><i class=vgi-star></i> Complet</div></div>`:''}

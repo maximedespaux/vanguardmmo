@@ -1,0 +1,11 @@
+Étuis des Carnets des Arcanes — 3 images à déposer ici.
+
+  etui-1  →  Étui Gris   (carnets Communs)
+  etui-2  →  Étui Bleu   (carnets Rares)
+  etui-3  →  Étui Rouge  (carnets Épiques & Légendaires)
+
+Format : .webp de préférence (.png accepté en repli), carré, ~64×64 px, fond
+transparent. Nommer exactement etui-1.webp, etui-2.webp, etui-3.webp.
+
+Tant qu'une image manque, l'AirBuilder retombe sur la pastille de couleur :
+la page ne montre jamais d'image cassée.

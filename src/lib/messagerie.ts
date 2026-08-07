@@ -46,6 +46,15 @@ export type Conversation = {
   enLigne: boolean;
   /** "perins" (règle par défaut) ou "troc" — visible sans ouvrir, comme le prix. */
   paiement: "perins" | "troc";
+  /**
+   * De quoi il s'agit, dit avant d'ouvrir : un ACHAT au coffre (l'objet y dort,
+   * il a un tarif) ou une REQUÊTE d'objet (il faut lui trouver un détenteur, ou
+   * le farmer). Les deux suivaient le même chemin sans jamais se distinguer, et
+   * on ne savait pas si on lisait une commande ou un appel à la guilde.
+   */
+  categorie: "achat" | "requete";
+  /** La quête de guilde ouverte depuis cette demande, s'il y en a une. */
+  queteId: string | null;
   /** L'objet exact demandé, quand la demande vient du builder. */
   spec: unknown;
   /** Combien de demandes ce membre a déjà faites — de quoi juger sans quitter
@@ -87,7 +96,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, characterName: true, createdAt: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, characterName: true, createdAt: true, origine: true, queteId: true, batchId: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
@@ -149,6 +158,13 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       // lui laisserait croire qu'un officier précis est devant l'écran.
       enLigne: false,
       paiement: r.modePaiement === "troc" ? "troc" : "perins",
+      // Les demandes d'avant la distinction n'ont pas d'origine : le panier
+      // groupait par batchId et fixait un tarif, l'objet sur mesure portait une
+      // spec. On retombe dessus plutôt que de tout marquer « achat ».
+      categorie: (r.origine === "achat" || r.origine === "requete")
+        ? r.origine
+        : (r.spec ? "requete" : r.batchId ? "achat" : "requete"),
+      queteId: r.queteId ?? null,
       spec: r.spec ?? null,
       demandesDeLAuteur: parAuteur.get(r.userId) ?? 0,
       detail: [

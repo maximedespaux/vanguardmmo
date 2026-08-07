@@ -38,6 +38,8 @@ type Quete = {
   auteur: Personne; createdAt: string; livreeAt: string | null;
   /** Ce qui est reçu, ce qui est promis, ce qui manque encore. */
   contributions: Apport[]; confirme: number; annonce: number; reste: number;
+  /** La demande dont la quête est née, quand elle vient d'une requête d'objet. */
+  requeteId?: string | null;
 };
 type Progression = { moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number } };
 
@@ -680,6 +682,14 @@ export default function QuetesPage() {
                     <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700 }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
                     {x.manque != null && x.manque > 0 && (
                       <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
+                    )}
+                    {/* Née d'une requête d'objet : le suivi se fait ici, la
+                        discussion reste dans la conversation — et on passe de
+                        l'un à l'autre sans avoir à la retrouver. */}
+                    {x.requeteId && (
+                      <a href={`/messages?fil=req:${x.requeteId}`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--purple)", color: "var(--purple)", textDecoration: "none", whiteSpace: "nowrap" }}>
+                        <Icon name="package" size={11} />Requête objet →
+                      </a>
                     )}
                   </div>
 

@@ -90,6 +90,8 @@ export async function POST(req: Request) {
         data: {
           userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
           kind: "ITEM", item: name, quantity: quantite,
+          // Panier de la boutique : l'objet est au coffre, c'est un achat.
+          origine: "achat",
           cat: (it?.cat ?? "").toString().slice(0, 60).trim() || null,
           characterName: perso,
           priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
@@ -123,6 +125,9 @@ export async function POST(req: Request) {
     data: {
       userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
       kind, item, quantity: Math.max(1, Math.floor(Number(b.quantity) || 1)),
+      // Objet sur mesure ou demande libre : il faut d'abord lui trouver un
+      // détenteur, ou le farmer. Ce n'est pas un achat au comptoir.
+      origine: "requete",
       reason: (b.reason ?? "").toString().slice(0, 500).trim() || null,
       characterName: perso,
       // L'objet exact venu du builder. Normalisé AVANT d'entrer en base : ce qui

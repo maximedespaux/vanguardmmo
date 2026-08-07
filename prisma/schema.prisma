@@ -637,6 +637,11 @@ model BankRequest {
   discordId         String // pour le MP du bot
   characterName     String?
   kind              BankRequestKind   @default(OBJET_IG)
+  /// D'où vient la demande — et donc comment on y répond :
+  /// "achat"   = panier de la boutique, l'objet dort au coffre, c'est un achat direct ;
+  /// "requete" = objet sur mesure ou introuvable, il faut lui trouver un détenteur.
+  /// Les deux suivaient le même chemin sans jamais se distinguer à l'écran.
+  origine           String?
   item              String? // nom de l'objet / des items
   quantity          Int               @default(1)
   reason            String?

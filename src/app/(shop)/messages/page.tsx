@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
 import { specDepuisJson } from "@/lib/specObjet";
@@ -48,6 +48,26 @@ function quandCourt(iso: string) {
  * « clos » = l'archive, qu'on ne veut justement PAS voir le reste du temps.
  */
 type Filtre = "afaire" | "tous" | "nonlus" | "clos";
+
+/**
+ * De quoi parle cette demande — un achat, ou une requête d'objet.
+ *
+ * Les deux arrivaient dans la même liste, avec la même icône de caddie : rien
+ * ne disait si on lisait une commande à servir depuis le coffre ou un appel à
+ * la guilde pour trouver l'objet. Ce sont pourtant deux façons d'y répondre.
+ */
+const CATEGORIES = {
+  achat: { label: "Achat au coffre", icone: "cart" as IconName, couleur: "var(--green)" },
+  requete: { label: "Requête objet", icone: "package" as IconName, couleur: "var(--purple)" },
+};
+function BadgeCategorie({ categorie, taille = 10 }: { categorie: "achat" | "requete"; taille?: number }) {
+  const c = CATEGORIES[categorie];
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, padding: "1px 7px", borderRadius: 6, border: `1px solid ${c.couleur}`, color: c.couleur, fontWeight: 700, fontSize: taille, textTransform: "uppercase", letterSpacing: .4, whiteSpace: "nowrap" }}>
+      <Icon name={c.icone} size={taille - 1} />{c.label}
+    </span>
+  );
+}
 
 export default function MessagesPage() {
   const { data: session } = useSession();
@@ -171,7 +191,7 @@ export default function MessagesPage() {
                 <button key={c.filId} onClick={() => ouvrir(c)}
                   style={{ textAlign: "left", display: "grid", gap: 4, padding: "9px 11px", borderRadius: 10, cursor: "pointer", border: `1px solid ${actif ? "var(--orange)" : "transparent"}`, background: actif ? "rgba(255,140,26,.10)" : c.nonLus ? "rgba(255,140,26,.05)" : "var(--bg-3)", color: "var(--text)", fontFamily: "inherit" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                    <Icon name="cart" size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />
+                    <Icon name={c.categorie === "achat" ? "cart" : "package"} size={13} style={{ color: c.categorie === "achat" ? "var(--green)" : "var(--purple)", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>{c.titre}</span>
                     <span style={{ fontSize: 10.5, color: "var(--text-muted)", flexShrink: 0 }}>{quandCourt(c.quand)}</span>
                   </div>
@@ -224,7 +244,17 @@ export default function MessagesPage() {
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flexWrap: "wrap", paddingBottom: 11, marginBottom: 13, borderBottom: "1px solid var(--border)" }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700 }}>{courante.titre}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 15, fontWeight: 700 }}>{courante.titre}</span>
+                    <BadgeCategorie categorie={courante.categorie} taille={10.5} />
+                    {/* Une requête suivie à plusieurs se lit mieux dans les
+                        quêtes : le fil, lui, part vite en trente messages. */}
+                    {courante.queteId && (
+                      <Link href={`/quetes?q=${courante.queteId}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
+                        <Icon name="target" size={11} />Suivre dans les quêtes →
+                      </Link>
+                    )}
+                  </div>
                   <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
                     <span style={{ width: 7, height: 7, borderRadius: 4, background: courante.enLigne ? "var(--green)" : "var(--border)" }} />
                     avec <b style={{ color: "var(--text)" }}>{courante.avec}</b>

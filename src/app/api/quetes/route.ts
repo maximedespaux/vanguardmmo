@@ -28,7 +28,14 @@ export async function GET() {
     orderBy: [{ statut: "asc" }, { createdAt: "desc" }],
     take: 120,
   });
-  return NextResponse.json(quetes.map(serialiserQuete));
+  // La demande dont chaque quête est née : le suivi se fait ici, la discussion
+  // reste là-bas, et on doit pouvoir passer de l'un à l'autre sans chercher.
+  const demandes = await prisma.bankRequest.findMany({
+    where: { queteId: { in: quetes.map((q) => q.id) } },
+    select: { id: true, queteId: true, item: true },
+  });
+  const parQuete = new Map(demandes.map((d) => [d.queteId!, d.id]));
+  return NextResponse.json(quetes.map((q) => ({ ...serialiserQuete(q), requeteId: parQuete.get(q.id) ?? null })));
 }
 
 export async function POST(req: Request) {

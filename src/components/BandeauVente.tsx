@@ -313,8 +313,8 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           {v.queteId ? (
             <>
               <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Une quête de guilde est ouverte pour cet objet.</span>
-              <Link href="/quetes" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
-                <Icon name="target" size={13} />Voir la quête
+              <Link href={`/quetes?q=${v.queteId}`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
+                <Icon name="target" size={13} />Suivre la quête →
               </Link>
             </>
           ) : (

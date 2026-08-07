@@ -487,11 +487,35 @@ function openRecipe(key){const base=findCraft(key)||{cost:[]};const cur=(S.recip
      le comportement par defaut plutot qu'une ligne a supprimer. */
   window.__prod=craftProduitsSpeciaux(base)?craftProduits(base).map(function(x){return {n:x.n,q:x.q};}):[];
   drawRecipe(key);}
+/**
+ * La liste des objets de la BASE (onglet Paramètres), proposée à la saisie.
+ *
+ * Les ingrédients se tapaient à la main, et le rapprochement avec le coffre se
+ * faisait ensuite sur le nom : une faute de frappe, et l'ingrédient devenait
+ * introuvable — le calculateur affichait « 0 / 40 » alors que le coffre en
+ * était plein. On propose donc les noms existants, et on dit tout de suite
+ * quand un nom ne correspond à rien.
+ */
+function listeObjetsBase(){
+  var vus={},out=[];
+  (catalog()||[]).forEach(function(it){ var n=(it.item||'').trim(); if(n&&!vus[n]){vus[n]=1;out.push(n);} });
+  return out.sort(function(a,b){return a.localeCompare(b,'fr');});
+}
+function optionsObjets(){
+  return '<datalist id="__objets">'+listeObjetsBase().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>';
+}
+/** Vert : l'objet est dans la base. Rouge : personne ne le trouvera. */
+function marqueObjet(nom){
+  if(!nom||!String(nom).trim())return '';
+  return iqFind(nom)
+    ? '<span title="Objet reconnu dans la base" style="color:var(--green);font-size:11px;white-space:nowrap"><i class=vgi-check></i></span>'
+    : '<span title="Ce nom ne correspond à aucun objet : ajoute-le dans Paramètres, sinon le stock ne sera jamais trouvé." style="color:var(--red);font-size:11px;white-space:nowrap"><i class=vgi-alert></i> inconnu</span>';
+}
 function drawRecipe(key){const cur=window.__rec;
-  const rows=cur.map((r,i)=>`<div class="ing"><span class="x" style="cursor:pointer" title="Changer l'icône" onclick="pickIngIcon(${i},'${sqa(key)}')">${img(r.ic)||'<i class=vgi-package></i>'}</span><input class="inp" style="flex:1" value="${esc(r.n)}" oninput="window.__rec[${i}].n=this.value" placeholder="Nom de l'ingrédient"><input class="inp" style="width:90px" value="${esc(r.q)}" oninput="window.__rec[${i}].q=this.value" placeholder="Qté"><label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center">slot<input type="checkbox" ${r.slot?'checked':''} onchange="window.__rec[${i}].slot=this.checked"></label><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__rec.splice(${i},1);drawRecipe('${sqa(key)}')"><i class=vgi-x></i></span></div>`).join('');
+  const rows=cur.map((r,i)=>`<div class="ing"><span class="x" style="cursor:pointer" title="Changer l'icône" onclick="pickIngIcon(${i},'${sqa(key)}')">${img(r.ic)||'<i class=vgi-package></i>'}</span><input class="inp" style="flex:1" list="__objets" value="${esc(r.n)}" oninput="window.__rec[${i}].n=this.value" onchange="drawRecipe('${sqa(key)}')" placeholder="Choisis un objet de la base…">${marqueObjet(r.n)}<input class="inp" style="width:90px" value="${esc(r.q)}" oninput="window.__rec[${i}].q=this.value" placeholder="Qté"><label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center">slot<input type="checkbox" ${r.slot?'checked':''} onchange="window.__rec[${i}].slot=this.checked"></label><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__rec.splice(${i},1);drawRecipe('${sqa(key)}')"><i class=vgi-x></i></span></div>`).join('');
   var prods=window.__prod||[];
-  var prodRows=prods.map(function(r,i){return '<div class="ing"><input class="inp" style="flex:1" value="'+esc(r.n)+'" oninput="window.__prod['+i+'].n=this.value" placeholder="Objet produit"><input class="inp" style="width:90px" value="'+esc(r.q)+'" oninput="window.__prod['+i+'].q=this.value" placeholder="Qté"><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__prod.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
-  openSheet(`<h3><i class=vgi-edit></i> Recette — ${esc(key)}</h3><div class="hint">Renseigne les ingrédients et quantités. Coche « slot » pour les grosses ressources.</div>
+  var prodRows=prods.map(function(r,i){return '<div class="ing"><input class="inp" style="flex:1" list="__objets" value="'+esc(r.n)+'" oninput="window.__prod['+i+'].n=this.value" onchange="drawRecipe(\''+sqa(key)+'\')" placeholder="Objet produit">'+marqueObjet(r.n)+'<input class="inp" style="width:90px" value="'+esc(r.q)+'" oninput="window.__prod['+i+'].q=this.value" placeholder="Qté"><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__prod.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
+  openSheet(`${optionsObjets()}<h3><i class=vgi-edit></i> Recette — ${esc(key)}</h3><div class="hint">Choisis les ingrédients <b>dans la base</b> (onglet Paramètres) : un nom tapé au hasard ne sera jamais rapproché du coffre. Un objet qui manque s'ajoute dans Paramètres. Coche « slot » pour les grosses ressources.</div>
    <div id="recrows">${rows||'<div class="mut" style="font-size:12px">Aucun ingrédient.</div>'}</div>
    <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({n:'',q:'',slot:false,ic:''});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Ingrédient</button></div>
    <h3 style="margin-top:14px"><i class=vgi-package></i> Ce que la recette produit</h3>

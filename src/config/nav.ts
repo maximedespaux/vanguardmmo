@@ -89,7 +89,9 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Les objets du coffre commun, à l'achat ou en dette." },
       { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Ce que tu as demandé, son état, et la discussion qui va avec." },
-      { label: "Coffre & crafts", href: "/coffre", icon: "vault", desc: "Le stock réel de la guilde, coffre par coffre.", acces: "admin" },
+      { label: "Coffre", href: "/coffre?tab=bank", icon: "vault", desc: "Le stock réel de la guilde, coffre par coffre.", acces: "admin" },
+      { label: "Crafts", href: "/coffre?tab=craft", icon: "hammer", desc: "Les recettes, ce qu'elles coûtent et ce qu'on peut fabriquer.", acces: "admin" },
+      { label: "Base des objets", href: "/coffre?tab=set", icon: "settings", desc: "Les objets, leurs catégories et leurs seuils — la source de tout le reste.", acces: "admin" },
       { label: "Plan de farm", href: "/plan-farm", icon: "sprout-farm", desc: "Ce qui manque au seuil, par catégorie.", acces: "admin" },
     ],
   },

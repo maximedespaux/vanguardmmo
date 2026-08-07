@@ -314,9 +314,29 @@ export default function QuetesPage() {
           formulaire. Le mettre en tête poussait les quêtes sous la ligne de
           flottaison — on ne voyait plus ce qu'il y avait à faire. */}
       {onglet === "miennes" && (
+      <>
+      {/* Ce que fait le bouton, dit avant de le presser.
+          « Mes requêtes » ne disait pas ce qui se passait ensuite : on remplit
+          un formulaire, et l'objet devient une QUÊTE PRINCIPALE que toute la
+          guilde voit et peut prendre. C'est un coup de main qu'on demande, pas
+          une commande qu'on passe — et c'est un bonus, pas un dû. */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "14px 16px", marginBottom: 14, borderRadius: 12, border: "1px solid rgba(255,140,26,.35)", background: "linear-gradient(135deg, rgba(255,140,26,.10), rgba(255,140,26,.03))" }}>
+        <Icon name="target" size={22} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
+        <div style={{ minWidth: 0 }}>
+          <div className="font-heading" style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>
+            Ce que tu demandes ici devient une <span style={{ color: "var(--orange)" }}>quête principale</span>
+          </div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Toute la guilde la voit et peut y contribuer, à plusieurs si besoin — chacun annonce ce qu&apos;il apporte,
+            tu confirmes à la réception, et personne ne farme deux fois la même chose.
+            <b style={{ color: "var(--text)" }}> C&apos;est un coup de main entre membres, pas un dû</b> : dis à quoi ça va
+            servir, c&apos;est ce qui donne envie de s&apos;en charger.
+          </div>
+        </div>
+      </div>
       <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 22 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
-          <Icon name="plus" size={14} />Demander de l&apos;aide
+          <Icon name="plus" size={14} />Demander de l&apos;aide à la guilde
         </div>
         <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 11 }}>
           Cherche dans le coffre, mets une quantité sur ce qu&apos;il te faut. Tout est à 0 tant que tu n&apos;as rien demandé.
@@ -388,7 +408,7 @@ export default function QuetesPage() {
           </button>
         </div>
       </div>
-
+      </>
       )}
 
       {onglet === "farm" && (

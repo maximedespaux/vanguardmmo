@@ -295,8 +295,14 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
 
           {choisi && (
             <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
+              {/* La monnaie se dit AVANT le montant, comme dans « Acheter au
+                  coffre » : sinon « 2 400 » se lit des deux façons, et le
+                  vendeur composait son tarif sans savoir ce que l'autre a. */}
+              <ChoixPaiement valeur={paiement} onChange={setPaiement} />
               <label><span style={etiquette}>Prix estimé (facultatif)</span>
-                <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)} placeholder="en périns" style={champ} />
+                <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
+                  placeholder={paiement === "airpoints" ? "en Airpoints" : paiement === "mixte" ? "en périns (la part en AP se convient dans la conversation)" : "en périns"}
+                  style={champ} />
               </label>
               <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Une précision ? (facultatif)" style={champ} />
               <button className="vg-btn" onClick={ajouter} style={{ justifyContent: "center" }}>
@@ -304,7 +310,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               </button>
               <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.4 }}>
                 <Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />
-                Le coût en crédits suit le prix estimé (1 crédit ≈ 1 000 périns). Le staff l&apos;ajuste s&apos;il ne colle pas.
+                Le prix n&apos;est qu&apos;une estimation : c&apos;est le détenteur qui annonce son tarif, et il se négocie ensuite dans la conversation.
               </div>
             </div>
           )}
@@ -329,9 +335,6 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                     </button>
                   </div>
                 ))}
-              </div>
-              <div style={{ marginBottom: 9 }}>
-                <ChoixPaiement valeur={paiement} onChange={setPaiement} />
               </div>
               <label style={{ display: "block", marginBottom: 9 }}>
                 <span style={etiquette}>Pseudo en jeu *</span>

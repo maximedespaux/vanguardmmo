@@ -113,6 +113,46 @@ def normaliser(im: Image.Image, canevas: int = CANEVAS, marge: int = MARGE) -> I
     return sortie
 
 
+def silhouette(im: Image.Image, bord: int = 2, frac: float = 0.18, gamma: float = 0.9, teinte=(214, 218, 228)) -> Image.Image:
+    """Transforme une case d'inventaire du jeu en silhouette claire détourée.
+
+    Les cases fournies par le jeu sont des vignettes complètes : un cadre, un
+    fond dégradé très sombre, et la forme de la pièce à peine plus claire. Les
+    neuf icônes déjà en place, elles, sont des silhouettes monochromes claires
+    (205,208,218) sur transparent. Pour que les vingt-deux emplacements se
+    ressemblent, on refait le même traitement : on jette le cadre, on lit la
+    LUMINANCE comme un masque, et on repeint la forme dans la teinte commune.
+    """
+    im = im.convert("RGBA")
+    if bord:
+        im = im.crop((bord, bord, im.width - bord, im.height - bord))
+    px = im.load()
+    lums = sorted((px[x, y][0] + px[x, y][1] + px[x, y][2]) // 3 for x in range(im.width) for y in range(im.height))
+    # Le seuil se calcule sur CETTE case : la mediane est le fond, le maximum
+    # le point le plus clair du dessin. Un seuil absolu convenait a l'anneau et
+    # effacait la boucle d'oreille, dessinee deux fois plus sombre.
+    median, haut = lums[len(lums) // 2], (lums[-1] or 1)
+    seuil = median + (haut - median) * frac
+    if haut <= seuil + 1:
+        return im
+    sortie = Image.new("RGBA", im.size)
+    donnees = []
+    for y in range(im.height):
+        for x in range(im.width):
+            r, v, b, a = px[x, y]
+            lum = (r + v + b) // 3
+            if a == 0 or lum <= seuil:
+                donnees.append((0, 0, 0, 0))
+            else:
+                # Racine carrée : sans elle, une forme dont la luminance monte
+                # doucement ressort presque transparente et se perd sur le fond.
+                ratio = ((lum - seuil) / (haut - seuil)) ** gamma
+                donnees.append((*teinte, min(255, round(255 * ratio))))
+    # putdata attend l'ordre ligne par ligne : on l'a construit ainsi.
+    sortie.putdata(donnees)
+    return sortie
+
+
 def inspecter(chemin: str) -> None:
     im = Image.open(chemin).convert("RGBA")
     print(f"{os.path.basename(chemin)} : {im.width}×{im.height}")
@@ -153,6 +193,16 @@ def main() -> None:
     elif cmd == "decouper":
         chemin, cols, lignes, prefixe = sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
         decouper(chemin, cols, lignes, prefixe)
+    elif cmd == "silhouette":
+        # silhouette <planche> <coupes séparées par des virgules> <prefixe>
+        chemin, coupes, prefixe = sys.argv[2], [int(v) for v in sys.argv[3].split(",")], sys.argv[4]
+        im = Image.open(chemin).convert("RGBA")
+        os.makedirs(os.path.dirname(prefixe) or ".", exist_ok=True)
+        for i, (a, b) in enumerate(zip(coupes, coupes[1:])):
+            case = im.crop((a, 0, b, im.height))
+            sortie = f"{prefixe}{i + 1:02d}.png"
+            normaliser(silhouette(case)).save(sortie)
+            print("écrit :", sortie)
     elif cmd == "normaliser":
         for f in sys.argv[2:]:
             normaliser(Image.open(f)).save(f)

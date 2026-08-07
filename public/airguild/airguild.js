@@ -326,7 +326,15 @@ function doRenameCat(oldc){var nv=(($('#rncat')||{}).value||'').trim();if(!nv)re
   save();render();reopenAddCat();agToast('Catégorie renommée en « '+nv+' » ',true);}
 function setCatAsset(c){if(!canEdit())return;var inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){keyMagenta(r.result,function(clean){S.catAssets=S.catAssets||{};S.catAssets[c]=clean;save();render();var b=document.getElementById('aiBody');if(b){b.innerHTML=aiCatHTML();vgDD();}agToast('Image de « '+c+' » mise à jour ',true);});};r.readAsDataURL(f);};inp.click();}
 function doAddItem(){const cat=$('#ic').value,cl=$('#icl').value.trim(),it=$('#ii').value.trim(),unit=$('#iu').value;if(!it)return;
-  const fin=icData=>{S.custom=S.custom||[];S.custom.push({id:'custom|'+cl+'|'+it+'|'+Date.now(),cat,classe:cl,item:it,unit,icData:icData||'',ic:'',prix:0});save();closeSheet();render();};
+  /* Lu AVANT closeSheet(), qui efface justement ce drapeau. */
+  const rt=window.__retourRecette;
+  const fin=icData=>{S.custom=S.custom||[];const nid='custom|'+cl+'|'+it+'|'+Date.now();S.custom.push({id:nid,cat,classe:cl,item:it,unit,icData:icData||'',ic:'',prix:0});save();closeSheet();render();
+    /* Venu d'une recette : on y retourne avec l'objet tout juste cree deja pose
+       sur une ligne — sinon il faudrait rouvrir le craft et le rechercher. */
+    if(rt&&rt.key){window.__retourRecette=null;openRecipe(rt.key);
+      if(rt.cible==='prod')window.__prod.push({id:nid,n:it,q:1});
+      else window.__rec.push({id:nid,n:it,q:'',slot:unit==='slot',ic:''});
+      drawRecipe(rt.key);agToast('« '+it+' » ajouté à la base et posé dans la recette.',true);}};
   const f=$('#iimg').files[0];
   if(f){const r=new FileReader();r.onload=()=>keyMagenta(r.result,fin);r.readAsDataURL(f);}else fin('');}
 function rmItem(id,custom){if(custom)S.custom=(S.custom||[]).filter(c=>c.id!==id);else{S.hidden=S.hidden||[];if(!S.hidden.includes(id))S.hidden.push(id);}save();render();}
@@ -397,7 +405,7 @@ function pourToBank(k){const f=S.farm[k];if(!f||!f.have)return;
 }
 
 /* ============ CRAFT ============ */
-function ingRow(o){const sl=o.slot&&typeof o.q==='number'?`<div class="b">${slotTxt(o.q)} · 1 slot = 9 999</div>`:'';return `<div class="ing">${img(o.ic)||'<span class="x"><i class=vgi-package></i></span>'}<div class="in"><div class="a">${esc(o.n)}</div>${sl}</div><div class="q">×${typeof o.q==='number'?fmt(o.q):o.q}</div></div>`;}
+function ingRow(o){const sl=o.slot&&typeof o.q==='number'?`<div class="b">${slotTxt(o.q)} · 1 slot = 9 999</div>`:'';return `<div class="ing">${ingIcone(o)}<div class="in"><div class="a">${esc(ingNom(o))}</div>${sl}</div><div class="q">×${typeof o.q==='number'?fmt(o.q):o.q}</div></div>`;}
 function craftCost(c){return S.recipes[c.key]||c.cost||[];}
 /* Ce que la recette PRODUIT. Decision de Maxime : un craft peut rendre un seul
    objet ou plusieurs, avec quantite — on garde les deux possibles.
@@ -430,7 +438,21 @@ function galleryRows(fnName,extra){var out='';['Badges','Mantras','Masques'].for
 //matching amélioré nom d'ingrédient -> objet du coffre (accents/ponctuation ignorés + sous-ensemble de mots)
 function iqNorm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
 function iqFind(name){var q=iqNorm(name);if(!q)return null;var cat=catalog()||[];var it=cat.find(function(x){return iqNorm(x.item)===q;});if(it)return it;var qt=q.split(' ').filter(Boolean);if(qt.length<2)return null;/* flou uniquement sur les noms à ≥2 mots (ex. « liane ruine prestigieuse » → « Liane de Ruine Prestigieuse ») : tous les mots de l'ingrédient présents dans le nom de l'objet. Pas d'appariement inverse (éviterait qu'un objet générique « Casque » matche « Casque du Berserker »). */return cat.find(function(x){var t=iqNorm(x.item);return t&&qt.every(function(w){return t.indexOf(w)>=0;});})||null;}
-function iqHolders(name){var it=iqFind(name);if(!it)return [];return (S.members||[]).map(function(m){return {m:m,q:+((S.inv[m]||{})[it.id])||0};}).filter(function(h){return h.q>0;}).sort(function(a,b){return b.q-a.q;});}
+/* ── Un ingrédient DÉSIGNE un objet de la base, il ne le décrit pas ───────────
+   La recette ne gardait qu'un nom, et le rapprochement avec le coffre se faisait
+   ensuite sur ce nom : une lettre de travers et le calculateur annonçait
+   « 0 / 40 » sur un coffre plein. L'icône, elle, se choisissait à part — d'où des
+   lianes dessinées en tas de boue. L'ingrédient porte donc l'identifiant de
+   l'objet ; son nom, son icône et son unité se lisent sur la base et la suivent.
+   Le rapprochement par nom reste en dernier recours, pour les recettes déjà
+   saisies et pour les tables de prestige qui ne référencent rien. */
+function objetParId(id){if(!id)return null;return (catalog()||[]).find(function(x){return x.id===id;})||null;}
+function ingObjet(o){if(!o)return null;if(typeof o==='string')return iqFind(o);return objetParId(o.id)||iqFind(o.n);}
+function ingNom(o){var it=ingObjet(o);return it?it.item:((typeof o==='string'?o:(o&&o.n))||'');}
+/* L'icône vient de la base dès que l'objet y est reconnu : elle montre alors
+   exactement l'objet que le calculateur va compter. */
+function ingIcone(o){var it=ingObjet(o);if(it)return '<span class="x">'+itemAsset(it)+'</span>';var p=img((o&&o.ic)||'');return '<span class="x">'+(p||'<i class=vgi-package></i>')+'</span>';}
+function iqHolders(o){var it=ingObjet(o);if(!it)return [];return (S.members||[]).map(function(m){return {m:m,q:+((S.inv[m]||{})[it.id])||0};}).filter(function(h){return h.q>0;}).sort(function(a,b){return b.q-a.q;});}
 function newCraftForm(){if(!canEdit())return;
   /* Categories existantes + celles deja creees a la main : la liste etait figee,
      donc impossible de ranger un nouvel objet ailleurs que dans les 4 d'origine. */
@@ -445,28 +467,26 @@ function doAddCraft(){var n=(($('#ncN')||{}).value||'').replace(/["'\\<>&]/g,'')
 function delCraft(key){if(!canEdit())return;agConfirm('Supprimer le craft « '+key+' » ?',function(){if((S.customCrafts||[]).some(function(c){return c.key===key;})){S.customCrafts=(S.customCrafts||[]).filter(function(c){return c.key!==key;});}else{S.hiddenCrafts=S.hiddenCrafts||[];if(S.hiddenCrafts.indexOf(key)<0)S.hiddenCrafts.push(key);}if(S.recipes)delete S.recipes[key];if(S.craftAssets)delete S.craftAssets[key];if(S.craftYields)delete S.craftYields[key];save();render();});}
 function editCraftIcon(key){if(!canEdit())return;openSheet('<h3><i class=vgi-image></i> Icône — '+esc(key)+'</h3><div class="hint">Choisis une icône fournie, ou colle un lien.</div>'+galleryRows('setCraftIcon',"'"+sqa(key)+"'")+'<div class="field" style="margin-top:10px"><label>Lien personnalisé (URL ou /chemin)</label><input class="inp" id="ciU" value="'+esc((S.craftAssets||{})[key]||'')+'" placeholder="/assets/... ou https://..."></div><div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="setCraftIcon(\''+sqa(key)+'\',\'\')">Retirer</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="setCraftIcon(\''+sqa(key)+'\',((document.getElementById(\'ciU\')||{}).value||\'\').trim())">Enregistrer</button></div></div>');}
 function setCraftIcon(key,path){S.craftAssets=S.craftAssets||{};if(path){S.craftAssets[key]=path;}else{delete S.craftAssets[key];}save();closeSheet();render();}
-function pickIngIcon(i,key){openSheet('<h3><i class=vgi-image></i> Icône ingrédient</h3><div class="hint">Choisis une icône, ou colle un lien.</div>'+galleryRows('setIngIcon',i+",'"+sqa(key)+"'")+'<div class="field" style="margin-top:10px"><label>Lien personnalisé</label><input class="inp" id="iiU" placeholder="/assets/... ou https://..."></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="drawRecipe(\''+sqa(key)+'\')">Retour</button> <button class="btn o" onclick="setIngIcon('+i+',\''+sqa(key)+'\',((document.getElementById(\'iiU\')||{}).value||\'\').trim())">Enregistrer</button></div>');}
-function setIngIcon(i,key,path){if(window.__rec&&window.__rec[i]){window.__rec[i].ic=path;}drawRecipe(key);}
 //── Calculateur de craft : recette -> stock du coffre (#Phase C) ──
 function craftBaseOpts(){return ['Σ Total guilde'].concat(S.members||[]);}
-function iqStock(name){var it=iqFind(name);if(!it)return {found:false,stock:0};var b=window.__craftBase||'Σ Total guilde';var st;if(b==='Σ Total guilde'){st=(S.members||[]).reduce(function(s,m){return s+(+((S.inv[m]||{})[it.id])||0);},0);}else{st=+((S.inv[b]||{})[it.id])||0;}return {found:true,stock:st,id:it.id,unit:it.unit,item:it.item};}
+function iqStock(o){var it=ingObjet(o);if(!it)return {found:false,stock:0};var b=window.__craftBase||'Σ Total guilde';var st;if(b==='Σ Total guilde'){st=(S.members||[]).reduce(function(s,m){return s+(+((S.inv[m]||{})[it.id])||0);},0);}else{st=+((S.inv[b]||{})[it.id])||0;}return {found:true,stock:st,id:it.id,unit:it.unit,item:it.item};}
 function craftCalc(key){var c=findCraft(key);if(!c)return;var cost=craftCost(c).filter(function(o){return o.n&&String(o.n).trim();});var base=window.__craftBase||'Σ Total guilde';
-  var rows=cost.map(function(o){var req=Number(o.q);var hasNum=!isNaN(req)&&o.q!==''&&o.q!=='?';var s=iqStock(o.n);var ok=hasNum?(s.stock>=req):null;var col=ok===null?'var(--mut)':(ok?'var(--green)':'var(--red)');var poss=hasNum?((s.found?s.stock:0)+' / '+req):('? / '+(o.q||'?'));var hold=iqHolders(o.n);var holdTxt=hold.length?'<div class="mut" style="font-size:10px;margin-top:1px"><i class=vgi-user></i> '+hold.slice(0,4).map(function(h){return esc(h.m)+' ×'+fmt(h.q);}).join(', ')+(hold.length>4?' +'+(hold.length-4)+' autre(s)':'')+'</div>':(s.found?'<div class="mut" style="font-size:10px;margin-top:1px">Aucun membre n\'en a en coffre</div>':'');return '<div class="ing"><span class="x">'+(img(o.ic)||'<i class=vgi-package></i>')+'</span><div class="in"><div class="a">'+esc(o.n)+(s.found?'':' <span class="mut" style="font-size:9px">(pas au coffre)</span>')+'</div>'+holdTxt+'</div><div class="q" style="color:'+col+';font-weight:700">'+poss+' '+(ok===null?'':(ok?'<i class=vgi-check></i>':'<i class=vgi-alert></i>'))+'</div></div>';}).join('');
+  var rows=cost.map(function(o){var req=Number(o.q);var hasNum=!isNaN(req)&&o.q!==''&&o.q!=='?';var s=iqStock(o);var ok=hasNum?(s.stock>=req):null;var col=ok===null?'var(--mut)':(ok?'var(--green)':'var(--red)');var poss=hasNum?((s.found?s.stock:0)+' / '+req):('? / '+(o.q||'?'));var hold=iqHolders(o);var holdTxt=hold.length?'<div class="mut" style="font-size:10px;margin-top:1px"><i class=vgi-user></i> '+hold.slice(0,4).map(function(h){return esc(h.m)+' ×'+fmt(h.q);}).join(', ')+(hold.length>4?' +'+(hold.length-4)+' autre(s)':'')+'</div>':(s.found?'<div class="mut" style="font-size:10px;margin-top:1px">Aucun membre n\'en a en coffre</div>':'');return '<div class="ing">'+ingIcone(o)+'<div class="in"><div class="a">'+esc(ingNom(o))+(s.found?'':' <span style="color:var(--red);font-size:9px">(hors base — à relier dans la recette)</span>')+'</div>'+holdTxt+'</div><div class="q" style="color:'+col+';font-weight:700">'+poss+' '+(ok===null?'':(ok?'<i class=vgi-check></i>':'<i class=vgi-alert></i>'))+'</div></div>';}).join('');
   var numeric=cost.filter(function(o){var q=Number(o.q);return !isNaN(q)&&o.q!==''&&o.q!=='?';});
-  var feasible=numeric.length?Math.min.apply(null,numeric.map(function(o){var s=iqStock(o.n);var q=Number(o.q);return q>0?Math.floor(s.stock/q):0;})):0;
-  var missing=numeric.map(function(o){var s=iqStock(o.n);return {n:o.n,manque:Number(o.q)-s.stock};}).filter(function(m){return m.manque>0;});
-  var totReq=0,totHave=0;numeric.forEach(function(o){var req=Number(o.q);var s=iqStock(o.n);totReq+=req;totHave+=Math.min(s.stock,req);});var prog=totReq?Math.round(totHave/totReq*100):0;var progCol=prog>=100?'var(--green)':prog>=50?'var(--gold)':'var(--orange)';var progBar=numeric.length?'<div style="margin:12px 0 4px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span class="mut">Progression vers le craft</span><span style="font-weight:700;color:'+progCol+'">'+prog+'%</span></div><div style="height:8px;background:#ffffff10;border-radius:5px;overflow:hidden"><i style="display:block;width:'+Math.min(100,prog)+'%;height:100%;background:'+progCol+';transition:width .3s"></i></div></div>':'';
+  var feasible=numeric.length?Math.min.apply(null,numeric.map(function(o){var s=iqStock(o);var q=Number(o.q);return q>0?Math.floor(s.stock/q):0;})):0;
+  var missing=numeric.map(function(o){var s=iqStock(o);return {n:ingNom(o),manque:Number(o.q)-s.stock};}).filter(function(m){return m.manque>0;});
+  var totReq=0,totHave=0;numeric.forEach(function(o){var req=Number(o.q);var s=iqStock(o);totReq+=req;totHave+=Math.min(s.stock,req);});var prog=totReq?Math.round(totHave/totReq*100):0;var progCol=prog>=100?'var(--green)':prog>=50?'var(--gold)':'var(--orange)';var progBar=numeric.length?'<div style="margin:12px 0 4px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span class="mut">Progression vers le craft</span><span style="font-weight:700;color:'+progCol+'">'+prog+'%</span></div><div style="height:8px;background:#ffffff10;border-radius:5px;overflow:hidden"><i style="display:block;width:'+Math.min(100,prog)+'%;height:100%;background:'+progCol+';transition:width .3s"></i></div></div>':'';
   var verdict=!numeric.length?'<div class="mut">Recette à compléter (renseigne les quantités).</div>':(!missing.length?'<div style="color:var(--green);font-weight:700;font-size:15px"><i class=vgi-check></i> Réalisable ×'+feasible+'</div>':'<div style="color:var(--red);font-weight:700"><i class=vgi-alert></i> Il manque : '+missing.map(function(m){return esc(m.n)+' ×'+m.manque;}).join(' · ')+'</div>');
   var baseSel='<select class="inp" style="max-width:210px" onchange="window.__craftBase=this.value;craftCalc(\''+sqa(key)+'\')">'+craftBaseOpts().map(function(b){return '<option '+(b===base?'selected':'')+'>'+esc(b)+'</option>';}).join('')+'</select>';
   openSheet('<h3><i class=vgi-gauge></i> '+esc(key)+'</h3><div class="hint" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">Base de stock : '+baseSel+'</div><div id="recrows" style="margin-top:8px">'+(rows||'<div class="mut">Aucun ingrédient.</div>')+'</div>'+progBar+'<div style="margin:12px 0">'+verdict+'</div><div class="toolbar" style="justify-content:space-between;margin:0">'+(missing.length?'<button class="btn o" onclick="craftFarm(\''+sqa(key)+'\')"><i class=vgi-clipboard></i> Créer une demande de farm</button>':'<span></span>')+'<button class="btn" onclick="closeSheet()">Fermer</button></div>');}
-function craftFarm(key){var c=findCraft(key);if(!c)return;var cost=craftCost(c);var added=0;S.farm=S.farm||{};cost.forEach(function(o){var q=Number(o.q);if(isNaN(q)||o.q===''||o.q==='?')return;var s=iqStock(o.n);var manque=q-s.stock;if(manque>0){if(S.farm[o.n]){S.farm[o.n].target=Math.max(S.farm[o.n].target||0,manque);S.farm[o.n].cat='Craft : '+key;}else{S.farm[o.n]={n:o.n,ic:o.ic||'',dj:0,cat:'Craft : '+key,target:manque,have:0};}added++;}});save();closeSheet();render();agToast(added+' ingrédient(s) ajouté(s) à la liste de farm ',true);}
+function craftFarm(key){var c=findCraft(key);if(!c)return;var cost=craftCost(c);var added=0;S.farm=S.farm||{};cost.forEach(function(o){var q=Number(o.q);if(isNaN(q)||o.q===''||o.q==='?')return;var s=iqStock(o);var manque=q-s.stock;if(manque>0){var nom=ingNom(o),it=ingObjet(o);if(S.farm[nom]){S.farm[nom].target=Math.max(S.farm[nom].target||0,manque);S.farm[nom].cat='Craft : '+key;if(it)S.farm[nom].id=it.id;}else{S.farm[nom]={n:nom,id:it?it.id:'',ic:it?'':(o.ic||''),dj:0,cat:'Craft : '+key,target:manque,have:0};}added++;}});save();closeSheet();render();agToast(added+' ingrédient(s) ajouté(s) à la liste de farm ',true);}
 function craftCard(c){const cost=craftCost(c);const edited=!!S.recipes[c.key];const ce=canEdit();
   return `<div class="ocard"><h3>${img(craftIcon(c))||GROUP_EMOJI[c.group]||'<i class=vgi-hammer></i>'} ${esc(c.key)}</h3>
     <div class="npc">${c.npc?esc(c.npc):(cost.length?'Composants':'Recette à compléter')}${edited?' · <span style="color:var(--gold)">modifiée</span>':''}</div>
     ${cost.length?cost.map(ingRow).join(''):'<div class="mut" style="font-size:12px;padding:6px 0">Aucune recette renseignée.</div>'}
     ${craftProduitsSpeciaux(c)?'<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);font-size:11.5px"><span class="mut">Produit :</span> '+craftProduits(c).map(function(pr){return '<b style="color:var(--gold,#FFB552)">'+esc(pr.q)+' ×</b> '+esc(pr.n);}).join(' · ')+'</div>':''}
     <div class="toolbar" style="margin:8px 0 0;flex-wrap:wrap">${cost.length?`<button class="btn sm o" onclick="craftCalc('${sqa(c.key)}')"><i class=vgi-gauge></i> Calculer</button> `:''}<button class="btn sm" onclick="openRecipe('${sqa(c.key)}')"><i class=vgi-edit></i> Recette</button>${ce?` <button class="btn sm" onclick="editCraftIcon('${sqa(c.key)}')"><i class=vgi-image></i> Icône</button> <button class="btn sm danger" onclick="delCraft('${sqa(c.key)}')"><i class=vgi-trash></i></button>`:''}</div></div>`;}
-function farmReqSection(){var fk=Object.keys(S.farm||{});if(!fk.length)return '';return '<div style="margin-top:6px"><div class="sec-h"><i class=vgi-clipboard></i> Demandes de farm en cours <span class="n">'+fk.length+'</span></div><div class="ogrid">'+fk.map(function(k){var f=S.farm[k];var have=f.have||0;var pc=f.target?Math.min(100,Math.round(have/f.target*100)):0;return '<div class="ocard" style="padding:10px"><div style="display:flex;align-items:center;gap:8px"><span class="x">'+(img(f.ic)||'<i class=vgi-package></i>')+'</span><div style="flex:1;min-width:0"><div class="a" style="font-weight:600">'+esc(f.n)+'</div><div class="mut" style="font-size:10px">'+esc(f.cat||'')+'</div></div><span class="rm" style="cursor:pointer" onclick="delete S.farm[\''+sq(k)+'\'];save();render()"><i class=vgi-x></i></span></div><div class="mut" style="font-size:11px;margin:5px 0 3px">'+have+' / '+f.target+'</div><div class="prog"><i style="width:'+pc+'%"></i></div><div class="toolbar" style="margin:6px 0 0;gap:4px"><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=Math.max(0,(f.have||0)-1);save();render();}">−</button><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=(f.have||0)+1;save();render();}"><i class=vgi-plus></i></button></div></div>';}).join('')+'</div></div>';}
+function farmReqSection(){var fk=Object.keys(S.farm||{});if(!fk.length)return '';return '<div style="margin-top:6px"><div class="sec-h"><i class=vgi-clipboard></i> Demandes de farm en cours <span class="n">'+fk.length+'</span></div><div class="ogrid">'+fk.map(function(k){var f=S.farm[k];var have=f.have||0;var pc=f.target?Math.min(100,Math.round(have/f.target*100)):0;return '<div class="ocard ing" style="padding:10px;display:block"><div style="display:flex;align-items:center;gap:8px">'+ingIcone(f)+'<div style="flex:1;min-width:0"><div class="a" style="font-weight:600">'+esc(ingNom(f))+'</div><div class="mut" style="font-size:10px">'+esc(f.cat||'')+'</div></div><span class="rm" style="cursor:pointer" onclick="delete S.farm[\''+sq(k)+'\'];save();render()"><i class=vgi-x></i></span></div><div class="mut" style="font-size:11px;margin:5px 0 3px">'+have+' / '+f.target+'</div><div class="prog"><i style="width:'+pc+'%"></i></div><div class="toolbar" style="margin:6px 0 0;gap:4px"><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=Math.max(0,(f.have||0)-1);save();render();}">−</button><button class="btn sm" onclick="var f=S.farm[\''+sq(k)+'\'];if(f){f.have=(f.have||0)+1;save();render();}"><i class=vgi-plus></i></button></div></div>';}).join('')+'</div></div>';}
 function viewCraft(){const O=D.objectifs;
   const byG={};allCrafts().forEach(c=>{(byG[c.group]=byG[c.group]||[]).push(c);});
   /* Les categories d'origine d'abord, pour garder l'ordre habituel, PUIS toute
@@ -481,55 +501,96 @@ function viewCraft(){const O=D.objectifs;
    ${groups.map(g=>byG[g]?`<div style="margin-top:6px"><div class="sec-h">${GROUP_EMOJI[g]||''} ${esc(g)} <span class="n">${byG[g].length}</span></div><div class="ogrid">${byG[g].map(craftCard).join('')}</div></div>`:'').join('')}
    <div style="margin-top:14px"><div class="sec-h"><i class=vgi-trophy></i> Prestige — coût par palier</div><div class="ogrid">${tiers.map(t=>`<div class="ocard"><div class="tierhead">P${+t-1} → P${t}</div>${O.prestige[t].map(ingRow).join('')}</div>`).join('')}</div></div>`;
 }
-function openRecipe(key){const base=findCraft(key)||{cost:[]};const cur=(S.recipes[key]||base.cost||[]).map(x=>({n:x.n,q:x.q,slot:!!x.slot,ic:x.ic||''}));
+function openRecipe(key){const base=findCraft(key)||{cost:[]};
+  /* On relie au passage les anciennes lignes (un nom seul) a l'objet de la base :
+     ce qui n'etait qu'un libelle devient une reference stable des l'ouverture. */
+  const cur=(S.recipes[key]||base.cost||[]).map(function(x){var it=ingObjet(x);return {id:it?it.id:'',n:it?it.item:(x.n||''),q:x.q,slot:!!x.slot,ic:it?'':(x.ic||'')};});
   window.__rec=cur;
   /* Vide quand la recette rend 1 fois son propre nom : l'editeur affiche alors
      le comportement par defaut plutot qu'une ligne a supprimer. */
-  window.__prod=craftProduitsSpeciaux(base)?craftProduits(base).map(function(x){return {n:x.n,q:x.q};}):[];
+  window.__prod=craftProduitsSpeciaux(base)?craftProduits(base).map(function(x){var it=ingObjet(x);return {id:it?it.id:'',n:it?it.item:(x.n||''),q:x.q};}):[];
   drawRecipe(key);}
-/**
- * La liste des objets de la BASE (onglet Paramètres), proposée à la saisie.
- *
- * Les ingrédients se tapaient à la main, et le rapprochement avec le coffre se
- * faisait ensuite sur le nom : une faute de frappe, et l'ingrédient devenait
- * introuvable — le calculateur affichait « 0 / 40 » alors que le coffre en
- * était plein. On propose donc les noms existants, et on dit tout de suite
- * quand un nom ne correspond à rien.
- */
-function listeObjetsBase(){
-  var vus={},out=[];
-  (catalog()||[]).forEach(function(it){ var n=(it.item||'').trim(); if(n&&!vus[n]){vus[n]=1;out.push(n);} });
-  return out.sort(function(a,b){return a.localeCompare(b,'fr');});
-}
-function optionsObjets(){
-  return '<datalist id="__objets">'+listeObjetsBase().map(function(n){return '<option value="'+esc(n)+'">';}).join('')+'</datalist>';
-}
-/** Vert : l'objet est dans la base. Rouge : personne ne le trouvera. */
-function marqueObjet(nom){
-  if(!nom||!String(nom).trim())return '';
-  return iqFind(nom)
-    ? '<span title="Objet reconnu dans la base" style="color:var(--green);font-size:11px;white-space:nowrap"><i class=vgi-check></i></span>'
-    : '<span title="Ce nom ne correspond à aucun objet : ajoute-le dans Paramètres, sinon le stock ne sera jamais trouvé." style="color:var(--red);font-size:11px;white-space:nowrap"><i class=vgi-alert></i> inconnu</span>';
-}
-function drawRecipe(key){const cur=window.__rec;
-  const rows=cur.map((r,i)=>`<div class="ing"><span class="x" style="cursor:pointer" title="Changer l'icône" onclick="pickIngIcon(${i},'${sqa(key)}')">${img(r.ic)||'<i class=vgi-package></i>'}</span><input class="inp" style="flex:1" list="__objets" value="${esc(r.n)}" oninput="window.__rec[${i}].n=this.value" onchange="drawRecipe('${sqa(key)}')" placeholder="Choisis un objet de la base…">${marqueObjet(r.n)}<input class="inp" style="width:90px" value="${esc(r.q)}" oninput="window.__rec[${i}].q=this.value" placeholder="Qté"><label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center">slot<input type="checkbox" ${r.slot?'checked':''} onchange="window.__rec[${i}].slot=this.checked"></label><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__rec.splice(${i},1);drawRecipe('${sqa(key)}')"><i class=vgi-x></i></span></div>`).join('');
+/* ── Le selecteur d'objets de la base ────────────────────────────────────────
+   On ne tape plus le nom d'un ingredient : on le prend dans la base (onglet
+   « Base des objets »). C'est la liste ou les membres deposent au coffre, donc
+   le calculateur compte exactement le bon objet — et un objet qui manque
+   s'ajoute a la base, jamais dans la recette. */
+function ouvrirSelecteur(cible,i,key){
+  window.__po={cible:cible,i:i,key:key};window.__poQ='';window.__poCat='';
+  openSheet('<h3><i class=vgi-package></i> Choisir un objet</h3>'
+   +'<div class="hint">La liste vient de l\'onglet <b>Base des objets</b> — celle où les membres déposent au coffre. Le nombre à droite, c\'est ce que la guilde en a déjà.</div>'
+   +'<input class="inp" id="poQ" style="width:100%" placeholder="Chercher un objet…" oninput="window.__poQ=this.value;dessineSelecteur()">'
+   +'<div id="pocats" style="display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 2px"></div>'
+   +'<div id="polist" style="max-height:44vh;overflow:auto"></div>'
+   +'<div class="toolbar" style="justify-content:space-between;margin:12px 0 0"><button class="btn sm" onclick="creerObjetDansLaBase()"><i class=vgi-plus></i> Il n\'existe pas — l\'ajouter à la base</button><button class="btn" onclick="drawRecipe(\''+sqa(key)+'\')">Retour</button></div>');
+  dessineSelecteur();var f=document.getElementById('poQ');if(f)f.focus();}
+function dessineSelecteur(){
+  var q=iqNorm(window.__poQ||''),c=window.__poCat||'',mots=q.split(' ').filter(Boolean);
+  var tous=sortByOrder(catalog()||[]);
+  var cats=[];tous.forEach(function(x){var k=(x.cat||'').trim();if(k&&cats.indexOf(k)<0)cats.push(k);});
+  var ec=document.getElementById('pocats');
+  if(ec)ec.innerHTML='<span class="mtab'+(c?'':' on')+'" style="font-size:11px;padding:4px 9px" onclick="window.__poCat=\'\';dessineSelecteur()">Tout</span>'
+    +cats.map(function(k){return '<span class="mtab'+(c===k?' on':'')+'" style="font-size:11px;padding:4px 9px" onclick="window.__poCat=\''+sq(k)+'\';dessineSelecteur()">'+catBadge(k)+' '+esc(k)+'</span>';}).join('');
+  var vus=tous.filter(function(x){
+    if(c&&(x.cat||'').trim()!==c)return false;
+    if(!mots.length)return true;
+    var t=iqNorm(x.item+' '+(x.classe||''));
+    return mots.every(function(w){return t.indexOf(w)>=0;});});
+  var el=document.getElementById('polist');if(!el)return;
+  el.innerHTML=vus.length?vus.map(function(x){var st=totalGuild(x.id);var ct=(x.cat||'').trim();
+    return '<div class="it" style="cursor:pointer" onclick="prendreObjet(\''+sqa(x.id)+'\')"><span class="logo">'+itemAsset(x)+'</span>'
+      +'<div class="nm"><div class="a">'+esc(x.item)+'</div><div class="b">'+catBadge(ct)+' '+esc(ct)+(x.classe?' · '+esc(x.classe):'')+(x.unit==='slot'?' · <span style="color:var(--green)">slot</span>':'')+'</div></div>'
+      +'<span style="font-family:Rajdhani;font-weight:700;font-size:15px;color:'+(st>0?'var(--green)':'var(--mut)')+'" title="Au coffre de la guilde">'+fmt(st)+'</span></div>';}).join('')
+    :'<div class="empty" style="padding:22px 10px">Aucun objet ne correspond. Vérifie l\'orthographe, ou ajoute-le à la base.</div>';}
+function prendreObjet(id){var it=objetParId(id);if(!it)return;var p=window.__po||{};
+  if(p.cible==='prod'){var l=window.__prod||[];if(!l[p.i])l[p.i]={q:1};l[p.i].id=it.id;l[p.i].n=it.item;}
+  /* L'unite vient de la base : c'est elle qui dit si l'objet se compte en slots. */
+  else{var r=window.__rec||[];if(!r[p.i])r[p.i]={q:''};r[p.i].id=it.id;r[p.i].n=it.item;r[p.i].ic='';r[p.i].slot=(it.unit==='slot');}
+  drawRecipe(p.key);}
+/* L'objet manquant se cree dans la base, pas dans la recette : on enregistre le
+   travail en cours, on ouvre la base, et doAddItem() ramene ici ensuite. */
+function creerObjetDansLaBase(){var p=window.__po||{};if(!canEdit())return agToast('Ajout réservé au rôle Vanguard.',false);
+  saveRecipe(p.key);window.__retourRecette={key:p.key,cible:p.cible};addItem();}
+/* Le champ « objet » d'une ligne : ce qu'on voit est ce que le calculateur compte. */
+function champObjet(cible,r,i,key){
+  var it=ingObjet(r),nom=it?it.item:((r&&r.n)||'');
+  var sous=it?(catBadge((it.cat||'').trim())+' '+esc((it.cat||'').trim())+(it.unit==='slot'?' · <span style="color:var(--green)">slot</span>':''))
+    :(nom?'<span style="color:var(--red);display:inline-flex;align-items:center;gap:4px"><i class=vgi-alert></i> hors base — clique pour le relier</span>':'Clique pour choisir');
+  return '<div class="ing" style="flex:1;min-width:220px;padding:5px 9px;margin:0;background:var(--bg);border:1px solid '+(it?'var(--border)':'var(--red)')+';border-radius:10px;cursor:pointer" title="Choisir un objet de la base" onclick="ouvrirSelecteur(\''+cible+'\','+i+',\''+sqa(key)+'\')">'
+    +ingIcone(r)
+    +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(nom?esc(nom):'<span class="mut">Choisir un objet…</span>')+'</div>'
+    +'<div style="font-size:10.5px;color:var(--mut);display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap">'+sous+'</div></div>'
+    +'<i class=vgi-chevron-down style="opacity:.5;flex:none"></i></div>';}
+function drawRecipe(key){const cur=window.__rec||[];
+  const rows=cur.map(function(r,i){return '<div class="ing" style="flex-wrap:wrap">'+champObjet('rec',r,i,key)
+    +'<input class="inp" style="width:80px;text-align:center" value="'+esc(r.q)+'" oninput="window.__rec['+i+'].q=this.value" placeholder="Qté">'
+    +'<label class="mut" style="font-size:10px;display:flex;flex-direction:column;align-items:center;gap:2px" title="Quantité exprimée en slots (1 slot = 9 999)">slot<input type="checkbox" '+(r.slot?'checked':'')+' onchange="window.__rec['+i+'].slot=this.checked"></label>'
+    +'<span class="rm" style="opacity:.6;cursor:pointer" title="Retirer" onclick="window.__rec.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
   var prods=window.__prod||[];
-  var prodRows=prods.map(function(r,i){return '<div class="ing"><input class="inp" style="flex:1" list="__objets" value="'+esc(r.n)+'" oninput="window.__prod['+i+'].n=this.value" onchange="drawRecipe(\''+sqa(key)+'\')" placeholder="Objet produit">'+marqueObjet(r.n)+'<input class="inp" style="width:90px" value="'+esc(r.q)+'" oninput="window.__prod['+i+'].q=this.value" placeholder="Qté"><span class="rm" style="opacity:.6;cursor:pointer" onclick="window.__prod.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
-  openSheet(`${optionsObjets()}<h3><i class=vgi-edit></i> Recette — ${esc(key)}</h3><div class="hint">Choisis les ingrédients <b>dans la base</b> (onglet Paramètres) : un nom tapé au hasard ne sera jamais rapproché du coffre. Un objet qui manque s'ajoute dans Paramètres. Coche « slot » pour les grosses ressources.</div>
-   <div id="recrows">${rows||'<div class="mut" style="font-size:12px">Aucun ingrédient.</div>'}</div>
-   <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({n:'',q:'',slot:false,ic:''});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Ingrédient</button></div>
-   <h3 style="margin-top:14px"><i class=vgi-package></i> Ce que la recette produit</h3>
-   <div class="hint">Laisse vide si la recette rend simplement <b>1 ${esc(key)}</b>. Ajoute une ou plusieurs lignes pour un autre résultat, ou pour plusieurs objets à la fois.</div>
-   <div id="prodrows">${prodRows||'<div class="mut" style="font-size:12px">1 × ' + esc(key) + ' (par défaut)</div>'}</div>
-   <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__prod.push({n:'',q:1});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Objet produit</button></div>
-   <div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({n:'',q:'',slot:false,ic:''});drawRecipe('${sqa(key)}')"><i class=vgi-plus></i> Ingrédient</button></div>
-   <div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="delete S.recipes['${sqa(key)}'];save();closeSheet();render()">Réinitialiser</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveRecipe('${sqa(key)}')">Enregistrer</button></div></div>`);}
-function saveRecipe(key){const cur=(window.__rec||[]).filter(r=>r.n&&String(r.n).trim()).map(r=>{const qn=Number(r.q);return {n:r.n.trim(),q:isNaN(qn)||r.q===''?(r.q||'?'):qn,slot:!!r.slot,ic:r.ic||''};});
+  var prodRows=prods.map(function(r,i){return '<div class="ing" style="flex-wrap:wrap">'+champObjet('prod',r,i,key)
+    +'<input class="inp" style="width:80px;text-align:center" value="'+esc(r.q)+'" oninput="window.__prod['+i+'].q=this.value" placeholder="Qté">'
+    +'<span class="rm" style="opacity:.6;cursor:pointer" title="Retirer" onclick="window.__prod.splice('+i+',1);drawRecipe(\''+sqa(key)+'\')"><i class=vgi-x></i></span></div>';}).join('');
+  var orphelins=cur.filter(function(r){return (r.n||r.id)&&!ingObjet(r);}).length;
+  var alerte=orphelins?'<div style="font-size:11.5px;color:var(--red);background:#f871711a;border:1px solid #f8717155;border-radius:9px;padding:8px 10px;margin:2px 0 8px;display:flex;align-items:center;gap:7px"><i class=vgi-alert></i><span>'+orphelins+' ingrédient(s) ne pointent aucun objet de la base : le calculateur les comptera à 0. Clique dessus pour les relier.</span></div>':'';
+  openSheet('<h3><i class=vgi-edit></i> Recette — '+esc(key)+'</h3><div class="hint">Chaque ingrédient <b>se choisit dans la base</b> : c\'est ce qui permet de compter exactement ce qui est déposé au coffre. Un objet qui n\'existe pas s\'ajoute à la base depuis le sélecteur.</div>'+alerte
+   +'<div id="recrows">'+(rows||'<div class="mut" style="font-size:12px">Aucun ingrédient.</div>')+'</div>'
+   +'<div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__rec.push({id:\'\',n:\'\',q:\'\',slot:false,ic:\'\'});ouvrirSelecteur(\'rec\',window.__rec.length-1,\''+sqa(key)+'\')"><i class=vgi-plus></i> Ingrédient</button></div>'
+   +'<h3 style="margin-top:14px"><i class=vgi-package></i> Ce que la recette produit</h3>'
+   +'<div class="hint">Laisse vide si la recette rend simplement <b>1 '+esc(key)+'</b>. Ajoute une ou plusieurs lignes pour un autre résultat, ou pour plusieurs objets à la fois.</div>'
+   +'<div id="prodrows">'+(prodRows||'<div class="mut" style="font-size:12px">1 × '+esc(key)+' (par défaut)</div>')+'</div>'
+   +'<div class="toolbar" style="margin:10px 0"><button class="btn sm" onclick="window.__prod.push({id:\'\',n:\'\',q:1});ouvrirSelecteur(\'prod\',window.__prod.length-1,\''+sqa(key)+'\')"><i class=vgi-plus></i> Objet produit</button></div>'
+   +'<div class="toolbar" style="justify-content:space-between;margin:0"><button class="btn danger sm" onclick="delete S.recipes[\''+sqa(key)+'\'];save();closeSheet();render()">Réinitialiser</button><div><button class="btn" onclick="closeSheet()">Annuler</button> <button class="btn o" onclick="saveRecipe(\''+sqa(key)+'\')">Enregistrer</button></div></div>');}
+/* On enregistre l'identifiant en plus du nom : le nom reste lisible dans les
+   vieux exports, l'identifiant est ce qui fait foi pour le stock. */
+function saveRecipe(key){const cur=(window.__rec||[]).filter(function(r){return (r.id&&objetParId(r.id))||(r.n&&String(r.n).trim());}).map(function(r){
+    var it=ingObjet(r),qn=Number(r.q);
+    return {id:it?it.id:'',n:it?it.item:String(r.n).trim(),q:isNaN(qn)||r.q===''?(r.q||'?'):qn,slot:!!r.slot,ic:it?'':(r.ic||'')};});
   S.recipes[key]=cur;
   /* Quantite invalide ou absente -> 1 : une recette qui produit « ? » objets
      serait inexploitable par le calcul de cout. */
-  var prod=(window.__prod||[]).filter(function(r){return r.n&&String(r.n).trim();}).map(function(r){
-    var q=Math.max(1,Math.floor(Number(r.q)||1));return {n:String(r.n).trim(),q:q};});
+  var prod=(window.__prod||[]).filter(function(r){return (r.id&&objetParId(r.id))||(r.n&&String(r.n).trim());}).map(function(r){
+    var it=ingObjet(r),q=Math.max(1,Math.floor(Number(r.q)||1));
+    return {id:it?it.id:'',n:it?it.item:String(r.n).trim(),q:q};});
   S.craftYields=S.craftYields||{};
   if(prod.length)S.craftYields[key]=prod;else delete S.craftYields[key];
   save();closeSheet();render();}
@@ -695,7 +756,7 @@ function exportData(){const blob=new Blob([JSON.stringify(S,null,1)],{type:'appl
 function importData(){const inp=document.createElement('input');inp.type='file';inp.accept='application/json';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d&&d.members){var _n=Object.keys(S.members||{}).length,_p=Object.keys(S.prices||{}).length,_d=(S.debts||[]).length;var _n2=Object.keys(d.members||{}).length;agConfirm('REMPLACER tout le coffre de la guilde par ce fichier ?\n\nActuel : '+_n+' coffre(s), '+_p+' tarif(s), '+_d+' dette(s)\nFichier : '+_n2+' coffre(s)\n\nCela ecrase les donnees de TOUS les membres, et il n\'y a aucune annulation.',function(){S=d;S.overrides=S.overrides||{};S.recipes=S.recipes||{};S.prices=S.prices||{};S.debts=S.debts||[];save();renderTabs();render();agToast('Coffre remplace par le fichier importe.',true);});}else agToast('Fichier invalide.',false);}catch(e){agToast('Fichier illisible.',false);}};r.readAsText(f);};inp.click();}
 
 function openSheet(html){$('#sheet').innerHTML=html;$('#modal').classList.add('on');vgDD();}
-function closeSheet(){$('#modal').classList.remove('on');}
+function closeSheet(){$('#modal').classList.remove('on');window.__retourRecette=null;/* le retour vers une recette ne vaut que pour l'aller-retour en cours */}
 let _agBd=false;$('#modal').addEventListener('mousedown',e=>{_agBd=(e.target.id==='modal');});$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&_agBd)closeSheet();_agBd=false;});
 injectLogoCSS();renderTabs();render();try{cleanMagentaIcData();}catch(e){}vgLienProfond();
 ;

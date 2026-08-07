@@ -703,8 +703,17 @@ model OffreVente {
   /// Prix demandé. Le tarif de référence est pré-rempli ; un détenteur peut
   /// s'en écarter, l'écart s'affiche à côté — la transparence suffit à réguler.
   prix      BigInt?
-  /// En quoi on paie : "perins" (défaut) ou "airpoints". Deux monnaies qui ne
-  /// se convertissent pas — un prix sans sa monnaie ne veut rien dire.
+  /// Part payée en Airpoints. Un paiement peut être MIXTE : personne n'a
+  /// jamais le compte rond dans une seule monnaie, et refuser le mélange
+  /// obligeait à renoncer à la vente ou à arrondir au détriment de quelqu'un.
+  /// `prix` porte la part en périns, celui-ci la part en Airpoints.
+  prixAp    Int?
+  /// À combien le vendeur prend l'Airpoint, en périns. Il n'y a pas de taux
+  /// officiel : c'est lui qui dit ce qu'il accepte, et l'acheteur compose sa
+  /// part en connaissance de cause.
+  tauxAp    Int?
+  /// Monnaie principale quand le paiement n'est pas mixte : "perins" ou
+  /// "airpoints". Conservée pour les offres à monnaie unique.
   devise    String      @default("perins")
   /// Quand on paie : "comptant" (défaut) ou "dette" — payé plus tard. La dette
   /// n'est ouverte qu'aux membres de la GUILDE : on ne fait pas crédit à

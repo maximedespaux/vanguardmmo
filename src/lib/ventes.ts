@@ -106,6 +106,9 @@ export type OffreVue = {
   id: string;
   membre: { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
   prix: number | null;
+  /** Part en Airpoints d'un paiement mixte, et le taux que le vendeur accepte. */
+  prixAp: number | null;
+  tauxAp: number | null;
   /** "perins" | "airpoints" */
   devise: string;
   /** "comptant" | "dette" */
@@ -133,7 +136,7 @@ export type VenteVue = {
 };
 
 const vueOffre = (
-  o: { id: string; prix: bigint | null; devise: string; reglement: string; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
+  o: { id: string; prix: bigint | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
   moiId?: string,
 ): OffreVue => ({
   id: o.id,
@@ -145,6 +148,8 @@ const vueOffre = (
     vuLe: o.user.lastSeenAt ? o.user.lastSeenAt.toISOString() : null,
   },
   prix: o.prix == null ? null : Number(o.prix),
+  prixAp: o.prixAp,
+  tauxAp: o.tauxAp,
   devise: o.devise,
   reglement: o.reglement,
   aObjet: o.aObjet,
@@ -161,7 +166,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
-          id: true, prix: true, devise: true, reglement: true, aObjet: true, statut: true, userId: true,
+          id: true, prix: true, prixAp: true, tauxAp: true, devise: true, reglement: true, aObjet: true, statut: true, userId: true,
           user: { select: { id: true, username: true, avatar: true, discordId: true, lastSeenAt: true } },
         },
       },

@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { DEVISES, montant, type Devise } from "@/lib/monnaies";
+import { DEVISES, prixMixte } from "@/lib/monnaies";
 
 /**
  * Qui fournit l'objet, et quand on se voit.
@@ -14,7 +14,7 @@ import { DEVISES, montant, type Devise } from "@/lib/monnaies";
  * ici — stock du coffre compris.
  */
 type Membre = { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
-type Offre = { id: string; membre: Membre; prix: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; moi: boolean };
+type Offre = { id: string; membre: Membre; prix: number | null; prixAp: number | null; tauxAp: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; moi: boolean };
 type Vente = {
   requestId: string;
   detenteur: Offre | null;
@@ -48,7 +48,10 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
 }) {
   const [v, setV] = useState<Vente | null>(null);
   const [prix, setPrix] = useState("");
-  const [dev, setDev] = useState<Devise>("perins");
+  // Deux parts : on peut payer tout en périns, tout en Airpoints, ou mêler les
+  // deux — personne n'a jamais le compte rond dans une seule monnaie.
+  const [ap, setAp] = useState("");
+  const [taux, setTaux] = useState("");
   const [credit, setCredit] = useState(false);
   const [rdv, setRdv] = useState("");
   const [occupe, setOccupe] = useState(false);
@@ -106,13 +109,19 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <Pastille enLigne={v.detenteur.membre.enLigne} />
           <b style={{ fontSize: 13.5 }}>{v.detenteur.membre.nom}</b>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>s&apos;en occupe</span>
-          {v.detenteur.prix != null && (
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--gold)", fontWeight: 700 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={DEVISES.find((d) => d.clef === v.detenteur!.devise)?.icone ?? DEVISES[0].icone} alt="" style={{ width: 16, height: 16 }} />
-              {montant(v.detenteur.prix, v.detenteur.devise)}
-            </span>
-          )}
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--gold)", fontWeight: 700 }}>
+            {/* Les deux pièces quand le paiement est mixte : on voit ce qu'on
+                doit sortir avant de lire les chiffres. */}
+            {!!v.detenteur.prix && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={DEVISES[0].icone} alt="" style={{ width: 16, height: 16 }} />
+            )}
+            {!!v.detenteur.prixAp && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={DEVISES[1].icone} alt="" style={{ width: 16, height: 16 }} />
+            )}
+            {prixMixte(v.detenteur.prix, v.detenteur.prixAp, v.detenteur.tauxAp)}
+          </span>
           {/* Achat ou dette : celui qui remet l'objet doit le savoir AVANT de
               le remettre, et celui qui reçoit doit savoir ce qu'il devra. */}
           <span style={{ fontSize: 11.5, fontWeight: 700, padding: "2px 9px", borderRadius: 20, border: `1px solid ${v.detenteur.reglement === "dette" ? "var(--gold)" : "var(--green)"}`, color: v.detenteur.reglement === "dette" ? "var(--gold)" : "var(--green)" }}>
@@ -163,20 +172,26 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         {jePeuxPrendre && (
           <>
-            <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
-              placeholder={v.prixReference ? `${fmt(v.prixReference)} (tarif)` : "ton prix"} style={{ ...champ, width: 130 }} aria-label="Ton prix" />
-            {/* Deux monnaies qui ne se convertissent pas : le prix ne part
-                jamais sans dire laquelle. */}
-            {DEVISES.map((d) => (
-              <button key={d.clef} onClick={() => setDev(d.clef)} title={d.label}
-                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
-                  border: `1px solid ${dev === d.clef ? "var(--orange)" : "var(--border)"}`,
-                  background: dev === d.clef ? "rgba(255,140,26,.14)" : "var(--bg-3)",
-                  color: dev === d.clef ? "var(--orange)" : "var(--text-muted)" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={d.icone} alt="" style={{ width: 15, height: 15 }} />{d.court}
-              </button>
-            ))}
+            {/* Une part par monnaie : laisser un champ vide, c'est payer
+                entièrement dans l'autre. */}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={DEVISES[0].icone} alt="" title="Périns" style={{ width: 16, height: 16 }} />
+              <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
+                placeholder={v.prixReference ? `${fmt(v.prixReference)} (tarif)` : "périns"} style={{ ...champ, width: 120 }} aria-label="Part en périns" />
+            </span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={DEVISES[1].icone} alt="" title="Airpoints" style={{ width: 16, height: 16 }} />
+              <input type="number" min={0} value={ap} onChange={(e) => setAp(e.target.value)}
+                placeholder="AP" style={{ ...champ, width: 80 }} aria-label="Part en Airpoints" />
+            </span>
+            {/* Il n'y a pas de cours officiel : c'est le vendeur qui dit à
+                combien il prend l'Airpoint. */}
+            {!!Number(ap) && (
+              <input type="number" min={0} value={taux} onChange={(e) => setTaux(e.target.value)}
+                placeholder="1 AP = ? périns" style={{ ...champ, width: 130 }} aria-label="Taux de l'Airpoint" />
+            )}
             {v.dettePossible && (
               <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: credit ? "var(--gold)" : "var(--text-muted)", cursor: "pointer" }}>
                 <input type="checkbox" checked={credit} onChange={(e) => setCredit(e.target.checked)} style={{ accentColor: "var(--orange)" }} />
@@ -184,7 +199,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               </label>
             )}
             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5, opacity: occupe ? .6 : 1 }} disabled={occupe}
-              onClick={() => agir("prendre", { prix: prix || v.prixReference, devise: dev, reglement: credit ? "dette" : "comptant" })}>
+              onClick={() => agir("prendre", { prix: prix || (Number(ap) ? "" : v.prixReference), prixAp: ap, tauxAp: taux, reglement: credit ? "dette" : "comptant" })}>
               <Icon name="check" size={14} />{v.detenteur ? "Je peux aussi le fournir" : "Je m'en occupe"}
             </button>
           </>
@@ -231,7 +246,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <span style={{ color: "var(--text-muted)" }}>Aussi disponibles : </span>
           {autres.map((o) => (
             <span key={o.id} style={{ marginRight: 10 }}>
-              <b>{o.membre.nom}</b>{o.prix != null ? ` — ${montant(o.prix, o.devise)}${o.reglement === "dette" ? " à crédit" : ""}` : ""}
+              <b>{o.membre.nom}</b> — {prixMixte(o.prix, o.prixAp, o.tauxAp)}{o.reglement === "dette" ? " à crédit" : ""}
             </span>
           ))}
         </div>

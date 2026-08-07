@@ -50,8 +50,8 @@ export const ESPACES: Espace[] = [
     acces: "guild",
     liens: [
       { label: "Tableau de bord", href: "/dashboard", icon: "gauge", desc: "Ta progression, et l'état de la guilde d'un coup d'œil." },
-      { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Tes personnages et leur stuff, piece par piece." },
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, leur classe et leur build." },
+      { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Tes personnages et leur stuff, piece par piece." },
       { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes, présences et consignes." },
       { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages et qui vient." },
       { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },

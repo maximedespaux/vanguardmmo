@@ -5,7 +5,7 @@ import { canAccessAdmin, canAccessGuild } from "@/config/roles";
 import { detenteursDe, majAnnonceVente, prevenir, retirerDuCoffre, vueVente } from "@/lib/ventes";
 import { donnerXp } from "@/lib/xp";
 import { sansBigInt } from "@/lib/json";
-import { montant } from "@/lib/monnaies";
+import { prixMixte } from "@/lib/monnaies";
 
 /**
  * La vie d'une vente : qui la prend, quand on se voit, et quand c'est remis.
@@ -64,8 +64,14 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (!canAccessGuild(a.user.role)) {
         return NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 });
       }
-      const prix = b?.prix == null || b.prix === "" ? null : BigInt(Math.max(0, Math.floor(Number(b.prix) || 0)));
-      const devise = b?.devise === "airpoints" ? "airpoints" : "perins";
+      const entier = (v: unknown) => (v == null || v === "" ? null : Math.max(0, Math.floor(Number(v) || 0)));
+      const perins = entier(b?.prix);
+      const prixAp = entier(b?.prixAp);
+      const tauxAp = entier(b?.tauxAp);
+      const prix = perins == null ? null : BigInt(perins);
+      // La monnaie « principale » n'a de sens que sur une offre à monnaie
+      // unique ; un paiement mixte porte ses deux parts.
+      const devise = !perins && prixAp ? "airpoints" : "perins";
       const libre = !dem.detenteurId;
 
       // La dette n'est ouverte qu'aux membres de la GUILDE : c'est le demandeur
@@ -76,8 +82,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
 
       await prisma.offreVente.upsert({
         where: { requestId_userId: { requestId: id, userId: a.user.id } },
-        create: { requestId: id, userId: a.user.id, prix, devise, reglement, statut: libre ? "retenue" : "proposee" },
-        update: { prix, devise, reglement, statut: libre ? "retenue" : "proposee" },
+        create: { requestId: id, userId: a.user.id, prix, prixAp, tauxAp, devise, reglement, statut: libre ? "retenue" : "proposee" },
+        update: { prix, prixAp, tauxAp, devise, reglement, statut: libre ? "retenue" : "proposee" },
       });
 
       if (libre) {
@@ -86,7 +92,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         await prevenir(
           dem.userId,
           `${a.user.username} s'occupe de ta demande`,
-          `${dem.item ?? "Objet"}${prix ? ` — ${montant(prix, devise)}${reglement === "dette" ? " à crédit" : ""}` : ""}. Réponds pour convenir d'une heure, ou dis-lui que tu es en ligne.`,
+          `${dem.item ?? "Objet"} — ${prixMixte(prix, prixAp, tauxAp)}${reglement === "dette" ? " à crédit" : ""}. Réponds pour convenir d'une heure, ou dis-lui que tu es en ligne.`,
           `/messages?fil=req:${id}`,
         );
       }

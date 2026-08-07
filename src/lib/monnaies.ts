@@ -21,3 +21,43 @@ export function montant(n: number | bigint | null | undefined, d?: string | null
   if (n == null) return "—";
   return `${Number(n).toLocaleString("fr-FR")} ${infoDevise(d).court}`;
 }
+
+/**
+ * Un prix qui peut mêler les deux monnaies.
+ *
+ * Personne n'a jamais le compte rond dans une seule : refuser le mélange
+ * obligeait à renoncer à la vente ou à arrondir au détriment de quelqu'un.
+ * « 1 400 000 périns + 100 AP » se lit d'un coup, et le taux annoncé par le
+ * vendeur suit entre parenthèses — il n'y a pas de cours officiel, c'est lui
+ * qui dit ce qu'il accepte.
+ */
+export function prixMixte(
+  perins: number | bigint | null | undefined,
+  airpoints: number | null | undefined,
+  taux?: number | null,
+): string {
+  const p = perins == null ? 0 : Number(perins);
+  const a = airpoints ?? 0;
+  const bouts: string[] = [];
+  if (p > 0) bouts.push(`${p.toLocaleString("fr-FR")} périns`);
+  if (a > 0) bouts.push(`${a.toLocaleString("fr-FR")} AP`);
+  if (!bouts.length) return "prix à convenir";
+  const detail = a > 0 && taux ? ` (1 AP = ${taux.toLocaleString("fr-FR")} périns)` : "";
+  return bouts.join(" + ") + detail;
+}
+
+/**
+ * L'équivalent en périns d'un prix mixte, pour comparer deux offres entre
+ * elles. Sans taux, la part en Airpoints n'est pas convertible : on la laisse
+ * de côté plutôt que d'inventer un cours.
+ */
+export function equivalentPerins(
+  perins: number | bigint | null | undefined,
+  airpoints: number | null | undefined,
+  taux?: number | null,
+): number | null {
+  const p = perins == null ? 0 : Number(perins);
+  const a = airpoints ?? 0;
+  if (a > 0 && !taux) return null;
+  return p + a * (taux ?? 0);
+}

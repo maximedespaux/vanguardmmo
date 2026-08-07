@@ -703,6 +703,14 @@ model OffreVente {
   /// Prix demandé. Le tarif de référence est pré-rempli ; un détenteur peut
   /// s'en écarter, l'écart s'affiche à côté — la transparence suffit à réguler.
   prix      BigInt?
+  /// En quoi on paie : "perins" (défaut) ou "airpoints". Deux monnaies qui ne
+  /// se convertissent pas — un prix sans sa monnaie ne veut rien dire.
+  devise    String      @default("perins")
+  /// Quand on paie : "comptant" (défaut) ou "dette" — payé plus tard. La dette
+  /// n'est ouverte qu'aux membres de la GUILDE : on ne fait pas crédit à
+  /// quelqu'un qui peut disparaître du serveur demain. Ce n'est pas la même
+  /// transaction, et celui qui remet l'objet doit le savoir avant de le remettre.
+  reglement String      @default("comptant")
   /// « Je l'ai bien », coché avant de discuter : sans ça on négocie un objet
   /// que personne n'a vérifié.
   aObjet    Boolean     @default(false)
@@ -773,7 +781,8 @@ model RequestMessage {
   /// Montant proposé quand `kind` vaut "offer". Null sinon — une négociation
   /// doit porter un chiffre exploitable, pas un prix noyé dans une phrase.
   amount        Int?
-  /// Comment on paie : "perins" (défaut) ou "troc". Porté par l'offre et non
+  /// Comment on paie : "perins" (défaut), "airpoints" ou "troc". Porté par
+  /// l'offre et non
   /// par la requête, parce que c'est justement ce qui se négocie : un troc
   /// proposé n'engage personne tant qu'il n'a pas été accepté.
   /// Sur un troc, `amount` reste la valeur ESTIMÉE des objets — sans chiffre,

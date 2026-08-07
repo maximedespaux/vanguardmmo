@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { detenteursDe, majAnnonceVente, retirerDuCoffre, vueVente } from "@/lib/ventes";
+import { detenteursDe, majAnnonceVente, prevenir, retirerDuCoffre, vueVente } from "@/lib/ventes";
 import { donnerXp } from "@/lib/xp";
 import { sansBigInt } from "@/lib/json";
+import { montant } from "@/lib/monnaies";
 
 /**
  * La vie d'une vente : qui la prend, quand on se voit, et quand c'est remis.
@@ -64,25 +65,30 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         return NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 });
       }
       const prix = b?.prix == null || b.prix === "" ? null : BigInt(Math.max(0, Math.floor(Number(b.prix) || 0)));
+      const devise = b?.devise === "airpoints" ? "airpoints" : "perins";
       const libre = !dem.detenteurId;
+
+      // La dette n'est ouverte qu'aux membres de la GUILDE : c'est le demandeur
+      // qui devra rembourser, et on ne fait pas crédit à quelqu'un qui peut
+      // quitter le serveur demain. Le vendeur ne peut donc pas l'accorder seul.
+      const client = await prisma.user.findUnique({ where: { id: dem.userId }, select: { role: true } });
+      const reglement = b?.reglement === "dette" && client && canAccessGuild(client.role) ? "dette" : "comptant";
 
       await prisma.offreVente.upsert({
         where: { requestId_userId: { requestId: id, userId: a.user.id } },
-        create: { requestId: id, userId: a.user.id, prix, statut: libre ? "retenue" : "proposee" },
-        update: { prix, statut: libre ? "retenue" : "proposee" },
+        create: { requestId: id, userId: a.user.id, prix, devise, reglement, statut: libre ? "retenue" : "proposee" },
+        update: { prix, devise, reglement, statut: libre ? "retenue" : "proposee" },
       });
 
       if (libre) {
         await prisma.bankRequest.update({ where: { id }, data: { detenteurId: a.user.id } });
         // Le demandeur doit l'apprendre sans avoir à revenir voir.
-        await prisma.notification.create({
-          data: {
-            userId: dem.userId, type: "vente",
-            title: `${a.user.username} s'occupe de ta demande`,
-            body: `${dem.item ?? "Objet"}${prix ? ` — ${Number(prix).toLocaleString("fr-FR")} périns` : ""}`,
-            link: `/requetes/${id}`,
-          },
-        });
+        await prevenir(
+          dem.userId,
+          `${a.user.username} s'occupe de ta demande`,
+          `${dem.item ?? "Objet"}${prix ? ` — ${montant(prix, devise)}${reglement === "dette" ? " à crédit" : ""}` : ""}. Réponds pour convenir d'une heure, ou dis-lui que tu es en ligne.`,
+          `/messages?fil=req:${id}`,
+        );
       }
       void majAnnonceVente(id);
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
@@ -97,14 +103,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       });
       await prisma.bankRequest.update({ where: { id }, data: { detenteurId: null, rendezVous: null } });
       void majAnnonceVente(id);
-      await prisma.notification.create({
-        data: {
-          userId: dem.userId, type: "vente",
-          title: "Ta demande cherche un nouveau détenteur",
-          body: `${a.user.username} s'est désisté pour ${dem.item ?? "l'objet"}.`,
-          link: `/requetes/${id}`,
-        },
-      });
+      await prevenir(
+        dem.userId,
+        "Ta demande cherche un nouveau détenteur",
+        `${a.user.username} s'est désisté pour ${dem.item ?? "l'objet"}.`,
+        `/messages?fil=req:${id}`,
+      );
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
@@ -114,7 +118,17 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         where: { requestId_userId: { requestId: id, userId: a.user.id } },
       });
       if (!offre) return NextResponse.json({ error: "Prends d'abord la commande." }, { status: 400 });
-      await prisma.offreVente.update({ where: { id: offre.id }, data: { aObjet: b?.aObjet !== false } });
+      const aObjet = b?.aObjet !== false;
+      await prisma.offreVente.update({ where: { id: offre.id }, data: { aObjet } });
+      // Le client attend surtout CETTE information : l'objet existe vraiment.
+      if (aObjet && dem.userId !== a.user.id) {
+        await prevenir(
+          dem.userId,
+          `${a.user.username} a vérifié l'objet`,
+          `${dem.item ?? "L'objet"} est bien en sa possession. Il reste à convenir d'une heure.`,
+          `/messages?fil=req:${id}`,
+        );
+      }
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
@@ -129,14 +143,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       await prisma.bankRequest.update({ where: { id }, data: { rendezVous: quand } });
       const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
       if (autre && quand) {
-        await prisma.notification.create({
-          data: {
-            userId: autre, type: "vente",
-            title: `${a.user.username} propose un rendez-vous`,
-            body: `${dem.item ?? "Objet"} — ${quand.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}`,
-            link: `/requetes/${id}`,
-          },
-        });
+        await prevenir(
+          autre,
+          `${a.user.username} propose un rendez-vous`,
+          `${dem.item ?? "Objet"} — ${quand.toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}. Confirme sur le site si ça te va.`,
+          `/messages?fil=req:${id}`,
+        );
       }
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
@@ -146,14 +158,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       if (!dansLaBoucle) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
       const autre = a.user.id === dem.userId ? dem.detenteurId : dem.userId;
       if (!autre) return NextResponse.json({ error: "Personne en face pour l'instant." }, { status: 400 });
-      await prisma.notification.create({
-        data: {
-          userId: autre, type: "vente",
-          title: `${a.user.username} est en ligne`,
-          body: `Pour ${dem.item ?? "l'objet"} — c'est le moment.`,
-          link: `/requetes/${id}`,
-        },
-      });
+      await prevenir(
+        autre,
+        `${a.user.username} est en ligne`,
+        `Pour ${dem.item ?? "l'objet"} — c'est le moment de vous retrouver en jeu.`,
+        `/messages?fil=req:${id}`,
+      );
       return NextResponse.json({ ok: true });
     }
 
@@ -178,17 +188,25 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       let stock: { avant: number; apres: number } | null = null;
       if (vendeur && aLObjet) stock = await retirerDuCoffre(vendeur.username, dem.item, quantite);
 
-      await prisma.bankRequest.update({ where: { id }, data: { status: "REMIS" } });
+      // Achat ou dette : la demande garde la nature de la transaction, c'est
+      // elle qu'on relira dans six mois pour savoir qui doit quoi.
+      const offreRetenue = await prisma.offreVente.findFirst({ where: { requestId: id, statut: "retenue" } });
+      await prisma.bankRequest.update({
+        where: { id },
+        data: {
+          status: "REMIS",
+          modePaiement: offreRetenue?.devise ?? "perins",
+          prixFinal: offreRetenue?.prix ?? undefined,
+        },
+      });
       if (vendeur) {
         await donnerXp(vendeur.id, "quete", 100, `Vente remise : ${quantite} × ${dem.item}`, `vente:${id}`);
-        await prisma.notification.create({
-          data: {
-            userId: dem.userId, type: "vente",
-            title: "Ton objet a été remis",
-            body: `${quantite} × ${dem.item} par ${vendeur.username}.`,
-            link: `/requetes/${id}`,
-          },
-        });
+        await prevenir(
+          dem.userId,
+          "Ton objet a été remis",
+          `${quantite} × ${dem.item} par ${vendeur.username}.`,
+          `/messages?fil=req:${id}`,
+        );
       }
       void majAnnonceVente(id);
       return NextResponse.json({ ok: true, stock });
@@ -220,14 +238,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       });
       // Celui qui s'en occupait doit l'apprendre : il gardait l'objet de côté.
       if (dem.detenteurId && dem.detenteurId !== a.user.id) {
-        await prisma.notification.create({
-          data: {
-            userId: dem.detenteurId, type: "vente",
-            title: abandon ? "Demande abandonnée" : "Demande close",
-            body: `${dem.item ?? "L'objet"} — tu peux le remettre en vente.`,
-            link: `/messages?fil=req:${id}`,
-          },
-        });
+        await prevenir(
+          dem.detenteurId,
+          abandon ? "Demande abandonnée" : "Demande close",
+          `${dem.item ?? "L'objet"} — tu peux le remettre en vente.`,
+          `/messages?fil=req:${id}`,
+        );
       }
       void majAnnonceVente(id);
       return NextResponse.json({ ok: true });

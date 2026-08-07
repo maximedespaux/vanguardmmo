@@ -139,6 +139,23 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const montant = Math.max(0, Math.floor(Number(b.offer) || 0));
     if (montant <= 0) return NextResponse.json({ error: "Montant invalide." }, { status: 400 });
 
+    // Le VENDEUR annonce son tarif en premier : c'est lui qui a l'objet et qui
+    // sait ce qu'il en veut. Le demandeur contre-propose ensuite, une fois qu'il
+    // y a un chiffre sur la table — sinon il négociait contre le vide, et le
+    // détenteur découvrait un prix avant même d'avoir dit qu'il vendait.
+    if (a.req.userId === a.auth.user.id && !estStaff) {
+      const dem = await prisma.bankRequest.findUnique({
+        where: { id },
+        select: { detenteurId: true, offres: { where: { statut: "retenue" }, select: { prix: true } } },
+      });
+      if (!dem?.detenteurId || dem.offres[0]?.prix == null) {
+        return NextResponse.json(
+          { error: "Attends qu'un détenteur annonce son tarif — tu pourras contre-proposer ensuite." },
+          { status: 409 },
+        );
+      }
+    }
+
     // Un prix convenu ferme la négociation : le serveur refusait bien
     // d'ACCEPTER une seconde offre, mais laissait en proposer d'autres — on
     // continuait donc de marchander un accord déjà conclu.

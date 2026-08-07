@@ -106,6 +106,10 @@ export type OffreVue = {
   id: string;
   membre: { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
   prix: number | null;
+  /** "perins" | "airpoints" */
+  devise: string;
+  /** "comptant" | "dette" */
+  reglement: string;
   aObjet: boolean;
   statut: string;
   moi: boolean;
@@ -123,10 +127,13 @@ export type VenteVue = {
   demandeur: { id: string; nom: string; enLigne: boolean } | null;
   /** Tarif de référence AirGuild, pour situer les prix proposés. */
   prixReference: number | null;
+  /** La dette n'est ouverte qu'aux membres de la guilde — c'est le DEMANDEUR
+   *  qui doit l'être, puisque c'est lui qui devra rembourser. */
+  dettePossible: boolean;
 };
 
 const vueOffre = (
-  o: { id: string; prix: bigint | null; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
+  o: { id: string; prix: bigint | null; devise: string; reglement: string; aObjet: boolean; statut: string; userId: string; user: { id: string; username: string; avatar: string | null; discordId: string; lastSeenAt: Date | null } },
   moiId?: string,
 ): OffreVue => ({
   id: o.id,
@@ -138,6 +145,8 @@ const vueOffre = (
     vuLe: o.user.lastSeenAt ? o.user.lastSeenAt.toISOString() : null,
   },
   prix: o.prix == null ? null : Number(o.prix),
+  devise: o.devise,
+  reglement: o.reglement,
   aObjet: o.aObjet,
   statut: o.statut,
   moi: !!moiId && o.userId === moiId,
@@ -152,7 +161,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
-          id: true, prix: true, aObjet: true, statut: true, userId: true,
+          id: true, prix: true, devise: true, reglement: true, aObjet: true, statut: true, userId: true,
           user: { select: { id: true, username: true, avatar: true, discordId: true, lastSeenAt: true } },
         },
       },
@@ -171,8 +180,9 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
 
   const demandeur = await prisma.user.findUnique({
     where: { id: req.userId },
-    select: { id: true, username: true, lastSeenAt: true },
+    select: { id: true, username: true, lastSeenAt: true, role: true },
   });
+  const { canAccessGuild } = await import("@/config/roles");
 
   return {
     requestId: req.id,
@@ -182,7 +192,34 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
     rendezVous: req.rendezVous ? req.rendezVous.toISOString() : null,
     demandeur: demandeur ? { id: demandeur.id, nom: demandeur.username, enLigne: estEnLigne(demandeur.lastSeenAt) } : null,
     prixReference: req.priceEach ?? null,
+    dettePossible: !!demandeur && canAccessGuild(demandeur.role),
   };
+}
+
+/**
+ * Prévenir quelqu'un : sur le site ET en message privé Discord.
+ *
+ * La cloche du site ne se voit que si on y est. Or l'échange se joue en jeu,
+ * entre deux personnes qui doivent se retrouver : celui qui attend doit être
+ * tiré de Discord, pas découvrir trois heures plus tard qu'on l'attendait. Le
+ * MP porte donc toujours le lien vers la conversation — c'est là qu'on répond,
+ * pas dans le MP.
+ */
+export async function prevenir(userId: string, titre: string, corps: string, lien: string): Promise<void> {
+  await prisma.notification.create({ data: { userId, type: "vente", title: titre, body: corps, link: lien } }).catch(() => {});
+  try {
+    const u = await prisma.user.findUnique({ where: { id: userId }, select: { discordId: true } });
+    if (!u?.discordId) return;
+    const { envoyerMP, COULEURS } = await import("@/lib/discord");
+    const site = process.env.NEXTAUTH_URL || "https://vanguardhub.fr";
+    await envoyerMP(u.discordId, {
+      embeds: [{
+        title: titre,
+        description: `${corps}\n\n[Répondre sur le site](${site}${lien})`,
+        color: COULEURS.orange,
+      }],
+    });
+  } catch { /* un MP fermé ne doit jamais bloquer une vente */ }
 }
 
 /* ─── Le salon des ventes ──────────────────────────────────────────────────

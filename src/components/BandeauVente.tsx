@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { DEVISES, montant, type Devise } from "@/lib/monnaies";
 
 /**
  * Qui fournit l'objet, et quand on se voit.
@@ -13,7 +14,7 @@ import { Icon } from "@/components/Icon";
  * ici — stock du coffre compris.
  */
 type Membre = { id: string; nom: string; avatar: string | null; enLigne: boolean; vuLe: string | null };
-type Offre = { id: string; membre: Membre; prix: number | null; aObjet: boolean; statut: string; moi: boolean };
+type Offre = { id: string; membre: Membre; prix: number | null; devise: string; reglement: string; aObjet: boolean; statut: string; moi: boolean };
 type Vente = {
   requestId: string;
   detenteur: Offre | null;
@@ -22,6 +23,7 @@ type Vente = {
   rendezVous: string | null;
   demandeur: { id: string; nom: string; enLigne: boolean } | null;
   prixReference: number | null;
+  dettePossible: boolean;
 };
 
 const fmt = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
@@ -46,6 +48,8 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
 }) {
   const [v, setV] = useState<Vente | null>(null);
   const [prix, setPrix] = useState("");
+  const [dev, setDev] = useState<Devise>("perins");
+  const [credit, setCredit] = useState(false);
   const [rdv, setRdv] = useState("");
   const [occupe, setOccupe] = useState(false);
   const [erreur, setErreur] = useState("");
@@ -103,8 +107,17 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <b style={{ fontSize: 13.5 }}>{v.detenteur.membre.nom}</b>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>s&apos;en occupe</span>
           {v.detenteur.prix != null && (
-            <span style={{ fontSize: 12.5, color: "var(--gold)", fontWeight: 700 }}>{fmt(v.detenteur.prix)} périns</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, color: "var(--gold)", fontWeight: 700 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={DEVISES.find((d) => d.clef === v.detenteur!.devise)?.icone ?? DEVISES[0].icone} alt="" style={{ width: 16, height: 16 }} />
+              {montant(v.detenteur.prix, v.detenteur.devise)}
+            </span>
           )}
+          {/* Achat ou dette : celui qui remet l'objet doit le savoir AVANT de
+              le remettre, et celui qui reçoit doit savoir ce qu'il devra. */}
+          <span style={{ fontSize: 11.5, fontWeight: 700, padding: "2px 9px", borderRadius: 20, border: `1px solid ${v.detenteur.reglement === "dette" ? "var(--gold)" : "var(--green)"}`, color: v.detenteur.reglement === "dette" ? "var(--gold)" : "var(--green)" }}>
+            {v.detenteur.reglement === "dette" ? "à crédit" : "achat comptant"}
+          </span>
           {!!v.prixReference && v.detenteur.prix != null && v.detenteur.prix !== v.prixReference && (
             <span style={{ fontSize: 11, color: "var(--text-muted)" }}>réf. {fmt(v.prixReference)}</span>
           )}
@@ -151,9 +164,27 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
         {jePeuxPrendre && (
           <>
             <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
-              placeholder={v.prixReference ? `${fmt(v.prixReference)} périns (tarif)` : "prix en périns"} style={{ ...champ, width: 160 }} aria-label="Ton prix" />
+              placeholder={v.prixReference ? `${fmt(v.prixReference)} (tarif)` : "ton prix"} style={{ ...champ, width: 130 }} aria-label="Ton prix" />
+            {/* Deux monnaies qui ne se convertissent pas : le prix ne part
+                jamais sans dire laquelle. */}
+            {DEVISES.map((d) => (
+              <button key={d.clef} onClick={() => setDev(d.clef)} title={d.label}
+                style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 9, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
+                  border: `1px solid ${dev === d.clef ? "var(--orange)" : "var(--border)"}`,
+                  background: dev === d.clef ? "rgba(255,140,26,.14)" : "var(--bg-3)",
+                  color: dev === d.clef ? "var(--orange)" : "var(--text-muted)" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={d.icone} alt="" style={{ width: 15, height: 15 }} />{d.court}
+              </button>
+            ))}
+            {v.dettePossible && (
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: credit ? "var(--gold)" : "var(--text-muted)", cursor: "pointer" }}>
+                <input type="checkbox" checked={credit} onChange={(e) => setCredit(e.target.checked)} style={{ accentColor: "var(--orange)" }} />
+                à crédit
+              </label>
+            )}
             <button className="vg-btn" style={{ padding: "8px 14px", fontSize: 12.5, opacity: occupe ? .6 : 1 }} disabled={occupe}
-              onClick={() => agir("prendre", { prix: prix || v.prixReference })}>
+              onClick={() => agir("prendre", { prix: prix || v.prixReference, devise: dev, reglement: credit ? "dette" : "comptant" })}>
               <Icon name="check" size={14} />{v.detenteur ? "Je peux aussi le fournir" : "Je m'en occupe"}
             </button>
           </>
@@ -200,7 +231,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           <span style={{ color: "var(--text-muted)" }}>Aussi disponibles : </span>
           {autres.map((o) => (
             <span key={o.id} style={{ marginRight: 10 }}>
-              <b>{o.membre.nom}</b>{o.prix != null ? ` — ${fmt(o.prix)} périns` : ""}
+              <b>{o.membre.nom}</b>{o.prix != null ? ` — ${montant(o.prix, o.devise)}${o.reglement === "dette" ? " à crédit" : ""}` : ""}
             </span>
           ))}
         </div>

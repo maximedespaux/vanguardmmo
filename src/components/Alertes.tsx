@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { demanderPermission, jouerCarillon, notifierNavigateur, permissionNotif, reglerSon, sonActif, type EtatPermission } from "@/lib/alerte";
+import { familleNotif, LIMITE_APERCU } from "@/lib/typesNotif";
 
 type Notif = { id: string; type: string; title: string; body: string | null; link: string | null; read: boolean; createdAt: string };
 
@@ -24,6 +25,8 @@ export function Alertes() {
   const [unread, setUnread] = useState(0);
   const [fils, setFils] = useState(0);
   const [open, setOpen] = useState(false);
+  /** La notification dont on a déroulé le texte long. */
+  const [deplie, setDeplie] = useState<string | null>(null);
   const [perm, setPerm] = useState<EtatPermission>("absent");
   const [son, setSon] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
@@ -137,12 +140,35 @@ export function Alertes() {
             {items.length === 0 ? (
               <div style={{ padding: 22, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>Aucune notification.</div>
             ) : items.map(n => {
+              // De quoi on parle, dit AVANT le titre : une quête, un message,
+              // un achat et une demande d'objet n'appellent pas la même
+              // réaction, et ils s'affichaient tous en gris.
+              const f = familleNotif(n.type);
+              const long = !!n.body && n.body.length > LIMITE_APERCU;
+              const ouvert = deplie === n.id;
               const inner = (
                 <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", gap: 10, background: n.read ? "transparent" : "rgba(255,140,26,.06)" }}>
-                  <Icon name={n.type === "bank_request" ? "cart" : n.type.endsWith("_MESSAGE") ? "message" : "info"} size={16} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
+                  <Icon name={f.icone} size={16} style={{ color: f.couleur, flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{n.title}</div>
-                    {n.body && <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, wordBreak: "break-word" }}>{n.body}</div>}
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .7, color: f.couleur, border: `1px solid ${f.couleur}55`, borderRadius: 20, padding: "1px 7px" }}>
+                        {f.label}
+                      </span>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{n.title}</span>
+                    </div>
+                    {n.body && (
+                      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 3, wordBreak: "break-word" }}>
+                        {long && !ouvert ? `${n.body.slice(0, LIMITE_APERCU).trimEnd()}…` : n.body}
+                        {long && (
+                          // Le lien ouvre la page ; ce bouton ne fait que dérouler
+                          // le texte — deux gestes différents, deux commandes.
+                          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeplie(ouvert ? null : n.id); }}
+                            style={{ marginLeft: 6, background: "none", border: "none", padding: 0, color: "var(--orange)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
+                            {ouvert ? "réduire" : "en savoir plus"}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               );

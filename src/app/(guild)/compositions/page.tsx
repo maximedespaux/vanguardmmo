@@ -26,7 +26,6 @@ export default function CompositionsPage() {
   const [editSlot, setEditSlot] = useState<Slot | null>(null);
   const [presences, setPresences] = useState<Presence[]>([]);
   const [instructions, setInstructions] = useState("");
-  const [editInstr, setEditInstr] = useState<string | null>(null);
   /**
    * Vrai une fois la composition partagée lue au moins une fois.
    * L'état est un blob remplacé EN BLOC : écrire avant de l'avoir lu revient à
@@ -60,10 +59,12 @@ export default function CompositionsPage() {
       const e = normaliserCompo(d);
       setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
       setCharge(true);
-      // On n'ecrase pas le texte pendant qu'un membre du staff le redige.
-      setInstructions(prev => (editInstr === null ? e.instructions : prev));
+      // Le texte des consignes n'est plus affiche ici (il aura sa page), mais on
+      // le garde en memoire : chaque enregistrement renvoie l'etat ENTIER, et
+      // l'oublier reviendrait a l'effacer pour tout le monde.
+      setInstructions(e.instructions);
     }).catch(() => {});
-  }, [editInstr]);
+  }, []);
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
   useEffect(() => { fetch("/api/characters").then(r => (r.ok ? r.json() : [])).then(setMyChars).catch(() => {}); }, []);
 
@@ -303,43 +304,6 @@ export default function CompositionsPage() {
           </div>
         )}
 
-        {/* ── Consignes ────────────────────────────────────────────────────
-            Redigees par le staff, lues par tout le monde. Maxime voulait une
-            page d'instructions : elle est ici, a cote des postes qu'elle
-            explique, plutot que sur une page separee qu'il faudrait aller
-            chercher. */}
-        <div className="fx-card" style={card}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
-            <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
-              <Icon name="book" size={17} />Consignes
-            </h2>
-            {isAdmin && editInstr === null && (
-              <button onClick={() => setEditInstr(instructions)} style={{ marginLeft: "auto", fontSize: 11.5, padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontWeight: 600 }}>
-                {instructions ? "Modifier" : "Rédiger"}
-              </button>
-            )}
-          </div>
-
-          {editInstr !== null ? (
-            <>
-              <textarea value={editInstr} onChange={e => setEditInstr(e.target.value.slice(0, 4000))} rows={10}
-                placeholder="Déroulé de la Chambre Secrète, rôle de chaque poste, points de rendez-vous…"
-                style={{ width: "100%", boxSizing: "border-box", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 12, color: "var(--text)", fontFamily: "inherit", fontSize: 13.5, lineHeight: 1.6, resize: "vertical" }} />
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", alignItems: "center", marginTop: 10 }}>
-                <span style={{ fontSize: 11, color: "var(--text-muted)", marginRight: "auto" }}>{editInstr.length}/4000</span>
-                <button onClick={() => setEditInstr(null)} style={{ fontSize: 12, padding: "7px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer" }}>Annuler</button>
-                <button className="vg-btn" onClick={() => { sauver({ instructions: editInstr }); setEditInstr(null); }}>Enregistrer</button>
-              </div>
-            </>
-          ) : instructions ? (
-            <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-wrap" }}>{instructions}</div>
-          ) : (
-            <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-              Aucune consigne pour l&apos;instant{isAdmin ? " — clique sur « Rédiger »." : ". Le staff les publiera ici."}
-            </div>
-          )}
-        </div>
-
         {/* Zones de composition */}
         {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
           <div key={g} className="fx-card" style={{ ...card, padding: 0, overflow: "hidden" }}>
@@ -423,10 +387,17 @@ export default function CompositionsPage() {
           </>)}
         </div>
       </>) : (
-        <div style={{ ...card, textAlign: "center", padding: 40, background: "radial-gradient(circle at 50% 30%, rgba(255,140,26,0.08), transparent 70%)" }}>
-          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--orange)" }}><Icon name="sword" size={44} /></div>
-          <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege — Libre</h2>
-          <p style={{ color: "var(--text)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>Tout le monde peut participer, il n&apos;y a pas de composition stricte. On s&apos;adapte : ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", verticalAlign: "-3px", color: "var(--orange)" }} /></p>
+        <div style={{ ...card, textAlign: "center", padding: 40 }}>
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="sword" size={44} /></div>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>
+            <Icon name="clock" size={12} />En standby
+          </div>
+          <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege</h2>
+          {/* Rien a organiser ici pour l'instant : le dire franchement vaut mieux
+              qu'une page qui ressemble a une page active. */}
+          <p style={{ color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>
+            Aucune séance n&apos;est organisée pour le moment. Quand ça reprendra, ce sera <b style={{ color: "var(--text)" }}>libre</b> : pas de composition stricte, ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", verticalAlign: "-3px", color: "var(--orange)" }} />
+          </p>
         </div>
       )}
       </div>

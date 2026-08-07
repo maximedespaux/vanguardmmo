@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { DEVISES, prixMixte } from "@/lib/monnaies";
 
@@ -27,6 +28,9 @@ type Vente = {
   prixReference: number | null;
   dettePossible: boolean;
   souhaitPaiement: string;
+  nature: "boutique" | "aFaire";
+  queteId: string | null;
+  raison: string | null;
 };
 
 const fmt = (n: number | null) => (n == null ? "—" : n.toLocaleString("fr-FR"));
@@ -117,8 +121,15 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
   return (
     <div className="glass-card" style={{ padding: 14, marginBottom: 12, borderColor: v.detenteur ? "rgba(74,222,128,.32)" : "rgba(255,140,26,.3)" }}>
       <div className="font-heading" style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1.4, color: "var(--orange)", marginBottom: 9, display: "flex", alignItems: "center", gap: 7 }}>
-        <Icon name="swap" size={14} />L&apos;échange
+        <Icon name={v.nature === "boutique" ? "swap" : "sprout-farm"} size={14} />
+        {v.nature === "boutique" ? "L'échange" : "À faire — personne ne l'a au coffre"}
       </div>
+      {v.raison && (
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 9 }}>
+          <Icon name="info" size={12} style={{ verticalAlign: "-1px", marginRight: 5 }} />
+          {v.raison}
+        </div>
+      )}
 
       {/* ── Qui fournit ── */}
       {v.detenteur ? (
@@ -234,6 +245,31 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
                 <Icon name="zap" size={13} />Je suis en jeu, maintenant
               </button>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Personne ne l'a au coffre : ça ne se vend pas, ça se farme — et à
+          plusieurs. La quête garde le « pourquoi » attaché au « quoi ». */}
+      {v.nature === "aFaire" && (jeSuisDemandeur || estStaff) && (
+        <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 10, padding: "9px 11px", borderRadius: 9, background: "rgba(255,140,26,.07)", border: "1px solid rgba(255,140,26,.25)" }}>
+          {v.queteId ? (
+            <>
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Une quête de guilde est ouverte pour cet objet.</span>
+              <Link href="/quetes" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
+                <Icon name="target" size={13} />Voir la quête
+              </Link>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+                Personne n&apos;a cet objet au coffre. Ouvre une quête : plusieurs membres pourront y contribuer.
+              </span>
+              <button className="vg-btn" style={{ marginLeft: "auto", padding: "7px 13px", fontSize: 12.5, opacity: occupe ? .6 : 1 }} disabled={occupe}
+                onClick={() => agir("enQuete").then(charger)}>
+                <Icon name="target" size={13} />En faire une quête
+              </button>
+            </>
           )}
         </div>
       )}

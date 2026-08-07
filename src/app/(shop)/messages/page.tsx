@@ -125,6 +125,13 @@ export default function MessagesPage() {
         subtitle="Chaque demande EST une conversation : son état, son prix et la discussion, au même endroit."
       />
 
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
+        {/* Beaucoup de demandes finissent en quête : le chemin doit être court. */}
+        <Link href="/quetes" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
+          <Icon name="target" size={14} />Les quêtes de la guilde
+        </Link>
+      </div>
+
       <div className="msg-layout" data-vue={ouvert ? "fil" : "liste"} style={{ display: "grid", gap: 14, alignItems: "start" }}>
         {/* ── Colonne des conversations ── */}
         <div className="msg-liste glass-card" style={{ padding: 12 }}>
@@ -250,6 +257,9 @@ export default function MessagesPage() {
               )}
               {/* Les coulisses n'existent que pour ceux qui vendent : jamais
                   pour l'auteur de la demande, même s'il est de la guilde. */}
+              {/* « Entre nous » : les détenteurs quand l'objet dort au coffre,
+                  le staff quand il faut le faire fabriquer ou farmer. Dans les
+                  deux cas, jamais l'auteur de la demande. */}
               <Fil
                 coulisses={deLaGuilde && courante.type === "requete" && !courante.jeSuisLAuteur}
                 key={courante.filId}

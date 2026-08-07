@@ -138,6 +138,18 @@ export type VenteVue = {
   prixReference: number | null;
   /** Ce que l'acheteur a annoncé pouvoir payer : "perins" | "airpoints" | "mixte". */
   souhaitPaiement: string;
+  /**
+   * Deux natures de demande, deux façons d'y répondre :
+   * — "boutique" : l'objet DORT au coffre de quelqu'un. On cherche son
+   *   détenteur, et « entre nous » réunit ceux qui l'ont.
+   * — "aFaire" : personne ne l'a. Il faut le farmer ou le fabriquer, à
+   *   plusieurs, et ça devient une quête. « Entre nous » réunit le staff.
+   */
+  nature: "boutique" | "aFaire";
+  /** La quête ouverte depuis cette demande, s'il y en a une. */
+  queteId: string | null;
+  /** Pourquoi le demandeur en a besoin — ce qui décide de la suite. */
+  raison: string | null;
   /** La dette n'est ouverte qu'aux membres de la guilde — c'est le DEMANDEUR
    *  qui doit l'être, puisque c'est lui qui devra rembourser. */
   dettePossible: boolean;
@@ -172,7 +184,7 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
     where: { id: requestId },
     select: {
       id: true, item: true, detenteurId: true, rendezVous: true, rendezVousPar: true, rendezVousOk: true,
-      priceEach: true, userId: true, modePaiement: true,
+      priceEach: true, userId: true, modePaiement: true, kind: true, reason: true, queteId: true, quantity: true,
       offres: {
         orderBy: { createdAt: "asc" },
         select: {
@@ -217,6 +229,11 @@ export async function vueVente(requestId: string, moiId?: string): Promise<Vente
       : null,
     prixReference: req.priceEach ?? null,
     souhaitPaiement: req.modePaiement,
+    // Le stock tranche mieux que le type de la demande : un objet que personne
+    // n'a au coffre ne se vend pas, quel qu'ait été le formulaire d'origine.
+    nature: possibles.length > 0 ? "boutique" : "aFaire",
+    queteId: req.queteId,
+    raison: req.reason?.replace(/^Boutique · /, "") ?? null,
     dettePossible: !!demandeur && canAccessGuild(demandeur.role),
   };
 }

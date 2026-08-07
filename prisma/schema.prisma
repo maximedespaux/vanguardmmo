@@ -683,6 +683,10 @@ model BankRequest {
   /// Message du salon des ventes, tenu à jour par le bot : c'est lui qui dit
   /// publiquement qui a pris la commande.
   venteMessageId    String?
+  /// Quête ouverte à partir de cette demande. Un objet que personne n'a au
+  /// coffre ne se vend pas : il se FARME, et à plusieurs. Le lien garde le
+  /// « pourquoi » attaché au « quoi ».
+  queteId           String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   offres            OffreVente[]

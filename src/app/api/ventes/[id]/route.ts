@@ -138,6 +138,44 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       return NextResponse.json(sansBigInt((await vueVente(id, a.user.id))!));
     }
 
+    /**
+     * En faire une quête de guilde.
+     *
+     * Un objet que PERSONNE n'a au coffre ne se vend pas : il se farme, et à
+     * plusieurs. La demande devient alors une quête participative, en gardant
+     * le « pourquoi » — sans la raison, celui qui farme ne sait pas pour qui
+     * ni dans quel but, et la quête traîne.
+     */
+    case "enQuete": {
+      if (!estStaff && !estDemandeur) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      const deja = await prisma.bankRequest.findUnique({ where: { id }, select: { queteId: true, reason: true } });
+      if (deja?.queteId) return NextResponse.json({ error: "Une quête existe déjà pour cette demande." }, { status: 409 });
+
+      const quete = await prisma.quete.create({
+        data: {
+          auteurId: a.user.id,
+          titre: dem.item ?? "Objet demandé",
+          quantite: Math.max(1, dem.quantity || 1),
+          note: [`Demandé par ${dem.username}`, deja?.reason?.replace(/^Boutique · /, "")].filter(Boolean).join(" — ").slice(0, 500),
+          itemRef: dem.item,
+        },
+      });
+      await prisma.bankRequest.update({ where: { id }, data: { queteId: quete.id } });
+      await prisma.requestMessage.create({
+        data: {
+          bankRequestId: id, kind: "system",
+          body: `${a.user.username} a ouvert une quête de guilde : plusieurs membres peuvent y contribuer.`,
+        },
+      });
+      await prevenirStaff(
+        "Nouvelle quête depuis une demande",
+        `${dem.item ?? "Objet"} pour ${dem.username} — personne ne l'a au coffre, on le farme.`,
+        `/quetes`,
+        a.user.id,
+      );
+      return NextResponse.json({ ok: true, queteId: quete.id });
+    }
+
     /** Se désister : la demande repart aux autres détenteurs. */
     case "liberer": {
       if (!estDetenteur && !estStaff) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });

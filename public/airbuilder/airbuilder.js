@@ -244,6 +244,19 @@ function _itip(){if(!_itipEl){_itipEl=document.createElement('div');_itipEl.clas
 function clsLabel(it){if(it.classes&&it.classes.length)return it.classes.map(c=>Object.keys(CKEY).find(k=>CKEY[k]===c)||c).join(', ');if(it.cls)return Object.keys(CKEY).find(k=>CKEY[k]===it.cls)||it.cls;return 'Toutes classes';}
 function statTally(arr){if(!Array.isArray(arr))return'';const m={},order=[];arr.forEach(x=>{if(x){if(m[x]==null){m[x]=0;order.push(x);}m[x]++;}});return order.map(k=>esc(k)+(m[k]>1?' ×'+m[k]:'')).join(' · ');}
 function pierceMaxFor(slot,it){if(slot==='suit')return 4;if(slot==='weapon'||slot==='weapon2')return(it&&['Éternel','Yggdrasil'].includes(it.tier))?12:10;return 10;}
+/* Le sertissage se dessinait en losanges CSS — jaune pour un diamant, violet
+   pour un holographique. Ce sont les vrais diamants du jeu maintenant, et
+   l'holographique est la meme pierre teintee, faute d'asset dedie. */
+function diaImg(rempli,holo){
+  if(!rempli)return '<span class="gem e"></span>';
+  return `<img class="gem img" src="/airbuilder/icons/sertissage/diamant${holo?'-holo':''}.png" alt="" title="${holo?'Diamant holographique':'Diamant'}${typeof rempli==='string'?' · '+rempli:''}">`;
+}
+/* La rune porte la pierre de sa famille : chaque palier a la sienne en jeu. */
+const RUNEIMG={'Yggdrasil':'rune-yggdrasil','Éternel':'rune-force','Ancestral':'rune-endurance','Lusaka':'rune-intelligence'};
+function runeImg(tier){
+  const f=RUNEIMG[tier];
+  return f?`<img class="runeic" src="/airbuilder/icons/sertissage/${f}.png" alt="">`:'<i class=vgi-rune></i>';
+}
 function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&&IC[it.ic])?`<img src="${IC[it.ic]}">`:'';
   const isW=(slot==='weapon'||slot==='weapon2');
   const up=(cfg&&cfg.up)?` <span style="color:var(--gold)">+${cfg.up}</span>`:'';
@@ -274,13 +287,13 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
   if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>+${b[1]}</span></div>`).join('');}
   // --- Schéma de configuration (pièce équipée) ---
   if(configured){let cf='';const chips=[];
-    if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut)'}">${'<i class=vgi-rune></i>'} ${esc(runeName(it.tier))}</span>`);
+    if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut);opacity:.65'}">${runeImg(it.tier)} ${esc(runeName(it.tier))}</span>`);
     else if(cfg&&typeof cfg.rune==='string'&&cfg.rune){const _rc=STATCOL[cfg.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">● ${esc(cfg.rune)}</span>`);}
     if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/100</span>`);
     if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">● ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
-    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>`<span class="gem ${d?'f':'e'}"></span>`).join('');const holos=(cfg.holo||[]).map(d=>`<span class="gem ${d?'h':'e'}"></span>`).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:#7fd0ff;font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
-    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>`<span class="gem ${d?'f':'e'}"></span>`).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:#7fd0ff;font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
+    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
+    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>diaImg(d,false)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.pierce){const SC={Fulgur:'#FFD24A',Volcano:'#F87171','Océane':'#4EA8FF'};const pcard=PIERCECARD[cfg.pierceEl];const ecol=pcard?pcard.col:(SC[cfg.pierceEl]||'#9a9aa8');const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
       if(cfg.pierceEl||open){const pips=Array.from({length:open},(_,i)=>{const v=cfg.pierce[i];
           if(v&&cfg.pierceEl)return `<img class="pcard" src="${pierceCarte(cfg.pierceEl,slot,v)}" alt="${v}" title="${esc(cfg.pierceEl)} ${v}">`;

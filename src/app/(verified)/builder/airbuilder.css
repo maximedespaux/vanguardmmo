@@ -244,7 +244,14 @@
    statistique de base, et la couleur dit laquelle d'un coup d'oeil.
    Declare sur les deux racines : l'infobulle est montee sur le body, hors
    de .agx, et n'heriterait pas des variables du panneau. */
-.agx,.itip{--c-eveil:#7fb8ff;--c-holo:#ff7a7a;--c-percage:#c77dff}
+/* Bleu = eveil, rouge = diamant holographique, violet-rose = percage, comme
+   dans les captures du jeu fournies par Maxime. Le diamant classique garde le
+   bleu clair, le systeme de rarete garde ses propres couleurs par ailleurs. */
+.agx,.itip{--c-eveil:#5aa0ff;--c-diamant:#7fd0ff;--c-holo:#ff6b6b;--c-percage:#e879f9}
+/* Les vraies pierres du jeu, a la place des losanges dessines en CSS. */
+.itip .gem.img{width:15px;height:15px;object-fit:contain;image-rendering:pixelated;
+  transform:none;border-radius:0;background:none;border:none}
+.itip .runeic{width:15px;height:15px;object-fit:contain;image-rendering:pixelated;vertical-align:-3px}
 /* Les boutons R1 / R2 portent le parchemin du jeu : c'est a son dessin qu'on
    les reconnait en inventaire, pas a deux lettres. */
 .seg-ev .s2{display:inline-flex;align-items:center;justify-content:center;gap:5px}

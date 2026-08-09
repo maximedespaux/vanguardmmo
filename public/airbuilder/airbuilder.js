@@ -366,44 +366,86 @@ function removeItem(){delete ST().eq[pickSlot];render();closePick();}
  * il fallait deja savoir laquelle, et l'ouvrir. On part desormais du build —
  * on voit ses pieces, on choisit celle qu'on veut se faire fournir.
  */
+/* « Acheter un objet » — les pieces montees sur ce stuff.
+ *
+ * On n'en demandait qu'une a la fois : pour trois pieces il fallait revenir
+ * trois fois sur le builder. On coche ce qu'on veut, et tout part ensemble ;
+ * la boutique les presente ensuite une par une, chacune avec son prix.
+ */
+var VGSEL = {};
+function vgSelPiece(slot, ev){
+  if(ev) ev.stopPropagation();
+  VGSEL[slot] = !VGSEL[slot];
+  var ligne = document.querySelector('.itl[data-slot="' + slot + '"]');
+  if(ligne) ligne.classList.toggle('sel', !!VGSEL[slot]);
+  vgSelMaj();
+}
+function vgSelMaj(){
+  var n = Object.keys(VGSEL).filter(function(k){ return VGSEL[k]; }).length;
+  var b = document.getElementById('vgBuyGo');
+  if(!b) return;
+  b.textContent = n ? ('Demander ' + n + ' pièce' + (n > 1 ? 's' : '')) : 'Choisis au moins une pièce';
+  b.classList.toggle('off', !n);
+}
 function vgAcheterPiece(){
   if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
-  var eq=ST().eq||{};
-  var slots=Object.keys(eq).filter(function(s){return eq[s]&&eq[s].item;});
-  var lignes=slots.map(function(s){
-    var e=eq[s];var lbl=(SLOTS[s]&&SLOTS[s].lbl)||s;
-    var c=e.cfg||{};var bouts=[];
-    if(c.tier&&c.tier!=='Commun')bouts.push(c.tier);
-    if(c.up)bouts.push('+'+c.up);
-    if(c.pierceEl)bouts.push(c.pierceEl);
-    if(c.evL)bouts.push('éveil '+c.evL);
-    return '<div class="itl" onclick="vgDemanderPiece(\''+s+'\')" style="cursor:pointer">'
-      +(e.item.ic&&IC[e.item.ic]?'<img src="'+IC[e.item.ic]+'">':'<i class=vgi-package></i>')
-      +'<div class="n" style="color:'+(e.item.col||'#cfd2dc')+'">'+esc(e.item.n)
-      +'<div style="font-size:10.5px;color:var(--mut)">'+esc(lbl)+(bouts.length?' · '+esc(bouts.join(' · ')):'')+'</div></div>'
-      +'<span class="pill dem"><i class=vgi-cart></i> Demander</span></div>';
+  VGSEL = {};
+  var eq = ST().eq || {};
+  var slots = Object.keys(eq).filter(function(s){ return eq[s] && eq[s].item; });
+  var lignes = slots.map(function(s){
+    var e = eq[s], lbl = (SLOTS[s] && SLOTS[s].lbl) || s;
+    var c = e.cfg || {}, bouts = [];
+    if(c.tier && c.tier !== 'Commun') bouts.push(c.tier);
+    if(c.up) bouts.push('+' + c.up);
+    if(c.pierceEl) bouts.push(c.pierceEl);
+    if(c.evL) bouts.push('éveil ' + c.evL);
+    var ic = (e.item.ic && IC[e.item.ic]) ? '<img src="' + IC[e.item.ic] + '" alt="">' : '<i class=vgi-package></i>';
+    return '<div class="itl buyl" data-slot="' + s + '" onclick="vgSelPiece(\'' + s + '\',event)">'
+      + '<span class="coche" aria-hidden="true"></span>'
+      + '<span class="ic">' + ic + '</span>'
+      + '<span class="n" style="color:' + (e.item.col || '#cfd2dc') + '">' + esc(e.item.n)
+      + '<span class="sub">' + esc(lbl) + (bouts.length ? ' · ' + esc(bouts.join(' · ')) : '') + '</span></span>'
+      + '</div>';
   }).join('');
-  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:560px;padding:22px">'
-    +'<div style="font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px">'+VGI('cart',{size:16})+' Acheter un objet de mon build</div>'
-    +'<div class="mut" style="font-size:11.5px;margin-bottom:12px">Choisis une pièce : elle part vers la boutique avec ses réglages (rareté, +N, perçage, éveil), et tu ajustes avant d\'envoyer ta demande.</div>'
-    +(lignes||'<div class="mut" style="font-size:13px;padding:8px 0">Ce stuff est vide — équipe au moins une pièce.</div>')
-    +'<div class="sheet-foot" style="margin-top:14px"><span></span><span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>'
-    +'</div></div>';
+  document.getElementById('modalRoot').innerHTML = '<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet buysheet" style="max-width:560px;padding:22px">'
+    + '<div class="buyttl">' + VGI('cart',{size:16}) + ' Acheter un objet de mon build</div>'
+    + '<div class="mut buysub">Coche les pièces qui t\'intéressent : elles partent vers la boutique avec leurs réglages (rareté, +N, perçage, éveil), et tu ajustes le prix de chacune avant d\'envoyer.</div>'
+    + (lignes || '<div class="mut" style="font-size:13px;padding:8px 0">Ce stuff est vide — équipe au moins une pièce.</div>')
+    + '<div class="sheet-foot buyfoot">'
+    + '<span class="pill" onclick="agClose(0)">Annuler</span>'
+    + '<span class="pill dem off" id="vgBuyGo" onclick="vgDemanderSelection()">Choisis au moins une pièce</span>'
+    + '</div></div></div>';
 }
-function vgDemanderPiece(slotDemande){
-  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
-  var slot=slotDemande||pickSlot,e=E(slot);
-  if(!e||!e.item){agToast('Équipe d\'abord une pièce dans cet emplacement.',false);return;}
+/* Envoie la selection vers la boutique. La pile est lue piece par piece. */
+function vgDemanderSelection(){
+  var choisis = Object.keys(VGSEL).filter(function(k){ return VGSEL[k]; });
+  if(!choisis.length){ agToast('Coche au moins une pièce.', false); return; }
+  var pile = choisis.map(vgDepotPiece).filter(Boolean);
+  if(!pile.length) return;
+  try{ localStorage.setItem('vg_demande_pieces', JSON.stringify(pile)); localStorage.removeItem('vg_demande_piece'); }
+  catch(err){ agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.', false); return; }
+  location.href = '/boutique?piece=1';
+}
+/* Le depot d'UNE piece, tel que la boutique l'attend. Partage entre le bouton
+   d'une seule piece et la selection multiple. */
+function vgDepotPiece(slot){
+  var e=E(slot); if(!e||!e.item) return null;
   var c=e.cfg||{};
   var ouverts=(c.pn!=null)?c.pn:((c.pierce||[]).filter(function(x){return x;}).length);
-  var d={slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
+  return {slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
     rarete:(c.tier&&c.tier!=='Commun')?c.tier:'',
     up:c.up?String(c.up):'',etoiles:c.stars?String(c.stars):'',
     percage:ouverts?String(ouverts):'',carte:c.pierceEl||'',
     eveilRang:c.evL||'',eveilStat:c.evS||'',
     scrollStat:c.scrS||'',scrollNiv:c.scrL?String(c.scrL):'',
     element:c.elemType||'',elementNiv:c.elemLvl?String(c.elemLvl):''}};
-  try{localStorage.setItem('vg_demande_piece',JSON.stringify(d));}
+}
+function vgDemanderPiece(slotDemande){
+  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
+  var slot=slotDemande||pickSlot;
+  var d=vgDepotPiece(slot);
+  if(!d){agToast('Équipe d\'abord une pièce dans cet emplacement.',false);return;}
+  try{localStorage.setItem('vg_demande_pieces',JSON.stringify([d]));localStorage.removeItem('vg_demande_piece');}
   catch(err){agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.',false);return;}
   location.href='/boutique?piece=1';
 }
@@ -578,12 +620,23 @@ const PIERCECARD={
 /* Les vraies cartes du jeu. Une arme ou un bouclier se perce avec une carte
    graduee A ou S ; une armure avec une carte a 7 % ou 10 %. Ce sont deux
    dessins differents, et le builder les confondait sous une meme pastille. */
-const PIERCE_USAGE=slot=>(slot==='weapon'||slot==='weapon2'||slot==='shield')?'arme':'armure';
+const PIERCE_USAGE=slot=>(slot==='weapon'||slot==='weapon2'||slot==='shield')?'arme':(slot==='suit'?'tenue':'armure');
+/* Trois familles de cartes, pas deux :
+   - arme et bouclier : carte graduee A ou S ;
+   - armure : carte a 7 % ou 10 % ;
+   - TENUE : ses propres elements — Fulgur, Volcano, Oceane — et une famille de
+     cartes encadrees, graduees 12 / 15 / 18. Elle n'avait aucune carte, donc
+     l'infobulle demandait des fichiers qui n'existaient pas.
+   L'accent d'« Oceane » est retire du nom de fichier : un chemin accentue se
+   fait encoder et l'image ne se charge plus. */
+const SANSACCENT=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 function pierceCarte(el,slot,grade){
   if(!el)return '';
   const usage=PIERCE_USAGE(slot);
-  const g=usage==='arme'?(grade==='S'?'s':'a'):(grade==='S'?'10':'7');
-  return `/airbuilder/icons/percage/${el.toLowerCase()}-${usage}-${g}.png`;
+  const g=usage==='arme'?(grade==='S'?'s':'a')
+        :usage==='tenue'?(grade==='S'?'s':'a')
+        :(grade==='S'?'10':'7');
+  return `/airbuilder/icons/percage/${SANSACCENT(el)}-${usage}-${g}.png`;
 }
 function pierceTotals(cfg){const card=PIERCECARD[cfg.pierceEl];if(!card)return null;let a=0,s=0;(cfg.pierce||[]).forEach(x=>{if(x==='A')a++;else if(x==='S')s++;});const prim=a*card.a[0]+s*card.s[0];const sec=a*card.a[1]+s*card.s[1];const lines=[];if(prim)lines.push([card.prim,'+'+prim]);if(sec)lines.push([card.sec,(sec>0?'+':'')+sec+card.secU]);return{card:card,a:a,s:s,lines:lines};}
 function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.pn;

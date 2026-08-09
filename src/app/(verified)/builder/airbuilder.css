@@ -130,7 +130,32 @@
 .sheet h3{font-family:Rubik;margin:0 0 10px;color:var(--orange);text-transform:uppercase;letter-spacing:1px}
 .srch{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px;margin-bottom:8px}
 .itl{display:flex;gap:9px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:9px;margin-bottom:5px;cursor:pointer;background:var(--bg3)}
-.itl:hover{border-color:var(--orange)}.itl img{width:32px;height:32px;object-fit:contain}.itl .n{flex:1;font-size:12.5px}
+.itl:hover{border-color:var(--orange)}.itl img{width:32px;height:32px;object-fit:contain}.itl .n{flex:1;min-width:0;font-size:12.5px}
+/* « Acheter un objet » : on coche les pieces, on demande une fois.
+   Chaque ligne tient sur un rang — case, icone, nom et reglages — et se
+   comporte pareil sur telephone, ou seule l'icone se reduit. Le bouton
+   d'envoi vit dans le pied, plus sur chaque ligne : il n'y a qu'une demande. */
+.buysheet .buyttl{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.buysheet .buysub{font-size:11.5px;margin-bottom:12px;line-height:1.5}
+.itl.buyl{align-items:center;gap:10px;padding:9px 11px;transition:border-color .12s,background .12s}
+.itl.buyl .coche{width:17px;height:17px;flex:none;border:1.5px solid var(--border);border-radius:5px;
+  display:inline-flex;align-items:center;justify-content:center;transition:.12s}
+.itl.buyl.sel{border-color:var(--orange);background:rgba(255,140,26,.08)}
+.itl.buyl.sel .coche{background:var(--orange);border-color:var(--orange)}
+.itl.buyl.sel .coche::after{content:"";width:5px;height:9px;border:solid #14100a;border-width:0 2px 2px 0;
+  transform:rotate(45deg) translate(-1px,-1px)}
+.itl.buyl .ic{width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center}
+.itl.buyl .ic img{width:32px;height:32px;object-fit:contain}
+.itl.buyl .n{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.itl.buyl .n .sub{font-size:10.5px;color:var(--mut);font-weight:400}
+.buyfoot{margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center}
+.buyfoot .pill.dem.off{opacity:.45;pointer-events:none}
+@media(max-width:560px){
+  .itl.buyl{padding:10px}
+  .itl.buyl .ic,.itl.buyl .ic img{width:26px;height:26px}
+  .buyfoot{flex-direction:column-reverse;align-items:stretch}
+  .buyfoot .pill{justify-content:center;padding:10px 12px}
+}
 .pill{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;display:inline-block}
 .pill.on{background:var(--orange);color:#000;border-color:var(--orange);font-weight:600}
 .sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);position:sticky;bottom:-16px;background:linear-gradient(180deg,transparent,var(--bg2) 30%)}

@@ -57,15 +57,27 @@ const etiquette: React.CSSProperties = { display: "block", fontSize: 10.5, textT
  * immédiatement pour que la pièce ne revienne pas à la visite suivante.
  */
 type DepotPiece = { slot?: string; itemId?: string; nom?: string; choix?: Partial<ChoixPiece> };
-let DEPOT: DepotPiece | null | undefined;
-function lireDepot(): DepotPiece | null {
-  if (DEPOT !== undefined) return DEPOT;
+/**
+ * Le builder dépose une PILE : on y coche plusieurs pièces d'un coup, et elles
+ * se composent ici l'une après l'autre — chacune a son prix et sa note, donc
+ * chacune a son passage. `vg_demande_piece` (au singulier) reste lu pour les
+ * dépôts laissés par une version antérieure.
+ */
+let PILE: DepotPiece[] | undefined;
+function lirePile(): DepotPiece[] {
+  if (PILE !== undefined) return PILE;
+  PILE = [];
   try {
-    const brut = localStorage.getItem("vg_demande_piece");
-    localStorage.removeItem("vg_demande_piece");
-    DEPOT = brut ? (JSON.parse(brut) as DepotPiece) : null;
-  } catch { DEPOT = null; }
-  return DEPOT;
+    const multi = localStorage.getItem("vg_demande_pieces");
+    localStorage.removeItem("vg_demande_pieces");
+    if (multi) PILE = JSON.parse(multi) as DepotPiece[];
+    else {
+      const seul = localStorage.getItem("vg_demande_piece");
+      localStorage.removeItem("vg_demande_piece");
+      if (seul) PILE = [JSON.parse(seul) as DepotPiece];
+    }
+  } catch { PILE = []; }
+  return PILE;
 }
 
 export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
@@ -109,9 +121,12 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
    * reviendrait à chaque visite de la boutique.
    */
   const [reprise, setReprise] = useState<string | null>(null);
+  /** Rang de la pièce en cours dans la pile déposée par le builder. */
+  const [rang, setRang] = useState(0);
+  const pile = lirePile();
   useEffect(() => {
     if (!Object.keys(items).length) return;
-    const d = lireDepot();
+    const d = pile[rang];
     if (!d) return;
     // weapon2 → weapon, ring1 → ring, fhead → fashion : le sélecteur de la
     // boutique parle en familles, le builder en emplacements.
@@ -124,7 +139,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setChoisi(trouve);
     setChoix({ ...CHOIX_VIDE, ...(d.choix ?? {}) });
     setReprise(trouve.n);
-  }, [items]);
+  }, [items, rang, pile]);
 
   const liste = useMemo(() => {
     const base = items[slot] ?? [];
@@ -227,7 +242,16 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setEnvoi(false);
     if (!ok) { setEtat({ ok: false, msg: dernierMessage || "Aucune demande envoyée." }); return; }
     setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix("");
-    setEtat({ ok: true, msg: `${ok} demande(s) envoyée(s) — la suite se règle dans la conversation.` });
+    // Pile déposée par le builder : on enchaîne sur la pièce suivante plutôt
+    // que de renvoyer l'utilisateur au builder entre chaque.
+    const suite = rang + 1 < pile.length;
+    setEtat({
+      ok: true,
+      msg: suite
+        ? `${ok} demande(s) envoyée(s). Pièce suivante : ${pile[rang + 1]?.nom ?? "—"} (${rang + 2} sur ${pile.length}).`
+        : `${ok} demande(s) envoyée(s) — la suite se règle dans la conversation.`,
+    });
+    if (suite) setRang((r) => r + 1);
     onEnvoye?.();
   };
 
@@ -243,7 +267,10 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
       {reprise && (
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 13, padding: "9px 12px", borderRadius: 10, background: "rgba(255,140,26,.1)", border: "1px solid rgba(255,140,26,.34)", fontSize: 12.5 }}>
           <Icon name="shirt" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
-          <span><b>{reprise}</b> reprise de ton build, avec ses réglages. Ajuste si besoin, puis ajoute-la à ta demande.</span>
+          <span>
+            <b>{reprise}</b> reprise de ton build, avec ses réglages. Ajuste si besoin, puis ajoute-la à ta demande.
+            {pile.length > 1 && <> <b>Pièce {rang + 1} sur {pile.length}</b> — les suivantes s&apos;enchaînent après l&apos;envoi.</>}
+          </span>
         </div>
       )}
 

@@ -6,7 +6,16 @@ import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 
-type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[] };
+/**
+ * `drops` est le résumé qui tient sur une carte ; `dropsComplets`, quand il
+ * existe, est la liste telle que la fenêtre d'information du jeu l'affiche.
+ * Les deux coexistent parce qu'ils ne servent pas au même moment : on parcourt
+ * la grille pour repérer une instance, on ouvre la fiche pour savoir ce qui
+ * tombe vraiment. Les donjons à set complet (Draken, Catacombes, Sentier,
+ * Dédale) n'ont volontairement pas de liste complète : énumérer 32 pièces d'une
+ * même armure en dit moins que « le set complet ».
+ */
+type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[]; dropsComplets?: string[] };
 
 /**
  * Un donjon à `hp: 0` n'est pas un donjon sans données : c'est un donjon sans PV
@@ -56,10 +65,19 @@ export default function DonjonsPage() {
               <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>
             </div>
             {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
-            <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}><Icon name="gift" size={12} style={{ verticalAlign: "-2px", marginRight: 5 }} />Drops</div>
-            {sel.drops.length > 0
-              ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{sel.drops.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px", fontSize: 12 }}>{d}</span>)}</div>
-              : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>Personne n&apos;a encore relevé les drops de cette instance.</div>}
+            {(() => {
+              // La fiche montre la liste complète quand on l'a ; la carte, elle, garde le résumé.
+              const liste = sel.dropsComplets ?? sel.drops;
+              return (<>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "flex", alignItems: "baseline", gap: 7, flexWrap: "wrap" }}>
+                  <span><Icon name="gift" size={12} style={{ verticalAlign: "-2px", marginRight: 5 }} />Drops</span>
+                  {liste.length > 0 && <span style={{ textTransform: "none", letterSpacing: 0, fontSize: 11 }}>{liste.length} objet{liste.length > 1 ? "s" : ""}</span>}
+                </div>
+                {liste.length > 0
+                  ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px", fontSize: 12 }}>{d}</span>)}</div>
+                  : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>Personne n&apos;a encore relevé les drops de cette instance.</div>}
+              </>);
+            })()}
             <button onClick={() => setSel(null)} style={{ marginTop: 16, width: "100%", padding: 10, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }} className="font-heading">Fermer</button>
           </div>
         </div>

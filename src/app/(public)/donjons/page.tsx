@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dungeonsData from "@/data/dungeons.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
@@ -23,6 +23,31 @@ type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: 
  * progression). Afficher « 0 » laissait croire à une fiche incomplète.
  */
 const hpLabel = (hp: number) => (hp > 0 ? hp.toLocaleString("fr-FR") : "Aucun minimum");
+
+const slugObjet = (nom: string) =>
+  nom.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+/**
+ * L'icône du jeu, quand on l'a. Elle vient de la fenêtre d'information de
+ * l'instance : c'est la seule source où l'icône est certifiée en face du bon
+ * nom français. Toutes les instances n'ont pas encore la leur, d'où le même
+ * principe que le calculateur de prestige — on précharge, et on n'affiche que
+ * si l'image existe. Déposer un PNG au bon nom suffit à en ajouter une.
+ */
+function IconeObjet({ nom }: { nom: string }) {
+  const [presente, setPresente] = useState(false);
+  const src = `/assets/items/drops/${slugObjet(nom)}.png`;
+  useEffect(() => {
+    let vivant = true;
+    const im = new Image();
+    im.onload = () => { if (vivant) setPresente(true); };
+    im.src = src;
+    return () => { vivant = false; };
+  }, [src]);
+  if (!presente) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />;
+}
 
 export default function DonjonsPage() {
   // Halo curseur + relief sur les cartes de donjon (.fx-card), cf. VgFx.
@@ -74,7 +99,7 @@ export default function DonjonsPage() {
                   {liste.length > 0 && <span style={{ textTransform: "none", letterSpacing: 0, fontSize: 11 }}>{liste.length} objet{liste.length > 1 ? "s" : ""}</span>}
                 </div>
                 {liste.length > 0
-                  ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px", fontSize: 12 }}>{d}</span>)}</div>
+                  ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px 4px 6px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}><IconeObjet nom={d} />{d}</span>)}</div>
                   : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>Personne n&apos;a encore relevé les drops de cette instance.</div>}
               </>);
             })()}

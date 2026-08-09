@@ -66,7 +66,11 @@ function slotHTML(slot){try{const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const sm
   else if(slot==='fairy'&&cf&&cf.lvl)rk=`<span class="rk">${cf.lvl}</span>`;
   else if(cf&&cf.rune)rk=`<span class="rk" style="background:var(--green)" title="Rune ${cf.rune}">R</span>`;
   else if((slot==='mantra'||slot==='masque')&&e&&e.item.cat)rk=`<span class="rk" style="background:var(--blue);color:#001">${e.item.cat[0]}</span>`;
-  return `<div class="slot ${small?'small':''}" onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" title="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
+  /* En jeu, une piece equipee se reconnait a la couleur de son cadre avant meme
+     qu'on lise son nom. L'emplacement etait uniformement gris : rien ne
+     distinguait une Yggdrasil d'une piece de depart. */
+  const teinte=(e&&e.item&&e.item.col)?` style="border-color:${e.item.col}77;box-shadow:inset 0 0 0 1px ${e.item.col}22, inset 0 0 14px ${e.item.col}1a"`:'';
+  return `<div class="slot ${small?'small':''}${e?' plein':''}"${teinte} onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" title="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
 
 function render(){
   var _pt=document.getElementById('ptabs');if(!_pt){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;vgSyncChip();
@@ -244,14 +248,30 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
   const isW=(slot==='weapon'||slot==='weapon2');
   const up=(cfg&&cfg.up)?` <span style="color:var(--gold)">+${cfg.up}</span>`:'';
   const stars=(isW&&cfg&&cfg.stars)?` <span style="color:var(--gold)">${'<i class=vgi-star></i>'.repeat(cfg.stars)}</span>`:'';
+  /* Le jeu annonce d'abord CE QUE C'EST, puis SI ON PEUT LE PORTER, et enfin ce
+     qu'il apporte. L'ordre comptait : le niveau requis etait relegue tout en bas,
+     alors que c'est la premiere chose qu'on cherche devant une piece convoitee. */
   let h=`<div class="t" style="color:${col}">${icon}<span>${esc(it.n)}${it.sex?' ('+it.sex+')':''}${up}${stars}</span></div>`;
   const tags=[];
-  if(isW&&cfg&&cfg.tier&&cfg.tier!=='Commun')tags.push(`<span class="tag" style="background:#ffffff10;color:var(--gold);border:1px solid #ffffff2a">${esc(cfg.tier)}</span>`);
-  if(tags.length)h+=`<div style="margin:-1px 0 4px;display:flex;gap:4px;flex-wrap:wrap">${tags.join('')}</div>`;
-  if(it.atk)h+=`<div class="meta"><span>Attaque</span><b>${it.atk[0]} ~ ${it.atk[1]}</b></div>`;
+  /* Le palier s'affichait pour les seules armes. Une armure Yggdrasil ou Lusaka
+     en a un aussi, et il porte la couleur qui identifie la piece d'un coup d'oeil. */
+  const palier=(isW&&cfg&&cfg.tier)?cfg.tier:it.tier;
+  if(palier&&palier!=='Commun')tags.push(`<span class="tag" style="background:${col}1a;color:${col};border:1px solid ${col}66">${esc(palier)}</span>`);
+  if(it.set)tags.push(`<span class="tag" style="background:#ffffff0d;color:var(--mut);border:1px solid #ffffff24">Set ${esc(it.set)}</span>`);
+  if(tags.length)h+=`<div class="tags">${tags.join('')}</div>`;
+  /* Conditions pour equiper, juste sous le nom, comme en jeu. */
+  const cond=[];
+  if(it.lv)cond.push(`Niveau ${it.lv}`);
+  if(it.pr)cond.push(`Prestige ${it.pr}`);
+  const cl=clsLabel(it);
+  if(cl&&cl!=='Toutes')cond.push(cl);
+  if(cond.length)h+=`<div class="cond">${cond.map(c=>esc(c)).join(' · ')}</div>`;
+  if(it.atk)h+=`<div class="atk"><span>Attaque</span><b>${it.atk[0]} ~ ${it.atk[1]}</b></div>`;
   const setb=it.setb&&it.setb.length,bonus=setb?it.setb:(it.b||[]);
   const configured=!!(cfg||(slot==='familier'&&e));
-  if(bonus.length&&!configured){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>+${b[1]}</span></div>`).join('');}
+  /* Les bonus de base disparaissaient des qu'une piece etait configuree : on ne
+     pouvait plus voir ce qu'elle apporte sans la desequiper. Ils restent. */
+  if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>+${b[1]}</span></div>`).join('');}
   // --- Schéma de configuration (pièce équipée) ---
   if(configured){let cf='';const chips=[];
     if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut)'}">${'<i class=vgi-rune></i>'} ${esc(runeName(it.tier))}</span>`);
@@ -271,12 +291,10 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
     if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:11px">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
     if(slot==='fairy'&&cfg&&cfg.lvl)cf+=`<div class="crow"><span class="lab">Niveau fée</span><b style="font-size:11px">${cfg.lvl}</b></div>`;
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
-  h+=`<hr><div class="meta"><span>Classe</span><b>${esc(clsLabel(it))}</b></div>`;
-  if(it.lv)h+=`<div class="meta"><span>Niveau requis</span><b>${it.lv}</b></div>`;
-  if(it.pr)h+=`<div class="meta"><span>Prestige</span><b>P${it.pr}</b></div>`;
   return h;}
-function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it);el.style.display='block';itipMove(ev);}
-function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);el.style.display='block';itipMove(ev);}
+function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
+function itipTeinte(el,it){const c=(it&&it.col)||'';el.style.borderColor=c?c+'88':'';el.style.boxShadow=c?`0 14px 36px #000d, 0 0 0 1px ${c}22 inset`:'';}
+function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item);el.style.display='block';itipMove(ev);}
 function itipMove(ev){if(!_itipEl||_itipEl.style.display!=='block')return;const pad=14,w=_itipEl.offsetWidth,h=_itipEl.offsetHeight;let x=ev.clientX+pad,y=ev.clientY+pad;if(x+w>window.innerWidth-8)x=ev.clientX-w-pad;if(x<8)x=8;if(y+h>window.innerHeight-8)y=window.innerHeight-h-8;if(y<8)y=8;_itipEl.style.left=x+'px';_itipEl.style.top=y+'px';}
 function itipHide(){if(_itipEl)_itipEl.style.display='none';}
 function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{lbl:slot};

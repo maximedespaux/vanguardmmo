@@ -210,6 +210,14 @@
 .itip .t{font-family:Rubik;font-weight:700;font-size:14.5px;letter-spacing:.4px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .itip .t img{width:26px;height:26px;object-fit:contain;flex:none}
 .itip .tag{display:inline-block;font-size:8.5px;padding:2px 8px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+/* Palier et set d'abord, puis les conditions pour equiper, puis l'attaque :
+   l'ordre dans lequel le jeu presente une piece. */
+.itip .tags{display:flex;gap:4px;flex-wrap:wrap;margin:-1px 0 5px}
+.itip .cond{font-size:10.5px;color:var(--mut);margin-bottom:6px}
+.itip .atk{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
+  background:#ffffff08;border:1px solid #ffffff14;border-radius:7px;padding:4px 9px;margin-bottom:2px}
+.itip .atk span{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut)}
+.itip .atk b{font-family:Rubik;font-size:13px;color:var(--gold)}
 .itip .sec{font-size:8.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--mut);margin:8px 0 3px}
 .itip .bl{display:flex;justify-content:space-between;gap:12px;color:var(--green)}
 .itip .bl span:last-child{color:var(--text);font-weight:700;white-space:nowrap}

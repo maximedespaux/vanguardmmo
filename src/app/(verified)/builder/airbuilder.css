@@ -252,6 +252,17 @@
 .itip .gem.img{width:15px;height:15px;object-fit:contain;image-rendering:pixelated;
   transform:none;border-radius:0;background:none;border:none}
 .itip .runeic{width:15px;height:15px;object-fit:contain;image-rendering:pixelated;vertical-align:-3px}
+/* Panneau de reglage : les boutons portent l'objet dont ils parlent, et les
+   en-tetes de groupe la pierre de leur famille. */
+/* L'en-tete est un conteneur flex : l'icone s'y centre toute seule, il ne faut
+   surtout pas lui remettre un vertical-align, qui n'y sert a rien et brouille
+   la lecture du style. Elle ne doit pas non plus s'etirer, d'ou flex:none. */
+.wp .runeic,.wp .ghic{width:16px;height:16px;object-fit:contain;image-rendering:pixelated;flex:none}
+/* Les etoiles d'amelioration, dans l'infobulle : l'icone d'artefact du jeu. */
+.itip .arts{display:inline-flex;align-items:center;gap:1px;vertical-align:-2px}
+.itip .arts img{width:13px;height:13px;object-fit:contain;image-rendering:pixelated}
+.tierbtn.cardbtn{display:inline-flex;align-items:center;gap:5px}
+.tierbtn.cardbtn img{width:16px;height:16px;object-fit:contain;image-rendering:pixelated;flex:none}
 /* Les boutons R1 / R2 portent le parchemin du jeu : c'est a son dessin qu'on
    les reconnait en inventaire, pas a deux lettres. */
 .seg-ev .s2{display:inline-flex;align-items:center;justify-content:center;gap:5px}

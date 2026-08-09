@@ -247,6 +247,20 @@ function pierceMaxFor(slot,it){if(slot==='suit')return 4;if(slot==='weapon'||slo
 /* Le sertissage se dessinait en losanges CSS — jaune pour un diamant, violet
    pour un holographique. Ce sont les vrais diamants du jeu maintenant, et
    l'holographique est la meme pierre teintee, faute d'asset dedie. */
+const RUNEB={'Force':'force','Endurance':'endurance','Dextérité':'dexterite','Intelligence':'intelligence'};
+/* La rune BONUS (fashion, cape, familier, ramasseur) porte la pierre de sa
+   statistique. Elle n'a rien a voir avec la rune d'ARME, qui depend du palier. */
+function runeBonusImg(stat){
+  const f=RUNEB[stat];
+  return f?`<img class="runeic" src="/airbuilder/icons/sertissage/runeb-${f}.png" alt="">`:'●';
+}
+/* Chaque piece de costume a sa propre gemme en jeu : la tete, le torse, les
+   gants et les bottes ne portent pas le meme dessin. */
+function gemmeCostume(slot,rempli){
+  if(!rempli)return '<span class="gem e"></span>';
+  const f=['fhead','ftop','fhand','ffoot'].includes(slot)?`gemme-${slot}`:'diamant';
+  return `<img class="gem img" src="/airbuilder/icons/sertissage/${f}.png" alt="" title="Gemme${typeof rempli==='string'?' · '+rempli:''}">`;
+}
 function diaImg(rempli,holo){
   if(!rempli)return '<span class="gem e"></span>';
   return `<img class="gem img" src="/airbuilder/icons/sertissage/diamant${holo?'-holo':''}.png" alt="" title="${holo?'Diamant holographique':'Diamant'}${typeof rempli==='string'?' · '+rempli:''}">`;
@@ -257,10 +271,10 @@ function runeImg(tier){
   const f=RUNEIMG[tier];
   return f?`<img class="runeic" src="/airbuilder/icons/sertissage/${f}.png" alt="">`:'<i class=vgi-rune></i>';
 }
-function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&&IC[it.ic])?`<img src="${IC[it.ic]}">`:'';
+function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.ic&&IC[it.ic])?`<img src="${IC[it.ic]}">`:'';
   const isW=(slot==='weapon'||slot==='weapon2');
   const up=(cfg&&cfg.up)?` <span style="color:var(--gold)">+${cfg.up}</span>`:'';
-  const stars=(isW&&cfg&&cfg.stars)?` <span style="color:var(--gold)">${'<i class=vgi-star></i>'.repeat(cfg.stars)}</span>`:'';
+  const stars=(isW&&cfg&&cfg.stars)?` <span class="arts">${'<img src="/airbuilder/icons/sertissage/artefact.png" alt="">'.repeat(cfg.stars)}</span>`:'';
   /* Le jeu annonce d'abord CE QUE C'EST, puis SI ON PEUT LE PORTER, et enfin ce
      qu'il apporte. L'ordre comptait : le niveau requis etait relegue tout en bas,
      alors que c'est la premiere chose qu'on cherche devant une piece convoitee. */
@@ -268,8 +282,8 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
   const tags=[];
   /* Le palier s'affichait pour les seules armes. Une armure Yggdrasil ou Lusaka
      en a un aussi, et il porte la couleur qui identifie la piece d'un coup d'oeil. */
-  const palier=(isW&&cfg&&cfg.tier)?cfg.tier:it.tier;
-  if(palier&&palier!=='Commun')tags.push(`<span class="tag" style="background:${col}1a;color:${col};border:1px solid ${col}66">${esc(palier)}</span>`);
+  if(cfg&&cfg.tier&&RARCOL[cfg.tier])tags.push(`<span class="tag" style="background:${col}1a;color:${col};border:1px solid ${col}66">${esc(cfg.tier)}</span>`);
+  if(it.tier)tags.push(`<span class="tag" style="background:${(it.col||'#cfd2dc')}14;color:${it.col||'var(--mut)'};border:1px solid ${(it.col||'#cfd2dc')}55">${esc(it.tier)}</span>`);
   if(it.set)tags.push(`<span class="tag" style="background:#ffffff0d;color:var(--mut);border:1px solid #ffffff24">Set ${esc(it.set)}</span>`);
   if(tags.length)h+=`<div class="tags">${tags.join('')}</div>`;
   /* Conditions pour equiper, juste sous le nom, comme en jeu. */
@@ -288,28 +302,28 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
   // --- Schéma de configuration (pièce équipée) ---
   if(configured){let cf='';const chips=[];
     if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut);opacity:.65'}">${runeImg(it.tier)} ${esc(runeName(it.tier))}</span>`);
-    else if(cfg&&typeof cfg.rune==='string'&&cfg.rune){const _rc=STATCOL[cfg.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">● ${esc(cfg.rune)}</span>`);}
+    else if(cfg&&typeof cfg.rune==='string'&&cfg.rune){const _rc=STATCOL[cfg.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(cfg.rune)} ${esc(cfg.rune)}</span>`);}
     if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/100</span>`);
-    if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">● ${esc(e.rune)}</span>`);}}
+    if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(e.rune)} ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
     if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
-    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>diaImg(d,false)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
+    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>gemmeCostume(slot,d)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.pierce){const SC={Fulgur:'#FFD24A',Volcano:'#F87171','Océane':'#4EA8FF'};const pcard=PIERCECARD[cfg.pierceEl];const ecol=pcard?pcard.col:(SC[cfg.pierceEl]||'#9a9aa8');const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
       if(cfg.pierceEl||open){const pips=Array.from({length:open},(_,i)=>{const v=cfg.pierce[i];
           if(v&&cfg.pierceEl)return `<img class="pcard" src="${pierceCarte(cfg.pierceEl,slot,v)}" alt="${v}" title="${esc(cfg.pierceEl)} ${v}">`;
           return `<span class="pip"></span>`;}).join('');
         let pc=`<div class="crow" style="align-items:flex-start"><span class="lab">Perçage</span><div style="flex:1;min-width:0">`;
-        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66"><i class=vgi-card></i> ${open}/${pierceMaxFor(slot,it)}</span>${cfg.pierceEl?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'S')}" alt="">${esc(cfg.pierceEl)}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
+        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66">${cfg.pierceEl?`<img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'A')}" alt="">`:'<i class=vgi-card></i>'} ${open}/${pierceMaxFor(slot,it)}</span>${cfg.pierceEl?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'S')}" alt="">${esc(cfg.pierceEl)}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
         if(pcard){const t=pierceTotals(cfg);if(t&&t.lines.length)pc+=`<div style="font-size:11px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
         pc+=`</div></div>`;cf+=pc;}}
     if(cfg&&cfg.evL)cf+=`<div class="crow"><span class="lab">Éveil</span><b style="font-size:11px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b></div>`;
-    if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:11px">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
+    if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:11px;display:inline-flex;align-items:center;gap:5px"><img class="runeic" src="/airbuilder/icons/sertissage/statscroll.png" alt="">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
     if(slot==='fairy'&&cfg&&cfg.lvl)cf+=`<div class="crow"><span class="lab">Niveau fée</span><b style="font-size:11px">${cfg.lvl}</b></div>`;
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
   return h;}
 function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
-function itipTeinte(el,it){const c=(it&&it.col)||'';el.style.borderColor=c?c+'88':'';el.style.boxShadow=c?`0 14px 36px #000d, 0 0 0 1px ${c}22 inset`:'';}
-function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item);el.style.display='block';itipMove(ev);}
+function itipTeinte(el,it,cfg){const c=couleurPiece(it,cfg);el.style.borderColor=c?c+'88':'';el.style.boxShadow=c?`0 14px 36px #000d, 0 0 0 1px ${c}22 inset`:'';}
+function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item,e.cfg);el.style.display='block';itipMove(ev);}
 function itipMove(ev){if(!_itipEl||_itipEl.style.display!=='block')return;const pad=14,w=_itipEl.offsetWidth,h=_itipEl.offsetHeight;let x=ev.clientX+pad,y=ev.clientY+pad;if(x+w>window.innerWidth-8)x=ev.clientX-w-pad;if(x<8)x=8;if(y+h>window.innerHeight-8)y=window.innerHeight-h-8;if(y<8)y=8;_itipEl.style.left=x+'px';_itipEl.style.top=y+'px';}
 function itipHide(){if(_itipEl)_itipEl.style.display='none';}
 function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{lbl:slot};
@@ -539,10 +553,21 @@ function upUI(slot,max){const w=cfgOf(slot);const v=w.up||0;const isW=(slot==='w
   else if(isW)foot='<div class="mini">Pas d\'artefact sur ce tier (max +10).</div>';
   else if(slot==='shield')foot='<div class="mini">Max +'+max+' · pas d\'artefact</div>';
   else foot='<div class="mini">Max +'+max+'</div>';
-  return `<div class="grp"><div class="gh"><i class=vgi-upgrade></i> Upgrade ${isW?`<span class="mini">(${art?'Artefact':'Normale'})</span>`:''}</div>
+  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/${art?'artefact':'upgrade'}.png" alt=""> Upgrade ${isW?`<span class="mini">(${art?'Artefact':'Normale'})</span>`:''}</div>
    <div class="lvl"><span class="mini">Niveau : <b>+${v}</b> / +${max}</span>
    <input type="range" min="0" max="${max}" value="${v}" oninput="upLive(this,'${slot}',${max})" onchange="cset('${slot}','up',+this.value)"></div>
    ${foot}</div>`;}
+/* Deux systemes de couleur coexistent et se confondaient.
+   - Le PALIER dit la famille de la piece : Eternel, Yggdrasil, Lusaka...
+     Il vient de la base d'objets et porte deja sa couleur.
+   - La RARETE se configure sur les armes, de Commun a Mythique, et n'avait
+     AUCUNE couleur : le nom et le cadre restaient sur la teinte de famille,
+     donc une arme Mythique se lisait comme une arme Commune.
+   L'echelle reprise ici est celle du wiki des donjons : une seule grille de
+   lecture sur tout le site. La rarete l'emporte quand elle est renseignee,
+   c'est elle qu'on regarde en premier en jeu. */
+const RARCOL={'Commun':'#9CA3AF','Rare':'#4EA8FF','Épique':'#C77DFF','Légendaire':'#FF8C1A','Pré-Mythique':'#FF5C8A','Mythique':'#C92A2A'};
+const couleurPiece=(it,cfg)=>(cfg&&cfg.tier&&RARCOL[cfg.tier])||(it&&it.col)||'#cfd2dc';
 const PIERCECARD={
  Feu:{col:'#F87171',ic:'<i class=vgi-flame></i>',prim:'Force',sec:'Dégâts critiques',secU:'%',a:[7,2],s:[12,4]},
  Eau:{col:'#4EA8FF',ic:'<i class=vgi-droplet></i>',prim:'Intelligence',sec:"Temps d'incantation",secU:'%',a:[7,-2],s:[12,-4]},
@@ -570,9 +595,9 @@ function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.p
   else{const pct=w.pierce.slice(0,n).reduce((a,x)=>a+(x==='A'?7:x==='S'?10:0),0);totalHtml=pct+'%';}
   let legend='';
   if(card){const fa=`${esc(card.prim)} +${card.a[0]}`+(card.a[1]?` · ${esc(card.sec)} ${card.a[1]>0?'+':''}${card.a[1]}${card.secU}`:'');const fs=`${esc(card.prim)} +${card.s[0]}`+(card.s[1]?` · ${esc(card.sec)} ${card.s[1]>0?'+':''}${card.s[1]}${card.secU}`:'');legend=`<div class="cardleg" style="border-color:${elCol}44"><div class="clh" style="color:${elCol}">${card.ic} Carte ${esc(w.pierceEl)}</div><div><span class="cg cgA">A</span> ${fa}</div><div><span class="cg cgS">S</span> ${fs}</div></div>`;}
-  return `<div class="grp"><div class="gh"><i class=vgi-card></i> Perçage <span class="mini">(chaque niveau ouvre un emplacement)</span></div>
+  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/../percage/feu-arme-s.png" alt=""> Perçage <span class="mini">(chaque niveau ouvre un emplacement)</span></div>
    <div class="mini" style="margin-bottom:3px">Carte / élément :</div>
-   <div class="row" style="gap:4px;margin-bottom:5px">${ELEM.map(([nm,col])=>`<span class="tierbtn ${w.pierceEl===nm?'on':''}" style="${w.pierceEl===nm?`border-color:${col};color:${col};background:${col}22`:''}" onclick="cset('${slot}','pierceEl','${nm}')">${nm}</span>`).join('')}<span class="tierbtn ${!w.pierceEl?'on':''}" onclick="cset('${slot}','pierceEl','')">—</span></div>
+   <div class="row" style="gap:4px;margin-bottom:5px">${ELEM.map(([nm,col])=>{const src=pierceCarte(nm,slot,'S');return `<span class="tierbtn cardbtn ${w.pierceEl===nm?'on':''}" style="${w.pierceEl===nm?`border-color:${col};color:${col};background:${col}22`:`color:${col}`}" onclick="cset('${slot}','pierceEl','${nm}')">${src?`<img src="${src}" alt="">`:''}${nm}</span>`;}).join('')}<span class="tierbtn ${!w.pierceEl?'on':''}" onclick="cset('${slot}','pierceEl','')">—</span></div>
    ${legend}
    <div class="lvl"><span class="mini">Niveau de perçage : <b>${n}</b> / ${max}</span><input type="range" min="0" max="${max}" value="${n}" oninput="pnLive(this,'${slot}')" onchange="cpn('${slot}',+this.value,${max})"></div>
    <div class="row" style="gap:4px;margin-top:6px">${Array.from({length:n},(_,i)=>{const v=w.pierce[i];const cs=elCol?(v==='S'?`border-color:${elCol};background:${elCol}33;color:${elCol}`:v==='A'?`border-color:${elCol};color:${elCol}`:''):'';return `<div class="cslot ${v||''}" style="${cs}" onclick="cpierce('${slot}',${i})">${v?((slot==='weapon'||slot==='weapon2'||slot==='shield')?v:(v==='A'?'7%':v==='S'?'10%':v)):'+'}</div>`;}).join('')||'<span class="mini">Monte le niveau pour ouvrir des emplacements.</span>'}</div>
@@ -583,11 +608,11 @@ function cpn(slot,v,max){keepScroll();const w=cfgOf(slot);w.pn=Math.max(0,Math.m
 const EVORDER={ring1:['Intelligence','Dégâts critiques','Endurance','Force'],ring2:['Intelligence','Dégâts critiques','Endurance','Force'],earring1:['Intelligence','Dégâts critiques','Endurance','Force'],earring2:['Intelligence','Dégâts critiques','Endurance','Force'],necklace:['Intelligence','Dégâts critiques','Endurance','Force'],weapon:['Intelligence','Dégâts critiques','Endurance','Force'],weapon2:['Intelligence','Dégâts critiques','Endurance','Force'],shield:['Intelligence','Dégâts critiques','Endurance','Force'],cape:['Intelligence','Dégâts critiques','Endurance','Force'],masque:['Intelligence','Dégâts critiques','Endurance','Force'],fhead:['Intelligence','Dégâts critiques','Endurance','Force'],ftop:['Intelligence','Dégâts critiques','Endurance','Force'],fhand:['Intelligence','Dégâts critiques','Endurance','Force'],ffoot:['Intelligence','Dégâts critiques','Endurance','Force'],helmet:['Intelligence','Endurance','Force','Dextérité'],suit:['Intelligence','Dégâts critiques','Endurance','Force','MP max'],gauntlet:['Attaque','PV max','MP max'],boots:['Dégâts critiques','Attaque','PV max','MP max']};
 function evStatsFor(slot){var pri=EVORDER[slot]||[];return pri.concat(EVSTATS.filter(function(s){return pri.indexOf(s)<0;}));}
 function eveilUI(slot){const w=cfgOf(slot);
-  return `<div class="grp"><div class="gh"><i class=vgi-awaken></i> Éveil (R1 ou R2)</div>
+  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/R1.png" alt=""> Éveil (R1 ou R2)</div>
    <div class="row"><div class="seg2 seg-ev" style="max-width:186px"><div class="s2 ${w.evL==='R1'?'on':''}" onclick="cset('${slot}','evL','R1')"><img src="/airbuilder/icons/R1.png" alt="">R1</div><div class="s2 ${w.evL==='R2'?'on':''}" onclick="cset('${slot}','evL','R2')"><img src="/airbuilder/icons/R2.png" alt="">R2</div><div class="s2 ${!w.evL?'on':''}" onclick="cset('${slot}','evL','')">—</div></div>
    <select onchange="cset('${slot}','evS',this.value)"><option value="">— statistique —</option>${evStatsFor(slot).map(s=>`<option ${w.evS===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`;}
 function scrollUI(slot){const w=cfgOf(slot);
-  return `<div class="grp"><div class="gh"><i class=vgi-scroll></i> Scroll stat</div><div class="row">
+  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/statscroll.png" alt=""> Scroll stat</div><div class="row">
    <select onchange="cset('${slot}','scrS',this.value)"><option value="">— stat —</option>${['Force','Endurance','Dextérité','Intelligence'].map(s=>`<option ${w.scrS===s?'selected':''}>${s}</option>`).join('')}</select>
    <span class="mini">Niveau</span><select onchange="cset('${slot}','scrL',+this.value)">${[0,1,2,3,4].map(n=>`<option ${w.scrL===n?'selected':''}>+${n}</option>`).join('')}</select></div></div>`;}
 // Icone de jeu par element. Un <select> ne sait pas afficher d'image : l'element
@@ -617,13 +642,13 @@ function weaponPanel2(slot,e){const _s=slot;return weaponPanelImpl(slot,e);}
 function weaponPanel(e){return weaponPanelImpl('weapon',e);}
 function weaponPanelImpl(SL,e){const w=cfgOf(SL);const artefactable=['Éternel','Yggdrasil'].includes(e.item.tier);const upMax=artefactable?20:10;const pMax=artefactable?12:10;if(!artefactable&&w.up>10)w.up=10;const art=artefactable&&w.up>10;
   return `<div class="wp">
-   <div class="grp"><div class="gh"><i class=vgi-rune></i> ${runeName(e.item.tier)}</div><div class="seg2" style="max-width:180px"><div class="s2 ${w.rune?'on':''}" onclick="cset('${SL}','rune',true)">Oui</div><div class="s2 ${!w.rune?'on':''}" onclick="cset('${SL}','rune',false)">Non</div></div></div>
+   <div class="grp"><div class="gh">${runeImg(e.item.tier)} ${runeName(e.item.tier)}</div><div class="seg2" style="max-width:180px"><div class="s2 ${w.rune?'on':''}" onclick="cset('${SL}','rune',true)">Oui</div><div class="s2 ${!w.rune?'on':''}" onclick="cset('${SL}','rune',false)">Non</div></div></div>
    ${upUI(SL,upMax)}
-   <div class="grp"><div class="gh"><i class=vgi-gem></i> Sertissage (5 diamants${art?' + 3 holographiques':''})</div>
+   <div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/diamant.png" alt=""> Sertissage (5 diamants${art?' + 3 holographiques':''})</div>
      ${Array.from({length:5},(_,i)=>`<div class="dslot"><span class="mini" style="width:54px">Diamant ${i+1}</span><select onchange="cdia('${SL}','dia',${i},this.value)"><option value="">—</option>${DIASTATS.map(s=>`<option ${w.dia[i]===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('')}
      ${art?'<div class="mini" style="color:var(--purple);margin-top:5px">Diamants holographiques :</div>'+Array.from({length:3},(_,i)=>`<div class="dslot holo"><span class="mini" style="width:54px">Holo ${i+1}</span><select onchange="cdia('${SL}','holo',${i},this.value)"><option value="">—</option>${HOLOSTATS.map(d=>`<option value="${d[0]}" ${w.holo[i]===d[0]?'selected':''}>${d[0]} +${d[1]}</option>`).join('')}</select></div>`).join(''):'<div class="mini">Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).</div>'}</div>
    ${pierceUI(SL,pMax)}
-   <div class="grp"><div class="gh"><i class=vgi-sparkles></i> Rareté</div><div class="row">${MECH.arme.rarete_tiers.map(t=>`<span class="tierbtn ${t==='Mythique'?'myth':''} ${w.tier===t?'on':''}" onclick="cset('${SL}','tier','${t}')">${t}</span>`).join('')}</div>
+   <div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/artefact.png" alt=""> Rareté</div><div class="row">${MECH.arme.rarete_tiers.map(t=>{const rc=RARCOL[t]||'';return `<span class="tierbtn ${w.tier===t?'on':''}" style="${w.tier===t?`background:${rc};color:#0c0c11;border-color:${rc}`:`color:${rc};border-color:${rc}55`}" onclick="cset('${SL}','tier','${t}')">${t}</span>`;}).join('')}</div>
      ${artefactable?masteryUI(SL):''}
      ${w.tier==='Mythique'?'<div class="mini" style="color:var(--gold)">Mythique = arme niveau 100.</div>':''}
      <div style="margin-top:6px">${(w.rlines||[]).map((l,i)=>`<div class="line"><select onchange="crl(${i},this.value)"><option value="">— ligne de bonus —</option>${MECH.arme.rarete_pool.map(b=>`<option ${l===b.stat?'selected':''}>${b.stat}</option>`).join('')}</select><span class="pill" onclick="crlDel(${i})"><i class=vgi-x></i></span></div>`).join('')}</div>
@@ -636,7 +661,7 @@ function shieldPanel(e){return `<div class="wp">${upUI('shield',10)}${pierceUI('
 function suitPanel(e){return `<div class="wp">${upUI('suit',10)}${pierceUI('suit',4)}${eveilUI('suit')}${scrollUI('suit')}${elemUI('suit',20)}</div>`;}
 function armorPanel(slot,e){return `<div class="wp">${upUI(slot,10)}${eveilUI(slot)}${scrollUI(slot)}<div class="mini">Cette pièce n'a ni perçage ni élément.</div></div>`;}
 function jewelPanel(slot,e){const w=cfgOf(slot);
-  return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-upgrade></i> Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +30</span><input type="range" min="0" max="30" value="${w.up||0}" oninput="upLive(this,'${slot}',30)" onchange="cset('${slot}','up',+this.value)"></div><div class="mini">+20 (aProtect) · jusqu'à +30 (aProtect lunaire = stats plus fortes)</div></div>${eveilUI(slot)}</div>`;}
+  return `<div class="wp"><div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/upgrade.png" alt=""> Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +30</span><input type="range" min="0" max="30" value="${w.up||0}" oninput="upLive(this,'${slot}',30)" onchange="cset('${slot}','up',+this.value)"></div><div class="mini">+20 (aProtect) · jusqu'à +30 (aProtect lunaire = stats plus fortes)</div></div>${eveilUI(slot)}</div>`;}
 
 function capePanel(e){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).join(' · ');return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-cape></i> ${esc(e.item.n)}</div><div class="cb" style="color:var(--green);font-size:11px">${b||'—'}</div></div>${runeUI('cape')}${eveilUI('cape')}</div>`;}
 function ramasseurPanel(e){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).join(' · ');return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-paw></i> ${esc(e.item.n)}</div><div class="cb" style="color:var(--green);font-size:11px">${b||'—'}</div></div>${runeUI('ramasseur')}</div>`;}
@@ -647,12 +672,12 @@ function flvLive(el){const b=el.parentNode.querySelector('.mini b');if(b)b.textC
 function fashionPanel(slot,e){const w=cfgOf(slot);const setb=(e.item.setb||[]).map(b=>esc(b[0])+' +'+b[1]).join(' · ');
   return `<div class="wp">
    <div class="grp"><div class="gh"><i class=vgi-sparkles></i> ${esc(e.item.set||'Fashion')} <span class="mini">(${esc(e.item.cat||'')})</span></div><div class="cb" style="color:var(--green);font-size:11px">Bonus du set : ${setb||'—'}</div></div>
-   <div class="grp"><div class="gh"><i class=vgi-upgrade></i> Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +10</span><input type="range" min="0" max="10" value="${w.up||0}" oninput="upLive(this,'${slot}',10)" onchange="cset('${slot}','up',+this.value)"></div></div>
+   <div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/upgrade.png" alt=""> Upgrade</div><div class="lvl"><span class="mini">Niveau : <b>+${w.up||0}</b> / +10</span><input type="range" min="0" max="10" value="${w.up||0}" oninput="upLive(this,'${slot}',10)" onchange="cset('${slot}','up',+this.value)"></div></div>
    ${runeUI(slot)}
-   <div class="grp"><div class="gh"><i class=vgi-gem></i> Gemmes costume (4)</div>
+   <div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/diamant.png" alt=""> Gemmes costume (4)</div>
      ${Array.from({length:4},(_,i)=>`<div class="dslot"><span class="mini" style="width:54px">Gemme ${i+1}</span><select onchange="cdia('${slot}','gems',${i},this.value)"><option value="">—</option>${[...new Set(GEMC.map(g=>g.fr))].map(fr=>`<option value="${fr}" ${w.gems[i]===fr?'selected':''}>${fr}</option>`).join('')}</select></div>`).join('')}</div>
    </div>`;}
-function runeUI(slot){const w=cfgOf(slot);return `<div class="grp"><div class="gh"><i class=vgi-rune></i> Rune (bonus)</div>${seg2stat(slot,'rune',['Force','Endurance','Dextérité','Intelligence'])}</div>`;}
+function runeUI(slot){const w=cfgOf(slot);return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/rune-force.png" alt=""> Rune (bonus)</div>${seg2stat(slot,'rune',['Force','Endurance','Dextérité','Intelligence'])}</div>`;}
 const STATCOL={Force:'#F87171',Endurance:'#4ADE80','Dextérité':'#FFD24A',Intelligence:'#4EA8FF'};
 function statS2(o,on,onclk){const c=STATCOL[o];const st=c?(on?`background:${c};color:#0a0a0c;border-color:${c};font-weight:700`:`color:${c};border-color:${c}66`):'';return `<div class="s2 ${(!c&&on)?'on':''}" style="${st}" onclick="${onclk}">${o}</div>`;}
 function seg2stat(slot,key,opts){const w=cfgOf(slot);return `<div class="seg2" style="flex-wrap:wrap;max-width:340px">${opts.map(o=>statS2(o,w[key]===o,`cset('${slot}','${key}','${o}')`)).join('')}<div class="s2 ${!w[key]?'on':''}" onclick="cset('${slot}','${key}','')">—</div></div>`;}

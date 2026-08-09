@@ -38,6 +38,27 @@ function Objet({ nom, texte }: { nom: string; texte?: string }) {
   );
 }
 
+/**
+ * « Cet objet · où le trouver ».
+ *
+ * Ces lignes reprenaient le style des items de quête — libellé à gauche, gros
+ * chiffre doré à droite. Ça marche pour « Nucléus · 160 000 », pas pour un
+ * objet suivi d'un ou deux liens : le contenu ne tenait pas dans les colonnes
+ * de 248 px et chaque ligne se repliait sur deux hauteurs. Une seule colonne,
+ * et de la place des deux côtés.
+ */
+function Ou({ quoi, ou }: { quoi: React.ReactNode; ou: React.ReactNode[] }) {
+  return (
+    <div className="gd-ou">
+      <span className="quoi">{quoi}</span>
+      <span className="ou">
+        <Icon name="chevron-right" size={12} />
+        {ou.map((x, i) => <span key={i} className="lieu">{x}</span>)}
+      </span>
+    </div>
+  );
+}
+
 function Tip({ title, prio, mt, icon, children }: { title?: string; prio?: string; mt?: boolean; icon?: IconName; children: React.ReactNode }) {
   return (
     <div className="gd-tip" style={mt ? { marginTop: 10 } : undefined}>
@@ -184,11 +205,11 @@ export default function GuidePage() {
         <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />Les runes d&apos;arme</h2>
           <p className="gd-intro" style={{ marginBottom: 12 }}>Une rune vierge se pose sur une arme pour la faire monter d&apos;un cran. Chaque famille a la sienne, et chacune tombe dans une instance précise.</p>
-          <div className="gd-grid">
-            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Yggdrasil Vierge" /></span><span className="qv"><Instance nom="Jardin de Jade" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Marteau Runique Yggdrasil" /></span><span className="qv"><Instance nom="Jardin de Jade" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Vampirique Vierge" /></span><span className="qv"><Instance nom="Crypte des sans repos" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Épée Luzaka oubliée (TANK)" texte="Runes Luzaka (TANK)" /></span><span className="qv"><Instance nom="Grotte d'Herneos" /></span></div>
+          <div className="gd-liste">
+            <Ou quoi={<Objet nom="Rune Yggdrasil Vierge" />} ou={[<Instance key="a" nom="Jardin de Jade" />]} />
+            <Ou quoi={<Objet nom="Marteau Runique Yggdrasil" />} ou={[<Instance key="a" nom="Jardin de Jade" />]} />
+            <Ou quoi={<Objet nom="Rune Vampirique Vierge" />} ou={[<Instance key="a" nom="Crypte des sans repos" />]} />
+            <Ou quoi={<Objet nom="Rune Épée Luzaka oubliée (TANK)" texte="Runes Luzaka (TANK)" />} ou={[<Instance key="a" nom="Grotte d'Herneos" />]} />
           </div>
           <Note><Icon name="alert" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} />Les runes Luzaka existent pour les neuf types d&apos;arme, plus une version SUP au sceptre. Le Jardin de Jade demande <b>3 000 marteaux</b> pour une rune Yggdrasil : c&apos;est le farm le plus long du jeu, à commencer tôt.</Note>
         </div>
@@ -196,11 +217,11 @@ export default function GuidePage() {
         <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="scroll" size={18} />L&apos;éveil</h2>
           <p className="gd-intro" style={{ marginBottom: 12 }}>Les parchemins d&apos;éveil ajoutent une statistique à une pièce. Ils vont par rang : le <b>rang 1</b> d&apos;abord, le <b>rang 2</b> ensuite, plus rare. Trois familles, trois provenances.</p>
-          <div className="gd-grid">
-            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil fixe FOR (Rang 1)" texte="Éveil fixe — 11 statistiques" /></span><span className="qv"><Instance nom="Behemoth" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil à bijou rang 1" texte="Éveil à bijou" /></span><span className="qv"><Instance nom="Temple aérien" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil à Fashion rang 1" texte="Éveil à Fashion" /></span><span className="qv"><Instance nom="Paradis Arcanique" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Pierre d'amélioration parure Tank" texte="Pierres de parure Tank / DPS" /></span><span className="qv"><Instance nom="Temple aérien" /></span></div>
+          <div className="gd-liste">
+            <Ou quoi={<Objet nom="Parchemin d'éveil fixe FOR (Rang 1)" texte="Éveil fixe — 11 statistiques" />} ou={[<Instance key="a" nom="Behemoth" />]} />
+            <Ou quoi={<Objet nom="Parchemin d'éveil à bijou rang 1" texte="Éveil à bijou" />} ou={[<Instance key="a" nom="Temple aérien" />]} />
+            <Ou quoi={<Objet nom="Parchemin d'éveil à Fashion rang 1" texte="Éveil à Fashion" />} ou={[<Instance key="a" nom="Paradis Arcanique" />]} />
+            <Ou quoi={<Objet nom="Pierre d'amélioration parure Tank" texte="Pierres de parure Tank / DPS" />} ou={[<Instance key="a" nom="Temple aérien" />]} />
           </div>
           <p className="gd-src" style={{ marginTop: 10 }}>Les onze statistiques de l&apos;éveil fixe : INCANT, DEPLA, SOINS, HP, MP, ATTAQUE, FOR, END, DEX, INT, DCC — chacune en rang 1 et en rang 2, plus un coffret qui en donne un au hasard.</p>
         </div>
@@ -218,11 +239,11 @@ export default function GuidePage() {
         <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="book" size={18} />Le Carnet d&apos;Arcanes</h2>
           <p className="gd-intro" style={{ marginBottom: 12 }}>Un album à collectionner. Les cartes se rangent dans des étuis, et les deux se gagnent en fin de jeu.</p>
-          <div className="gd-grid">
-            <div className="gd-qitem"><span className="ql">Raretés de carte</span><span className="qv">Commune · Rare · Épique · Légendaire</span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Étui à carte 1" texte="Étuis à carte 1 · 2 · 3" /></span><span className="qv"><Instance nom="Paradis Arcanique" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Coffret à packet de cartes Epic" texte="Coffret Epic / Rare" /></span><span className="qv"><Instance nom="Mausolée des Divinités" /> · <Instance nom="Sanctuaire Shogun" /></span></div>
-            <div className="gd-qitem"><span className="ql"><Objet nom="Coffre à packet de cartes aléatoire" texte="Coffre aléatoire" /></span><span className="qv"><Instance nom="Clairière de la fée" /> · <Instance nom="Temple aérien" /></span></div>
+          <p className="gd-src" style={{ marginBottom: 12 }}>Quatre raretés de carte : <b>Commune</b>, <b>Rare</b>, <b>Épique</b>, <b>Légendaire</b>.</p>
+          <div className="gd-liste">
+            <Ou quoi={<Objet nom="Étui à carte 1" texte="Étuis à carte 1 · 2 · 3" />} ou={[<Instance key="a" nom="Paradis Arcanique" />]} />
+            <Ou quoi={<Objet nom="Coffret à packet de cartes Epic" texte="Coffret Epic / Rare" />} ou={[<Instance key="a" nom="Mausolée des Divinités" />, <Instance key="b" nom="Sanctuaire Shogun" />]} />
+            <Ou quoi={<Objet nom="Coffre à packet de cartes aléatoire" texte="Coffre aléatoire" />} ou={[<Instance key="a" nom="Clairière de la fée" />, <Instance key="b" nom="Temple aérien" />]} />
           </div>
         </div>
 
@@ -273,8 +294,17 @@ export default function GuidePage() {
         .gd-recette h4 { font-size:14.5px; color:var(--orange); margin-bottom:7px; }
         .gd-recette ul { margin:0; padding-left:18px; font-size:13px; line-height:1.7; }
         .gd-src { font-size:12px; color:var(--text-muted); margin-top:7px; line-height:1.55; }
-        /* La colonne de droite porte des liens : elle doit pouvoir se replier. */
-        .gd-qitem .qv { display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; min-width:0; font-size:13px; }
+        /* « Cet objet · ou le trouver » : une seule colonne, l'objet a gauche,
+           le ou les lieux a droite, et tout se replie proprement sur telephone. */
+        .gd-liste { display:grid; gap:8px; }
+        .gd-ou { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--bg-3);
+                 border-radius:9px; padding:10px 14px; border-left:2px solid var(--orange-dark); min-width:0; }
+        .gd-ou .quoi { display:inline-flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600;
+                       flex:1 1 200px; min-width:0; }
+        .gd-ou .ou { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;
+                     font-size:12.5px; color:var(--text-muted); }
+        .gd-ou .ou > svg { flex-shrink:0; opacity:.55; }
+        .gd-ou .lieu { display:inline-flex; }
       `}</style>
     </div>
   );

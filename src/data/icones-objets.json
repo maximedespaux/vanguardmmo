@@ -154,5 +154,10 @@
   "Parchemin d'éveil fixe SOINS (Rang 1)": "/assets/items/categories/R1.png",
   "Parchemin d'éveil fixe HP (Rang 1)": "/assets/items/categories/R1.png",
   "Parchemin d'éveil fixe SOINS (Rang 2)": "/assets/items/categories/R2.png",
-  "Parchemin d'éveil fixe HP (Rang 2)": "/assets/items/categories/R2.png"
+  "Parchemin d'éveil fixe HP (Rang 2)": "/assets/items/categories/R2.png",
+  "Badge Jardin Prestigieux": "/assets/items/craft/badges/badgejardinprestigieux.png",
+  "Badge de la Tour": "/assets/items/craft/badges/badgedelatour.png",
+  "Badge Donjon": "/assets/items/craft/badges/badgedonjon.png",
+  "Badge de donjon mineur": "/assets/items/craft/badges/badgedonjonmineur.png",
+  "Badge World Boss prestigieux": "/assets/items/craft/badges/badgeworldboss.png"
 }

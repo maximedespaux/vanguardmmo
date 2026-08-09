@@ -86,6 +86,14 @@
 .tierbtn{padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-family:Rajdhani;font-weight:700}
 .tierbtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
 .tierbtn.myth.on{background:linear-gradient(90deg,#ff5c8a,#ffd24a);color:#1a1205}
+/* Choix de l'element : des boutons illustres a la place d'un menu deroulant,
+   qui ne sait pas afficher d'image. L'icone est celle du jeu. */
+.elemrow{gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.elembtn{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 5px;border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:11px;font-family:Rajdhani;font-weight:700;line-height:1;transition:border-color .12s,background .12s}
+.elembtn img{width:20px;height:20px;object-fit:contain;flex-shrink:0}
+.elembtn:hover{border-color:var(--orange)}
+.elembtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
+.elembtn.none{padding:4px 10px}
 .line{display:flex;gap:5px;align-items:center;margin-bottom:4px}
 .seg2{display:flex;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-width:260px}
 .seg2 .s2{flex:1;text-align:center;padding:5px 10px;cursor:pointer;color:var(--mut);background:var(--bg2);font-size:11px}

@@ -546,10 +546,14 @@ function scrollUI(slot){const w=cfgOf(slot);
   return `<div class="grp"><div class="gh"><i class=vgi-scroll></i> Scroll stat</div><div class="row">
    <select onchange="cset('${slot}','scrS',this.value)"><option value="">— stat —</option>${['Force','Endurance','Dextérité','Intelligence'].map(s=>`<option ${w.scrS===s?'selected':''}>${s}</option>`).join('')}</select>
    <span class="mini">Niveau</span><select onchange="cset('${slot}','scrL',+this.value)">${[0,1,2,3,4].map(n=>`<option ${w.scrL===n?'selected':''}>+${n}</option>`).join('')}</select></div></div>`;}
+// Icone de jeu par element. Un <select> ne sait pas afficher d'image : l'element
+// se choisit donc sur une rangee de boutons, comme le percage juste au-dessus.
+// Ne concerne QUE l'element de la piece, pas le percage (pierceEl).
+const ELEMIC={'Feu':'FireSmall','Eau':'WaterSmall','Vent':'WindSmall','Terre':'EarthSmall','Électricité':'ElectricSmall'};
 function elemUI(slot,max){const w=cfgOf(slot);
-  return `<div class="grp"><div class="gh"><i class=vgi-flame></i> Élément</div><div class="row">
-   <select onchange="cset('${slot}','elemType',this.value)"><option value="">— aucun —</option>${ELEMENTS.map(el=>`<option ${w.elemType===el?'selected':''}>${el}</option>`).join('')}</select>
-   <div class="lvl"><span class="mini">Niveau : <b>+${w.elemLvl||0}</b>/+${max}</span><input type="range" min="0" max="${max}" value="${w.elemLvl||0}" oninput="elemLive(this,'${slot}')" onchange="cset('${slot}','elemLvl',+this.value)"></div></div></div>`;}
+  return `<div class="grp"><div class="gh"><i class=vgi-flame></i> Élément</div>
+   <div class="row elemrow">${ELEMENTS.map(el=>`<span class="elembtn ${w.elemType===el?'on':''}" title="${el}" onclick="cset('${slot}','elemType','${w.elemType===el?'':el}')"><img src="/airbuilder/icons/elements/${ELEMIC[el]}.webp" alt="" width="20" height="20"><span>${el}</span></span>`).join('')}<span class="elembtn none ${!w.elemType?'on':''}" title="Aucun élément" onclick="cset('${slot}','elemType','')">Aucun</span></div>
+   <div class="row"><div class="lvl"><span class="mini">Niveau : <b>+${w.elemLvl||0}</b>/+${max}</span><input type="range" min="0" max="${max}" value="${w.elemLvl||0}" oninput="elemLive(this,'${slot}')" onchange="cset('${slot}','elemLvl',+this.value)"></div></div></div>`;}
 
 function panelFor(slot,e){
   if(slot==='weapon'||slot==='weapon2')return weaponPanel2(slot,e);

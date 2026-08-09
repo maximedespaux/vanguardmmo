@@ -4,6 +4,39 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import dungeonsData from "@/data/dungeons.json";
+import ICONES from "@/data/icones-objets.json";
+
+const DONJONS = dungeonsData as { name: string; icon: string; type: string; prestige: number | null }[];
+
+/**
+ * Une instance citée dans le texte renvoie à sa fiche du wiki.
+ *
+ * Le guide nommait des donjons sans y mener : il fallait retenir le nom, ouvrir
+ * le wiki, le retrouver dans une grille de vingt-trois cartes. Le lien ouvre
+ * directement la bonne fiche, avec ses PV, son armure et ses drops.
+ */
+function Instance({ nom }: { nom: string }) {
+  const d = DONJONS.find((x) => x.name.toLowerCase() === nom.toLowerCase());
+  if (!d) return <b>{nom}</b>;
+  return (
+    <a href={`/donjons?instance=${encodeURIComponent(d.name)}`} className="gd-lien">
+      <Icon name={d.icon as IconName} size={13} />{d.name}
+    </a>
+  );
+}
+
+/** Un objet, avec son icône du jeu quand on la connaît. */
+function Objet({ nom, texte }: { nom: string; texte?: string }) {
+  const src = (ICONES as Record<string, string>)[nom];
+  return (
+    <span className="gd-objet">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {src && <img src={src} alt="" width={16} height={16} />}
+      {texte ?? nom}
+    </span>
+  );
+}
 
 function Tip({ title, prio, mt, icon, children }: { title?: string; prio?: string; mt?: boolean; icon?: IconName; children: React.ReactNode }) {
   return (
@@ -56,7 +89,7 @@ export default function GuidePage() {
         <div className="gd-card fx-card">
           <div className="gd-author">
             <div className="av"><Icon name="graduation" size={24} style={{ color: "var(--orange)" }} /></div>
-            <div><div className="n">Guide de progression — par Sugot</div><div className="r">Formateur volontaire é__è</div></div>
+            <div><div className="n">Guide de progression — par Sugot</div><div className="r">Formateur volontaire</div></div>
           </div>
           <p className="gd-intro">Bonjour à tous les nouveaux joueurs, vous voilà 200 et prestige 3. Pour ne pas vous disperser et avoir des objectifs clairs, voici une « trame » à suivre, ou du moins quelques conseils pour vous y retrouver sans passer des heures à errer inutilement. Ce guide est classé par prestige pour suivre pas à pas.</p>
         </div>
@@ -112,6 +145,87 @@ export default function GuidePage() {
           <Note><Icon name="target" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} />Voici ce qu&apos;il vous faudra pour préparer tous les items quête afin de passer P10, sans vous perdre.</Note>
         </Prestige>
 
+        {/* ── Ce que la trame de Sugot ne couvrait pas ──
+            Le guide s'arrête au P8 et ne parle que des instances. Tout ce qui
+            vient après — runes, éveil, cartes, crafts — n'était écrit nulle
+            part. Ces sections ne disent que ce que les données confirment :
+            les drops relevés dans la fenêtre du jeu, et la base d'objets de la
+            guilde. Rien n'y est estimé. */}
+        <h2 className="gd-phead" style={{ display: "flex", alignItems: "center", gap: 8 }}><Icon name="layers" size={18} />Après les instances</h2>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="hammer" size={18} />Les crafts de la guilde</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>Trois recettes, telles qu&apos;elles sont enregistrées dans la base d&apos;objets de Vanguard. Les composants se farment en instance : le badge sort de la <Instance nom="Ruine Prestigieuse" />, les morceaux d&apos;œuf de plusieurs donjons de fin de jeu.</p>
+          <div className="gd-recettes">
+            <div className="gd-recette">
+              <h4><Objet nom="Badge Jardin Prestigieux" texte="Badge Jardin Prestigieux" /></h4>
+              <ul><li>40 × Liane Ruine Prestigieuse</li><li>1 × Terreau Ruine Prestigieuse</li></ul>
+              <p className="gd-src">Les lianes tombent sur les trash mobs, le terreau sur le boss. C&apos;est le craft le plus rentable du début : il en faut 69 en tout jusqu&apos;au P10.</p>
+            </div>
+            <div className="gd-recette">
+              <h4><Objet nom="Morceau d'oeuf doré Britannia" texte="Œuf doré" /></h4>
+              <ul>
+                <li>10 × morceau d&apos;œuf doré, de chacune des six sources : Britannia, Sentier Rhisis, Dédale Rhisis, Kalgas, Protection, Protection Supérieure</li>
+                <li>20 × Œuf</li><li>1 000 × Périn</li>
+              </ul>
+            </div>
+            <div className="gd-recette">
+              <h4><Objet nom="Morceau d'oeuf doré Britannia" texte="Œuf doré Tank" /></h4>
+              <ul>
+                <li>15 × morceau d&apos;œuf doré, des six mêmes sources</li>
+                <li>15 × Catalyseur d&apos;énergie de Bubble</li>
+                <li>30 × Œuf</li><li>1 500 × Périn</li>
+              </ul>
+              <p className="gd-src">Plus cher que la version classique, et il demande en plus les catalyseurs. À ne lancer que si le tank est votre personnage principal.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />Les runes d&apos;arme</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>Une rune vierge se pose sur une arme pour la faire monter d&apos;un cran. Chaque famille a la sienne, et chacune tombe dans une instance précise.</p>
+          <div className="gd-grid">
+            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Yggdrasil Vierge" /></span><span className="qv"><Instance nom="Jardin de Jade" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Marteau Runique Yggdrasil" /></span><span className="qv"><Instance nom="Jardin de Jade" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Vampirique Vierge" /></span><span className="qv"><Instance nom="Crypte des sans repos" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Rune Épée Luzaka oubliée (TANK)" texte="Runes Luzaka (TANK)" /></span><span className="qv"><Instance nom="Grotte d'Herneos" /></span></div>
+          </div>
+          <Note><Icon name="alert" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} />Les runes Luzaka existent pour les neuf types d&apos;arme, plus une version SUP au sceptre. Le Jardin de Jade demande <b>3 000 marteaux</b> pour une rune Yggdrasil : c&apos;est le farm le plus long du jeu, à commencer tôt.</Note>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="scroll" size={18} />L&apos;éveil</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>Les parchemins d&apos;éveil ajoutent une statistique à une pièce. Ils vont par rang : le <b>rang 1</b> d&apos;abord, le <b>rang 2</b> ensuite, plus rare. Trois familles, trois provenances.</p>
+          <div className="gd-grid">
+            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil fixe FOR (Rang 1)" texte="Éveil fixe — 11 statistiques" /></span><span className="qv"><Instance nom="Behemoth" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil à bijou rang 1" texte="Éveil à bijou" /></span><span className="qv"><Instance nom="Temple aérien" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Parchemin d'éveil à Fashion rang 1" texte="Éveil à Fashion" /></span><span className="qv"><Instance nom="Paradis Arcanique" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Pierre d'amélioration parure Tank" texte="Pierres de parure Tank / DPS" /></span><span className="qv"><Instance nom="Temple aérien" /></span></div>
+          </div>
+          <p className="gd-src" style={{ marginTop: 10 }}>Les onze statistiques de l&apos;éveil fixe : INCANT, DEPLA, SOINS, HP, MP, ATTAQUE, FOR, END, DEX, INT, DCC — chacune en rang 1 et en rang 2, plus un coffret qui en donne un au hasard.</p>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />Les cartes d&apos;élément</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>Elles percent une arme d&apos;un élément. Deux qualités seulement, et six éléments — c&apos;est tout ce qu&apos;il y a à retenir.</p>
+          <div className="gd-grid">
+            <div className="gd-qitem"><span className="ql">Grade A</span><span className="qv">7 %</span></div>
+            <div className="gd-qitem"><span className="ql">Grade S</span><span className="qv">10 %</span></div>
+          </div>
+          <p className="gd-src" style={{ marginTop: 10 }}>Éléments disponibles dans les deux grades : Eau, Feu, Foudre, Terre, Fulgur, Volcano.</p>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="book" size={18} />Le Carnet d&apos;Arcanes</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>Un album à collectionner. Les cartes se rangent dans des étuis, et les deux se gagnent en fin de jeu.</p>
+          <div className="gd-grid">
+            <div className="gd-qitem"><span className="ql">Raretés de carte</span><span className="qv">Commune · Rare · Épique · Légendaire</span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Étui à carte 1" texte="Étuis à carte 1 · 2 · 3" /></span><span className="qv"><Instance nom="Paradis Arcanique" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Coffret à packet de cartes Epic" texte="Coffret Epic / Rare" /></span><span className="qv"><Instance nom="Mausolée des Divinités" /> · <Instance nom="Sanctuaire Shogun" /></span></div>
+            <div className="gd-qitem"><span className="ql"><Objet nom="Coffre à packet de cartes aléatoire" texte="Coffre aléatoire" /></span><span className="qv"><Instance nom="Clairière de la fée" /> · <Instance nom="Temple aérien" /></span></div>
+          </div>
+        </div>
+
         <div className="gd-foot">N&apos;hésitez pas pour la suite à aller en vocal, sinon sur le Wiki du serveur !<br />Votre dévoué Sugot.</div>
       </div>
 
@@ -149,6 +263,18 @@ export default function GuidePage() {
         .gd-prio { display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:4px; background:rgba(248,113,113,.18); color:var(--red); font-weight:600; }
         .gd-note { background:rgba(255,140,26,.06); border:1px solid var(--orange-dark); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-top:10px; }
         .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:20px; font-style:italic; }
+        /* Un donjon cité mène a sa fiche ; un objet montre son icône. */
+        .gd-lien { display:inline-flex; align-items:center; gap:5px; color:var(--orange); text-decoration:none; border-bottom:1px dotted currentColor; font-weight:600; }
+        .gd-lien:hover { color:var(--text); }
+        .gd-objet { display:inline-flex; align-items:center; gap:6px; min-width:0; }
+        .gd-objet img { width:16px; height:16px; object-fit:contain; flex-shrink:0; }
+        .gd-recettes { display:grid; gap:10px; }
+        .gd-recette { background:var(--bg-3); border-radius:10px; padding:13px 15px; border-left:2px solid var(--orange-dark); }
+        .gd-recette h4 { font-size:14.5px; color:var(--orange); margin-bottom:7px; }
+        .gd-recette ul { margin:0; padding-left:18px; font-size:13px; line-height:1.7; }
+        .gd-src { font-size:12px; color:var(--text-muted); margin-top:7px; line-height:1.55; }
+        /* La colonne de droite porte des liens : elle doit pouvoir se replier. */
+        .gd-qitem .qv { display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; min-width:0; font-size:13px; }
       `}</style>
     </div>
   );

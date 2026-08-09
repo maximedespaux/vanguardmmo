@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dungeonsData from "@/data/dungeons.json";
 import ICONES_OBJETS from "@/data/icones-objets.json";
 import { PageHeader } from "@/components/PageHeader";
@@ -57,6 +57,18 @@ export default function DonjonsPage() {
   const [q, setQ] = useState(""); const [typeFilter, setTypeFilter] = useState<"Tous" | "SOLO" | "GROUPE">("Tous"); const [sel, setSel] = useState<Dungeon | null>(null);
   /** « Par prestige » regroupe au lieu de filtrer : on cherche rarement UN prestige, on veut voir la marche à suivre. */
   const [tri, setTri] = useState<"ordre" | "prestige">("ordre");
+
+  /**
+   * `?instance=<nom>` ouvre directement la fiche visée. C'est ce qui permet au
+   * guide de progression de renvoyer sur l'instance dont il parle, au lieu de
+   * laisser le lecteur la chercher dans une grille de vingt-trois cartes.
+   */
+  useEffect(() => {
+    const vise = new URLSearchParams(window.location.search).get("instance");
+    if (!vise) return;
+    const cible = dungeons.find((d) => d.name.toLowerCase() === vise.toLowerCase());
+    if (cible) setSel(cible);
+  }, [dungeons]);
   const wikiList = dungeons.filter(d => (typeFilter === "Tous" || d.type === typeFilter) && (!q || d.name.toLowerCase().includes(q.toLowerCase())));
 
   /**

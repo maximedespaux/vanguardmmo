@@ -78,9 +78,16 @@ export default function DonjonsPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
             {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>}
-            {/* Signalé sur la carte : sans ça, personne ne devine qu'il y a une
-                vidéo derrière et le travail de Sugot reste invisible. */}
-            {d.video && <div style={{ marginTop: 7, fontSize: 10.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="video" size={11} />Vidéo disponible</div>}
+            {/* Signalé sur la carte, dans un sens comme dans l'autre : sans ça,
+                personne ne devine qu'il y a une vidéo derrière, et celui qui
+                en cherche une ouvre les fiches une par une pour rien. Le champ
+                n'existe que sur les instances Solo — la série ne couvre
+                qu'elles, donc les autres cartes ne disent rien. */}
+            {d.video !== undefined && (
+              <div style={{ marginTop: 7, fontSize: 10.5, display: "inline-flex", alignItems: "center", gap: 5, color: d.video ? "var(--orange)" : "var(--text-muted)" }}>
+                <Icon name="video" size={11} />{d.video ? "Vidéo disponible" : "Pas encore de vidéo"}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -98,18 +105,31 @@ export default function DonjonsPage() {
                 Domaine nocookie : rien n'est déposé chez le visiteur tant qu'il
                 n'a pas lancé la lecture. `loading=lazy` évite de charger le
                 lecteur pour une fiche qu'on ne fait qu'entrouvrir. */}
-            {sel.video && (
+            {sel.video !== undefined && (
               <div style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   <Icon name="video" size={12} />En vidéo
                 </div>
-                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${sel.video}?list=${PLAYLIST}&rel=0`}
-                    title={`${sel.name} en vidéo`} loading="lazy" allowFullScreen
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
-                  />
-                </div>
+                {sel.video ? (
+                  <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
+                    <iframe
+                      src={`https://www.youtube-nocookie.com/embed/${sel.video}?list=${PLAYLIST}&rel=0`}
+                      title={`${sel.name} en vidéo`} loading="lazy" allowFullScreen
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+                    />
+                  </div>
+                ) : (
+                  // Dire l'absence plutôt que de ne rien afficher : la série est
+                  // en cours, et sans cette ligne on ne sait pas s'il n'y a pas
+                  // de vidéo ou si la fiche est cassée.
+                  <div style={{ fontSize: 12.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                    Pas encore de vidéo pour cette instance.
+                    <a href={`https://www.youtube.com/playlist?list=${PLAYLIST}`} target="_blank" rel="noreferrer"
+                      style={{ color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <Icon name="video" size={12} />Voir la playlist
+                    </a>
+                  </div>
+                )}
               </div>
             )}
             {(() => {

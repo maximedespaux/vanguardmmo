@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dungeonsData from "@/data/dungeons.json";
+import ICONES_OBJETS from "@/data/icones-objets.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
@@ -24,27 +25,23 @@ type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: 
  */
 const hpLabel = (hp: number) => (hp > 0 ? hp.toLocaleString("fr-FR") : "Aucun minimum");
 
-const slugObjet = (nom: string) =>
-  nom.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
 /**
- * L'icône du jeu, quand on l'a. Elle vient de la fenêtre d'information de
- * l'instance : c'est la seule source où l'icône est certifiée en face du bon
- * nom français. Toutes les instances n'ont pas encore la leur, d'où le même
- * principe que le calculateur de prestige — on précharge, et on n'affiche que
- * si l'image existe. Déposer un PNG au bon nom suffit à en ajouter une.
+ * L'icône du jeu, quand on la connaît.
+ *
+ * Rien, dans les fichiers du jeu, ne relie un nom français à un code d'icône :
+ * les 12 871 PNG extraits sont nommés par code interne, et deux tentatives de
+ * reconnaissance d'image ont donné des écarts de 1,0 entre le premier et le
+ * deuxième candidat — autant tirer au sort. La table qui manquait était déjà
+ * dans le dépôt : la base d'objets de l'AirBuilder porte le nom français ET
+ * l'icône de chaque pièce. `icones-objets.json` en est le croisement, complété
+ * par les assets déjà rangés sous /assets/items.
+ *
+ * Un objet absent de la table n'affiche pas d'icône, et c'est tout : ajouter
+ * une ligne au fichier suffit à en poser une.
  */
 function IconeObjet({ nom }: { nom: string }) {
-  const [presente, setPresente] = useState(false);
-  const src = `/assets/items/drops/${slugObjet(nom)}.png`;
-  useEffect(() => {
-    let vivant = true;
-    const im = new Image();
-    im.onload = () => { if (vivant) setPresente(true); };
-    im.src = src;
-    return () => { vivant = false; };
-  }, [src]);
-  if (!presente) return null;
+  const src = (ICONES_OBJETS as Record<string, string>)[nom];
+  if (!src) return null;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />;
 }

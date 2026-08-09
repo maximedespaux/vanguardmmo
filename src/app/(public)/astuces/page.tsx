@@ -48,15 +48,9 @@ export default function GuidePage() {
       <SectionTabs section="guides" />
 
       <div className="gd">
-        {/* VIDEOS */}
-        <div className="gd-card fx-card">
-          <h2 className="gd-cardtitle"><Icon name="video" size={18} />Astuces en vidéo</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>Playlist d&apos;astuces pour les <b>instances Solo</b> (8 vidéos · série en cours).</p>
-          <div className="gd-video">
-            <iframe src="https://www.youtube.com/embed/videoseries?list=PL64S1j7adQcwMHVfTyRfMkBOu8hS7c08V" title="Astuces donjons Vanguard" frameBorder="0" allowFullScreen />
-          </div>
-          <a className="gd-vlink" href="https://www.youtube.com/playlist?list=PL64S1j7adQcwMHVfTyRfMkBOu8hS7c08V" target="_blank" rel="noreferrer">▶ Voir la playlist complète sur YouTube</a>
-        </div>
+        {/* La playlist vivait ici, dans un lecteur unique : on ne savait pas
+            quelle vidéo allait avec quel donjon. Chaque instance porte
+            maintenant la sienne sur sa propre fiche, dans le wiki. */}
 
         {/* AUTHOR */}
         <div className="gd-card fx-card">
@@ -133,9 +127,6 @@ export default function GuidePage() {
         .gd-author .n { font-family:'Rubik',sans-serif; font-weight:700; font-size:16px; }
         .gd-author .r { font-size:12px; color:var(--orange); }
         .gd-intro { font-size:14px; color:var(--text); }
-        .gd-video { position:relative; padding-bottom:56.25%; height:0; border-radius:12px; overflow:hidden; border:1px solid var(--border); margin-bottom:12px; }
-        .gd-video iframe { position:absolute; top:0; left:0; width:100%; height:100%; }
-        .gd-vlink { display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:#FF0000; color:#fff; border-radius:8px; text-decoration:none; font-family:'Rubik',sans-serif; font-weight:600; font-size:14px; }
         .gd-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
         .gd-qitem { display:flex; justify-content:space-between; align-items:center; background:var(--bg-3); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
         .gd-qitem .ql { font-size:13px; color:var(--text-muted); }

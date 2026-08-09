@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import dungeonsData from "@/data/dungeons.json";
 import ICONES_OBJETS from "@/data/icones-objets.json";
 import { PageHeader } from "@/components/PageHeader";
@@ -55,7 +55,28 @@ export default function DonjonsPage() {
   const dungeons = dungeonsData as Dungeon[];
 
   const [q, setQ] = useState(""); const [typeFilter, setTypeFilter] = useState<"Tous" | "SOLO" | "GROUPE">("Tous"); const [sel, setSel] = useState<Dungeon | null>(null);
+  /** « Par prestige » regroupe au lieu de filtrer : on cherche rarement UN prestige, on veut voir la marche à suivre. */
+  const [tri, setTri] = useState<"ordre" | "prestige">("ordre");
   const wikiList = dungeons.filter(d => (typeFilter === "Tous" || d.type === typeFilter) && (!q || d.name.toLowerCase().includes(q.toLowerCase())));
+
+  /**
+   * La liste, telle qu'on la parcourt. Par défaut, l'ordre du fichier — celui
+   * dans lequel on débloque les instances. Par prestige, les mêmes donjons
+   * rangés sous le palier qui les ouvre : c'est la question « qu'est-ce que je
+   * peux faire à mon prestige ? », qu'une liste à plat ne répond pas.
+   */
+  const groupes = useMemo(() => {
+    if (tri === "ordre") return [{ titre: "", items: wikiList }];
+    const par = new Map<number, Dungeon[]>();
+    for (const d of wikiList) {
+      const p = d.prestige ?? 0;
+      if (!par.has(p)) par.set(p, []);
+      par.get(p)!.push(d);
+    }
+    return [...par.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([p, items]) => ({ titre: p === 0 ? "Sans prestige requis" : `Prestige ${p}`, items }));
+  }, [wikiList, tri]);
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
@@ -71,9 +92,29 @@ export default function DonjonsPage() {
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher un donjon..." style={{ flex: 1, minWidth: 180, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
         <div className="vg-subtabs" style={{ margin: 0 }}>{(["Tous", "SOLO", "GROUPE"] as const).map(t => <button key={t} onClick={() => setTypeFilter(t)} className={`vg-subtab ${typeFilter === t ? "active" : ""}`}>{t}</button>)}</div>
+        {/* Le type FILTRE, le prestige REGROUPE : ce sont deux questions
+            différentes, « en solo ou à plusieurs ? » et « à mon palier, je peux
+            faire quoi ? ». Les mêler dans une seule barre obligeait à renoncer
+            à l'une pour poser l'autre. */}
+        <div className="vg-subtabs" style={{ margin: 0 }}>
+          {([["ordre", "Par ordre"], ["prestige", "Par prestige"]] as const).map(([k, l]) => (
+            <button key={k} onClick={() => setTri(k)} className={`vg-subtab ${tri === k ? "active" : ""}`}>{l}</button>
+          ))}
+        </div>
       </div>
+      {wikiList.length === 0 && <div style={{ color: "var(--text-muted)", padding: "18px 2px", fontSize: 13 }}>Aucun donjon ne correspond.</div>}
+      {groupes.map((g) => (
+      <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 20 : 0 }}>
+      {g.titre && (
+        <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8 }}>
+          {g.titre}
+          <span style={{ fontSize: 11, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>
+            {g.items.length} donjon{g.items.length > 1 ? "s" : ""}
+          </span>
+        </div>
+      )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 12 }}>
-        {wikiList.map(d => (
+        {g.items.map(d => (
           <div key={d.id} className="fx-card" onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
@@ -91,6 +132,8 @@ export default function DonjonsPage() {
           </div>
         ))}
       </div>
+      </div>
+      ))}
       {sel && (
         <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 500, width: "100%", marginBottom: 0, maxHeight: "calc(100vh - 40px)", overflowY: "auto" }}>

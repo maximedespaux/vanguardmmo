@@ -90,7 +90,11 @@ function rarOf(key){var p=String(key).split('|R#');return p.length>1?p[1]:null;}
 function rarMeta(r){for(var i=0;i<RARITIES.length;i++)if(RARITIES[i][0]===r)return RARITIES[i];return null;}
 function itemStock(it,isTotal){if(needsRarity(it)){var t=0;RARITIES.forEach(function(r){var k=rarKey(it.id,r[0]);t+=isTotal?totalGuild(k):qty(S.cur,k);});return t;}return isTotal?totalGuild(it.id):qty(S.cur,it.id);}
 
-const TABS=[['bank','<i class=vgi-bank></i>','Dépôt en Coffre de Guilde'],['craft','<i class=vgi-hammer></i>','Craft'],['set','<i class=vgi-settings></i>','Paramètres']];
+/* Les libelles suivent la navigation du site : on clique « Coffre », « Crafts »
+   ou « Base des objets » dans le menu, on doit retrouver ces mots ici. L'onglet
+   « set » s'appelait « Parametres », ce qui ne disait pas ce qu'on y trouve —
+   les objets, leurs categories et leurs seuils. */
+const TABS=[['bank','<i class=vgi-bank></i>','Coffre'],['craft','<i class=vgi-hammer></i>','Crafts'],['set','<i class=vgi-settings></i>','Base des objets']];
 function renderTabs(){$('#tabs').innerHTML=TABS.map(([k,ic,l])=>`<div class="tab ${S.tab===k?'on':''}" onclick="go('${k}')"><span>${ic}</span>${l}${k==='shop'&&S.debts.length?`<span class="pill pr">${S.debts.length}</span>`:''}</div>`).join('');}
 function go(t){S.tab=t;save();renderTabs();render();window.scrollTo({top:0,behavior:'smooth'});}
 /* Lien profond : ?tab=bank&coffre=moi ouvre directement le depot sur SON coffre.

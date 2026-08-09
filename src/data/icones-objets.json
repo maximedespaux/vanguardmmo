@@ -85,5 +85,10 @@
   "Rune Bâton Luzaka oubliée (TANK)": "/assets/items/drops/itm_rune_tankpng.png",
   "Rune Arc Luzaka oubliée (TANK)": "/assets/items/drops/itm_rune_tankpng.png",
   "Rune Yo-yo Luzaka oubliée (TANK)": "/assets/items/drops/itm_rune_tankpng.png",
-  "Rune Sceptre Luzaka oubliée (SUP)": "/assets/items/drops/itm_rune_tankpng.png"
+  "Rune Sceptre Luzaka oubliée (SUP)": "/assets/items/drops/itm_rune_tankpng.png",
+  "Perle d'Ivillis (niv 3)": "/assets/items/perles/Itm_Niv3.png",
+  "Perle de Shade (niv 3)": "/assets/items/perles/Itm_Niv3.png",
+  "Perle de Bubble (niv 3)": "/assets/items/perles/Itm_Niv3.png",
+  "Perle du chevalier (niv 3)": "/assets/items/perles/Itm_Niv3.png",
+  "Perle du guerrier (niv 3)": "/assets/items/perles/Itm_Niv3.png"
 }

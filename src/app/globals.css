@@ -145,6 +145,9 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-pagehead-title{margin:0;font-family:'Rubik',sans-serif;font-size:25px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#fff;line-height:1.15}
 .vg-pagehead-sub{margin:5px 0 0;color:var(--text-muted);font-size:14px;line-height:1.5}
 .vg-pagehead-bannerwrap{position:relative;display:flex;flex-direction:column;gap:4px}
+/* Le h1 n'enveloppe la bannière que pour porter le titre : il ne doit rien
+   changer au rendu, d'où la remise à zéro des marges et de l'interligne. */
+.vg-pagehead-bannerh1{margin:0;line-height:0;align-self:flex-start;max-width:100%}
 .vg-pagehead-banner{height:76px;width:auto;max-width:min(100%,380px);object-fit:contain;align-self:flex-start;filter:drop-shadow(0 5px 18px rgba(0,0,0,.55))}
 @media(max-width:760px){.vg-pagehead-banner{height:56px}}
 /* ── Sous-onglets de section ── */

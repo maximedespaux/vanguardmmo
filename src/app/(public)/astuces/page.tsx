@@ -1,10 +1,9 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
-import { EncartRejoindre } from "@/components/EncartRejoindre";
 
 function Tip({ title, prio, mt, icon, children }: { title?: string; prio?: string; mt?: boolean; icon?: IconName; children: React.ReactNode }) {
   return (
@@ -41,7 +40,11 @@ export default function GuidePage() {
 
   return (
     <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guides" subtitle="Guide de progression, calculateur de prestige et infos de jeu." />
+      {/* Le sous-titre annoncait « calculateur de prestige et infos de jeu » : le
+          calculateur est une autre page (l'onglet Prestige juste en dessous), et
+          les « infos de jeu » ne menaient nulle part. Il dit maintenant ce que
+          CETTE page contient. */}
+      <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guide de progression" subtitle="Le guide de Sugot, prestige par prestige : quelles instances faire en priorité, et ce qu'il faut anticiper longtemps à l'avance." />
       <SectionTabs section="guides" />
 
       <div className="gd">
@@ -67,7 +70,7 @@ export default function GuidePage() {
         {/* QUEST ITEMS */}
         <div className="gd-card fx-card">
           <h2 className="gd-cardtitle"><Icon name="package" size={18} />Items quête requis (tous prestiges)</h2>
-          <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>La quantité totale d&apos;items de quête requis pour tous les prestiges. Ça peut sembler important, mais en vous y prenant bien tout se goupillera — le farm étant l&apos;essence même de Flyff </p>
+          <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>La quantité totale d&apos;items de quête requis pour tous les prestiges. Ça peut sembler important, mais en vous y prenant bien tout se goupillera — le farm étant l&apos;essence même de Flyff.</p>
           <div className="gd-grid">
             {([["Nucléus", "160 000"], ["Perin", "1 400"], ["Emblème de protection", "15 000"], ["Badge Jardin prestigieux", "69"], ["Badge Donjon mineur", "4"], ["Badge Donjon", "2"], ["Badge de la tour", "2"], ["Badge World Boss prestigieux", "4"]] as const).map(([l, v]) => (
               <div className="gd-qitem" key={l}><span className="ql">{l}</span><span className="qv">{v}</span></div>
@@ -96,7 +99,7 @@ export default function GuidePage() {
           <Tip icon="dragon" title="Sietch Kalgas">Une instance longue, très longue (attendez-vous à courir). Très intéressante : pas de PV minimal requis car le boss a un aggro fixe. Tapez avec un perso en tournant autour, et avec votre second personnage tapez librement sans jamais vous faire toucher. Il vous faut <b>2 personnages P5</b>.</Tip>
           <Tip icon="tower" title="Tower Defense" prio="À prioriser">3 entrées/jour, 700 emblèmes de protection si vous allez au bout par entrée. Une statue s&apos;affiche sur la mini-map (croix rouge) : défendez la tour. Surveillez les 2 premières vagues, puis lancez vos AoE sans ciblage avec vos dugkug toutes les 60s via le Ftool et partez faire autre chose. <Icon name="alert" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 3 }} />L&apos;AoE Primat en combo Halo peut bugger/s&apos;arrêter : cliquez et décalez votre perso pour relancer.</Tip>
           <Tip icon="medal" title="Quête Badge Donjon Mineur" prio="À prioriser">Il en faut 4 par personnage jusqu&apos;au P10. Pour en avoir 1, faites Vampirique / Behemoth / Bastion / Celestia sur 3 jours.</Tip>
-          <Note> Optionnel (ou pas ) : le <b>Jardin Prestigieux</b> (en haut de l&apos;escalier d&apos;Oasis, à gauche, le téléporteur). Le CW y est tous les jours à <b>18h30</b> pour récupérer un buff de 2h (le temps s&apos;arrête lors des déconnexions).</Note>
+          <Note>Optionnel (ou pas) : le <b>Jardin Prestigieux</b> (en haut de l&apos;escalier d&apos;Oasis, à gauche, le téléporteur). Le CW y est tous les jours à <b>18h30</b> pour récupérer un buff de 2h (le temps s&apos;arrête lors des déconnexions).</Note>
         </Prestige>
 
         <Prestige badge="P6" title="Peu de gains" subtitle="Mais un déblocage utile" {...P("p6")}>
@@ -106,7 +109,7 @@ export default function GuidePage() {
         <Prestige badge="P7" title="Fin du guide débutant" subtitle="Nouvelle zone de farm + Jardin de Jade" {...P("p7")}>
           <Tip icon="sprout-farm" title="Nouvelle zone de Farm">Accessible au téléporteur du Jardin Prestigieux (Oasis). Zone parfaite pour farm des nucléus parfaits (échangeables contre n&apos;importe quel autre nucléus), des branches (à revendre), des perins à foison, et une grande quantité d&apos;ori/pl très utiles.</Tip>
           <Tip icon="leaf" title="Jardin de Jade">Instance pour farm les items quête servant à votre rune d&apos;arme <b>Yggdrasil</b>. C&apos;est laborieux, mais voici une astuce : vous pouvez ne faire que les mobs pour avoir les marteaux (il en faut 3000, prix avoisinant 1P/u). Plus vous anticipez tôt, mieux c&apos;est — le taux de drop est bas sans cape ni Goldéa.</Tip>
-          <Note><Icon name="sparkles" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} /><b>Astuce de pauvre (Sugot) :</b> restat full END via les parchemins à Isruel, restez en stuff DPS, dugkug en continu via Ftool, prenez une dizaine/vingtaine de mobs (ça tape un peu fort, ne soyez pas trop gourmand) et hop, AoE. Uniquement sur les mobs, sans toucher au boss. Faites votre stock de 3000 marteaux et vendez le surplus : ça financera vos 4 runes vierges Yggdrasil </Note>
+          <Note><Icon name="sparkles" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} /><b>Astuce de pauvre (Sugot) :</b> restat full END via les parchemins à Isruel, restez en stuff DPS, dugkug en continu via Ftool, prenez une dizaine/vingtaine de mobs (ça tape un peu fort, ne soyez pas trop gourmand) et hop, AoE. Uniquement sur les mobs, sans toucher au boss. Faites votre stock de 3000 marteaux et vendez le surplus : ça financera vos 4 runes vierges Yggdrasil.</Note>
         </Prestige>
 
         <Prestige badge="P8" title="Le Temple Aérien" subtitle="Dernière étape avant le P10" {...P("p8")}>
@@ -115,7 +118,7 @@ export default function GuidePage() {
           <Note><Icon name="target" size={14} style={{ display: "inline-block", verticalAlign: "-3px", marginRight: 6 }} />Voici ce qu&apos;il vous faudra pour préparer tous les items quête afin de passer P10, sans vous perdre.</Note>
         </Prestige>
 
-        <div className="gd-foot">N&apos;hésitez pas pour la suite à aller en vocal, sinon sur le Wiki du serveur !<br />Votre dévoué Sugot </div>
+        <div className="gd-foot">N&apos;hésitez pas pour la suite à aller en vocal, sinon sur le Wiki du serveur !<br />Votre dévoué Sugot.</div>
       </div>
 
       <style>{`
@@ -156,7 +159,6 @@ export default function GuidePage() {
         .gd-note { background:rgba(255,140,26,.06); border:1px solid var(--orange-dark); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-top:10px; }
         .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:20px; font-style:italic; }
       `}</style>
-      <EncartRejoindre />
     </div>
   );
 }

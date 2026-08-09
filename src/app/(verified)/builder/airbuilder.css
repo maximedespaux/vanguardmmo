@@ -56,19 +56,33 @@
   font-size:13px;font-family:Rubik,sans-serif;font-weight:600}
 .clssel{display:flex;gap:3px;flex-wrap:wrap;max-width:340px}.ci{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}.ci img{width:30px;height:30px;object-fit:contain}.ci.on{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
 /* paperdoll */
-.doll{display:grid;grid-template-columns:64px 1fr 64px;grid-template-rows:auto 1fr auto;gap:14px;max-width:760px;margin:0 auto;
+/* La colonne du milieu doit pouvoir descendre sous la largeur de son contenu :
+   sans minmax(0,...) elle garde le min-content de la silhouette (212 px), et
+   sur mobile la grille reclamait 368 px de pistes dans une boite de 315 — d'ou
+   les pieces d'equipement qui sortaient de l'ecran par la droite. */
+.doll{display:grid;grid-template-columns:64px minmax(0,1fr) 64px;grid-template-rows:auto 1fr auto;gap:14px;max-width:760px;margin:0 auto;
   background:linear-gradient(180deg,#15151c,#0c0c11);border:2px solid #3a2c16;border-radius:16px;padding:16px;
   box-shadow:inset 0 0 0 1px #FF8C1A22, inset 0 0 40px #0009, 0 12px 40px #0008;position:relative}
 .dollttl{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-family:Rubik;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:#1a1410;border:1px solid #3a2c16;color:var(--gold);padding:3px 16px;border-radius:14px}
-.colL,.colR{display:flex;flex-direction:column;gap:10px}
-.rowT,.rowB{grid-column:1 / -1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+/* min-width:0 a chaque niveau : un enfant de grille refuse par defaut de
+   passer sous la largeur de son contenu, et c'est ce qui faisait deborder. */
+.colL,.colR{display:flex;flex-direction:column;gap:10px;min-width:0}
+.rowT,.rowB{grid-column:1 / -1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;min-width:0}
 /* Le nom de la categorie, une fois pour la rangee — plutot que repete entre
    parentheses derriere chacune des quatre pieces.                           */
 .rowB .rowttl{flex-basis:100%;text-align:center;font-family:Rubik,sans-serif;font-weight:700;font-size:10px;
   letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
-.petbar{grid-column:1 / -1;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px;padding-top:10px;border-top:1px dashed #34343f}
-.center{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:360px}
-.center .silwrap{width:212px;min-height:360px;background:radial-gradient(circle at 50% 28%,#23232e,#0d0d12);border:1px solid #2a2a34;border-radius:12px;display:flex;flex-direction:column;align-items:center;position:relative;box-shadow:inset 0 0 24px #000a;padding:12px 8px 8px;overflow:hidden}
+.petbar{grid-column:1 / -1;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px;padding-top:10px;border-top:1px dashed #34343f;min-width:0}
+/* Sur telephone, on resserre les colonnes laterales et les marges : c'est ce
+   qui rend a la silhouette la place dont elle a besoin. */
+@media(max-width:560px){
+  .doll{grid-template-columns:56px minmax(0,1fr) 56px;gap:8px;padding:10px}
+  .rowT,.rowB{gap:6px}
+}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;min-height:360px;min-width:0}
+/* Largeur souhaitee, pas largeur imposee : sur un ecran etroit la silhouette
+   se resserre au lieu d'elargir la grille. */
+.center .silwrap{width:100%;max-width:212px;min-height:360px;background:radial-gradient(circle at 50% 28%,#23232e,#0d0d12);border:1px solid #2a2a34;border-radius:12px;display:flex;flex-direction:column;align-items:center;position:relative;box-shadow:inset 0 0 24px #000a;padding:12px 8px 8px;overflow:hidden}
 .center .silhead{text-align:center;margin-bottom:8px;z-index:1}
 .center .charimg{flex:1;width:100%;max-height:312px;object-fit:contain;object-position:bottom center;filter:drop-shadow(0 6px 14px rgba(255,140,26,.22))}
 .center #cn{font-family:Rubik;font-weight:700;font-size:18px;letter-spacing:.6px;line-height:1.2}

@@ -25,6 +25,24 @@ type Fiche = {
   };
   /** Le volet marchand — renvoyé par le serveur au staff seulement. */
   staff: { ventes: number; perinsEncaisses: number; airpointsEncaisses: number; ventesEnCours: number; achatsACredit: number } | null;
+  /** Ce qu'il y a derrière chaque chiffre : un clic doit répondre à « lesquels ? ». */
+  detail: {
+    achats: LigneDetail[]; requetes: LigneDetail[];
+    apports: { quete: string; quantite: number; date: string }[];
+    fournitures: { item: string; quantite: number; pour: string; date: string; prix?: number; prixAp?: number }[];
+  };
+};
+type LigneDetail = { item: string; quantite: number; statut: string; enQuete: boolean; date: string };
+
+/** Les statuts de demande, dits comme on en parle. */
+const STATUT: Record<string, { l: string; c: string }> = {
+  REMIS: { l: "reçu", c: "var(--green)" },
+  PENDING: { l: "en attente", c: "var(--gold)" },
+  ACCEPTE_ACHAT: { l: "accepté", c: "var(--gold)" },
+  ACCEPTE_DETTE: { l: "accepté à crédit", c: "var(--gold)" },
+  EN_ECHANGE: { l: "en cours d'échange", c: "var(--gold)" },
+  ANNULE: { l: "annulé", c: "var(--red)" },
+  REFUSE: { l: "refusé", c: "var(--red)" },
 };
 
 const RANG: Record<string, { label: string; couleur: string }> = {
@@ -68,25 +86,76 @@ function statuts(e: Etat): { texte: string; couleur: string }[] {
   return l;
 }
 
-function Ligne({ n, mot, detail }: { n: number; mot: string; detail: { texte: string; couleur: string }[] }) {
+const jourCourt = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+
+/**
+ * Le chiffre se clique et le détail se déplie dessous.
+ *
+ * « 5 achats » ne dit pas lesquels, et il fallait quitter la fiche pour le
+ * savoir. Le repli garde la fiche compacte tant qu'on ne demande rien.
+ */
+function Repliable({ n, ouvert, onToggle, enfants, children }: {
+  n: number; ouvert: boolean; onToggle: () => void; enfants: number; children: React.ReactNode;
+}) {
+  const cliquable = n > 0 && enfants > 0;
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
-      <span className="font-heading" style={{ fontSize: 19, fontWeight: 700 }}>{n}</span>
-      <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{mot}{n > 1 ? "s" : ""}</span>
-      {detail.map((d) => (
-        <span key={d.texte} style={{ fontSize: 11.5, color: d.couleur }}>· {d.texte}</span>
-      ))}
-      {!n && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>— rien pour l&apos;instant</span>}
+    <>
+      <div
+        role={cliquable ? "button" : undefined} tabIndex={cliquable ? 0 : undefined}
+        onClick={cliquable ? onToggle : undefined}
+        onKeyDown={cliquable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onToggle(); } } : undefined}
+        title={cliquable ? (ouvert ? "Masquer le détail" : "Voir le détail") : undefined}
+        style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap", cursor: cliquable ? "pointer" : undefined }}>
+        {children}
+        {cliquable && (
+          <Icon name="chevron-right" size={12}
+            style={{ color: "var(--text-muted)", alignSelf: "center", transform: ouvert ? "rotate(90deg)" : "none", transition: "transform .15s" }} />
+        )}
+      </div>
+    </>
+  );
+}
+
+/** Une ligne du détail : ce que c'est, combien, quand — et où ça en est. */
+function LigneRepli({ titre, quantite, date, note, noteCouleur }: {
+  titre: string; quantite?: number; date: string; note?: string; noteCouleur?: string;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 7, fontSize: 11.5, padding: "3px 0", flexWrap: "wrap", minWidth: 0 }}>
+      {quantite !== undefined && quantite > 1 && <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{quantite} ×</span>}
+      <span style={{ flex: "1 1 120px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{titre}</span>
+      {note && <span style={{ color: noteCouleur ?? "var(--text-muted)", flexShrink: 0 }}>{note}</span>}
+      <span style={{ color: "var(--text-muted)", opacity: .75, flexShrink: 0 }}>{jourCourt(date)}</span>
+    </div>
+  );
+}
+
+function Repli({ children, total, montres }: { children: React.ReactNode; total: number; montres: number }) {
+  return (
+    <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px dashed var(--border)", display: "grid" }}>
+      {children}
+      {total > montres && (
+        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 4, fontStyle: "italic" }}>
+          … et {total - montres} de plus
+        </div>
+      )}
     </div>
   );
 }
 
 const etiquetteBilan: React.CSSProperties = { fontSize: 10, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 };
 
-function Chiffre({ n, label, couleur }: { n: number; label: string; couleur?: string }) {
+function Chiffre({ n, label, couleur, onClick, ouvert }: { n: number; label: string; couleur?: string; onClick?: () => void; ouvert?: boolean }) {
   return (
-    <div style={{ minWidth: 0 }}>
-      <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: couleur ?? "var(--text)" }}>{n}</div>
+    <div style={{ minWidth: 0, cursor: onClick ? "pointer" : undefined }}
+      role={onClick ? "button" : undefined} tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+      title={onClick ? (ouvert ? "Masquer le détail" : "Voir le détail") : undefined}>
+      <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: couleur ?? "var(--text)", display: "flex", alignItems: "center", gap: 5 }}>
+        {n}
+        {onClick && <Icon name="chevron-right" size={11} style={{ color: "var(--text-muted)", transform: ouvert ? "rotate(90deg)" : "none", transition: "transform .15s" }} />}
+      </div>
       <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.3 }}>{label}</div>
     </div>
   );
@@ -95,6 +164,9 @@ function Chiffre({ n, label, couleur }: { n: number; label: string; couleur?: st
 export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void }) {
   const [f, setF] = useState<Fiche | null>(null);
   const [erreur, setErreur] = useState("");
+  /** La rubrique dépliée, s'il y en a une : une seule à la fois, la fiche reste lisible. */
+  const [replie, setReplie] = useState<string | null>(null);
+  const bascule = (k: string) => setReplie((v) => (v === k ? null : k));
 
   useEffect(() => {
     let vivant = true;
@@ -149,11 +221,37 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
             <div style={{ display: "grid", gap: 11, padding: "12px 14px", borderRadius: 11, background: "var(--bg-3)", border: "1px solid var(--border)", marginBottom: 14 }}>
               <div>
                 <div style={etiquetteBilan}>Ce qu&apos;il a acheté <span style={{ opacity: .7 }}>· boutique</span></div>
-                <Ligne n={f.bilan.achats.total} mot="achat" detail={statuts(f.bilan.achats)} />
+                <Repliable n={f.bilan.achats.total} ouvert={replie === "achats"} onToggle={() => bascule("achats")} enfants={f.detail.achats.length}>
+                  <span className="font-heading" style={{ fontSize: 19, fontWeight: 700 }}>{f.bilan.achats.total}</span>
+                  <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>achat{f.bilan.achats.total > 1 ? "s" : ""}</span>
+                  {statuts(f.bilan.achats).map((d) => <span key={d.texte} style={{ fontSize: 11.5, color: d.couleur }}>· {d.texte}</span>)}
+                  {!f.bilan.achats.total && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>— rien pour l&apos;instant</span>}
+                </Repliable>
+                {replie === "achats" && (
+                  <Repli total={f.bilan.achats.total} montres={f.detail.achats.length}>
+                    {f.detail.achats.map((l, i) => (
+                      <LigneRepli key={i} titre={l.item} quantite={l.quantite} date={l.date}
+                        note={(STATUT[l.statut] ?? { l: l.statut }).l} noteCouleur={STATUT[l.statut]?.c} />
+                    ))}
+                  </Repli>
+                )}
               </div>
               <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
                 <div style={etiquetteBilan}>Ce qu&apos;il a demandé <span style={{ opacity: .7 }}>· requêtes objet</span></div>
-                <Ligne n={f.bilan.requetes.total} mot="requête" detail={statuts(f.bilan.requetes)} />
+                <Repliable n={f.bilan.requetes.total} ouvert={replie === "requetes"} onToggle={() => bascule("requetes")} enfants={f.detail.requetes.length}>
+                  <span className="font-heading" style={{ fontSize: 19, fontWeight: 700 }}>{f.bilan.requetes.total}</span>
+                  <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>requête{f.bilan.requetes.total > 1 ? "s" : ""}</span>
+                  {statuts(f.bilan.requetes).map((d) => <span key={d.texte} style={{ fontSize: 11.5, color: d.couleur }}>· {d.texte}</span>)}
+                  {!f.bilan.requetes.total && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>— rien pour l&apos;instant</span>}
+                </Repliable>
+                {replie === "requetes" && (
+                  <Repli total={f.bilan.requetes.total} montres={f.detail.requetes.length}>
+                    {f.detail.requetes.map((l, i) => (
+                      <LigneRepli key={i} titre={l.item + (l.enQuete ? " · passée en quête" : "")} quantite={l.quantite} date={l.date}
+                        note={(STATUT[l.statut] ?? { l: l.statut }).l} noteCouleur={STATUT[l.statut]?.c} />
+                    ))}
+                  </Repli>
+                )}
                 {f.bilan.requetes.enQuete > 0 && (
                   <div style={{ fontSize: 11, color: "var(--purple)", marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
                     <Icon name="target" size={11} />dont {f.bilan.requetes.enQuete} passée{f.bilan.requetes.enQuete > 1 ? "s" : ""} en quête de guilde
@@ -169,10 +267,26 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
               </div>
               <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10 }}>
                 <div style={etiquetteBilan}>Ce qu&apos;il a rendu</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
-                  <Chiffre n={f.bilan.apports} label={`quête${f.bilan.apports > 1 ? "s" : ""} aidée${f.bilan.apports > 1 ? "s" : ""}${f.bilan.quantiteApportee ? ` · ${f.bilan.quantiteApportee} objets` : ""}`} couleur={f.bilan.apports ? "var(--orange)" : undefined} />
-                  <Chiffre n={f.bilan.fournitures} label="objets fournis à un membre" couleur={f.bilan.fournitures ? "var(--orange)" : undefined} />
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,140px),1fr))", gap: 8 }}>
+                  <Chiffre n={f.bilan.apports} couleur={f.bilan.apports ? "var(--orange)" : undefined}
+                    onClick={f.detail.apports.length ? () => bascule("apports") : undefined} ouvert={replie === "apports"}
+                    label={`quête${f.bilan.apports > 1 ? "s" : ""} aidée${f.bilan.apports > 1 ? "s" : ""}${f.bilan.quantiteApportee ? ` · ${f.bilan.quantiteApportee} objets` : ""}`} />
+                  <Chiffre n={f.bilan.fournitures} label="objets fournis à un membre" couleur={f.bilan.fournitures ? "var(--orange)" : undefined}
+                    onClick={f.detail.fournitures.length ? () => bascule("fournitures") : undefined} ouvert={replie === "fournitures"} />
                 </div>
+                {replie === "apports" && (
+                  <Repli total={f.bilan.apports} montres={f.detail.apports.length}>
+                    {f.detail.apports.map((l, i) => <LigneRepli key={i} titre={l.quete} quantite={l.quantite} date={l.date} />)}
+                  </Repli>
+                )}
+                {replie === "fournitures" && (
+                  <Repli total={f.bilan.fournitures} montres={f.detail.fournitures.length}>
+                    {f.detail.fournitures.map((l, i) => (
+                      <LigneRepli key={i} titre={l.item} quantite={l.quantite} date={l.date}
+                        note={`pour ${l.pour}${l.prix ? ` · ${l.prix.toLocaleString("fr-FR")} périns` : ""}${l.prixAp ? ` · ${l.prixAp.toLocaleString("fr-FR")} AP` : ""}`} />
+                    ))}
+                  </Repli>
+                )}
               </div>
             </div>
 
@@ -182,13 +296,24 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
                 <div style={{ ...etiquetteBilan, color: "var(--gold)", marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
                   <Icon name="shield" size={12} />Réservé au staff
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap", fontSize: 11.5 }}>
+                {/* La demande de Maxime : pouvoir cliquer et savoir ce qui a
+                    ete vendu, a qui et a quel prix. C'est la meme liste que
+                    « objets fournis », vue sous son angle marchand. */}
+                <Repliable n={f.staff.ventes} ouvert={replie === "ventes"} onToggle={() => bascule("ventes")} enfants={f.detail.fournitures.length}>
                   <span className="font-heading" style={{ fontSize: 19, fontWeight: 700 }}>{f.staff.ventes}</span>
-                  <span style={{ color: "var(--text-muted)" }}>vente{f.staff.ventes > 1 ? "s" : ""} conclue{f.staff.ventes > 1 ? "s" : ""}</span>
-                  {f.staff.perinsEncaisses > 0 && <span style={{ color: "var(--gold)" }}>· {f.staff.perinsEncaisses.toLocaleString("fr-FR")} périns</span>}
-                  {f.staff.airpointsEncaisses > 0 && <span style={{ color: "var(--gold)" }}>· {f.staff.airpointsEncaisses.toLocaleString("fr-FR")} AP</span>}
-                  {!f.staff.ventes && <span style={{ color: "var(--text-muted)" }}>— rien vendu pour l&apos;instant</span>}
-                </div>
+                  <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>vente{f.staff.ventes > 1 ? "s" : ""} conclue{f.staff.ventes > 1 ? "s" : ""}</span>
+                  {f.staff.perinsEncaisses > 0 && <span style={{ fontSize: 11.5, color: "var(--gold)" }}>· {f.staff.perinsEncaisses.toLocaleString("fr-FR")} périns</span>}
+                  {f.staff.airpointsEncaisses > 0 && <span style={{ fontSize: 11.5, color: "var(--gold)" }}>· {f.staff.airpointsEncaisses.toLocaleString("fr-FR")} AP</span>}
+                  {!f.staff.ventes && <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>— rien vendu pour l&apos;instant</span>}
+                </Repliable>
+                {replie === "ventes" && (
+                  <Repli total={f.staff.ventes} montres={f.detail.fournitures.length}>
+                    {f.detail.fournitures.map((l, i) => (
+                      <LigneRepli key={i} titre={l.item} quantite={l.quantite} date={l.date} noteCouleur="var(--gold)"
+                        note={[l.prix ? `${l.prix.toLocaleString("fr-FR")} périns` : "", l.prixAp ? `${l.prixAp.toLocaleString("fr-FR")} AP` : "", `à ${l.pour}`].filter(Boolean).join(" · ")} />
+                    ))}
+                  </Repli>
+                )}
                 {(f.staff.ventesEnCours > 0 || f.staff.achatsACredit > 0) && (
                   <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 11.5, color: "var(--text-muted)" }}>
                     {f.staff.ventesEnCours > 0 && <span><b style={{ color: "var(--orange)" }}>{f.staff.ventesEnCours}</b> engagement{f.staff.ventesEnCours > 1 ? "s" : ""} en cours</span>}

@@ -44,13 +44,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
   const [lignes, quetes, apports, xp] = await Promise.all([
     prisma.bankRequest.findMany({
       where: { userId: membre.id },
-      select: { origine: true, status: true, spec: true, batchId: true, queteId: true },
+      // item, quantité et date servent au détail qu'on déplie en cliquant un
+      // chiffre : « 5 achats » ne dit pas lesquels, ni s'ils ont abouti.
+      select: { origine: true, status: true, spec: true, batchId: true, queteId: true, item: true, quantity: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
       take: 500,
     }),
     prisma.quete.findMany({ where: { auteurId: membre.id }, select: { statut: true }, take: 500 }),
-    prisma.queteContribution.aggregate({
+    prisma.queteContribution.findMany({
       where: { userId: membre.id, statut: "confirme" },
-      _count: true, _sum: { quantite: true },
+      select: { quantite: true, confirmeAt: true, createdAt: true, quete: { select: { titre: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 500,
     }),
     prisma.xpEvent.aggregate({ where: { userId: membre.id }, _sum: { points: true } }).catch(() => null),
   ]);
@@ -71,10 +76,18 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
     };
   };
 
-  // Les objets qu'il a fournis à quelqu'un : offres retenues sur une demande remise.
-  const fournitures = await prisma.offreVente.count({
+  /**
+   * Les objets qu'il a fournis à quelqu'un : offres retenues sur une demande
+   * remise. C'est la MÊME liste que ses ventes conclues — d'un côté on la
+   * compte, de l'autre on la chiffre. Une seule requête sert les deux.
+   */
+  const retenues = await prisma.offreVente.findMany({
     where: { userId: membre.id, statut: "retenue", request: { status: "REMIS" } },
-  }).catch(() => 0);
+    select: { prix: true, prixAp: true, createdAt: true, request: { select: { item: true, quantity: true, username: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  }).catch(() => [] as { prix: bigint | null; prixAp: number | null; createdAt: Date; request: { item: string | null; quantity: number; username: string } }[]);
+  const fournitures = retenues.length;
 
   /**
    * Le volet marchand, pour le staff seul.
@@ -86,27 +99,49 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
   const estStaff = canAccessAdmin(a.user.role);
   let staff: Record<string, number> | null = null;
   if (estStaff) {
-    const [vendues, enCours, credits] = await Promise.all([
-      prisma.offreVente.findMany({
-        where: { userId: membre.id, statut: "retenue", request: { status: "REMIS" } },
-        select: { prix: true, prixAp: true },
-      }),
+    const [enCours, credits] = await Promise.all([
       prisma.offreVente.count({ where: { userId: membre.id, statut: "retenue", request: { status: { not: "REMIS" } } } }),
       // Ses achats réglés à crédit : l'ardoise, telle que les offres la disent.
       prisma.offreVente.count({ where: { request: { userId: membre.id }, statut: "retenue", reglement: "dette" } }),
     ]);
     staff = {
-      ventes: vendues.length,
-      perinsEncaisses: vendues.reduce((t, o) => t + Number(o.prix ?? 0), 0),
-      airpointsEncaisses: vendues.reduce((t, o) => t + Number(o.prixAp ?? 0), 0),
+      ventes: retenues.length,
+      perinsEncaisses: retenues.reduce((t, o) => t + Number(o.prix ?? 0), 0),
+      airpointsEncaisses: retenues.reduce((t, o) => t + Number(o.prixAp ?? 0), 0),
       ventesEnCours: enCours,
       achatsACredit: credits,
     };
   }
 
+  /**
+   * Le détail derrière chaque chiffre, pour qu'un clic réponde à « lesquels ? ».
+   * Plafonné à trente lignes par rubrique : au-delà on ne lit plus, on scrute.
+   */
+  const LIMITE = 30;
+  const iso = (d: Date) => d.toISOString();
+  const lignesDe = (quoi: "achat" | "requete") =>
+    lignes.filter((r) => categorie(r) === quoi).slice(0, LIMITE).map((r) => ({
+      item: r.item ?? "objet sur mesure", quantite: r.quantity, statut: r.status,
+      enQuete: !!r.queteId, date: iso(r.createdAt),
+    }));
+  const detail = {
+    achats: lignesDe("achat"),
+    requetes: lignesDe("requete"),
+    apports: apports.slice(0, LIMITE).map((c) => ({
+      quete: c.quete?.titre ?? "quête supprimée", quantite: c.quantite, date: iso(c.confirmeAt ?? c.createdAt),
+    })),
+    // Ce qu'il a fourni, et à qui. Les prix ne partent qu'au staff.
+    fournitures: retenues.slice(0, LIMITE).map((o) => ({
+      item: o.request.item ?? "objet sur mesure", quantite: o.request.quantity,
+      pour: o.request.username, date: iso(o.createdAt),
+      ...(estStaff ? { prix: Number(o.prix ?? 0), prixAp: Number(o.prixAp ?? 0) } : {}),
+    })),
+  };
+
   const total = Number(xp?._sum.points ?? 0);
   return NextResponse.json({
     staff,
+    detail,
     nom: membre.username,
     avatar: membre.avatar ? `https://cdn.discordapp.com/avatars/${membre.discordId}/${membre.avatar}.png?size=128` : null,
     role: membre.role,
@@ -125,8 +160,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
       requetes: compter("requete"),
       quetesOuvertes: quetes.length,
       quetesLivrees: quetes.filter((q) => q.statut === "livree").length,
-      apports: apports._count ?? 0,
-      quantiteApportee: Number(apports._sum.quantite ?? 0),
+      apports: apports.length,
+      quantiteApportee: apports.reduce((t, c) => t + c.quantite, 0),
       fournitures,
     },
   });

@@ -308,13 +308,18 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
     if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>gemmeCostume(slot,d)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:var(--c-diamant);font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
-    if(cfg&&cfg.pierce){const SC={Fulgur:'#FFD24A',Volcano:'#F87171','Océane':'#4EA8FF'};const pcard=PIERCECARD[cfg.pierceEl];const ecol=pcard?pcard.col:(SC[cfg.pierceEl]||'#9a9aa8');const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
-      if(cfg.pierceEl||open){const pips=Array.from({length:open},(_,i)=>{const v=cfg.pierce[i];
-          if(v&&cfg.pierceEl)return `<img class="pcard" src="${pierceCarte(cfg.pierceEl,slot,v)}" alt="${v}" title="${esc(cfg.pierceEl)} ${v}">`;
+    if(cfg&&cfg.pierce){const pel=pierceElDe(cfg,slot);const pcard=PIERCECARD[pel];const ecol=pcard?pcard.col:'#9a9aa8';const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
+      const pgr=pierceGrades(pel);const plib=g=>pcard&&pcard.fam==='def'?g+'%':g;
+      const pcas=pierceCases(cfg,slot);
+      /* La pastille montre la carte reellement posee, pas un palier decoratif. */
+      let phaut='';pcas.slice(0,open).forEach(function(v){if(pgr.indexOf(v)>pgr.indexOf(phaut))phaut=v;});
+      if(!phaut)phaut=pgr[0]||'';
+      if(pel||open){const pips=Array.from({length:open},(_,i)=>{const v=pcas[i];
+          if(v&&pcard&&pcard.g[v])return `<img class="pcard" src="${pierceCarte(pel,slot,v)}" alt="${plib(v)}" title="${esc(pel)} ${plib(v)}">`;
           return `<span class="pip"></span>`;}).join('');
         let pc=`<div class="crow" style="align-items:flex-start"><span class="lab">Perçage</span><div style="flex:1;min-width:0">`;
-        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66">${cfg.pierceEl?`<img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'A')}" alt="">`:'<i class=vgi-card></i>'} ${open}/${pierceMaxFor(slot,it)}</span>${cfg.pierceEl?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'S')}" alt="">${esc(cfg.pierceEl)}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
-        if(pcard){const t=pierceTotals(cfg);if(t&&t.lines.length)pc+=`<div style="font-size:11px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
+        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66">${pel?`<img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">`:'<i class=vgi-card></i>'} ${open}/${pierceMaxFor(slot,it)}</span>${pel?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">${esc(pel)}${phaut?' '+plib(phaut):''}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
+        if(pcard){const t=pierceTotals(cfg,slot);if(t&&t.lines.length)pc+=`<div style="font-size:11px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
         pc+=`</div></div>`;cf+=pc;}}
     if(cfg&&cfg.evL)cf+=`<div class="crow"><span class="lab">Éveil</span><b style="font-size:11px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b></div>`;
     if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:11px;display:inline-flex;align-items:center;gap:5px"><img class="runeic" src="/airbuilder/icons/sertissage/statscroll.png" alt="">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
@@ -397,7 +402,7 @@ function vgAcheterPiece(){
     var c = e.cfg || {}, bouts = [];
     if(c.tier && c.tier !== 'Commun') bouts.push(c.tier);
     if(c.up) bouts.push('+' + c.up);
-    if(c.pierceEl) bouts.push(c.pierceEl);
+    if(pierceElDe(c,s)) bouts.push(pierceElDe(c,s));
     if(c.evL) bouts.push('éveil ' + c.evL);
     var ic = (e.item.ic && IC[e.item.ic]) ? '<img src="' + IC[e.item.ic] + '" alt="">' : '<i class=vgi-package></i>';
     return '<div class="itl buyl" data-slot="' + s + '" onclick="vgSelPiece(\'' + s + '\',event)">'
@@ -426,6 +431,14 @@ function vgDemanderSelection(){
   catch(err){ agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.', false); return; }
   location.href = '/boutique?piece=1';
 }
+/* « Volcano » seul ne dit pas au vendeur s'il faut du 7 % ou du 15 % : on joint
+   le palier le plus haut effectivement pose. */
+function carteDemandee(c,slot){var el=pierceElDe(c,slot);if(!el)return '';
+  var g=pierceGrades(el),haut='';
+  pierceCases(c,slot).slice(0,(c.pn!=null)?c.pn:(c.pierce||[]).length).forEach(function(v){
+    if(g.indexOf(v)>g.indexOf(haut))haut=v;});
+  if(!haut)return el;
+  return el+' '+(PIERCECARD[el].fam==='def'?haut+'\u00a0%':haut);}
 /* Le depot d'UNE piece, tel que la boutique l'attend. Partage entre le bouton
    d'une seule piece et la selection multiple. */
 function vgDepotPiece(slot){
@@ -435,7 +448,7 @@ function vgDepotPiece(slot){
   return {slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
     rarete:(c.tier&&c.tier!=='Commun')?c.tier:'',
     up:c.up?String(c.up):'',etoiles:c.stars?String(c.stars):'',
-    percage:ouverts?String(ouverts):'',carte:c.pierceEl||'',
+    percage:ouverts?String(ouverts):'',carte:carteDemandee(c,slot),
     eveilRang:c.evL||'',eveilStat:c.evS||'',
     scrollStat:c.scrS||'',scrollNiv:c.scrL?String(c.scrL):'',
     element:c.elemType||'',elementNiv:c.elemLvl?String(c.elemLvl):''}};
@@ -548,10 +561,11 @@ function defCfg(slot){
   if(['ring1','ring2','earring1','earring2','necklace'].includes(slot))return{up:0,evL:'',evS:''};
   return {};
 }
-// Maximise les NIVEAUX d'une pièce équipée (upgrade, étoiles, perçage plein en S, scroll, élément, maîtrise, fée).
+// Maximise les NIVEAUX d'une pièce équipée (upgrade, étoiles, perçage plein au meilleur palier, scroll, élément, maîtrise, fée).
 // Les CHOIX (type d'élément, stat de scroll/éveil, cartes) restent au joueur.
 function maxCfg(slot,tier){var c=cfgOf(slot);if(!c)return;var artef=['Éternel','Yggdrasil'].indexOf(tier)>=0;
-  var fillS=function(n){c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;};
+  var fillS=function(n){var g=pierceGrades(pierceElDe(c,slot));var top=g[g.length-1];c.pierce=c.pierce||[];
+    for(var i=0;i<n;i++)c.pierce[i]=top||null;c.pn=n;};
   if(slot==='weapon'||slot==='weapon2'){c.rune=true;c.up=artef?20:10;if(artef)c.stars=3;fillS(artef?12:10);c.scrL=4;c.elemLvl=20;c.mastery=100;}
   else if(slot==='shield'){c.up=10;fillS(10);c.elemLvl=20;}
   else if(slot==='suit'){c.up=10;fillS(4);c.scrL=4;c.elemLvl=20;}
@@ -581,7 +595,9 @@ function stuffRole(){var n=((ST()||{}).name||'').toLowerCase();return n.indexOf(
 //  Arme : sans rune, +10, sans étoile · élément Vent+20 si physique (rien si magique) · Bijoux +20 · Armure +10 (Vent+20 plastron) · Fashion +0.
 function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGIC_CLS.indexOf(cls)>=0;var R=recoFor(cls,stuffRole());
   var setEv=function(){if(R.ev[slot]&&EVN[R.ev[slot]]){c.evS=EVN[R.ev[slot]];c.evL='R1';}}; // evS = la stat d'éveil · evL = la ligne (R1 par défaut)
-  var setCard=function(n){if(R.card[slot]){c.pierceEl=R.card[slot];c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]='S';c.pn=n;}};
+  // Palier courant (S a l'attaque, 10 % en defense) : celui de Baruna se pose a la main.
+  var setCard=function(n){if(R.card[slot]){c.pierceEl=R.card[slot];var g=pierceGrades(c.pierceEl)[1]||pierceGrades(c.pierceEl)[0];
+    c.pierce=c.pierce||[];for(var i=0;i<n;i++)c.pierce[i]=g||null;c.pn=n;}};
   if(slot==='weapon'||slot==='weapon2'){c.rune=false;c.up=10;c.stars=0;if(magic){c.elemType='';c.elemLvl=0;}else{c.elemType='Vent';c.elemLvl=20;}setCard(10);setEv();}
   else if(slot==='shield'){c.up=10;setCard(10);setEv();}
   else if(slot==='suit'){c.up=10;c.elemType='Vent';c.elemLvl=20;setCard(4);setEv();}
@@ -610,51 +626,95 @@ function upUI(slot,max){const w=cfgOf(slot);const v=w.up||0;const isW=(slot==='w
    c'est elle qu'on regarde en premier en jeu. */
 const RARCOL={'Commun':'#9CA3AF','Rare':'#4EA8FF','Épique':'#C77DFF','Légendaire':'#FF8C1A','Pré-Mythique':'#FF5C8A','Mythique':'#C92A2A'};
 const couleurPiece=(it,cfg)=>(cfg&&cfg.tier&&RARCOL[cfg.tier])||(it&&it.col)||'#cfd2dc';
+/* DEUX familles de cartes de percage, et c'est la que le builder se trompait.
+   Le meme element porte deux noms selon ce qu'on perce : le feu ATTAQUE sous le
+   nom « Feu » et DEFEND sous le nom « Volcano ». Ce ne sont ni les memes
+   dessins, ni les memes effets, ni les memes paliers.
+
+     element       arme / bouclier     tenue
+     feu           Feu                 Volcano   PV %
+     eau           Eau                 Oceane    PM % et soins
+     air           Air                 Neant     PF %
+     terre         Terre               Seisme    Defense %
+     electricite   Foudre              Fulgur    Attaque %
+
+   Paliers : A, S, R, SR a l'attaque ; 7, 10, 12, 15 % en defense. L'air n'a ni
+   R ni SR — le jeu ne les a jamais sortis, donc sa case s'arrete a S. Valeurs
+   et libelles repris des descriptions du jeu. */
+const PIERCEGRADE={atk:['A','S','R','SR'],def:['7','10','12','15']};
 const PIERCECARD={
- Feu:{col:'#F87171',ic:'<i class=vgi-flame></i>',prim:'Force',sec:'Dégâts critiques',secU:'%',a:[7,2],s:[12,4]},
- Eau:{col:'#4EA8FF',ic:'<i class=vgi-droplet></i>',prim:'Intelligence',sec:"Temps d'incantation",secU:'%',a:[7,-2],s:[12,-4]},
- Terre:{col:'#4ADE80',ic:'<i class=vgi-rock></i>',prim:'Endurance',sec:'PV',secU:'',a:[7,0],s:[12,500]},
- Foudre:{col:'#FFD24A',ic:'<i class=vgi-zap></i>',prim:'Dextérité',sec:'Critique',secU:'%',a:[7,2],s:[12,4]},
- Vent:{col:'#33D6A6',ic:'<i class=vgi-wind></i>',prim:'Dextérité',sec:"Vitesse d'attaque",secU:'%',a:[7,2],s:[12,4]}
+ // ATTAQUE — arme et bouclier
+ 'Feu':    {fam:'atk',col:'#F87171',ic:'<i class=vgi-flame></i>',  g:{A:[['Force',7,''],['Dégâts critiques',2,'%']],S:[['Force',12,''],['Dégâts critiques',4,'%']],R:[['Force',15,'']],SR:[['Force',18,''],['Dégâts critiques',8,'%']]}},
+ 'Eau':    {fam:'atk',col:'#4EA8FF',ic:'<i class=vgi-droplet></i>',g:{A:[['Intelligence',7,''],["Vitesse d'incantation",2,'%']],S:[['Intelligence',12,''],["Vitesse d'incantation",4,'%']],R:[['Intelligence',15,''],["Temps d'incantation",-5,'%']],SR:[['Intelligence',18,''],["Temps d'incantation",-8,'%']]}},
+ 'Air':    {fam:'atk',col:'#33D6A6',ic:'<i class=vgi-wind></i>',   g:{A:[['Vitesse de déplacement',7,'%'],['Soins',4,'%']],S:[['Vitesse de déplacement',12,'%'],['Soins',15,'%']]}},
+ 'Terre':  {fam:'atk',col:'#4ADE80',ic:'<i class=vgi-rock></i>',   g:{A:[['Endurance',7,'']],S:[['Endurance',12,''],['PV max',500,'']],R:[['Endurance',15,''],['PV',5,'%']],SR:[['Endurance',18,''],['PV',8,'%']]}},
+ 'Foudre': {fam:'atk',col:'#FFD24A',ic:'<i class=vgi-zap></i>',    g:{A:[['Dextérité',7,''],['Dégâts critiques',2,'%']],S:[['Dextérité',12,''],['Taux de critique',4,'%']],R:[['Dextérité',15,''],['Taux de critique',5,'%']],SR:[['Dextérité',18,''],['Taux de critique',8,'%']]}},
+ // DEFENSE — tenue
+ 'Volcano':{fam:'def',col:'#F87171',ic:'<i class=vgi-flame></i>',  g:{'7':[['PV',7,'%']],'10':[['PV',10,'%']],'12':[['PV',12,'%']],'15':[['PV',15,'%']]}},
+ 'Océane': {fam:'def',col:'#4EA8FF',ic:'<i class=vgi-droplet></i>',g:{'7':[['PM',7,'%'],['Soins',15,'%']],'10':[['PM',10,'%'],['Soins',30,'%']],'12':[['PM',12,'%']],'15':[['PM',15,'%']]}},
+ 'Néant':  {fam:'def',col:'#33D6A6',ic:'<i class=vgi-wind></i>',   g:{'7':[['PF',7,'%']],'10':[['PF',10,'%']],'12':[['PF',12,'%']],'15':[['PF',15,'%']]}},
+ 'Séisme': {fam:'def',col:'#4ADE80',ic:'<i class=vgi-rock></i>',   g:{'7':[['Défense',7,'%']],'10':[['Défense',10,'%']],'12':[['Défense',12,'%']],'15':[['Défense',15,'%']]}},
+ 'Fulgur': {fam:'def',col:'#FFD24A',ic:'<i class=vgi-zap></i>',    g:{'7':[['Attaque',7,'%']],'10':[['Attaque',10,'%']],'12':[['Attaque',12,'%']],'15':[['Attaque',15,'%']]}}
 };
-/* Les vraies cartes du jeu. Une arme ou un bouclier se perce avec une carte
-   graduee A ou S ; une armure avec une carte a 7 % ou 10 %. Ce sont deux
-   dessins differents, et le builder les confondait sous une meme pastille. */
-const PIERCE_USAGE=slot=>(slot==='weapon'||slot==='weapon2'||slot==='shield')?'arme':(slot==='suit'?'tenue':'armure');
-/* Trois familles de cartes, pas deux :
-   - arme et bouclier : carte graduee A ou S ;
-   - armure : carte a 7 % ou 10 % ;
-   - TENUE : ses propres elements — Fulgur, Volcano, Oceane — et une famille de
-     cartes encadrees, graduees 12 / 15 / 18. Elle n'avait aucune carte, donc
-     l'infobulle demandait des fichiers qui n'existaient pas.
-   L'accent d'« Oceane » est retire du nom de fichier : un chemin accentue se
+/* Seuls l'arme, le bouclier et la tenue se percent dans le builder. */
+const PIERCE_FAM=slot=>(slot==='weapon'||slot==='weapon2'||slot==='shield')?'atk':'def';
+/* Une sauvegarde d'avant la correction porte un nom d'attaque sur la tenue, ou
+   l'inverse. On traduit vers la bonne famille plutot que de vider le reglage. */
+const PIERCETRAD={'Feu':'Volcano','Eau':'Océane','Air':'Néant','Vent':'Néant','Terre':'Séisme','Foudre':'Fulgur',
+                  'Volcano':'Feu','Océane':'Eau','Néant':'Air','Séisme':'Terre','Fulgur':'Foudre'};
+function pierceElDe(cfg,slot){const fam=PIERCE_FAM(slot);let el=(cfg&&cfg.pierceEl)||'';
+  if(el&&(!PIERCECARD[el]||PIERCECARD[el].fam!==fam))el=PIERCETRAD[el]||'';
+  if(el&&(!PIERCECARD[el]||PIERCECARD[el].fam!==fam))el='';
+  return el;}
+function pierceGrades(el){const c=PIERCECARD[el];return c?PIERCEGRADE[c.fam].filter(g=>c.g[g]):[];}
+/* Meme chose pour les paliers : une tenue sauvegardee avant la correction porte
+   des A/S. Le rang se conserve, seul son nom change. */
+const PIERCEGRTRAD={A:'7',S:'10',R:'12',SR:'15','7':'A','10':'S','12':'R','15':'SR'};
+function pierceCases(cfg,slot){const c=PIERCECARD[pierceElDe(cfg,slot)];
+  return ((cfg&&cfg.pierce)||[]).map(function(v){if(!v||!c)return null;
+    if(c.g[v])return v;const t=PIERCEGRTRAD[v];return (t&&c.g[t])?t:null;});}
+/* L'accent d'« Oceane » est retire du nom de fichier : un chemin accentue se
    fait encoder et l'image ne se charge plus. */
-const SANSACCENT=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const SANSACCENT=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 function pierceCarte(el,slot,grade){
-  if(!el)return '';
-  const usage=PIERCE_USAGE(slot);
-  const g=usage==='arme'?(grade==='S'?'s':'a')
-        :usage==='tenue'?(grade==='S'?'s':'a')
-        :(grade==='S'?'10':'7');
-  return `/airbuilder/icons/percage/${SANSACCENT(el)}-${usage}-${g}.png`;
+  const c=PIERCECARD[el];if(!c)return '';
+  const dispo=pierceGrades(el);
+  const g=c.g[grade]?grade:dispo[0];
+  return `/airbuilder/icons/percage/${SANSACCENT(el)}-${SANSACCENT(g)}.png`;
 }
-function pierceTotals(cfg){const card=PIERCECARD[cfg.pierceEl];if(!card)return null;let a=0,s=0;(cfg.pierce||[]).forEach(x=>{if(x==='A')a++;else if(x==='S')s++;});const prim=a*card.a[0]+s*card.s[0];const sec=a*card.a[1]+s*card.s[1];const lines=[];if(prim)lines.push([card.prim,'+'+prim]);if(sec)lines.push([card.sec,(sec>0?'+':'')+sec+card.secU]);return{card:card,a:a,s:s,lines:lines};}
+/* Total : on additionne ligne par ligne, par libelle. Une carte Foudre A donne
+   des DEGATS critiques et une S le TAUX de critique — deux lignes distinctes
+   qu'il ne faut surtout pas fondre en une seule. */
+function pierceTotals(cfg,slot){const el=pierceElDe(cfg,slot);const card=PIERCECARD[el];if(!card)return null;
+  const par={},ordre=[],cases={};
+  pierceCases(cfg,slot).slice(0,(cfg.pn!=null)?cfg.pn:(cfg.pierce||[]).length).forEach(v=>{const lg=card.g[v];if(!lg)return;
+    cases[v]=(cases[v]||0)+1;
+    lg.forEach(function(t){const lab=t[0],val=t[1],u=t[2],k=lab+'|'+u;
+      if(par[k]===undefined){par[k]=0;ordre.push([lab,u,k]);}par[k]+=val;});});
+  const lines=ordre.filter(function(o){return par[o[2]];}).map(function(o){return [o[0],(par[o[2]]>0?'+':'')+par[o[2]]+o[1]];});
+  return{card:card,el:el,cases:cases,lines:lines};}
 function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.pn;
-  const isSuit=(slot==='suit');
-  const ELEM=isSuit?[['Fulgur','#FFD24A'],['Volcano','#F87171'],['Océane','#4EA8FF']]:[['Feu','#F87171'],['Eau','#4EA8FF'],['Terre','#4ADE80'],['Foudre','#FFD24A']];
-  const card=PIERCECARD[w.pierceEl];const elCol=(ELEM.find(x=>x[0]===w.pierceEl)||[,''])[1]||(card?card.col:'');
-  let totalHtml;
-  if(card){const t=pierceTotals(w);totalHtml=(t&&t.lines.length)?t.lines.map(l=>`<b style="color:${elCol}">${esc(l[0])} ${l[1]}</b>`).join(' · '):'<span class="mini">aucune carte posée</span>';}
-  else{const pct=w.pierce.slice(0,n).reduce((a,x)=>a+(x==='A'?7:x==='S'?10:0),0);totalHtml=pct+'%';}
-  let legend='';
-  if(card){const fa=`${esc(card.prim)} +${card.a[0]}`+(card.a[1]?` · ${esc(card.sec)} ${card.a[1]>0?'+':''}${card.a[1]}${card.secU}`:'');const fs=`${esc(card.prim)} +${card.s[0]}`+(card.s[1]?` · ${esc(card.sec)} ${card.s[1]>0?'+':''}${card.s[1]}${card.secU}`:'');legend=`<div class="cardleg" style="border-color:${elCol}44"><div class="clh" style="color:${elCol}">${card.ic} Carte ${esc(w.pierceEl)}</div><div><span class="cg cgA">A</span> ${fa}</div><div><span class="cg cgS">S</span> ${fs}</div></div>`;}
-  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/../percage/feu-arme-s.png" alt=""> Perçage <span class="mini">(chaque niveau ouvre un emplacement)</span></div>
+  const fam=PIERCE_FAM(slot);
+  const ELEM=Object.keys(PIERCECARD).filter(k=>PIERCECARD[k].fam===fam);
+  const el=pierceElDe(w,slot);const cas=pierceCases(w,slot);   // une vieille sauvegarde se traduit
+  if(el!==(w.pierceEl||''))w.pierceEl=el;
+  if(cas.some((v,i)=>v!==(w.pierce[i]||null)))w.pierce=cas;
+  const card=PIERCECARD[el];const elCol=card?card.col:'';
+  const grades=pierceGrades(el);
+  const lib=g=>fam==='def'?g+'%':g;
+  const t=card?pierceTotals(w,slot):null;
+  const totalHtml=card?((t&&t.lines.length)?t.lines.map(l=>`<b style="color:${elCol}">${esc(l[0])} ${l[1]}</b>`).join(' · '):'<span class="mini">aucune carte posée</span>')
+                     :'<span class="mini">choisis une carte</span>';
+  const ligne=g=>card.g[g].map(function(x){return esc(x[0])+' '+(x[1]>0?'+':'')+x[1]+x[2];}).join(' · ');
+  const legend=card?`<div class="cardleg" style="border-color:${elCol}44"><div class="clh" style="color:${elCol}">${card.ic} Carte ${esc(el)}</div>${grades.map(g=>`<div><span class="cg cg${g}">${lib(g)}</span> ${ligne(g)}</div>`).join('')}</div>`:'';
+  const entete=pierceCarte(ELEM[0],slot,grades[grades.length-1]||'');
+  return `<div class="grp"><div class="gh"><img class="ghic" src="${entete}" alt=""> Perçage <span class="mini">(chaque niveau ouvre un emplacement)</span></div>
    <div class="mini" style="margin-bottom:3px">Carte / élément :</div>
-   <div class="row" style="gap:4px;margin-bottom:5px">${ELEM.map(([nm,col])=>{const src=pierceCarte(nm,slot,'S');return `<span class="tierbtn cardbtn ${w.pierceEl===nm?'on':''}" style="${w.pierceEl===nm?`border-color:${col};color:${col};background:${col}22`:`color:${col}`}" onclick="cset('${slot}','pierceEl','${nm}')">${src?`<img src="${src}" alt="">`:''}${nm}</span>`;}).join('')}<span class="tierbtn ${!w.pierceEl?'on':''}" onclick="cset('${slot}','pierceEl','')">—</span></div>
+   <div class="row" style="gap:4px;margin-bottom:5px">${ELEM.map(nm=>{const col=PIERCECARD[nm].col;const src=pierceCarte(nm,slot,pierceGrades(nm).slice(-1)[0]);return `<span class="tierbtn cardbtn ${el===nm?'on':''}" style="${el===nm?`border-color:${col};color:${col};background:${col}22`:`color:${col}`}" onclick="cset('${slot}','pierceEl','${nm}')"><img src="${src}" alt="">${nm}</span>`;}).join('')}<span class="tierbtn ${!el?'on':''}" onclick="cset('${slot}','pierceEl','')">—</span></div>
    ${legend}
    <div class="lvl"><span class="mini">Niveau de perçage : <b>${n}</b> / ${max}</span><input type="range" min="0" max="${max}" value="${n}" oninput="pnLive(this,'${slot}')" onchange="cpn('${slot}',+this.value,${max})"></div>
-   <div class="row" style="gap:4px;margin-top:6px">${Array.from({length:n},(_,i)=>{const v=w.pierce[i];const cs=elCol?(v==='S'?`border-color:${elCol};background:${elCol}33;color:${elCol}`:v==='A'?`border-color:${elCol};color:${elCol}`:''):'';return `<div class="cslot ${v||''}" style="${cs}" onclick="cpierce('${slot}',${i})">${v?((slot==='weapon'||slot==='weapon2'||slot==='shield')?v:(v==='A'?'7%':v==='S'?'10%':v)):'+'}</div>`;}).join('')||'<span class="mini">Monte le niveau pour ouvrir des emplacements.</span>'}</div>
-   <div class="mini" style="margin-top:5px">Total : ${totalHtml} · clique une case → A → S</div></div>`;}
+   <div class="row" style="gap:4px;margin-top:6px">${Array.from({length:n},(_,i)=>{const v=card&&card.g[cas[i]]?cas[i]:null;const fort=v===grades[grades.length-1];const cs=elCol&&v?`border-color:${elCol};color:${elCol}`+(fort?`;background:${elCol}33`:''):'';return `<div class="cslot ${v?'on':''}" style="${cs}" onclick="cpierce('${slot}',${i})">${v?lib(v):'+'}</div>`;}).join('')||'<span class="mini">Monte le niveau pour ouvrir des emplacements.</span>'}</div>
+   <div class="mini" style="margin-top:5px">Total : ${totalHtml}${grades.length?' · clique une case → '+grades.map(lib).join(' → '):''}</div></div>`;}
 function pnLive(el,slot){const b=el.parentNode.querySelector('.mini b');if(b)b.textContent=el.value;}
 function cpn(slot,v,max){keepScroll();const w=cfgOf(slot);w.pn=Math.max(0,Math.min(v,max));render();drawPick(curQ());restoreScroll();}
 // Ordre des stats d'éveil par pièce (priorité iBeats en début de liste, le reste ensuite)
@@ -744,7 +804,9 @@ function masteryLive(el){const b=el.parentNode.querySelector('.mini b');if(b)b.t
 function elemLive(el,slot){const lbl=el.parentNode.querySelector('.mini b');if(lbl)lbl.textContent='+'+el.value;}
 function cset(slot,key,val){keepScroll();const w=cfgOf(slot);if(!w)return;if(key==='up'&&slot==='weapon'){w.up=val;E('weapon').artefact=val>10;if(val<=10)w.holo=['','',''];}else w[key]=val;render();drawPick(curQ());restoreScroll();}
 function cdia(slot,arr,i,v){keepScroll();const w=cfgOf(slot);w[arr][i]=v;render();restoreScroll();}
-function cpierce(slot,i){keepScroll();const w=cfgOf(slot);const x=w.pierce[i];w.pierce[i]=(!x)?'A':x==='A'?'S':null;render();drawPick(curQ());restoreScroll();}
+function cpierce(slot,i){keepScroll();const w=cfgOf(slot);const g=pierceGrades(pierceElDe(w,slot));
+  const k=g.indexOf(w.pierce[i]);w.pierce[i]=(k<0)?(g[0]||null):(k+1<g.length?g[k+1]:null);
+  render();drawPick(curQ());restoreScroll();}
 function crlAdd(){keepScroll();const w=cfgOf('weapon');w.rlines=w.rlines||[];if(w.rlines.length<4){w.rlines.push('');drawPick(curQ());restoreScroll();}}
 function crlDel(i){keepScroll();const w=cfgOf('weapon');w.rlines.splice(i,1);render();drawPick(curQ());restoreScroll();}
 function crl(i,v){const w=cfgOf('weapon');w.rlines[i]=v;render();}

@@ -234,6 +234,21 @@
 .itip .gem.h{background:linear-gradient(135deg,#C77DFF,#4EA8FF)}
 .itip .gem.e{background:transparent;border:1.5px solid #ffffff2e}
 .itip .sep{width:1px;height:13px;background:#ffffff24;margin:0 3px}
+/* Les vraies cartes de percage du jeu, a la place des pastilles de couleur.
+   Une arme porte une carte graduee A ou S, une armure une carte a 7 % ou 10 %. */
+.itip .pcard{width:18px;height:18px;object-fit:contain;image-rendering:pixelated;flex:none;
+  border-radius:3px;vertical-align:-4px}
+.itip .pcard.mini{width:14px;height:14px;vertical-align:-3px;margin-right:2px}
+/* Le code couleur du jeu : bleu = eveil, rouge = diamant holographique,
+   violet = percage. Ce qui vient d'une amelioration ne se lit pas comme une
+   statistique de base, et la couleur dit laquelle d'un coup d'oeil.
+   Declare sur les deux racines : l'infobulle est montee sur le body, hors
+   de .agx, et n'heriterait pas des variables du panneau. */
+.agx,.itip{--c-eveil:#7fb8ff;--c-holo:#ff7a7a;--c-percage:#c77dff}
+/* Les boutons R1 / R2 portent le parchemin du jeu : c'est a son dessin qu'on
+   les reconnait en inventaire, pas a deux lettres. */
+.seg-ev .s2{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.seg-ev .s2 img{width:17px;height:17px;object-fit:contain;flex:none}
 .itip .pips{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
 .itip .pip{width:9px;height:13px;border-radius:2px;display:inline-block;border:1px solid #ffffff28;box-sizing:border-box}
 .itip .pct{color:var(--text);font-weight:700;font-size:10px;margin-left:3px}

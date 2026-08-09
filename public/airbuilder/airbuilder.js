@@ -279,15 +279,17 @@ function itipBuild(it,cfg,slot,e){const col=it.col||'#cfd2dc';const icon=(it.ic&
     if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/100</span>`);
     if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">● ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
-    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>`<span class="gem ${d?'f':'e'}"></span>`).join('');const holos=(cfg.holo||[]).map(d=>`<span class="gem ${d?'h':'e'}"></span>`).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:#7fd0ff;font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:#b48cff;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
+    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>`<span class="gem ${d?'f':'e'}"></span>`).join('');const holos=(cfg.holo||[]).map(d=>`<span class="gem ${d?'h':'e'}"></span>`).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:11px;color:#7fd0ff;font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:11px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>`<span class="gem ${d?'f':'e'}"></span>`).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:11px;color:#7fd0ff;font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.pierce){const SC={Fulgur:'#FFD24A',Volcano:'#F87171','Océane':'#4EA8FF'};const pcard=PIERCECARD[cfg.pierceEl];const ecol=pcard?pcard.col:(SC[cfg.pierceEl]||'#9a9aa8');const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
-      if(cfg.pierceEl||open){const pips=Array.from({length:open},(_,i)=>{const v=cfg.pierce[i];const st=v==='S'?`background:${ecol};border-color:${ecol}`:v==='A'?`background:${ecol}55;border-color:${ecol}`:'';return `<span class="pip" style="${st}"></span>`;}).join('');
+      if(cfg.pierceEl||open){const pips=Array.from({length:open},(_,i)=>{const v=cfg.pierce[i];
+          if(v&&cfg.pierceEl)return `<img class="pcard" src="${pierceCarte(cfg.pierceEl,slot,v)}" alt="${v}" title="${esc(cfg.pierceEl)} ${v}">`;
+          return `<span class="pip"></span>`;}).join('');
         let pc=`<div class="crow" style="align-items:flex-start"><span class="lab">Perçage</span><div style="flex:1;min-width:0">`;
-        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66"><i class=vgi-card></i> ${open}/${pierceMaxFor(slot,it)}</span>${cfg.pierceEl?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a">${pcard?pcard.ic+' ':''}${esc(cfg.pierceEl)}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
-        if(pcard){const t=pierceTotals(cfg);if(t&&t.lines.length)pc+=`<div style="font-size:11px;color:${ecol};font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
+        pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66"><i class=vgi-card></i> ${open}/${pierceMaxFor(slot,it)}</span>${cfg.pierceEl?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(cfg.pierceEl,slot,'S')}" alt="">${esc(cfg.pierceEl)}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
+        if(pcard){const t=pierceTotals(cfg);if(t&&t.lines.length)pc+=`<div style="font-size:11px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
         pc+=`</div></div>`;cf+=pc;}}
-    if(cfg&&cfg.evL)cf+=`<div class="crow"><span class="lab">Éveil</span><b style="font-size:11px">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b></div>`;
+    if(cfg&&cfg.evL)cf+=`<div class="crow"><span class="lab">Éveil</span><b style="font-size:11px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b></div>`;
     if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:11px">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
     if(slot==='fairy'&&cfg&&cfg.lvl)cf+=`<div class="crow"><span class="lab">Niveau fée</span><b style="font-size:11px">${cfg.lvl}</b></div>`;
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
@@ -532,8 +534,19 @@ const PIERCECARD={
  Feu:{col:'#F87171',ic:'<i class=vgi-flame></i>',prim:'Force',sec:'Dégâts critiques',secU:'%',a:[7,2],s:[12,4]},
  Eau:{col:'#4EA8FF',ic:'<i class=vgi-droplet></i>',prim:'Intelligence',sec:"Temps d'incantation",secU:'%',a:[7,-2],s:[12,-4]},
  Terre:{col:'#4ADE80',ic:'<i class=vgi-rock></i>',prim:'Endurance',sec:'PV',secU:'',a:[7,0],s:[12,500]},
- Foudre:{col:'#FFD24A',ic:'<i class=vgi-zap></i>',prim:'Dextérité',sec:'Critique',secU:'%',a:[7,2],s:[12,4]}
+ Foudre:{col:'#FFD24A',ic:'<i class=vgi-zap></i>',prim:'Dextérité',sec:'Critique',secU:'%',a:[7,2],s:[12,4]},
+ Vent:{col:'#33D6A6',ic:'<i class=vgi-wind></i>',prim:'Dextérité',sec:"Vitesse d'attaque",secU:'%',a:[7,2],s:[12,4]}
 };
+/* Les vraies cartes du jeu. Une arme ou un bouclier se perce avec une carte
+   graduee A ou S ; une armure avec une carte a 7 % ou 10 %. Ce sont deux
+   dessins differents, et le builder les confondait sous une meme pastille. */
+const PIERCE_USAGE=slot=>(slot==='weapon'||slot==='weapon2'||slot==='shield')?'arme':'armure';
+function pierceCarte(el,slot,grade){
+  if(!el)return '';
+  const usage=PIERCE_USAGE(slot);
+  const g=usage==='arme'?(grade==='S'?'s':'a'):(grade==='S'?'10':'7');
+  return `/airbuilder/icons/percage/${el.toLowerCase()}-${usage}-${g}.png`;
+}
 function pierceTotals(cfg){const card=PIERCECARD[cfg.pierceEl];if(!card)return null;let a=0,s=0;(cfg.pierce||[]).forEach(x=>{if(x==='A')a++;else if(x==='S')s++;});const prim=a*card.a[0]+s*card.s[0];const sec=a*card.a[1]+s*card.s[1];const lines=[];if(prim)lines.push([card.prim,'+'+prim]);if(sec)lines.push([card.sec,(sec>0?'+':'')+sec+card.secU]);return{card:card,a:a,s:s,lines:lines};}
 function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.pn;
   const isSuit=(slot==='suit');
@@ -558,7 +571,7 @@ const EVORDER={ring1:['Intelligence','Dégâts critiques','Endurance','Force'],r
 function evStatsFor(slot){var pri=EVORDER[slot]||[];return pri.concat(EVSTATS.filter(function(s){return pri.indexOf(s)<0;}));}
 function eveilUI(slot){const w=cfgOf(slot);
   return `<div class="grp"><div class="gh"><i class=vgi-awaken></i> Éveil (R1 ou R2)</div>
-   <div class="row"><div class="seg2" style="max-width:150px"><div class="s2 ${w.evL==='R1'?'on':''}" onclick="cset('${slot}','evL','R1')">R1</div><div class="s2 ${w.evL==='R2'?'on':''}" onclick="cset('${slot}','evL','R2')">R2</div><div class="s2 ${!w.evL?'on':''}" onclick="cset('${slot}','evL','')">—</div></div>
+   <div class="row"><div class="seg2 seg-ev" style="max-width:186px"><div class="s2 ${w.evL==='R1'?'on':''}" onclick="cset('${slot}','evL','R1')"><img src="/airbuilder/icons/R1.png" alt="">R1</div><div class="s2 ${w.evL==='R2'?'on':''}" onclick="cset('${slot}','evL','R2')"><img src="/airbuilder/icons/R2.png" alt="">R2</div><div class="s2 ${!w.evL?'on':''}" onclick="cset('${slot}','evL','')">—</div></div>
    <select onchange="cset('${slot}','evS',this.value)"><option value="">— statistique —</option>${evStatsFor(slot).map(s=>`<option ${w.evS===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`;}
 function scrollUI(slot){const w=cfgOf(slot);
   return `<div class="grp"><div class="gh"><i class=vgi-scroll></i> Scroll stat</div><div class="row">

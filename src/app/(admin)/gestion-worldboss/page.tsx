@@ -36,7 +36,10 @@ export default function WorldBossAdminPage() {
       <PageHeader icon="dragon" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
       <SectionTabs section="discord" />
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+      {/* Deux colonnes quand la place le permet, une seule sinon. En « 1fr 1fr »
+          les deux pistes gardaient la largeur de leur contenu et la page
+          debordait de 109 px sur telephone. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))", gap: 16, marginBottom: 24 }}>
         <div className="glass-card fx-card" style={{ padding: 16 }}>
           <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Nouveau boss</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

@@ -205,13 +205,16 @@ export default function DiscordPage() {
       <div className="fx-card" style={card}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Historique des commandes</div>
         {cmds.length === 0 ? <div style={{ color: "var(--text-muted)", fontSize: 13 }}>Aucune commande pour l'instant.</div> :
-          <div style={{ display: "grid", gap: 8 }}>
+          // La piste doit avoir droit a zero : sans minmax(0,...) elle se
+          // dimensionne sur l'identifiant Discord du resultat, qui ne se coupe
+          // nulle part, et la page debordait de 168 px sur telephone.
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 8 }}>
             {cmds.map((c) => { const s = STATUS_META[c.status] ?? { c: "var(--text-muted)", l: c.status }; return (
-              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "var(--bg-3)", borderRadius: 8, fontSize: 13 }}>
-                <span style={{ minWidth: 110, color: "var(--text)" }}>{TYPE_LABEL[c.type] ?? c.type}</span>
-                <span style={{ color: s.c, minWidth: 110 }}>{s.l}</span>
-                <span style={{ color: "var(--text-muted)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.result ?? ""}</span>
-                <span style={{ color: "var(--text-muted)", fontSize: 11 }}>par {c.createdBy}</span>
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "var(--bg-3)", borderRadius: 8, fontSize: 13, flexWrap: "wrap", minWidth: 0 }}>
+                <span style={{ minWidth: 92, color: "var(--text)" }}>{TYPE_LABEL[c.type] ?? c.type}</span>
+                <span style={{ color: s.c, minWidth: 92 }}>{s.l}</span>
+                <span style={{ color: "var(--text-muted)", flex: "1 1 140px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.result ?? ""}</span>
+                <span style={{ color: "var(--text-muted)", fontSize: 11, flexShrink: 0 }}>par {c.createdBy}</span>
               </div>
             ); })}
           </div>}

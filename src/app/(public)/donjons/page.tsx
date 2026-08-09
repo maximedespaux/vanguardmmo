@@ -16,7 +16,10 @@ import { useCardFx } from "@/components/VgFx";
  * Dédale) n'ont volontairement pas de liste complète : énumérer 32 pièces d'une
  * même armure en dit moins que « le set complet ».
  */
-type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; prestigeDetail?: string; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[]; dropsComplets?: string[] };
+type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: number | null; prestigeDetail?: string; hp: number; armor: string | null; elem: string; cat: string; icon: string; drops: string[]; dropsComplets?: string[]; video?: string };
+
+/** L'identifiant YouTube de la vidéo du donjon, quand il y en a une. */
+const PLAYLIST = "PL64S1j7adQcwMHVfTyRfMkBOu8hS7c08V";
 
 /**
  * Un donjon à `hp: 0` n'est pas un donjon sans données : c'est un donjon sans PV
@@ -75,6 +78,9 @@ export default function DonjonsPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.armor}</span>}</div>
             {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ verticalAlign: "-1px", marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>}
+            {/* Signalé sur la carte : sans ça, personne ne devine qu'il y a une
+                vidéo derrière et le travail de Sugot reste invisible. */}
+            {d.video && <div style={{ marginTop: 7, fontSize: 10.5, color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="video" size={11} />Vidéo disponible</div>}
           </div>
         ))}
       </div>
@@ -87,6 +93,25 @@ export default function DonjonsPage() {
               <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>
             </div>
             {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ verticalAlign: "-2px", marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
+
+            {/* La vidéo du donjon, quand elle existe dans la playlist de Sugot.
+                Domaine nocookie : rien n'est déposé chez le visiteur tant qu'il
+                n'a pas lancé la lecture. `loading=lazy` évite de charger le
+                lecteur pour une fiche qu'on ne fait qu'entrouvrir. */}
+            {sel.video && (
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  <Icon name="video" size={12} />En vidéo
+                </div>
+                <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${sel.video}?list=${PLAYLIST}&rel=0`}
+                    title={`${sel.name} en vidéo`} loading="lazy" allowFullScreen
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+                  />
+                </div>
+              </div>
+            )}
             {(() => {
               // La fiche montre la liste complète quand on l'a ; la carte, elle, garde le résumé.
               const liste = sel.dropsComplets ?? sel.drops;

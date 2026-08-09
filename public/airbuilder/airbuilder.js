@@ -552,7 +552,7 @@ function scrollUI(slot){const w=cfgOf(slot);
 const ELEMIC={'Feu':'FireSmall','Eau':'WaterSmall','Vent':'WindSmall','Terre':'EarthSmall','Électricité':'ElectricSmall'};
 function elemUI(slot,max){const w=cfgOf(slot);
   return `<div class="grp"><div class="gh"><i class=vgi-flame></i> Élément</div>
-   <div class="row elemrow">${ELEMENTS.map(el=>`<span class="elembtn ${w.elemType===el?'on':''}" title="${el}" onclick="cset('${slot}','elemType','${w.elemType===el?'':el}')"><img src="/airbuilder/icons/elements/${ELEMIC[el]}.webp" alt="" width="20" height="20"><span>${el}</span></span>`).join('')}<span class="elembtn none ${!w.elemType?'on':''}" title="Aucun élément" onclick="cset('${slot}','elemType','')">Aucun</span></div>
+   <div class="row" style="margin-bottom:5px">${ELEMENTS.map(el=>`<span class="elembtn ${w.elemType===el?'on':''}" title="${el}" onclick="cset('${slot}','elemType','${w.elemType===el?'':el}')"><img src="/airbuilder/icons/elements/${ELEMIC[el]}.webp" alt="" width="16" height="16"><span>${el}</span></span>`).join('')}<span class="elembtn ${!w.elemType?'on':''}" title="Aucun élément" onclick="cset('${slot}','elemType','')">Aucun</span></div>
    <div class="row"><div class="lvl"><span class="mini">Niveau : <b>+${w.elemLvl||0}</b>/+${max}</span><input type="range" min="0" max="${max}" value="${w.elemLvl||0}" oninput="elemLive(this,'${slot}')" onchange="cset('${slot}','elemLvl',+this.value)"></div></div></div>`;}
 
 function panelFor(slot,e){

@@ -200,8 +200,8 @@ export default function MessagesPage() {
             {([["afaire", "À faire"], ["tous", "Tout"], ["nonlus", "Non lus"], ["clos", "Clos"]] as const).map(([k, base]) => {
               const l = `${base} (${comptes[k]})`;
               return (
-              <button key={k} onClick={() => setFiltre(k)}
-                style={{ padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
+              <button key={k} className="vg-touch" onClick={() => setFiltre(k)}
+                style={{ padding: "7px 11px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
                 {l}
               </button>
               );

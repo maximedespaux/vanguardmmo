@@ -74,6 +74,16 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 @keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .vg-dd-opt:hover{background:rgba(255,255,255,.07) !important}
 @media (prefers-reduced-motion:reduce){.vg-dd-list{animation:none !important}}
+/* ── Zone tactile étendue ────────────────────────────────────────────────
+   Un petit bouton peut rester petit à l'œil et devenir touchable au doigt : le
+   pseudo-élément élargit la surface sensible sans toucher au dessin ni pousser
+   les voisins. C'est ce qui permet de garder une rangée dense — un panier, une
+   barre d'onglets — sans la rendre inutilisable sur téléphone. */
+@media (pointer:coarse){
+  .vg-touch{position:relative}
+  .vg-touch::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:max(100%,44px);height:max(100%,44px)}
+}
 /* Boutique — les portes du panneau d'entrée. Meme reaction que les cartes
    outils du tableau de bord : ce sont les memes objets, un choix a cliquer. */
 .vg-porte{transition:transform var(--t-mid) var(--ease),border-color var(--t-mid),box-shadow var(--t-mid)}
@@ -453,7 +463,7 @@ textarea:focus-visible,[tabindex]:not([tabindex="-1"]):focus-visible{
    70 % du contenu était sous la ligne de flottaison sans aucun signal.      */
 .hf-scroll{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);
   display:flex;flex-direction:column;align-items:center;gap:5px;
-  color:rgba(255,255,255,.62);font-size:10.5px;letter-spacing:2.2px;text-transform:uppercase;
+  color:rgba(255,255,255,.62);font-size:11px;letter-spacing:2.2px;text-transform:uppercase;
   background:none;border:0;cursor:pointer;padding:8px 14px;border-radius:var(--r-full,999px);
   transition:color .2s,background .2s}
 .hf-scroll:hover{color:#fff;background:rgba(255,255,255,.07)}

@@ -281,7 +281,7 @@ export default function GuidePage() {
         .gd-tip { background:var(--bg-3); border-radius:10px; padding:14px 16px; margin-bottom:10px; border-left:2px solid var(--orange-dark); }
         .gd-tip h4 { font-size:15px; color:var(--orange); margin-bottom:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .gd-tip p { font-size:13.5px; color:var(--text); }
-        .gd-prio { display:inline-block; font-size:10px; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:4px; background:rgba(248,113,113,.18); color:var(--red); font-weight:600; }
+        .gd-prio { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:4px; background:rgba(248,113,113,.18); color:var(--red); font-weight:600; }
         .gd-note { background:rgba(255,140,26,.06); border:1px solid var(--orange-dark); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-top:10px; }
         .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:20px; font-style:italic; }
         /* Un donjon cité mène a sa fiche ; un objet montre son icône. */
@@ -305,6 +305,14 @@ export default function GuidePage() {
                      font-size:12.5px; color:var(--text-muted); }
         .gd-ou .ou > svg { flex-shrink:0; opacity:.55; }
         .gd-ou .lieu { display:inline-flex; }
+        /* Les liens d'instance faisaient 21 px de haut : on les rate au doigt.
+           On ne grossit pas le texte — la ligne deviendrait un pave — on ouvre
+           la zone sensible autour, sans decaler la mise en page. */
+        @media (pointer:coarse){
+          .gd-ou .lieu a, .gd-ou .lieu { position:relative; }
+          .gd-ou .lieu a::before { content:""; position:absolute; left:0; right:0; top:50%;
+            transform:translateY(-50%); height:44px; }
+        }
       `}</style>
     </div>
   );

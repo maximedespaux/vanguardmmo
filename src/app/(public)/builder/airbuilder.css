@@ -12,19 +12,19 @@
 .wrap{max-width:1280px;margin:0 auto;padding:14px}
 .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
 .brand{font-family:Rubik;font-weight:700;font-size:21px;color:var(--text);letter-spacing:1.6px;text-transform:uppercase}
-.brand span{color:var(--orange);text-shadow:0 0 18px rgba(255,140,26,.4)}.step{font-size:11px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
+.brand span{color:var(--orange);text-shadow:0 0 18px rgba(255,140,26,.4)}.step{font-size:12px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
 .ptabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ptab{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:5px 9px;cursor:pointer;font-size:13px}
-.ptab.on{border-color:var(--orange);background:#241a0e}.ptab .x{color:var(--mut);font-size:11px}.ptab .x:hover{color:var(--red)}
+.ptab.on{border-color:var(--orange);background:#241a0e}.ptab .x{color:var(--mut);font-size:12px}.ptab .x:hover{color:var(--red)}
 .ptab img{width:18px;height:18px;object-fit:contain}
 .addp{background:var(--bg3);border:1px dashed var(--border);border-radius:10px;padding:5px 11px;cursor:pointer;color:var(--mut);font-size:13px}
 .addp:hover{border-color:var(--orange);color:var(--orange)}
 .setup{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px;align-items:flex-end}
 .stuffbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-4px 0 14px}
-.stuffbar .slabel{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+.stuffbar .slabel{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
 .stab{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:6px 12px;cursor:pointer;font-family:Rubik;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
 .stab.on{border-color:var(--gold);background:#221d0a;color:var(--gold)}
-.stab .x{color:var(--mut);font-size:10px}.stab .x:hover{color:var(--red)}
+.stab .x{color:var(--mut);font-size:11px}.stab .x:hover{color:var(--red)}
 /* Mêmes police et graisse que les onglets de stuff : ces boutons vivent sur la
    même ligne, une fonte differente les faisait passer pour du texte.        */
 .saddp{background:var(--bg3);border:1px dashed var(--border);border-radius:9px;padding:6px 11px;cursor:pointer;color:var(--mut);
@@ -49,7 +49,7 @@
   cursor:pointer;box-shadow:0 6px 18px rgba(255,140,26,.42)}
 .dollbuy:hover{filter:brightness(1.06);box-shadow:0 8px 22px rgba(255,140,26,.52)}
 @media(max-width:640px){ .dollbuy{position:static;margin:0 0 10px auto;display:flex} }
-.setup .f{display:flex;flex-direction:column;gap:3px}.setup label{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding-left:2px}
+.setup .f{display:flex;flex-direction:column;gap:3px}.setup label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding-left:2px}
 /* Les champs natifs n'heritent pas de la police : sexe, niveau et prestige
    s'affichaient dans la fonte par defaut du navigateur, a cote du reste.    */
 .setup select,.setup input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 9px;
@@ -70,7 +70,7 @@
 .rowT,.rowB{grid-column:1 / -1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;min-width:0}
 /* Le nom de la categorie, une fois pour la rangee — plutot que repete entre
    parentheses derriere chacune des quatre pieces.                           */
-.rowB .rowttl{flex-basis:100%;text-align:center;font-family:Rubik,sans-serif;font-weight:700;font-size:10px;
+.rowB .rowttl{flex-basis:100%;text-align:center;font-family:Rubik,sans-serif;font-weight:700;font-size:11px;
   letter-spacing:2px;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
 .petbar{grid-column:1 / -1;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:4px;padding-top:10px;border-top:1px dashed #34343f;min-width:0}
 /* Sur telephone, on resserre les colonnes laterales et les marges : c'est ce
@@ -93,37 +93,37 @@
 .slot:hover{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
 .slot img{width:42px;height:42px;object-fit:contain}.slot .ico{font-size:24px;opacity:.5}
 .slot .phimg{opacity:.42;filter:grayscale(1)}.slot:hover .phimg{opacity:.7}
-.slot .pl{position:absolute;top:-6px;right:-6px;background:var(--blue);color:#001;font-size:9px;font-weight:700;border-radius:6px;padding:0 4px;border:1px solid #0006}
+.slot .pl{position:absolute;top:-6px;right:-6px;background:var(--blue);color:#001;font-size:11px;font-weight:700;border-radius:6px;padding:0 4px;border:1px solid #0006}
 .slot .pl.art{background:var(--green)}
 /* Les libelles de slots tombaient dans la police par defaut : ils juraient
    avec le reste du builder, qui est en Rubik.                               */
 .slot .lbl{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-family:Rubik,sans-serif;font-weight:600;
-  font-size:9px;letter-spacing:.2px;color:var(--mut);white-space:nowrap}
+  font-size:11px;letter-spacing:.2px;color:var(--mut);white-space:nowrap}
 .slot.small{width:46px;height:46px}.slot.small img{width:34px;height:34px}
 .slot.rank{outline:2px solid transparent}
-.rk{position:absolute;top:-6px;left:-6px;font-family:Rubik;font-weight:700;font-size:10px;color:#001;background:var(--gold);border-radius:6px;padding:0 4px}
-.legend{max-width:760px;margin:10px auto 0;font-size:11px;color:var(--mut);text-align:center}
+.rk{position:absolute;top:-6px;left:-6px;font-family:Rubik;font-weight:700;font-size:11px;color:#001;background:var(--gold);border-radius:6px;padding:0 4px}
+.legend{max-width:760px;margin:10px auto 0;font-size:12px;color:var(--mut);text-align:center}
 .panel{background:linear-gradient(180deg,rgba(22,22,29,.93),rgba(13,13,17,.95));border:1px solid var(--border);border-radius:15px;padding:16px;margin:16px auto 0;max-width:1080px;box-shadow:0 12px 38px rgba(0,0,0,.45)}
 .panel h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--orange);margin:0 0 13px}
 .carnets{display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:10px}
-.carn{background:linear-gradient(180deg,#1d1d26,#141419);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-size:11px;transition:transform .14s,box-shadow .14s,border-color .14s}
+.carn{background:linear-gradient(180deg,#1d1d26,#141419);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-size:12px;transition:transform .14s,box-shadow .14s,border-color .14s}
 .carn:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.5)}
 .carn.on{background:linear-gradient(180deg,#251e0d,#181308);box-shadow:0 0 0 1px rgba(255,210,74,.25),0 8px 22px rgba(0,0,0,.45)}
 .carn .cn{font-family:Rubik;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px}
 /* L'etui du carnet : l'objet du jeu, a la place d'un point de couleur. */
 .carn .etui{width:19px;height:19px;object-fit:contain;flex:none}
 .cc-cards{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.cc-card{font-size:9px;font-weight:600;padding:2px 7px;border-radius:5px;background:rgba(0,0,0,.35);border:1px solid var(--border);color:var(--mut)}
+.cc-card{font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;background:rgba(0,0,0,.35);border:1px solid var(--border);color:var(--mut)}
 .cc-card.r-rare{border-color:#4ea8ff88;color:#bfe0ff;background:rgba(78,168,255,.12)}
 .cc-card.r-épique{border-color:#c77dff88;color:#e6cfff;background:rgba(199,125,255,.12)}
 .cc-card.r-légendaire{border-color:#FFD24A88;color:#ffeaa8;background:rgba(255,210,74,.12)}
-.carn .cb{color:var(--green);font-size:10px;margin-top:8px;line-height:1.45;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-weight:600}
+.carn .cb{color:var(--green);font-size:11px;margin-top:8px;line-height:1.45;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-weight:600}
 .carn .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
-.seg{display:flex;gap:0;margin:8px 0 2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:10px}
+.seg{display:flex;gap:0;margin:8px 0 2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:11px}
 .seg .sg{flex:1;text-align:center;padding:5px 0;cursor:pointer;color:var(--mut);background:rgba(0,0,0,.25);transition:background .14s,color .14s}
 .seg .sg:hover{color:var(--text)}
 .seg .sg.on{background:linear-gradient(180deg,#FFD86A,var(--gold));color:#1a1205;font-weight:700}
-.fullbtn{font-size:9px;padding:1px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--mut);float:right}.fullbtn.on{border-color:var(--gold);color:var(--gold)}
+.fullbtn{font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--mut);float:right}.fullbtn.on{border-color:var(--gold);color:var(--gold)}
 #stats .l{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(44,44,54,.5)}#stats .l b{color:var(--green)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .sheet{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:560px;max-width:100%;max-height:88vh;overflow:auto;padding:16px}
@@ -147,7 +147,7 @@
 .itl.buyl .ic{width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center}
 .itl.buyl .ic img{width:32px;height:32px;object-fit:contain}
 .itl.buyl .n{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.itl.buyl .n .sub{font-size:10.5px;color:var(--mut);font-weight:400}
+.itl.buyl .n .sub{font-size:11.5px;color:var(--mut);font-weight:400}
 .buyfoot{margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center}
 .buyfoot .pill.dem.off{opacity:.45;pointer-events:none}
 @media(max-width:560px){
@@ -156,7 +156,7 @@
   .buyfoot{flex-direction:column-reverse;align-items:stretch}
   .buyfoot .pill{justify-content:center;padding:10px 12px}
 }
-.pill{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;cursor:pointer;display:inline-block}
+.pill{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;display:inline-block}
 .pill.on{background:var(--orange);color:#000;border-color:var(--orange);font-weight:600}
 .sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);position:sticky;bottom:-16px;background:linear-gradient(180deg,transparent,var(--bg2) 30%)}
 .pill.rm{color:#ff9a9a;border-color:#f8717155;font-weight:600}
@@ -194,13 +194,13 @@
 .wp{margin-top:10px}.wp .grp{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--bg3)}
 .wp .gh{font-family:Rubik;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:6px}
 .wp .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.wp select,.wp input{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 7px;font-size:11px}
-.wp .mini{font-size:10px;color:var(--mut)}
+.wp select,.wp input{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 7px;font-size:12px}
+.wp .mini{font-size:11px;color:var(--mut)}
 /* La case tenait « A » ou « S ». Elle doit tenir « 15% » et « SR » : largeur
    libre a partir de 30 px, la couleur venant de l'element (style en ligne). */
-.cslot{min-width:30px;padding:0 4px;height:34px;border-radius:5px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:Rubik;font-weight:700;font-size:10px;color:var(--mut)}
+.cslot{min-width:30px;padding:0 4px;height:34px;border-radius:5px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:Rubik;font-weight:700;font-size:11px;color:var(--mut)}
 .dslot{display:flex;align-items:center;gap:4px;margin-bottom:3px}.dslot.holo{border-left:2px solid var(--purple);padding-left:5px}
-.tierbtn{padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-family:Rubik;font-weight:700}
+.tierbtn{padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-family:Rubik;font-weight:700}
 .tierbtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
 .tierbtn.myth.on{background:linear-gradient(90deg,#ff5c8a,#ffd24a);color:#1a1205}
 /* Choix de l'element : des boutons illustres a la place d'un menu deroulant,
@@ -210,12 +210,12 @@
    controle, il ne doit pas se distinguer. Seuls s'ajoutent la mise en ligne et
    l'ecart necessaires a l'icone, affichee a sa taille native (16 px) pour
    rester nette. L'ecart entre boutons vient de .wp .row, comme partout. */
-.elembtn{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px;font-family:Rubik;font-weight:700}
+.elembtn{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-family:Rubik;font-weight:700}
 .elembtn img{width:16px;height:16px;object-fit:contain;flex-shrink:0}
 .elembtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
 .line{display:flex;gap:5px;align-items:center;margin-bottom:4px}
 .seg2{display:flex;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-width:260px}
-.seg2 .s2{flex:1;text-align:center;padding:5px 10px;cursor:pointer;color:var(--mut);background:var(--bg2);font-size:11px}
+.seg2 .s2{flex:1;text-align:center;padding:5px 10px;cursor:pointer;color:var(--mut);background:var(--bg2);font-size:12px}
 .seg2 .s2.on{background:var(--orange);color:#000;font-weight:700}
 .lvl{display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px}.lvl input[type=range]{width:100%}
 .note{max-width:1080px;margin:14px auto 0;background:#1a1410;border:1px solid #3a2c16;border-radius:10px;padding:10px 14px;font-size:12px;color:#d8c5a8}
@@ -224,7 +224,7 @@
 .vgdd-b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 11px;font:600 13px Rubik,sans-serif;cursor:pointer;transition:border-color .14s,box-shadow .14s}
 .vgdd-b:hover{border-color:#FF8C1A88}
 .vgdd.open .vgdd-b{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,140,26,.16)}
-.vgdd-b i{color:var(--orange);font-style:normal;font-size:10px;transition:transform .16s}
+.vgdd-b i{color:var(--orange);font-style:normal;font-size:11px;transition:transform .16s}
 .vgdd.open .vgdd-b i{transform:rotate(180deg)}
 .vgdd-l{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;z-index:300;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);padding:5px;max-height:240px;overflow-y:auto}
 .vgdd.open .vgdd-l{display:block;animation:vgddin .14s ease}
@@ -235,25 +235,25 @@
 .itip{position:fixed;z-index:9999;width:290px;background:linear-gradient(180deg,#17171e,#0d0d12);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:0 14px 36px #000d;pointer-events:none;font-size:11.5px;line-height:1.55;display:none}
 .itip .t{font-family:Rubik;font-weight:700;font-size:14.5px;letter-spacing:.4px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
 .itip .t img{width:26px;height:26px;object-fit:contain;flex:none}
-.itip .tag{display:inline-block;font-size:8.5px;padding:2px 8px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+.itip .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
 /* Palier et set d'abord, puis les conditions pour equiper, puis l'attaque :
    l'ordre dans lequel le jeu presente une piece. */
 .itip .tags{display:flex;gap:4px;flex-wrap:wrap;margin:-1px 0 5px}
-.itip .cond{font-size:10.5px;color:var(--mut);margin-bottom:6px}
+.itip .cond{font-size:11.5px;color:var(--mut);margin-bottom:6px}
 .itip .atk{display:flex;justify-content:space-between;gap:12px;align-items:baseline;
   background:#ffffff08;border:1px solid #ffffff14;border-radius:7px;padding:4px 9px;margin-bottom:2px}
-.itip .atk span{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut)}
+.itip .atk span{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--mut)}
 .itip .atk b{font-family:Rubik;font-size:13px;color:var(--gold)}
-.itip .sec{font-size:8.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--mut);margin:8px 0 3px}
+.itip .sec{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:var(--mut);margin:8px 0 3px}
 .itip .bl{display:flex;justify-content:space-between;gap:12px;color:var(--green)}
 .itip .bl span:last-child{color:var(--text);font-weight:700;white-space:nowrap}
-.itip .meta{display:flex;justify-content:space-between;gap:12px;color:var(--mut);font-size:10.5px}
+.itip .meta{display:flex;justify-content:space-between;gap:12px;color:var(--mut);font-size:11.5px}
 .itip .meta b{color:var(--text);font-weight:700}
 .itip hr{border:none;border-top:1px solid var(--border);margin:7px 0}
 .itip .crow{display:flex;align-items:center;gap:8px;margin:5px 0}
-.itip .crow .lab{font-size:8.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);width:70px;flex:none}
+.itip .crow .lab{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);width:70px;flex:none}
 .itip .chips{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin:6px 0}
-.itip .chip{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#ffffff10;border:1px solid #ffffff20;display:inline-flex;align-items:center;gap:4px;line-height:1.3}
+.itip .chip{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:#ffffff10;border:1px solid #ffffff20;display:inline-flex;align-items:center;gap:4px;line-height:1.3}
 .itip .gems{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 .itip .gem{width:11px;height:11px;transform:rotate(45deg);border-radius:2px;display:inline-block;box-sizing:border-box}
 .itip .gem.f{background:linear-gradient(135deg,#FFE68A,#FFB13C)}
@@ -295,18 +295,18 @@
 .seg-ev .s2 img{width:17px;height:17px;object-fit:contain;flex:none}
 .itip .pips{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
 .itip .pip{width:9px;height:13px;border-radius:2px;display:inline-block;border:1px solid #ffffff28;box-sizing:border-box}
-.itip .pct{color:var(--text);font-weight:700;font-size:10px;margin-left:3px}
-.cardleg{border:1px solid var(--border);border-radius:8px;padding:6px 9px;margin:2px 0 7px;font-size:10.5px;line-height:1.65;background:#ffffff08}
+.itip .pct{color:var(--text);font-weight:700;font-size:11px;margin-left:3px}
+.cardleg{border:1px solid var(--border);border-radius:8px;padding:6px 9px;margin:2px 0 7px;font-size:11.5px;line-height:1.65;background:#ffffff08}
 .cardleg .clh{font-weight:700;font-size:11.5px;margin-bottom:2px;font-family:Rubik;letter-spacing:.3px}
 /* Quatre paliers par famille, et les libelles vont de « A » a « 15% » : la
    pastille s'elargit au contenu. La couleur monte avec le palier, la meme
    echelle servant aux deux familles (A et 7 % sont le meme cran). */
-.cg{display:inline-block;min-width:16px;text-align:center;font-weight:700;border-radius:4px;margin-right:6px;font-size:9px;padding:1px 4px}
+.cg{display:inline-block;min-width:16px;text-align:center;font-weight:700;border-radius:4px;margin-right:6px;font-size:11px;padding:1px 4px}
 .cgA,.cg7{background:#4EA8FF22;color:#4EA8FF;border:1px solid #4EA8FF55}
 .cgS,.cg10{background:#FFD24A22;color:#FFD24A;border:1px solid #FFD24A55}
 .cgR,.cg12{background:#C77DFF22;color:#C77DFF;border:1px solid #C77DFF55}
 .cgSR,.cg15{background:#FF5C8A22;color:#FF5C8A;border:1px solid #FF5C8A55}
-.gemlbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-top:5px;text-align:center;opacity:.85}
+.gemlbl{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-top:5px;text-align:center;opacity:.85}
 
 /* ─── En-tête de build : configuration à gauche, partage en haut à droite ───── */
 .buildhead{display:flex;gap:18px;align-items:flex-start;margin-bottom:6px}
@@ -320,7 +320,7 @@
 .sharebox:empty{display:none}
 .sharebox h4{display:flex;align-items:center;gap:8px;margin:0 0 3px;font-family:Rubik;font-weight:700;
   font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold)}
-.sharebox .shmini{font-size:11px;color:var(--mut);line-height:1.5;margin-bottom:11px}
+.sharebox .shmini{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:11px}
 .sharebox .shrow{display:flex;gap:7px;align-items:center}
 .sharebox .shlink{flex:1;min-width:0;background:#0d0d11;border:1px solid var(--border);border-radius:8px;
   color:var(--text);padding:8px 10px;font-size:11.5px;font-family:monospace;text-overflow:ellipsis}
@@ -339,7 +339,7 @@
 .sharebox .shseg button:hover{color:var(--text)}
 .sharebox .shseg button:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
 .sharebox .shseg button.on{background:linear-gradient(180deg,#2a2013,#1d160c);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,210,74,.32)}
-.sharebox .shstate{display:flex;align-items:center;gap:7px;font-size:11px;margin-top:10px;color:var(--mut)}
+.sharebox .shstate{display:flex;align-items:center;gap:7px;font-size:12px;margin-top:10px;color:var(--mut)}
 .sharebox .shstate.pub{color:var(--green)}
 @media(max-width:1000px){
   .buildhead{flex-direction:column}
@@ -347,13 +347,13 @@
 }
 
 /* ─── Puce « sauvegarde auto » (le style était inline, il est maintenant ici) ── */
-.savechip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+.savechip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
   color:var(--green);background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.28);
   border-radius:20px;padding:4px 11px;margin-left:14px;cursor:help}
 
 /* ─── Lien « Carnets des Arcanes » : c'est un <button> (accessible au clavier) ─ */
 .legend.vg-scrollhint{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
-  background:none;border:0;font:inherit;font-size:11px;color:var(--mut);cursor:pointer;
+  background:none;border:0;font:inherit;font-size:12px;color:var(--mut);cursor:pointer;
   user-select:none;padding:6px 0;transition:color .16s}
 .legend.vg-scrollhint b{color:var(--orange)}
 .legend.vg-scrollhint:hover{color:var(--text)}

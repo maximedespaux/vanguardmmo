@@ -118,12 +118,12 @@ export default function PersonnagesPage() {
               <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.class} · Niveau {c.level} · Prestige {c.prestige}</div>
             </div>
-            <button onClick={() => setConfirmDel(c.id)} title="Supprimer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={16} /></button>
+            <button className="vg-touch" onClick={() => setConfirmDel(c.id)} title="Supprimer" aria-label={`Supprimer ${c.name}`} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={16} /></button>
           </div>
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs</span>
-              {MODES.map(m => <button key={m} onClick={() => openGear(c.id, m)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
+              {MODES.map(m => <button key={m} className="vg-touch" onClick={() => openGear(c.id, m)} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 12, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
               {/* C'est l'action principale de la carte : c'est dans le Builder qu'on
                   equipe reellement un personnage. Elle est donc traitee comme un
                   vrai bouton et non comme un lien discret. */}
@@ -151,7 +151,7 @@ export default function PersonnagesPage() {
                     style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "inherit" }}>
                     <b style={{ color: modeColor(g.mode) }}>{g.mode}</b> {g.name}
                   </Link>
-                  <button onClick={() => delGear(g.id)} title="Retirer ce stuff" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>
+                  <button className="vg-touch" onClick={() => delGear(g.id)} title="Retirer ce stuff" aria-label="Retirer ce stuff" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>
                 </span>
               ))}</div>
               );

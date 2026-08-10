@@ -44,7 +44,11 @@ const REQ_STATUS: Record<string, { l: string; c: string }> = {
 };
 const KIND_LABEL: Record<string, string> = { OBJET_IG: "Objet IG", ITEM: "Items", PERINS: "Périns" };
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", fontSize: 14 };
-const stepBtn: React.CSSProperties = { width: 24, height: 26, borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 14 };
+/* Les +/- du panier. Ils faisaient 24 x 26 : intouchables au doigt, alors que
+   le plancher confortable est 44. On ne grossit pas le dessin — il tiendrait
+   toute la ligne — on agrandit la ZONE : le cadre reste petit, la surface
+   sensible deborde de part et d'autre grace au pseudo-element. */
+const stepBtn: React.CSSProperties = { position: "relative", width: 26, height: 28, borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text)", cursor: "pointer", fontSize: 14 };
 const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocaleString("fr-FR"));
 
 /**
@@ -231,9 +235,9 @@ export function EcranEconomie() {
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <button onClick={() => setQty(s.id, inCart - 1)} style={stepBtn}>−</button>
+                      <button className="vg-touch" aria-label="Retirer un" onClick={() => setQty(s.id, inCart - 1)} style={stepBtn}>−</button>
                       <input value={inCart} onChange={e => setQty(s.id, +e.target.value || 0)} style={{ ...inp, width: 42, textAlign: "center", padding: "5px 4px", fontSize: 13 }} />
-                      <button onClick={() => setQty(s.id, inCart + 1)} style={stepBtn}>＋</button>
+                      <button className="vg-touch" aria-label="Ajouter un" onClick={() => setQty(s.id, inCart + 1)} style={stepBtn}>＋</button>
                     </div>
                   )}
                 </div>

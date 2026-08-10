@@ -216,21 +216,42 @@ function addChar(){if(_ro())return;charForm();}
  * dit d'un coup d'oeil, et renvoie au site pour ce qui n'appartient qu'a la
  * guilde : le perso principal, les specialisations.
  */
+/* Les illustrations de perso, memes fichiers que le site (src/data/charRenders).
+   La liste n'en montrait aucune : on choisissait entre trois lignes de texte
+   alors que le builder dessine le personnage juste a cote. */
+var VGRENDUS={Arcaniste:24,Spadassin:26,Templier:28,Envouteur:30,Arbaletrier:32,Sylphide:34,Primat:36,Chanoine:38};
+function vgRendu(cls,sexe){
+  var n=VGRENDUS[cls]; if(n==null)return '';
+  return '/airbuilder/icons/emb_0'+(n+(sexe==='F'?1:0))+'.png';
+}
+var VGMODECOL={DPS:'#FF8C1A',Tank:'#4EA8FF',TANK:'#4EA8FF',Hybride:'#C77DFF',HYBRIDE:'#C77DFF'};
+
 function vgMesPersos(){
   var lignes=state.chars.map(function(c,i){
     var stuffs=(c.stuffs||[]).filter(function(s){return s.eq&&Object.keys(s.eq).some(function(k){return s.eq[k]&&s.eq[k].item;});});
-    var img=IC['class_'+String(c.cls||'').toLowerCase()];
-    return '<div class="itl" onclick="vgOuvrirPerso('+i+')" style="cursor:pointer'+(i===state.cur?';border:2px solid var(--orange);background:rgba(255,140,26,.10)':'')+'">'
-      +(img?'<img src="'+img+'">':'<i class=vgi-user></i>')
-      +'<div class="n">'+esc(c.name)
-      +'<div style="font-size:11.5px;color:var(--mut)">'+esc(c.cls||'')+' · niv '+(c.lvl||200)+' · P'+(c.prestige||0)
-      +' · '+(stuffs.length?stuffs.map(function(s){return esc(s.name);}).join(', '):'aucun stuff monté')+'</div></div>'
-      +(state.chars.length>1?'<span class="pill rm" onclick="event.stopPropagation();vgSupprPerso('+i+')" title="Supprimer"><i class=vgi-trash></i></span>':'')
+    var img=vgRendu(c.cls,c.sex);
+    var actif=(i===state.cur);
+    /* Les stuffs en pastilles colorees, pas en liste separee par des virgules :
+       on cherche « est-ce que mon Tank est monte ? », et une couleur repond plus
+       vite qu'une phrase. */
+    var past=stuffs.length
+      ? stuffs.map(function(s){var col=VGMODECOL[s.name]||'#8A8A95';
+          return '<span style="display:inline-flex;align-items:center;border:1px solid '+col+';color:'+col
+            +';border-radius:7px;padding:2px 8px;font-size:11px;font-weight:700">'+esc(s.name)+'</span>';}).join('')
+      : '<span style="font-size:11.5px;color:var(--mut)">aucun stuff monte</span>';
+    return '<div class="vgperso'+(actif?' on':'')+'" onclick="vgOuvrirPerso('+i+')">'
+      +'<span class="ill">'+(img?'<img src="'+img+'" alt="">':'<i class=vgi-user></i>')+'</span>'
+      +'<span class="txt">'
+        +'<span class="nom">'+esc(c.name)+(actif?'<span class="ici">ouvert</span>':'')+'</span>'
+        +'<span class="sous">'+esc(c.cls||'')+' &middot; niveau '+(c.lvl||200)+' &middot; prestige '+(c.prestige||0)+'</span>'
+        +'<span class="past">'+past+'</span>'
+      +'</span>'
+      +(state.chars.length>1?'<span class="pill rm" onclick="event.stopPropagation();vgSupprPerso('+i+')" title="Supprimer" aria-label="Supprimer '+esc(c.name)+'"><i class=vgi-trash></i></span>':'')
       +'</div>';
   }).join('');
   document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:560px;padding:22px">'
     +'<div style="font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px">'+VGI('users',{size:16})+' Mes personnages</div>'
-    +'<div class="mut" style="font-size:11.5px;margin-bottom:12px">Clique un perso pour l\'ouvrir. Ils sont publiés à la guilde automatiquement — compositions, GuildViewer, tableau de bord.</div>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:13px">Clique un perso pour l\'ouvrir. Ils partent a la guilde tout seuls.</div>'
     +(lignes||'<div class="mut" style="font-size:13px;padding:8px 0">Aucun personnage pour l\'instant.</div>')
     +'<div class="sheet-foot" style="margin-top:14px">'
     +'<span class="pill" onclick="agClose(0);addChar()">'+VGI('plus',{size:13})+' Nouveau personnage</span>'

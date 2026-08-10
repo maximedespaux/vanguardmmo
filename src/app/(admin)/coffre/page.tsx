@@ -19,13 +19,20 @@ const MARKUP = `<div class="wrap">
 export default async function AirGuildPage() {
   // Roster Discord → coffres membres auto-créés (F2). Coffres réservés aux admins (Direction/Vanguard/Général/Officier).
   const members = await prisma.user
-    .findMany({ where: { role: { in: ADMIN_ROLES } }, select: { username: true }, orderBy: { username: "asc" } })
-    .catch(() => [] as { username: string }[]);
+    .findMany({ where: { role: { in: ADMIN_ROLES } }, select: { username: true, discordId: true }, orderBy: { username: "asc" } })
+    .catch(() => [] as { username: string; discordId: string }[]);
   const roster = Array.from(new Set(members.map((m) => m.username).filter(Boolean)));
+  /* Le pseudo ne suffit plus a designer quelqu'un : un coffre s'attache a son
+     IDENTIFIANT Discord, qui ne change pas quand le pseudo change. On passe donc
+     la table pseudo -> identifiant, la seule facon d'attribuer un coffre a un
+     membre en le nommant. */
+  const identifiants = Object.fromEntries(
+    members.filter((m) => m.username && m.discordId).map((m) => [m.username, m.discordId]),
+  );
   return (
     <div className="agx">
       <div dangerouslySetInnerHTML={{ __html: MARKUP }} />
-      <AirGuildRunner roster={roster} />
+      <AirGuildRunner roster={roster} identifiants={identifiants} />
     </div>
   );
 }

@@ -31,8 +31,25 @@ function classLogo(cl){return cl&&LOGOIDX[cl]!=null?`<span class="climg cl-${LOG
 const KEY='vg_airguild_u2';
 let S=load();
 function canEdit(){return ['VANGUARD','DIRECTION'].indexOf(window.__agRole||'')>=0;} // édition du catalogue réservée Vanguard/Direction
-// Dépôt : chaque staff ne modifie que SON coffre (repéré par pseudo Discord) ; Vanguard/Direction peuvent corriger partout.
-function canDeposit(){var me=(window.__agUser||'').toLowerCase().trim();return canEdit()||(S.cur!=='__total__'&&!!me&&String(S.cur).toLowerCase().trim()===me);}
+/* A QUI appartient un coffre.
+   Il etait reconnu par le NOM du membre : quelqu'un qui change son pseudo
+   Discord perdait le sien et deposait dans le coffre commun sans s'en rendre
+   compte. `S.owners` attache chaque coffre a un IDENTIFIANT Discord, qui ne
+   change jamais ; le pseudo ne sert plus qu'a l'afficher. Le repli par nom
+   reste, pour les coffres d'avant cette attache. */
+function ownerOf(m){return (S.owners||{})[m]||'';}
+function estMonCoffre(m){
+  var id=(window.__agId||'').trim(), me=(window.__agUser||'').toLowerCase().trim();
+  var o=ownerOf(m);
+  if(o) return !!id && o===id;
+  return !!me && String(m).toLowerCase().trim()===me;
+}
+function myCoffreNom(){
+  var trouve=(S.members||[]).find(estMonCoffre);
+  return trouve||'';
+}
+// Depot : chacun ne modifie que SON coffre ; Vanguard/Direction corrigent partout.
+function canDeposit(){return canEdit()||(S.cur!=='__total__'&&estMonCoffre(S.cur));}
 function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};r.iconLib=r.iconLib||[];if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
   return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},iconLib:[],shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
@@ -60,7 +77,7 @@ function qty(m,id){return(S.inv[m]&&S.inv[m][id])||0;}
 function totalGuild(id){let t=0;S.members.forEach(m=>t+=qty(m,id));return t;}
 // Coffre par défaut où DÉPOSER : le coffre du membre connecté (repli = coffre historique/1er membre).
 function mainCoffre(){var m=(S.mainCoffre||'ibeats');if(S.members.indexOf(m)<0){S.members.push(m);if(!S.inv[m])S.inv[m]={};}return m;}
-function myCoffre(){var me=(window.__agUser||'').toLowerCase().trim();var m=me&&(S.members||[]).find(function(x){return x.toLowerCase().trim()===me;});return m||mainCoffre();}
+function myCoffre(){return myCoffreNom()||mainCoffre();}
 // La boutique & les crafts se basent sur le TOTAL GUILDE (somme de tous les coffres). Une vente puise
 // dans les coffres, du plus gros détenteur au plus petit, pour que le stock de chaque membre y serve aussi.
 function drawFromGuild(id,need,label){need=Math.max(0,Math.round(+need||0));var holders=(S.members||[]).map(function(m){return {m:m,q:qty(m,id)};}).filter(function(h){return h.q>0;}).sort(function(a,b){return b.q-a.q;});for(var i=0;i<holders.length&&need>0;i++){var take=Math.min(need,holders[i].q);setQty(holders[i].m,id,holders[i].q-take,label);need-=take;}return need;}
@@ -129,8 +146,8 @@ function viewBank(){
   const me=(window.__agUser||'').toLowerCase().trim();const roster=window.__agRoster||[];const canM=canEdit();
   const sortedM=S.members.filter(m=>m!=='Commun').sort((a,b)=>{const am=a.toLowerCase().trim()===me,bm=b.toLowerCase().trim()===me;return am===bm?a.localeCompare(b,'fr'):(am?-1:1);});
   const mtabs=
-    sortedM.map(m=>{const isMe=!!me&&m.toLowerCase().trim()===me;const inR=roster.indexOf(m)>=0;return `<div class="mtab ${S.cur===m?'on':''}" onclick="selM('${sq(m)}')"${isMe?' title="Ton coffre personnel"':''}>${isMe?'<i class=vgi-hand-point></i> ':'<i class=vgi-user></i> '}${esc(m)}${isMe?' <span class="pill" style="font-size:11px;padding:1px 5px;background:var(--orange);color:#0a0a0c">perso</span>':''}${(canM&&!inR)?` <span class="x" onclick="event.stopPropagation();delM('${sq(m)}')"><i class=vgi-x></i></span>`:''}</div>`;}).join('')+
-    (canM?`<div class="mtab" onclick="addMember()" style="border-style:dashed;opacity:.9" title="Ajouter un coffre membre (Vanguard)"><i class=vgi-plus></i> Coffre</div>`:'');
+    sortedM.map(m=>{const isMe=estMonCoffre(m);const inR=roster.indexOf(m)>=0;const lie=!!ownerOf(m);return `<div class="mtab ${S.cur===m?'on':''} ${isMe?'moi':''}" onclick="selM('${sq(m)}')" title="${isMe?'Ton coffre — tu es le seul a pouvoir y deposer':(lie?'Coffre d\'un autre membre — lecture seule':'Coffre libre')}">${isMe?'<i class=vgi-hand-point></i> ':(lie?'<i class=vgi-key></i> ':'<i class=vgi-user></i> ')}${esc(m)}${isMe?' <span class="moi-b">moi</span>':''}${!inR&&!isMe?' <span class="pill mut">hors guilde</span>':''}</div>`;}).join('')+
+    (canM?`<div class="mtab" onclick="donnerAcces()" style="border-style:dashed;opacity:.9" title="Attribuer un coffre a un membre (Vanguard)"><i class=vgi-key></i> Donner l'acces</div>`:'');
   /* « Total guilde » n'est pas un coffre de plus : c'est la reference sur laquelle
      s'appuient la boutique et les crafts. Le laisser dans la meme rangee que les
      membres le faisait passer pour l'un d'eux. Il a donc son propre encadre. */
@@ -301,8 +318,54 @@ function selM(m){S.cur=m;save();render();}
 function togC(c){S.closed[c]=!S.closed[c];save();paintBank();}
 function adj(id,d){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,qty(S.cur,id)+d,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();if(d>0)promptPriceIfNew(id);}
 function setQ(id,v){if(!canDeposit())return agToast('Tu ne peux déposer que dans TON coffre.',false);var it=catalog().find(x=>x.id===baseId(id));var rm=rarMeta(rarOf(id));setQty(S.cur,id,v,(it?it.item:id)+(rm?' ('+rm[1]+')':''));paintBank();if((+v||0)>0)promptPriceIfNew(id);}
-function addMember(){openSheet(`<h3>Ajouter un coffre membre</h3><div class="field"><label>Nom</label><input class="inp" id="mn" placeholder="ex. Daiisukae"></div><div class="toolbar" style="justify-content:flex-end;margin:0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="doAddMember()">Créer</button></div>`);}
-function doAddMember(){const n=$('#mn').value.trim();if(!n)return;if(!S.members.includes(n)){S.members.push(n);S.inv[n]={};}S.cur=n;save();closeSheet();render();}
+/* « Donner l'acces » remplace « + Coffre ».
+   On ne cree plus un coffre a la main : il en naissait des orphelins, sans
+   personne derriere, que le roster Discord ne connaissait pas. On ATTRIBUE un
+   coffre existant a un membre — c'est-a-dire qu'on note son identifiant
+   Discord dessus — et lui seul pourra y deposer. Reserve a Vanguard. */
+function donnerAcces(){
+  if(!canEdit())return agToast('Attribution reservee au role Vanguard.',false);
+  var membres=(S.members||[]).filter(function(m){return m!=='Commun';});
+  var roster=window.__agRoster||[];
+  var lignes=membres.map(function(m){
+    var o=ownerOf(m);
+    return '<div class="acl"><span class="n">'+esc(m)+'</span>'
+      +'<span class="e">'+(o?'<i class=vgi-key></i> attribue':'<span class="mut">libre</span>')+'</span>'
+      +'<span class="b">'
+        +(o?'<button class="btn sm" onclick="retirerAcces(\''+sq(m)+'\')">Retirer</button>'
+           :'<button class="btn g sm" onclick="attribuerA(\''+sq(m)+'\')">Attribuer</button>')
+      +'</span></div>';
+  }).join('');
+  openSheet('<h3>Donner l\'acces a un coffre</h3>'
+    +'<p class="mut" style="font-size:12px;line-height:1.5;margin:0 0 12px">Attribuer un coffre a quelqu\'un le lie a son compte Discord : lui seul pourra y deposer, les autres le consultent. Un coffre libre reste modifiable par le staff.</p>'
+    +'<div class="acllist">'+(lignes||'<div class="mut">Aucun coffre.</div>')+'</div>'
+    +'<div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn sm" onclick="closeSheet()">Fermer</button></div>');
+}
+function attribuerA(m){
+  var roster=(window.__agRoster||[]);
+  var choix=roster.length?roster:[m];
+  var opts=choix.map(function(n){return '<option value="'+esc(n)+'"'+(n===m?' selected':'')+'>'+esc(n)+'</option>';}).join('');
+  openSheet('<h3>Attribuer « '+esc(m)+' »</h3>'
+    +'<div class="field"><label>A quel membre ?</label><select class="inp" id="acq">'+opts+'</select></div>'
+    +'<p class="mut" style="font-size:11.5px;line-height:1.5">Le coffre suivra son compte Discord, meme s\'il change de pseudo.</p>'
+    +'<div class="toolbar" style="justify-content:flex-end;margin-top:10px"><button class="btn sm" onclick="closeSheet()">Annuler</button>'
+    +'<button class="btn g sm" onclick="doAttribuer(\''+sq(m)+'\')">Attribuer</button></div>');
+}
+function doAttribuer(m){
+  var el=document.getElementById('acq'); var qui=el?el.value:'';
+  var ids=window.__agIds||{};
+  var id=ids[qui]||'';
+  if(!id){agToast('Identifiant Discord inconnu pour '+qui+' — il doit s\'etre connecte au site une fois.',false);return;}
+  S.owners=S.owners||{}; S.owners[m]=id;
+  S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||'staff'),n:'coffre attribue a '+qui,d:0});
+  save();closeSheet();render();agToast('Coffre attribue a '+qui+'.',true);
+}
+function retirerAcces(m){
+  if(!canEdit())return;
+  S.owners=S.owners||{}; delete S.owners[m];
+  S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||'staff'),n:'acces au coffre retire',d:0});
+  save();closeSheet();render();agToast('Acces retire.',false);
+}
 function delM(m){if(!canEdit())return agToast('Suppression de coffre réservée au rôle Vanguard.',false);agConfirm('Supprimer le coffre de '+m+' ?\nLe contenu sera perdu — l\'action est tracée dans le journal.',function(){S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:'Coffre supprimé',delta:0});if(S.log.length>200)S.log.length=200;S.members=S.members.filter(x=>x!==m);delete S.inv[m];if(S.cur===m)S.cur='__total__';save();render();agToast('Coffre de '+m+' supprimé (journalisé).',true);});}
 function allCats(){var hid=new Set(S.hiddenCats||[]);return [...new Set(D.bankCats.concat(S.cats||[]).concat((catalog()||[]).map(function(x){return (x.cat||'').trim();}).filter(Boolean)))].filter(function(c){return !hid.has(c);});}
 function sortCats(cats){var o=S.catOrder||[];return cats.slice().sort(function(a,b){var ia=o.indexOf(a),ib=o.indexOf(b);return (ia<0?1e9:ia)-(ib<0?1e9:ib);});}

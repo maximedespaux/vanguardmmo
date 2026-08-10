@@ -6,7 +6,7 @@ import { ensureVgIcons } from "@/lib/vanillaLoader";
 // Charge l'app AirGuild d'iBeats (vanilla JS) et branche son stockage sur la base
 // (state partagé via /api/admin/airguild). Recharge proprement si une autre app
 // (AirBuilder) tenait les globals.
-export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
+export function AirGuildRunner({ roster = [], identifiants = {} }: { roster?: string[]; identifiants?: Record<string, string> }) {
   const { data: session } = useSession();
   /**
    * Le coffre est un etat partage remplace EN BLOC a chaque sauvegarde. Si sa
@@ -18,12 +18,19 @@ export function AirGuildRunner({ roster = [] }: { roster?: string[] }) {
   // Expose le staff connecté (pseudo + rôle) : tracer qui dépose (#29) + gating édition réservée Vanguard.
   // + le roster Discord (F2) : les coffres membres sont auto-créés depuis la vraie liste de guilde.
   useEffect(() => {
-    const w = window as unknown as { __agUser?: string; __agRole?: string; __agRoster?: string[] };
-    const u = session?.user as { username?: string; name?: string; role?: string } | undefined;
+    const w = window as unknown as { __agUser?: string; __agRole?: string; __agRoster?: string[]; __agId?: string; __agIds?: Record<string, string> };
+    const u = session?.user as { username?: string; name?: string; role?: string; discordId?: string } | undefined;
     w.__agUser = (u?.username) || (session?.user?.name ?? "") || "";
     w.__agRole = u?.role || (process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1" ? "DIRECTION" : "");
+    /* L'identifiant Discord, en plus du pseudo. Un coffre etait reconnu par le
+       NOM : quelqu'un qui change son pseudo Discord perdait le sien et se
+       retrouvait a deposer dans le coffre commun. L'identifiant, lui, ne change
+       jamais — c'est a lui que le coffre s'attache desormais, le pseudo ne
+       servant plus qu'a l'afficher. */
+    w.__agId = u?.discordId || "";
     w.__agRoster = roster;
-  }, [session, roster]);
+    w.__agIds = identifiants;
+  }, [session, roster, identifiants]);
   useEffect(() => {
     const w = window as unknown as { __APP?: string; render?: () => void; renderTabs?: () => void; __AGSTATE?: unknown; __agSave?: (s: unknown) => void; __agt?: ReturnType<typeof setTimeout> };
     // Re-navigation SPA (Administration → AirGuild) : le markup est recréé vide → on re-rend les onglets ET la vue (sinon onglets vides jusqu'au refresh).

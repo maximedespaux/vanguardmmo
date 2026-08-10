@@ -45,10 +45,13 @@ export async function GET() {
     if (d.priceEach) return d.priceEach * Math.max(1, d.quantity || 1);
     return null;
   };
-  return NextResponse.json(quetes.map((q) => {
-    const d = parQuete.get(q.id);
-    return { ...serialiserQuete(q, cagnotteDe(d)), requeteId: d?.id ?? null };
-  }));
+  /* Une quete nee d'une requete client N'APPARAIT PAS ici. Ce n'est pas ce dont
+     la guilde a besoin, mais ce qu'un membre a commande a un tarif convenu avec
+     lui — elle se suit dans la boutique, avec sa cagnotte, sous « Requetes
+     clients ». Les melanger noyait les besoins de la guilde sous les commandes. */
+  return NextResponse.json(
+    quetes.filter((q) => !parQuete.has(q.id)).map((q) => serialiserQuete(q)),
+  );
 }
 
 export async function POST(req: Request) {

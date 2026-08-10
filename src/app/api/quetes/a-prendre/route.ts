@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessGuild } from "@/config/roles";
+import { QUETE_AVEC, serialiserQuete } from "@/lib/quetes";
 
 /**
  * Les requêtes d'objets qui attendent que quelqu'un s'en charge.
@@ -25,6 +26,10 @@ export async function GET() {
     return NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 });
   }
 
+  /* Deux listes, une seule page : celles qui attendent qu'on leur ouvre une
+     quete, et celles DEJA ouvertes — avec leur cagnotte et la part de chacun.
+     Elles ne vivent plus dans Quete Guilde : ce n'est pas ce dont la guilde a
+     besoin, mais ce qu'un membre a commande. Tout se suit donc ici. */
   const brutes = await prisma.bankRequest.findMany({
     where: {
       queteId: null,
@@ -48,8 +53,28 @@ export async function GET() {
   const estRequete = (r: { origine: string | null; spec: unknown; batchId: string | null }) =>
     r.origine === "requete" || (r.origine !== "achat" && (r.spec ? true : !r.batchId));
 
-  return NextResponse.json(
-    brutes.filter(estRequete).slice(0, 60).map((r) => ({
+  const ouvertes = await prisma.bankRequest.findMany({
+    where: { queteId: { not: null } },
+    orderBy: { createdAt: "desc" }, take: 60,
+    select: {
+      id: true, item: true, quantity: true, username: true, userId: true,
+      createdAt: true, reason: true, spec: true, cat: true, priceEach: true,
+      prixFinal: true, queteId: true,
+    },
+  });
+  const quetes = ouvertes.length
+    ? await prisma.quete.findMany({ where: { id: { in: ouvertes.map((o) => o.queteId!) } }, include: QUETE_AVEC })
+    : [];
+  const parId = new Map(quetes.map((q) => [q.id, q]));
+  /* La cagnotte vient du tarif de la demande, jamais d'un champ a part : c'est
+     la que le staff le negocie, et un second endroit mentirait des qu'il bouge. */
+  const cagnotteDe = (d: { priceEach: number | null; prixFinal: bigint | null; quantity: number }) =>
+    d.prixFinal != null ? Number(d.prixFinal)
+    : d.priceEach ? d.priceEach * Math.max(1, d.quantity || 1)
+    : null;
+
+  return NextResponse.json({
+    aPrendre: brutes.filter(estRequete).slice(0, 60).map((r) => ({
       id: r.id,
       item: r.item ?? "Objet",
       quantite: r.quantity || 1,
@@ -62,5 +87,24 @@ export async function GET() {
       spec: r.spec ?? null,
       quand: r.createdAt.toISOString(),
     })),
-  );
+    enCours: ouvertes
+      .map((r) => {
+        const q = parId.get(r.queteId!);
+        if (!q) return null;
+        return {
+          id: r.id,
+          item: r.item ?? "Objet",
+          quantite: r.quantity || 1,
+          demandeur: r.username,
+          estLaMienne: r.userId === a.user.id,
+          note: r.reason?.replace(/^Boutique · /, "") ?? null,
+          cat: r.cat,
+          prix: r.priceEach ?? null,
+          spec: r.spec ?? null,
+          quand: r.createdAt.toISOString(),
+          quete: serialiserQuete(q, cagnotteDe(r)),
+        };
+      })
+      .filter(Boolean),
+  });
 }

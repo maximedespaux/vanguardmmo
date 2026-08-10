@@ -315,9 +315,9 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
         <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 10, padding: "9px 11px", borderRadius: 9, background: "rgba(255,140,26,.07)", border: "1px solid rgba(255,140,26,.25)" }}>
           {v.queteId ? (
             <>
-              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Une quête de guilde est ouverte pour cet objet.</span>
-              <Link href={`/quetes?q=${v.queteId}`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
-                <Icon name="target" size={13} />Suivre la quête →
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>La commande est lancée : plusieurs membres peuvent la farmer.</span>
+              <Link href="/boutique?mode=requetes" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
+                <Icon name="target" size={13} />Suivre la commande →
               </Link>
             </>
           ) : (

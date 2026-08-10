@@ -22,6 +22,9 @@ type Requete = {
   id: string; item: string; quantite: number; demandeur: string; estLaMienne: boolean;
   note: string | null; cat: string | null; prix: number | null; spec: unknown; quand: string;
 };
+type Apport = { id: string; quantite: number; statut: "annonce" | "confirme"; par: { nom: string }; part: number };
+type Quete = { id: string; quantite: number; confirme: number; annonce: number; reste: number; cagnotte: number | null; contributions: Apport[] };
+type EnCours = Requete & { quete: Quete };
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
 
@@ -36,6 +39,7 @@ function depuis(iso: string) {
 
 export function RequetesClients() {
   const [liste, setListe] = useState<Requete[] | null>(null);
+  const [enCours, setEnCours] = useState<EnCours[]>([]);
   const [ouverture, setOuverture] = useState<string | null>(null);
   const [erreur, setErreur] = useState("");
   const [ouvertes, setOuvertes] = useState<Record<string, boolean>>({});
@@ -43,7 +47,7 @@ export function RequetesClients() {
   const charger = useCallback(async () => {
     try {
       const r = await fetch("/api/quetes/a-prendre");
-      if (r.ok) { setListe(await r.json()); setErreur(""); }
+      if (r.ok) { const j = await r.json(); setListe(j.aPrendre ?? []); setEnCours(j.enCours ?? []); setErreur(""); }
       else setErreur((await r.json().catch(() => ({})))?.error ?? `Chargement impossible (${r.status}).`);
     } catch { setErreur("Impossible de joindre le serveur."); }
   }, []);
@@ -77,15 +81,83 @@ export function RequetesClients() {
 
       {erreur && <div style={{ fontSize: 12.5, color: "var(--red)", marginBottom: 10 }}>{erreur}</div>}
 
+      {/* ── Ce qui est deja lance, avec sa cagnotte ─────────────────────────
+          Ces commandes ne sont plus dans Quete Guilde : elles se suivent ici,
+          la ou le tarif se negocie. La cagnotte se partage au prorata de ce que
+          chacun RAMENE — le site dit qui a droit a combien, le versement se
+          regle entre vous. */}
+      {enCours.length > 0 && (
+        <div style={{ display: "grid", gap: 9, marginBottom: 16 }}>
+          <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
+            En cours — {enCours.length} commande{enCours.length > 1 ? "s" : ""} lancée{enCours.length > 1 ? "s" : ""}
+          </div>
+          {enCours.map((r) => {
+            const q = r.quete;
+            const pcRecu = Math.min(100, Math.round((q.confirme / Math.max(1, q.quantite)) * 100));
+            const pcPromis = Math.min(100 - pcRecu, Math.round((q.annonce / Math.max(1, q.quantite)) * 100));
+            return (
+              <div key={r.id} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: "11px 13px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 8 }}>
+                  <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 700 }}>
+                      {r.item}{r.quantite > 1 && <span style={{ color: "var(--gold)" }}> × {fmt(r.quantite)}</span>}
+                    </div>
+                    <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>pour {r.demandeur} · {depuis(r.quand)}</div>
+                  </div>
+                  <div style={{ textAlign: "right", flexShrink: 0 }}>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>Cagnotte</div>
+                    <div className="font-heading" style={{ fontSize: 15, fontWeight: 700, color: q.cagnotte ? "var(--gold)" : "var(--text-muted)" }}>
+                      {q.cagnotte ? `${fmt(q.cagnotte)} périns` : "à convenir"}
+                    </div>
+                  </div>
+                  <Link href={`/messages?fil=req:${r.id}`}
+                    style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}>
+                    <Icon name="message" size={13} />La discussion
+                  </Link>
+                </div>
+
+                {/* Ce qui est REÇU (plein) et ce qui est PROMIS (hachuré) :
+                    sans le second, deux personnes farment la même chose. */}
+                <div style={{ height: 9, borderRadius: 6, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden", display: "flex" }}>
+                  <div style={{ width: `${pcRecu}%`, background: "linear-gradient(90deg,#4ADE80,#22c55e)" }} />
+                  <div style={{ width: `${pcPromis}%`, background: "repeating-linear-gradient(45deg,rgba(255,140,26,.55),rgba(255,140,26,.55) 5px,rgba(255,140,26,.18) 5px,rgba(255,140,26,.18) 10px)" }} />
+                </div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", fontSize: 11.5, marginTop: 5, color: "var(--text-muted)" }}>
+                  <span style={{ color: "var(--green)" }}><b>{fmt(q.confirme)}</b> reçu</span>
+                  {q.annonce > 0 && <span style={{ color: "var(--orange)" }}><b>{fmt(q.annonce)}</b> promis</span>}
+                  <span>{q.reste ? <>reste <b>{fmt(q.reste)}</b></> : "tout est couvert"}</span>
+                </div>
+
+                {q.contributions.length > 0 && (
+                  <div style={{ display: "grid", gap: 4, marginTop: 9, paddingTop: 8, borderTop: "1px dashed var(--border)" }}>
+                    {q.contributions.map((c) => (
+                      <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                        <b>{c.par.nom}</b>
+                        <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
+                          {c.statut === "confirme" ? "a livré" : "apporte"} {fmt(c.quantite)}
+                        </span>
+                        {!!c.part && (
+                          <span style={{ marginLeft: "auto", fontWeight: 700, color: c.statut === "confirme" ? "var(--gold)" : "var(--text-muted)" }}
+                            title={c.statut === "confirme" ? "Part acquise" : "Part attendue si l'apport est confirmé"}>
+                            {fmt(c.part)} périns
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {liste === null ? (
         <div style={{ fontSize: 12.5, color: "var(--text-muted)", padding: "16px 2px" }}>Lecture des commandes…</div>
       ) : liste.length === 0 ? (
         <div style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55, padding: "14px 2px" }}>
           <Icon name="check" size={15} style={{ color: "var(--green)", flexShrink: 0, marginTop: 1 }} />
-          <span>
-            Aucune commande en attente. Celles qui ont déjà leur quête se suivent sur{" "}
-            <Link href="/quetes" style={{ color: "var(--orange)" }}>Quête Guilde</Link>.
-          </span>
+          <span>Aucune commande en attente d&apos;être lancée.</span>
         </div>
       ) : (
         <div style={{ display: "grid", gap: 9 }}>

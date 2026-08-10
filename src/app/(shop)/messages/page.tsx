@@ -297,11 +297,12 @@ export default function MessagesPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 15, fontWeight: 700 }}>{courante.titre}</span>
                     <BadgeCategorie categorie={courante.categorie} taille={10.5} />
-                    {/* Une requête suivie à plusieurs se lit mieux dans les
-                        quêtes : le fil, lui, part vite en trente messages. */}
+                    {/* Une requête prise en charge à plusieurs se suit dans la
+                        boutique — avec sa cagnotte et la part de chacun. Le fil,
+                        lui, part vite en trente messages. */}
                     {courante.queteId && (
-                      <Link href={`/quetes?q=${courante.queteId}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
-                        <Icon name="target" size={11} />Suivre dans les quêtes →
+                      <Link href="/boutique?mode=requetes" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
+                        <Icon name="target" size={11} />Suivre la commande →
                       </Link>
                     )}
                   </div>

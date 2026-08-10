@@ -30,11 +30,7 @@ type Objectif = { id: string; titre: string; cible: number; fait: number; unite:
  * récompense du livreur incontestable.
  */
 type Personne = { id: string; nom: string; avatar: string | null };
-type Apport = {
-  id: string; quantite: number; statut: "annonce" | "confirme"; par: Personne;
-  /** Ce que cet apport vaut sur la cagnotte : acquis s'il est confirmé, attendu sinon. */
-  part: number;
-};
+type Apport = { id: string; quantite: number; statut: "annonce" | "confirme"; par: Personne };
 type Quete = {
   id: string; titre: string; quantite: number; note: string | null; manque: number | null;
   itemRef: string | null; unite: string | null;
@@ -44,8 +40,6 @@ type Quete = {
   contributions: Apport[]; confirme: number; annonce: number; reste: number;
   /** La demande dont la quête est née, quand elle vient d'une requête d'objet. */
   requeteId?: string | null;
-  /** La somme convenue avec le client, à partager entre ceux qui ramènent. */
-  cagnotte?: number | null;
 };
 
 const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "check" | "x" }> = {
@@ -656,8 +650,8 @@ export default function QuetesPage() {
                             <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                               {c.statut === "confirme" ? "a livré" : "avait promis"} {lisible(c.quantite, x.unite)}
                             </span>
-                            <span style={{ marginLeft: "auto", fontSize: 12, color: c.part ? (c.statut === "confirme" ? "var(--gold)" : "var(--text-muted)") : "var(--text-muted)", fontWeight: c.part ? 700 : 400 }}>
-                              {c.part ? `${c.part.toLocaleString("fr-FR")} périns` : `${Math.round((c.quantite / Math.max(1, x.quantite)) * 100)} % de la quête`}
+                            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>
+                              {Math.round((c.quantite / Math.max(1, x.quantite)) * 100)} % de la quête
                             </span>
                           </div>
                         ))}
@@ -706,21 +700,6 @@ export default function QuetesPage() {
                     </div>
                   </div>
 
-                  {/* La cagnotte : ce que le client paie, et qui se partage entre
-                      ceux qui ramènent — au prorata de ce qui est ARRIVÉ, pas de
-                      ce qui est promis. Le versement se règle entre vous ; le
-                      site dit seulement qui a droit à combien. */}
-                  {!!x.cagnotte && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", margin: "9px 0 6px", padding: "8px 11px", borderRadius: 10, background: "rgba(255,210,74,.07)", border: "1px solid rgba(255,210,74,.22)" }}>
-                      <Icon name="coins" size={15} style={{ color: "var(--gold)" }} />
-                      <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Cagnotte</span>
-                      <b className="font-heading" style={{ fontSize: 15, color: "var(--gold)" }}>{x.cagnotte.toLocaleString("fr-FR")} périns</b>
-                      <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)" }}>
-                        partagée au prorata de ce que chacun ramène
-                      </span>
-                    </div>
-                  )}
-
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
                     <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} taille={22} />
                     demandé par <b style={{ color: "var(--text)" }}><Pseudo nom={x.auteur.nom} /></b>
@@ -739,14 +718,6 @@ export default function QuetesPage() {
                             {c.statut === "confirme" ? "a livré" : "apporte"} {lisible(c.quantite, x.unite)}
                           </span>
                           {c.statut === "confirme" && <Icon name="check" size={12} style={{ color: "var(--green)" }} />}
-                          {/* Sa part de la cagnotte. « Acquis » une fois la réception
-                              confirmée, « attendu » tant que l'apport n'est qu'annoncé. */}
-                          {!!c.part && (
-                            <span title={c.statut === "confirme" ? "Part acquise" : "Part attendue si l'apport est confirmé"}
-                              style={{ fontSize: 12, fontWeight: 700, color: c.statut === "confirme" ? "var(--gold)" : "var(--text-muted)" }}>
-                              {c.part.toLocaleString("fr-FR")} périns
-                            </span>
-                          )}
                           <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                             {jeSuisAuteur && c.statut === "annonce" && (
                               <button onClick={() => agir(x.id, "confirmer", { contributionId: c.id })}

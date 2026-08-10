@@ -209,6 +209,25 @@ export function EcranEconomie() {
   const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, rarOf(id)) * cart[id] : 0); }, 0);
+
+  /* LE MONTANT SE REMPLIT TOUT SEUL, depuis le tarif de la guilde.
+     L'objet est au coffre : il a un prix, ce n'est pas au client de le
+     deviner. Il choisit la monnaie, le montant suit — arrondi à l'unité, et
+     réparti exactement quand il règle dans les deux. S'il trouve le tarif trop
+     cher, ça se discute avec le détenteur, pas en tapant un autre chiffre. */
+  useEffect(() => {
+    if (!cartTotal) { setEstimP(""); setEstimAp(""); return; }
+    if (paiement === "perins") { setEstimP(String(cartTotal)); setEstimAp(""); return; }
+    if (paiement === "airpoints") {
+      // Sans cours annoncé, il n'y a rien à convertir : on laisse la main.
+      setEstimP("");
+      setEstimAp(tauxAP > 0 ? String(Math.max(1, Math.round(cartTotal / tauxAP))) : "");
+      return;
+    }
+    // Mixte : on part de « tout en périns », le client déplace ensuite ce qu'il
+    // veut vers les Airpoints — la somme reste égale au tarif.
+    setEstimP(String(cartTotal)); setEstimAp("0");
+  }, [cartTotal, paiement, tauxAP]);
   /** Ce qui part vraiment : le nom tel qu'il sera lu par le détenteur. */
   const lignesDuPanier = (): { name: string; quantity: number; price: number; cat: string }[] =>
     cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, rk), cat: it.cat }; });

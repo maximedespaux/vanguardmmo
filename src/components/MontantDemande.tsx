@@ -48,6 +48,13 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
      Le complément se calcule au PLANCHER (`floor`) : arrondir au-dessus ferait
      dépasser d'un Airpoint entier — c'est-à-dire, au cours du marché, de
      plusieurs centaines de milliers de périns. */
+  /* AU COFFRE, LE PRIX EST LE PRIX. L'objet a un tarif de guilde : ce n'est
+     pas au client de l'estimer, il n'a qu'à choisir dans quelle monnaie il
+     règle. Le champ n'est donc modifiable que pour RÉPARTIR entre les deux —
+     et s'il trouve le tarif trop cher, ça se discute dans le fil, pas en
+     tapant un autre chiffre dans une case. */
+  const tarifFixe = !!objectif && objectif > 0;
+  const fige = tarifFixe && paiement !== "mixte";
   const plafondP = objectif && objectif > 0 ? objectif : null;
   const plafondAp = calculable ? Math.floor(objectif! / tauxAP) : null;
   const borne = (v: string, max: number | null) => {
@@ -101,14 +108,16 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
         fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)",
       }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--gold)", fontWeight: 700 }}>
-          Ton estimation
+          {tarifFixe ? "Prix de vente" : "Ton estimation"}
         </span>
         <span style={{ color: erreur ? "var(--red)" : "var(--orange)", fontWeight: 700 }}>
-          {lignes.length > 1 ? "2 monnaies · obligatoire" : "obligatoire"}
+          {tarifFixe ? (paiement === "mixte" ? "répartis comme tu veux" : "tarif de la guilde") : "obligatoire"}
         </span>
       </div>
 
       <div style={{ display: "grid", gap: 1, background: "var(--border)" }}>
+      {/* Le montant se lit, il ne se saisit pas : il vaut le tarif, converti
+          dans la monnaie choisie et arrondi à l'unité. */}
         {lignes.map(({ clef, v, set }) => {
           const d = DEVISES.find((x) => x.clef === clef)!;
           return (
@@ -122,6 +131,7 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
               <input
                 type="number" min={0} inputMode="numeric"
                 value={v} onChange={(e) => set(e.target.value)}
+                readOnly={fige}
                 max={clef === "perins" ? (plafondP ?? undefined) : (plafondAp ?? undefined)}
                 aria-label={`Montant en ${d.label}`}
                 placeholder="0"
@@ -142,6 +152,14 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
       <div style={{ padding: "7px 12px", borderTop: "1px dashed var(--border)", fontSize: 11, color: "var(--text-muted)", lineHeight: 1.45 }}>
         {erreur
           ? <b style={{ color: "var(--red)" }}>Indique ce que tu es prêt à mettre — sans ce chiffre, personne ne sait par où commencer.</b>
+          /* UN AIRPOINT NE SE COUPE PAS. Régler un tarif de 2 800 000 avec un
+             cours à 500 000 demande 5,6 AP : on arrondit à 6, et l'écart doit
+             être DIT — sinon la phrase « tu proposes 200 000 de plus » se lit
+             comme un choix du client, alors que c'est l'arrondi. */
+          : fige && paiement === "airpoints" && tauxAP > 0
+            ? (manque === 0
+                ? <>C&apos;est le tarif de la guilde, tout rond. Tu peux en discuter dans la conversation.</>
+                : <>Tarif <b style={{ color: "var(--gold)" }}>{objectif!.toLocaleString("fr-FR")} périns</b> — l&apos;Airpoint ne se coupe pas, {(Number(airpoints) || 0).toLocaleString("fr-FR")} AP font <b>{couvert.toLocaleString("fr-FR")}</b>, soit {Math.abs(manque).toLocaleString("fr-FR")} {manque < 0 ? "de plus" : "de moins"}. Choisis <b>Les deux</b> pour tomber juste.</>)
           : objectif && objectif > 0
             /* AUCUNE TOLÉRANCE. Elle était d'un Airpoint — c'est-à-dire, au
                cours du marché, de plusieurs centaines de milliers de périns :
@@ -149,7 +167,11 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
                à 3 000 000. Les périns sont granulaires, le compte PEUT tomber
                juste ; tant qu'il ne tombe pas juste, on dit ce qui manque. */
             ? (manque === 0
-                ? <span style={{ color: "var(--green)" }}>Le compte y est — {objectif.toLocaleString("fr-FR")} périns couverts.</span>
+                ? <span style={{ color: "var(--green)" }}>
+                    {paiement === "mixte"
+                      ? <>Le compte y est — {objectif.toLocaleString("fr-FR")} périns couverts.</>
+                      : <>C&apos;est le tarif de la guilde. Tu peux en discuter avec le détenteur dans la conversation.</>}
+                  </span>
                 : manque > 0
                   ? <>Tarif : <b style={{ color: "var(--gold)" }}>{objectif.toLocaleString("fr-FR")} périns</b> — il reste <b style={{ color: "var(--orange)" }}>{manque.toLocaleString("fr-FR")}</b> à couvrir{tauxAP > 0 ? ` (≈ ${Math.ceil(manque / tauxAP).toLocaleString("fr-FR")} AP)` : ""}.</>
                   : <>Tarif : <b style={{ color: "var(--gold)" }}>{objectif.toLocaleString("fr-FR")} périns</b> — tu proposes <b style={{ color: "var(--green)" }}>{Math.abs(manque).toLocaleString("fr-FR")}</b> de plus.</>)

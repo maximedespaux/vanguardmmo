@@ -1,6 +1,7 @@
 "use client";
 import { Icon } from "@/components/Icon";
 import type { SpecObjet } from "@/lib/specObjet";
+import { iconeDeLigne } from "@/lib/assetsJeu";
 
 /**
  * La bulle d'un objet, telle qu'on la voit dans le builder.
@@ -48,12 +49,19 @@ export function BulleObjet({ spec, compact = false }: { spec: SpecObjet; compact
 
       {(spec.lignes?.length ?? 0) > 0 && (
         <div style={{ marginTop: 7, paddingTop: 6, borderTop: "1px dashed var(--border)", display: "grid", gap: 3 }}>
-          {spec.lignes!.map((l, i) => (
-            <div key={i} style={{ display: "flex", gap: 8, fontSize: 11.5 }}>
-              <span style={{ color: "var(--text-muted)", flexShrink: 0 }}>{l.label}</span>
+          {spec.lignes!.map((l, i) => {
+            const ic = iconeDeLigne(l.label, l.valeur);
+            return (
+            <div key={i} style={{ display: "flex", gap: 8, fontSize: 11.5, alignItems: "center" }}>
+              <span style={{ color: "var(--text-muted)", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {ic && <img src={ic} alt="" style={{ width: 16, height: 16, objectFit: "contain", flexShrink: 0 }} />}
+                {l.label}
+              </span>
               <span style={{ marginLeft: "auto", textAlign: "right", color: "var(--text)" }}>{l.valeur}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

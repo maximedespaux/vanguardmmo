@@ -34,8 +34,17 @@ export const STATS_HOLO = ["Intelligence +33", "Endurance +33", "Force +33", "De
 /** Gemmes de fashion : 4 emplacements, data.json → GEMC (noms uniques). */
 export const STATS_GEMME = ["Force", "Endurance", "Dextérité", "Intelligence", "Attaque", "Dégâts magiques", "Dégâts critiques", "Dégâts magiques %", "Heal Rate", "PV max", "Défense"] as const;
 /** Cartes de perçage : arme et bouclier d'un côté, tenue de l'autre. */
-export const CARTES_ARME = ["Feu", "Eau", "Terre", "Foudre"] as const;
-export const CARTES_TENUE = ["Fulgur", "Volcano", "Océane"] as const;
+/**
+ * Les deux familles de cartes de perçage, reprises de la base d'objets du jeu.
+ *
+ * Une arme ou un bouclier prend une carte d'ATTAQUE ; une tenue prend une carte
+ * de DÉFENSE. Le même élément change de nom d'une famille à l'autre — le feu
+ * attaque sous « Feu » et défend sous « Volcano ». Les listes étaient
+ * incomplètes des deux côtés : l'air manquait à l'attaque, et la défense n'avait
+ * que trois de ses cinq cartes.
+ */
+export { CARTES_ATTAQUE as CARTES_ARME, CARTES_DEFENSE as CARTES_TENUE } from "@/lib/assetsJeu";
+import { CARTES_ATTAQUE, CARTES_DEFENSE } from "@/lib/assetsJeu";
 
 export type SlotFlyff = "weapon" | "shield" | "suit" | "armor" | "jewel" | "cape" | "fashion";
 
@@ -79,14 +88,14 @@ export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?
   switch (slot) {
     case "weapon":
       return { ...base, label: o.label ?? "Arme", rarete: o.rarete !== false, upMax: art ? 20 : 10, etoiles: art,
-        percage: { max: art ? 12 : 10, cartes: CARTES_ARME }, eveil: true, scroll: true, elementMax: 20,
+        percage: { max: art ? 12 : 10, cartes: CARTES_ATTAQUE }, eveil: true, scroll: true, elementMax: 20,
         // Les 3 holographiques se débloquent en artefact : on les propose là où
         // le builder les propose, pas ailleurs.
         sertissage: { diamants: 5, holo: art ? 3 : 0 } };
     case "shield":
-      return { ...base, label: o.label ?? "Bouclier", upMax: 10, percage: { max: 10, cartes: CARTES_ARME }, eveil: true, elementMax: 20 };
+      return { ...base, label: o.label ?? "Bouclier", upMax: 10, percage: { max: 10, cartes: CARTES_ATTAQUE }, eveil: true, elementMax: 20 };
     case "suit":
-      return { ...base, label: o.label ?? "Tenue", upMax: 10, percage: { max: 4, cartes: CARTES_TENUE }, eveil: true, scroll: true, elementMax: 20 };
+      return { ...base, label: o.label ?? "Tenue", upMax: 10, percage: { max: 4, cartes: CARTES_DEFENSE }, eveil: true, scroll: true, elementMax: 20 };
     case "armor":
       // « Cette pièce n'a ni perçage ni élément » — armorPanel du builder.
       return { ...base, label: o.label ?? "Armure", upMax: 10, eveil: true, scroll: true };

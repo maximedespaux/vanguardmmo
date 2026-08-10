@@ -6,7 +6,7 @@ import { ensureVgIcons } from "@/lib/vanillaLoader";
 // Recharge proprement si une autre app (AirGuild) tenait les globals (isolation SPA).
 export function BuilderRunner({ embed = false }: { embed?: boolean }) {
   useEffect(() => {
-    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number };
+    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number; vgOuvrirDepuisURL?: () => void };
     // L'ancien public/builder.html posait __embed = 1. Le moteur s'en sert pour
     // renvoyer le build au parent par postMessage (c'est ainsi que la
     // candidature le recupere) et pour couper la sauvegarde cloud.
@@ -14,7 +14,12 @@ export function BuilderRunner({ embed = false }: { embed?: boolean }) {
     if (embed) w.__embed = 1;
     if (w.__APP === "airbuilder" && typeof w.render === "function") {
       if (w.__VIEW) { window.location.reload(); return; } // on revient d'une vue lecture seule → reboot propre sur mon build
-      try { w.render(); } catch { /* noop */ } return;
+      // Ce rendu efface ce que le moteur avait ouvert au démarrage. En
+      // développement React remonte le composant (StrictMode) et passe donc
+      // toujours par ici : sans ce rappel, un lien ?perso=…&acheter=1 ouvrait
+      // la fenêtre d'achat puis la refermait aussitôt. La fonction ne fait
+      // rien la deuxième fois.
+      try { w.render(); w.vgOuvrirDepuisURL?.(); } catch { /* noop */ } return;
     }
     if (w.__APP && w.__APP !== "airbuilder") { window.location.reload(); return; }
 

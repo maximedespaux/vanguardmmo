@@ -407,7 +407,8 @@ function vgAcheterPiece(){
     if(pierceElDe(c,s)) bouts.push(pierceElDe(c,s));
     if(c.evL) bouts.push('éveil ' + c.evL);
     var ic = (e.item.ic && IC[e.item.ic]) ? '<img src="' + IC[e.item.ic] + '" alt="">' : '<i class=vgi-package></i>';
-    return '<div class="itl buyl" data-slot="' + s + '" onclick="vgSelPiece(\'' + s + '\',event)">'
+    return '<div class="itl buyl" data-slot="' + s + '" onclick="vgSelPiece(\'' + s + '\',event)"'
+      + ' onmouseenter="itipSlot(event,\'' + s + '\')" onmousemove="itipMove(event)" onmouseleave="itipHide()">'
       + '<span class="coche" aria-hidden="true"></span>'
       + '<span class="ic">' + ic + '</span>'
       + '<span class="n" style="color:' + (e.item.col || '#cfd2dc') + '">' + esc(e.item.n)
@@ -871,8 +872,35 @@ function vgPremierPerso(){
   }).catch(function(){});
 }
 
+/* Une adresse peut designer un perso et un stuff precis, et demander l'ouverture
+   directe de « Acheter un objet ». C'est ainsi que « Mes personnages » et la
+   boutique renvoient ici. Le moteur n'avait jamais lu l'URL : ces liens
+   existaient depuis le debut et ne faisaient rien.
+   La comparaison se fait sans accent ni casse — le nom vient d'un formulaire. */
+function vgOuvrirDepuisURL(){
+  if(window.__vgURLFaite)return;
+  try{
+    var p=new URLSearchParams(location.search);
+    var nom=p.get('perso'),st=p.get('stuff'),ach=p.get('acheter');
+    if(!nom&&!st&&!ach)return;
+    var norm=function(x){return String(x==null?'':x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');};
+    var bouge=false;
+    if(nom){var i=state.chars.findIndex(function(c){return norm(c.name)===norm(nom);});
+      if(i>=0&&i!==state.cur){state.cur=i;bouge=true;}}
+    if(st){ST();var c=C();var j=(c.stuffs||[]).findIndex(function(x){return norm(x.name)===norm(st);});
+      if(j>=0&&j!==c.curStuff){c.curStuff=j;bouge=true;}}
+    if(bouge){render();save();}
+    /* On n'ouvre « Acheter un objet » que s'il y a quelque chose a acheter :
+       sur un stuff vide, la fenetre s'ouvrirait sur une liste vide. */
+    if(ach==='1'&&Object.keys(ST().eq||{}).some(function(k){var e=ST().eq[k];return e&&e.item;}))vgAcheterPiece();
+    window.__vgURLFaite=1;
+  }catch(e){}
+}
+window.vgOuvrirDepuisURL=vgOuvrirDepuisURL;
+
 render();
 vgPremierPerso();
+vgOuvrirDepuisURL();
 window.addEventListener('beforeunload',function(){try{save();}catch(e){}});
 ;
 window.__APP='airbuilder';

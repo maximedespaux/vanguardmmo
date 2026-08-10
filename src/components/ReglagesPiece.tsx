@@ -1,6 +1,11 @@
 "use client";
 import type { Reglages, ChoixPiece } from "@/lib/specsFlyff";
 import { RARETES, RANGS_EVEIL, STATS_EVEIL, STATS_SCROLL, ELEMENTS, STATS_DIAMANT, STATS_HOLO, STATS_GEMME, resumerPiece } from "@/lib/specsFlyff";
+import {
+  carteDePercage, libellePalier, decouperCarte, composerCarte, COULEUR_CARTE,
+  PALIERS_ATTAQUE, PALIERS_DEFENSE, CARTES_DEFENSE,
+  ICONE_ELEMENT, ICONE_EVEIL, ICONE_DIAMANT, ICONE_HOLO, ICONE_SCROLL, ICONE_ETOILE, GEMME_PAR_DEFAUT,
+} from "@/lib/assetsJeu";
 
 /**
  * Décrire la pièce exacte qu'on veut — rareté, +N, étoiles, perçage, éveil,
@@ -21,6 +26,22 @@ const pastille = (actif: boolean): React.CSSProperties => ({
   background: actif ? "rgba(255,140,26,.14)" : "transparent",
   color: actif ? "var(--orange)" : "var(--text-muted)",
 });
+
+/** L'image du jeu devant l'intitulé. Sans image, la pastille reste telle quelle. */
+function Vignette({ src, taille = 18 }: { src?: string | null; taille?: number }) {
+  if (!src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" style={{ width: taille, height: taille, objectFit: "contain", flexShrink: 0 }} />;
+}
+/** Une étiquette de section, précédée de son icône — comme les titres de
+ *  panneau du builder, où chaque réglage porte le dessin de ce qu'il règle. */
+function Titre({ src, children }: { src?: string | null; children: React.ReactNode }) {
+  return (
+    <span style={{ ...etiquette, display: "inline-flex", alignItems: "center", gap: 5 }}>
+      <Vignette src={src} taille={15} />{children}
+    </span>
+  );
+}
 
 export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
   reglages: Reglages;
@@ -66,7 +87,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
           {/* Les étoiles n'existent qu'en artefact, c'est-à-dire au-delà de +10. */}
           {r.etoiles && Number(choix.up) > 10 && (
             <>
-              <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8 }}>Étoiles</span>
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4 }}><Vignette src={ICONE_ETOILE} taille={15} />Étoiles</span>
               {[1, 2, 3].map((n) => (
                 <button key={n} onClick={() => bascule("etoiles", String(n))} style={pastille(choix.etoiles === String(n))}>
                   {"★".repeat(n)}
@@ -77,26 +98,58 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
         </div>
       )}
 
-      {r.percage && (
-        <div style={ligne}>
-          <span style={etiquette}>Perçage</span>
-          <select value={choix.percage} onChange={(e) => maj("percage", e.target.value)} style={mini} aria-label="Perçages">
-            <option value="">—</option>
-            {Array.from({ length: r.percage.max }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>sur {r.percage.max}</span>
-          <select value={choix.carte} onChange={(e) => maj("carte", e.target.value)} style={mini} aria-label="Carte de perçage">
-            <option value="">carte…</option>
-            {r.percage.cartes.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+      {r.percage && (() => {
+        // Le champ ne stocke qu'une chaîne — « Fulgur 10 % » — parce que c'est
+        // ainsi que le builder la dépose et que le vendeur la lit. On la
+        // redécoupe ici pour replacer les deux boutons.
+        const [carteEl, carteRang] = decouperCarte(choix.carte);
+        const defense = (CARTES_DEFENSE as readonly string[]).includes(String(r.percage!.cartes[0]));
+        const paliers = defense ? PALIERS_DEFENSE : PALIERS_ATTAQUE;
+        return (
+        <div style={{ display: "grid", gap: 6 }}>
+          <div style={ligne}>
+            <Titre src={carteDePercage(carteEl || String(r.percage!.cartes[0]), carteRang)}>Perçage</Titre>
+            <select value={choix.percage} onChange={(e) => maj("percage", e.target.value)} style={mini} aria-label="Perçages">
+              <option value="">—</option>
+              {Array.from({ length: r.percage!.max }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>sur {r.percage!.max}</span>
+          </div>
+          <div style={{ ...ligne, paddingLeft: 62 }}>
+            {r.percage!.cartes.map((c) => {
+              const actif = carteEl === c;
+              const col = COULEUR_CARTE[c] ?? "var(--orange)";
+              return (
+                <button key={c} onClick={() => maj("carte", actif ? "" : composerCarte(c, carteRang || paliers[0]))}
+                  style={{ ...pastille(actif), display: "inline-flex", alignItems: "center", gap: 5, paddingLeft: 6,
+                    borderColor: actif ? col : "var(--border)", color: actif ? col : "var(--text-muted)",
+                    background: actif ? `${col}22` : "transparent" }}>
+                  <Vignette src={carteDePercage(c, carteRang || paliers[0])} />{c}
+                </button>
+              );
+            })}
+          </div>
+          {carteEl && (
+            <div style={{ ...ligne, paddingLeft: 62 }}>
+              {paliers.map((p) => (
+                <button key={p} onClick={() => maj("carte", composerCarte(carteEl, p))} style={pastille(carteRang === p)}>
+                  {libellePalier(carteEl, p)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {r.eveil && (
         <div style={ligne}>
-          <span style={etiquette}>Éveil</span>
+          <Titre src={ICONE_EVEIL[choix.eveilRang] ?? ICONE_EVEIL.R1}>Éveil</Titre>
           {RANGS_EVEIL.map((x) => (
-            <button key={x} onClick={() => bascule("eveilRang", x)} style={pastille(choix.eveilRang === x)}>{x}</button>
+            <button key={x} onClick={() => bascule("eveilRang", x)}
+              style={{ ...pastille(choix.eveilRang === x), display: "inline-flex", alignItems: "center", gap: 5, paddingLeft: 6 }}>
+              <Vignette src={ICONE_EVEIL[x]} />{x}
+            </button>
           ))}
           <select value={choix.eveilStat} onChange={(e) => maj("eveilStat", e.target.value)} style={mini} aria-label="Statistique d'éveil">
             <option value="">statistique…</option>
@@ -107,7 +160,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
 
       {r.scroll && (
         <div style={ligne}>
-          <span style={etiquette}>Scroll</span>
+          <Titre src={ICONE_SCROLL}>Scroll</Titre>
           <select value={choix.scrollStat} onChange={(e) => maj("scrollStat", e.target.value)} style={mini} aria-label="Statistique du scroll">
             <option value="">stat…</option>
             {STATS_SCROLL.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -121,11 +174,13 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
 
       {r.elementMax > 0 && (
         <div style={ligne}>
-          <span style={etiquette}>Élément</span>
-          <select value={choix.element} onChange={(e) => maj("element", e.target.value)} style={mini} aria-label="Élément">
-            <option value="">aucun</option>
-            {ELEMENTS.map((el) => <option key={el} value={el}>{el}</option>)}
-          </select>
+          <Titre src={ICONE_ELEMENT[choix.element] ?? ICONE_ELEMENT.Feu}>Élément</Titre>
+          {ELEMENTS.map((el) => (
+            <button key={el} onClick={() => bascule("element", el)}
+              style={{ ...pastille(choix.element === el), display: "inline-flex", alignItems: "center", gap: 5, paddingLeft: 6 }}>
+              <Vignette src={ICONE_ELEMENT[el]} />{el}
+            </button>
+          ))}
           <select value={choix.elementNiv} onChange={(e) => maj("elementNiv", e.target.value)} style={mini} aria-label="Niveau d'élément">
             <option value="">+ ?</option>
             {Array.from({ length: r.elementMax }, (_, i) => i + 1).map((n) => <option key={n} value={n}>+{n}</option>)}
@@ -141,7 +196,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
       {r.sertissage && (
         <div style={{ display: "grid", gap: 6 }}>
           <div style={ligne}>
-            <span style={etiquette}>Sertissage</span>
+            <Titre src={ICONE_DIAMANT}>Sertissage</Titre>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
               {Array.from({ length: r.sertissage.diamants }, (_, i) => (
                 <select key={i} value={choix.diamants?.[i] ?? ""} onChange={(e) => majEmplacement("diamants", i, e.target.value)}
@@ -157,7 +212,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
           {/* Comme dans le builder : les holos n'existent qu'au-delà de +10. */}
           {r.sertissage.holo > 0 && Number(choix.up) > 10 ? (
             <div style={ligne}>
-              <span style={{ ...etiquette, color: "var(--purple)" }}>Holo</span>
+              <span style={{ ...etiquette, color: "var(--purple)", display: "inline-flex", alignItems: "center", gap: 5 }}><Vignette src={ICONE_HOLO} taille={15} />Holo</span>
               <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
                 {Array.from({ length: r.sertissage.holo }, (_, i) => (
                   <select key={i} value={choix.holo?.[i] ?? ""} onChange={(e) => majEmplacement("holo", i, e.target.value)}
@@ -178,7 +233,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
 
       {r.gemmes > 0 && (
         <div style={ligne}>
-          <span style={etiquette}>Gemmes</span>
+          <Titre src={GEMME_PAR_DEFAUT}>Gemmes</Titre>
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
             {Array.from({ length: r.gemmes }, (_, i) => (
               <select key={i} value={choix.gemmes?.[i] ?? ""} onChange={(e) => majEmplacement("gemmes", i, e.target.value)}

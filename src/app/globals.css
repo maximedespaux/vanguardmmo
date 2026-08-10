@@ -58,6 +58,10 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 @keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .vg-dd-opt:hover{background:rgba(255,255,255,.07) !important}
 @media (prefers-reduced-motion:reduce){.vg-dd-list{animation:none !important}}
+/* Boutique — les portes du panneau d'entrée. Meme reaction que les cartes
+   outils du tableau de bord : ce sont les memes objets, un choix a cliquer. */
+.vg-porte{transition:transform .16s,border-color .16s,box-shadow .16s}
+.vg-porte:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--orange) 45%,var(--border));box-shadow:0 8px 22px rgba(0,0,0,.32)}
 /* Dashboard — cartes outils réactives */
 .dash-hub{transition:transform .16s,border-color .16s,box-shadow .16s}
 .dash-hub:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--orange) 45%,var(--border));box-shadow:0 10px 28px rgba(0,0,0,.35)}

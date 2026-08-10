@@ -8,6 +8,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
 import { ObjetSurMesure } from "@/components/ObjetSurMesure";
+import { ChoixBoutique, type ChoixFait } from "@/components/ChoixBoutique";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
@@ -76,14 +77,32 @@ export function EcranEconomie() {
    *  mesure invisible — il n'a pas de ligne dans le stock. */
   const [panneau, setPanneau] = useState<"stock" | "surMesure">("stock");
   const [paiement, setPaiement] = useState<Paiement>("perins");
+  /** La question posée à l'entrée : acheter au coffre, ou faire fabriquer. */
+  const [choixOuvert, setChoixOuvert] = useState(false);
   // Arrivée depuis l'AirBuilder (« Demander cet objet ») : la pièce attend dans
   // le panneau sur mesure, autant l'ouvrir. Sans ça, le joueur atterrissait sur
   // le catalogue du coffre et sa pièce restait invisible.
+  //
+  // Ces deux cas court-circuitent la question d'entrée : elle n'a plus lieu
+  // d'être quand la réponse est déjà dans l'adresse (`?piece=1` au retour du
+  // builder, `?mode=` quand on a déjà choisi une fois).
   useEffect(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("piece")) {
-      setPanneau("surMesure");
-    }
+    if (typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("piece")) { setPanneau("surMesure"); return; }
+    const mode = p.get("mode");
+    if (mode === "stock" || mode === "surMesure") { setPanneau(mode); return; }
+    setChoixOuvert(true);
   }, []);
+  /** Le choix se note dans l'adresse : un retour arrière ne repose pas la question. */
+  const repondre = (c: ChoixFait) => {
+    setPanneau(c); setChoixOuvert(false);
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("mode", c);
+      window.history.replaceState(null, "", u);
+    } catch { /* pas bloquant */ }
+  };
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";
@@ -137,6 +156,8 @@ export function EcranEconomie() {
   };
 
   const filtered = shop.filter(s => (!catF || s.cat === catF) && (!q || s.item.toLowerCase().includes(q.toLowerCase())));
+  /** Demandes encore ouvertes : c'est ce qui merite qu'on retourne dans le fil. */
+  const enCours = reqs.filter((r) => r.status === "PENDING").length;
   // Regroupe les requêtes par panier (batchId) → 1 carte par transaction
   const reqGroups = reqs.reduce<{ key: string; items: Req[] }[]>((acc, r) => { const k = r.batchId || r.id; let g = acc.find(x => x.key === k); if (!g) { g = { key: k, items: [] }; acc.push(g); } g.items.push(r); return acc; }, []);
 
@@ -148,13 +169,30 @@ export function EcranEconomie() {
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+      <ChoixBoutique ouvert={choixOuvert} onChoix={repondre} onFermer={() => setChoixOuvert(false)} />
+
+      {/* Les deux panneaux, et — a leur droite — la conversation. Une demande
+          envoyee ne se suit pas dans la boutique : elle se poursuit dans le fil.
+          L'y renvoyer depuis n'importe quelle section evite d'avoir a ressortir
+          par la barre de navigation pour savoir ou en est ce qu'on a demande. */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
         {([["stock", "cart", "Acheter au coffre"], ["surMesure", "hammer", "Objet sur mesure"]] as const).map(([k, ic, l]) => (
-          <button key={k} onClick={() => setPanneau(k)}
+          <button key={k} onClick={() => repondre(k)}
             style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${panneau === k ? "var(--orange)" : "var(--border)"}`, background: panneau === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: panneau === k ? "var(--orange)" : "var(--text-muted)" }}>
             <Icon name={ic} size={15} />{l}
           </button>
         ))}
+        <button onClick={() => setChoixOuvert(true)} title="Revoir les deux façons de demander"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 12px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)" }}>
+          <Icon name="help" size={15} />
+        </button>
+        <Link href="/messages"
+          style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)" }}>
+          <Icon name="message" size={15} /> Mes demandes &amp; messages
+          {enCours > 0 && (
+            <span style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0A0A0C", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{enCours}</span>
+          )}
+        </Link>
       </div>
 
       {panneau === "surMesure" && <ObjetSurMesure onEnvoye={load} />}

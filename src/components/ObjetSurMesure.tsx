@@ -103,6 +103,9 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
    *  part — d'où une liste ici, et une demande par pièce à l'arrivée. */
   const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; note: string }[]>([]);
+  /** La pièce dont on regarde le détail. Une seule à la fois : six bulles
+   *  empilées dans la colonne de droite ne se comparent pas mieux. */
+  const [deplie, setDeplie] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/airbuilder/data.json").then((r) => (r.ok ? r.json() : null)).then((d) => {
@@ -358,18 +361,37 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                 Ma demande — {panier.length} pièce{panier.length > 1 ? "s" : ""}
               </div>
               <div style={{ display: "grid", gap: 5, marginBottom: 10 }}>
-                {panier.map((piece, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 9px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", fontSize: 12 }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {piece.spec.icone && <img src={piece.spec.icone} alt="" style={{ width: 20, height: 20, objectFit: "contain" }} />}
-                    <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: piece.spec.couleur ?? "var(--text)" }}>{piece.nom}</span>
-                    {piece.prix > 0 && <span style={{ color: "var(--gold)", flexShrink: 0 }}>~{piece.prix.toLocaleString("fr-FR")}</span>}
-                    <button onClick={() => setPanier((p) => p.filter((_, j) => j !== i))} aria-label="Retirer"
-                      style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex" }}>
-                      <Icon name="x" size={12} />
-                    </button>
+                {/* Une ligne ne disait que le nom. Or ce qui distingue deux pièces
+                    homonymes, c'est justement la configuration : la bulle se
+                    rouvre au clic, pour revérifier avant d'envoyer. */}
+                {panier.map((piece, i) => {
+                  const ouverte = deplie === i;
+                  return (
+                  <div key={i} style={{ borderRadius: 9, background: "var(--bg-3)", border: `1px solid ${ouverte ? "var(--orange)" : "var(--border)"}`, overflow: "hidden" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 9px", fontSize: 12 }}>
+                      <button onClick={() => setDeplie(ouverte ? null : i)}
+                        aria-expanded={ouverte} aria-label={ouverte ? "Masquer le détail" : "Voir le détail"}
+                        style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, color: "inherit", font: "inherit", cursor: "pointer", textAlign: "left" }}>
+                        <Icon name={ouverte ? "chevron-down" : "chevron-right"} size={12} style={{ flexShrink: 0, color: "var(--text-muted)" }} />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {piece.spec.icone && <img src={piece.spec.icone} alt="" style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }} />}
+                        <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: piece.spec.couleur ?? "var(--text)" }}>{piece.nom}</span>
+                      </button>
+                      {piece.prix > 0 && <span style={{ color: "var(--gold)", flexShrink: 0 }}>~{piece.prix.toLocaleString("fr-FR")}</span>}
+                      <button onClick={() => setPanier((p) => p.filter((_, j) => j !== i))} aria-label="Retirer"
+                        style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", flexShrink: 0 }}>
+                        <Icon name="x" size={12} />
+                      </button>
+                    </div>
+                    {ouverte && (
+                      <div style={{ padding: "0 9px 9px" }}>
+                        <BulleObjet spec={piece.spec} compact />
+                        {piece.note && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>{piece.note}</div>}
+                      </div>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <label style={{ display: "block", marginBottom: 9 }}>
                 <span style={etiquette}>Pseudo en jeu *</span>

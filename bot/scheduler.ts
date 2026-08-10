@@ -16,6 +16,7 @@ import { postApplicationDecision, postBankRequestDecision, postBankBatchDecision
 import { openDiscussion } from "./lib/exchange.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
+import { syncGuildRoles } from "./lib/moderation.js";
 
 async function sendTo(client: Client, channelId: string, payload: any) {
   if (!channelId) return;
@@ -285,9 +286,11 @@ export function startScheduler(client: Client) {
   // automatique du suivi des dettes.
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);
-  // Pilotage depuis le site : cache des salons + consommation de la file de commandes.
+  // Pilotage depuis le site : cache des salons et des rôles + consommation de la file de commandes.
   syncGuildChannels(client).catch(console.error);
   setInterval(() => syncGuildChannels(client).catch(console.error), 10 * 60_000);
+  syncGuildRoles(client).catch(console.error);
+  setInterval(() => syncGuildRoles(client).catch(console.error), 10 * 60_000);
   setInterval(() => processBotCommands(client).catch(console.error), 12_000);
   // Synchro des rangs (GuildViewer à jour) : au démarrage + toutes les 10 min.
   syncMemberRanks(client).catch(console.error);

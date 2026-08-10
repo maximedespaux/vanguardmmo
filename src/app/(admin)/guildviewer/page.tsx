@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { DossierMembre } from "@/components/DossierMembre";
 
 type Gear = { id: string; name: string; mode: string; weaponRarity?: string; hp?: number; attack?: number; defense?: number; critRate?: number; critDamage?: number; damageReduction?: number; weapon?: any; armor?: any; jewelry?: any; pets?: any; cards?: any };
 type Spec = { id: string; type: string; score: number };
@@ -35,6 +36,7 @@ export default function GuildViewerPage() {
   const [q, setQ] = useState("");
   const [onlyNoBuild, setOnlyNoBuild] = useState(false);
   const [roleFilter, setRoleFilter] = useState("");
+  const [dossier, setDossier] = useState<string | null>(null);
   const [histUser, setHistUser] = useState<string | null>(null);
   const [hist, setHist] = useState<{ id: string; createdAt: string }[]>([]);
   const [histLoading, setHistLoading] = useState(false);
@@ -45,12 +47,13 @@ export default function GuildViewerPage() {
     setHistLoading(false);
   };
 
-  useEffect(() => {
-    (async () => {
-      try { const r = await fetch("/api/admin/users"); if (r.ok) setMembers(await r.json()); else setErr(true); }
-      catch { setErr(true); }
-    })();
-  }, []);
+  // Rechargeable : après un geste de modération, le rang et l'activité du
+  // membre ont bougé — la liste doit le dire sans qu'on rafraîchisse la page.
+  const charger = async () => {
+    try { const r = await fetch("/api/admin/users"); if (r.ok) setMembers(await r.json()); else setErr(true); }
+    catch { setErr(true); }
+  };
+  useEffect(() => { charger(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stats = useMemo(() => {
     const m = members ?? [];
@@ -142,6 +145,13 @@ export default function GuildViewerPage() {
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   {miniStat("users", u.characters.length, "perso", noChar ? "var(--gold)" : "var(--text)")}
                   {miniStat("ban", u._count.absences, "abs.", u._count.absences ? "var(--gold)" : "var(--text-muted)")}
+                  {/* Le dossier : absences, économie, coffre, décisions — et les
+                      gestes de modération. C'est la seule page où tout ça se
+                      regarde ensemble, donc c'est d'ici qu'on l'ouvre. */}
+                  <button onClick={() => setDossier(u.id)} title={`Ouvrir le dossier de ${u.username} — absences, ce qu'il a fourni, son coffre, et les décisions prises`}
+                    style={{ fontSize: 12, fontWeight: 700, cursor: "pointer", color: "var(--text)", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 11px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "inherit" }}>
+                    <Icon name="scroll" size={14} />Dossier
+                  </button>
                   <button onClick={() => openHist(u.id)} title="Historique des builds — 10 dernières versions sauvegardées" style={{ fontSize: 12, fontWeight: 700, cursor: "pointer", color: histUser === u.id ? "#000" : "var(--text-muted)", background: histUser === u.id ? "var(--orange)" : "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 11px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="clock" size={14} />Versions{histUser === u.id ? " ▲" : ""}</button>
                 </div>
               </div>
@@ -190,6 +200,8 @@ export default function GuildViewerPage() {
             </div>
           );
         })}
+
+      {dossier && <DossierMembre userId={dossier} onFermer={() => setDossier(null)} onChange={charger} />}
 
       <style>{`
         .gv-stat{transition:transform .18s, box-shadow .18s}

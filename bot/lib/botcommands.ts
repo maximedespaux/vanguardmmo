@@ -10,6 +10,7 @@ import { prisma } from "./prisma.js";
 import { ORANGE } from "./helpers.js";
 import { createGiveaway } from "./giveaways.js";
 import { postClassPanel } from "./classpanel.js";
+import { executeModeration, repercuteEnBase } from "./moderation.js";
 
 const CHAN_TYPE: Record<number, string> = {
   [ChannelType.GuildText]: "text",
@@ -75,10 +76,21 @@ export async function processBotCommands(client: Client) {
       if (cmd.type === "post_embed") result = "message " + (await doPostEmbed(client, p));
       else if (cmd.type === "create_giveaway") result = "giveaway " + (await createGiveaway(client, { channelId: p.channelId, prize: p.prize, prizes: p.prizes, description: p.description, winnersCount: p.winnersCount ?? 1, durationMs: p.durationMs, hostId: p.hostId || cmd.createdBy, embedTitle: p.embedTitle, embedColor: p.embedColor, embedImage: p.embedImage }));
       else if (cmd.type === "post_class_panel") result = "panneau " + (await postClassPanel(client, p.channelId));
+      else if (cmd.type === "moderation") {
+        result = await executeModeration(client, p);
+        await repercuteEnBase(p.action, p.discordId);
+        // Le dossier du membre lit la décision, pas la file : c'est elle qui
+        // doit porter le verdict, sinon le site affiche « en attente » à vie.
+        if (p.actionId) await prisma.actionMembre.update({ where: { id: p.actionId }, data: { statut: "FAITE", resultat: result.slice(0, 500), faiteAt: new Date() } }).catch(() => {});
+      }
       else throw new Error("type de commande inconnu: " + cmd.type);
       await prisma.botCommand.update({ where: { id: cmd.id }, data: { status: "DONE", result, processedAt: new Date() } });
     } catch (e: any) {
-      await prisma.botCommand.update({ where: { id: cmd.id }, data: { status: "FAILED", result: String(e?.message ?? e).slice(0, 500), processedAt: new Date() } });
+      const pourquoi = String(e?.message ?? e).slice(0, 500);
+      const p: any = cmd.payload ?? {};
+      if (cmd.type === "moderation" && p.actionId)
+        await prisma.actionMembre.update({ where: { id: p.actionId }, data: { statut: "ECHOUEE", resultat: pourquoi, faiteAt: new Date() } }).catch(() => {});
+      await prisma.botCommand.update({ where: { id: cmd.id }, data: { status: "FAILED", result: pourquoi, processedAt: new Date() } });
     }
   }
   } finally { processing = false; }

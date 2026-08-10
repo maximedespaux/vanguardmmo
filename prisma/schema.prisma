@@ -611,6 +611,49 @@ model GuildChannel {
   @@index([guildId])
 }
 
+/// Cache des RÔLES du serveur (rempli par le bot, lu par le site).
+/// User.discordRoles ne garde que des identifiants bruts : sans ce cache, le
+/// site ne peut proposer « retirer Vétéran », seulement « retirer 1498… ».
+/// `position` reproduit la hiérarchie Discord — elle décide de ce que le bot a
+/// le droit de retirer, et de l'ordre d'affichage.
+model GuildRole {
+  id        String   @id // ID du rôle Discord
+  guildId   String
+  name      String
+  color     Int      @default(0) // couleur Discord (entier RGB), 0 = pas de couleur
+  position  Int      @default(0)
+  managed   Boolean  @default(false) // rôle géré par une intégration → non retirable
+  updatedAt DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+/// ─── CE QU'ON A DÉCIDÉ POUR UN MEMBRE, ET POURQUOI ───
+/// Le motif n'est pas optionnel. Une exclusion sans raison écrite, personne ne
+/// s'en souvient six mois plus tard — ni celui qui l'a décidée, ni le membre
+/// qui revient demander pourquoi.
+///
+/// La cible est l'IDENTIFIANT Discord, jamais la ligne User : un banni peut
+/// être effacé de la base, son dossier doit lui survivre. `pseudo` fige le nom
+/// du moment, qui aura changé.
+model ActionMembre {
+  id        String   @id @default(cuid())
+  discordId String // cible
+  pseudo    String // son pseudo au moment des faits
+  action    String // "role" | "guilde" | "kick" | "ban" | "coffre"
+  detail    String? // ce qui a été touché (nom du rôle, nom du coffre…)
+  motif     String // OBLIGATOIRE
+  auteur    String // pseudo de qui l'a décidé
+  auteurId  String
+  statut    String    @default("EN_ATTENTE") // EN_ATTENTE | FAITE | ECHOUEE
+  resultat  String? // retour de Discord (ou la raison de l'échec)
+  createdAt DateTime  @default(now())
+  faiteAt   DateTime?
+
+  @@index([discordId, createdAt])
+  @@index([createdAt])
+}
+
 // ─── BANQUE — requête d'objet (Phase 3) ─────────────────────
 //  Le membre demande un objet IG / des Items / des Périns. L'admin décide à
 //  l'acceptation : achat (−20 % du prix public) OU dette (prix public complet).

@@ -23,6 +23,7 @@ async function ouvrirFilRequete(
     .catch(() => null);
 }
 import { apiGuild } from "@/lib/access";
+import { STATUTS_OUVERTS, DELAI_APRES_ABANDON } from "@/lib/commandes";
 import { annoncerVente } from "@/lib/ventes";
 
 const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, prixFinal: r.prixFinal?.toString() ?? null });
@@ -67,8 +68,6 @@ export async function GET() {
 }
 
 // POST /api/bank-request — créer une requête (pré-requis : profil avec au moins un personnage)
-/** Délai minimum entre deux demandes d'un même membre. */
-const DELAI_ENTRE_DEMANDES = 5 * 60_000;
 
 export async function POST(req: Request) {
   const a = await apiGuild(); if ("error" in a) return a.error;
@@ -76,25 +75,45 @@ export async function POST(req: Request) {
   if (charCount === 0) return NextResponse.json({ error: "Complète d'abord ton profil (au moins un personnage) pour faire une requête." }, { status: 400 });
 
   /**
-   * Un délai entre deux demandes.
+   * UNE SEULE COMMANDE À LA FOIS.
    *
-   * Rien n'empêchait d'en envoyer trente d'affilée : chacune ouvre une
-   * conversation, une notification et un message Discord, et c'est le staff qui
-   * les reçoit toutes. Cinq minutes suffisent à casser l'envoi en rafale sans
-   * gêner quelqu'un qui commande deux pièces de suite — un panier entier ne
-   * compte d'ailleurs que pour UNE demande, puisqu'il part d'un seul envoi.
+   * Rien n'empêchait d'en ouvrir trente d'affilée. Chacune mobilise un
+   * détenteur, une conversation, une notification et un message Discord — et
+   * c'est le staff qui les reçoit toutes. Pire : deux commandes du même membre
+   * pour le même objet font travailler deux personnes sur la même livraison.
+   *
+   * Une commande doit donc aller au bout : être remise, ou être abandonnée.
+   * Ajouter un objet ne demande pas d'en ouvrir une seconde — le panier part
+   * d'un seul envoi et compte pour UNE commande.
+   *
+   * Un délai remplaçait cette règle : cinq minutes entre deux envois. Il
+   * n'empêchait rien, il ralentissait seulement. On le garde au seul endroit
+   * où il sert vraiment — après un ABANDON, pour que « j'abandonne, je
+   * recommence » ne devienne pas une façon de tourner en rond.
    */
-  const derniere = await prisma.bankRequest.findFirst({
-    where: { userId: a.user.id },
+  const ouverte = await prisma.bankRequest.findFirst({
+    where: { userId: a.user.id, status: { in: STATUTS_OUVERTS as never[] } },
     orderBy: { createdAt: "desc" },
-    select: { createdAt: true },
+    select: { id: true, item: true, status: true },
   });
-  if (derniere) {
-    const reste = DELAI_ENTRE_DEMANDES - (Date.now() - derniere.createdAt.getTime());
+  if (ouverte) {
+    return NextResponse.json({
+      error: `Tu as déjà une commande en cours${ouverte.item ? ` (${ouverte.item})` : ""}. Termine-la ou abandonne-la avant d'en ouvrir une autre — et si tu veux autre chose en plus, ajoute-le à celle-ci.`,
+      commandeOuverte: ouverte.id,
+    }, { status: 409 });
+  }
+
+  const abandonnee = await prisma.bankRequest.findFirst({
+    where: { userId: a.user.id, status: "ANNULE" },
+    orderBy: { updatedAt: "desc" },
+    select: { updatedAt: true },
+  });
+  if (abandonnee) {
+    const reste = DELAI_APRES_ABANDON - (Date.now() - abandonnee.updatedAt.getTime());
     if (reste > 0) {
       const min = Math.ceil(reste / 60000);
       return NextResponse.json(
-        { error: `Tu viens d'envoyer une demande. Attends encore ${min} minute${min > 1 ? "s" : ""} avant la suivante.`, reste },
+        { error: `Tu viens d'abandonner une commande. Attends encore ${min} minute${min > 1 ? "s" : ""} avant d'en ouvrir une nouvelle.`, reste },
         { status: 429 },
       );
     }
@@ -148,6 +167,43 @@ export async function POST(req: Request) {
   // pas encore le prix, c'est le vendeur qui l'annonce. Mais le détenteur doit
   // le savoir avant de composer son tarif.
   const paiement = ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins";
+
+  /* ── Plusieurs pièces sur mesure, en UNE commande ────────────────────────
+     L'écran les envoyait une par une, en boucle. Depuis qu'on ne peut avoir
+     qu'une commande ouverte, la première passait et toutes les suivantes se
+     faisaient refuser : on commandait trois pièces, une seule arrivait. Elles
+     partent donc ensemble, sous un même batchId — chacune garde sa fiche, sa
+     spec et son estimation, et se négocie séparément dans le fil. */
+  if (Array.isArray(b?.pieces) && b.pieces.length) {
+    const batchId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `p${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+    const noms: string[] = [];
+    let count = 0;
+    for (const pc of b.pieces.slice(0, 20)) {
+      const nom = (pc?.item ?? "").toString().slice(0, 200).trim();
+      if (!nom) continue;
+      const ap = Math.max(0, Math.round(Number(pc?.prixEstimeAp) || 0));
+      const cree = await prisma.bankRequest.create({
+        data: {
+          userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
+          kind: "ITEM", item: nom, quantity: Math.max(1, Math.floor(Number(pc?.quantity) || 1)),
+          origine: "requete", batchId,
+          reason: [(pc?.reason ?? "").toString().slice(0, 460).trim(), ap > 0 ? `— ${ap.toLocaleString("fr-FR")} AP proposés` : ""]
+            .filter(Boolean).join(" ").trim() || null,
+          characterName: perso,
+          spec: specDepuisJson(pc?.spec) ?? undefined,
+          modePaiement: paiement,
+          priceEach: Math.max(0, Math.round(Number(pc?.prixEstime) || 0)) || null,
+        },
+      });
+      await ouvrirFilRequete(cree.id, a.user.username, nom, cree.quantity, cree.priceEach);
+      void annoncerVente(cree.id);
+      noms.push(nom); count++;
+    }
+    if (!count) return NextResponse.json({ error: "Aucune pièce valide dans la commande." }, { status: 400 });
+    await notifyHolders(noms, a.user.username, a.user.id);
+    return NextResponse.json({ ok: true, count, batchId }, { status: 201 });
+  }
+
   const kind = ["OBJET_IG", "ITEM", "PERINS"].includes(b.kind) ? b.kind : "OBJET_IG";
   const enPerins = Math.max(0, Math.round(Number(b?.prixEstime) || 0));
   const enAp = Math.max(0, Math.round(Number(b?.prixEstimeAp) || 0));

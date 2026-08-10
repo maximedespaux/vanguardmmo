@@ -18,7 +18,10 @@ import { Icon, type IconName } from "@/components/Icon";
  * l'AirBuilder évite de la ressaisir : elle part avec ses réglages, et le
  * détenteur la voit exactement comme elle est portée.
  */
-export type ChoixFait = "stock" | "surMesure" | "requetes";
+/* « commande » n'est pas une porte du panneau d'entrée — on n'arrive pas à la
+   Boutique pour relire une commande — mais c'est bien un panneau, et c'est ce
+   type qui sert à en changer. */
+export type ChoixFait = "stock" | "surMesure" | "commande" | "requetes";
 
 /** Un stuff qui porte au moins une pièce. Un stuff vide n'a rien à reprendre. */
 export type StuffRempli = { perso: string; stuff: string; pieces: number };

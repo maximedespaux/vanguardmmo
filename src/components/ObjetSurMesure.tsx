@@ -6,6 +6,7 @@ import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
+import { ConfirmationCommande, type LigneCommande } from "@/components/ConfirmationCommande";
 import { MontantDemande } from "@/components/MontantDemande";
 import {
   reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, resumerEmplacements, CHOIX_VIDE, type ChoixPiece,
@@ -103,6 +104,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   const [perso, setPerso] = useState("");
 
   const [envoi, setEnvoi] = useState(false);
+  /** Le récapitulatif ouvert avant l'envoi. */
+  const [aRelire, setARelire] = useState(false);
   const [etat, setEtat] = useState<{ msg: string; ok: boolean } | null>(null);
   /** Les pièces composées, en attente d'envoi. On commande rarement une seule
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
@@ -230,37 +233,43 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setEtat(null);
   };
 
-  const envoyer = async () => {
+  /** Le clic ouvre le récapitulatif ; l'envoi ne part qu'après relecture. */
+  const demanderConfirmation = () => {
     if (!panier.length) return;
     if (!perso.trim()) { setEtat({ ok: false, msg: "Indique ton pseudo en jeu : c'est là que l'objet sera envoyé par courrier." }); return; }
+    setEtat(null); setARelire(true);
+  };
+
+  const envoyer = async () => {
+    if (!panier.length) return;
     setEnvoi(true);
     setEtat(null);
-    let ok = 0;
-    let dernierMessage = "";
-    for (const piece of panier) {
-      // Une demande PAR pièce : chacune se négocie, se refuse ou se remet
-      // séparément — les grouper obligerait à tout traiter d'un bloc.
-      const r = await fetch("/api/bank-request", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          kind: "ITEM",
+    /* TOUTES LES PIÈCES EN UN SEUL ENVOI.
+       C'était une boucle : une requête HTTP par pièce. Depuis qu'on ne peut
+       avoir qu'une commande ouverte, la première passait et les suivantes se
+       faisaient refuser — on commandait trois pièces, une seule arrivait. Le
+       serveur les crée maintenant ensemble, sous un même panier ; chacune garde
+       sa fiche et se négocie séparément. */
+    const r = await fetch("/api/bank-request", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        characterName: perso.trim(),
+        paiement,
+        pieces: panier.map((piece) => ({
           item: piece.nom,
           quantity: 1,
-          // Le prix estimé sert au coût en crédits (1 crédit ≈ 1 000 périns).
           // Facultatif : le staff l'ajuste dans la conversation s'il est faux.
           prixEstime: piece.prix,
           prixEstimeAp: piece.prixAp || undefined,
-          characterName: perso.trim(),
-          paiement,
           reason: piece.note ? `Sur mesure — ${piece.note.slice(0, 300)}` : "Objet sur mesure",
           spec: piece.spec,
-        }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (r.ok) ok += 1; else dernierMessage = j.error ?? `erreur ${r.status}`;
-    }
-    setEnvoi(false);
-    if (!ok) { setEtat({ ok: false, msg: dernierMessage || "Aucune demande envoyée." }); return; }
+        })),
+      }),
+    });
+    const j = await r.json().catch(() => ({} as { error?: string; count?: number }));
+    setEnvoi(false); setARelire(false);
+    const ok = r.ok ? (j.count ?? panier.length) : 0;
+    if (!ok) { setEtat({ ok: false, msg: j.error || `Envoi impossible (erreur ${r.status}).` }); return; }
     setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix("");
     // Pile déposée par le builder : on enchaîne sur la pièce suivante plutôt
     // que de renvoyer l'utilisateur au builder entre chaque.
@@ -268,8 +277,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setEtat({
       ok: true,
       msg: suite
-        ? `${ok} demande(s) envoyée(s). Pièce suivante : ${pile[rang + 1]?.nom ?? "—"} (${rang + 2} sur ${pile.length}).`
-        : `${ok} demande(s) envoyée(s) — la suite se règle dans la conversation.`,
+        ? `${ok} pièce(s) commandée(s). Pièce suivante : ${pile[rang + 1]?.nom ?? "—"} (${rang + 2} sur ${pile.length}).`
+        : `${ok} pièce(s) commandée(s) — suis la commande dans « Ma commande ».`,
     });
     if (suite) setRang((r) => r + 1);
     onEnvoye?.();
@@ -437,7 +446,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                 <span style={etiquette}>Pseudo en jeu *</span>
                 <ChampPseudo valeur={perso} onChange={setPerso} style={champ} />
               </label>
-              <button className="vg-btn" onClick={envoyer} disabled={envoi} style={{ width: "100%", justifyContent: "center", opacity: envoi ? .6 : 1 }}>
+              <button className="vg-btn" onClick={demanderConfirmation} disabled={envoi} style={{ width: "100%", justifyContent: "center", opacity: envoi ? .6 : 1 }}>
                 {envoi ? "Envoi…" : `Demander ${panier.length > 1 ? `ces ${panier.length} objets` : "cet objet"}`}
               </button>
             </div>
@@ -446,6 +455,19 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
           {etat && <div style={{ marginTop: 10, fontSize: 12.5, color: etat.ok ? "var(--green)" : "var(--red)" }}>{etat.msg}</div>}
         </div>
       </div>
+
+      {aRelire && (
+        <ConfirmationCommande
+          titre="Ta commande sur mesure"
+          sousTitre="Le prix reste à convenir : chaque pièce se négocie dans le fil. Relis la liste avant d'envoyer — une fois partie, c'est ta commande en cours."
+          lignes={panier.map((p): LigneCommande => ({ nom: p.nom, quantite: 1, prix: p.prix || null, note: p.note || null }))}
+          perso={perso.trim()} paiement={paiement} envoi={envoi}
+          motAction="Confirmer et envoyer"
+          onAjouter={() => setARelire(false)}
+          onConfirmer={envoyer}
+          onAnnuler={() => setARelire(false)}
+        />
+      )}
     </div>
   );
 }

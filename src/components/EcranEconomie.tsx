@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
@@ -10,10 +9,12 @@ import { BulleObjet } from "@/components/BulleObjet";
 import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { ChoixBoutique, type ChoixFait } from "@/components/ChoixBoutique";
 import { RequetesClients } from "@/components/RequetesClients";
+import { MesCommandes } from "@/components/MesCommandes";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
+import { ConfirmationCommande, type LigneCommande } from "@/components/ConfirmationCommande";
 import { useCardFx } from "@/components/VgFx";
 
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null; spec?: unknown };
@@ -63,6 +64,27 @@ const fourchette = (s: Shop) => {
   return t.length ? { min: Math.min(...t), max: Math.max(...t) } : null;
 };
 
+/**
+ * Deux gestes, deux groupes.
+ *
+ * On COMMANDE (au coffre ou sur mesure), puis on SUIT ce qu'on a commandé.
+ * Servir les commandes des autres est un troisième geste, et il n'appartient
+ * qu'au staff.
+ */
+const GROUPES = [
+  { titre: "Commander", staff: false, onglets: [["stock", "cart", "Au coffre"], ["surMesure", "hammer", "Sur mesure"]] as const },
+  { titre: "Suivre", staff: false, onglets: [["commande", "message", "Ma commande"]] as const },
+  { titre: "Servir", staff: true, onglets: [["requetes", "package", "À livrer"]] as const },
+];
+
+/** Ce qu'on fait dans ce panneau, en une phrase — affichée, pas cachée. */
+const EXPLIQUE: Record<string, string> = {
+  stock: "Le catalogue de ce qui dort dans les coffres de la guilde. Choisis, remplis ton panier, commande.",
+  surMesure: "La pièce n'est pas au coffre : décris-la exactement, elle sera cherchée ou fabriquée pour toi.",
+  commande: "Ce que TU as commandé — par l'un ou l'autre chemin — et où ça en est : qui fournit, à quel prix, quand.",
+  requetes: "Les commandes des AUTRES, celles que la guilde doit servir. À prendre en charge, seul ou à plusieurs.",
+};
+
 const REQ_STATUS: Record<string, { l: string; c: string }> = {
   PENDING: { l: "En attente", c: "var(--gold)" },
   ACCEPTE_ACHAT: { l: "Achat accepté", c: "var(--green)" },
@@ -102,6 +124,8 @@ export function EcranEconomie() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
   const [sending, setSending] = useState(false);
+  /** Le récapitulatif ouvert avant l'envoi. */
+  const [aRelire, setARelire] = useState(false);
   /** Pseudo EN JEU : c'est là que l'objet part par courrier. Pré-rempli avec
    *  le personnage principal — le retaper à chaque demande est une corvée. */
   const [perso, setPerso] = useState("");
@@ -109,7 +133,7 @@ export function EcranEconomie() {
   /** Deux façons de demander, deux panneaux : ce qui dort au coffre, et ce qui
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
-  const [panneau, setPanneau] = useState<"stock" | "surMesure" | "requetes">("stock");
+  const [panneau, setPanneau] = useState<"stock" | "surMesure" | "commande" | "requetes">("stock");
   const [paiement, setPaiement] = useState<Paiement>("perins");
   /** La question posée à l'entrée : acheter au coffre, ou faire fabriquer. */
   const [choixOuvert, setChoixOuvert] = useState(false);
@@ -125,7 +149,7 @@ export function EcranEconomie() {
     const p = new URLSearchParams(window.location.search);
     if (p.get("piece")) { setPanneau("surMesure"); return; }
     const mode = p.get("mode");
-    if (mode === "stock" || mode === "surMesure" || mode === "requetes") { setPanneau(mode); return; }
+    if (mode === "stock" || mode === "surMesure" || mode === "commande" || mode === "requetes") { setPanneau(mode); return; }
     setChoixOuvert(true);
   }, []);
   /** Le choix se note dans l'adresse : un retour arrière ne repose pas la question. */
@@ -177,19 +201,27 @@ export function EcranEconomie() {
   const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
   const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, rarOf(id)) * cart[id] : 0); }, 0);
-  const submitCart = async () => {
+  /** Ce qui part vraiment : le nom tel qu'il sera lu par le détenteur. */
+  const lignesDuPanier = (): { name: string; quantity: number; price: number; cat: string }[] =>
+    cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, rk), cat: it.cat }; });
+
+  /** Le clic n'envoie plus : il ouvre le récapitulatif. Les contrôles restent
+   *  ici pour qu'on corrige AVANT de relire, pas pendant. */
+  const demanderConfirmation = () => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique Garçon ou Fille pour chaque Stuff avant d'envoyer.");
     if (!perso.trim()) return flash("Indique ton pseudo en jeu : c'est là que l'objet sera envoyé par courrier.");
-      // Le palier « dette uniquement » n'a plus de sens : tout se demande, le
-    // staff décide au cas par cas dans la conversation.
+    setARelire(true);
+  };
+
+  const submitCart = async () => {
     setSending(true);
-    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, rk), cat: it.cat }; });
+    const items = lignesDuPanier();
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement }) });
     setSending(false);
-    if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s). Le staff va répondre dans la conversation.`); load(); }
-    else { const e = await r.json().catch(() => ({} as any)); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
+    if (r.ok) { setARelire(false); setCart({}); setStuffSex({}); flash(`Commande envoyée — ${cartIds.length} article(s). Suis-la dans « Ma commande ».`); load(); }
+    else { const e = await r.json().catch(() => ({} as any)); setARelire(false); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
   const filtered = shop.filter(s => (!catF || s.cat === catF) && (!q || s.item.toLowerCase().includes(q.toLowerCase())));
@@ -202,7 +234,7 @@ export function EcranEconomie() {
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Une tuile d'icône plutôt que la bannière : elle dit « Banque » alors que
           tout le reste dit « Boutique ». */}
-      <PageHeader icon="cart" title="Boutique" subtitle="Ce qui dort au coffre, ou une pièce précise à faire fabriquer. La suite se règle dans la conversation." />
+      <PageHeader icon="cart" title="Boutique" subtitle="Ce qui dort au coffre, une pièce à faire fabriquer — et le suivi de ta commande, au même endroit." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
@@ -212,28 +244,37 @@ export function EcranEconomie() {
           envoyee ne se suit pas dans la boutique : elle se poursuit dans le fil.
           L'y renvoyer depuis n'importe quelle section evite d'avoir a ressortir
           par la barre de navigation pour savoir ou en est ce qu'on a demande. */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
-        {([["stock", "cart", "Acheter au coffre"], ["surMesure", "hammer", "Objet sur mesure"],
-           ...(estStaff ? [["requetes", "package", "Requêtes clients"] as const] : [])] as const).map(([k, ic, l]) => (
-          <button key={k} onClick={() => repondre(k)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${panneau === k ? "var(--orange)" : "var(--border)"}`, background: panneau === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: panneau === k ? "var(--orange)" : "var(--text-muted)" }}>
-            <Icon name={ic} size={15} />{l}
-          </button>
+      {/* DEUX GROUPES, parce qu'il y a deux gestes.
+          Les quatre onglets se suivaient à la file : rien ne disait que les
+          deux premiers servent à PASSER une commande et les deux autres à la
+          SUIVRE ou à la SERVIR. « Acheter au coffre » et « Ma commande » se
+          lisaient donc comme deux façons d'acheter. */}
+      <div style={{ display: "flex", gap: 14, marginBottom: 6, flexWrap: "wrap", alignItems: "flex-end" }}>
+        {GROUPES.filter((g) => !g.staff || estStaff).map((g) => (
+          <div key={g.titre}>
+            <div className="font-heading" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 5, paddingLeft: 2 }}>{g.titre}</div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {g.onglets.map(([k, ic, l]) => (
+                <button key={k} onClick={() => repondre(k)} title={EXPLIQUE[k]}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 15px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${panneau === k ? "var(--orange)" : "var(--border)"}`, background: panneau === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: panneau === k ? "var(--orange)" : "var(--text-muted)" }}>
+                  <Icon name={ic} size={15} />{l}
+                  {k === "commande" && enCours > 0 && (
+                    <span style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0A0A0C", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{enCours}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
         ))}
-        <button onClick={() => setChoixOuvert(true)} title="Revoir les deux façons de demander"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 12px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)" }}>
-          <Icon name="help" size={15} />
-        </button>
-        <Link href="/messages"
-          style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)" }}>
-          <Icon name="message" size={15} /> Mes demandes &amp; messages
-          {enCours > 0 && (
-            <span style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0A0A0C", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{enCours}</span>
-          )}
-        </Link>
       </div>
 
-      {panneau === "surMesure" && <ObjetSurMesure onEnvoye={load} />}
+      {/* La phrase qui manquait : ce qu'on fait ICI, en toutes lettres. */}
+      <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 16, display: "flex", alignItems: "center", gap: 7 }}>
+        <Icon name="info" size={13} style={{ color: "var(--orange)", flexShrink: 0 }} />{EXPLIQUE[panneau]}
+      </div>
+
+      {panneau === "surMesure" && <ObjetSurMesure onEnvoye={() => { load(); repondre("commande"); }} />}
+      {panneau === "commande" && <MesCommandes entete={false} />}
       {panneau === "requetes" && estStaff && <RequetesClients />}
 
       {panneau === "stock" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
@@ -338,12 +379,23 @@ export function EcranEconomie() {
               <ChampPseudo valeur={perso} onChange={setPerso} style={{ ...inp, width: "100%" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <button onClick={() => submitCart()} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander ces objets</button>
+              <button onClick={demanderConfirmation} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Commander</button>
             </div>
             <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />Ta demande part au staff, qui répond dans la conversation. Profil avec personnage requis.</div>
           </div>
         </div>
       </div>}
+
+      {aRelire && (
+        <ConfirmationCommande
+          titre="Ta commande"
+          lignes={lignesDuPanier().map((l): LigneCommande => ({ nom: l.name, quantite: l.quantity, prix: l.price || null }))}
+          perso={perso.trim()} paiement={paiement} tauxAP={tauxAP} envoi={sending}
+          onAjouter={() => setARelire(false)}
+          onConfirmer={submitCart}
+          onAnnuler={() => setARelire(false)}
+        />
+      )}
 
       <style>{`@media(max-width:760px){.shop-layout{grid-template-columns:1fr !important}}`}</style>
     </div>

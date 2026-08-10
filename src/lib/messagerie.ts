@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { canAccessAdmin } from "@/config/roles";
 import type { Role, User } from "@prisma/client";
+import { etapeDe, type Etape } from "@/lib/commandes";
 
 /**
  * Boîte de réception : toutes les demandes d'un membre, vues comme des
@@ -68,6 +69,14 @@ export type Conversation = {
   /** Horodatage de tri : dernier message, sinon création de la demande. */
   quand: string;
   lien: string;
+  /**
+   * OÙ ON EN EST, sur le chemin complet de la commande.
+   *
+   * L'état seul ne le disait pas : « Acceptée — achat » ne dit ni s'il reste
+   * un rendez-vous à prendre, ni si le prix est déjà convenu. On lisait un
+   * statut sans savoir combien d'étapes restaient.
+   */
+  etape: Etape;
 };
 
 const ETAT_REQUETE: Record<string, { l: string; t: Conversation["ton"] }> = {
@@ -96,7 +105,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   // l'interlocuteur de chaque demande, on ignore d'avance qui la traitera.
   const requetes = await prisma.bankRequest.findMany({
     where: staff ? {} : { userId: user.id },
-    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, characterName: true, createdAt: true, origine: true, queteId: true, batchId: true },
+    select: { id: true, userId: true, username: true, item: true, quantity: true, status: true, modePaiement: true, spec: true, prixFinal: true, reason: true, characterName: true, createdAt: true, origine: true, queteId: true, batchId: true, detenteurId: true, rendezVous: true, rendezVousOk: true },
     orderBy: { createdAt: "desc" },
     take: staff ? 300 : 200,
   });
@@ -152,6 +161,7 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       titre: `${r.item ?? "Demande"}${r.quantity > 1 ? ` ×${r.quantity}` : ""}`,
       etat: etat.l,
       ton: etat.t,
+      etape: etapeDe(r),
       avec: jeSuisDemandeur ? "Staff Vanguard" : r.username,
       jeSuisLAuteur: jeSuisDemandeur,
       // Le staff est un collectif, pas une personne : afficher « en ligne » pour

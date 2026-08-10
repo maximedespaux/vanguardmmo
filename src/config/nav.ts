@@ -91,16 +91,19 @@ export const ESPACES: Espace[] = [
     ],
   },
   {
-    label: "Économie",
-    icon: "coins",
+    /* Elle s'appelait « Économie » : un mot de gestionnaire pour un endroit où
+       l'on vient acheter. Et « Mes demandes & messages » en était une entrée
+       séparée, alors qu'on ne suit pas une commande ailleurs qu'à l'endroit où
+       on l'a passée — le suivi est devenu un onglet DE la Boutique. */
+    label: "Boutique",
+    icon: "cart",
     href: "/boutique",
     /* Etait "public" : la boutique s'ouvrait a tout compte connecte, y compris
        un Recrue. Un Recrue est un visiteur — le stock commun et les commandes
        ne le regardent pas. L'espace entier descend au niveau guilde. */
     acces: "guild",
     liens: [
-      { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, ou une pièce sur mesure." },
-      { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Tes demandes en cours, et la discussion qui va avec." },
+      { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, une pièce sur mesure, et le suivi de ta commande." },
       { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté.", acces: "admin" },
       // Coffre, Crafts et Base des objets etaient trois entrees pour UNE page :
       // ce sont les onglets d'AirGuild, pas des destinations differentes — elles

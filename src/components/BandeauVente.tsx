@@ -204,7 +204,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
             {v.detenteur.reglement === "dette" ? "à crédit" : "achat comptant"}
           </span>
           {!!v.prixReference && v.detenteur.prix != null && v.detenteur.prix !== v.prixReference && (
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>réf. {fmt(v.prixReference)}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }} title="Ce que le client avait proposé">client : {fmt(v.prixReference)}</span>
           )}
           <span style={{ fontSize: 11.5, padding: "2px 9px", borderRadius: 20, border: `1px solid ${v.detenteur.aObjet ? "var(--green)" : "var(--border)"}`, color: v.detenteur.aObjet ? "var(--green)" : "var(--text-muted)" }}>
             {v.detenteur.aObjet ? "objet vérifié" : "objet pas encore vérifié"}
@@ -217,6 +217,17 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
         </div>
       ) : (
         <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 10 }}>
+          {/* L'ESTIMATION DU CLIENT, dite comme telle. Elle circulait déjà —
+              c'est `priceEach` — mais s'affichait en « réf. », ce qui ne dit
+              pas d'où elle vient. Or c'est le premier mot de la négociation :
+              le client annonce ce qu'il mettrait, le détenteur répond avec le
+              sien. */}
+          {!!v.prixReference && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 8, padding: "8px 11px", background: "var(--bg-3)", border: "1px dashed var(--border)", borderRadius: 9 }}>
+              <Icon name="user" size={13} style={{ color: "var(--gold)", flexShrink: 0 }} />
+              <span>Le client en propose <b style={{ color: "var(--gold)" }}>{fmt(v.prixReference)} périns</b> — à toi de dire ton prix.</span>
+            </div>
+          )}
           Personne ne s&apos;en occupe pour l&apos;instant.
           {v.detenteursPossibles.length > 0 && (
             <> Au coffre : {v.detenteursPossibles.map((d, i) => (
@@ -236,7 +247,12 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
           s'adressait. On nomme donc les deux rôles, on dit depuis quand chacun
           n'a pas été vu, et le rendez-vous porte le nom de celui qui l'a
           proposé — l'autre confirme. */}
-      {(jeSuisDemandeur || jeSuisDetenteur || estStaff) && (
+      {/* UNE ÉTAPE À LA FOIS. Tout s'affichait ensemble : on proposait une
+          heure à un échange que personne n'avait encore pris, et le bloc des
+          présences occupait la moitié du panneau avant même qu'il y ait deux
+          parties à mettre en présence. Le rendez-vous n'apparaît donc qu'une
+          fois qu'on sait QUI fournit. */}
+      {!!v.detenteur && (jeSuisDemandeur || jeSuisDetenteur || estStaff) && (
         <div style={{ display: "grid", gap: 8, marginBottom: 10, paddingTop: 9, borderTop: "1px solid var(--border)" }}>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 12.5 }}>
             {v.demandeur && (
@@ -344,7 +360,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={DEVISES[0].icone} alt="" title="Périns" style={{ width: 16, height: 16 }} />
               <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
-                placeholder={v.prixReference ? `${fmt(v.prixReference)} (tarif)` : "périns"} style={{ ...champ, width: 120 }} aria-label="Part en périns" />
+                placeholder={v.prixReference ? `${fmt(v.prixReference)} proposés` : "ton prix en périns"} style={{ ...champ, width: 150 }} aria-label="Ton estimation, part en périns" />
             </span>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -405,10 +421,15 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
             toujours et encombrait la liste de tout le monde. */}
         {(jeSuisDemandeur || estStaff) && (
           <span style={{ marginLeft: "auto", display: "flex", gap: 7 }}>
-            <button style={bouton} disabled={occupe}
-              onClick={() => { if (confirm("Clore cette demande comme réglée ?")) agir("clore", { issue: "fait" }).then(() => onClos?.()); }}>
-              <Icon name="check" size={13} />C&apos;est réglé
-            </button>
+            {/* « C'est réglé » n'a de sens que si quelqu'un s'en occupe : sur
+                une demande que personne n'a prise, il n'y a rien à régler — et
+                le bouton se lisait comme une façon de la faire disparaître. */}
+            {!!v.detenteur && (
+              <button style={bouton} disabled={occupe}
+                onClick={() => { if (confirm("Clore cette demande comme réglée ?")) agir("clore", { issue: "fait" }).then(() => onClos?.()); }}>
+                <Icon name="check" size={13} />C&apos;est réglé
+              </button>
+            )}
             <button style={{ ...bouton, color: "var(--text-muted)" }} disabled={occupe}
               onClick={() => { if (confirm("Abandonner cette demande ?")) agir("clore", { issue: "abandon" }).then(() => onClos?.()); }}>
               Abandonner

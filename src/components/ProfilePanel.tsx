@@ -29,6 +29,13 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const u = session?.user as any;
   const [open, setOpen] = useState(false);
   const [xp, setXp] = useState<{ total: number; niveau: number; dansNiveau: number; pourNiveau: number } | null>(null);
+  /* Le pseudo EN JEU du personnage principal. Le nom Discord et l'identifiant
+     viennent du compte : ils ne se modifient pas ici, et les afficher grisés
+     evite qu'on les cherche ailleurs. Le pseudo, lui, est la seule chose que le
+     membre doit pouvoir corriger — c'est l'adresse ou partent ses objets. */
+  const [principal, setPrincipal] = useState<{ id: string; name: string } | null>(null);
+  const [pseudo, setPseudo] = useState("");
+  const [etatPseudo, setEtatPseudo] = useState<"" | "envoi" | "ok" | "erreur">("");
   const ref = useRef<HTMLDivElement>(null);
 
   // Chargé à l'ouverture seulement : le niveau n'a pas besoin d'être suivi en
@@ -37,6 +44,35 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
     if (!open || xp) return;
     fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).then((d) => d?.moi && setXp(d.moi)).catch(() => {});
   }, [open, xp]);
+
+  useEffect(() => {
+    if (!open || principal) return;
+    fetch("/api/characters").then((r) => (r.ok ? r.json() : null))
+      .then((cs: { id: string; name: string; isMain: boolean }[] | null) => {
+        const p = cs?.find((c) => c.isMain) ?? cs?.[0];
+        if (p) { setPrincipal({ id: p.id, name: p.name }); setPseudo(p.name); }
+      }).catch(() => {});
+  }, [open, principal]);
+
+  const enregistrerPseudo = async () => {
+    const nom = pseudo.trim();
+    if (!nom || nom === principal?.name) return;
+    setEtatPseudo("envoi");
+    try {
+      const r = principal
+        ? await fetch(`/api/characters/${principal.id}`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: nom }),
+          })
+        : await fetch("/api/characters", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: nom, isMain: true }),
+          });
+      if (!r.ok) { setEtatPseudo("erreur"); return; }
+      const j = await r.json().catch(() => null);
+      setPrincipal({ id: j?.id ?? principal?.id ?? "", name: nom });
+      setEtatPseudo("ok");
+      setTimeout(() => setEtatPseudo(""), 2200);
+    } catch { setEtatPseudo("erreur"); }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -88,11 +124,43 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
             </div>
           )}
 
-          {u?.discordId && (
-            <div style={{ padding: "10px 16px", fontSize: 11, color: "var(--text-muted)", display: "flex", gap: 6, alignItems: "center", borderBottom: "1px solid var(--border)" }}>
-              <span>Discord ID</span><span style={{ fontFamily: "monospace", color: "var(--text)", background: "var(--bg-3)", borderRadius: 6, padding: "2px 7px", fontSize: 10.5 }}>{u.discordId}</span>
+          {/* Ce qui vient du compte Discord, et qui ne se change pas ici. */}
+          <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", display: "grid", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
+              <span style={{ minWidth: 66 }}>Discord</span>
+              <span style={{ color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
             </div>
-          )}
+            {u?.discordId && (
+              <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
+                <span style={{ minWidth: 66 }}>Identifiant</span>
+                <span style={{ fontFamily: "monospace", color: "var(--text)", background: "var(--bg-3)", borderRadius: 6, padding: "2px 7px", fontSize: 10.5 }}>{u.discordId}</span>
+              </div>
+            )}
+          </div>
+
+          {/* La seule ligne modifiable : c'est l'adresse où partent les objets. */}
+          <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)" }}>
+            <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 6 }}>
+              Pseudo en jeu — perso principal
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <input value={pseudo} onChange={(e) => { setPseudo(e.target.value); setEtatPseudo(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") enregistrerPseudo(); }}
+                placeholder="ex. Daiisuke" maxLength={80} aria-label="Pseudo en jeu du personnage principal"
+                style={{ flex: 1, minWidth: 0, background: "var(--bg-3)", border: `1px solid ${etatPseudo === "erreur" ? "var(--red)" : etatPseudo === "ok" ? "var(--green)" : "var(--border)"}`, borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 12.5, fontFamily: "inherit" }} />
+              <button onClick={enregistrerPseudo}
+                disabled={etatPseudo === "envoi" || !pseudo.trim() || pseudo.trim() === principal?.name}
+                aria-label="Enregistrer le pseudo"
+                style={{ flexShrink: 0, width: 34, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-3)", color: pseudo.trim() && pseudo.trim() !== principal?.name ? "var(--orange)" : "var(--text-muted)", cursor: pseudo.trim() && pseudo.trim() !== principal?.name ? "pointer" : "default" }}>
+                <Icon name={etatPseudo === "ok" ? "check" : "save"} size={14} />
+              </button>
+            </div>
+            <div style={{ fontSize: 10.5, color: etatPseudo === "erreur" ? "var(--red)" : "var(--text-muted)", marginTop: 5, lineHeight: 1.45 }}>
+              {etatPseudo === "erreur" ? "Enregistrement impossible — réessaie."
+                : etatPseudo === "ok" ? "Pseudo enregistré."
+                : "Nécessaire pour les demandes à la boutique : c'est là que l'objet t'est envoyé par courrier."}
+            </div>
+          </div>
 
           {/* Raccourcis persos */}
           <div style={{ padding: "10px 10px 7px" }}>

@@ -277,6 +277,21 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
         Compose exactement la pièce que tu veux. La demande part avec sa bulle : le détenteur voit la version demandée, améliorations comprises.
       </div>
 
+      {/* La porte de sortie vers l'AirBuilder. Quand la pièce est DÉJÀ montée sur
+          un stuff, la ressaisir ici est du travail pour rien : on la coche
+          là-bas et elle revient avec tous ses réglages. */}
+      <a href="/builder?acheter=1"
+        style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 13, padding: "9px 13px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", textDecoration: "none", fontSize: 12.5 }}>
+        <Icon name="sword" size={15} style={{ color: "var(--orange)" }} />
+        <span>
+          <b>Elle est déjà sur un de mes stuffs</b>
+          <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", marginTop: 1 }}>
+            Coche-la dans l&apos;AirBuilder : elle revient ici avec ses réglages.
+          </span>
+        </span>
+        <Icon name="chevron-right" size={13} style={{ color: "var(--text-muted)", marginLeft: 4 }} />
+      </a>
+
       {reprise && (
         <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 13, padding: "9px 12px", borderRadius: 10, background: "rgba(255,140,26,.1)", border: "1px solid rgba(255,140,26,.34)", fontSize: 12.5 }}>
           <Icon name="shirt" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />

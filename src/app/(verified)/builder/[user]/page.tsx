@@ -1,4 +1,4 @@
-import "../airbuilder.css";
+import "@/app/(public)/builder/airbuilder.css";
 import { requireGuild } from "@/lib/access";
 import { BuilderViewer } from "./BuilderViewer";
 

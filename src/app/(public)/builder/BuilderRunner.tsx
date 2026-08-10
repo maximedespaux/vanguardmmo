@@ -4,9 +4,15 @@ import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Charge le moteur AirBuilder (vanilla JS d'iBeats). Re-render au re-montage de la page.
 // Recharge proprement si une autre app (AirGuild) tenait les globals (isolation SPA).
-export function BuilderRunner({ embed = false }: { embed?: boolean }) {
+export function BuilderRunner({ embed = false, connecte = true }: { embed?: boolean; connecte?: boolean }) {
   useEffect(() => {
-    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number; vgOuvrirDepuisURL?: () => void };
+    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number; __ANON?: boolean; vgOuvrirDepuisURL?: () => void };
+    /* Visiteur non connecté : il compose librement, mais rien ne quitte son
+       navigateur. Le moteur lit ce drapeau pour couper la sauvegarde cloud et
+       renvoyer vers la connexion sur tout ce qui engage un compte. Posé AVANT
+       le chargement du moteur, comme `__embed` — après, la sauvegarde aurait
+       déjà pu partir. */
+    w.__ANON = !connecte;
     // L'ancien public/builder.html posait __embed = 1. Le moteur s'en sert pour
     // renvoyer le build au parent par postMessage (c'est ainsi que la
     // candidature le recupere) et pour couper la sauvegarde cloud.
@@ -54,6 +60,6 @@ export function BuilderRunner({ embed = false }: { embed?: boolean }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [embed]);
+  }, [embed, connecte]);
   return null;
 }

@@ -1,4 +1,4 @@
-import "@/app/(verified)/builder/airbuilder.css";
+import "@/app/(public)/builder/airbuilder.css";
 import { SharedBuildViewer } from "./SharedBuildViewer";
 
 // Vue d'un build partagé. Réservée aux membres du serveur Discord comme le

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { BUILDER_MARKUP } from "../markup";
+import { BUILDER_MARKUP } from "@/app/(public)/builder/markup";
 import { ensureVgIcons } from "@/lib/vanillaLoader";
 import { Icon } from "@/components/Icon";
 

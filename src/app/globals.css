@@ -83,6 +83,11 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
   .vg-touch{position:relative}
   .vg-touch::before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:max(100%,44px);height:max(100%,44px)}
+  /* La zone ne s'etend PAS d'office sur tout petit bouton : dans une liste
+     dense — compositions, coffre — les zones voisines se chevaucheraient et le
+     clic partirait sur la mauvaise ligne. Un doigt qui rate est moins grave
+     qu'un doigt qui touche autre chose. Elle se pose donc a la main, la ou les
+     boutons sont assez espaces pour l'accueillir. */
 }
 /* Boutique — les portes du panneau d'entrée. Meme reaction que les cartes
    outils du tableau de bord : ce sont les memes objets, un choix a cliquer. */

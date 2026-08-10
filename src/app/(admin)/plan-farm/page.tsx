@@ -243,7 +243,7 @@ export default function PlanFarmPage() {
           <button
             onClick={() => setChoisies([])}
             style={{
-              fontSize: 11.5, fontWeight: 700, padding: "4px 11px", borderRadius: 20, cursor: "pointer",
+              fontSize: 11.5, fontWeight: 700, padding: "8px 13px", borderRadius: 20, cursor: "pointer",
               border: `1px solid ${choisies.length === 0 ? "var(--orange)" : "var(--border)"}`,
               background: choisies.length === 0 ? "rgba(255,140,26,.16)" : "var(--bg-3)",
               color: choisies.length === 0 ? "var(--orange)" : "var(--text-muted)",
@@ -259,7 +259,7 @@ export default function PlanFarmPage() {
                 key={c}
                 onClick={() => setChoisies((l) => (on ? l.filter((x) => x !== c) : [...l, c]))}
                 style={{
-                  display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, padding: "4px 11px", borderRadius: 20, cursor: "pointer",
+                  display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 600, padding: "8px 13px", borderRadius: 20, cursor: "pointer",
                   border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
                   background: on ? "rgba(255,140,26,.16)" : "var(--bg-3)",
                   color: on ? "var(--orange)" : "var(--text)",

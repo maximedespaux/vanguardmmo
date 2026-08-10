@@ -180,7 +180,7 @@ export default function GuildViewerPage() {
                           {c.specializations.length > 0 && (
                             <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--purple)", background: "rgba(199,125,255,.1)", border: "1px solid color-mix(in srgb, var(--purple) 45%, transparent)", borderRadius: 6, padding: "3px 9px", whiteSpace: "nowrap" }}>{c.specializations.map((s) => `${SPEC_FR[s.type] ?? s.type} ${s.score}%`).join(" · ")}</span>
                           )}
-                          {c.gearProfiles.length > 0 && <a href={`/builder/${u.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", background: "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 6, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="sword" size={12} />AirBuilder ↗</a>}
+                          {c.gearProfiles.length > 0 && <a className="vg-touch" href={`/builder/${u.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)", background: "rgba(255,140,26,.1)", border: "1px solid var(--orange)", borderRadius: 6, padding: "3px 10px", textDecoration: "none", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="sword" size={12} />AirBuilder ↗</a>}
                         </div>
                       </div>
                     );

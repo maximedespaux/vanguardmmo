@@ -64,10 +64,25 @@ if (mode === "vide") {
   supprime.messages = (await p.requestMessage.deleteMany({})).count;
   supprime.offres = (await p.offreVente.deleteMany({})).count;
   supprime.demandes = (await p.bankRequest.deleteMany({})).count;
-  // Seulement les notifications qui menaient à ce qu'on vient d'effacer : une
-  // notification de candidature ou de world boss n'a rien à voir avec ça.
+  /* Seulement les notifications qui menaient à ce qu'on vient d'effacer : une
+     notification de candidature ou de world boss n'a rien à voir avec ça.
+     Deux critères plutôt qu'un, et c'est voulu : la première version filtrait
+     sur une liste de types DEVINÉE — « QUETE », « DEMANDE » — qui ne
+     correspondait à rien en base, où ils s'écrivent « vente », « bank_request »,
+     « REQ_MESSAGE ». Elle n'a rien supprimé et laissé 54 notifications pointant
+     vers des demandes disparues. Le LIEN, lui, ne se devine pas : il dit vers
+     quelle page la notification mène. */
   supprime.notifications = (await p.notification.deleteMany({
-    where: { type: { in: ["QUETE", "DEMANDE", "MESSAGE", "VENTE"] } },
+    where: {
+      OR: [
+        { type: { in: ["vente", "vente_enjeu", "bank_request", "REQ_MESSAGE"] } },
+        { link: { startsWith: "/messages" } },
+        { link: { startsWith: "/boutique" } },
+        { link: { startsWith: "/quetes" } },
+        { link: { startsWith: "/demandes" } },
+        { link: { startsWith: "/requetes/" } },
+      ],
+    },
   })).count;
   console.log(JSON.stringify({ avant, supprime, apres: await compter() }, null, 1));
 }

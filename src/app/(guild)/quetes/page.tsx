@@ -32,6 +32,13 @@ type Objectif = { id: string; titre: string; cible: number; fait: number; unite:
  */
 type Personne = { id: string; nom: string; avatar: string | null };
 type Apport = { id: string; quantite: number; statut: "annonce" | "confirme"; par: Personne };
+/** Une requête d'objet qui n'a pas encore de quête — donc que personne ne peut
+ *  encore rejoindre. C'est ce que « débloquer » veut dire ici. */
+type Requete = {
+  id: string; item: string; quantite: number; demandeur: string; estLaMienne: boolean;
+  note: string | null; cat: string | null; prix: number | null; spec: unknown; quand: string;
+};
+
 type Quete = {
   id: string; titre: string; quantite: number; note: string | null; manque: number | null;
   itemRef: string | null; unite: string | null;
@@ -72,6 +79,10 @@ export default function QuetesPage() {
   const monAvatar = (session?.user as { image?: string } | undefined)?.image ?? null;
 
   const [quetes, setQuetes] = useState<Quete[]>([]);
+  /** Les requêtes d'objets qui n'ont pas encore de quête. Elles dormaient au
+   *  fond d'une conversation : personne ne pouvait les trouver ni les rejoindre. */
+  const [aPrendre, setAPrendre] = useState<Requete[]>([]);
+  const [ouverture, setOuverture] = useState<string | null>(null);
   const [prog, setProg] = useState<Progression | null>(null);
   const [note, setNote] = useState("");
   const [erreur, setErreur] = useState("");
@@ -85,15 +96,30 @@ export default function QuetesPage() {
   const [panier, setPanier] = useState<Record<string, number>>({});
 
   const charger = useCallback(async () => {
-    const [a, b] = await Promise.all([
+    const [a, b, c] = await Promise.all([
       fetch("/api/quetes").then((r) => (r.ok ? r.json() : null)).catch(() => null),
       fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/quetes/a-prendre").then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
     if (a) setQuetes(a);
     if (b) setProg({ moi: b.moi });
+    if (Array.isArray(c)) setAPrendre(c);
     setPret(true);
   }, []);
   useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t); }, [charger]);
+  /** Ouvrir la quête d'une requête : elle devient rejoignable par tout le monde. */
+  const ouvrirQuete = async (id: string) => {
+    setOuverture(id); setErreur("");
+    try {
+      const r = await fetch(`/api/ventes/${id}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "enQuete" }),
+      });
+      if (!r.ok) setErreur((await r.json().catch(() => ({})))?.error ?? "L'ouverture a échoué.");
+      else { setOnglet("principales"); await charger(); }
+    } catch { setErreur("Impossible de joindre le serveur."); }
+    setOuverture(null);
+  };
   useEffect(() => {
     fetch("/api/catalogue").then((r) => (r.ok ? r.json() : null)).then((d) => d && setCatalogue(d.items ?? [])).catch(() => {});
   }, []);
@@ -300,6 +326,13 @@ export default function QuetesPage() {
           <button key={k} onClick={() => setOnglet(k)}
             style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${onglet === k ? "var(--orange)" : "var(--border)"}`, background: onglet === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: onglet === k ? "var(--orange)" : "var(--text-muted)" }}>
             <Icon name={ic} size={15} />{l}
+            {/* Ce qui attend d'être ouvert se signale depuis n'importe quel
+                onglet : sans ça, on ne sait pas qu'il y a de quoi faire. */}
+            {k === "principales" && aPrendre.length > 0 && (
+              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                +{aPrendre.length}
+              </span>
+            )}
             {/* Une confirmation qui attend bloque celui qui a livré : elle se
                 signale même quand on regarde un autre onglet. */}
             {k === "miennes" && aConfirmer > 0 && (
@@ -629,6 +662,45 @@ export default function QuetesPage() {
               </div>
             )}
           </div>}
+        </div>
+      )}
+
+      {/* ── Les requêtes qui attendent qu'on ouvre leur quête ──────────────
+          Une requête d'objet pouvait déjà devenir une quête, mais le bouton
+          dormait au fond de la conversation et seuls le demandeur et le staff
+          le voyaient. Neuf requêtes sur dix restaient donc sans quête, absentes
+          de la page où l'on vient justement chercher quoi farmer. Elles
+          remontent ici : un clic ouvre la quête, et tout le monde peut alors
+          s'y mettre. Ouvrir n'engage à rien — c'est rendre visible. */}
+      {onglet === "principales" && aPrendre.length > 0 && (
+        <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 14 }}>
+          <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.4, color: "var(--gold)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
+            <Icon name="package" size={14} />À débloquer — {aPrendre.length} requête{aPrendre.length > 1 ? "s" : ""} d&apos;objet
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 11px" }}>
+            Personne ne les a au coffre : il faut les farmer. Ouvre la quête et chacun pourra y apporter sa part.
+          </p>
+          <div style={{ display: "grid", gap: 7 }}>
+            {aPrendre.map((r) => (
+              <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 11px" }}>
+                <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                    {r.item}
+                    {r.quantite > 1 && <span style={{ color: "var(--gold)" }}>× {r.quantite}</span>}
+                    {r.estLaMienne && <span style={{ fontSize: 10, fontWeight: 700, color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 6, padding: "1px 6px" }}>ma demande</span>}
+                  </div>
+                  <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>
+                    Demandé par {r.demandeur}{r.note ? ` — ${r.note}` : ""}
+                  </div>
+                </div>
+                <button className="vg-btn" disabled={ouverture === r.id}
+                  onClick={() => ouvrirQuete(r.id)}
+                  style={{ padding: "8px 14px", fontSize: 12.5, opacity: ouverture === r.id ? .6 : 1, flexShrink: 0 }}>
+                  <Icon name="target" size={13} />{ouverture === r.id ? "Ouverture…" : "Ouvrir la quête"}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

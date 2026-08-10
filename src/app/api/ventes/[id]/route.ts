@@ -191,7 +191,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
      * ni dans quel but, et la quête traîne.
      */
     case "enQuete": {
-      if (!estStaff && !estDemandeur) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+      /* Ouvrir une quete est un geste d'entraide, pas un engagement : celui qui
+         ouvre ne promet rien, il rend la demande visible et rejoignable. Le
+         reserver au demandeur et au staff la laissait invisible de la page ou
+         l'on vient justement chercher quoi farmer. */
+      if (!canAccessGuild(a.user.role)) {
+        return NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 });
+      }
       const deja = await prisma.bankRequest.findUnique({ where: { id }, select: { queteId: true, reason: true } });
       if (deja?.queteId) return NextResponse.json({ error: "Une quête existe déjà pour cette demande." }, { status: 409 });
 

@@ -100,6 +100,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   const [prixAp, setPrixAp] = useState("");
   const [paiement, setPaiement] = useState<Paiement>("perins");
   const [note, setNote] = useState("");
+  /** Pour quand tu la voudrais. Facultatif — c'est un repère, pas une promesse. */
+  const [pourQuand, setPourQuand] = useState("");
   /** Pseudo EN JEU : la remise se fait par courrier dans le jeu. */
   const [perso, setPerso] = useState("");
 
@@ -110,7 +112,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   /** Les pièces composées, en attente d'envoi. On commande rarement une seule
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
    *  part — d'où une liste ici, et une demande par pièce à l'arrivée. */
-  const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; prixAp: number; note: string }[]>([]);
+  const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; prixAp: number; note: string; pourQuand: string }[]>([]);
   /** La pièce dont on regarde le détail. Une seule à la fois : six bulles
    *  empilées dans la colonne de droite ne se comparent pas mieux. */
   const [deplie, setDeplie] = useState<number | null>(null);
@@ -227,7 +229,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
       setEtat({ msg: "Donne ton estimation pour cette pièce : c'est elle qui dit au détenteur ce que tu y mets.", ok: false });
       return;
     }
-    setPanier((p) => [...p, { spec, nom: nomComplet, prix: enPerins, prixAp: enAp, note: note.trim() }]);
+    setPanier((p) => [...p, { spec, nom: nomComplet, prix: enPerins, prixAp: enAp, note: note.trim(), pourQuand }]);
     // On garde l'objet et ses réglages : composer la pièce suivante d'un set
     // repart presque toujours des mêmes valeurs.
     setEtat(null);
@@ -262,6 +264,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
           prixEstime: piece.prix,
           prixEstimeAp: piece.prixAp || undefined,
           reason: piece.note ? `Sur mesure — ${piece.note.slice(0, 300)}` : "Objet sur mesure",
+          dateSouhaitee: piece.pourQuand || undefined,
           spec: piece.spec,
         })),
       }),
@@ -270,7 +273,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setEnvoi(false); setARelire(false);
     const ok = r.ok ? (j.count ?? panier.length) : 0;
     if (!ok) { setEtat({ ok: false, msg: j.error || `Envoi impossible (erreur ${r.status}).` }); return; }
-    setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix("");
+    setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix(""); setPourQuand("");
     // Pile déposée par le builder : on enchaîne sur la pièce suivante plutôt
     // que de renvoyer l'utilisateur au builder entre chaque.
     const suite = rang + 1 < pile.length;
@@ -386,6 +389,23 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                 erreur={!!etat && !etat.ok && !Number(prix) && !Number(prixAp)}
               />
               <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Une précision ? (facultatif)" style={champ} />
+              {/* POUR QUAND. « Il me la faut avant samedi » se disait dans le
+                  fil — quand il se disait — et celui qui prenait la commande le
+                  mardi ne le lisait jamais. Facultatif : une date inventée pour
+                  remplir un champ vaut moins que pas de date du tout. */}
+              <label style={{ display: "flex", alignItems: "center", gap: 9, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 12px" }}>
+                <Icon name="calendar" size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                <span style={{ fontSize: 12.5, color: "var(--text-muted)", flexShrink: 0 }}>Pour quand ?</span>
+                <input type="date" value={pourQuand} min={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setPourQuand(e.target.value)} aria-label="Date souhaitée"
+                  style={{ marginLeft: "auto", background: "transparent", border: "none", outline: "none", color: pourQuand ? "var(--gold)" : "var(--text-muted)", fontSize: 13, fontFamily: "inherit", colorScheme: "dark" }} />
+                {pourQuand && (
+                  <button type="button" onClick={() => setPourQuand("")} title="Retirer la date"
+                    style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 0 }}>
+                    <Icon name="x" size={13} />
+                  </button>
+                )}
+              </label>
               <button className="vg-btn" onClick={ajouter} style={{ justifyContent: "center" }}>
                 <Icon name="plus" size={14} />Ajouter à ma demande
               </button>
@@ -460,7 +480,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
         <ConfirmationCommande
           titre="Ta commande sur mesure"
           sousTitre="Le prix reste à convenir : chaque pièce se négocie dans le fil. Relis la liste avant d'envoyer — une fois partie, c'est ta commande en cours."
-          lignes={panier.map((p): LigneCommande => ({ nom: p.nom, quantite: 1, prix: p.prix || null, note: p.note || null }))}
+          lignes={panier.map((p): LigneCommande => ({ nom: p.nom, quantite: 1, prix: p.prix || null,
+            note: [p.note, p.pourQuand ? `pour le ${new Date(p.pourQuand).toLocaleDateString("fr-FR")}` : ""].filter(Boolean).join(" · ") || null }))}
           perso={perso.trim()} paiement={paiement} envoi={envoi}
           motAction="Confirmer et envoyer"
           onAjouter={() => setARelire(false)}

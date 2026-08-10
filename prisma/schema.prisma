@@ -719,6 +719,11 @@ model BankRequest {
   /// Le membre qui s'est engagé à fournir l'objet. Tant qu'il est nul, la
   /// demande n'a personne en face : c'est ce vide qui faisait qu'une demande
   /// dormait — « le staff » n'est pas quelqu'un.
+  /// Pour QUAND le client la voudrait. Facultatif, et ce n'est pas une
+  /// promesse : c'est un repère. Sans lui, « il me la faut avant samedi » se
+  /// disait dans le fil — quand il se disait — et le détenteur qui prenait la
+  /// commande le mardi ne le lisait jamais.
+  dateSouhaitee     DateTime?
   detenteurId       String?
   /// Rendez-vous convenu en jeu. Deux joueurs qui ne se croisent jamais ne
   /// concluent rien, et « je suis en jeu » ne se lit qu'au moment où c'est vrai.

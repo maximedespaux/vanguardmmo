@@ -67,6 +67,16 @@ export async function GET() {
   return NextResponse.json(reqs.map(ser));
 }
 
+/** Une date « pour quand » : une vraie date, jamais dans le passé, jamais à
+ *  plus d'un an — au-delà ce n'est plus une échéance, c'est du bruit. */
+function dateVoulue(v: unknown): Date | null {
+  if (!v) return null;
+  const d = new Date(String(v));
+  if (Number.isNaN(d.getTime())) return null;
+  const min = Date.now() - 86_400_000, max = Date.now() + 366 * 86_400_000;
+  return d.getTime() < min || d.getTime() > max ? null : d;
+}
+
 // POST /api/bank-request — créer une requête (pré-requis : profil avec au moins un personnage)
 
 export async function POST(req: Request) {
@@ -131,11 +141,20 @@ export async function POST(req: Request) {
   if (Array.isArray(b.items) && b.items.length) {
     // Un panier = une transaction → même batchId pour tous les articles (récap consolidé + 1 seul message Discord)
     const batchId = (globalThis.crypto && globalThis.crypto.randomUUID) ? globalThis.crypto.randomUUID() : `b${Date.now()}${Math.random().toString(36).slice(2, 8)}`;
+    /* L'estimation porte sur le PANIER entier ; les demandes, elles, sont une
+       par article. On la répartit au prorata du tarif de chaque ligne, pour que
+       la somme des priceEach retombe sur ce que l'acheteur a annoncé. */
+    const totalTarif = b.items.reduce((t: number, it: any) => t + Math.max(0, Math.round(Number(it?.price) || 0)) * Math.max(1, Math.floor(Number(it?.quantity) || 1)), 0);
+    const estimTotale = Math.max(0, Math.round(Number(b?.prixEstime) || 0));
     let count = 0;
     for (const it of b.items.slice(0, 40)) {
       const name = (it?.name ?? "").toString().slice(0, 200).trim();
       if (!name) continue;
       const quantite = Math.max(1, Math.floor(Number(it.quantity) || 1));
+      const tarifLigne = Math.max(0, Math.round(Number(it.price) || 0)) * quantite;
+      const estimUnitaire = estimTotale > 0 && totalTarif > 0
+        ? Math.round((estimTotale * tarifLigne) / totalTarif / quantite) || null
+        : null;
       const cree = await prisma.bankRequest.create({
         data: {
           userId: a.user.id, username: a.user.username, discordId: a.user.discordId,
@@ -144,9 +163,14 @@ export async function POST(req: Request) {
           origine: "achat",
           cat: (it?.cat ?? "").toString().slice(0, 60).trim() || null,
           characterName: perso,
-          priceEach: Math.max(0, Math.round(Number(it.price) || 0)),
+          /* L'estimation de l'acheteur PRIME sur le tarif de la guilde quand
+             elle existe : c'est ce qu'il est prêt à mettre, et c'est elle qui
+             devient la cagnotte si la commande part en quête. Le tarif reste le
+             repli — un panier d'avant ce champ n'a rien d'autre. */
+          priceEach: estimUnitaire ?? Math.max(0, Math.round(Number(it.price) || 0)),
           batchId,
           modePaiement: ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins",
+          dateSouhaitee: dateVoulue(b?.dateSouhaitee),
           reason: "Boutique · demande d'objet",
         },
       });
@@ -193,6 +217,7 @@ export async function POST(req: Request) {
           spec: specDepuisJson(pc?.spec) ?? undefined,
           modePaiement: paiement,
           priceEach: Math.max(0, Math.round(Number(pc?.prixEstime) || 0)) || null,
+          dateSouhaitee: dateVoulue(pc?.dateSouhaitee),
         },
       });
       await ouvrirFilRequete(cree.id, a.user.username, nom, cree.quantity, cree.priceEach);
@@ -234,6 +259,7 @@ export async function POST(req: Request) {
          dans la raison, la ou le detenteur la lit, plutot que d'inventer un
          schema pour une valeur que le tarif final remplacera. */
       priceEach: enPerins > 0 ? enPerins : null,
+      dateSouhaitee: dateVoulue(b?.dateSouhaitee),
     },
   });
   await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);

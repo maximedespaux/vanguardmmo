@@ -14,6 +14,7 @@ import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
+import { MontantDemande } from "@/components/MontantDemande";
 import { ConfirmationCommande, type LigneCommande } from "@/components/ConfirmationCommande";
 import { useCardFx } from "@/components/VgFx";
 
@@ -126,6 +127,13 @@ export function EcranEconomie() {
   const [sending, setSending] = useState(false);
   /** Le récapitulatif ouvert avant l'envoi. */
   const [aRelire, setARelire] = useState(false);
+  /** Ce que l'acheteur est prêt à mettre — obligatoire, comme sur mesure. */
+  const [estimP, setEstimP] = useState("");
+  const [estimAp, setEstimAp] = useState("");
+  const [estimManque, setEstimManque] = useState(false);
+  const [persoManque, setPersoManque] = useState(false);
+  /** Pour quand il la voudrait. Facultatif. */
+  const [pourQuand, setPourQuand] = useState("");
   /** Pseudo EN JEU : c'est là que l'objet part par courrier. Pré-rempli avec
    *  le personnage principal — le retaper à chaque demande est une corvée. */
   const [perso, setPerso] = useState("");
@@ -211,16 +219,22 @@ export function EcranEconomie() {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
     if (missingSex.length) return flash("Indique Garçon ou Fille pour chaque Stuff avant d'envoyer.");
-    if (!perso.trim()) return flash("Indique ton pseudo en jeu : c'est là que l'objet sera envoyé par courrier.");
+    if (!perso.trim()) { setPersoManque(true); return flash("Indique ton pseudo en jeu : c'est là que l'objet sera envoyé par courrier."); }
+    setPersoManque(false);
+    const p = paiement === "airpoints" ? 0 : Math.max(0, Math.round(Number(estimP) || 0));
+    const ap = paiement === "perins" ? 0 : Math.max(0, Math.round(Number(estimAp) || 0));
+    if (p + ap <= 0) { setEstimManque(true); return flash("Donne ton estimation : c'est elle qui dit au détenteur ce que tu y mets."); }
+    setEstimManque(false);
     setARelire(true);
   };
 
   const submitCart = async () => {
     setSending(true);
     const items = lignesDuPanier();
-    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement }) });
+    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement, dateSouhaitee: pourQuand || undefined,
+      prixEstime: Math.max(0, Math.round(Number(estimP) || 0)), prixEstimeAp: Math.max(0, Math.round(Number(estimAp) || 0)) }) });
     setSending(false);
-    if (r.ok) { setARelire(false); setCart({}); setStuffSex({}); flash(`Commande envoyée — ${cartIds.length} article(s). Suis-la dans « Ma commande ».`); load(); }
+    if (r.ok) { setARelire(false); setCart({}); setStuffSex({}); setEstimP(""); setEstimAp(""); setPourQuand(""); flash(`Commande envoyée — ${cartIds.length} article(s). Suis-la dans « Ma commande ».`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); setARelire(false); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
@@ -371,13 +385,55 @@ export function EcranEconomie() {
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns{enAP(cartTotal, tauxAP) ? <span style={{ fontWeight: 400, color: "var(--text-muted)" }}> · {enAP(cartTotal, tauxAP)}</span> : null}</b></div>
             {/* Le pseudo EN JEU, juste au-dessus du bouton : c'est la dernière
                 chose qu'on vérifie avant d'envoyer, et l'objet part par courrier. */}
+            {/* LE PSEUDO EN JEU D'ABORD. Il était coincé juste au-dessus du
+                bouton, après le paiement : on découvrait qu'il manquait au
+                moment de commander. C'est pourtant la première question — sans
+                lui, l'objet n'a nulle part où être envoyé. */}
+            <div style={{ marginBottom: 9 }}>
+              <span style={{ display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: persoManque ? "var(--red)" : "var(--text-muted)", marginBottom: 4 }}>
+                Pseudo en jeu — obligatoire
+              </span>
+              <ChampPseudo valeur={perso} onChange={(v) => { setPerso(v); setPersoManque(false); }}
+                style={{ ...inp, width: "100%", borderColor: persoManque ? "var(--red)" : "var(--border)" }} />
+              <span style={{ display: "block", fontSize: 11, color: persoManque ? "var(--red)" : "var(--text-muted)", marginTop: 4, lineHeight: 1.4 }}>
+                {persoManque ? "Indique-le : c'est là que l'objet sera envoyé par courrier." : "C'est là que l'objet sera envoyé par courrier, en jeu."}
+              </span>
+            </div>
             <div style={{ marginBottom: 9 }}>
               <ChoixPaiement valeur={paiement} onChange={setPaiement} />
             </div>
+            {/* LE MÊME TICKET QUE SUR MESURE. Le panier n'en avait pas : on
+                voyait le tarif de la guilde et on commandait, sans jamais dire
+                ce qu'on était prêt à mettre. Le détenteur n'avait donc rien à
+                quoi répondre — et quand la commande part en quête, la cagnotte
+                restait vide. Pré-rempli au tarif : c'est le point de départ
+                naturel, pas un plafond. */}
             <div style={{ marginBottom: 9 }}>
-              <span style={{ display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
-              <ChampPseudo valeur={perso} onChange={setPerso} style={{ ...inp, width: "100%" }} />
+              <MontantDemande
+                paiement={paiement}
+                perins={estimP} airpoints={estimAp}
+                onPerins={(v) => { setEstimP(v); setToast(""); }}
+                onAirpoints={(v) => { setEstimAp(v); setToast(""); }}
+                objectif={cartTotal || null}
+                tauxAP={tauxAP}
+                erreur={estimManque}
+              />
             </div>
+            {/* POUR QUAND. Facultatif : une date inventée pour remplir un champ
+                vaut moins que pas de date du tout. */}
+            <label style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 12px" }}>
+              <Icon name="calendar" size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)", flexShrink: 0 }}>Pour quand ?</span>
+              <input type="date" value={pourQuand} min={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setPourQuand(e.target.value)} aria-label="Date souhaitée"
+                style={{ marginLeft: "auto", background: "transparent", border: "none", outline: "none", color: pourQuand ? "var(--gold)" : "var(--text-muted)", fontSize: 13, fontFamily: "inherit", colorScheme: "dark" }} />
+              {pourQuand && (
+                <button type="button" onClick={() => setPourQuand("")} title="Retirer la date"
+                  style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 0 }}>
+                  <Icon name="x" size={13} />
+                </button>
+              )}
+            </label>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={demanderConfirmation} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Commander</button>
             </div>

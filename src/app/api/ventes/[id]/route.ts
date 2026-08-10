@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
 import { detenteursDe, majAnnonceVente, prevenir, prevenirStaff, rendreAuCoffre, retirerDuCoffre, vueVente } from "@/lib/ventes";
-import { donnerXp } from "@/lib/xp";
 import { sansBigInt } from "@/lib/json";
 import { prixMixte } from "@/lib/monnaies";
 
@@ -415,7 +414,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         },
       });
       if (vendeur) {
-        await donnerXp(vendeur.id, "quete", 100, `Vente remise : ${quantite} × ${dem.item}`, `vente:${id}`);
         await prevenir(
           dem.userId,
           "Ton objet a été remis",

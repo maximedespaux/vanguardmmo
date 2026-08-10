@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
-import { niveau } from "@/lib/xp";
 
 /**
  * Les chiffres de la guilde, pour le staff.
@@ -22,9 +21,8 @@ export async function GET() {
 
   const ilYa30Jours = new Date(Date.now() - 30 * 864e5);
 
-  const [membres, xp, apports, quetes, demandes] = await Promise.all([
+  const [membres, apports, quetes, demandes] = await Promise.all([
     prisma.user.findMany({ select: { id: true, username: true, avatar: true, discordId: true, role: true, lastSeenAt: true } }),
-    prisma.xpEvent.findMany({ select: { userId: true, points: true, source: true, createdAt: true } }),
     prisma.queteContribution.findMany({
       where: { statut: "confirme" },
       select: { userId: true, quantite: true, confirmeAt: true, quete: { select: { titre: true } } },
@@ -33,42 +31,38 @@ export async function GET() {
     prisma.bankRequest.findMany({ select: { userId: true, username: true, status: true, createdAt: true } }),
   ]);
 
-  const somme = (t: { points: number }[]) => t.reduce((s, x) => s + x.points, 0);
-
+  /* Le classement se faisait sur l'XP. Elle a ete retiree : on classe donc sur
+     ce qu'on mesurait vraiment a travers elle — les UNITES APPORTEES, c'est-a-dire
+     ce que quelqu'un a effectivement ramene et qu'un autre a confirme recevoir. */
   const parMembre = membres
     .map((m) => {
-      const sien = xp.filter((x) => x.userId === m.id);
-      const total = somme(sien);
+      const siens = apports.filter((c) => c.userId === m.id);
       return {
         id: m.id,
         nom: m.username,
         role: m.role,
         avatar: m.avatar ? `https://cdn.discordapp.com/avatars/${m.discordId}/${m.avatar}.png?size=64` : null,
-        xp: total,
-        niveau: niveau(total).niveau,
-        // Le détail par source dit COMMENT quelqu'un aide : celui qui dépose
-        // sans jamais venir aux CS n'a pas le même profil que l'inverse.
-        depots: somme(sien.filter((x) => x.source === "depot")),
-        quetes: somme(sien.filter((x) => x.source === "quete")),
-        presences: somme(sien.filter((x) => x.source === "presence")),
-        unitesApportees: apports.filter((c) => c.userId === m.id).reduce((s, c) => s + c.quantite, 0),
+        unitesApportees: siens.reduce((s, c) => s + c.quantite, 0),
+        // Combien de fois il a livré, indépendamment des quantités : dix
+        // livraisons de un ne se lisent pas comme une livraison de dix.
+        livraisons: siens.length,
         demandes: demandes.filter((d) => d.username === m.username).length,
         quetesOuvertes: quetes.filter((q) => q.auteurId === m.id).length,
         actifRecemment: !!m.lastSeenAt && m.lastSeenAt > ilYa30Jours,
       };
     })
-    .filter((m) => m.xp || m.demandes || m.quetesOuvertes)
-    .sort((x, y) => y.xp - x.xp);
+    .filter((m) => m.unitesApportees || m.demandes || m.quetesOuvertes)
+    .sort((x, y) => y.unitesApportees - x.unitesApportees);
 
   // Les 30 derniers jours, jour par jour : une activité qui s'effondre se voit
   // sur une courbe, jamais sur un total.
-  const parJour: { jour: string; xp: number; demandes: number }[] = [];
+  const parJour: { jour: string; apports: number; demandes: number }[] = [];
   for (let i = 29; i >= 0; i--) {
     const d = new Date(Date.now() - i * 864e5);
     const jour = d.toISOString().slice(0, 10);
     parJour.push({
       jour,
-      xp: somme(xp.filter((x) => x.createdAt.toISOString().slice(0, 10) === jour)),
+      apports: apports.filter((c) => c.confirmeAt?.toISOString().slice(0, 10) === jour).reduce((s, c) => s + c.quantite, 0),
       demandes: demandes.filter((r) => r.createdAt.toISOString().slice(0, 10) === jour).length,
     });
   }
@@ -76,7 +70,6 @@ export async function GET() {
   return NextResponse.json({
     totaux: {
       membresActifs: parMembre.filter((m) => m.actifRecemment).length,
-      xpTotal: somme(xp),
       quetesOuvertes: quetes.filter((q) => q.statut === "ouverte").length,
       quetesLivrees: quetes.filter((q) => q.statut === "livree").length,
       unitesApportees: apports.reduce((s, c) => s + c.quantite, 0),

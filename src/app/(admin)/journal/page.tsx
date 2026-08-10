@@ -12,14 +12,14 @@ import { useCardFx } from "@/components/VgFx";
  * l'ordre, pour vérifier un cas précis plutôt que de croire un ressenti.
  */
 type Ligne = {
-  id: string; quand: string; type: "demande" | "xp" | "decision";
+  id: string; quand: string; type: "demande" | "apport" | "decision";
   qui: string; quoi: string; valeur: number | null;
 };
 type Membre = { nom: string; donne: number; demandes: number };
 
 const TYPE: Record<Ligne["type"], { l: string; c: string; ic: IconName }> = {
   demande: { l: "Demande", c: "var(--orange)", ic: "cart" },
-  xp: { l: "XP", c: "var(--green)", ic: "medal" },
+  apport: { l: "Apport", c: "var(--green)", ic: "package" },
   decision: { l: "Décision", c: "var(--blue)", ic: "shield-check" },
 };
 
@@ -83,7 +83,7 @@ export default function JournalPage() {
       <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
         <input value={membre} onChange={(e) => setMembre(e.target.value)} placeholder="Filtrer par membre…"
           style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13, minWidth: 200 }} />
-        {([["", "Tout"], ["demande", "Demandes"], ["xp", "XP donné"], ["decision", "Décisions"]] as const).map(([k, l]) => (
+        {([["", "Tout"], ["demande", "Demandes"], ["apport", "Apports"], ["decision", "Décisions"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setFiltre(k)}
             style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit", border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
             {l}

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
-import { donnerXp, pointsDepot } from "@/lib/xp";
 
 /**
  * Dépôt RAPIDE dans son coffre personnel, depuis la liste de ce qui manque.
@@ -45,11 +44,5 @@ export async function POST(req: Request) {
     update: { data: { ...etat, inv: { ...inv, [pseudo]: { ...mien, [itemRef]: apres } } } as object },
   });
 
-  // Même barème que le dépôt constaté par la sauvegarde de l'app : ce qui
-  // manquait au seuil vaut trois fois le surplus.
-  const points = pointsDepot(ajout, Math.max(0, seuil - totalAvant));
-  const jour = new Date().toISOString().slice(0, 10);
-  await donnerXp(a.user.id, "depot", points, `${ajout} × ${itemRef.split("|").pop()} déposé au coffre`, `depot:${jour}:${pseudo}:${itemRef}:${apres}`);
-
-  return NextResponse.json({ ok: true, stock: apres, points });
+  return NextResponse.json({ ok: true, stock: apres });
 }

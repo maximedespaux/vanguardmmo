@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin } from "@/config/roles";
 import { normaliserCompo, CRENEAUX, type Creneau } from "@/lib/compositions";
-import { BAREME, donnerXp } from "@/lib/xp";
 
 /**
  * POST /api/compositions/presences — le staff confirme qui était VRAIMENT là.
@@ -44,7 +43,6 @@ export async function POST(req: Request) {
     const compte = comptes.find((c) => c.username.toLowerCase() === joueur.toLowerCase());
     if (!compte) continue;
     // Une même soirée confirmée deux fois ne paie qu'une fois.
-    await donnerXp(compte.id, "presence", BAREME.presence, `Présent aux Chambres Secrètes — ${libelle}`, `cs:${jour}:${creneau}:${compte.id}`);
     credites += 1;
   }
   return NextResponse.json({ credites });

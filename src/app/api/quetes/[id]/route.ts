@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessGuild } from "@/config/roles";
-import { BAREME, donnerXp } from "@/lib/xp";
 import { QUETE_AVEC, serialiserQuete } from "@/lib/quetes";
 
 /**
@@ -78,13 +77,6 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
 
     await prisma.queteContribution.update({ where: { id: c.id }, data: { statut: "confirme", confirmeAt: new Date() } });
 
-    // Récompense AU PRORATA : celui qui apporte la moitié touche la moitié.
-    // Un forfait identique pour 1 et pour 399 récompenserait le passager.
-    // Plancher à 1 point : un petit apport reste un apport, pas rien.
-    const part = Math.min(1, c.quantite / Math.max(1, q.quantite));
-    const xp = Math.max(1, Math.round(BAREME.quete * part));
-    await donnerXp(c.userId, "quete", xp, `Quête : ${c.quantite} × ${q.titre} livré`, `quete:${c.id}`);
-
     // La quête se ferme quand le compte y est. Personne n'a à penser à la clore.
     const total = vue.confirme + c.quantite;
     if (total >= q.quantite) {
@@ -95,7 +87,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
       .create({
         data: {
           userId: c.userId, type: "QUETE", title: "Livraison confirmée",
-          body: `${a.user.username} a reçu tes ${c.quantite} × ${q.titre} — +${xp} XP.`,
+          body: `${a.user.username} a confirmé la réception de tes ${c.quantite} × ${q.titre}.`,
           link: "/quetes",
         },
       })

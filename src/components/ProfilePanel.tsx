@@ -28,7 +28,6 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const { data: session } = useSession();
   const u = session?.user as any;
   const [open, setOpen] = useState(false);
-  const [xp, setXp] = useState<{ total: number; niveau: number; dansNiveau: number; pourNiveau: number } | null>(null);
   /* Le pseudo EN JEU du personnage principal. Le nom Discord et l'identifiant
      viennent du compte : ils ne se modifient pas ici, et les afficher grisés
      evite qu'on les cherche ailleurs. Le pseudo, lui, est la seule chose que le
@@ -37,13 +36,6 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const [pseudo, setPseudo] = useState("");
   const [etatPseudo, setEtatPseudo] = useState<"" | "envoi" | "ok" | "erreur">("");
   const ref = useRef<HTMLDivElement>(null);
-
-  // Chargé à l'ouverture seulement : le niveau n'a pas besoin d'être suivi en
-  // continu, et le panneau est fermé la plupart du temps.
-  useEffect(() => {
-    if (!open || xp) return;
-    fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).then((d) => d?.moi && setXp(d.moi)).catch(() => {});
-  }, [open, xp]);
 
   useEffect(() => {
     if (!open || principal) return;
@@ -108,21 +100,6 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
             </div>
           </div>
 
-          {/* Progression : le niveau vit ici, sous le nom, parce que c'est là
-              qu'on regarde qui on est. Ce n'est plus un lien — il menait au
-              tableau de bord, qui a quitté la navigation. */}
-          {xp && (
-            <div style={{ display: "block", padding: "11px 16px", borderBottom: "1px solid var(--border)", color: "inherit" }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 7, marginBottom: 6 }}>
-                <span className="font-heading" style={{ fontSize: 12.5, fontWeight: 700, color: "var(--orange)" }}>Niveau {xp.niveau}</span>
-                <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{xp.total.toLocaleString("fr-FR")} XP</span>
-                <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)" }}>{xp.dansNiveau} / {xp.pourNiveau}</span>
-              </div>
-              <div style={{ height: 5, borderRadius: 3, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden" }}>
-                <div style={{ width: `${Math.min(100, Math.round((xp.dansNiveau / xp.pourNiveau) * 100))}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)" }} />
-              </div>
-            </div>
-          )}
 
           {/* Ce qui vient du compte Discord, et qui ne se change pas ici. */}
           <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", display: "grid", gap: 6 }}>

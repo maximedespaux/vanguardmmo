@@ -7,7 +7,6 @@ import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
-import { Progression } from "@/components/Progression";
 
 type Prio = { level: "haute" | "moyenne" | "basse"; label: string; count: number; href: string };
 type Deficit = { item: string; stock: number; target: number; manque: number };
@@ -108,7 +107,6 @@ export default function DashboardPage() {
       {/* ── Ma progression ──
           Avant les priorités du staff : sur SON tableau de bord, un membre veut
           d'abord savoir où il en est. */}
-      <Progression />
 
       {/* ── Priorités (staff seulement) ── */}
       {isAdmin && <div className="dash-card dash-prio" style={{ marginBottom: 24 }}>

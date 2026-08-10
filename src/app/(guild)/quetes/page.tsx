@@ -8,7 +8,6 @@ import { useCardFx } from "@/components/VgFx";
 import { canAccessAdmin } from "@/config/roles";
 import type { Role } from "@prisma/client";
 import { AvatarCadre } from "@/components/AvatarCadre";
-import { rangDe, rangSuivant } from "@/lib/rangs";
 import type { ObjetCoffre } from "@/lib/coffre";
 import type { Source } from "@/lib/ouFarmer";
 import { reglagesPour, resumerPiece, CHOIX_VIDE, type ChoixPiece } from "@/lib/specsFlyff";
@@ -42,7 +41,6 @@ type Quete = {
   /** La demande dont la quête est née, quand elle vient d'une requête d'objet. */
   requeteId?: string | null;
 };
-type Progression = { moi: { total: number; niveau: number; dansNiveau: number; pourNiveau: number } };
 
 const ETAT: Record<Quete["statut"], { l: string; c: string; ic: "target" | "check" | "x" }> = {
   ouverte: { l: "En cours", c: "var(--gold)", ic: "target" },
@@ -72,7 +70,6 @@ export default function QuetesPage() {
   const monAvatar = (session?.user as { image?: string } | undefined)?.image ?? null;
 
   const [quetes, setQuetes] = useState<Quete[]>([]);
-  const [prog, setProg] = useState<Progression | null>(null);
   const [note, setNote] = useState("");
   const [erreur, setErreur] = useState("");
   const [pret, setPret] = useState(false);
@@ -85,12 +82,8 @@ export default function QuetesPage() {
   const [panier, setPanier] = useState<Record<string, number>>({});
 
   const charger = useCallback(async () => {
-    const [a, b] = await Promise.all([
-      fetch("/api/quetes").then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch("/api/xp").then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]);
+    const a = await fetch("/api/quetes").then((r) => (r.ok ? r.json() : null)).catch(() => null);
     if (a) setQuetes(a);
-    if (b) setProg({ moi: b.moi });
     setPret(true);
   }, []);
   useEffect(() => { charger(); const t = setInterval(charger, 30000); return () => clearInterval(t); }, [charger]);
@@ -259,34 +252,10 @@ export default function QuetesPage() {
   /** Une confirmation en attente est la seule chose qui BLOQUE quelqu'un d'autre. */
   const aConfirmer = miennes.reduce((s, x) => s + x.contributions.filter((c) => c.statut === "annonce").length, 0);
   const liste = onglet === "principales" ? aFaire : onglet === "miennes" ? miennes : [...couvertes, ...closes];
-  const niveau = prog?.moi.niveau ?? 1;
-  const rang = rangDe(niveau);
-  const suivant = rangSuivant(niveau);
-  const pc = prog ? Math.min(100, Math.round((prog.moi.dansNiveau / prog.moi.pourNiveau) * 100)) : 0;
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
-      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin, et qui s'en charge. Aider fait monter ton niveau ; celui qui a demandé confirme la réception." />
-
-      {/* ── Bandeau de progression : la boucle du jeu, toujours à l'écran ── */}
-      <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 18, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-        <AvatarCadre src={monAvatar} niveau={niveau} taille={64} montrerRang />
-
-        <div style={{ flex: "1 1 260px", minWidth: 220 }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
-            <span className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: rang.couleur }}>Niveau {niveau}</span>
-            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{(prog?.moi.total ?? 0).toLocaleString("fr-FR")} XP</span>
-            <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)" }}>
-              {suivant ? `${suivant.nom} au niveau ${suivant.seuil}` : "rang maximal atteint"}
-            </span>
-          </div>
-          <div style={{ height: 8, borderRadius: 5, background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden", margin: "7px 0 5px" }}>
-            <div style={{ width: `${pc}%`, height: "100%", background: `linear-gradient(90deg, ${rang.couleur}, var(--orange))`, transition: "width .4s var(--ease,ease)" }} />
-          </div>
-          <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{rang.obtention}</div>
-        </div>
-
-      </div>
+      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin, et qui s'en charge. Chacun annonce ce qu'il apporte ; le demandeur confirme la réception." />
 
       {erreur && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--red)" }}>{erreur}</div>}
 
@@ -676,7 +645,7 @@ export default function QuetesPage() {
                           <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Personne n&apos;a contribué.</div>
                         ) : x.contributions.map((c) => (
                           <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
-                            <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
+                            <AvatarCadre src={c.par.avatar} nom={c.par.nom} taille={20} />
                             <b><Pseudo nom={c.par.nom} /></b>
                             <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                               {c.statut === "confirme" ? "a livré" : "avait promis"} {lisible(c.quantite, x.unite)}
@@ -732,7 +701,7 @@ export default function QuetesPage() {
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
-                    <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} niveau={1} taille={22} />
+                    <AvatarCadre src={x.auteur.avatar} nom={x.auteur.nom} taille={22} />
                     demandé par <b style={{ color: "var(--text)" }}><Pseudo nom={x.auteur.nom} /></b>
                   </div>
                   {x.note && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 6, fontStyle: "italic" }}>« {x.note} »</div>}
@@ -743,7 +712,7 @@ export default function QuetesPage() {
                     <div style={{ display: "grid", gap: 5, marginTop: 10, paddingTop: 9, borderTop: "1px dashed var(--border)" }}>
                       {x.contributions.map((c) => (
                         <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
-                          <AvatarCadre src={c.par.avatar} nom={c.par.nom} niveau={1} taille={20} />
+                          <AvatarCadre src={c.par.avatar} nom={c.par.nom} taille={20} />
                           <b><Pseudo nom={c.par.nom} /></b>
                           <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                             {c.statut === "confirme" ? "a livré" : "apporte"} {lisible(c.quantite, x.unite)}

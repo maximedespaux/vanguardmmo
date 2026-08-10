@@ -90,7 +90,7 @@ export default function CompositionsPage() {
   };
   const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => sauver({ signups: next, slotMeta: meta });
 
-  /** Le staff atteste de la venue : c'est ce constat, et lui seul, qui donne l'XP. */
+  /** Le staff atteste de la venue : c'est ce constat, et lui seul, qui compte. */
   const confirmerPresences = async (creneau: Creneau, label: string, combien: number) => {
     if (!window.confirm(`Confirmer que les ${combien} membre(s) encore listés étaient présents (${label}) ?\nRetire d'abord les absents avec la croix.`)) return;
     const r = await fetch("/api/compositions/presences", {
@@ -278,7 +278,7 @@ export default function CompositionsPage() {
               </button>
               {isAdmin && annonces.length > 0 && (
                 <button onClick={() => confirmerPresences(seance.creneau, seance.label, annonces.length)}
-                  title="Crédite l'XP de présence aux membres encore listés"
+                  title="Enregistre la présence des membres encore listés"
                   style={{ fontSize: 11.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
                   <Icon name="medal" size={12} />Ils étaient là
                 </button>

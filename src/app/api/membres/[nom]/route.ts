@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { niveau as niveauDepuisXp } from "@/lib/xp";
 
 /**
  * La fiche d'un membre, telle qu'on la lit avant de traiter avec lui.
@@ -150,7 +149,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
     // création du compte sur le site.
     rejointLe: (membre.verifiedAt ?? membre.createdAt).toISOString(),
     vuLe: membre.lastSeenAt ? membre.lastSeenAt.toISOString() : null,
-    niveau: niveauDepuisXp(total).niveau,
     xp: total,
     personnages: membre.characters.map((c) => ({
       nom: c.name, classe: c.class, niveau: c.level, prestige: c.prestige, principal: c.isMain,

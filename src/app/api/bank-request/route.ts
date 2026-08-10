@@ -52,7 +52,10 @@ async function notifyHolders(itemNames: string[], requester: string, requesterId
     const users = await prisma.user.findMany({ where: { OR: [...holders].map((h) => ({ username: { equals: h, mode: "insensitive" as const } })) }, select: { id: true } });
     const recipients = users.filter((u) => u.id !== requesterId);
     if (!recipients.length) return;
-    await prisma.notification.createMany({ data: recipients.map((u) => ({ userId: u.id, type: "bank_request", title: `${requester} souhaite un objet que tu détiens`, body: [...new Set(itemNames)].join(", ").slice(0, 300), link: "/gestion-dettes" })) });
+    // Vers /messages : la conversation de la demande vit là. Le lien pointait
+    // sur /gestion-dettes, page disparue avec le système de dettes — celui qui
+    // détenait l'objet cliquait sa notification et tombait sur un 404.
+    await prisma.notification.createMany({ data: recipients.map((u) => ({ userId: u.id, type: "bank_request", title: `${requester} souhaite un objet que tu détiens`, body: [...new Set(itemNames)].join(", ").slice(0, 300), link: "/messages" })) });
   } catch { /* une notif ne doit jamais bloquer la requête */ }
 }
 

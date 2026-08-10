@@ -14,7 +14,6 @@ type Data = {
   members: { total: number; active: number; inactive: number; roles: { role: string; count: number }[] };
   characters: { total: number; mains: number; secondaries: number; withoutBuild: number; classes: { classe: string; count: number }[] };
   builds: { total: number; withoutBuild: number };
-  debts: { ongoing: number; repaid: number; toValidate: number; ongoingAmount: number; overdue: number; remaining: number };
   absences: { active: number; pending: number };
   coffre: { under: number; total: number; topDeficits: Deficit[] };
   candidatures: { pending: number; waiting: number; total: number };
@@ -92,7 +91,7 @@ export default function DashboardPage() {
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Le tableau de bord n'est plus une fonctionnalité à part : c'est la vue
           d'entrée du GuildViewer, dans l'organisation en 3 outils. */}
-      <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="GuildViewer · Tableau de bord" subtitle="L'état de Vanguard en temps réel : membres, personnages, builds et économie." />
+      <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="GuildViewer · Tableau de bord" subtitle="L'état de Vanguard en un coup d'œil : membres, personnages, builds, coffre, absences et candidatures." />
 
       {/* ── CTA AirBuilder ── */}
       <Link href="/builder" className="dash-cta" style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", marginBottom: 24, borderRadius: 14, textDecoration: "none", background: "linear-gradient(90deg, rgba(255,140,26,0.18), rgba(255,140,26,0.04))", border: "1px solid var(--orange)" }}>
@@ -155,15 +154,10 @@ export default function DashboardPage() {
             <Stat value={d.coffre.total} label="objets suivis" />
           </div>} />
 
-        <StatCard href="/gestion-dettes" icon="coins" title="Dettes" summary={
-          <>
-            <div style={{ display: "flex", gap: 22 }}>
-              <Stat value={d.debts.ongoing} label="en cours" color={d.debts.ongoing ? "var(--gold)" : "var(--green)"} />
-              <Stat value={d.debts.repaid} label="remboursées" color="var(--green)" />
-              <Stat value={d.debts.overdue} label="en retard" color={d.debts.overdue ? "var(--red)" : "var(--green)"} />
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{d.debts.remaining.toLocaleString("fr-FR")} périns restant à rembourser sur {d.debts.ongoingAmount.toLocaleString("fr-FR")} périn en circulation</div>
-          </>} />
+        {/* La carte « Dettes » vivait ici. Elle est partie avec le système de
+            dettes, retiré du site le 2026-07-27 : l'API a cessé de renvoyer
+            `debts`, la carte a continué de le lire, et TOUTE la page tombait
+            sur l'écran d'erreur — pas seulement la carte. */}
 
         <StatCard href="/absences" icon="moon" title="Absences" summary={
           <div style={{ display: "flex", gap: 22 }}>

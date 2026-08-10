@@ -95,7 +95,8 @@ export async function GET() {
   if (usersNoMain.length)
     priorities.push({ level: "moyenne", label: "membre(s) sans personnage principal", count: usersNoMain.length, href: "/personnages" });
   if (absencesPending)
-    priorities.push({ level: "moyenne", label: "absence(s) à valider", count: absencesPending, href: "/personnages" });
+    // Vers /absences, pas /personnages : c'est la page qui les montre.
+    priorities.push({ level: "moyenne", label: "absence(s) à valider", count: absencesPending, href: "/absences" });
   if (coffreUnder.length)
     priorities.push({ level: "basse", label: "objet(s) du coffre à compléter", count: coffreUnder.length, href: "/coffre" });
   const order = { haute: 0, moyenne: 1, basse: 2 };

@@ -226,14 +226,62 @@ export default function GuidePage() {
           <p className="gd-src" style={{ marginTop: 10 }}>Les onze statistiques de l&apos;éveil fixe : INCANT, DEPLA, SOINS, HP, MP, ATTAQUE, FOR, END, DEX, INT, DCC — chacune en rang 1 et en rang 2, plus un coffret qui en donne un au hasard.</p>
         </div>
 
+        {/* Cette carte disait « Grade A → 7 %, Grade S → 10 % » et melait Feu,
+            Eau, Foudre, Terre avec Fulgur et Volcano. C'etaient DEUX familles
+            confondues en une : A et S sont des cartes d'ATTAQUE, 7 % et 10 % des
+            cartes de DEFENSE, et le meme element change de nom de l'une a
+            l'autre. La confusion venait de la, pas du lecteur. */}
         <div className="gd-card fx-card">
-          <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />Les cartes d&apos;élément</h2>
-          <p className="gd-intro" style={{ marginBottom: 12 }}>Elles percent une arme d&apos;un élément. Deux qualités seulement, et six éléments — c&apos;est tout ce qu&apos;il y a à retenir.</p>
-          <div className="gd-grid">
-            <div className="gd-qitem"><span className="ql">Grade A</span><span className="qv">7 %</span></div>
-            <div className="gd-qitem"><span className="ql">Grade S</span><span className="qv">10 %</span></div>
+          <h2 className="gd-cardtitle"><Icon name="target" size={18} />Les cartes de perçage</h2>
+          <p className="gd-intro" style={{ marginBottom: 14 }}>
+            Deux familles, et c&apos;est tout le piège : le même élément porte deux noms selon ce qu&apos;on perce.
+            Le feu attaque sous le nom <b>Feu</b> et défend sous le nom <b>Volcano</b>.
+          </p>
+
+          <div className="gd-perc">
+            <div>
+              <div className="gd-perctitre">Arme &amp; bouclier — attaque</div>
+              <div className="gd-perclist">
+                {[["Feu", "Force"], ["Eau", "Intelligence"], ["Air", "Déplacement, soins"], ["Terre", "Endurance"], ["Foudre", "Dextérité"]].map(([nom, quoi]) => (
+                  <div key={nom} className="gd-percel">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/airbuilder/icons/percage/${nom.toLowerCase()}-s.png`} alt="" />
+                    <span><b>{nom}</b><i>{quoi}</i></span>
+                  </div>
+                ))}
+              </div>
+              <div className="gd-percgr"><span>A</span> puis <span>S</span> — la seconde vaut presque le double.</div>
+            </div>
+
+            <div>
+              <div className="gd-perctitre">Tenue — défense</div>
+              <div className="gd-perclist">
+                {[["Volcano", "PV %", "volcano"], ["Océane", "PM %, soins", "oceane"], ["Néant", "PF %", "neant"], ["Séisme", "Défense %", "seisme"], ["Fulgur", "Attaque %", "fulgur"]].map(([nom, quoi, f]) => (
+                  <div key={nom} className="gd-percel">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/airbuilder/icons/percage/${f}-10.png`} alt="" />
+                    <span><b>{nom}</b><i>{quoi}</i></span>
+                  </div>
+                ))}
+              </div>
+              <div className="gd-percgr"><span>7 %</span> puis <span>10 %</span> — sur le même emplacement.</div>
+            </div>
           </div>
-          <p className="gd-src" style={{ marginTop: 10 }}>Éléments disponibles dans les deux grades : Eau, Feu, Foudre, Terre, Fulgur, Volcano.</p>
+
+          <p className="gd-src" style={{ marginTop: 12 }}>
+            Chaque niveau de perçage ouvre un emplacement, et chaque emplacement prend une carte.
+            Le jeu a des paliers plus hauts — R et SR à l&apos;attaque, 12 % et 15 % en défense, dits « de Baruna » —
+            que l&apos;AirBuilder ne propose pas encore.
+          </p>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />L&apos;élément de la pièce</h2>
+          <p className="gd-intro">
+            À ne pas confondre avec le perçage : c&apos;est l&apos;élément de l&apos;arme ou de la tenue elle-même,
+            monté de +1 à +20. Cinq éléments — Feu, Eau, Vent, Terre, Électricité — et une seule règle :
+            on choisit celui auquel les monstres visés résistent le moins.
+          </p>
         </div>
 
         <div className="gd-card fx-card">
@@ -305,6 +353,21 @@ export default function GuidePage() {
                      font-size:12.5px; color:var(--text-muted); }
         .gd-ou .ou > svg { flex-shrink:0; opacity:.55; }
         .gd-ou .lieu { display:inline-flex; }
+        /* Les deux familles de cartes, cote a cote : c'est leur mise en regard
+           qui fait comprendre qu'il y en a deux, mieux qu'une phrase. */
+        .gd-perc { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); gap:16px; }
+        .gd-perctitre { font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--orange);
+          font-family:'Rubik',sans-serif; font-weight:700; margin-bottom:9px; }
+        .gd-perclist { display:grid; gap:6px; }
+        .gd-percel { display:flex; align-items:center; gap:9px; padding:6px 9px; border-radius:9px;
+          background:var(--bg-3); border:1px solid var(--border); }
+        .gd-percel img { width:26px; height:26px; object-fit:contain; flex-shrink:0; }
+        .gd-percel span { display:flex; flex-direction:column; min-width:0; }
+        .gd-percel b { font-size:12.5px; }
+        .gd-percel i { font-style:normal; font-size:11.5px; color:var(--text-muted); }
+        .gd-percgr { margin-top:9px; font-size:11.5px; color:var(--text-muted); }
+        .gd-percgr span { display:inline-block; font-weight:700; color:var(--gold); border:1px solid var(--gold);
+          border-radius:6px; padding:0 7px; margin:0 2px; }
         /* Les liens d'instance faisaient 21 px de haut : on les rate au doigt.
            On ne grossit pas le texte — la ligne deviendrait un pave — on ouvre
            la zone sensible autour, sans decaler la mise en page. */

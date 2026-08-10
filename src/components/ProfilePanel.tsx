@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
+import { canAccessAdmin } from "@/config/roles";
+import type { Role } from "@prisma/client";
 
 /** Panneau profil déroulant (haut-droite) : identité + raccourcis persos + déconnexion.
  *  Remplace la page « Paramètres » du menu. */
@@ -21,9 +23,13 @@ const SHORTCUTS: { icon: IconName; label: string; href: string }[] = [
   { icon: "users", label: "Mes personnages", href: "/personnages" },
   { icon: "sword", label: "Mon build", href: "/builder" },
   { icon: "message", label: "Mes demandes", href: "/messages" },
-  { icon: "coins", label: "Mes ventes", href: "/mes-ventes" },
+
   { icon: "moon", label: "Mes absences", href: "/absences" },
 ];
+
+/** Le detail marchand est une affaire d'encadrement : le raccourci ne s'affiche
+ *  qu'au staff, comme la page elle-meme. */
+const VENTES: { icon: IconName; label: string; href: string } = { icon: "coins", label: "Mes ventes", href: "/mes-ventes" };
 
 export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const { data: session } = useSession();
@@ -143,7 +149,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
           {/* Raccourcis persos */}
           <div style={{ padding: "10px 10px 7px" }}>
             <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.4, color: "var(--text-muted)", padding: "0 4px 5px", display: "flex", alignItems: "center", gap: 6 }}><Icon name="link" size={12} /> Raccourcis</div>
-            {SHORTCUTS.map((s) => (
+            {[...SHORTCUTS, ...(canAccessAdmin((u?.role as Role) ?? "RECRUE") ? [VENTES] : [])].map((s) => (
               <Link key={s.href} href={s.href} onClick={() => setOpen(false)} className="vg-prof-link" style={{ display: "flex", alignItems: "center", gap: 11, padding: "8px", borderRadius: 9, textDecoration: "none", color: "var(--text)" }}>
                 <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange)", flexShrink: 0 }}><Icon name={s.icon} size={16} /></span>
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 500 }}>{s.label}</span>

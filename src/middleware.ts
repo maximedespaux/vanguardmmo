@@ -13,9 +13,9 @@ import { DEV_ALL } from "@/lib/devAccess";
    compte (enregistrer, publier, partager, commander) exige la connexion, et
    c'est verifie cote serveur par les routes concernees. `/builder/<membre>`, qui
    montre le build d'un AUTRE, reste protege par le layout de son groupe. */
-const VERIFIED_PREFIXES = ["/build", "/boutique", "/messages", "/mes-ventes", "/sommaire"];
+const VERIFIED_PREFIXES = ["/build", "/boutique", "/messages", "/sommaire"];
 const GUILD_PREFIXES = ["/dashboard", "/personnages", "/compositions", "/worldboss", "/quetes", "/absences"];
-const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
+const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm", "/mes-ventes"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
 
@@ -50,7 +50,7 @@ export const config = {
     "/dashboard/:path*", "/personnages/:path*",
     "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/absences/:path*", "/build/:path*",
-    "/boutique/:path*", "/messages/:path*", "/mes-ventes/:path*", "/sommaire/:path*",
-    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
+    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*",
+    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*", "/mes-ventes/:path*",
   ],
 };

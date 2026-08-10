@@ -90,7 +90,7 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, ou une pièce sur mesure." },
       { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Tes demandes en cours, et la discussion qui va avec." },
-      { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté." },
+      { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté.", acces: "admin" },
       { label: "Coffre", href: "/coffre?tab=bank", icon: "vault", desc: "Le stock réel, coffre par coffre.", acces: "admin" },
       { label: "Crafts", href: "/coffre?tab=craft", icon: "hammer", desc: "Les recettes, et ce qu'elles coûtent.", acces: "admin" },
       { label: "Base des objets", href: "/coffre?tab=set", icon: "settings", desc: "Les objets, leurs catégories et leurs seuils.", acces: "admin" },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
+import { canAccessAdmin } from "@/config/roles";
 import { partager } from "@/lib/quetes";
 
 /**
@@ -12,7 +13,9 @@ import { partager } from "@/lib/quetes";
  * question qu'on se pose le plus souvent : est-ce que ça vaut la peine que je
  * fournisse, et combien ça m'a fait ?
  *
- * Pas de question de permission ici : ce sont mes propres chiffres.
+ * Reserve au STAFF. Ce sont ses propres chiffres — mais fournir un objet et en
+ * tirer une somme est une activite d'encadrement, et le detail marchand n'a pas
+ * a circuler dans toute la guilde.
  *
  * Deux sources de gains, et il faut les deux :
  *  — la VENTE directe, quand j'avais l'objet et que je l'ai remis ;
@@ -23,6 +26,9 @@ import { partager } from "@/lib/quetes";
 export async function GET() {
   const a = await apiAuth();
   if ("error" in a) return a.error;
+  if (!canAccessAdmin(a.user.role)) {
+    return NextResponse.json({ error: "Réservé au staff." }, { status: 403 });
+  }
   const moi = a.user.id;
 
   const [retenues, enCours, mesApports] = await Promise.all([

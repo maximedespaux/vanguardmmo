@@ -44,25 +44,23 @@ export type Espace = {
 
 export const ESPACES: Espace[] = [
   {
-    label: "Jouer",
-    icon: "sword",
-    // Le tableau de bord n'ouvre plus l'espace : il redisait les statistiques
-    // sans rien apporter, et personne n'y allait pour jouer.
-    href: "/personnages",
+    // L'espace porte le nom de l'outil, parce que c'est CE qu'on vient y faire :
+    // monter son stuff. Les deux pages qui restent sont les deux faces du meme
+    // geste — qui je joue, et avec quoi.
+    label: "AirBuilder",
+    icon: "shirt",
+    href: "/builder",
     acces: "guild",
     liens: [
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, et le stuff de chacun." },
       { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Monte ton stuff, pièce par pièce." },
-      { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes et présences." },
-      { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages, et qui vient." },
-      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
     ],
   },
   {
     // Ouvert à tout le monde, connecté ou non : c'est de la connaissance du
     // JEU, pas de l'activité de la guilde. C'est aussi par là qu'un joueur de
     // passage découvre Vanguard — d'où des pages indexables.
-    label: "Le jeu",
+    label: "Astuces",
     icon: "compass",
     href: "/donjons",
     acces: "public",
@@ -70,6 +68,10 @@ export const ESPACES: Espace[] = [
       { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances, leur niveau et leurs butins." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige, ce qu'il rapporte." },
+      // Le World Boss est une connaissance du JEU — quand il passe, ce qu'il
+      // lache — avant d'etre une affaire de guilde. Sa page reste reservee aux
+      // membres : c'est le lien qui porte l'exigence, pas l'espace.
+      { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages, et qui vient.", acces: "guild" },
     ],
   },
   {
@@ -101,19 +103,25 @@ export const ESPACES: Espace[] = [
     ],
   },
   {
+    /* L'espace descend au niveau GUILDE. Il etait reserve au staff : y ranger
+       Compositions et Mes absences les aurait fait disparaitre pour les membres,
+       puisque l'espace entier se serait masque. Ce sont donc les LIENS qui
+       portent l'exigence — ceux du staff restent marques `admin`. */
     label: "Guilde",
     icon: "shield",
-    href: "/guildviewer",
-    acces: "admin",
+    href: "/compositions",
+    acces: "guild",
     liens: [
-      { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff." },
-      { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." },
-      { label: "Statistiques", href: "/statistiques", icon: "bar-chart", desc: "Qui livre, qui demande, et si l'activité tient." },
-      { label: "Journal", href: "/journal", icon: "list", desc: "Le détail, événement par événement." },
-      { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Programmer les passages, suivre les venues." },
-      { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." },
-      { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Un message à toute la guilde, sur Discord." },
-      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements AirFlyff annoncés par le bot." },
+      { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes et présences." },
+      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
+      { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff.", acces: "admin" },
+      { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." , acces: "admin" },
+      { label: "Statistiques", href: "/statistiques", icon: "bar-chart", desc: "Qui livre, qui demande, et si l'activité tient." , acces: "admin" },
+      { label: "Journal", href: "/journal", icon: "list", desc: "Le détail, événement par événement." , acces: "admin" },
+      { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Programmer les passages, suivre les venues." , acces: "admin" },
+      { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." , acces: "admin" },
+      { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Un message à toute la guilde, sur Discord." , acces: "admin" },
+      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements AirFlyff annoncés par le bot." , acces: "admin" },
     ],
   },
 ];

@@ -24,7 +24,7 @@ export type LigneCommande = { nom: string; quantite: number; prix?: number | nul
 
 export function ConfirmationCommande({
   titre, sousTitre, lignes, perso, paiement, tauxAP = 0, envoi,
-  onAjouter, onConfirmer, onAnnuler, motAction = "Confirmer la commande",
+  onAjouter, onConfirmer, onAnnuler, motAction = "Confirmer la commande", motApres,
 }: {
   titre: string;
   sousTitre?: string;
@@ -39,6 +39,8 @@ export function ConfirmationCommande({
   onConfirmer: () => void;
   onAnnuler: () => void;
   motAction?: string;
+  /** La précision libre jointe à la commande, s'il y en a une. */
+  motApres?: string;
 }) {
   useEffect(() => {
     const t = (e: KeyboardEvent) => { if (e.key === "Escape" && !envoi) onAnnuler(); };
@@ -93,6 +95,11 @@ export function ConfirmationCommande({
             </b>
           </div>
 
+          {motApres && (
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)", fontStyle: "italic", padding: "8px 12px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10 }}>
+              « {motApres} »
+            </div>
+          )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 12, color: "var(--text-muted)" }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 11px" }}>
               <Icon name="user" size={13} />Livré à <b style={{ color: "var(--text)" }}>{perso || "—"}</b>

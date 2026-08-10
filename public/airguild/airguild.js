@@ -336,12 +336,16 @@ function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);
 // Arme suivie par rareté : une ligne d'en-tête (total) + 4 lignes de rareté (stock indépendant, clé id|R#rareté).
 function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
   var editable=!isTotal&&canDeposit();
-  var price=editable?priceMini(it.id):'';
+  // L'en-tete d'une arme n'a PAS de prix : ses raretes en ont un chacune. Il en
+  // montrait un quand meme — celui de la cle de base — qui contredisait les
+  // lignes juste en dessous.
+  var price=resumeRaretes(it);
   var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div>${price}<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
   var rows=RARITIES.map(function(r){var key=rarKey(it.id,r[0]);var v=isTotal?totalGuild(key):qty(S.cur,key);
     var ctrl=editable?`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)"><i class=vgi-plus></i></button></div>`:`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`;
     var clr=(editable&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider"><i class=vgi-x></i></span>`:'<span style="width:14px;flex:none"></span>';
-    return `<div class="it" data-s="${esc(ds)}" style="padding-left:30px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r[2]};box-shadow:0 0 5px ${r[2]}99;flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:${r[2]};font-size:12.5px">${r[1]}</div></div>${ctrl}${clr}</div>`;}).join('');
+    var px=editable?priceMini(key,true):'';
+    return `<div class="it" data-s="${esc(ds)}" style="padding-left:30px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r[2]};box-shadow:0 0 5px ${r[2]}99;flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:${r[2]};font-size:12.5px">${r[1]}</div></div>${px}${ctrl}${clr}</div>`;}).join('');
   // Ancien stock déposé AVANT le système de rareté (clé sans « |R# ») : on l'affiche pour pouvoir le supprimer/migrer.
   var legacy=isTotal?totalGuild(it.id):qty(S.cur,it.id);
   var legacyRow=legacy>0?`<div class="it" data-s="${esc(ds)}" style="padding-left:30px;background:rgba(248,113,113,.06)"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);flex:none;margin-right:2px"></span><div class="nm" style="flex:1;min-width:0"><div class="a" style="color:var(--red);font-size:12px">Sans rareté (ancien)</div><div class="b" style="font-size:11px">à supprimer — re-dépose avec la bonne rareté</div></div><div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:70px;text-align:right">${fmt(legacy)}</div>${editable?`<span class="rm" onclick="setQ('${sq(it.id)}','0')" title="Supprimer l'ancien stock sans rareté"><i class=vgi-x></i></span>`:'<span style="width:14px;flex:none"></span>'}</div>`:'';
@@ -814,6 +818,14 @@ function raritesEnStock(id){
 }
 /** Liste des cles tarifaires a renseigner : les raretes en stock, sinon l'objet seul. */
 function clesTarifaires(id){
+  // Une cle de rarete (id|R#rarete) ne concerne QUE cette rarete : on ouvre la
+  // fenetre sur une seule ligne. Sans ca, cliquer le prix d'« Épique » rouvrait
+  // les quatre raretes et obligeait a toutes les remplir pour en corriger une.
+  var sep=String(id).indexOf('|R#');
+  if(sep>=0){
+    var r=RARITIES.find(function(x){return x[0]===String(id).slice(sep+3);});
+    return [{cle:id,lib:r?r[1]:'',couleur:r?r[2]:'var(--orange)'}];
+  }
   var rs=raritesEnStock(id);
   return rs.length?rs.map(function(r){return {cle:rarKey(id,r[0]),lib:r[1],couleur:r[2]};})
                   :[{cle:id,lib:'',couleur:'var(--orange)'}];
@@ -822,7 +834,7 @@ function clesTarifaires(id){
 function cleId(cle){return btoa(unescape(encodeURIComponent(cle))).replace(/=/g,'');}
 function editPrice(id){
   if(!canEdit()&&!canDeposit())return agToast('Tarifs : possible au dépôt dans TON coffre (ou rôle Vanguard/Direction).',false);
-  var it=catalog().find(function(x){return x.id===id;})||{item:id};
+  var it=catalog().find(function(x){return x.id===baseId(id);})||{item:baseId(id)};
   var cles=clesTarifaires(id);
   var parRarete=cles.length>1||!!cles[0].lib;
   var p0=priceObj(cles[0].cle);
@@ -907,7 +919,26 @@ function majPrix(el,cle){
 function priceBtn(id){var p=priceObj(id);var ap=enAP(p.prix);
   return '<button class="inp" style="cursor:pointer;text-align:right;white-space:nowrap;min-width:120px" onclick="editPrice(\''+sqa(id)+'\')" title="Éditer le tarif de la guilde"><b style="color:var(--gold)">'+fmt(p.prix)+'</b> <span class="mut" style="font-size:11px">périns</span>'+(ap?' <span class="mut" style="font-size:11px">· ≈'+ap+'</span>':'')+(p.v?'':' <span style="color:var(--red);font-size:11px"><i class=vgi-x></i>vente</span>')+'</button>';}
 //Bouton compact « tarifs » posé sur chaque ligne du coffre (au dépôt). Doré si le tarif n'est pas encore fixé.
-function priceMini(id){var bid=baseId(id);var p=priceObj(bid);var set=p.prix>0;return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none;'+(set?'':'border-color:var(--gold);color:var(--gold)')+'" onclick="editPrice(\''+sqa(bid)+'\')" title="Le tarif de la guilde pour cet objet"><i class=vgi-coin></i> '+(set?fmt(p.prix):'à fixer')+'</button>';}
+/**
+ * Le bouton de tarif d'UNE ligne. Il prend la cle telle quelle : pour une arme,
+ * chaque rarete a la sienne (id|R#rarete) et donc son propre prix. Il appelait
+ * `baseId()`, ce qui ramenait les quatre raretes au meme tarif — celui de la
+ * cle de base, souvent un vieux prix que personne ne revoyait, pendant que les
+ * raretes restaient a « a fixer » sans qu'on puisse les fixer.
+ */
+function priceMini(cle,court){var p=priceObj(cle);var set=p.prix>0;
+  return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none;'+(set?'':'border-color:var(--gold);color:var(--gold)')+'" onclick="event.stopPropagation();editPrice(\''+sqa(cle)+'\')" title="Le tarif de la guilde pour cette ligne"><i class=vgi-coin></i> '+(set?fmt(p.prix):(court?'prix':'à fixer'))+'</button>';}
+
+/** Ce que valent les raretes d'une arme : « de X a Y », ou ce qui manque. */
+function resumeRaretes(it){
+  var vals=RARITIES.map(function(r){return priceObj(rarKey(it.id,r[0])).prix;});
+  var fixes=vals.filter(function(v){return v>0;});
+  if(!fixes.length)return '<span class="pill" style="color:var(--gold);border-color:#ffd24a55">aucun tarif</span>';
+  var min=Math.min.apply(null,fixes), max=Math.max.apply(null,fixes);
+  var manque=vals.length-fixes.length;
+  return '<span class="pill" style="color:var(--gold);border-color:#ffd24a55">'+(min===max?fmt(min):fmt(min)+' – '+fmt(max))
+    +(manque?' · '+manque+' à fixer':'')+'</span>';
+}
 // Au 1er dépôt d'un objet non tarifé dans SON coffre : ouvre la fenêtre de tarifs (« que faire de l'objet + prix »).
 function promptPriceIfNew(id){var bid=baseId(id);if(canDeposit()&&S.prices[bid]==null&&qty(S.cur,id)>0)editPrice(bid);}
 function cartAdd(id,d){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,(S.cart[id]||0)+d));if(!S.cart[id])delete S.cart[id];save();render();}

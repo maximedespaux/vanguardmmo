@@ -132,8 +132,8 @@ export function EcranEconomie() {
   const [estimAp, setEstimAp] = useState("");
   const [estimManque, setEstimManque] = useState(false);
   const [persoManque, setPersoManque] = useState(false);
-  /** Pour quand il la voudrait. Facultatif. */
-  const [pourQuand, setPourQuand] = useState("");
+  /** Un mot libre joint à la commande. Facultatif. */
+  const [precision, setPrecision] = useState("");
   /** Pseudo EN JEU : c'est là que l'objet part par courrier. Pré-rempli avec
    *  le personnage principal — le retaper à chaque demande est une corvée. */
   const [perso, setPerso] = useState("");
@@ -231,10 +231,10 @@ export function EcranEconomie() {
   const submitCart = async () => {
     setSending(true);
     const items = lignesDuPanier();
-    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement, dateSouhaitee: pourQuand || undefined,
+    const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement, precision: precision.trim() || undefined,
       prixEstime: Math.max(0, Math.round(Number(estimP) || 0)), prixEstimeAp: Math.max(0, Math.round(Number(estimAp) || 0)) }) });
     setSending(false);
-    if (r.ok) { setARelire(false); setCart({}); setStuffSex({}); setEstimP(""); setEstimAp(""); setPourQuand(""); flash(`Commande envoyée — ${cartIds.length} article(s). Suis-la dans « Ma commande ».`); load(); }
+    if (r.ok) { setARelire(false); setCart({}); setStuffSex({}); setEstimP(""); setEstimAp(""); setPrecision(""); flash(`Commande envoyée — ${cartIds.length} article(s). Suis-la dans « Ma commande ».`); load(); }
     else { const e = await r.json().catch(() => ({} as any)); setARelire(false); flash(e.error || "Erreur — as-tu un personnage déclaré ?"); }
   };
 
@@ -419,21 +419,13 @@ export function EcranEconomie() {
                 erreur={estimManque}
               />
             </div>
-            {/* POUR QUAND. Facultatif : une date inventée pour remplir un champ
-                vaut moins que pas de date du tout. */}
-            <label style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 12px" }}>
-              <Icon name="calendar" size={14} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-              <span style={{ fontSize: 12.5, color: "var(--text-muted)", flexShrink: 0 }}>Pour quand ?</span>
-              <input type="date" value={pourQuand} min={new Date().toISOString().slice(0, 10)}
-                onChange={(e) => setPourQuand(e.target.value)} aria-label="Date souhaitée"
-                style={{ marginLeft: "auto", background: "transparent", border: "none", outline: "none", color: pourQuand ? "var(--gold)" : "var(--text-muted)", fontSize: 13, fontFamily: "inherit", colorScheme: "dark" }} />
-              {pourQuand && (
-                <button type="button" onClick={() => setPourQuand("")} title="Retirer la date"
-                  style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 0 }}>
-                  <Icon name="x" size={13} />
-                </button>
-              )}
-            </label>
+            {/* PAS DE DATE ICI. L'objet dort déjà dans un coffre : la remise se
+                fait dans la foulée, et demander « pour quand ? » pour quelque
+                chose qui part le soir même ajoute un champ pour rien. Elle
+                reste sur le sur mesure, où la pièce est à trouver ou à faire.
+                Une précision libre, en revanche, sert toujours. */}
+            <input value={precision} onChange={(e) => setPrecision(e.target.value)} maxLength={300}
+              placeholder="Une précision ? (facultatif)" style={{ ...inp, width: "100%", marginBottom: 9 }} />
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={demanderConfirmation} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Commander</button>
             </div>
@@ -446,6 +438,7 @@ export function EcranEconomie() {
         <ConfirmationCommande
           titre="Ta commande"
           lignes={lignesDuPanier().map((l): LigneCommande => ({ nom: l.name, quantite: l.quantity, prix: l.price || null }))}
+          motApres={precision.trim() || undefined}
           perso={perso.trim()} paiement={paiement} tauxAP={tauxAP} envoi={sending}
           onAjouter={() => setARelire(false)}
           onConfirmer={submitCart}

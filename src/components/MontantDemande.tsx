@@ -41,17 +41,38 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
      le tarif ET le cours : sans l'un des deux, il n'y a rien à répartir. On
      n'écrase jamais la monnaie qu'on est en train de taper. */
   const calculable = paiement === "mixte" && !!objectif && objectif > 0 && tauxAP > 0;
+  /* LA LIMITE, pas un bouton « max ». On ne peut PAS dépasser le tarif : ni en
+     périns, ni en Airpoints, ni par la somme des deux. Un bouton se clique ou
+     s'ignore ; une limite tient toute seule, et personne ne paie trop parce
+     qu'il a tapé un zéro de trop.
+     Le complément se calcule au PLANCHER (`floor`) : arrondir au-dessus ferait
+     dépasser d'un Airpoint entier — c'est-à-dire, au cours du marché, de
+     plusieurs centaines de milliers de périns. */
+  const plafondP = objectif && objectif > 0 ? objectif : null;
+  const plafondAp = calculable ? Math.floor(objectif! / tauxAP) : null;
+  const borne = (v: string, max: number | null) => {
+    const n = Math.max(0, Math.round(Number(v) || 0));
+    return max != null && n > max ? String(max) : String(n);
+  };
   const majPerins = (v: string) => {
-    onPerins(v);
-    if (!calculable) return;
-    const reste = Math.max(0, objectif! - Math.max(0, Math.round(Number(v) || 0)));
-    onAirpoints(reste > 0 ? String(Math.ceil(reste / tauxAP)) : "0");
+    // En « périns seuls », le tarif n'est pas un plafond : c'est une estimation
+    // libre. La limite ne vaut que là où les deux monnaies doivent tomber juste.
+    if (!calculable) return onPerins(v);
+    const demande = Number(borne(v, plafondP));
+    /* On garde le nombre d'Airpoints ENTIER le plus proche par en dessous, puis
+       on remet le reliquat dans les périns : sans ça il manquait toujours
+       jusqu'à un Airpoint — plusieurs centaines de milliers de périns — et le
+       compte ne tombait jamais juste. Les périns sont la monnaie fine, c'est
+       à eux d'absorber la différence. */
+    const enAp = Math.floor(Math.max(0, objectif! - demande) / tauxAP);
+    onAirpoints(String(enAp));
+    onPerins(String(Math.max(0, objectif! - enAp * tauxAP)));
   };
   const majAirpoints = (v: string) => {
-    onAirpoints(v);
-    if (!calculable) return;
-    const couvert = Math.max(0, Math.round(Number(v) || 0)) * tauxAP;
-    onPerins(String(Math.max(0, objectif! - couvert)));
+    if (!calculable) return onAirpoints(v);
+    const a = Number(borne(v, plafondAp));
+    onAirpoints(String(a));
+    onPerins(String(Math.max(0, objectif! - a * tauxAP)));
   };
 
   const lignes: { clef: "perins" | "airpoints"; v: string; set: (v: string) => void }[] =
@@ -101,6 +122,7 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
               <input
                 type="number" min={0} inputMode="numeric"
                 value={v} onChange={(e) => set(e.target.value)}
+                max={clef === "perins" ? (plafondP ?? undefined) : (plafondAp ?? undefined)}
                 aria-label={`Montant en ${d.label}`}
                 placeholder="0"
                 style={{
@@ -121,7 +143,12 @@ export function MontantDemande({ paiement, perins, airpoints, onPerins, onAirpoi
         {erreur
           ? <b style={{ color: "var(--red)" }}>Indique ce que tu es prêt à mettre — sans ce chiffre, personne ne sait par où commencer.</b>
           : objectif && objectif > 0
-            ? (Math.abs(manque) < Math.max(1, tauxAP) // à moins d'un Airpoint près, le compte y est
+            /* AUCUNE TOLÉRANCE. Elle était d'un Airpoint — c'est-à-dire, au
+               cours du marché, de plusieurs centaines de milliers de périns :
+               l'écran annonçait « le compte y est » sur 2 700 000 pour un objet
+               à 3 000 000. Les périns sont granulaires, le compte PEUT tomber
+               juste ; tant qu'il ne tombe pas juste, on dit ce qui manque. */
+            ? (manque === 0
                 ? <span style={{ color: "var(--green)" }}>Le compte y est — {objectif.toLocaleString("fr-FR")} périns couverts.</span>
                 : manque > 0
                   ? <>Tarif : <b style={{ color: "var(--gold)" }}>{objectif.toLocaleString("fr-FR")} périns</b> — il reste <b style={{ color: "var(--orange)" }}>{manque.toLocaleString("fr-FR")}</b> à couvrir{tauxAP > 0 ? ` (≈ ${Math.ceil(manque / tauxAP).toLocaleString("fr-FR")} AP)` : ""}.</>

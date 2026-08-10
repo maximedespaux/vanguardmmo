@@ -4,7 +4,7 @@ import { RARETES, RANGS_EVEIL, STATS_EVEIL, STATS_SCROLL, ELEMENTS, STATS_DIAMAN
 import {
   carteDePercage, libellePalier, decouperCarte, composerCarte, COULEUR_CARTE,
   PALIERS_ATTAQUE, PALIERS_DEFENSE, CARTES_DEFENSE,
-  ICONE_ELEMENT, ICONE_EVEIL, ICONE_DIAMANT, ICONE_HOLO, ICONE_SCROLL, ICONE_ETOILE, GEMME_PAR_DEFAUT,
+  ICONE_ELEMENT, ICONE_EVEIL, ICONE_DIAMANT, ICONE_HOLO, ICONE_SCROLL, ICONE_ETOILE, ICONE_UPGRADE, GEMME_PAR_DEFAUT,
 } from "@/lib/assetsJeu";
 
 /**
@@ -78,7 +78,10 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
 
       {r.upMax > 0 && (
         <div style={ligne}>
-          <span style={etiquette}>Amélio.</span>
+          {/* Toutes les lignes de ce panneau portent l'icône de ce qu'elles
+              règlent — sauf celle-ci, qui restait un mot seul au milieu de
+              pictogrammes. C'est l'asset d'amélioration de l'AirBuilder. */}
+          <Titre src={ICONE_UPGRADE}>Amélio.</Titre>
           <select value={choix.up} onChange={(e) => maj("up", e.target.value)} style={mini} aria-label="Amélioration">
             <option value="">+ ?</option>
             {Array.from({ length: r.upMax + 1 }, (_, i) => i).map((n) => <option key={n} value={n}>+{n}</option>)}

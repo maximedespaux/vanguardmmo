@@ -170,8 +170,7 @@ export async function POST(req: Request) {
           priceEach: estimUnitaire ?? Math.max(0, Math.round(Number(it.price) || 0)),
           batchId,
           modePaiement: ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins",
-          dateSouhaitee: dateVoulue(b?.dateSouhaitee),
-          reason: "Boutique · demande d'objet",
+          reason: [(String(b?.precision ?? "").slice(0, 300).trim()), "Boutique · demande d'objet"].filter(Boolean).join(" — "),
         },
       });
       // Le fil s'ouvre AVEC la demande : il doit exister avant qu'on ait quelque

@@ -40,7 +40,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
   // Une par une plutôt qu'en groupBy : l'origine manque sur les demandes d'avant
   // la distinction, et c'est en JS qu'on retombe dessus (une spec = sur mesure,
   // un batchId = panier). Quelques dizaines de lignes par membre, pas plus.
-  const [lignes, quetes, apports, xp] = await Promise.all([
+  const [lignes, quetes, apports] = await Promise.all([
     prisma.bankRequest.findMany({
       where: { userId: membre.id },
       // item, quantité et date servent au détail qu'on déplie en cliquant un
@@ -56,7 +56,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
       orderBy: { createdAt: "desc" },
       take: 500,
     }),
-    prisma.xpEvent.aggregate({ where: { userId: membre.id }, _sum: { points: true } }).catch(() => null),
   ]);
 
   const categorie = (r: { origine: string | null; spec: unknown; batchId: string | null }) =>
@@ -137,7 +136,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
     })),
   };
 
-  const total = Number(xp?._sum.points ?? 0);
   return NextResponse.json({
     staff,
     detail,
@@ -149,7 +147,6 @@ export async function GET(_req: Request, ctx: { params: Promise<{ nom: string }>
     // création du compte sur le site.
     rejointLe: (membre.verifiedAt ?? membre.createdAt).toISOString(),
     vuLe: membre.lastSeenAt ? membre.lastSeenAt.toISOString() : null,
-    xp: total,
     personnages: membre.characters.map((c) => ({
       nom: c.name, classe: c.class, niveau: c.level, prestige: c.prestige, principal: c.isMain,
     })),

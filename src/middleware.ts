@@ -8,7 +8,7 @@ import { DEV_ALL } from "@/lib/devAccess";
 // session depuis que la connexion d'un non-membre est refusée (lib/auth.ts).
 // On y range ce qui est ouvert hors guilde : le builder (la candidature exige
 // un build) et l'économie (la boutique est ouverte aux non-membres de guilde).
-const VERIFIED_PREFIXES = ["/builder", "/build", "/boutique", "/messages", "/sommaire"];
+const VERIFIED_PREFIXES = ["/builder", "/build", "/boutique", "/messages", "/mes-ventes", "/sommaire"];
 const GUILD_PREFIXES = ["/dashboard", "/personnages", "/compositions", "/worldboss", "/quetes", "/absences"];
 const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
@@ -45,7 +45,7 @@ export const config = {
     "/dashboard/:path*", "/personnages/:path*", "/builder/:path*",
     "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/absences/:path*", "/build/:path*",
-    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*",
+    "/boutique/:path*", "/messages/:path*", "/mes-ventes/:path*", "/sommaire/:path*",
     "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*",
   ],
 };

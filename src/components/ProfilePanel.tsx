@@ -21,6 +21,7 @@ const SHORTCUTS: { icon: IconName; label: string; href: string }[] = [
   { icon: "users", label: "Mes personnages", href: "/personnages" },
   { icon: "sword", label: "Mon build", href: "/builder" },
   { icon: "message", label: "Mes demandes", href: "/messages" },
+  { icon: "coins", label: "Mes ventes", href: "/mes-ventes" },
   { icon: "moon", label: "Mes absences", href: "/absences" },
 ];
 

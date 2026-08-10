@@ -98,7 +98,7 @@ export default function GuidePage() {
           calculateur est une autre page (l'onglet Prestige juste en dessous), et
           les « infos de jeu » ne menaient nulle part. Il dit maintenant ce que
           CETTE page contient. */}
-      <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guide de progression" subtitle="Le guide de Sugot, prestige par prestige : quelles instances faire en priorité, et ce qu'il faut anticiper longtemps à l'avance." />
+      <PageHeader banner="/assets/site/banners/banner-guides.webp" title="Guide de progression" subtitle="Le guide de Sugot, prestige par prestige : quoi faire en priorité, et quoi anticiper." />
       <SectionTabs section="guides" />
 
       <div className="gd">

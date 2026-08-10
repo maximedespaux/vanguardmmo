@@ -64,7 +64,7 @@ export default function StatistiquesPage() {
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
-      <PageHeader icon="bar-chart" title="Statistiques" subtitle="Qui porte l'entraide, qui ne fait que demander, et si l'activité monte ou descend." />
+      <PageHeader icon="bar-chart" title="Statistiques" subtitle="Qui livre, qui demande, et si l'activité monte ou descend." />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10, marginBottom: 22 }}>
         <Chiffre valeur={d.totaux.membresActifs} label="membres vus ce mois-ci" icon="users" />

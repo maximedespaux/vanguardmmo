@@ -25,7 +25,7 @@ export default function WorldBossPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 900, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="dragon" title="World Boss" subtitle="Les prochains affrontements. Confirme ta présence pour que les officiers organisent les groupes." />
+      <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="dragon" title="World Boss" subtitle="Les prochains affrontements. Confirme ta venue pour qu'on compose les groupes." />
       <SectionTabs section="pve" />
 
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>

@@ -220,7 +220,7 @@ export default function CompositionsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Compositions" subtitle="La composition optimale des Chambres Secrètes (à respecter pour la cohésion) et le Guild Siege (libre)." />
+      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Compositions" subtitle="Les postes des Chambres Secrètes, à respecter — et le Guild Siege, libre." />
       <div className="vg-subtabs">
         <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="key" size={15} /> Chambre Secrète</button>
         <button onClick={() => setTab("strat")} className={`vg-subtab ${tab === "strat" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="book" size={15} /> Stratégie</button>

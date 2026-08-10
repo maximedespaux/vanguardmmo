@@ -84,7 +84,7 @@ export default function GuildViewerPage() {
 
   return (
     <div style={{ padding: "28px 32px", maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guildviewer.webp" icon="eye" title="GuildViewer" subtitle="Suivi complet des membres : personnages, classes, builds et activité. Repère qui accompagner en priorité." />
+      <PageHeader banner="/assets/site/banners/banner-guildviewer.webp" icon="eye" title="GuildViewer" subtitle="Personnages, classes, builds et activité — et qui accompagner en priorité." />
 
       {/* Hub admin — tout relié depuis le GuildViewer (#26) */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>

@@ -45,7 +45,7 @@ export default function EventsPage() {
 
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "24px 18px 80px" }}>
-      <PageHeader icon="calendar" title="Événements du jeu" subtitle="Le bot annonce ces événements et envoie les rappels automatiquement. Modifie-les ici — pas besoin de toucher au code." />
+      <PageHeader icon="calendar" title="Événements du jeu" subtitle="Le bot les annonce et envoie les rappels. Modifie-les ici, sans toucher au code." />
       <SectionTabs section="discord" />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 

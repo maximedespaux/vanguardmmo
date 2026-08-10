@@ -47,7 +47,7 @@ export default function JournalPage() {
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
-      <PageHeader icon="list" title="Journal" subtitle="Ce qui est pris, ce qui est donné, et par qui. De quoi vérifier un cas plutôt que de se fier à une impression." />
+      <PageHeader icon="list" title="Journal" subtitle="Ce qui est pris, ce qui est donné, et par qui — de quoi vérifier plutôt que supposer." />
 
       {/* ── L'équilibre par membre ── */}
       <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 18 }}>

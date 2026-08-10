@@ -207,7 +207,7 @@ export default function PlanFarmPage() {
 
   return (
     <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 18px 80px" }}>
-      <PageHeader icon="sprout" title="Plan de farm" subtitle="Calculé sur le vrai stock du coffre AirGuild : ce qui manque pour atteindre les seuils." />
+      <PageHeader icon="sprout" title="Plan de farm" subtitle="Ce qui manque pour atteindre les seuils, sur le stock réel du coffre." />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, margin: "8px 0 18px" }}>
         <Stat v={`${health}%`} l="coffres au seuil" c={col(health)} />

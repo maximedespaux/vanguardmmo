@@ -170,7 +170,7 @@ export function EcranEconomie() {
     <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
       {/* Une tuile d'icône plutôt que la bannière : elle dit « Banque » alors que
           tout le reste dit « Boutique ». */}
-      <PageHeader icon="cart" title="Boutique" subtitle="Parcours les objets du coffre de guilde, ajoute au panier et envoie ta demande — la suite se règle dans la conversation." />
+      <PageHeader icon="cart" title="Boutique" subtitle="Ce qui dort au coffre, ou une pièce précise à faire fabriquer. La suite se règle dans la conversation." />
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 

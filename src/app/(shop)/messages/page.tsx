@@ -179,7 +179,7 @@ export default function MessagesPage() {
       <PageHeader
         icon="message"
         title="Mes demandes & messages"
-        subtitle="Chaque demande EST une conversation : son état, son prix et la discussion, au même endroit."
+        subtitle="Une demande est une conversation : son état, son prix et la discussion au même endroit."
       />
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>

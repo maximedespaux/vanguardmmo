@@ -255,7 +255,7 @@ export default function QuetesPage() {
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 1080, margin: "0 auto" }}>
-      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce dont la guilde a besoin, et qui s'en charge. Chacun annonce ce qu'il apporte ; le demandeur confirme la réception." />
+      <PageHeader icon="target" title="Quête Guilde" subtitle="Ce que la guilde cherche. Chacun annonce sa part, le demandeur confirme la réception." />
 
       {erreur && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--red)" }}>{erreur}</div>}
 

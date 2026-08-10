@@ -18,7 +18,7 @@ import { Icon, type IconName } from "@/components/Icon";
  * l'AirBuilder évite de la ressaisir : elle part avec ses réglages, et le
  * détenteur la voit exactement comme elle est portée.
  */
-export type ChoixFait = "stock" | "surMesure";
+export type ChoixFait = "stock" | "surMesure" | "requetes";
 
 /** Un stuff qui porte au moins une pièce. Un stuff vide n'a rien à reprendre. */
 export type StuffRempli = { perso: string; stuff: string; pieces: number };
@@ -75,8 +75,12 @@ function Porte({ icon, titre, texte, onClick, href }: { icon: IconName; titre: s
     : <button onClick={onClick} className="fx-card vg-porte" style={carte}>{dedans}</button>;
 }
 
-export function ChoixBoutique({ ouvert, onChoix, onFermer }: {
-  ouvert: boolean; onChoix: (c: ChoixFait) => void; onFermer: () => void;
+export function ChoixBoutique({ ouvert, staff = false, onChoix, onFermer }: {
+  ouvert: boolean;
+  /** Le staff a une troisième porte : les commandes que personne n'a prises. */
+  staff?: boolean;
+  onChoix: (c: ChoixFait) => void;
+  onFermer: () => void;
 }) {
   /** Deux étapes : ce qu'on veut, puis — pour le sur-mesure — par quel bout. */
   const [etape, setEtape] = useState<"quoi" | "comment">("quoi");
@@ -119,6 +123,19 @@ export function ChoixBoutique({ ouvert, onChoix, onFermer }: {
               <Porte icon="hammer" titre="Un objet précis, sur mesure"
                 texte="Une pièce qui n'est pas au coffre : tu la décris avec ses réglages, le staff te répond."
                 onClick={() => setEtape("comment")} />
+              {/* La porte du staff : ce que les autres ont commandé et que
+                  personne n'a encore pris en charge. Elle n'a rien à faire dans
+                  la liste d'un membre — il n'a pas à servir les commandes. */}
+              {staff && (
+                <>
+                  <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 12, fontSize: 10.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
+                    Réservé au staff
+                  </div>
+                  <Porte icon="package" titre="Les requêtes clients"
+                    texte="Les commandes que personne n'a prises. Ouvre-leur une quête : chacun y apporte sa part, et la somme se partage."
+                    onClick={() => onChoix("requetes")} />
+                </>
+              )}
             </div>
           </>
         ) : (

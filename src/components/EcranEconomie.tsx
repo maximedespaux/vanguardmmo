@@ -9,6 +9,7 @@ import { Fil } from "@/components/Fil";
 import { BulleObjet } from "@/components/BulleObjet";
 import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { ChoixBoutique, type ChoixFait } from "@/components/ChoixBoutique";
+import { RequetesClients } from "@/components/RequetesClients";
 import { specDepuisJson } from "@/lib/specObjet";
 import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
@@ -75,7 +76,7 @@ export function EcranEconomie() {
   /** Deux façons de demander, deux panneaux : ce qui dort au coffre, et ce qui
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
-  const [panneau, setPanneau] = useState<"stock" | "surMesure">("stock");
+  const [panneau, setPanneau] = useState<"stock" | "surMesure" | "requetes">("stock");
   const [paiement, setPaiement] = useState<Paiement>("perins");
   /** La question posée à l'entrée : acheter au coffre, ou faire fabriquer. */
   const [choixOuvert, setChoixOuvert] = useState(false);
@@ -91,7 +92,7 @@ export function EcranEconomie() {
     const p = new URLSearchParams(window.location.search);
     if (p.get("piece")) { setPanneau("surMesure"); return; }
     const mode = p.get("mode");
-    if (mode === "stock" || mode === "surMesure") { setPanneau(mode); return; }
+    if (mode === "stock" || mode === "surMesure" || mode === "requetes") { setPanneau(mode); return; }
     setChoixOuvert(true);
   }, []);
   /** Le choix se note dans l'adresse : un retour arrière ne repose pas la question. */
@@ -107,6 +108,10 @@ export function EcranEconomie() {
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";
   const isMember = canAccessGuild(role); // membre de guilde → prix membre ; sinon prix public + invitation Discord
+  /* Le verrou reel est cote serveur (`/api/quetes/a-prendre` et `enQuete`
+     exigent un role de guilde) : ce drapeau ne decide que de l'affichage, et il
+     est toujours faux en production. Meme convention que la messagerie. */
+  const estStaff = canAccessAdmin(role) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
 
   const load = async () => {
     setLoading(true);
@@ -169,14 +174,15 @@ export function EcranEconomie() {
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
-      <ChoixBoutique ouvert={choixOuvert} onChoix={repondre} onFermer={() => setChoixOuvert(false)} />
+      <ChoixBoutique ouvert={choixOuvert} staff={estStaff} onChoix={repondre} onFermer={() => setChoixOuvert(false)} />
 
       {/* Les deux panneaux, et — a leur droite — la conversation. Une demande
           envoyee ne se suit pas dans la boutique : elle se poursuit dans le fil.
           L'y renvoyer depuis n'importe quelle section evite d'avoir a ressortir
           par la barre de navigation pour savoir ou en est ce qu'on a demande. */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
-        {([["stock", "cart", "Acheter au coffre"], ["surMesure", "hammer", "Objet sur mesure"]] as const).map(([k, ic, l]) => (
+        {([["stock", "cart", "Acheter au coffre"], ["surMesure", "hammer", "Objet sur mesure"],
+           ...(estStaff ? [["requetes", "package", "Requêtes clients"] as const] : [])] as const).map(([k, ic, l]) => (
           <button key={k} onClick={() => repondre(k)}
             style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: `1px solid ${panneau === k ? "var(--orange)" : "var(--border)"}`, background: panneau === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: panneau === k ? "var(--orange)" : "var(--text-muted)" }}>
             <Icon name={ic} size={15} />{l}
@@ -196,6 +202,7 @@ export function EcranEconomie() {
       </div>
 
       {panneau === "surMesure" && <ObjetSurMesure onEnvoye={load} />}
+      {panneau === "requetes" && estStaff && <RequetesClients />}
 
       {panneau === "stock" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
         <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>

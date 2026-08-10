@@ -11,13 +11,13 @@ import { ObjetSurMesure } from "@/components/ObjetSurMesure";
 import { ChoixBoutique, type ChoixFait } from "@/components/ChoixBoutique";
 import { RequetesClients } from "@/components/RequetesClients";
 import { specDepuisJson } from "@/lib/specObjet";
-import { canAccessGuild, canAccessAdmin } from "@/config/roles";
+import { canAccessAdmin } from "@/config/roles";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
 import { useCardFx } from "@/components/VgFx";
 
 type Req = { id: string; kind: string; item: string | null; quantity: number; reason: string | null; status: string; prixPublic: string | null; prixFinal: string | null; adminNote: string | null; createdAt: string; batchId: string | null; cat: string | null; priceEach: number | null; spec?: unknown };
-type Tiers = { v: boolean; d: boolean; pub: number; mem: number; det: number };
+type Tiers = { v: boolean; prix: number };
 type Shop = { id: string; item: string; cat: string; classe: string; price: number; tiers?: Tiers; tiersByRarity?: Record<string, Tiers> | null; rarities?: Record<string, number> | null; stock: number; unit: string; icon: string | null };
 // Raretés d'armes (mêmes clés/couleurs que le coffre AirGuild).
 const RARITY_META: Record<string, { l: string; c: string }> = {
@@ -28,13 +28,39 @@ const RARITY_META: Record<string, { l: string; c: string }> = {
  *  l'ordre où le coffre avait été parcouru — on lisait « Pré-myth. » avant
  *  « Légendaire », ce qui ne veut rien dire pour un joueur. */
 const ORDRE_RARETE = ["rare", "epique", "legendaire", "premyth"];
-// Prix affiché selon le statut : membre de guilde → prix membre ; public → prix public.
-// Prix applicable : si une rareté est précisée et qu'un tarif existe pour elle, il
-// PRIME sur le tarif de l'objet — une Hache Rare et une Hache Pré-myth. n'ont pas
-// le même prix. Sinon on retombe sur le tarif de l'objet.
-const priceFor = (s: Shop, member: boolean, rarete?: string | null) => {
+/**
+ * LE prix — il n'y en a plus qu'un.
+ *
+ * Il y avait un tarif public et un tarif membre. La boutique n'étant plus
+ * ouverte hors guilde, le premier ne s'affichait plus jamais ; et surtout, un
+ * objet doit avoir UN prix, celui de la guilde, sinon deux d'entre nous se font
+ * concurrence sur la même pièce.
+ *
+ * La rareté, elle, garde son mot : si un tarif existe pour la rareté demandée,
+ * il PRIME — une Hache Rare et une Hache Pré-mythique ne valent pas pareil.
+ */
+const priceFor = (s: Shop, rarete?: string | null) => {
   const t = (rarete && s.tiersByRarity?.[rarete]) || s.tiers;
-  return t ? (member ? t.mem : t.pub) : s.price;
+  return t ? t.prix : s.price;
+};
+
+/**
+ * « ≈ 12 AP » à côté du prix en périns, quand la guilde a fixé un cours.
+ *
+ * Jamais « ≈ 0 AP » : un objet qui coûte quelque chose ne vaut pas zéro
+ * Airpoint. Sous la barre du 1 AP on se tait — la conversion n'apprend rien,
+ * et un zéro se lit comme « gratuit ».
+ */
+const enAP = (perins: number, taux: number) => {
+  if (taux <= 0 || perins <= 0) return "";
+  const ap = Math.round(perins / taux);
+  return ap >= 1 ? `≈ ${ap.toLocaleString("fr-FR")} AP` : "";
+};
+
+/** Le plus bas et le plus haut prix d'une arme suivie par rareté. */
+const fourchette = (s: Shop) => {
+  const t = s.tiersByRarity ? Object.values(s.tiersByRarity).map((x) => x.prix).filter((n) => n > 0) : [];
+  return t.length ? { min: Math.min(...t), max: Math.max(...t) } : null;
 };
 
 const REQ_STATUS: Record<string, { l: string; c: string }> = {
@@ -69,6 +95,9 @@ export function EcranEconomie() {
   // ── Boutique ──
   const [shop, setShop] = useState<Shop[]>([]);
   const [cats, setCats] = useState<string[]>([]);
+  /* Le cours de l'Airpoint, fixé par la guilde dans l'AirGuild. 0 = aucun cours
+     annoncé : on n'affiche alors pas de conversion, plutôt que d'en inventer. */
+  const [tauxAP, setTauxAP] = useState(0);
   const [catF, setCatF] = useState(""); const [q, setQ] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({});
   const [stuffSex, setStuffSex] = useState<Record<string, "G" | "F">>({}); // #4 : préférence Garçon/Fille par Stuff
@@ -111,7 +140,6 @@ export function EcranEconomie() {
   const { data: session } = useSession();
   const canDelete = ["VANGUARD", "DIRECTION"].includes((session?.user as unknown as { role?: string })?.role ?? "");
   const role = (session?.user as any)?.role ?? "RECRUE";
-  const isMember = canAccessGuild(role); // membre de guilde → prix membre ; sinon prix public + invitation Discord
   /* Le verrou reel est cote serveur (`/api/quetes/a-prendre` et `enQuete`
      exigent un role de guilde) : ce drapeau ne decide que de l'affichage, et il
      est toujours faux en production. Meme convention que la messagerie. */
@@ -125,7 +153,7 @@ export function EcranEconomie() {
     } catch {}
     setLoading(false);
   };
-  const loadShop = async () => { try { const r = await fetch("/api/shop"); if (r.ok) { const d = await r.json(); setShop(d.items ?? []); setCats(d.cats ?? []); } } catch {} };
+  const loadShop = async () => { try { const r = await fetch("/api/shop"); if (r.ok) { const d = await r.json(); setShop(d.items ?? []); setCats(d.cats ?? []); setTauxAP(+d.tauxAP || 0); } } catch {} };
   useEffect(() => { load(); loadShop(); }, []);
   useEffect(() => {
     fetch("/api/characters").then((r) => (r.ok ? r.json() : [])).then((cs: { name: string; isMain: boolean }[]) => {
@@ -148,7 +176,7 @@ export function EcranEconomie() {
   const maxFor = (key: string) => { const it = byId(key); if (!it) return 0; const rk = rarOf(key); return (it.rarities && rk && it.rarities[rk] != null) ? it.rarities[rk] : it.stock; };
   const setQty = (key: string, v: number) => setCart(c => { const max = maxFor(key); const n = Math.max(0, Math.min(max, Math.round(v) || 0)); const cc = { ...c }; if (n <= 0) delete cc[key]; else cc[key] = n; return cc; });
   const cartIds = Object.keys(cart);
-  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, isMember, rarOf(id)) * cart[id] : 0); }, 0);
+  const cartTotal = cartIds.reduce((s, id) => { const it = byId(id); return s + (it ? priceFor(it, rarOf(id)) * cart[id] : 0); }, 0);
   const submitCart = async () => {
     if (!cartIds.length) return;
     const missingSex = cartIds.filter(id => { const it = byId(id); return it && (it.cat || "").trim().startsWith("Stuff") && !stuffSex[id]; });
@@ -157,7 +185,7 @@ export function EcranEconomie() {
       // Le palier « dette uniquement » n'a plus de sens : tout se demande, le
     // staff décide au cas par cas dans la conversation.
     setSending(true);
-    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, isMember, rk), cat: it.cat }; });
+    const items = cartIds.map(key => { const it = byId(key)!; const isStuff = (it.cat || "").trim().startsWith("Stuff"); const rk = rarOf(key); const rlabel = rk && RARITY_META[rk] ? ` (${RARITY_META[rk].l})` : ""; const name = isStuff && stuffSex[key] ? `${it.item} (${stuffSex[key]})` : `${it.item}${rlabel}`; return { name, quantity: cart[key], price: priceFor(it, rk), cat: it.cat }; });
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement }) });
     setSending(false);
     if (r.ok) { setCart({}); setStuffSex({}); flash(`Demande envoyée — ${cartIds.length} article(s). Le staff va répondre dans la conversation.`); load(); }
@@ -231,7 +259,18 @@ export function EcranEconomie() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · {(() => {
+                      /* Une arme a un prix PAR RARETÉ. Afficher en tête le tarif
+                         de la clé de base — souvent un vieux prix jamais revu —
+                         contredit la liste juste en dessous. On annonce la
+                         fourchette réelle, ou rien. */
+                      const f = isWeapon ? fourchette(s) : null;
+                      if (f) return <b style={{ color: "var(--gold)" }}>{f.min === f.max ? <>{fmt(f.min)} périns</> : <>de {fmt(f.min)} à {fmt(f.max)} périns</>}</b>;
+                      const pr = priceFor(s), ap = enAP(pr, tauxAP);
+                      return pr > 0
+                        ? <><b style={{ color: "var(--gold)" }}>~{fmt(pr)} périns</b>{ap ? <span style={{ color: "var(--text-muted)" }}> · {ap}</span> : null}</>
+                        : <b style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</b>;
+                    })()}{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -249,8 +288,8 @@ export function EcranEconomie() {
                         <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>stock {stk}</span>
                         {/* Le prix de CETTE rareté : c'est la seule information qui
                             permet de choisir en connaissance de cause. */}
-                        {(() => { const pr = priceFor(s, isMember, rk); return pr > 0
-                          ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)" }}>{fmt(pr)} périns</span>
+                        {(() => { const pr = priceFor(s, rk); const ap = enAP(pr, tauxAP); return pr > 0
+                          ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)" }}>{fmt(pr)} périns{ap ? <span style={{ fontWeight: 400, color: "var(--text-muted)" }}> · {ap}</span> : null}</span>
                           : <span style={{ fontSize: 11.5, fontStyle: "italic", color: "var(--text-muted)" }}>prix à définir</span>; })()}
                         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, opacity: stk > 0 ? 1 : 0.4 }}>
                           <button onClick={() => setQty(key, q - 1)} style={stepBtn}>−</button>
@@ -273,7 +312,7 @@ export function EcranEconomie() {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
                       <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.item}{rm ? <span style={{ color: rm.c, fontWeight: 700 }}> · {rm.l}</span> : null}</span>
                       <span style={{ color: "var(--text-muted)" }}>×{cart[id]}</span>
-                      <span style={{ color: "var(--orange)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, isMember, rarOf(id)) * cart[id])}</span>
+                      <span style={{ color: "var(--orange)", minWidth: 58, textAlign: "right" }}>{fmt(priceFor(it, rarOf(id)) * cart[id])}</span>
                       <button onClick={() => setQty(id, 0)} style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center" }}><Icon name="x" size={14} /></button>
                     </div>
                     {isStuff && (
@@ -288,7 +327,7 @@ export function EcranEconomie() {
                 ); })}
               </div>
             )}
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns</b></div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, margin: "10px 0 12px", paddingTop: 10, borderTop: "1px solid var(--border)" }}><span style={{ color: "var(--text-muted)" }}>Total estimé</span><b style={{ color: "var(--gold)" }}>{fmt(cartTotal)} périns{enAP(cartTotal, tauxAP) ? <span style={{ fontWeight: 400, color: "var(--text-muted)" }}> · {enAP(cartTotal, tauxAP)}</span> : null}</b></div>
             {/* Le pseudo EN JEU, juste au-dessus du bouton : c'est la dernière
                 chose qu'on vérifie avant d'envoyer, et l'objet part par courrier. */}
             <div style={{ marginBottom: 9 }}>

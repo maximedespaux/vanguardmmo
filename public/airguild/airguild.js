@@ -50,8 +50,8 @@ function myCoffreNom(){
 }
 // Depot : chacun ne modifie que SON coffre ; Vanguard/Direction corrigent partout.
 function canDeposit(){return canEdit()||(S.cur!=='__total__'&&estMonCoffre(S.cur));}
-function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};r.iconLib=r.iconLib||[];if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
-  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},iconLib:[],shopMember:'',tab:'bank'};}
+function load(){try{const r=JSON.parse(JSON.stringify(window.__AGSTATE||null));if(r&&r.members){r.prices=r.prices||{};r.debts=r.debts||[];r.cart=r.cart||{};r.farm=r.farm||{};r.overrides=r.overrides||{};r.recipes=r.recipes||{};r.cats=r.cats||[];r.hiddenCats=r.hiddenCats||[];r.catAssets=r.catAssets||{};r.catOrder=r.catOrder||[];r.customCrafts=r.customCrafts||[];r.hiddenCrafts=r.hiddenCrafts||[];r.craftAssets=r.craftAssets||{};r.prestige=r.prestige||{};r.iconLib=r.iconLib||[];r.tauxAP=+r.tauxAP||0;if(r.tab==='dj')r.tab='bank';if(r.tab==='obj')r.tab='craft';if(r.tab==='shop')r.tab='set';return r;}}catch(e){}
+  return{members:[],cur:'__total__',inv:{},mainCoffre:'ibeats',_csetup:2,custom:[],hidden:[],log:[],closed:{},farm:{},prices:{},debts:[],cart:{},overrides:{},recipes:{},cats:[],hiddenCats:[],catAssets:{},catOrder:[],customCrafts:[],hiddenCrafts:[],craftAssets:{},prestige:{},iconLib:[],tauxAP:0,shopMember:'',tab:'bank'};}
 function save(){try{(window.__agSave&&window.__agSave(S));}catch(e){}}
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
 function vgDD(){
@@ -84,15 +84,37 @@ function drawFromGuild(id,need,label){need=Math.max(0,Math.round(+need||0));var 
 function setQty(m,id,v,label){v=Math.max(0,Math.round(+v||0));if(!S.inv[m])S.inv[m]={};const old=qty(m,id);if(v===old)return;S.inv[m][id]=v;S.log.unshift({ts:Date.now(),member:m,by:(window.__agUser||''),label:label||id,delta:v-old});if(S.log.length>200)S.log.length=200;save();}
 function health(q,cat,unit,id){var t=id&&S.thresh&&S.thresh[id];if(t){var ok=+t.ok||0,mid=+t.mid||0;if(ok>0||mid>0){if(ok>0&&q>=ok)return'ok';if(mid>0&&q>=mid)return'mid';return'low';}}const c=cat.trim();if(unit==='slot'){if(q>=2)return'ok';if(q>=1)return'mid';return'low';}if(c==='Ressource'||c==='R1'||c==='R2'||c.startsWith('Carte')){if(q>=20)return'ok';if(q>=8)return'mid';return'low';}if(q>=10)return'ok';if(q>=6)return'mid';return'low';}
 function itemAsset(it){if(it.icData)return `<img src="${it.icData}" alt="">`;if(it.ic&&ICOIDX[it.ic]!=null)return `<span class="climg bic-${ICOIDX[it.ic]}"></span>`;return classLogo(it.classe)||`<span>${catIcon(it.cat)}</span>`;}
-// Tarifs par objet. Legacy = un nombre (= prix public). Nouveau modèle = objet à paliers.
-//  v = vendable (achat direct) · d = dette membre autorisée · pub/mem/det = prix public/membre/dette
-//  Pour une arme, la cle porte la rarete : id|R#rare, id|R#epique, ... (un prix par rarete)
+// Tarifs par objet — UN SEUL PRIX, le meme pour tout le monde.
+//
+// Il y en avait trois : public, membre, dette. Ils datent d'une boutique
+// ouverte aux non-membres ; elle ne l'est plus. Surtout, trois prix pour un
+// objet, c'est trois occasions de se contredire — et le tarif doit etre COMMUN
+// pour qu'on ne se fasse pas concurrence entre nous.
+//
+//  v = propose a la Boutique · prix = le tarif. La « dette membre » a disparu
+//  avec le systeme de dettes : il ne reste que l'achat.
+//  Pour une arme, la cle porte la rarete : id|R#rare, id|R#epique, ...
+//
+// Trois ecritures anciennes survivent et doivent continuer d'etre lues : un
+// NOMBRE nu (le tout premier format), et l'objet a paliers. Pour celui-ci on
+// reprend le prix MEMBRE : la boutique etant reservee a la guilde, c'est celui
+// que les gens payaient reellement. A defaut, le public.
 function priceObj(id){var p=S.prices[id];
-  if(p&&typeof p==='object')return {v:p.v!==false,d:p.d!==false,pub:+p.pub||0,mem:+p.mem||0,det:+p.det||0};
+  if(p&&typeof p==='object')
+    return {v:p.v!==false,prix:+p.prix||+p.mem||+p.pub||0};
   var n=(p!=null?+p:0)||((catalog().find(function(x){return x.id===id;})||{}).prix||0);
-  return {v:true,d:true,pub:n,mem:n,det:n};
+  return {v:true,prix:n};
 }
-function priceOf(id){return priceObj(id).pub;} // prix public (compat panier / checkout / fiche objet)
+function priceOf(id){return priceObj(id).prix;}
+
+/** Le cours de l'Airpoint : combien de perins vaut 1 AP, decide par la guilde. */
+function tauxAP(){return Math.max(0,Math.round(+S.tauxAP||0));}
+/** « 6 000 périns » et, si le cours est connu, « ≈ 12 AP ». */
+function enAP(perins){var t=tauxAP();if(!t||!perins)return '';
+  var ap=Math.round(perins/t);
+  // Jamais « 0 AP » : un objet qui coute quelque chose ne vaut pas zero
+  // Airpoint. Sous la barre du 1 AP, on se tait.
+  return ap>=1?ap.toLocaleString('fr-FR')+' AP':'';}
 //── Rareté des armes (Yggdrasil/Luzaka) : un stock par rareté. Clé = id|R#rareté (le sexe/des armes). ──
 var RARITIES=[['rare','Rare','#4EA8FF'],['epique','Épique','#C77DFF'],['legendaire','Légendaire','#FF8C1A'],['premyth','Pré-myth.','#FF5C8A']];
 // Rareté = TOUTES les armes des catégories « Armes… », SAUF ce que liste noRarity.
@@ -773,7 +795,7 @@ function viewShop(){
      ${cartPanel()}</div>
    ${debtsPanel()}`;
 }
-function setPrice(id,v){var p=priceObj(id);p.pub=Math.max(0,Math.round(+v||0));S.prices[id]=p;save();} // compat : fixe le prix public en gardant les paliers
+function setPrice(id,v){var p=priceObj(id);p.prix=Math.max(0,Math.round(+v||0));S.prices[id]=p;save();}
 // Éditeur de tarifs (réservé Vanguard/Direction) : vendable/dette + prix public/membre/dette.
 // ── Tarifs ───────────────────────────────────────────────────────────────────
 // Une arme a un stock PAR RARETE (cle id|R#rarete) : une Hache Rare et une Hache
@@ -796,58 +818,96 @@ function clesTarifaires(id){
   return rs.length?rs.map(function(r){return {cle:rarKey(id,r[0]),lib:r[1],couleur:r[2]};})
                   :[{cle:id,lib:'',couleur:'var(--orange)'}];
 }
+/** Identifiant DOM sur pour une cle tarifaire (elle contient espaces, accents et « | »). */
+function cleId(cle){return btoa(unescape(encodeURIComponent(cle))).replace(/=/g,'');}
 function editPrice(id){
   if(!canEdit()&&!canDeposit())return agToast('Tarifs : possible au dépôt dans TON coffre (ou rôle Vanguard/Direction).',false);
   var it=catalog().find(function(x){return x.id===id;})||{item:id};
   var cles=clesTarifaires(id);
-  var parRarete=cles.length>1||cles[0].lib;
-  var num=function(cle,champ,val){
-    return '<input class="inp" id="p_'+champ+'_'+btoa(unescape(encodeURIComponent(cle))).replace(/=/g,'')+'" type="number" min="0" step="1" value="'+(val||0)+'" style="width:100%;text-align:right">';
-  };
-  var lignes=cles.map(function(c){
-    var p=priceObj(c.cle);
-    return '<tr>'
-      +'<td style="padding:6px 8px 6px 0;white-space:nowrap">'+(c.lib
-          ? '<span style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:20px;color:'+c.couleur+';border:1px solid '+c.couleur+'55;background:'+c.couleur+'18">'+c.lib+'</span>'
-          : '<span style="color:var(--mut)">Tarif</span>')+'</td>'
-      +'<td style="padding:4px">'+num(c.cle,'pub',p.pub)+'</td>'
-      +'<td style="padding:4px">'+num(c.cle,'mem',p.mem)+'</td>'
-      +'<td style="padding:4px">'+num(c.cle,'det',p.det)+'</td>'
-      +'</tr>';
-  }).join('');
+  var parRarete=cles.length>1||!!cles[0].lib;
   var p0=priceObj(cles[0].cle);
-  openSheet('<h3>Tarifs — '+esc(it.item)+'</h3>'
-   +'<div class="hint">Le membre voit le prix membre, le public le prix public. '
-   +(parRarete?'Chaque rareté en stock doit avoir son prix.':'Le prix est obligatoire pour que l\'objet apparaisse en Boutique.')+'</div>'
-   +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pV" '+(p0.v?'checked':'')+'> Vendable (achat direct)</label></div>'
-   +'<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="pD" '+(p0.d?'checked':'')+'> Dette membre autorisée</label></div>'
-   +'<table style="width:100%;border-collapse:collapse;margin-top:4px">'
-   +'<thead><tr style="font-size:11.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px">'
-   +'<th style="text-align:left;padding-bottom:4px"></th><th style="padding-bottom:4px">Public</th><th style="padding-bottom:4px">Membre</th><th style="padding-bottom:4px">Dette</th>'
-   +'</tr></thead><tbody>'+lignes+'</tbody></table>'
-   +'<div class="toolbar" style="justify-content:flex-end;margin:10px 0 0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="savePrice(\''+sqa(id)+'\')">Enregistrer</button></div>');
+
+  /* Une LIGNE par rareté, chacune dans son cadre : le tableau nu alignait
+     quatre champs identiques sans dire lequel valait quoi, et la pastille de
+     rareté flottait loin de son prix. Ici la rareté, le champ et l'équivalent
+     en Airpoints tiennent dans le même bloc, teinté de la couleur de la rareté. */
+  var lignes=cles.map(function(c){
+    var p=priceObj(c.cle), k=cleId(c.cle);
+    return '<div class="pxrow" style="border-color:'+(c.lib?c.couleur+'44':'var(--border)')+'">'
+      +'<div class="pxlab">'+(c.lib
+          ? '<span class="pxrar" style="color:'+c.couleur+';border-color:'+c.couleur+'66;background:'+c.couleur+'18">'+c.lib+'</span>'
+          : '<span class="pxrar" style="color:var(--gold);border-color:#ffd24a55;background:#ffd24a14">Tarif</span>')+'</div>'
+      +'<div class="pxin"><input class="inp" id="p_prix_'+k+'" type="text" inputmode="numeric" autocomplete="off"'
+        +' value="'+(p.prix?fmt(p.prix):'')+'" placeholder="0" oninput="majPrix(this,\''+sqa(c.cle)+'\')"><span class="pxcur">périns</span></div>'
+      +'<div class="pxap" id="ap_'+k+'">'+(p.prix&&tauxAP()?'≈ '+enAP(p.prix):'')+'</div>'
+      +'</div>';
+  }).join('');
+
+  openSheet('<h3><i class=vgi-coin></i> Prix de vente — '+esc(it.item)+'</h3>'
+   +'<div class="pxhead">'
+     +'<div class="pxicon">'+itemAsset(it)+'</div>'
+     +'<div style="min-width:0">'
+       +'<div class="pxtitle">Le tarif de la guilde</div>'
+       +'<div class="pxsub">Le même pour tout le monde — on ne se fait pas concurrence entre nous. '
+       +(parRarete?'Chaque rareté en stock a le sien.':'Sans prix, l\'objet n\'apparaît pas en Boutique.')+'</div>'
+     +'</div>'
+   +'</div>'
+   +'<label class="pxtog"><input type="checkbox" id="pV" '+(p0.v?'checked':'')+'>'
+     +'<span><b>En vente à la Boutique</b><span class="pxtogsub">Décoche pour le garder au coffre sans le proposer.</span></span></label>'
+   +'<div class="pxgrid">'
+     +'<div class="pxth"><span>Rareté</span><span>Prix en périns</span><span>'+(tauxAP()?'≈ Airpoints':'')+'</span></div>'
+     +lignes
+   +'</div>'
+   +'<div class="pxcours">'+(tauxAP()
+       ? '<i class=vgi-info></i> Cours actuel : <b>1 AP = '+fmt(tauxAP())+' périns</b>.'
+       : '<i class=vgi-alert></i> Le cours de l\'Airpoint n\'est pas fixé — règle-le dans <b>Base des objets</b> pour voir l\'équivalent.')+'</div>'
+   +'<div class="toolbar" style="justify-content:flex-end;margin:14px 0 0"><button class="btn" onclick="closeSheet()">Annuler</button><button class="btn o" onclick="savePrice(\''+sqa(id)+'\')"><i class=vgi-save></i> Enregistrer</button></div>');
 }
 function savePrice(id){
-  var v=document.getElementById('pV').checked, d=document.getElementById('pD').checked;
+  var v=document.getElementById('pV').checked;
   var cles=clesTarifaires(id);
   var lire=function(cle,champ){
-    var el=document.getElementById('p_'+champ+'_'+btoa(unescape(encodeURIComponent(cle))).replace(/=/g,''));
-    return Math.max(0,Math.round(+(el||{}).value||0));
+    var el=document.getElementById('p_'+champ+'_'+cleId(cle));
+    return Math.max(0,Math.round(+String((el||{}).value||'').replace(/[^0-9]/g,'')||0));
   };
   // Chaque rarete en stock doit avoir un prix : on refuse l'enregistrement partiel
   // plutot que de laisser un article a 0 perin, donc « gratuit », en Boutique.
-  var manquants=cles.filter(function(c){return lire(c.cle,'pub')<=0;});
+  var manquants=cles.filter(function(c){return lire(c.cle,'prix')<=0;});
   if(manquants.length)
-    return agToast('Prix public manquant pour : '+manquants.map(function(c){return c.lib||'cet objet';}).join(', '),false);
-  cles.forEach(function(c){
-    S.prices[c.cle]={v:v,d:d,pub:lire(c.cle,'pub'),mem:lire(c.cle,'mem')||lire(c.cle,'pub'),det:lire(c.cle,'det')||lire(c.cle,'pub')};
-  });
+    return agToast('Prix manquant pour : '+manquants.map(function(c){return c.lib||'cet objet';}).join(', '),false);
+  // On ecrit `prix` SEUL : garder pub/mem/det a cote laisserait deux verites
+  // dans le meme objet, et le premier lecteur qui reprend l'ancien champ
+  // reafficherait un tarif qu'on croyait avoir change.
+  cles.forEach(function(c){ S.prices[c.cle]={v:v,prix:lire(c.cle,'prix')}; });
   save();closeSheet();render();
   agToast(cles.length>1?'Tarifs enregistrés pour '+cles.length+' raretés':'Tarifs enregistrés',true);
 }
-function priceBtn(id){var p=priceObj(id);return '<button class="inp" style="cursor:pointer;text-align:right;white-space:nowrap;min-width:120px" onclick="editPrice(\''+sqa(id)+'\')" title="Éditer les tarifs (public / membre / dette)"><b style="color:var(--gold)">'+fmt(p.pub)+'</b> <span class="mut" style="font-size:11px">pub</span> · <b style="color:var(--green)">'+fmt(p.mem)+'</b> <span class="mut" style="font-size:11px">mbr</span>'+(p.v?'':' <span style="color:var(--red);font-size:11px"><i class=vgi-x></i>vente</span>')+'</button>';}
+/**
+ * Groupe le prix par milliers PENDANT la frappe, et rafraichit le « ≈ N AP ».
+ *
+ * Un champ `type=number` ne sait pas grouper : on lisait « 1000000 » et rien ne
+ * distingue un million de dix millions d'un coup d'oeil. C'est precisement
+ * comme ca qu'on saisit un prix a un zero pres. D'ou un champ TEXTE reformate a
+ * chaque touche — en replacant le curseur sur le meme CHIFFRE, sinon il saute a
+ * la fin des qu'on corrige un chiffre au milieu.
+ */
+function majPrix(el,cle){
+  var brut=String(el.value||'').replace(/[^0-9]/g,'').replace(/^0+(?=\d)/,'');
+  var avantCurseur=String(el.value||'').slice(0,el.selectionStart||0).replace(/[^0-9]/g,'').length;
+  var v=Math.max(0,+brut||0);
+  el.value=brut?fmt(v):'';
+  // On repositionne apres le N-ieme chiffre, separateurs ignores.
+  var n=0,pos=el.value.length;
+  for(var i=0;i<el.value.length;i++){ if(/[0-9]/.test(el.value[i]))n++; if(n===avantCurseur){pos=i+1;break;} }
+  if(avantCurseur===0)pos=0;
+  try{el.setSelectionRange(pos,pos);}catch(e){}
+  var o=document.getElementById('ap_'+cleId(cle));
+  if(o)o.textContent=(v&&tauxAP())?'≈ '+enAP(v):'';
+}
+function priceBtn(id){var p=priceObj(id);var ap=enAP(p.prix);
+  return '<button class="inp" style="cursor:pointer;text-align:right;white-space:nowrap;min-width:120px" onclick="editPrice(\''+sqa(id)+'\')" title="Éditer le tarif de la guilde"><b style="color:var(--gold)">'+fmt(p.prix)+'</b> <span class="mut" style="font-size:11px">périns</span>'+(ap?' <span class="mut" style="font-size:11px">· ≈'+ap+'</span>':'')+(p.v?'':' <span style="color:var(--red);font-size:11px"><i class=vgi-x></i>vente</span>')+'</button>';}
 //Bouton compact « tarifs » posé sur chaque ligne du coffre (au dépôt). Doré si le tarif n'est pas encore fixé.
-function priceMini(id){var bid=baseId(id);var set=S.prices[bid]!=null;var p=priceObj(bid);return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none;'+(set?'':'border-color:var(--gold);color:var(--gold)')+'" onclick="editPrice(\''+sqa(bid)+'\')" title="Tarifs : à vendre et/ou dette · prix public/membre/dette +"><i class=vgi-coin></i> '+(set?fmt(p.pub):'à fixer')+'</button>';}
+function priceMini(id){var bid=baseId(id);var p=priceObj(bid);var set=p.prix>0;return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none;'+(set?'':'border-color:var(--gold);color:var(--gold)')+'" onclick="editPrice(\''+sqa(bid)+'\')" title="Le tarif de la guilde pour cet objet"><i class=vgi-coin></i> '+(set?fmt(p.prix):'à fixer')+'</button>';}
 // Au 1er dépôt d'un objet non tarifé dans SON coffre : ouvre la fenêtre de tarifs (« que faire de l'objet + prix »).
 function promptPriceIfNew(id){var bid=baseId(id);if(canDeposit()&&S.prices[bid]==null&&qty(S.cur,id)>0)editPrice(bid);}
 function cartAdd(id,d){const stock=totalGuild(id);S.cart[id]=Math.max(0,Math.min(stock,(S.cart[id]||0)+d));if(!S.cart[id])delete S.cart[id];save();render();}
@@ -885,10 +945,32 @@ function viewSettings(){const cats=sortByOrder(catalog());
     return `<div class="it" data-s="${esc(ds)}"><div class="logo">${itemAsset(it)}</div>
       <div class="nm"><div class="a">${esc(it.item)} ${ov?'<span class="utag" style="color:var(--gold);border-color:#ffd24a55;background:#ffd24a14">modifié</span>':''}${custom?'<span class="utag" style="color:var(--blue);border-color:#4ea8ff55;background:#4ea8ff14">perso</span>':''}</div><div class="b">${esc(it.cat.trim())}${it.classe?' · '+esc(it.classe):''} · ${it.unit==='slot'?'slot':'unitaire'}${it.prix?' · '+fmt(it.prix)+' périns':''}</div></div>
       ${canEdit()?`<button class="btn sm" onclick="moveItem('${sq(it.id)}',-1)" title="Monter dans la catégorie"><i class=vgi-arrow-up></i></button><button class="btn sm" onclick="moveItem('${sq(it.id)}',1)" title="Descendre dans la catégorie"><i class=vgi-arrow-down></i></button><button class="btn sm" onclick="editItem('${sq(it.id)}')"><i class=vgi-edit></i> Éditer</button><span class="rm" onclick="rmItem('${sq(it.id)}',${custom});render()"><i class=vgi-trash></i></span>`:'<span class="mut" style="font-size:11px"><i class=vgi-lock></i> lecture seule</span>'}</div>`;}).join('');
-  return `<div class="card" style="margin-bottom:14px"><div class="sec-h"><i class=vgi-settings></i> Base de données du coffre <span class="n">${cats.length} objets</span></div>
+  /* LE COURS DE L'AIRPOINT — un reglage de guilde, pas un avis personnel.
+     Les Airpoints s'achetent, les perins se farment : il n'existe aucun taux
+     officiel, seulement un prix de marche qui bouge. Sans un cours ecrit
+     quelque part, chacun annonce le sien et deux membres proposent le meme
+     objet a des prix qui ne se comparent pas. Il vit ici, a cote des tarifs
+     qu'il sert a convertir, et il est partage comme eux. */
+  const cours = `<div class="card" style="margin-bottom:14px">
+     <div class="sec-h"><i class=vgi-coin></i> Cours de l'Airpoint ${tauxAP() ? `<span class="n">1 AP = ${fmt(tauxAP())} périns</span>` : '<span class="n" style="color:var(--gold)">à fixer</span>'}</div>
+     <div class="toolbar" style="margin:0;align-items:center">
+       <span class="mut" style="font-size:12.5px;white-space:nowrap">1 Airpoint vaut</span>
+       <input class="inp" id="agTauxAP" type="number" min="0" step="1000" value="${tauxAP()}" ${canEdit() ? '' : 'disabled'} style="width:150px;text-align:right" placeholder="0">
+       <span class="mut" style="font-size:12.5px">périns</span>
+       ${canEdit() ? '<button class="btn o" onclick="saveTauxAP()"><i class=vgi-save></i> Enregistrer</button>' : '<span class="mut" style="font-size:11px"><i class=vgi-lock></i> rôle Vanguard</span>'}
+     </div>
+     <div class="hint">Le prix du marché, à mettre à jour quand il bouge. Il sert à convertir les tarifs de la Boutique et les estimations des demandes — il ne change aucun prix, il les traduit. Laisse 0 si tu préfères ne rien annoncer.</div></div>`;
+  return cours + `<div class="card" style="margin-bottom:14px"><div class="sec-h"><i class=vgi-settings></i> Base de données du coffre <span class="n">${cats.length} objets</span></div>
      <div class="toolbar" style="margin:0"><input class="inp" placeholder="Rechercher…" value="${esc(cfgQ)}" oninput="cfgQ=this.value;filterSet(this.value)" style="flex:1;min-width:160px">${canEdit()?'<button class="btn o" onclick="addItem()"><i class=vgi-plus></i> Ajouter</button>':''}<button class="btn" onclick="exportData()"><i class=vgi-arrow-down></i> Exporter</button>${canEdit()?'<button class="btn" onclick="importData()"><i class=vgi-upgrade></i> Importer</button>':''}</div>
      <div class="hint">Édite n'importe quel objet (nom, catégorie, classe, unité unitaire/slot, asset, prix) ou ajoute-en. Tout est sauvegardé localement.</div></div>
    <div class="card" id="setbody" style="padding:8px 12px">${rows||'<div class="empty">Aucun objet.</div>'}</div>`;
+}
+function saveTauxAP(){
+  if(!canEdit())return agToast('Le cours de l\'Airpoint se règle avec le rôle Vanguard.',false);
+  var el=document.getElementById('agTauxAP');
+  var v=Math.max(0,Math.round(+(el||{}).value||0));
+  S.tauxAP=v; save(); render();
+  agToast(v?('Cours enregistré : 1 AP = '+fmt(v)+' périns'):'Cours effacé — plus aucune conversion ne sera affichée.',true);
 }
 function editItem(id){if(!canEdit())return agToast('Édition réservée au rôle Vanguard.',false);const it=catalog().find(x=>x.id===id);if(!it)return;
   const opts=D.bankCats.concat(['Butin de donjon','Autre']).filter((v,i,a)=>a.indexOf(v)===i);

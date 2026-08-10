@@ -47,13 +47,24 @@ export async function GET() {
     }
   }
   const prices: Record<string, any> = S.prices ?? {};
-  // Tarifs par objet : accepte l'ancien format (nombre = prix public) et le nouveau (objet à paliers).
+  /* UN SEUL PRIX. Il y en avait trois — public, membre, dette — hérités d'une
+     boutique ouverte hors guilde. Elle ne l'est plus, et surtout le tarif doit
+     être COMMUN : trois prix pour un objet, c'est trois façons de se faire
+     concurrence entre nous.
+
+     Deux écritures anciennes restent lisibles : le nombre nu, et l'objet à
+     paliers dont on reprend le prix MEMBRE — c'est celui que les gens payaient
+     réellement, puisque seuls des membres voyaient la boutique. */
   const tiers = (id: string, base: number) => {
     const p = prices[id];
-    if (p && typeof p === "object") return { v: p.v !== false, d: p.d !== false, pub: +p.pub || 0, mem: +p.mem || 0, det: +p.det || 0 };
+    if (p && typeof p === "object") return { v: p.v !== false, prix: +p.prix || +p.mem || +p.pub || 0 };
     const n = (p != null ? +p : 0) || base || 0;
-    return { v: true, d: true, pub: n, mem: n, det: n };
+    return { v: true, prix: n };
   };
+  /* Le cours de l'Airpoint, fixé par la guilde dans l'AirGuild. 0 = pas de
+     cours annoncé : on n'affiche alors aucune conversion plutôt que d'en
+     inventer une. */
+  const tauxAP = Math.max(0, Math.round(Number(S.tauxAP) || 0));
   const custom: any[] = Array.isArray(S.custom) ? S.custom : [];
   const hidden = new Set<string>(Array.isArray(S.hidden) ? S.hidden : []);
   const overrides: Record<string, any> = S.overrides ?? {};
@@ -66,7 +77,7 @@ export async function GET() {
       const stock = inv[it.id] ?? 0;
       if (stock <= 0) return null;
       const t = tiers(it.id, it.prix ?? 0);
-      if (!t.v && !t.d) return null; // ni vendable ni dette → hors boutique
+      if (!t.v) return null; // pas proposé à la Boutique
       // Une arme a un prix PAR RARETÉ (clé « id|R#rareté » dans S.prices) : sans
       // cela, les tarifs saisis par rareté dans l'AirGuild ne seraient jamais lus
       // et la Boutique afficherait le même prix pour une Rare et une Pré-myth.
@@ -79,9 +90,9 @@ export async function GET() {
         item: it.item,
         cat: it.cat,
         classe: it.classe ?? "",
-        price: t.pub, // prix public (compat)
-        tiers: t,     // { v, d, pub, mem, det } — la caution a ete supprimee
-        tiersByRarity: tiersParRarete, // { rareté: { v, d, pub, mem, det } } ou null
+        price: t.prix,
+        tiers: t,     // { v, prix } — un seul tarif, celui de la guilde
+        tiersByRarity: tiersParRarete, // { rareté: { v, prix } } ou null
         stock,
         unit: it.unit ?? "",
         rarities: rar, // armes → { rareté: stock } ; null pour les objets sans rareté
@@ -93,5 +104,5 @@ export async function GET() {
   // Catégories réellement présentes en stock : bankCats (ordre stable) + toute NOUVELLE
   // catégorie créée dans l'AirGuild (items custom / overrides), pour qu'elles apparaissent.
   const usedCats = [...new Set([...bankCats, ...items.map((i: any) => i.cat)])].filter((c: string) => c && items.some((i: any) => i.cat === c));
-  return NextResponse.json({ items, cats: usedCats });
+  return NextResponse.json({ items, cats: usedCats, tauxAP });
 }

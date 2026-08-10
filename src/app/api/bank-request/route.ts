@@ -64,10 +64,38 @@ export async function GET() {
 }
 
 // POST /api/bank-request — créer une requête (pré-requis : profil avec au moins un personnage)
+/** Délai minimum entre deux demandes d'un même membre. */
+const DELAI_ENTRE_DEMANDES = 5 * 60_000;
+
 export async function POST(req: Request) {
   const a = await apiAuth(); if ("error" in a) return a.error;
   const charCount = await prisma.character.count({ where: { userId: a.user.id } });
   if (charCount === 0) return NextResponse.json({ error: "Complète d'abord ton profil (au moins un personnage) pour faire une requête." }, { status: 400 });
+
+  /**
+   * Un délai entre deux demandes.
+   *
+   * Rien n'empêchait d'en envoyer trente d'affilée : chacune ouvre une
+   * conversation, une notification et un message Discord, et c'est le staff qui
+   * les reçoit toutes. Cinq minutes suffisent à casser l'envoi en rafale sans
+   * gêner quelqu'un qui commande deux pièces de suite — un panier entier ne
+   * compte d'ailleurs que pour UNE demande, puisqu'il part d'un seul envoi.
+   */
+  const derniere = await prisma.bankRequest.findFirst({
+    where: { userId: a.user.id },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
+  if (derniere) {
+    const reste = DELAI_ENTRE_DEMANDES - (Date.now() - derniere.createdAt.getTime());
+    if (reste > 0) {
+      const min = Math.ceil(reste / 60000);
+      return NextResponse.json(
+        { error: `Tu viens d'envoyer une demande. Attends encore ${min} minute${min > 1 ? "s" : ""} avant la suivante.`, reste },
+        { status: 429 },
+      );
+    }
+  }
 
   const b = await req.json();
 

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
@@ -51,6 +52,21 @@ function quandCourt(iso: string) {
 type Filtre = "afaire" | "tous" | "nonlus" | "clos";
 
 /**
+ * Une conversation appartient-elle à cette section ?
+ *
+ * Écrit une fois et utilisé aussi bien pour filtrer que pour compter : quand la
+ * règle existait en double, le compte et la liste pouvaient se contredire, et
+ * un onglet qui annonce quinze pour en montrer trois se lit comme un tri cassé.
+ */
+const estClose = (c: Conversation) => c.ton === "fini" || c.ton === "stop";
+function dansSection(c: Conversation, f: Filtre): boolean {
+  if (f === "afaire") return !estClose(c);
+  if (f === "clos") return estClose(c);
+  if (f === "nonlus") return c.nonLus > 0;
+  return true;
+}
+
+/**
  * De quoi parle cette demande — un achat, ou une requête d'objet.
  *
  * Les deux arrivaient dans la même liste, avec la même icône de caddie : rien
@@ -87,6 +103,11 @@ export default function MessagesPage() {
   // qui a caché pendant des semaines le 500 des dettes. Une liste vide est une
   // information, une panne en est une autre.
   const [panne, setPanne] = useState("");
+  /** La conversation qu'on s'apprête à abandonner. Une demande abandonnée n'est
+   *  pas effacée : elle passe en « Annulée » et rejoint les closes, pour que le
+   *  staff garde la trace de ce qui a été demandé puis retiré. */
+  const [aAbandonner, setAAbandonner] = useState<Conversation | null>(null);
+  const [abandonEnCours, setAbandonEnCours] = useState(false);
 
   const charger = useCallback(async () => {
     try {
@@ -114,21 +135,36 @@ export default function MessagesPage() {
   const liste = useMemo(() => {
     const texte = q.trim().toLowerCase();
     return convs.filter((c) => {
-      // Une conversation close n'est plus « à faire » : elle encombrait la
-      // liste alors que l'objet était remis ou la demande abandonnée.
-      const close = c.ton === "fini" || c.ton === "stop";
-      if (filtre === "afaire" && close) return false;
-      if (filtre === "clos" && !close) return false;
-      if (filtre === "nonlus" && c.nonLus === 0) return false;
+      if (!dansSection(c, filtre)) return false;
       if (!texte) return true;
       return (c.titre + " " + c.avec + " " + (c.dernier?.corps ?? "")).toLowerCase().includes(texte);
     });
   }, [convs, filtre, q]);
 
   const courante = convs.find((c) => c.filId === ouvert) ?? null;
-  const totalNonLus = convs.reduce((s, c) => s + (c.nonLus > 0 ? 1 : 0), 0);
-  // Ce qui reste sur le feu : ni remis, ni abandonné.
-  const nbAFaire = convs.filter((c) => c.ton !== "fini" && c.ton !== "stop").length;
+  /** Le compte de chaque onglet, par le MÊME prédicat que la liste : un onglet
+   *  qui annonce 15 et n'en montre que 3 se lit comme un tri cassé. */
+  const comptes = useMemo(() => ({
+    afaire: convs.filter((c) => dansSection(c, "afaire")).length,
+    tous: convs.length,
+    nonlus: convs.filter((c) => dansSection(c, "nonlus")).length,
+    clos: convs.filter((c) => dansSection(c, "clos")).length,
+  }), [convs]);
+
+  const abandonner = async () => {
+    if (!aAbandonner) return;
+    setAbandonEnCours(true);
+    try {
+      const r = await fetch(`/api/ventes/${aAbandonner.id}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clore", issue: "abandon" }),
+      });
+      if (!r.ok) setPanne((await r.json().catch(() => ({})))?.error ?? "L'abandon a échoué.");
+      else { if (ouvert === aAbandonner.filId) setOuvert(null); await charger(); }
+    } catch { setPanne("Impossible de joindre le serveur."); }
+    setAbandonEnCours(false);
+    setAAbandonner(null);
+  };
 
   const ouvrir = (c: Conversation) => {
     setOuvert(c.filId);
@@ -161,12 +197,15 @@ export default function MessagesPage() {
             style={{ width: "100%", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13, marginBottom: 9 }}
           />
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-            {([["afaire", `À faire${nbAFaire ? ` (${nbAFaire})` : ""}`], ["tous", "Tout"], ["nonlus", `Non lus${totalNonLus ? ` (${totalNonLus})` : ""}`], ["clos", "Clos"]] as const).map(([k, l]) => (
+            {([["afaire", "À faire"], ["tous", "Tout"], ["nonlus", "Non lus"], ["clos", "Clos"]] as const).map(([k, base]) => {
+              const l = `${base} (${comptes[k]})`;
+              return (
               <button key={k} onClick={() => setFiltre(k)}
                 style={{ padding: "5px 11px", borderRadius: 8, cursor: "pointer", fontSize: 11.5, fontWeight: 600, border: `1px solid ${filtre === k ? "var(--orange)" : "var(--border)"}`, background: filtre === k ? "rgba(255,140,26,.14)" : "var(--bg-3)", color: filtre === k ? "var(--orange)" : "var(--text-muted)" }}>
                 {l}
               </button>
-            ))}
+              );
+            })}
           </div>
 
           <div style={{ display: "grid", gap: 5, maxHeight: "62vh", overflowY: "auto" }}>
@@ -188,13 +227,22 @@ export default function MessagesPage() {
             )}
             {liste.map((c) => {
               const actif = c.filId === ouvert;
+              const abandonnable = !estClose(c) && (c.jeSuisLAuteur || estStaff);
               return (
-                <button key={c.filId} onClick={() => ouvrir(c)}
-                  style={{ textAlign: "left", display: "grid", gap: 4, padding: "9px 11px", borderRadius: 10, cursor: "pointer", border: `1px solid ${actif ? "var(--orange)" : "transparent"}`, background: actif ? "rgba(255,140,26,.10)" : c.nonLus ? "rgba(255,140,26,.05)" : "var(--bg-3)", color: "var(--text)", fontFamily: "inherit" }}>
+                <div key={c.filId} style={{ position: "relative", borderRadius: 10, border: `1px solid ${actif ? "var(--orange)" : "transparent"}`, background: actif ? "rgba(255,140,26,.10)" : c.nonLus ? "rgba(255,140,26,.05)" : "var(--bg-3)" }}>
+                {abandonnable && (
+                  <button onClick={() => setAAbandonner(c)} title="Abandonner cette commande"
+                    aria-label={`Abandonner « ${c.titre} »`}
+                    style={{ position: "absolute", top: 6, right: 6, zIndex: 1, width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 6, border: "1px solid var(--border)", background: "var(--bg-2)", color: "var(--text-muted)", cursor: "pointer", padding: 0 }}>
+                    <Icon name="trash" size={11} />
+                  </button>
+                )}
+                <button onClick={() => ouvrir(c)}
+                  style={{ textAlign: "left", display: "grid", gap: 4, padding: "9px 11px", borderRadius: 10, cursor: "pointer", border: "none", background: "transparent", color: "var(--text)", fontFamily: "inherit", width: "100%" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <Icon name={c.categorie === "achat" ? "cart" : "package"} size={13} style={{ color: c.categorie === "achat" ? "var(--green)" : "var(--purple)", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>{c.titre}</span>
-                    <span style={{ fontSize: 10.5, color: "var(--text-muted)", flexShrink: 0 }}>{quandCourt(c.quand)}</span>
+                    <span style={{ fontSize: 10.5, color: "var(--text-muted)", flexShrink: 0, paddingRight: abandonnable ? 24 : 0 }}>{quandCourt(c.quand)}</span>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--text-muted)" }}>
@@ -224,6 +272,7 @@ export default function MessagesPage() {
                     )}
                   </div>
                 </button>
+                </div>
               );
             })}
           </div>
@@ -307,6 +356,38 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      {/* Abandonner une commande — sur <body>, pas dans la carte : un parent en
+          `transform` (.fx-card) enfermerait la fenêtre à l'intérieur. */}
+      {aAbandonner && typeof document !== "undefined" && createPortal(
+        <div onClick={() => !abandonEnCours && setAAbandonner(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.62)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 18 }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, width: "100%", maxWidth: 420 }}>
+            <div className="font-heading" style={{ fontSize: 16.5, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+              <Icon name="alert" size={17} style={{ color: "var(--red)" }} /> Abandonner cette commande ?
+            </div>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 6px" }}>
+              <b style={{ color: "var(--text)" }}>{aAbandonner.titre}</b> ne sera plus attendue : la demande passe en
+              « Annulée » et rejoint les conversations closes. Celui d&apos;en face en est prévenu.
+            </p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5, margin: "0 0 14px" }}>
+              La conversation reste consultable dans « Clos » — rien n&apos;est effacé, et elle peut se rouvrir.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button onClick={() => setAAbandonner(null)} disabled={abandonEnCours}
+                style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
+                Garder
+              </button>
+              <button onClick={abandonner} disabled={abandonEnCours}
+                style={{ padding: "9px 16px", borderRadius: 9, border: "none", background: "var(--red)", color: "#0A0A0C", fontWeight: 700, cursor: abandonEnCours ? "wait" : "pointer", fontSize: 13, fontFamily: "inherit" }}>
+                {abandonEnCours ? "Abandon…" : "Abandonner"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

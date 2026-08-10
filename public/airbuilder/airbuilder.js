@@ -64,7 +64,9 @@ function slotHTML(slot){try{const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const sm
   let rk='';
   if(slot==='familier'&&e&&e.rank)rk=`<span class="rk">${e.rank}</span>`;
   else if(slot==='fairy'&&cf&&cf.lvl)rk=`<span class="rk">${cf.lvl}</span>`;
-  else if(cf&&cf.rune)rk=`<span class="rk" style="background:var(--green)" title="Rune ${cf.rune}">R</span>`;
+  // Deuxieme bulle native au meme endroit, et elle affichait « Rune true » sur
+  // une arme — `rune` y est un booleen. L'infobulle du builder dit deja laquelle.
+  else if(cf&&cf.rune)rk=`<span class="rk" style="background:var(--green)" aria-label="Rune${typeof cf.rune==='string'?' '+esc(cf.rune):''}">R</span>`;
   else if((slot==='mantra'||slot==='masque')&&e&&e.item.cat)rk=`<span class="rk" style="background:var(--blue);color:#001">${e.item.cat[0]}</span>`;
   /* En jeu, une piece equipee se reconnait a la couleur de son cadre avant meme
      qu'on lise son nom. L'emplacement etait uniformement gris : rien ne

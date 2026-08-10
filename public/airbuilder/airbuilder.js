@@ -70,7 +70,7 @@ function slotHTML(slot){try{const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const sm
      qu'on lise son nom. L'emplacement etait uniformement gris : rien ne
      distinguait une Yggdrasil d'une piece de depart. */
   const teinte=(e&&e.item&&e.item.col)?` style="border-color:${e.item.col}77;box-shadow:inset 0 0 0 1px ${e.item.col}22, inset 0 0 14px ${e.item.col}1a"`:'';
-  return `<div class="slot ${small?'small':''}${e?' plein':''}"${teinte} onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" title="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" title="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
+  return `<div class="slot ${small?'small':''}${e?' plein':''}"${teinte} onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" aria-label="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" aria-label="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
 
 function render(){
   var _pt=document.getElementById('ptabs');if(!_pt){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;vgSyncChip();
@@ -638,10 +638,12 @@ const couleurPiece=(it,cfg)=>(cfg&&cfg.tier&&RARCOL[cfg.tier])||(it&&it.col)||'#
      terre         Terre               Seisme    Defense %
      electricite   Foudre              Fulgur    Attaque %
 
-   Paliers : A, S, R, SR a l'attaque ; 7, 10, 12, 15 % en defense. L'air n'a ni
-   R ni SR — le jeu ne les a jamais sortis, donc sa case s'arrete a S. Valeurs
-   et libelles repris des descriptions du jeu. */
-const PIERCEGRADE={atk:['A','S','R','SR'],def:['7','10','12','15']};
+   Valeurs et libelles repris des descriptions du jeu. */
+/* Les paliers PROPOSES. Le jeu en a quatre par famille — R et SR a l'attaque,
+   12 et 15 % en defense (« de Baruna ») — mais on s'en tient a deux pour
+   l'instant. Leurs valeurs restent decrites plus bas et leurs cartes restent
+   posees dans `icons/percage/` : les rouvrir tient a cette seule ligne. */
+const PIERCEGRADE={atk:['A','S'],def:['7','10']};
 const PIERCECARD={
  // ATTAQUE — arme et bouclier
  'Feu':    {fam:'atk',col:'#F87171',ic:'<i class=vgi-flame></i>',  g:{A:[['Force',7,''],['Dégâts critiques',2,'%']],S:[['Force',12,''],['Dégâts critiques',4,'%']],R:[['Force',15,'']],SR:[['Force',18,''],['Dégâts critiques',8,'%']]}},
@@ -670,9 +672,9 @@ function pierceGrades(el){const c=PIERCECARD[el];return c?PIERCEGRADE[c.fam].fil
 /* Meme chose pour les paliers : une tenue sauvegardee avant la correction porte
    des A/S. Le rang se conserve, seul son nom change. */
 const PIERCEGRTRAD={A:'7',S:'10',R:'12',SR:'15','7':'A','10':'S','12':'R','15':'SR'};
-function pierceCases(cfg,slot){const c=PIERCECARD[pierceElDe(cfg,slot)];
-  return ((cfg&&cfg.pierce)||[]).map(function(v){if(!v||!c)return null;
-    if(c.g[v])return v;const t=PIERCEGRTRAD[v];return (t&&c.g[t])?t:null;});}
+function pierceCases(cfg,slot){const ok=pierceGrades(pierceElDe(cfg,slot));
+  return ((cfg&&cfg.pierce)||[]).map(function(v){if(!v)return null;
+    if(ok.indexOf(v)>=0)return v;const t=PIERCEGRTRAD[v];return (t&&ok.indexOf(t)>=0)?t:null;});}
 /* L'accent d'« Oceane » est retire du nom de fichier : un chemin accentue se
    fait encoder et l'image ne se charge plus. */
 const SANSACCENT=s=>String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');

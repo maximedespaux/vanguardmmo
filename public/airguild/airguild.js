@@ -138,7 +138,23 @@ function render(){const v=$('#view');if(!v){if((render._n=(render._n||0)+1)<90)r
 /* ============ BANQUE ============ */
 let bankQ='';
 // F2 : coffres membres liés au roster Discord (auto-créés, plus de « +Membre » manuel ; jamais de suppression de coffre existant → on garde les données).
-function syncRoster(){var r=window.__agRoster||[];if(!r.length)return;var ch=false;r.forEach(function(name){if(name&&S.members.indexOf(name)<0){S.members.push(name);if(!S.inv[name])S.inv[name]={};ch=true;}});if(ch)save();}
+/* Les coffres suivent le roster Discord : on les cree, et on les ATTRIBUE dans
+   la foulee. Attribuer a la main ce que le site sait deja — le coffre « sugot »
+   appartient a sugot — etait une corvee sans decision : personne ne s'y serait
+   mis, et les coffres seraient restes attaches a un pseudo.
+   On n'attribue QUE ce qui est libre : un coffre deja attache ne se fait pas
+   voler par un homonyme, et une attribution manuelle n'est jamais defaite. */
+function syncRoster(){
+  var r=window.__agRoster||[]; var ids=window.__agIds||{}; if(!r.length)return;
+  var ch=false;
+  r.forEach(function(name){
+    if(!name)return;
+    if(S.members.indexOf(name)<0){S.members.push(name);if(!S.inv[name])S.inv[name]={};ch=true;}
+    var id=ids[name];
+    if(id&&!(S.owners&&S.owners[name])){S.owners=S.owners||{};S.owners[name]=id;ch=true;}
+  });
+  if(ch)save();
+}
 function viewBank(){
   syncRoster();
   if(!S.members.includes(S.cur)&&S.cur!=='__total__')S.cur='__total__';
@@ -337,7 +353,7 @@ function donnerAcces(){
       +'</span></div>';
   }).join('');
   openSheet('<h3>Donner l\'acces a un coffre</h3>'
-    +'<p class="mut" style="font-size:12px;line-height:1.5;margin:0 0 12px">Attribuer un coffre a quelqu\'un le lie a son compte Discord : lui seul pourra y deposer, les autres le consultent. Un coffre libre reste modifiable par le staff.</p>'
+    +'<p class="mut" style="font-size:12px;line-height:1.5;margin:0 0 12px">Les coffres au nom d\'un membre de la guilde s\'attribuent tout seuls. Cette liste sert aux exceptions : un coffre nomme autrement, ou quelqu\'un qui a change de pseudo. Attribuer lie le coffre au compte Discord — lui seul pourra y deposer, les autres le consultent.</p>'
     +'<div class="acllist">'+(lignes||'<div class="mut">Aucun coffre.</div>')+'</div>'
     +'<div class="toolbar" style="justify-content:flex-end;margin-top:12px"><button class="btn sm" onclick="closeSheet()">Fermer</button></div>');
 }

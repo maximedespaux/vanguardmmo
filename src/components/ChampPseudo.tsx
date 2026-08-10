@@ -9,16 +9,15 @@ import type { Role } from "@prisma/client";
  * Le pseudo EN JEU d'une demande — l'objet part par courrier, c'est cette
  * ligne qui dit où.
  *
- * Deux publics, deux champs :
+ * UNE SAISIE, pas une liste. C'était un menu déroulant des personnages
+ * déclarés : on ne pouvait donc écrire QUE ce qui était déjà enregistré. Or on
+ * fait livrer sur un perso de mule, sur un second compte, sur un personnage
+ * créé la veille — et il fallait alors aller le déclarer avant de pouvoir
+ * commander, pour une case qui ne sert qu'à adresser un courrier.
  *
- * — Membre de la GUILDE : il choisit parmi SES personnages. Ils sont déjà
- *   enregistrés, ils servent aux compositions et au GuildViewer, et une liste
- *   force à les tenir à jour — une demande adressée à un perso supprimé se
- *   perd en jeu, pas sur le site.
- *
- * — Membre du serveur seulement : saisie libre. Il n'a pas de personnage
- *   enregistré ici, et lui en demander un pour acheter un objet serait lui
- *   imposer la paperasse d'une guilde qu'il n'a pas rejointe.
+ * Les personnages déclarés restent proposés, en suggestions : la commodité
+ * sans l'obligation. Le principal est pré-rempli, parce que c'est lui qui
+ * reçoit neuf fois sur dix — mais il s'efface d'un coup de touche.
  */
 export function ChampPseudo({ valeur, onChange, style }: {
   valeur: string;
@@ -53,18 +52,35 @@ export function ChampPseudo({ valeur, onChange, style }: {
 
   const base: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13.5, fontFamily: "inherit", width: "100%", ...style };
 
-  if (deLaGuilde && persos.length > 0) {
-    return (
-      <select value={valeur} onChange={(e) => onChange(e.target.value)} style={base} aria-label="Personnage en jeu">
-        {persos.map((c) => <option key={c.name} value={c.name}>{c.name}{c.isMain ? " (principal)" : ""}</option>)}
-      </select>
-    );
-  }
-
   return (
     <>
-      <input value={valeur} onChange={(e) => onChange(e.target.value)} placeholder="ton personnage en jeu" style={base} aria-label="Personnage en jeu" />
-      {deLaGuilde && charge && (
+      <input
+        value={valeur} onChange={(e) => onChange(e.target.value)}
+        placeholder="ton personnage en jeu" style={base} aria-label="Personnage en jeu"
+        list={persos.length ? "vg-mes-persos" : undefined}
+        autoComplete="off" maxLength={80}
+      />
+      {persos.length > 0 && (
+        <datalist id="vg-mes-persos">
+          {persos.map((c) => <option key={c.name} value={c.name} />)}
+        </datalist>
+      )}
+      {/* Les persos déclarés, cliquables : la liste déroulante rendait ce
+          service et c'est le seul qu'elle rendait. */}
+      {persos.length > 1 && (
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 5 }}>
+          {persos.map((c) => (
+            <button key={c.name} type="button" onClick={() => onChange(c.name)}
+              style={{ fontSize: 11.5, fontWeight: 600, padding: "3px 9px", borderRadius: 7, cursor: "pointer", fontFamily: "inherit",
+                border: `1px solid ${valeur === c.name ? "var(--orange)" : "var(--border)"}`,
+                background: valeur === c.name ? "rgba(255,140,26,.14)" : "var(--bg-2)",
+                color: valeur === c.name ? "var(--orange)" : "var(--text-muted)" }}>
+              {c.name}{c.isMain ? " ★" : ""}
+            </button>
+          ))}
+        </div>
+      )}
+      {deLaGuilde && charge && persos.length === 0 && (
         // Membre de la guilde sans personnage enregistré : on ne bloque pas sa
         // demande, mais on dit où corriger — c'est la liste qui sert partout
         // ailleurs (compositions, GuildViewer, quêtes).

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import { listerConversations, marquerLu } from "@/lib/messagerie";
 
 /**
@@ -9,13 +9,13 @@ import { listerConversations, marquerLu } from "@/lib/messagerie";
  * POST → { filId } : je viens d'ouvrir ce fil, il est lu jusqu'ici.
  */
 export async function GET() {
-  const a = await apiAuth();
+  const a = await apiGuild();
   if ("error" in a) return a.error;
   return NextResponse.json({ conversations: await listerConversations(a.user) });
 }
 
 export async function POST(req: Request) {
-  const a = await apiAuth();
+  const a = await apiGuild();
   if ("error" in a) return a.error;
   const b = await req.json().catch(() => ({}));
   const filId = String(b?.filId ?? "");

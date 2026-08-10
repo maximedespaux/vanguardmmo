@@ -6,18 +6,25 @@ import { DEV_ALL } from "@/lib/devAccess";
 // Routes par niveau d'accès (doivent rester alignées avec la nav de Shell.tsx).
 // Niveau d'entrée : être membre du serveur Discord — ce qui est vrai de toute
 // session depuis que la connexion d'un non-membre est refusée (lib/auth.ts).
-// On y range ce qui est ouvert hors guilde : le builder (la candidature exige
-// un build) et l'économie (la boutique est ouverte aux non-membres de guilde).
+// N'y reste que ce dont un CANDIDAT a besoin : son build. Rien de la vie
+// interne de la guilde.
 /* `/builder` n'y est plus : l'AirBuilder est ouvert a tous, connecte ou non.
    On compose librement — c'est un outil de fan-site — mais tout ce qui engage un
    compte (enregistrer, publier, partager, commander) exige la connexion, et
    c'est verifie cote serveur par les routes concernees. `/builder/<membre>`, qui
    montre le build d'un AUTRE, reste protege par le layout de son groupe. */
-const VERIFIED_PREFIXES = ["/build", "/boutique", "/messages", "/sommaire"];
+const VERIFIED_PREFIXES = ["/build"];
 /* `/personnages` n'y est plus : declarer ses persos ne demande pas d'etre DE la
    guilde — un candidat doit pouvoir le faire, sa candidature l'exige. La page
-   invite a se connecter quand personne ne l'est, et l'API refuse d'elle-meme. */
-const GUILD_PREFIXES = ["/dashboard", "/compositions", "/worldboss", "/quetes", "/absences"];
+   invite a se connecter quand personne ne l'est, et l'API refuse d'elle-meme.
+
+   L'ECONOMIE EST MONTEE ICI. La boutique etait ouverte hors guilde ; un Recrue
+   est un visiteur, pas un membre — il n'a rien a voir du stock commun ni des
+   conversations de commande. `/dettes` et `/requetes` suivent : ce sont des
+   adresses de la meme boutique, laissees vivantes parce qu'elles ont circule
+   dans des notifications. */
+const GUILD_PREFIXES = ["/dashboard", "/compositions", "/worldboss", "/quetes", "/absences",
+                        "/boutique", "/messages", "/sommaire", "/demandes", "/dettes", "/requetes"];
 const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm", "/mes-ventes"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -53,7 +60,7 @@ export const config = {
     "/dashboard/:path*",
     "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/absences/:path*", "/build/:path*",
-    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*",
+    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*", "/demandes/:path*", "/dettes/:path*", "/requetes/:path*",
     "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*", "/mes-ventes/:path*",
   ],
 };

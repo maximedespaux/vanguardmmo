@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 
 // POST /api/worldboss/[eventId]/participate  { status: "CONFIRMED" | "DECLINED" }
 export async function POST(req: Request, context: { params: Promise<{ eventId: string }> }) {
   const params = await context.params;
-  const auth = await apiAuth();
+  const auth = await apiGuild();
   if ("error" in auth) return auth.error;
 
   const { status } = await req.json();

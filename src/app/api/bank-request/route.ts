@@ -22,7 +22,7 @@ async function ouvrirFilRequete(
     })
     .catch(() => null);
 }
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import { annoncerVente } from "@/lib/ventes";
 
 const ser = (r: any) => ({ ...r, prixPublic: r.prixPublic?.toString() ?? null, prixFinal: r.prixFinal?.toString() ?? null });
@@ -61,7 +61,7 @@ async function notifyHolders(itemNames: string[], requester: string, requesterId
 
 // GET /api/bank-request — mes requêtes
 export async function GET() {
-  const a = await apiAuth(); if ("error" in a) return a.error;
+  const a = await apiGuild(); if ("error" in a) return a.error;
   const reqs = await prisma.bankRequest.findMany({ where: { userId: a.user.id }, orderBy: { createdAt: "desc" } });
   return NextResponse.json(reqs.map(ser));
 }
@@ -71,7 +71,7 @@ export async function GET() {
 const DELAI_ENTRE_DEMANDES = 5 * 60_000;
 
 export async function POST(req: Request) {
-  const a = await apiAuth(); if ("error" in a) return a.error;
+  const a = await apiGuild(); if ("error" in a) return a.error;
   const charCount = await prisma.character.count({ where: { userId: a.user.id } });
   if (charCount === 0) return NextResponse.json({ error: "Complète d'abord ton profil (au moins un personnage) pour faire une requête." }, { status: 400 });
 

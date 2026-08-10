@@ -1,10 +1,18 @@
 import { Shell } from "@/components/Shell";
-import { requireVerified } from "@/lib/access";
-// Boutique : ouverte à tout membre du SERVEUR Discord, y compris hors guilde —
-// les non-membres de guilde voient le prix public. Depuis que la connexion d'un
-// non-membre est refusée (lib/auth.ts), « connecté » et « vérifié » désignent
-// la même chose : on garde requireVerified, qui dit l'exigence réelle.
+import { requireGuild } from "@/lib/access";
+/**
+ * L'ÉCONOMIE EST RÉSERVÉE À LA GUILDE.
+ *
+ * Elle a été ouverte un temps à tout membre du serveur Discord, prix public
+ * affiché pour les non-membres. Ce n'est plus le choix : un Recrue est un
+ * visiteur, pas un membre. Le stock commun, les commandes et les conversations
+ * qui vont avec sont la vie interne de la guilde — il n'y a rien à y faire tant
+ * qu'on n'en est pas.
+ *
+ * Ce garde ne protège que les PAGES. Les routes /api de la boutique portent le
+ * leur (apiGuild) : sans cela, la porte se ferme et la fenêtre reste ouverte.
+ */
 export default async function ShopLayout({ children }: { children: React.ReactNode }) {
-  await requireVerified(); // redirige vers /login si non connecté
+  await requireGuild();
   return <Shell>{children}</Shell>;
 }

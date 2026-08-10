@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiRole } from "@/lib/access";
-import { ADMIN_ROLES, rankValue } from "@/config/roles";
+import { ADMIN_ROLES, rankValue, canAccessAdmin } from "@/config/roles";
 
 /**
  * AGIR SUR UN MEMBRE — retirer un rôle, le sortir de la guilde, l'exclure du
@@ -75,6 +75,11 @@ export async function POST(req: Request) {
 
   /* ── Ouvrir un coffre : notre donnée, appliquée tout de suite ────────── */
   if (b.action === "coffre") {
+    // Le coffre est une page du STAFF. Attribuer un coffre à quelqu'un qui ne
+    // peut pas ouvrir /coffre ne lui donne rien : il n'y accédera jamais. Le
+    // refuser ici évite une attribution muette dont personne ne verrait l'effet.
+    if (!canAccessAdmin(cible.role))
+      return NextResponse.json({ error: `Le coffre est réservé au staff. ${cible.username} est ${cible.role.toLowerCase()} — il n'y aurait pas accès de toute façon.` }, { status: 400 });
     const nom = String(b?.coffre ?? "").trim();
     if (!nom) return NextResponse.json({ error: "Indique le coffre à ouvrir." }, { status: 400 });
     const row = await prisma.airGuildState.findUnique({ where: { id: "main" } });

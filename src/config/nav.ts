@@ -50,7 +50,13 @@ export const ESPACES: Espace[] = [
     label: "AirBuilder",
     icon: "shirt",
     href: "/builder",
-    acces: "guild",
+    /* PUBLIC, comme ses deux pages : elles vivent dans le groupe (public) et le
+       middleware les en a explicitement sorties. Le menu, lui, exigeait encore
+       la guilde — un visiteur, et surtout un CANDIDAT, ne trouvait donc pas le
+       builder alors que sa candidature lui demande un build. On compose sans
+       compte ; c'est enregistrer et partager qui exigent la connexion, et les
+       routes le verifient d'elles-memes. */
+    acces: "public",
     liens: [
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, et le stuff de chacun." },
       { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Monte ton stuff, pièce par pièce." },
@@ -88,7 +94,10 @@ export const ESPACES: Espace[] = [
     label: "Économie",
     icon: "coins",
     href: "/boutique",
-    acces: "public",
+    /* Etait "public" : la boutique s'ouvrait a tout compte connecte, y compris
+       un Recrue. Un Recrue est un visiteur — le stock commun et les commandes
+       ne le regardent pas. L'espace entier descend au niveau guilde. */
+    acces: "guild",
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, ou une pièce sur mesure." },
       { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Tes demandes en cours, et la discussion qui va avec." },

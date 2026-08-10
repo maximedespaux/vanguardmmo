@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/dashboard — chiffres de la guilde + priorités intelligentes.
 // Lit uniquement les modèles existants (aucune migration requise).
 export async function GET() {
-  const auth = await apiAuth();
+  const auth = await apiGuild();
   if ("error" in auth) return auth.error;
 
   // Requêtes en parallèle

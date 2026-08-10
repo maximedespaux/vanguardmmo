@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import fs from "fs";
 import path from "path";
 
@@ -21,7 +21,7 @@ function loadCatalog() {
 // GET /api/shop — catalogue SHOPPABLE pour les membres : uniquement les articles en stock
 // dans le coffre commun, avec prix + icône. Aucune donnée sensible (dettes/membres/log).
 export async function GET() {
-  const a = await apiAuth();
+  const a = await apiGuild();
   if ("error" in a) return a.error;
 
   const { bankItems, icons, bankCats } = loadCatalog();

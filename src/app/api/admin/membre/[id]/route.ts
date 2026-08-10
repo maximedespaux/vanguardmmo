@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiRole } from "@/lib/access";
-import { ADMIN_ROLES, rankValue } from "@/config/roles";
+import { ADMIN_ROLES, rankValue, canAccessAdmin, canAccessGuild } from "@/config/roles";
 import { partager } from "@/lib/quetes";
 
 /**
@@ -122,7 +122,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       contributions: contributions.map((c) => ({ id: c.id, quete: c.quete?.titre ?? "", quantite: c.quantite, statut: c.statut, date: c.createdAt.toISOString() })),
       partsAcquises,
     },
-    coffre: { nom: monCoffre, objets: objetsAuCoffre, tous: coffres },
+    // `peutOuvrir` : le coffre est une page du staff. Sur un membre qui n'y a
+    // pas accès, le geste s'affiche grisé avec sa raison — plutôt que d'ouvrir
+    // un coffre dont il ne verra jamais la porte.
+    coffre: { nom: monCoffre, objets: objetsAuCoffre, tous: coffres, peutOuvrir: canAccessAdmin(u.role), deLaGuilde: canAccessGuild(u.role) },
     decisions: decisions.map((d) => ({
       id: d.id, action: d.action, detail: d.detail, motif: d.motif, auteur: d.auteur,
       statut: d.statut, resultat: d.resultat, date: d.createdAt.toISOString(),

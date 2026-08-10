@@ -132,5 +132,27 @@ export async function apiRole(roles: Role[]): Promise<ApiAuth> {
   if (!roles.includes(r.user.role)) return { error: NextResponse.json({ error: "Accès refusé" }, { status: 403 }) };
   return r;
 }
+
+/**
+ * ÊTRE DE LA GUILDE — le pendant API de requireGuild().
+ *
+ * Un layout de groupe ne protège que des PAGES. Les routes /api n'en ont pas :
+ * chacune doit dire elle-même ce qu'elle exige. Plusieurs se contentaient
+ * d'apiAuth, c'est-à-dire « connecté », alors qu'elles servaient des pages
+ * réservées à la guilde — le tableau de bord, la boutique, les absences, les
+ * World Boss. Un Recrue redirigé à la porte obtenait la même donnée en
+ * appelant l'adresse directement.
+ *
+ * Un Recrue n'est pas un membre : c'est un visiteur, ou un candidat. Il garde
+ * ce que la candidature exige (ses personnages, son build, ses notifications)
+ * et rien de la vie interne de la guilde.
+ */
+export async function apiGuild(): Promise<ApiAuth> {
+  const r = await apiAuth();
+  if ("error" in r) return r;
+  if (!canAccessGuild(r.user.role))
+    return { error: NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 }) };
+  return r;
+}
 export const isOfficer = (role: Role) => canAccessAdmin(role); // Officier+ = bras droits
 export { rankValue };

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { apiAuth } from "@/lib/access";
+import { apiGuild } from "@/lib/access";
 import { prisma } from "@/lib/prisma";
 
 // GET /api/worldboss — bosses + événements à venir, avec participants
 export async function GET() {
-  const auth = await apiAuth();
+  const auth = await apiGuild();
   if ("error" in auth) return auth.error;
 
   const events = await prisma.worldBossEvent.findMany({

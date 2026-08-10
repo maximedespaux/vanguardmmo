@@ -35,7 +35,7 @@ type Dossier = {
   personnages: Perso[];
   absences: Abs[];
   economie: { ventes: { id: string; item: string; quantite: number; pour: string; perins: number; remis: boolean; date: string }[]; demandes: { id: string; item: string | null; quantite: number; statut: string; date: string }[]; contributions: { id: string; quete: string; quantite: number; statut: string; date: string }[]; partsAcquises: number };
-  coffre: { nom: string | null; objets: number; tous: { nom: string; tenuPar: string | null }[] };
+  coffre: { nom: string | null; objets: number; tous: { nom: string; tenuPar: string | null }[]; peutOuvrir: boolean; deLaGuilde: boolean };
   decisions: Decision[];
   compteurs: { absences: number; versions: number; contributions: number };
 };
@@ -226,7 +226,9 @@ function OngletMembre({ d }: { d: Dossier }) {
         <Titre icone="vault">Coffre AirGuild</Titre>
         {d.coffre.nom
           ? <div style={ligne}><Icon name="vault" size={16} style={{ color: "var(--green)" }} />Il tient <b>{d.coffre.nom}</b><span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>{nb(d.coffre.objets)} objets</span></div>
-          : <Vide>Aucun coffre ne lui est attribué : il consulte tous les coffres, mais n&apos;écrit dans aucun. Ça s&apos;ouvre dans l&apos;onglet Décisions.</Vide>}
+          : d.coffre.peutOuvrir
+            ? <Vide>Aucun coffre ne lui est attribué : il consulte les coffres, mais n&apos;écrit dans aucun. Ça s&apos;ouvre dans l&apos;onglet Décisions.</Vide>
+            : <Vide>Le coffre est réservé au <b style={{ color: "var(--gold)" }}>staff</b> : {d.identite.username} ne le voit pas, même en lecture.</Vide>}
       </div>
     </div>
   );
@@ -361,7 +363,11 @@ function OngletDecisions({ d, onFait }: { d: Dossier; onFait: () => void }) {
               <div style={{ display: "grid", gap: 6 }}>
                 {GESTES.map((x) => {
                   const indispo = x.clef === "role" && retirables.length === 0 ? "Aucun rôle retirable connu"
-                    : x.clef === "coffre" && libres.length === 0 ? "Tous les coffres sont déjà tenus" : null;
+                    // Le coffre est une page du staff : l'ouvrir à quelqu'un qui
+                    // n'y a pas accès ne lui donnerait rien.
+                    : x.clef === "coffre" && !d.coffre.peutOuvrir ? `Le coffre est réservé au staff — ${d.identite.username} n'y a pas accès`
+                    : x.clef === "coffre" && libres.length === 0 ? "Tous les coffres sont déjà tenus"
+                    : x.clef === "guilde" && !d.coffre.deLaGuilde ? "Il n'est déjà pas de la guilde" : null;
                   return (
                     <button key={x.clef} disabled={!!indispo} onClick={() => { setGeste(x.clef); setRetour(null); }} title={indispo ?? x.explique}
                       style={{ display: "flex", alignItems: "center", gap: 11, textAlign: "left", width: "100%", padding: "11px 13px", borderRadius: 10, fontFamily: "inherit",

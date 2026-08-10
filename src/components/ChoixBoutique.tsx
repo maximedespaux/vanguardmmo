@@ -55,22 +55,39 @@ export async function lireStuffsRemplis(): Promise<StuffRempli[]> {
   return [];
 }
 
+/* UNE CARTE PAR GESTE, cote a cote. C'etaient des lignes empilees : l'icone a
+   gauche, le titre, deux phrases — soit trois blocs de texte a lire avant de
+   savoir lequel cliquer. Une carte se choisit d'un regard : le dessin en haut,
+   le verbe, et UNE ligne qui dit ce qu'on y fait. */
 const carte: React.CSSProperties = {
-  display: "flex", gap: 13, alignItems: "flex-start", textAlign: "left", width: "100%",
-  background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 12,
-  padding: "15px 16px", cursor: "pointer", color: "var(--text)", fontFamily: "inherit",
+  display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center",
+  gap: 9, padding: "20px 14px 18px", borderRadius: 14, cursor: "pointer",
+  background: "var(--bg-3)", border: "1px solid var(--border)",
+  color: "var(--text)", fontFamily: "inherit", position: "relative",
 };
 
-function Porte({ icon, titre, texte, onClick, href }: { icon: IconName; titre: string; texte: string; onClick?: () => void; href?: string }) {
+function Porte({ icon, titre, texte, onClick, href, phare, marque }: {
+  icon: IconName; titre: string; texte: string; onClick?: () => void; href?: string;
+  /** La porte la plus empruntée : elle se voit avant les autres. */
+  phare?: boolean;
+  /** Une pastille en coin (« staff », « nouveau »…). */
+  marque?: string;
+}) {
   const dedans = (
     <>
-      <span style={{ flexShrink: 0, width: 38, height: 38, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,140,26,.12)", border: "1px solid rgba(255,140,26,.3)", color: "var(--orange)" }}>
-        <Icon name={icon} size={19} />
+      {marque && (
+        <span style={{ position: "absolute", top: 9, right: 9, fontSize: 9.5, fontWeight: 700, letterSpacing: .8,
+          textTransform: "uppercase", padding: "2px 7px", borderRadius: 20,
+          background: "var(--gold)", color: "#0A0A0C" }}>{marque}</span>
+      )}
+      <span style={{ flexShrink: 0, width: 52, height: 52, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center",
+        background: phare ? "var(--orange)" : "rgba(255,140,26,.12)",
+        border: `1px solid ${phare ? "var(--orange)" : "rgba(255,140,26,.3)"}`,
+        color: phare ? "#0A0A0C" : "var(--orange)" }}>
+        <Icon name={icon} size={25} />
       </span>
-      <span style={{ minWidth: 0 }}>
-        <span className="font-heading" style={{ display: "block", fontSize: 14.5, fontWeight: 700, marginBottom: 3 }}>{titre}</span>
-        <span style={{ display: "block", fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5 }}>{texte}</span>
-      </span>
+      <span className="font-heading" style={{ display: "block", fontSize: 15.5, fontWeight: 700 }}>{titre}</span>
+      <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.45 }}>{texte}</span>
     </>
   );
   return href
@@ -113,31 +130,34 @@ export function ChoixBoutique({ ouvert, staff = false, onChoix, onFermer }: {
 
         {etape === "quoi" ? (
           <>
-            <h2 className="font-heading" style={{ margin: "0 0 4px", fontSize: 19, display: "flex", alignItems: "center", gap: 9 }}>
-              <Icon name="cart" size={19} style={{ color: "var(--orange)" }} /> Que viens-tu chercher ?
-            </h2>
-            <p style={{ margin: "0 0 18px", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.55 }}>
-              Deux démarches, deux écrans. Tu pourras passer de l&apos;une à l&apos;autre ensuite.
-            </p>
-            <div style={{ display: "grid", gap: 10 }}>
-              <Porte icon="cart" titre="Un objet du coffre"
-                texte="Parcours ce que la guilde a en stock, remplis ton panier et envoie la demande."
+            <div style={{ textAlign: "center", margin: "0 0 20px" }}>
+              <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.6, color: "var(--orange)", marginBottom: 6 }}>
+                Boutique · Vanguard
+              </div>
+              <h2 className="font-heading" style={{ margin: "0 0 5px", fontSize: 23, fontWeight: 700 }}>
+                Que souhaites-tu faire ?
+              </h2>
+              <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>
+                Choisis pour continuer.
+              </p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(148px, 1fr))", gap: 10 }}>
+              <Porte icon="cart" titre="Acheter" phare
+                texte="Ce que la guilde a en stock"
                 onClick={() => onChoix("stock")} />
-              <Porte icon="hammer" titre="Un objet précis, sur mesure"
-                texte="Une pièce qui n'est pas au coffre : tu la décris avec ses réglages, le staff te répond."
+              <Porte icon="hammer" titre="Sur mesure"
+                texte="Une pièce à faire, décrite par toi"
                 onClick={() => setEtape("comment")} />
+              <Porte icon="message" titre="Ma commande"
+                texte="Suivre celle qui est en cours"
+                onClick={() => onChoix("commande")} />
               {/* La porte du staff : ce que les autres ont commandé et que
                   personne n'a encore pris en charge. Elle n'a rien à faire dans
                   la liste d'un membre — il n'a pas à servir les commandes. */}
               {staff && (
-                <>
-                  <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 12, fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
-                    Réservé au staff
-                  </div>
-                  <Porte icon="package" titre="Les requêtes clients"
-                    texte="Les commandes que personne n'a prises. Ouvre-leur une quête : chacun y apporte sa part, et la somme se partage."
-                    onClick={() => onChoix("requetes")} />
-                </>
+                <Porte icon="package" titre="À livrer" marque="staff"
+                  texte="Les commandes des autres, à prendre en charge"
+                  onClick={() => onChoix("requetes")} />
               )}
             </div>
           </>

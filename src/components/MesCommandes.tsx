@@ -106,23 +106,48 @@ function BadgeCategorie({ categorie, taille = 10 }: { categorie: "achat" | "requ
 function Etapes({ courante }: { courante: Etape }) {
   const ici = indexEtape(courante);
   return (
-    <div style={{ display: "flex", gap: 4, marginBottom: 14, overflowX: "auto", paddingBottom: 2 }}>
+    <ol style={{ listStyle: "none", margin: "0 0 15px", padding: 0, display: "grid", gap: 0 }}>
       {ETAPES.map((e, i) => {
         const passee = i < ici, active = i === ici;
         const c = passee ? "var(--green)" : active ? "var(--orange)" : "var(--text-muted)";
+        const dernier = i === ETAPES.length - 1;
         return (
-          <div key={e.clef} title={e.quoi}
-            style={{ flex: "1 1 0", minWidth: 92, padding: "7px 9px", borderRadius: 9,
-              borderTop: `2px solid ${passee || active ? c : "var(--border)"}`,
-              background: active ? "rgba(255,140,26,.09)" : "var(--bg-3)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: c }}>
-              {passee ? <Icon name="check" size={11} /> : active ? <Icon name="chevron-right" size={11} /> : null}
-              {e.titre}
-            </div>
-          </div>
+          <li key={e.clef} style={{ display: "flex", gap: 12, alignItems: "flex-start", position: "relative", paddingBottom: dernier ? 0 : 12 }}>
+            {/* Le fil qui relie les etapes : sans lui ce sont cinq encadres
+                cote a cote, pas un chemin qu'on parcourt. */}
+            {!dernier && (
+              <span aria-hidden style={{ position: "absolute", left: 13, top: 30, bottom: 2, width: 2,
+                background: passee ? "var(--green)" : "var(--border)", borderRadius: 2 }} />
+            )}
+            <span style={{ flexShrink: 0, width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 12.5, fontWeight: 700, fontFamily: "'Rubik',sans-serif", zIndex: 1,
+              background: passee ? "var(--green)" : active ? "var(--orange)" : "var(--bg-3)",
+              color: passee || active ? "#0A0A0C" : "var(--text-muted)",
+              border: `1px solid ${passee || active ? "transparent" : "var(--border)"}`,
+              boxShadow: active ? "0 0 0 4px rgba(255,140,26,.16)" : "none" }}>
+              {passee ? <Icon name="check" size={14} /> : i + 1}
+            </span>
+            <span style={{ minWidth: 0, paddingTop: 3 }}>
+              <span className="font-heading" style={{ display: "block", fontSize: 13.5, fontWeight: 700, color: active ? "var(--orange)" : passee ? "var(--text)" : "var(--text-muted)" }}>
+                {e.titre}
+              </span>
+              {/* Ce que dit l'etape : c'est la phrase, pas le titre, qui
+                  repond a « et maintenant, il se passe quoi ? ». Elle etait
+                  cachee dans une infobulle — donc invisible au doigt. */}
+              <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.45, marginTop: 1 }}>
+                {e.quoi}
+              </span>
+            </span>
+            {active && (
+              <span style={{ marginLeft: "auto", flexShrink: 0, alignSelf: "center", fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .8,
+                color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 20, padding: "2px 9px" }}>
+                on en est là
+              </span>
+            )}
+          </li>
         );
       })}
-    </div>
+    </ol>
   );
 }
 

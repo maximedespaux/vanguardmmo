@@ -7,6 +7,7 @@ import { canAccessGuild, canAccessAdmin } from "@/config/roles";
 import { ESPACES, HORS_ESPACES, type Acces } from "@/config/nav";
 import { Icon } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
+import { PanneauTout } from "@/components/PanneauTout";
 import { Alertes } from "@/components/Alertes";
 import { AccueilPersonnages } from "@/components/AccueilPersonnages";
 
@@ -98,19 +99,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
             );
           })}
 
-          {/* Le filet : quand on ne sait pas sous quel espace chercher, une page
-              montre tout d'un coup. C'est aussi ce qui rattrape les pages qu'on
-              n'ouvre qu'une fois par an. */}
-          <div className="vg-top-item">
-            <Link href="/sommaire" onClick={() => setNavOpen(false)} className={`vg-top-link ${isActive("/sommaire") ? "active" : ""}`} title="Toutes les pages du site">
-              <Icon name="grid" size={16} /><span className="vg-top-som">Tout</span>
-            </Link>
-          </div>
         </nav>
 
         <div className="vg-top-user">
           {(session || DEV_ALL) ? (
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <PanneauTout espaces={espaces} hors={horsEspaces} />
               <Alertes />
               <ProfilePanel devAll={DEV_ALL} />
             </div>

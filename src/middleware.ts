@@ -14,7 +14,10 @@ import { DEV_ALL } from "@/lib/devAccess";
    c'est verifie cote serveur par les routes concernees. `/builder/<membre>`, qui
    montre le build d'un AUTRE, reste protege par le layout de son groupe. */
 const VERIFIED_PREFIXES = ["/build", "/boutique", "/messages", "/sommaire"];
-const GUILD_PREFIXES = ["/dashboard", "/personnages", "/compositions", "/worldboss", "/quetes", "/absences"];
+/* `/personnages` n'y est plus : declarer ses persos ne demande pas d'etre DE la
+   guilde — un candidat doit pouvoir le faire, sa candidature l'exige. La page
+   invite a se connecter quand personne ne l'est, et l'API refuse d'elle-meme. */
+const GUILD_PREFIXES = ["/dashboard", "/compositions", "/worldboss", "/quetes", "/absences"];
 const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm", "/mes-ventes"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -47,7 +50,7 @@ export async function middleware(req: NextRequest) {
 export const config = {
   // Protège les pages des espaces Guilde et Admin.
   matcher: [
-    "/dashboard/:path*", "/personnages/:path*",
+    "/dashboard/:path*",
     "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/absences/:path*", "/build/:path*",
     "/boutique/:path*", "/messages/:path*", "/sommaire/:path*",

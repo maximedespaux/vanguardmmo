@@ -158,7 +158,11 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
             ))}
           </div>
 
-          {u?.discordId && (
+          {/* Se deconnecter s'affichait sous condition de `discordId`. Or il vaut
+              la chaine vide sur un jeton emis avant son ajout : le bouton
+              disparaissait, et le membre ne pouvait plus sortir de sa session.
+              La bonne condition est la SESSION, pas un de ses champs. */}
+          {session && (
             <div style={{ padding: "8px 12px 12px", borderTop: "1px solid var(--border)" }}>
               <button onClick={() => signOut()} className="vg-prof-logout" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--red)", cursor: "pointer", fontWeight: 600, fontSize: 13 }}><Icon name="power" size={16} /> Se déconnecter</button>
             </div>

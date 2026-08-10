@@ -36,6 +36,22 @@ export default async function BuilderPage({
           .vg-page{max-width:none!important;padding:0!important}
         `}</style>
       )}
+      {/* Un visiteur voit tout mais ne compose pas. Le dire AVANT qu'il clique :
+          sans ce bandeau, il essaie, rien ne bouge, et il croit que c'est cassé. */}
+      {!connecte && !enIframe && (
+        <div style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap",
+          margin: "0 0 14px", padding: "11px 14px", borderRadius: 11,
+          background: "rgba(255,140,26,.08)", border: "1px solid rgba(255,140,26,.26)" }}>
+          <span style={{ fontSize: 13, color: "var(--text)", flex: "1 1 240px", lineHeight: 1.5 }}>
+            Tu regardes l&apos;AirBuilder en lecture. <b>Pour composer ton stuff et le partager</b>, rejoins
+            le Discord de Vanguard et connecte-toi.
+          </span>
+          <a href="/login" className="vg-btn" style={{ padding: "9px 16px", fontSize: 12.5, flexShrink: 0 }}>
+            Se connecter
+          </a>
+        </div>
+      )}
+
       <div dangerouslySetInnerHTML={{ __html: BUILDER_MARKUP }} />
       <BuilderRunner embed={enIframe} connecte={connecte} />
     </div>

@@ -50,6 +50,12 @@ var _vgPushT=null;
    `vgConnexion()` le dit et propose la marche a suivre plutot que d'echouer en
    silence sur un 401. */
 function vgAnon(){return !!window.__ANON;}
+/* Un visiteur non connecte entre en mode LECTURE. Le moteur en a deja un — celui
+   qui sert a voir le build d'un autre membre — et en inventer un second aurait
+   diverge au premier ajout. On le pose donc au demarrage, et `_ro()` explique
+   la difference : ici ce n'est pas « le build d'un autre », c'est « connecte-toi
+   pour composer ». */
+if (typeof window !== 'undefined' && window.__ANON) window.__VIEW = true;
 function vgConnexion(quoi){
   agConfirm('Pour '+quoi+', il faut avoir rejoint le Discord de Vanguard et t\'y être connecté.\n\nTon build reste dans ce navigateur en attendant : tu le retrouveras en revenant.\n\nConfirmer pour aller à la connexion.',
     function(){location.href='/login';});
@@ -247,7 +253,9 @@ function setMode(i,full){const c=C();c.carnetsFull=c.carnetsFull||[];const k=c.c
 function resetChar(){if(_ro())return;agConfirm('Vider l\'équipement de ce stuff ? (les carnets du personnage sont conservés)',function(){const s=ST();s.eq={};render();});}
 
 let pickSlot=null;
-function _ro(){if(window.__VIEW){if(!_ro._t||Date.now()-_ro._t>1500){_ro._t=Date.now();agToast('Mode lecture — build non modifiable.',false);}return true;}return false;}
+function _ro(){if(window.__VIEW){if(!_ro._t||Date.now()-_ro._t>1500){_ro._t=Date.now();
+  agToast(vgAnon()?'Connecte-toi pour composer ton stuff.':'Mode lecture — build non modifiable.',false);}
+  return true;}return false;}
 function openPick(s){if(_ro())return;pickSlot=s;drawPick('');}
 function closePick(){document.getElementById('modalRoot').innerHTML='';pickSlot=null;itipHide();}
 let _itipEl=null;
@@ -360,9 +368,9 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const pick=`<input class="srch" placeholder="${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
     <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${esc(it.n)}${it.sex?' ('+it.sex+')':''}<div style="font-size:11px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:11px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
   document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
-function equip(id){if(window.__VIEW)return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
+function equip(id){if(_ro())return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
-function equipFam(id,n){if(window.__VIEW)return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
+function equipFam(id,n){if(_ro())return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
 function setRank(r){if(_ro())return;const e=E('familier');if(e){e.rank=r;render();drawPick('');}}
 function famRune(v){const e=E('familier');if(e){e.rune=v;render();drawPick('');}}
 function removeItem(){delete ST().eq[pickSlot];render();closePick();}

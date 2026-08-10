@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { useSession } from "next-auth/react";
 
 const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
 const MODES = ["DPS","TANK","HYBRIDE"];
@@ -16,6 +17,11 @@ type Char = { id: string; name: string; class: string; level: number; prestige: 
 export default function PersonnagesPage() {
   // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
   useCardFx();
+  /* La page est ouverte a tous — declarer ses persos ne demande pas d'etre DE la
+     guilde, un candidat doit pouvoir le faire. Mais sans compte, il n'y a rien a
+     declarer : on invite, plutot que de montrer un formulaire qui echouera. */
+  const { data: session, status } = useSession();
+  const anonyme = status === "unauthenticated" && process.env.NEXT_PUBLIC_DEV_ALL_ACCESS !== "1";
   const [chars, setChars] = useState<Char[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState(""); const [cls, setCls] = useState("SPADASSIN"); const [prestige, setPrestige] = useState(3); const [level, setLevel] = useState(200); const [isMain, setIsMain] = useState(false);
@@ -79,6 +85,16 @@ export default function PersonnagesPage() {
   return (
     <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
       <PageHeader icon="users" title="Mes Personnages" subtitle="Tes persos et leurs stuffs — ce sont eux qu'on retrouve dans les compositions et les demandes." />
+
+      {anonyme && (
+        <div className="glass-card" style={{ padding: 18, marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <span style={{ flex: "1 1 260px", fontSize: 13.5, lineHeight: 1.55 }}>
+            Tes personnages sont rattachés à ton compte. <b>Connecte-toi</b> pour les déclarer — c&apos;est ce
+            qui permet aux demandes de savoir à qui envoyer un objet, et à ta candidature d&apos;être complète.
+          </span>
+          <a href="/login" className="vg-btn" style={{ flexShrink: 0 }}>Se connecter</a>
+        </div>
+      )}
 
       {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>{toast.ok && <Icon name="check" size={15} />}{toast.msg}</div>}
 

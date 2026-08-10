@@ -22,14 +22,20 @@ import { BUILDER_MARKUP } from "./markup";
 export default async function BuilderPage({
   searchParams,
 }: {
-  searchParams: Promise<{ embed?: string }>;
+  searchParams: Promise<{ embed?: string; volet?: string }>;
 }) {
-  const { embed } = await searchParams;
+  const { embed, volet } = await searchParams;
   const enIframe = embed === "1";
+  /* `volet=1` : le builder dans un cadre, sur une AUTRE page du site. Il perd sa
+     barre de navigation comme en `embed`, mais GARDE sa sauvegarde — c'est toute
+     la difference. `embed` sert la candidature, ou le build est capture par la
+     page hote et ne doit surtout pas s'enregistrer ; ici il s'agit du build du
+     joueur, qu'on veut voir s'ecrire tout seul. */
+  const enVolet = volet === "1";
   const connecte = !!(await getCurrentUser());
   return (
     <div className="abx">
-      {enIframe && (
+      {(enIframe || enVolet) && (
         <style>{`
           .vg-topnav{display:none!important}
           .vg-main{padding-top:0!important}

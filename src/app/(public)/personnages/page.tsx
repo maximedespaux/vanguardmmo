@@ -56,6 +56,8 @@ export default function PersonnagesPage() {
   const [fiche, setFiche] = useState<Fiche | null>(null);
   const [creation, setCreation] = useState<Fiche | null>(null);
   const [promouvoir, setPromouvoir] = useState<Char | null>(null);
+  /** Le stuff qu'on est en train de regarder, dans le cadre de l'AirBuilder. */
+  const [volet, setVolet] = useState<{ perso: string; stuff: string } | null>(null);
   const [supprimer, setSupprimer] = useState<Char | null>(null);
 
   const flash = (msg: string, ok = false) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2800); };
@@ -265,22 +267,22 @@ export default function PersonnagesPage() {
                     {visibles.length > 0 ? (
                       <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                         {visibles.map((g) => (
-                          <Link key={g.id} href={`/builder?perso=${encodeURIComponent(c.name)}&stuff=${encodeURIComponent(g.name || g.mode)}`}
+                          <button key={g.id} onClick={() => setVolet({ perso: c.name, stuff: g.name || g.mode })}
                             title={`Ouvrir « ${g.name || g.mode} » dans l'AirBuilder`}
                             style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)",
                               border: `1px solid ${MODE_COULEUR(g.mode)}`, borderRadius: 8, padding: "5px 11px", fontSize: 12,
-                              textDecoration: "none", color: "inherit" }}>
+                              cursor: "pointer", color: "var(--text)", fontFamily: "inherit" }}>
                             <b style={{ color: MODE_COULEUR(g.mode) }}>{g.mode}</b>{g.name}
-                          </Link>
+                          </button>
                         ))}
                       </div>
                     ) : (
                       <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Aucun pour l&apos;instant.</span>
                     )}
-                    <Link href={`/builder?perso=${encodeURIComponent(c.name)}`} className="vg-btn"
-                      style={{ marginLeft: "auto", fontSize: 12, padding: "8px 14px" }}>
-                      <Icon name="sword" size={14} />Monter un stuff
-                    </Link>
+                    <button onClick={() => setVolet({ perso: c.name, stuff: visibles[0]?.name || visibles[0]?.mode || "" })}
+                      className="vg-btn" style={{ marginLeft: "auto", fontSize: 12, padding: "8px 14px" }}>
+                      <Icon name="sword" size={14} />{visibles.length ? "Voir et modifier" : "Monter un stuff"}
+                    </button>
                   </div>
                 </div>
               </>
@@ -313,6 +315,42 @@ export default function PersonnagesPage() {
               </button>
             </div>
           </div>
+        </div>, document.body)}
+
+      {/* ── L'AirBuilder, dans la page ──────────────────────────────────────
+          En cadre plutot qu'en lien : on ouvrait le builder, on montait sa
+          piece, et il fallait revenir pour voir si la page avait suivi. Ici on
+          voit les deux a la fois.
+
+          Le cadre pointe sur `?volet=1`, PAS sur `?embed=1` : le second sert la
+          candidature, ou le build est capture par la page hote et ne doit
+          surtout pas s'enregistrer. Ici c'est le build du joueur — il
+          s'enregistre tout seul, comme sur la page pleine, localement puis dans
+          son compte. Rien a valider : fermer le volet ne perd rien.
+
+          Meme origine, donc meme `localStorage` : en refermant, la page relit
+          l'etat et les pastilles de stuff suivent. */}
+      {typeof document !== "undefined" && volet && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(6,6,9,.86)", zIndex: 70, display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-2)", flexWrap: "wrap" }}>
+            <Icon name="sword" size={17} style={{ color: "var(--orange)" }} />
+            <span className="font-heading" style={{ fontSize: 14.5, fontWeight: 700 }}>
+              {volet.perso}{volet.stuff ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {volet.stuff}</span> : null}
+            </span>
+            <span style={{ fontSize: 11.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <Icon name="check" size={12} />Enregistrement automatique
+            </span>
+            <button onClick={() => { setVolet(null); charger(); }}
+              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9,
+                border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
+              <Icon name="x" size={13} />Fermer
+            </button>
+          </div>
+          <iframe
+            title={`AirBuilder — ${volet.perso}`}
+            src={`/builder?volet=1&perso=${encodeURIComponent(volet.perso)}${volet.stuff ? `&stuff=${encodeURIComponent(volet.stuff)}` : ""}`}
+            style={{ flex: 1, width: "100%", border: "none", background: "var(--bg)" }}
+          />
         </div>, document.body)}
 
       {typeof document !== "undefined" && promouvoir && createPortal(

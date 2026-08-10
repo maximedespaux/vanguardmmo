@@ -146,6 +146,8 @@ export async function POST(req: Request) {
   // le savoir avant de composer son tarif.
   const paiement = ["perins", "airpoints", "mixte"].includes(b?.paiement) ? b.paiement : "perins";
   const kind = ["OBJET_IG", "ITEM", "PERINS"].includes(b.kind) ? b.kind : "OBJET_IG";
+  const enPerins = Math.max(0, Math.round(Number(b?.prixEstime) || 0));
+  const enAp = Math.max(0, Math.round(Number(b?.prixEstimeAp) || 0));
   const item = (b.item ?? "").toString().slice(0, 200).trim() || null;
   if (kind !== "PERINS" && !item) return NextResponse.json({ error: "Indique l'objet demandé." }, { status: 400 });
 
@@ -156,13 +158,23 @@ export async function POST(req: Request) {
       // Objet sur mesure ou demande libre : il faut d'abord lui trouver un
       // détenteur, ou le farmer. Ce n'est pas un achat au comptoir.
       origine: "requete",
-      reason: (b.reason ?? "").toString().slice(0, 500).trim() || null,
+      reason: [(b.reason ?? "").toString().slice(0, 460).trim(), enAp > 0 ? `— ${enAp.toLocaleString("fr-FR")} AP proposés` : ""]
+        .filter(Boolean).join(" ").trim() || null,
       characterName: perso,
       // L'objet exact venu du builder. Normalisé AVANT d'entrer en base : ce qui
       // arrive est du JSON écrit par un client, il ne doit jamais être stocké tel
       // quel pour être réaffiché à quelqu'un d'autre.
       spec: specDepuisJson(b.spec) ?? undefined,
       modePaiement: paiement,
+      /* L'estimation de l'acheteur. Elle n'etait PAS enregistree : le champ
+         arrivait dans la requete et se perdait la. C'est pourtant elle qui dit
+         au detenteur ce qu'on est pret a mettre, et elle qui devient la cagnotte
+         quand la commande part en quete de guilde — sans elle, la cagnotte reste
+         vide et il n'y a rien a partager.
+         La part en Airpoints n'a pas de colonne sur la demande : on la porte
+         dans la raison, la ou le detenteur la lit, plutot que d'inventer un
+         schema pour une valeur que le tarif final remplacera. */
+      priceEach: enPerins > 0 ? enPerins : null,
     },
   });
   await ouvrirFilRequete(r.id, a.user.username, item, r.quantity, null);

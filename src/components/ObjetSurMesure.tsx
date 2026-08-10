@@ -6,6 +6,7 @@ import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
+import { MontantDemande } from "@/components/MontantDemande";
 import {
   reglagesDeSlot, slotDepuisBuilder, estTierArtefact, resumerPiece, resumerEmplacements, CHOIX_VIDE, type ChoixPiece,
 } from "@/lib/specsFlyff";
@@ -92,6 +93,10 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   // table est celle du builder (lib/specsFlyff), pas une deuxième liste.
   const [choix, setChoix] = useState<ChoixPiece>(CHOIX_VIDE);
   const [prix, setPrix] = useState("");
+  /* « Les deux » ouvre une seconde ligne : personne n'a le compte rond dans une
+     seule monnaie, et forcer un champ unique obligeait a convertir de tete a un
+     cours qui n'existe pas. */
+  const [prixAp, setPrixAp] = useState("");
   const [paiement, setPaiement] = useState<Paiement>("perins");
   const [note, setNote] = useState("");
   /** Pseudo EN JEU : la remise se fait par courrier dans le jeu. */
@@ -102,7 +107,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   /** Les pièces composées, en attente d'envoi. On commande rarement une seule
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
    *  part — d'où une liste ici, et une demande par pièce à l'arrivée. */
-  const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; note: string }[]>([]);
+  const [panier, setPanier] = useState<{ spec: SpecObjet; nom: string; prix: number; prixAp: number; note: string }[]>([]);
   /** La pièce dont on regarde le détail. Une seule à la fois : six bulles
    *  empilées dans la colonne de droite ne se comparent pas mieux. */
   const [deplie, setDeplie] = useState<number | null>(null);
@@ -213,12 +218,13 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
        quand la commande devient une quête, il n'y a rien à partager entre ceux
        qui la farment. Zéro est refusé pour la même raison — c'est une absence
        déguisée, pas un prix. */
-    const montant = Math.round(Number(prix));
-    if (!Number.isFinite(montant) || montant <= 0) {
+    const enPerins = paiement === "airpoints" ? 0 : Math.max(0, Math.round(Number(prix) || 0));
+    const enAp = paiement === "perins" ? 0 : Math.max(0, Math.round(Number(prixAp) || 0));
+    if (enPerins + enAp <= 0) {
       setEtat({ msg: "Donne ton estimation pour cette pièce : c'est elle qui dit au détenteur ce que tu y mets.", ok: false });
       return;
     }
-    setPanier((p) => [...p, { spec, nom: nomComplet, prix: montant, note: note.trim() }]);
+    setPanier((p) => [...p, { spec, nom: nomComplet, prix: enPerins, prixAp: enAp, note: note.trim() }]);
     // On garde l'objet et ses réglages : composer la pièce suivante d'un set
     // repart presque toujours des mêmes valeurs.
     setEtat(null);
@@ -243,6 +249,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
           // Le prix estimé sert au coût en crédits (1 crédit ≈ 1 000 périns).
           // Facultatif : le staff l'ajuste dans la conversation s'il est faux.
           prixEstime: piece.prix,
+          prixEstimeAp: piece.prixAp || undefined,
           characterName: perso.trim(),
           paiement,
           reason: piece.note ? `Sur mesure — ${piece.note.slice(0, 300)}` : "Objet sur mesure",
@@ -362,11 +369,13 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                   coffre » : sinon « 2 400 » se lit des deux façons, et le
                   vendeur composait son tarif sans savoir ce que l'autre a. */}
               <ChoixPaiement valeur={paiement} onChange={setPaiement} />
-              <label><span style={etiquette}>Ton estimation pour cette pièce *</span>
-                <input type="number" min={1} value={prix} onChange={(e) => { setPrix(e.target.value); setEtat(null); }}
-                  placeholder={paiement === "airpoints" ? "en Airpoints" : paiement === "mixte" ? "en périns (la part en AP se convient dans la conversation)" : "en périns"}
-                  style={{ ...champ, borderColor: etat && !etat.ok && !Number(prix) ? "var(--red)" : "var(--border)" }} />
-              </label>
+              <MontantDemande
+                paiement={paiement}
+                perins={prix} airpoints={prixAp}
+                onPerins={(v) => { setPrix(v); setEtat(null); }}
+                onAirpoints={(v) => { setPrixAp(v); setEtat(null); }}
+                erreur={!!etat && !etat.ok && !Number(prix) && !Number(prixAp)}
+              />
               <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Une précision ? (facultatif)" style={champ} />
               <button className="vg-btn" onClick={ajouter} style={{ justifyContent: "center" }}>
                 <Icon name="plus" size={14} />Ajouter à ma demande
@@ -404,7 +413,11 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                         {piece.spec.icone && <img src={piece.spec.icone} alt="" style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }} />}
                         <span style={{ flex: 1, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: piece.spec.couleur ?? "var(--text)" }}>{piece.nom}</span>
                       </button>
-                      {piece.prix > 0 && <span style={{ color: "var(--gold)", flexShrink: 0 }}>~{piece.prix.toLocaleString("fr-FR")}</span>}
+                      {(piece.prix > 0 || piece.prixAp > 0) && (
+                        <span style={{ color: "var(--gold)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                          {[piece.prix > 0 ? `${piece.prix.toLocaleString("fr-FR")} périns` : "", piece.prixAp > 0 ? `${piece.prixAp.toLocaleString("fr-FR")} AP` : ""].filter(Boolean).join(" + ")}
+                        </span>
+                      )}
                       <button onClick={() => setPanier((p) => p.filter((_, j) => j !== i))} aria-label="Retirer"
                         style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", flexShrink: 0 }}>
                         <Icon name="x" size={12} />

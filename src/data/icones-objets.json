@@ -191,5 +191,7 @@
  "Masque Entaness (G/F)": "/assets/items/drops/masque_entaness.png",
  "Meubles Modernes (7j) : Lit, Bibliothèque, Maquilleuse, Canapé, Table, Penderie": "/assets/items/drops/meubles_modernes.png",
  "Familiers INT/FOR/DEX/END (PVE/PVP)": "/assets/items/drops/familiers.png",
- "Bague/Collier/Boucle débutant": "/assets/items/drops/bijoux_debutant.png"
+ "Bague/Collier/Boucle débutant": "/assets/items/drops/bijoux_debutant.png",
+ "Liane Ruine Prestigieuse (trash)": "/assets/items/drops/ag_liane_ruine_prestigieuse.png",
+ "Terreau Ruine Prestigieuse (boss)": "/assets/items/drops/ag_terreau_ruine_prestigieuse.png"
 }

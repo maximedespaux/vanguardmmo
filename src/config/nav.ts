@@ -91,9 +91,12 @@ export const ESPACES: Espace[] = [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, ou une pièce sur mesure." },
       { label: "Mes demandes & messages", href: "/messages", icon: "message", desc: "Tes demandes en cours, et la discussion qui va avec." },
       { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté.", acces: "admin" },
-      { label: "Coffre", href: "/coffre?tab=bank", icon: "vault", desc: "Le stock réel, coffre par coffre.", acces: "admin" },
-      { label: "Crafts", href: "/coffre?tab=craft", icon: "hammer", desc: "Les recettes, et ce qu'elles coûtent.", acces: "admin" },
-      { label: "Base des objets", href: "/coffre?tab=set", icon: "settings", desc: "Les objets, leurs catégories et leurs seuils.", acces: "admin" },
+      // Coffre, Crafts et Base des objets etaient trois entrees pour UNE page :
+      // ce sont les onglets d'AirGuild, pas des destinations differentes — elles
+      // s'allumaient d'ailleurs toutes les trois ensemble, l'adresse etant la
+      // meme. Une seule entree, dont le libelle dit ce qu'on vient y FAIRE et la
+      // description ce qu'on y trouve : « AirGuild » seul ne l'apprend a personne.
+      { label: "Coffre & crafts", href: "/coffre", icon: "vault", desc: "Le stock, les recettes et la base des objets — l'outil AirGuild.", acces: "admin" },
       { label: "Plan de farm", href: "/plan-farm", icon: "sprout-farm", desc: "Ce qui manque au seuil, par catégorie.", acces: "admin" },
     ],
   },

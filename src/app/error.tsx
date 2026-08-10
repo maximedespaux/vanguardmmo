@@ -14,7 +14,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 400, margin: "14px 0 0", textTransform: "uppercase", letterSpacing: 1, color: "#fff" }}>Oups, un pépin</h1>
         <div style={{ fontFamily: "'Athiti', sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px auto 26px", lineHeight: 1.6, maxWidth: 360 }}>
           Une erreur inattendue est survenue de notre côté. Tu peux réessayer — si ça persiste, préviens un officier.
-          {error?.digest && <div style={{ marginTop: 10, fontSize: 11, opacity: 0.6 }}>Réf : {error.digest}</div>}
+          {error?.digest && <div style={{ marginTop: 10, fontSize: 12, opacity: 0.6 }}>Réf : {error.digest}</div>}
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           <button onClick={() => reset()} className="vg-btn" style={{ cursor: "pointer" }}>↻ Réessayer</button>

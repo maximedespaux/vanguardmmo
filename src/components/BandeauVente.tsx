@@ -174,7 +174,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
       </div>
       {v.raison && (
         <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 9 }}>
-          <Icon name="info" size={12} style={{ verticalAlign: "-1px", marginRight: 5 }} />
+          <Icon name="info" size={12} style={{ marginRight: 5 }} />
           {v.raison}
         </div>
       )}
@@ -204,7 +204,7 @@ export function BandeauVente({ id, moiId, estStaff, deLaGuilde, onClos }: {
             {v.detenteur.reglement === "dette" ? "à crédit" : "achat comptant"}
           </span>
           {!!v.prixReference && v.detenteur.prix != null && v.detenteur.prix !== v.prixReference && (
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>réf. {fmt(v.prixReference)}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>réf. {fmt(v.prixReference)}</span>
           )}
           <span style={{ fontSize: 11.5, padding: "2px 9px", borderRadius: 20, border: `1px solid ${v.detenteur.aObjet ? "var(--green)" : "var(--border)"}`, color: v.detenteur.aObjet ? "var(--green)" : "var(--text-muted)" }}>
             {v.detenteur.aObjet ? "objet vérifié" : "objet pas encore vérifié"}

@@ -45,7 +45,7 @@ const champ: React.CSSProperties = {
   background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9,
   padding: "9px 11px", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: "100%",
 };
-const etiquette: React.CSSProperties = { display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 };
+const etiquette: React.CSSProperties = { display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 };
 
 /**
  * Le dépôt laissé par l'AirBuilder, lu UNE fois pour toute la page.
@@ -300,7 +300,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                   </span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "block", fontSize: 12.5, fontWeight: 600, color: i.col ?? "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{i.n}</span>
-                    <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>
+                    <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)" }}>
                       {i.tier ?? "—"}{i.cls ? ` · ${i.cls}` : ""}{i.lv ? ` · niv. ${i.lv}` : ""}
                     </span>
                   </span>
@@ -324,7 +324,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
 
         {/* ── Aperçu et envoi ── */}
         <div>
-          <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 7 }}>Ce que tu demandes</div>
+          <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 7 }}>Ce que tu demandes</div>
           {spec ? <BulleObjet spec={spec} /> : (
             <div style={{ fontSize: 12.5, color: "var(--text-muted)", padding: "22px 12px", textAlign: "center", border: "1px dashed var(--border)", borderRadius: 11 }}>
               Choisis un objet à gauche : sa bulle se dessine ici.
@@ -346,8 +346,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               <button className="vg-btn" onClick={ajouter} style={{ justifyContent: "center" }}>
                 <Icon name="plus" size={14} />Ajouter à ma demande
               </button>
-              <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.4 }}>
-                <Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />
+              <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.4 }}>
+                <Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />
                 Le prix n&apos;est qu&apos;une estimation : c&apos;est le détenteur qui annonce son tarif, et il se négocie ensuite dans la conversation.
               </div>
             </div>
@@ -357,7 +357,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               moment : on compose souvent trois pièces pour n'en garder qu'une. */}
           {panier.length > 0 && (
             <div style={{ marginTop: 13, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-              <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 7 }}>
+              <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 7 }}>
                 Ma demande — {panier.length} pièce{panier.length > 1 ? "s" : ""}
               </div>
               <div style={{ display: "grid", gap: 5, marginBottom: 10 }}>
@@ -386,7 +386,7 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                     {ouverte && (
                       <div style={{ padding: "0 9px 9px" }}>
                         <BulleObjet spec={piece.spec} compact />
-                        {piece.note && <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>{piece.note}</div>}
+                        {piece.note && <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6 }}>{piece.note}</div>}
                       </div>
                     )}
                   </div>

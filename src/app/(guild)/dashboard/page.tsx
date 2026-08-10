@@ -41,7 +41,7 @@ function Stat({ value, label, color }: { value: React.ReactNode; label: string; 
 function StatCard({ icon, title, summary, href }: { icon: IconName; title: string; summary: React.ReactNode; href: string }) {
   return (
     <Link href={href} className="dash-card fx-card dash-stat-link" style={{ position: "relative", display: "block", textDecoration: "none", color: "inherit" }}>
-      <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}>
+      <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}>
         <Icon name={icon} size={16} style={{ color: "var(--orange)" }} />{title}
         <Icon name="arrow-right" size={14} className="dash-stat-arrow" style={{ marginLeft: "auto", color: "var(--orange)" }} />
       </div>
@@ -186,7 +186,7 @@ export default function DashboardPage() {
 
       {/* ── Répartition des classes ── */}
       <div className="dash-card" style={{ marginBottom: 8 }}>
-        <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Classes représentées</div>
+        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Classes représentées</div>
         {d.characters.classes.length === 0 ? (
           <div style={{ color: "var(--text-muted)", fontSize: 14 }}>Aucun personnage pour l&apos;instant.</div>
         ) : (

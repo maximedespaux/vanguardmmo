@@ -96,28 +96,28 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
             <img src={`/assets/site/ranks/${r.badge}.webp`} alt={r.label} style={{ width: 48, height: 48, objectFit: "contain", flexShrink: 0, filter: `drop-shadow(0 0 8px color-mix(in srgb, ${r.color} 55%, transparent))` }} />
             <div style={{ minWidth: 0 }}>
               <div className="font-heading" style={{ fontSize: 16, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</div>
-              <span style={{ fontSize: 10.5, fontWeight: 700, color: r.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{r.label}{dev ? " · dev" : ""}</span>
+              <span style={{ fontSize: 11.5, fontWeight: 700, color: r.color, textTransform: "uppercase", letterSpacing: 0.6 }}>{r.label}{dev ? " · dev" : ""}</span>
             </div>
           </div>
 
 
           {/* Ce qui vient du compte Discord, et qui ne se change pas ici. */}
           <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)", display: "grid", gap: 6 }}>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, color: "var(--text-muted)" }}>
               <span style={{ minWidth: 66 }}>Discord</span>
               <span style={{ color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
             </div>
             {u?.discordId && (
-              <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11, color: "var(--text-muted)" }}>
+              <div style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 12, color: "var(--text-muted)" }}>
                 <span style={{ minWidth: 66 }}>Identifiant</span>
-                <span style={{ fontFamily: "monospace", color: "var(--text)", background: "var(--bg-3)", borderRadius: 6, padding: "2px 7px", fontSize: 10.5 }}>{u.discordId}</span>
+                <span style={{ fontFamily: "monospace", color: "var(--text)", background: "var(--bg-3)", borderRadius: 6, padding: "2px 7px", fontSize: 11.5 }}>{u.discordId}</span>
               </div>
             )}
           </div>
 
           {/* La seule ligne modifiable : c'est l'adresse où partent les objets. */}
           <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)" }}>
-            <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 6 }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 6 }}>
               Pseudo en jeu — perso principal
             </div>
             <div style={{ display: "flex", gap: 6 }}>
@@ -132,7 +132,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
                 <Icon name={etatPseudo === "ok" ? "check" : "save"} size={14} />
               </button>
             </div>
-            <div style={{ fontSize: 10.5, color: etatPseudo === "erreur" ? "var(--red)" : "var(--text-muted)", marginTop: 5, lineHeight: 1.45 }}>
+            <div style={{ fontSize: 11.5, color: etatPseudo === "erreur" ? "var(--red)" : "var(--text-muted)", marginTop: 5, lineHeight: 1.45 }}>
               {etatPseudo === "erreur" ? "Enregistrement impossible — réessaie."
                 : etatPseudo === "ok" ? "Pseudo enregistré."
                 : "Nécessaire pour les demandes à la boutique : c'est là que l'objet t'est envoyé par courrier."}
@@ -141,7 +141,7 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
 
           {/* Raccourcis persos */}
           <div style={{ padding: "10px 10px 7px" }}>
-            <div className="font-heading" style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1.4, color: "var(--text-muted)", padding: "0 4px 5px", display: "flex", alignItems: "center", gap: 6 }}><Icon name="link" size={12} /> Raccourcis</div>
+            <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.4, color: "var(--text-muted)", padding: "0 4px 5px", display: "flex", alignItems: "center", gap: 6 }}><Icon name="link" size={12} /> Raccourcis</div>
             {SHORTCUTS.map((s) => (
               <Link key={s.href} href={s.href} onClick={() => setOpen(false)} className="vg-prof-link" style={{ display: "flex", alignItems: "center", gap: 11, padding: "8px", borderRadius: 9, textDecoration: "none", color: "var(--text)" }}>
                 <span style={{ width: 30, height: 30, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange)", flexShrink: 0 }}><Icon name={s.icon} size={16} /></span>

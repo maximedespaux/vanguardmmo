@@ -28,7 +28,7 @@ function Stat({ v, l, c }: { v: React.ReactNode; l: string; c: string }) {
   return (
     <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center" }}>
       <div className="font-heading" style={{ fontSize: 26, fontWeight: 700, color: c }}>{v}</div>
-      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3 }}>{l}</div>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3 }}>{l}</div>
     </div>
   );
 }
@@ -86,7 +86,7 @@ function Ligne({ d }: { d: FarmItem }) {
           <span
             title={sansPremyth ? "Aucun exemplaire pré-mythique en coffre — en prévoir 1" : `${d.premyth} pré-myth. en coffre`}
             style={{
-              marginLeft: 7, fontSize: 10, fontWeight: 700, padding: "1px 6px", borderRadius: 20, whiteSpace: "nowrap",
+              marginLeft: 7, fontSize: 11, fontWeight: 700, padding: "1px 6px", borderRadius: 20, whiteSpace: "nowrap",
               border: `1px solid ${sansPremyth ? PREMYTH : "rgba(74,222,128,.45)"}`,
               background: sansPremyth ? "rgba(255,92,138,.14)" : "rgba(74,222,128,.11)",
               color: sansPremyth ? PREMYTH : "var(--green)",
@@ -274,7 +274,7 @@ export default function PlanFarmPage() {
 
       {items.length === 0 ? (
         <div className="glass-card fx-card" style={{ padding: 30, textAlign: "center", color: "var(--green)" }}>
-          <Icon name="sparkles" size={16} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} /> Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !
+          <Icon name="sparkles" size={16} style={{ display: "inline-block", marginRight: 5 }} /> Tous les objets du coffre sont au-dessus de leur seuil. Rien à farmer !
         </div>
       ) : filtered.length === 0 ? (
         <div className="glass-card fx-card" style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Aucun objet ne correspond au filtre.</div>

@@ -64,7 +64,7 @@ export default function CandidaturesAdminPage() {
         const Tuile = ({ v, l, c, alerte }: { v: React.ReactNode; l: string; c: string; alerte?: boolean }) => (
           <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center", ...(alerte ? { borderColor: c } : null) }}>
             <div className="font-heading" style={{ fontSize: 24, fontWeight: 700, color: c }}>{v}</div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: .5 }}>{l}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: .5 }}>{l}</div>
           </div>
         );
         return (
@@ -93,7 +93,7 @@ export default function CandidaturesAdminPage() {
               <div key={a.id} className="glass-card fx-card" style={{ padding: 18 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                   <div className="font-heading" style={{ fontSize: 17, fontWeight: 700 }}>{a.username}</div>
-                  <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "var(--bg-3)", border: `1px solid ${sm.color}`, color: sm.color }}>{sm.label}</span>
+                  <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 20, background: "var(--bg-3)", border: `1px solid ${sm.color}`, color: sm.color }}>{sm.label}</span>
                   <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{new Date(a.createdAt).toLocaleDateString("fr-FR")}</span>
                 </div>
 
@@ -106,7 +106,7 @@ export default function CandidaturesAdminPage() {
                 </div>
 
                 <div style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: 4 }}>
-                  <div><b style={{ color: "var(--text)" }}>Spés :</b> {(a.specs ?? []).length === 0 ? "—" : (a.specs ?? []).map((s, i) => { const m = SPEC_META[s]; return <span key={s}>{i > 0 ? " · " : ""}{m ? <><Icon name={m.icon} size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 3 }} />{m.label}</> : s}</span>; })}{a.specs?.includes("CS") && a.favClasses?.length ? ` · CS: ${a.csChars ?? "?"} perso(s), ${a.favClasses.join(", ")}` : ""}</div>
+                  <div><b style={{ color: "var(--text)" }}>Spés :</b> {(a.specs ?? []).length === 0 ? "—" : (a.specs ?? []).map((s, i) => { const m = SPEC_META[s]; return <span key={s}>{i > 0 ? " · " : ""}{m ? <><Icon name={m.icon} size={14} style={{ display: "inline-block", marginRight: 3 }} />{m.label}</> : s}</span>; })}{a.specs?.includes("CS") && a.favClasses?.length ? ` · CS: ${a.csChars ?? "?"} perso(s), ${a.favClasses.join(", ")}` : ""}</div>
                   <div><b style={{ color: "var(--text)" }}>Quiz :</b> {a.quizScore ?? "?"}/{a.quizTotal ?? "?"}</div>
                   {a.interests && <div><b style={{ color: "var(--text)" }}>Intérêts :</b> {a.interests}</div>}
                   {a.motivation && <div><b style={{ color: "var(--text)" }}>Motivation :</b> {a.motivation}</div>}

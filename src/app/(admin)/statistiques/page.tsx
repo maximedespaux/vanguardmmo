@@ -89,7 +89,7 @@ export default function StatistiquesPage() {
               style={{ flex: 1, minWidth: 0, height: `${Math.max(2, (j.apports / maxJour) * 100)}%`, borderRadius: "3px 3px 0 0", background: j.apports ? "linear-gradient(180deg,#FFB552,#FF8C1A)" : "var(--bg-3)" }} />
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--text-muted)", marginTop: 6 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>
           <span>{new Date(d.parJour[0].jour).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</span>
           <span>aujourd&apos;hui</span>
         </div>
@@ -107,7 +107,7 @@ export default function StatistiquesPage() {
         <div style={{ overflowX: "auto" }}>
           <table className="vg-table-membres" style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
             <thead>
-              <tr style={{ color: "var(--text-muted)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8 }}>
+              <tr style={{ color: "var(--text-muted)", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8 }}>
                 <th style={{ textAlign: "left", padding: "6px 8px" }}>Membre</th>
                 <th style={{ textAlign: "right", padding: "6px 8px" }}>Objets livrés</th>
                 <th className="vg-col-sec" style={{ textAlign: "right", padding: "6px 8px" }}>Livraisons</th>
@@ -123,7 +123,7 @@ export default function StatistiquesPage() {
                     <span>
                       <b>{m.nom}</b>
                       {!m.actifRecemment && (
-                        <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>pas vu ce mois-ci</span>
+                        <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)" }}>pas vu ce mois-ci</span>
                       )}
                     </span>
                   </td>

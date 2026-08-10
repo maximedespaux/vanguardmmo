@@ -239,12 +239,12 @@ export default function CompositionsPage() {
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span className="font-heading" style={{ fontWeight: 700, fontSize: 20, color: "var(--orange)" }}>{fillPct}%</span></div>
           </div>
           <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{selectedSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{CS_SLOTS.length}</span></div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes validés</div></div>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--blue)" }}>{playersCount}</div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Joueurs</div></div>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--purple)" }}>{signups.length}</div><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Candidatures</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{selectedSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{CS_SLOTS.length}</span></div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes validés</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--blue)" }}>{playersCount}</div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Joueurs</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--purple)" }}>{signups.length}</div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Candidatures</div></div>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)" }} /> Partagé · live</span>
+            <span style={{ fontSize: 11.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)" }} /> Partagé · live</span>
             {isAdmin && <button onClick={resetAll} style={{ fontSize: 11.5, padding: "7px 13px", borderRadius: 8, border: "1px solid var(--red)", background: "transparent", color: "var(--red)", cursor: "pointer", fontWeight: 600 }}>↺ Réinitialiser</button>}
           </div>
         </div>
@@ -320,12 +320,12 @@ export default function CompositionsPage() {
                 <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
-                    <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{lbl(slot)}</div><div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{nt(slot)}</div></div>
+                    <div style={{ flex: 1, minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 14 }}>{lbl(slot)}</div><div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.3 }}>{nt(slot)}</div></div>
                     {isAdmin && <button onClick={() => setEditSlot(slot)} title="Renommer le poste (titre + desc)" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="edit" size={14} /></button>}
                     <button onClick={() => setInfo(slot)} title="Build conseillé & build de référence" style={{ background: "none", border: "none", color: meta.color, cursor: "pointer", flexShrink: 0, padding: 2, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="eye" size={16} /></button>
                   </div>
                   {presentsClasse.length > 0 && <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--border)" }}>
-                    <div style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", marginBottom: 5 }}>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", marginBottom: 5 }}>
                       Annoncés en {slot.classe}{isAdmin ? " — clique pour retenir" : ""}
                     </div>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -334,7 +334,7 @@ export default function CompositionsPage() {
                         return (
                           <span key={pr.pseudo} title={`${pr.pseudo} · annoncé par ${pr.player}${dedans ? " · retenu" : ""}`}
                             onClick={isAdmin && seance ? () => basculerRetenu(seance.creneau, pr.pseudo) : undefined}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10.5, cursor: isAdmin ? "pointer" : "default",
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, cursor: isAdmin ? "pointer" : "default",
                               color: dedans ? "var(--gold)" : "var(--text)", fontWeight: dedans ? 700 : 400,
                               background: dedans ? "rgba(255,210,74,.12)" : "var(--bg-2)",
                               border: `1px solid ${dedans ? "var(--gold)" : "var(--border)"}`, borderRadius: 20, padding: "2px 8px" }}>
@@ -355,16 +355,16 @@ export default function CompositionsPage() {
                       {isAdmin ? (
                         <a href={`/builder/${encodeURIComponent(t.player)}`} title={`Voir le build de ${t.player} (lecture seule)`} style={{ color: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "baseline", gap: 4, overflow: "hidden", minWidth: 0 }}>
                           <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", borderBottom: "1px dotted currentColor" }}>{t.pseudo}</b>
-                          <span style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.player}</span>
+                          <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span>
                         </a>
                       ) : (
-                        <><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 10 }}>· {t.player}</span></>
+                        <><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span></>
                       )}
                       {/* Etre sur un poste ne dit pas qu'on sera la : les deux se
                           lisent maintenant sur la meme ligne. */}
                       {annonces.some(p => p.pseudo.toLowerCase() === t.pseudo.toLowerCase())
                         ? <span title="Annoncé pour la prochaine séance" style={{ color: "var(--green)", display: "inline-flex" }}><Icon name="check" size={11} /></span>
-                        : <span title="Ne s'est pas encore annoncé pour la prochaine séance" style={{ color: "var(--text-muted)", fontSize: 9 }}>pas annoncé</span>}
+                        : <span title="Ne s'est pas encore annoncé pour la prochaine séance" style={{ color: "var(--text-muted)", fontSize: 11 }}>pas annoncé</span>}
                       <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
                         {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="star" size={14} /></button>}
                         {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>}
@@ -373,8 +373,8 @@ export default function CompositionsPage() {
                   </div>}
                   <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
                     {mine.length === 0
-                      ? <div style={{ fontSize: 10.5, color: "var(--text-muted)", textAlign: "center" }}>{taken.some(s => s.charId && myChars.some(c => c.id === s.charId)) ? "Inscrit·e" : `Aucun perso ${slot.classe} dispo`}</div>
-                      : <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>{mine.map(c => <button key={c.id} onClick={() => registerToSlot(slot, c)} style={{ fontSize: 10.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${meta.color}`, background: "transparent", color: meta.color, cursor: "pointer" }}>+ {c.name}</button>)}</div>}
+                      ? <div style={{ fontSize: 11.5, color: "var(--text-muted)", textAlign: "center" }}>{taken.some(s => s.charId && myChars.some(c => c.id === s.charId)) ? "Inscrit·e" : `Aucun perso ${slot.classe} dispo`}</div>
+                      : <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center" }}>{mine.map(c => <button key={c.id} onClick={() => registerToSlot(slot, c)} style={{ fontSize: 11.5, padding: "4px 9px", borderRadius: 6, border: `1px solid ${meta.color}`, background: "transparent", color: meta.color, cursor: "pointer" }}>+ {c.name}</button>)}</div>}
                   </div>
                 </div>
               ); })}
@@ -383,7 +383,7 @@ export default function CompositionsPage() {
         ); })}
 
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", verticalAlign: "-2px", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block", verticalAlign: "-3px" }} /> donne le build conseillé + le build de référence.</div>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block" }} /> donne le build conseillé + le build de référence.</div>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -398,14 +398,14 @@ export default function CompositionsPage() {
       ) : (
         <div style={{ ...card, textAlign: "center", padding: 40 }}>
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="sword" size={44} /></div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>
             <Icon name="clock" size={12} />En standby
           </div>
           <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege</h2>
           {/* Rien a organiser ici pour l'instant : le dire franchement vaut mieux
               qu'une page qui ressemble a une page active. */}
           <p style={{ color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>
-            Aucune séance n&apos;est organisée pour le moment. Quand ça reprendra, ce sera <b style={{ color: "var(--text)" }}>libre</b> : pas de composition stricte, ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", verticalAlign: "-3px", color: "var(--orange)" }} />
+            Aucune séance n&apos;est organisée pour le moment. Quand ça reprendra, ce sera <b style={{ color: "var(--text)" }}>libre</b> : pas de composition stricte, ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", color: "var(--orange)" }} />
           </p>
         </div>
       )}
@@ -416,7 +416,7 @@ export default function CompositionsPage() {
         <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, maxWidth: 460, width: "100%" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
             <ClassLogo name={info.classe} size={34} />
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{lbl(info)}</div><div style={{ fontSize: 11, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 17 }}>{lbl(info)}</div><div style={{ fontSize: 12, color: "var(--text-muted)" }}>{info.classe} · build conseillé</div></div>
             <button onClick={() => setInfo(null)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={18} /></button>
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>

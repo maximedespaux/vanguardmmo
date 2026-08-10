@@ -128,7 +128,7 @@ export function ChoixBoutique({ ouvert, staff = false, onChoix, onFermer }: {
                   la liste d'un membre — il n'a pas à servir les commandes. */}
               {staff && (
                 <>
-                  <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 12, fontSize: 10.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
+                  <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 12, fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
                     Réservé au staff
                   </div>
                   <Porte icon="package" titre="Les requêtes clients"
@@ -155,7 +155,7 @@ export function ChoixBoutique({ ouvert, staff = false, onChoix, onFermer }: {
                 onClick={() => onChoix("surMesure")} />
 
               <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginTop: 4 }}>
-                <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 9 }}>
+                <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 9 }}>
                   La reprendre d&apos;un de mes stuffs
                 </div>
                 {stuffs === null ? (

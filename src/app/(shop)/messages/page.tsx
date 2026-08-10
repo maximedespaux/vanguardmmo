@@ -242,7 +242,7 @@ export default function MessagesPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                     <Icon name={c.categorie === "achat" ? "cart" : "package"} size={13} style={{ color: c.categorie === "achat" ? "var(--green)" : "var(--purple)", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1, minWidth: 0 }}>{c.titre}</span>
-                    <span style={{ fontSize: 10.5, color: "var(--text-muted)", flexShrink: 0, paddingRight: abandonnable ? 24 : 0 }}>{quandCourt(c.quand)}</span>
+                    <span style={{ fontSize: 11.5, color: "var(--text-muted)", flexShrink: 0, paddingRight: abandonnable ? 24 : 0 }}>{quandCourt(c.quand)}</span>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--text-muted)" }}>
@@ -252,7 +252,7 @@ export default function MessagesPage() {
                     {/* Le troc est l'exception : on ne l'annonce que quand il a été
                         accepté, sinon la ligne dirait un accord qui n'existe pas. */}
                     {c.paiement === "troc" && (
-                      <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 6px", borderRadius: 6, border: "1px solid var(--gold)", color: "var(--gold)", fontWeight: 600, fontSize: 10 }}>
+                      <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 3, padding: "1px 6px", borderRadius: 6, border: "1px solid var(--gold)", color: "var(--gold)", fontWeight: 600, fontSize: 11 }}>
                         <Icon name="swap" size={9} />troc
                       </span>
                     )}
@@ -266,7 +266,7 @@ export default function MessagesPage() {
                         : "Aucun message"}
                     </span>
                     {c.nonLus > 0 && (
-                      <span style={{ flexShrink: 0, minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--orange)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ flexShrink: 0, minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--orange)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         {c.nonLus > 9 ? "9+" : c.nonLus}
                       </span>
                     )}
@@ -300,7 +300,7 @@ export default function MessagesPage() {
                     {/* Une requête suivie à plusieurs se lit mieux dans les
                         quêtes : le fil, lui, part vite en trente messages. */}
                     {courante.queteId && (
-                      <Link href={`/quetes?q=${courante.queteId}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
+                      <Link href={`/quetes?q=${courante.queteId}`} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
                         <Icon name="target" size={11} />Suivre dans les quêtes →
                       </Link>
                     )}

@@ -223,14 +223,14 @@ export default function CandidaturePage() {
   const card: React.CSSProperties = { background: "linear-gradient(180deg, rgba(28,28,36,.92), rgba(16,16,22,.94))", border: "1px solid var(--border)", borderRadius: 16, padding: 24, boxShadow: "0 12px 36px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.03)" };
   const btnG: React.CSSProperties = { padding: "11px 22px", borderRadius: 8, background: "var(--bg-3)", color: "var(--text)", border: "1px solid var(--border)", fontWeight: 600, cursor: "pointer" };
   const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 13px", color: "var(--text)", width: "100%" };
-  const ico: React.CSSProperties = { display: "inline-block", verticalAlign: "-2px", marginRight: 5 };
+  const ico: React.CSSProperties = { display: "inline-block", marginRight: 5 };
   const canNext = (s: number) => s === 1 ? chars.every(c => c.name.trim()) : s === 2 ? specs.length > 0 && interests.trim() && motivation.trim() && experience.trim() && (!specs.includes("CS") || favClasses.length > 0) : s === 3 ? stuffOk : true;
 
   // ── Connexion Discord d'abord (la soumission l'exige de toute façon) ──
   if (authed === null) return <div style={{ padding: 40, color: "var(--text-muted)" }}>Vérification de ta connexion…</div>;
   if (authed === false) return (
     <div style={{ padding: 40, maxWidth: 560, margin: "0 auto", textAlign: "center" }}>
-      <h1 className="font-heading" style={{ fontSize: 30, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Candidature <Icon name="clipboard" size={24} style={{ display: "inline-block", verticalAlign: "-3px" }} /></h1>
+      <h1 className="font-heading" style={{ fontSize: 30, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Candidature <Icon name="clipboard" size={24} style={{ display: "inline-block" }} /></h1>
       <div className="glass-card fx-card" style={{ padding: 28, marginTop: 20 }}>
         <p style={{ color: "var(--text)", marginBottom: 18 }}>Connecte-toi avec Discord pour postuler — c'est la première étape.</p>
         <a href="/login" className="vg-btn">Se connecter avec Discord</a>
@@ -265,7 +265,7 @@ export default function CandidaturePage() {
                   color: done || cur ? "#0A0A0C" : "var(--text-muted)",
                   border: `2px solid ${done ? "var(--green)" : cur ? "var(--orange)" : "var(--border)"}`,
                   boxShadow: cur ? "0 0 16px rgba(255,140,26,.55)" : done ? "0 0 10px rgba(74,222,128,.35)" : "none" }}>{done ? <Icon name="check" size={18} /> : num}</div>
-                <span style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", fontFamily: "'Rubik',sans-serif", color: cur ? "var(--orange)" : done ? "var(--green)" : "var(--text-muted)", textAlign: "center" }}>{n}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", fontFamily: "'Rubik',sans-serif", color: cur ? "var(--orange)" : done ? "var(--green)" : "var(--text-muted)", textAlign: "center" }}>{n}</span>
               </div>
               {i < STEP_NAMES.length - 1 && <div style={{ flex: 1, height: 3, borderRadius: 2, margin: "0 6px", marginBottom: 20, background: done ? "var(--green)" : "var(--border)", boxShadow: done ? "0 0 8px rgba(74,222,128,.4)" : "none", transition: "background .35s, box-shadow .35s" }} />}
             </div>
@@ -281,7 +281,7 @@ export default function CandidaturePage() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--orange)" }}> · {c.cls}</span> : null}
                   {/* Repère : ce perso vient du compte, il n'est ni ressaisi ni recréé. */}
-                  {c.id && <span title="Repris de ton compte — pas besoin de le ressaisir" style={{ marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4, textTransform: "none", letterSpacing: 0, fontSize: 10.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 8px" }}><Icon name="check" size={11} />de ton compte</span>}</span>
+                  {c.id && <span title="Repris de ton compte — pas besoin de le ressaisir" style={{ marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4, textTransform: "none", letterSpacing: 0, fontSize: 11.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 8px" }}><Icon name="check" size={11} />de ton compte</span>}</span>
                 {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} title="Retirer ce perso" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0 }}><Icon name="x" size={15} /></button>}
               </div>
               {/* Illustration du personnage (classe + sexe) a gauche, reglages a droite —
@@ -370,9 +370,9 @@ export default function CandidaturePage() {
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Quelle(s) classe(s) veux-tu jouer en Chambre Secrète ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars})</span></label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; const aUnPerso = classesJouables.includes(c); return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={aUnPerso ? c : `${c} — tu n'as pas encore de personnage de cette classe, tu pourras le construire ensuite`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}{!aUnPerso && <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", color: "var(--gold)", background: "rgba(255,210,74,.12)", border: "1px solid rgba(255,210,74,.3)", borderRadius: 20, padding: "1px 6px", marginLeft: 3 }}>à construire</span>}</button>; })}
+                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; const aUnPerso = classesJouables.includes(c); return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={aUnPerso ? c : `${c} — tu n'as pas encore de personnage de cette classe, tu pourras le construire ensuite`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}{!aUnPerso && <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", color: "var(--gold)", background: "rgba(255,210,74,.12)", border: "1px solid rgba(255,210,74,.3)", borderRadius: 20, padding: "1px 6px", marginLeft: 3 }}>à construire</span>}</button>; })}
                 </div>
-                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}><Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>
             </div>
           )}
@@ -456,7 +456,7 @@ export default function CandidaturePage() {
             <div><b><Icon name="target" size={14} style={ico} />Intérêts :</b> {interests || "—"}</div>
             <div><b><Icon name="flame" size={14} style={ico} />Motivation :</b> {motivation || "—"}</div>
             <div><b><Icon name="book" size={14} style={ico} />Expérience :</b> {experience || "—"}</div>
-            <div><b><Icon name="sword" size={14} style={ico} />Stuff :</b> build configuré <Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} /></div>
+            <div><b><Icon name="sword" size={14} style={ico} />Stuff :</b> build configuré <Icon name="check" size={14} style={{ display: "inline-block" }} /></div>
           </div>
           {/* Non bloquant : viser une classe qu'on n'a pas encore montée est
               légitime, on l'annonce juste clairement au candidat et au staff. */}

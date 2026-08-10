@@ -11,9 +11,9 @@ type Cmd = { id: string; type: string; status: string; result: string | null; cr
 
 const TYPE_LABEL: Record<string, string> = { post_embed: "Embed", create_giveaway: "Giveaway", post_class_panel: "Panneau classes" };
 const STATUS_META: Record<string, { c: string; l: React.ReactNode }> = {
-  PENDING: { c: "var(--gold)", l: <><Icon name="clock" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />en attente</> },
-  DONE: { c: "var(--green)", l: <><Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />envoyé</> },
-  FAILED: { c: "var(--red)", l: <><Icon name="x" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />échec</> },
+  PENDING: { c: "var(--gold)", l: <><Icon name="clock" size={14} style={{ display: "inline-block", marginRight: 5 }} />en attente</> },
+  DONE: { c: "var(--green)", l: <><Icon name="check" size={14} style={{ display: "inline-block", marginRight: 5 }} />envoyé</> },
+  FAILED: { c: "var(--red)", l: <><Icon name="x" size={14} style={{ display: "inline-block", marginRight: 5 }} />échec</> },
 };
 
 function parseDurationMs(s: string): number | null {
@@ -181,7 +181,7 @@ export default function DiscordPage() {
             <div style={{ flex: 1, minWidth: 120 }}><label style={lab}>Durée (30m, 2h, 1d)</label><input style={inp} value={gDur} onChange={(e) => setGDur(e.target.value)} /></div>
             <div style={{ width: 110 }}><label style={lab}>Gagnants</label><input type="number" min={1} style={inp} value={gWin} onChange={(e) => setGWin(Math.max(1, +e.target.value || 1))} /></div>
           </div>
-          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 11, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
+          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 12, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = GIVEAWAY — (1er lot)" />
           <label style={lab}>Description</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} placeholder="Texte de l'embed (optionnel)" />
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -214,7 +214,7 @@ export default function DiscordPage() {
                 <span style={{ minWidth: 92, color: "var(--text)" }}>{TYPE_LABEL[c.type] ?? c.type}</span>
                 <span style={{ color: s.c, minWidth: 92 }}>{s.l}</span>
                 <span style={{ color: "var(--text-muted)", flex: "1 1 140px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.result ?? ""}</span>
-                <span style={{ color: "var(--text-muted)", fontSize: 11, flexShrink: 0 }}>par {c.createdBy}</span>
+                <span style={{ color: "var(--text-muted)", fontSize: 12, flexShrink: 0 }}>par {c.createdBy}</span>
               </div>
             ); })}
           </div>}

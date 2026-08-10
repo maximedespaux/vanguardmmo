@@ -66,7 +66,7 @@ export function VgSelect({ value, onChange, options, style, minWidth, placeholde
             return (
               <div key={String(o.value)} className="vg-dd-opt" onClick={() => { onChange(String(o.value)); setOpen(false); }}
                 style={{ padding: "8px 11px", borderRadius: 7, fontSize: 13.5, cursor: "pointer", color: sel ? "var(--orange)" : "var(--text)", background: sel ? "rgba(255,140,26,.12)" : "transparent", fontWeight: sel ? 700 : 500, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, transition: "background .12s" }}>
-                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.label}</span>{sel && <span style={{ fontSize: 11, flexShrink: 0, display: "flex" }}><Icon name="check" size={13} /></span>}
+                <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.label}</span>{sel && <span style={{ fontSize: 12, flexShrink: 0, display: "flex" }}><Icon name="check" size={13} /></span>}
               </div>
             );
           })}

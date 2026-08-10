@@ -107,7 +107,7 @@ export default function JournalPage() {
                   {l.valeur != null && (
                     <b style={{ flexShrink: 0, color: l.valeur >= 0 ? "var(--green)" : "var(--red)" }}>{l.valeur > 0 ? "+" : ""}{l.valeur}</b>
                   )}
-                  <span style={{ flexShrink: 0, fontSize: 11, color: "var(--text-muted)" }}>
+                  <span style={{ flexShrink: 0, fontSize: 12, color: "var(--text-muted)" }}>
                     {new Date(l.quand).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
                   </span>
                 </div>

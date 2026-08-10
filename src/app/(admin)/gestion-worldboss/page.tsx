@@ -74,7 +74,7 @@ export default function WorldBossAdminPage() {
                 <span className="font-heading" style={{ fontWeight: 700 }}>{e.boss?.name}</span>
                 <span style={{ fontSize: 13, color: "var(--orange)" }}>{new Date(e.startAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{conf} présent(s)</span>
-                <span style={{ fontSize: 11, padding: "2px 9px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--text-muted)" }}>{e.status}</span>
+                <span style={{ fontSize: 12, padding: "2px 9px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--text-muted)" }}>{e.status}</span>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
                   <button onClick={() => setStatus(e.id, "ONGOING")} style={mini("var(--green)")}>Démarrer</button>
                   <button onClick={() => setStatus(e.id, "DONE")} style={mini("var(--blue)")}>Terminer</button>

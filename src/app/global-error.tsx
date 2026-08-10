@@ -11,7 +11,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           <h1 style={{ fontSize: 22, margin: "14px 0 8px", color: "#fff" }}>Erreur critique</h1>
           <p style={{ color: "#8A8A95", fontSize: 14, lineHeight: 1.6, margin: "0 0 26px" }}>
             L&apos;application a rencontré un problème majeur. Recharge la page pour repartir.
-            {error?.digest && <span style={{ display: "block", marginTop: 10, fontSize: 11, opacity: 0.6 }}>Réf : {error.digest}</span>}
+            {error?.digest && <span style={{ display: "block", marginTop: 10, fontSize: 12, opacity: 0.6 }}>Réf : {error.digest}</span>}
           </p>
           <button onClick={() => reset()} style={{ padding: "12px 24px", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#241402", background: "linear-gradient(180deg,#FFB552,#FF8C1A)" }}>↻ Recharger</button>
         </div>

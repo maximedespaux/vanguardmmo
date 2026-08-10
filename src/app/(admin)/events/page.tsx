@@ -11,7 +11,7 @@ const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dima
 const MENTIONS: [string, string][] = [["", "Aucun ping"], ["@here", "@here"], ["@everyone", "@everyone"]];
 
 const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 11px", color: "var(--text)", fontSize: 13.5 };
-const lab: React.CSSProperties = { fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, display: "block" };
+const lab: React.CSSProperties = { fontSize: 11.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, display: "block" };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function EventsPage() {
@@ -38,7 +38,7 @@ export default function EventsPage() {
   const add = async () => {
     if (!f.name.trim()) return flash("Donne un nom à l'événement.");
     const r = await fetch("/api/admin/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) });
-    if (r.ok) { setF({ ...f, name: "", embedTitle: "", embedDesc: "", embedImage: "" }); load(); flash(<>Événement ajouté <Icon name="check" size={14} style={{ display: "inline-block", verticalAlign: "-2px" }} /></>); } else flash("Erreur");
+    if (r.ok) { setF({ ...f, name: "", embedTitle: "", embedDesc: "", embedImage: "" }); load(); flash(<>Événement ajouté <Icon name="check" size={14} style={{ display: "inline-block" }} /></>); } else flash("Erreur");
   };
   const toggle = async (e: Ev) => { await fetch("/api/admin/events", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: e.id, enabled: !e.enabled }) }); load(); };
   const del = async (id: string) => { await fetch("/api/admin/events", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); load(); };
@@ -66,7 +66,7 @@ export default function EventsPage() {
                 ...salons.map((c) => ({ value: c.id, label: `#${c.name}` })),
               ]} />
           </div>
-          <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed var(--border)", paddingTop: 4, marginTop: 2 }}><span style={{ fontSize: 10.5, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
+          <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed var(--border)", paddingTop: 4, marginTop: 2 }}><span style={{ fontSize: 11.5, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Titre de l&apos;embed</label><input style={{ ...inp, width: "100%" }} placeholder={`vide = ${f.name || "Nom de l'événement"}`} value={f.embedTitle} onChange={(e) => setF({ ...f, embedTitle: e.target.value })} /></div>
           <div><label style={lab}>Couleur</label><input type="color" style={{ ...inp, width: "100%", height: 38, padding: 3, cursor: "pointer" }} value={f.embedColor || "#ff8c1a"} onChange={(e) => setF({ ...f, embedColor: e.target.value })} /></div>
           <div style={{ gridColumn: "1 / -1" }}><label style={lab}>Description</label><textarea style={{ ...inp, width: "100%", resize: "vertical", minHeight: 52, fontFamily: "inherit", boxSizing: "border-box" }} placeholder="Texte de l'embed. Le « commence dans X min » est ajouté automatiquement." value={f.embedDesc} onChange={(e) => setF({ ...f, embedDesc: e.target.value })} /></div>

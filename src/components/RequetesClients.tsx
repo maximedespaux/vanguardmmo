@@ -101,7 +101,7 @@ export function RequetesClients() {
                       <span style={{ color: spec?.couleur ?? "var(--text)" }}>{r.item}</span>
                       {r.quantite > 1 && <span style={{ color: "var(--gold)" }}>× {fmt(r.quantite)}</span>}
                       {r.estLaMienne && (
-                        <span style={{ fontSize: 9.5, fontWeight: 700, color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 6, padding: "1px 6px", textTransform: "uppercase", letterSpacing: .4 }}>ma demande</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 6, padding: "1px 6px", textTransform: "uppercase", letterSpacing: .4 }}>ma demande</span>
                       )}
                     </div>
                     <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 3, display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
@@ -116,12 +116,12 @@ export function RequetesClients() {
                   {/* Le tarif convenu avec le client : c'est lui qui dit si ça vaut
                       la peine de s'y mettre, et ce qu'il y aura à partager. */}
                   <div style={{ textAlign: "right", flexShrink: 0, minWidth: 96 }}>
-                    <div style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>Tarif client</div>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>Tarif client</div>
                     <div style={{ fontSize: 15, fontWeight: 700, color: total ? "var(--gold)" : "var(--text-muted)", fontFamily: "'Rubik',sans-serif" }}>
                       {total ? `${fmt(total)} périns` : "à convenir"}
                     </div>
                     {total && r.quantite > 1 && (
-                      <div style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{fmt(r.prix!)} / unité</div>
+                      <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{fmt(r.prix!)} / unité</div>
                     )}
                   </div>
 

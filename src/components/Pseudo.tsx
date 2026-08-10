@@ -135,7 +135,7 @@ function Repli({ children, total, montres }: { children: React.ReactNode; total:
     <div style={{ marginTop: 7, paddingTop: 7, borderTop: "1px dashed var(--border)", display: "grid" }}>
       {children}
       {total > montres && (
-        <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 4, fontStyle: "italic" }}>
+        <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 4, fontStyle: "italic" }}>
           … et {total - montres} de plus
         </div>
       )}
@@ -143,7 +143,7 @@ function Repli({ children, total, montres }: { children: React.ReactNode; total:
   );
 }
 
-const etiquetteBilan: React.CSSProperties = { fontSize: 10, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 };
+const etiquetteBilan: React.CSSProperties = { fontSize: 11, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", fontWeight: 700, marginBottom: 6 };
 
 function Chiffre({ n, label, couleur, onClick, ouvert }: { n: number; label: string; couleur?: string; onClick?: () => void; ouvert?: boolean }) {
   return (
@@ -156,7 +156,7 @@ function Chiffre({ n, label, couleur, onClick, ouvert }: { n: number; label: str
         {n}
         {onClick && <Icon name="chevron-right" size={11} style={{ color: "var(--text-muted)", transform: ouvert ? "rotate(90deg)" : "none", transition: "transform .15s" }} />}
       </div>
-      <div style={{ fontSize: 10.5, color: "var(--text-muted)", lineHeight: 1.3 }}>{label}</div>
+      <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.3 }}>{label}</div>
     </div>
   );
 }
@@ -253,12 +253,12 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
                   </Repli>
                 )}
                 {f.bilan.requetes.enQuete > 0 && (
-                  <div style={{ fontSize: 11, color: "var(--purple)", marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ fontSize: 12, color: "var(--purple)", marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
                     <Icon name="target" size={11} />dont {f.bilan.requetes.enQuete} passée{f.bilan.requetes.enQuete > 1 ? "s" : ""} en quête de guilde
                   </div>
                 )}
                 {f.bilan.quetesOuvertes > 0 && (
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 5 }}>
                     <Icon name="target" size={11} />
                     {f.bilan.quetesOuvertes} quête{f.bilan.quetesOuvertes > 1 ? "s" : ""} de guilde ouverte{f.bilan.quetesOuvertes > 1 ? "s" : ""}
                     {f.bilan.quetesLivrees > 0 && <span style={{ color: "var(--green)" }}>· {f.bilan.quetesLivrees} livrée{f.bilan.quetesLivrees > 1 ? "s" : ""}</span>}
@@ -324,11 +324,11 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
             )}
 
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", marginBottom: 7 }}>
-              <span style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
+              <span style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
                 Personnages{f.personnages.length ? ` — ${f.personnages.length}` : ""}
               </span>
               {f.personnages.length > 0 && (
-                <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>· clique pour voir son build (lecture seule)</span>
+                <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>· clique pour voir son build (lecture seule)</span>
               )}
             </div>
             {f.personnages.length === 0 ? (
@@ -341,7 +341,7 @@ export function FicheJoueur({ nom, onClose }: { nom: string; onClose: () => void
                     style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 9px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", textDecoration: "none", color: "inherit" }}>
                     <ClassLogo name={c.classe} size={22} />
                     <b style={{ fontSize: 13 }}>{c.nom}</b>
-                    {c.principal && <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 6, padding: "1px 6px" }}>principal</span>}
+                    {c.principal && <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: .5, color: "var(--orange)", border: "1px solid var(--orange)", borderRadius: 6, padding: "1px 6px" }}>principal</span>}
                     <span style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--text-muted)" }}>niv. {c.niveau} · P{c.prestige}</span>
                     <Icon name="chevron-right" size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
                   </a>

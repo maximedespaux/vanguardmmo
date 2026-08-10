@@ -68,7 +68,7 @@ export function ChampPseudo({ valeur, onChange, style }: {
         // Membre de la guilde sans personnage enregistré : on ne bloque pas sa
         // demande, mais on dit où corriger — c'est la liste qui sert partout
         // ailleurs (compositions, GuildViewer, quêtes).
-        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
           Aucun personnage enregistré. <Link href="/personnages" style={{ color: "var(--orange)" }}>Ajoute-le</Link> pour ne plus avoir à le retaper.
         </div>
       )}

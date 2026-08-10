@@ -31,12 +31,12 @@ export function BulleObjet({ spec, compact = false }: { spec: SpecObjet; compact
         </span>
       </div>
 
-      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{spec.slot}</div>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{spec.slot}</div>
 
       {(spec.puces?.length ?? 0) > 0 && (
         <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 7 }}>
           {spec.puces!.map((p, i) => (
-            <span key={i} style={{ fontSize: 10.5, fontWeight: 600, padding: "2px 7px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--gold)" }}>{p}</span>
+            <span key={i} style={{ fontSize: 11.5, fontWeight: 600, padding: "2px 7px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--gold)" }}>{p}</span>
           ))}
         </div>
       )}
@@ -66,7 +66,7 @@ export function BulleObjet({ spec, compact = false }: { spec: SpecObjet; compact
       )}
 
       {!compact && (spec.classe || spec.niveau || spec.prestige) && (
-        <div style={{ marginTop: 7, paddingTop: 6, borderTop: "1px solid var(--border)", display: "grid", gap: 2, fontSize: 11 }}>
+        <div style={{ marginTop: 7, paddingTop: 6, borderTop: "1px solid var(--border)", display: "grid", gap: 2, fontSize: 12 }}>
           {spec.classe && <div style={{ display: "flex" }}><span style={{ color: "var(--text-muted)" }}>Classe</span><b style={{ marginLeft: "auto" }}>{spec.classe}</b></div>}
           {spec.niveau ? <div style={{ display: "flex" }}><span style={{ color: "var(--text-muted)" }}>Niveau requis</span><b style={{ marginLeft: "auto" }}>{spec.niveau}</b></div> : null}
           {spec.prestige ? <div style={{ display: "flex" }}><span style={{ color: "var(--text-muted)" }}>Prestige</span><b style={{ marginLeft: "auto" }}>P{spec.prestige}</b></div> : null}

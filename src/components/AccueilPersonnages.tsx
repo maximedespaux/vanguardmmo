@@ -93,14 +93,14 @@ export function AccueilPersonnages() {
         {/* Le champ plutôt qu'un lien : renvoyer vers un formulaire pour une
             seule ligne, c'est perdre la moitié des gens en route. */}
         <label style={{ display: "block", marginBottom: 14 }}>
-          <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 5 }}>
+          <span style={{ display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 5 }}>
             Pseudo en jeu — personnage principal
           </span>
           <input autoFocus value={pseudo} onChange={(e) => { setPseudo(e.target.value); setErreur(""); }}
             onKeyDown={(e) => { if (e.key === "Enter") enregistrer(); }}
             placeholder="ex. Daiisuke" maxLength={80}
             style={{ width: "100%", background: "var(--bg-3)", border: `1px solid ${erreur ? "var(--red)" : "var(--border)"}`, borderRadius: 10, padding: "11px 13px", color: "var(--text)", fontSize: 14, fontFamily: "inherit" }} />
-          <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: 5, lineHeight: 1.45 }}>
+          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginTop: 5, lineHeight: 1.45 }}>
             Classe, niveau et prestige se règlent juste après. Tu pourras le modifier depuis ton profil.
           </span>
         </label>

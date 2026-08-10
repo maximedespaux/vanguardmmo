@@ -37,20 +37,20 @@ export default function WorldBossPage() {
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span className="font-heading" style={{ fontSize: 18, fontWeight: 700 }}>{e.boss.name}</span>
                 {e.boss.recommendedLevel && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>niv. {e.boss.recommendedLevel}+</span>}
-                {e.status === "ONGOING" && <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--green)", color: "var(--green)" }}>en cours</span>}
+                {e.status === "ONGOING" && <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--green)", color: "var(--green)" }}>en cours</span>}
                 <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--orange)" }}>{fmt(e.startAt)}</span>
               </div>
-              {e.boss.zone && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}><Icon name="map-pin" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{e.boss.zone}</div>}
-              {e.boss.strategy && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}><Icon name="target" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{e.boss.strategy}</div>}
-              {e.boss.rewards && <div style={{ fontSize: 13, color: "var(--gold)", marginTop: 4 }}><Icon name="gift" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{e.boss.rewards}</div>}
-              {e.note && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}><Icon name="edit" size={14} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{e.note}</div>}
+              {e.boss.zone && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}><Icon name="map-pin" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.boss.zone}</div>}
+              {e.boss.strategy && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}><Icon name="target" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.boss.strategy}</div>}
+              {e.boss.rewards && <div style={{ fontSize: 13, color: "var(--gold)", marginTop: 4 }}><Icon name="gift" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.boss.rewards}</div>}
+              {e.note && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}><Icon name="edit" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.note}</div>}
 
               <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center" }}>
                 <button onClick={() => participate(e.id, "CONFIRMED")} style={btn("var(--green)", e.myStatus === "CONFIRMED")}><Icon name="check" size={15} />Présent</button>
                 <button onClick={() => participate(e.id, "DECLINED")} style={btn("var(--red)", e.myStatus === "DECLINED")}><Icon name="x" size={15} />Absent</button>
                 <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--text-muted)" }}>{e.confirmed} présent(s){e.declined ? ` · ${e.declined} absent(s)` : ""}</span>
               </div>
-              {e.participants.length > 0 && <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}><Icon name="users" size={13} style={{ display: "inline-block", verticalAlign: "-2px", marginRight: 5 }} />{e.participants.join(", ")}</div>}
+              {e.participants.length > 0 && <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8 }}><Icon name="users" size={13} style={{ display: "inline-block", marginRight: 5 }} />{e.participants.join(", ")}</div>}
             </div>
           ))}
         </div>

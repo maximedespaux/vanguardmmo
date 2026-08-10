@@ -73,7 +73,7 @@ export function Icon({
       // display de l'enfant est de toute façon neutralisé.
       style={framed
         ? { flexShrink: 0, display: "block" }
-        : { flexShrink: 0, display: "inline-block", verticalAlign: "-0.14em", ...style }}
+        : { flexShrink: 0, display: "inline-block", ...style }}
       dangerouslySetInnerHTML={{ __html: paths }}
       {...rest}
     />

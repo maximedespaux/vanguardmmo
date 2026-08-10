@@ -101,12 +101,12 @@ export function Alertes() {
       <Link href="/messages" aria-label="Messages" title="Messages"
         style={{ position: "relative", color: fils > 0 ? "var(--orange)" : "var(--text-muted)", padding: 6, display: "flex", alignItems: "center" }}>
         <Icon name="message" size={19} />
-        {fils > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 9.5, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{fils > 9 ? "9+" : fils}</span>}
+        {fils > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{fils > 9 ? "9+" : fils}</span>}
       </Link>
 
       <button onClick={toggle} aria-label="Notifications" title="Notifications" style={{ position: "relative", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, display: "flex", alignItems: "center" }}>
         <Icon name="bell" size={19} />
-        {unread > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 9.5, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{unread > 9 ? "9+" : unread}</span>}
+        {unread > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{unread > 9 ? "9+" : unread}</span>}
       </button>
       {open && (
         <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 320, maxWidth: "90vw", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,.5)", zIndex: 200, overflow: "hidden" }}>
@@ -151,7 +151,7 @@ export function Alertes() {
                   <Icon name={f.icone} size={16} style={{ color: f.couleur, flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
-                      <span style={{ fontSize: 9.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: .7, color: f.couleur, border: `1px solid ${f.couleur}55`, borderRadius: 20, padding: "1px 7px" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: .7, color: f.couleur, border: `1px solid ${f.couleur}55`, borderRadius: 20, padding: "1px 7px" }}>
                         {f.label}
                       </span>
                       <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--text)" }}>{n.title}</span>

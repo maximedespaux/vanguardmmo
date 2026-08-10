@@ -189,7 +189,7 @@ export function StrategieCS({ isAdmin, texteExistant = "" }: { isAdmin: boolean;
             {brouillon.map((b, i) => (
               <div key={b.id} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11, padding: 11 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-                  <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", fontWeight: 700 }}>
+                  <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", fontWeight: 700 }}>
                     {b.type === "titre" ? "Titre" : b.type === "image" ? "Image" : "Paragraphe"}
                   </span>
                   <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
@@ -241,7 +241,7 @@ export function StrategieCS({ isAdmin, texteExistant = "" }: { isAdmin: boolean;
           </div>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               {brouillon.length} bloc{brouillon.length > 1 ? "s" : ""} · {enMo(poids(brouillon))}
             </span>
             {etat && <span style={{ fontSize: 12, color: "var(--red)" }}>{etat}</span>}

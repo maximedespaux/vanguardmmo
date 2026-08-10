@@ -19,7 +19,7 @@ export function ChoixPaiement({ valeur, onChange }: { valeur: Paiement; onChange
   ];
   return (
     <div>
-      <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>
+      <span style={{ display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>
         Je paie en
       </span>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

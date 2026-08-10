@@ -196,7 +196,7 @@ export function EcranEconomie() {
           style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 9, textDecoration: "none", fontWeight: 600, fontSize: 13, fontFamily: "'Rubik',sans-serif", border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)" }}>
           <Icon name="message" size={15} /> Mes demandes &amp; messages
           {enCours > 0 && (
-            <span style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0A0A0C", fontSize: 11, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{enCours}</span>
+            <span style={{ minWidth: 18, height: 18, padding: "0 5px", borderRadius: 9, background: "var(--gold)", color: "#0A0A0C", fontSize: 12, fontWeight: 700, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{enCours}</span>
           )}
         </Link>
       </div>
@@ -205,7 +205,7 @@ export function EcranEconomie() {
       {panneau === "requetes" && estStaff && <RequetesClients />}
 
       {panneau === "stock" && <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ verticalAlign: "-2px", marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
+        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}><Icon name="cart" size={14} style={{ marginRight: 6 }} />Boutique de guilde <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none" }}>— articles en stock dans le coffre commun</span></div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
           <VgSelect value={catF} onChange={setCatF} options={[{ value: "", label: "Toutes catégories" }, ...cats.map(c => ({ value: c, label: c }))]} minWidth={160} />
           <input placeholder="Rechercher un article…" value={q} onChange={e => setQ(e.target.value)} style={{ ...inp, flex: 1, minWidth: 160 }} />
@@ -227,7 +227,7 @@ export function EcranEconomie() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.item}</div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{s.classe ? s.classe + " · " : ""}stock {s.stock} · <b style={{ color: "var(--gold)" }}>{priceFor(s, isMember) > 0 ? <>~{fmt(priceFor(s, isMember))} périns</> : <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>prix à définir</span>}</b>{isWeapon ? " · choisis la/les rareté(s) ↓" : ""}</div>
                   </div>
                   {!isWeapon && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -241,13 +241,13 @@ export function EcranEconomie() {
                   <div className="vg-rarete-liste" style={{ display: "flex", flexDirection: "column", gap: 4, paddingLeft: 44 }}>
                     {raritys.map(rk => { const m = RARITY_META[rk]; if (!m) return null; const key = `${s.id}::${rk}`; const q = cart[key] || 0; const stk = s.rarities![rk]; return (
                       <div key={rk} className="vg-ligne-dense" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14`, minWidth: 78 }}>{m.l}</span>
-                        <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>stock {stk}</span>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, padding: "1px 7px", borderRadius: 5, color: m.c, border: `1px solid ${m.c}55`, background: `${m.c}14`, minWidth: 78 }}>{m.l}</span>
+                        <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>stock {stk}</span>
                         {/* Le prix de CETTE rareté : c'est la seule information qui
                             permet de choisir en connaissance de cause. */}
                         {(() => { const pr = priceFor(s, isMember, rk); return pr > 0
-                          ? <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--orange)" }}>{fmt(pr)} périns</span>
-                          : <span style={{ fontSize: 10.5, fontStyle: "italic", color: "var(--text-muted)" }}>prix à définir</span>; })()}
+                          ? <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--orange)" }}>{fmt(pr)} périns</span>
+                          : <span style={{ fontSize: 11.5, fontStyle: "italic", color: "var(--text-muted)" }}>prix à définir</span>; })()}
                         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, opacity: stk > 0 ? 1 : 0.4 }}>
                           <button onClick={() => setQty(key, q - 1)} style={stepBtn}>−</button>
                           <input value={q} onChange={e => setQty(key, +e.target.value || 0)} style={{ ...inp, width: 40, textAlign: "center", padding: "4px 3px", fontSize: 13 }} />
@@ -274,9 +274,9 @@ export function EcranEconomie() {
                     </div>
                     {isStuff && (
                       <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2 }}>
-                        <span style={{ fontSize: 10.5, color: stuffSex[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: stuffSex[id] ? 400 : 700 }}>Sexe du Stuff :</span>
+                        <span style={{ fontSize: 11.5, color: stuffSex[id] ? "var(--text-muted)" : "var(--orange)", fontWeight: stuffSex[id] ? 400 : 700 }}>Sexe du Stuff :</span>
                         {(["G", "F"] as const).map(sx => (
-                          <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 11, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}</span></button>
+                          <button key={sx} onClick={() => setStuffSex(p => ({ ...p, [id]: sx }))} style={{ fontSize: 12, fontWeight: 700, padding: "2px 9px", borderRadius: 6, cursor: "pointer", border: `1px solid ${stuffSex[id] === sx ? "var(--orange)" : "var(--border)"}`, background: stuffSex[id] === sx ? "rgba(255,140,26,.16)" : "var(--bg-2)", color: stuffSex[id] === sx ? "var(--orange)" : "var(--text-muted)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}</span></button>
                         ))}
                       </div>
                     )}
@@ -291,13 +291,13 @@ export function EcranEconomie() {
               <ChoixPaiement valeur={paiement} onChange={setPaiement} />
             </div>
             <div style={{ marginBottom: 9 }}>
-              <span style={{ display: "block", fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
+              <span style={{ display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 }}>Pseudo en jeu *</span>
               <ChampPseudo valeur={perso} onChange={setPerso} style={{ ...inp, width: "100%" }} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <button onClick={() => submitCart()} disabled={!cartIds.length || sending} style={{ padding: "9px 14px", borderRadius: 8, border: "1px solid var(--green)", background: "rgba(74,222,128,0.12)", color: "var(--green)", cursor: cartIds.length && !sending ? "pointer" : "default", opacity: cartIds.length && !sending ? 1 : 0.45, fontWeight: 600, fontSize: 13, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}><Icon name="cart" size={15} /> Demander ces objets</button>
             </div>
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 4 }} />Ta demande part au staff, qui répond dans la conversation. Profil avec personnage requis.</div>
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.4 }}><Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />Ta demande part au staff, qui répond dans la conversation. Profil avec personnage requis.</div>
           </div>
         </div>
       </div>}

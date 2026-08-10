@@ -27,6 +27,22 @@ p { font-family:'Athiti','Athiti',system-ui,sans-serif; letter-spacing:.2px; }
 .vg-btn { display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:10px; border:none; cursor:pointer; font-family:'Rubik',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:1px; font-size:13px; color:#2a1400; background:linear-gradient(180deg,#FFC061,#FF8C1A); box-shadow:0 4px 16px rgba(255,140,26,.32); transition:transform .12s, box-shadow .12s; text-decoration:none; }
 .vg-btn:hover { transform:translateY(-2px); box-shadow:0 7px 24px rgba(255,140,26,.5); }
 .vg-btn:active { transform:translateY(0) scale(.97); }
+/* ── Lisibilité du texte clair sur fond sombre ──────────────────────────────
+   Un texte clair sur fond sombre paraît plus GRAS qu'il ne l'est : le rendu par
+   défaut épaissit les traits, les contre-formes se bouchent et les petites
+   tailles bavent. L'antialiasing en niveaux de gris rend le trait à son poids
+   réel — c'est la seule ligne qui change vraiment la netteté d'un thème sombre.
+   Le crénage et les ligatures suivent : ils resserrent les capitales des
+   titres, qui sont partout ici. */
+body { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; font-kerning:normal; }
+
+/* Le clavier doit voir où il est. Les champs avaient leur anneau, pas les
+   boutons ni les liens : on tabulait à l'aveugle. `:focus-visible` ne se montre
+   qu'au clavier — la souris ne déclenche rien. */
+:where(button, a, [role="button"], [tabindex]):focus-visible {
+  outline:2px solid var(--orange); outline-offset:3px; border-radius:8px;
+}
+
 /* ── Scrollbars maison (vertical + horizontal + Firefox) + défilement doux ── */
 html { scroll-behavior:smooth; }
 * { scrollbar-width:thin; scrollbar-color:#46464f transparent; }

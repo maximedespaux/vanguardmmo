@@ -137,12 +137,12 @@ export default function PrestigePage() {
       {/* Sélecteur */}
       <div className="glass-card fx-card" style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end", padding: 18, marginBottom: 16 }}>
         <label style={{ flex: 1, minWidth: 150 }}>
-          <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige actuel</div>
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige actuel</div>
           <VgSelect full value={cur} onChange={(val) => { const v = +val; setCur(v); if (v >= tgt) setTgt(Math.min(10, v + 1)); }} options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
         </label>
         <div style={{ display: "flex", alignItems: "center", paddingBottom: 8, color: "var(--orange)", fontSize: 22 }}>→</div>
         <label style={{ flex: 1, minWidth: 150 }}>
-          <div style={{ fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige cible</div>
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Prestige cible</div>
           <VgSelect full value={tgt} onChange={(v) => setTgt(+v)} options={[2, 3, 4, 5, 6, 7, 8, 9, 10].filter((p) => p > cur).map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
         </label>
       </div>
@@ -176,7 +176,7 @@ export default function PrestigePage() {
                     {ok && <Icon name="check" size={16} style={{ color: "var(--green)" }} />}
                   </div>
                   {k.toLowerCase().includes("parfait") && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 9, fontSize: 10.5, color: "var(--text-muted)", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 9, fontSize: 11.5, color: "var(--text-muted)", flexWrap: "wrap" }}>
                       <span>1 parfait = 1 au choix :</span>
                       {NUCLEUS_ELEMENTS.map(([label, src]) => (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -205,7 +205,7 @@ export default function PrestigePage() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
-                    <tr style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: 10, borderBottom: "1px solid var(--border)" }}>
+                    <tr style={{ color: "var(--text-muted)", textTransform: "uppercase", fontSize: 11, borderBottom: "1px solid var(--border)" }}>
                       <th style={{ padding: 8, textAlign: "left" }}>Palier</th>
                       {PRESTIGE_KEYS.map((k) => <th key={k} style={{ padding: 8, textAlign: "right" }} title={k}><PrestigeIcon name={k} size={16} /></th>)}
                     </tr>

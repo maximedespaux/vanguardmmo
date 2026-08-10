@@ -63,7 +63,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
 
   return (
     <div style={{ display: "grid", gap: 9, padding: "10px 11px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-      <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
+      <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)" }}>
         {r.label} — la pièce que je vise (facultatif)
       </div>
 
@@ -83,7 +83,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
             <option value="">+ ?</option>
             {Array.from({ length: r.upMax + 1 }, (_, i) => i).map((n) => <option key={n} value={n}>+{n}</option>)}
           </select>
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>max +{r.upMax}</span>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>max +{r.upMax}</span>
           {/* Les étoiles n'existent qu'en artefact, c'est-à-dire au-delà de +10. */}
           {r.etoiles && Number(choix.up) > 10 && (
             <>
@@ -113,7 +113,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
               <option value="">—</option>
               {Array.from({ length: r.percage!.max }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
-            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>sur {r.percage!.max}</span>
+            <span style={{ fontSize: 12, color: "var(--text-muted)" }}>sur {r.percage!.max}</span>
           </div>
           <div style={{ ...ligne, paddingLeft: 62 }}>
             {r.percage!.cartes.map((c) => {
@@ -224,7 +224,7 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: 10.5, color: "var(--text-muted)", paddingLeft: 62 }}>
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", paddingLeft: 62 }}>
               Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).
             </div>
           )}

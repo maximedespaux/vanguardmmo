@@ -115,7 +115,7 @@ export default function PersonnagesPage() {
                 : <ClassLogo name={c.class} size={34} />}
             </div>
             <div style={{ flex: 1 }}>
-              <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
+              <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
               <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.class} · Niveau {c.level} · Prestige {c.prestige}</div>
             </div>
             <button onClick={() => setConfirmDel(c.id)} title="Supprimer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={16} /></button>
@@ -123,7 +123,7 @@ export default function PersonnagesPage() {
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
               <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs</span>
-              {MODES.map(m => <button key={m} onClick={() => openGear(c.id, m)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
+              {MODES.map(m => <button key={m} onClick={() => openGear(c.id, m)} style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
               {/* C'est l'action principale de la carte : c'est dans le Builder qu'on
                   equipe reellement un personnage. Elle est donc traitee comme un
                   vrai bouton et non comme un lien discret. */}

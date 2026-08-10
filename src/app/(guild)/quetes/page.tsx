@@ -272,7 +272,7 @@ export default function QuetesPage() {
             {/* Une confirmation qui attend bloque celui qui a livré : elle se
                 signale même quand on regarde un autre onglet. */}
             {k === "miennes" && aConfirmer > 0 && (
-              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--green)", color: "#0a0a0c", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 9, background: "var(--green)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                 {aConfirmer}
               </span>
             )}
@@ -332,7 +332,7 @@ export default function QuetesPage() {
                   <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
                   </span>
-                  <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>
+                  <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)" }}>
                     {o.cat} · coffre {o.stock}/{o.target}
                     {o.manque > 0 && <b style={{ color: "var(--red)" }}> — il en manque {o.manque}</b>}
                   </span>
@@ -344,7 +344,7 @@ export default function QuetesPage() {
                   <button onClick={() => bouger(o.id, n + 1)} style={pas} aria-label={`Plus de ${o.item}`}>＋</button>
                   {o.manque > 0 && (
                     <button onClick={() => bouger(o.id, o.manque)} title="Demander tout ce qui manque au seuil"
-                      style={{ ...pas, width: "auto", padding: "0 9px", fontSize: 11, color: "var(--text-muted)" }}>
+                      style={{ ...pas, width: "auto", padding: "0 9px", fontSize: 12, color: "var(--text-muted)" }}>
                       manque
                     </button>
                   )}
@@ -406,7 +406,7 @@ export default function QuetesPage() {
             <div className="glass-card fx-card" style={{ padding: 16 }}>
               <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 11, display: "flex", alignItems: "center", gap: 7 }}>
                 <Icon name="target" size={14} />Ce que je farme
-                <span style={{ marginLeft: "auto", fontSize: 11, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)" }}>
+                <span style={{ marginLeft: "auto", fontSize: 12, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)" }}>
                   {enCours.filter((o) => o.fait >= o.cible).length} / {enCours.length} terminée{enCours.length > 1 ? "s" : ""}
                 </span>
               </div>
@@ -513,7 +513,7 @@ export default function QuetesPage() {
                           <span style={{ display: "block", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {o.item}{o.classe ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {o.classe}</span> : null}
                           </span>
-                          <span style={{ display: "block", fontSize: 10.5, color: "var(--text-muted)" }}>{o.cat}</span>
+                          <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)" }}>{o.cat}</span>
                         </span>
                         {estStaff ? (
                           <>
@@ -521,14 +521,14 @@ export default function QuetesPage() {
                               <span style={{ display: "block", height: 6, borderRadius: 4, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden" }}>
                                 <span style={{ display: "block", width: `${pc}%`, height: "100%", background: pc >= 80 ? "var(--green)" : pc >= 40 ? "var(--gold)" : "var(--red)" }} />
                               </span>
-                              <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)", marginTop: 3, textAlign: "right" }}>{o.stock}/{o.target}</span>
+                              <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: 3, textAlign: "right" }}>{o.stock}/{o.target}</span>
                             </span>
                             <b style={{ flexShrink: 0, color: "var(--red)", fontSize: 12.5, width: 62, textAlign: "right" }}>−{o.manque.toLocaleString("fr-FR")}</b>
                           </>
                         ) : (
                           /* Le membre voit l'URGENCE, pas les stocks : ce qu'il
                              lui faut pour choisir, sans l'état du coffre. */
-                          <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 20, border: `1px solid ${o.besoin === "fort" ? "var(--red)" : "var(--gold)"}`, color: o.besoin === "fort" ? "var(--red)" : "var(--gold)" }}>
+                          <span style={{ flexShrink: 0, fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 20, border: `1px solid ${o.besoin === "fort" ? "var(--red)" : "var(--gold)"}`, color: o.besoin === "fort" ? "var(--red)" : "var(--gold)" }}>
                             {o.besoin === "fort" ? "en priorité" : "utile"}
                           </span>
                         )}
@@ -638,7 +638,7 @@ export default function QuetesPage() {
                     </button>
                     {ouvert && (
                       <div style={{ padding: "0 12px 11px", display: "grid", gap: 5 }}>
-                        <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
                           demandé par <b style={{ color: "var(--text)" }}><Pseudo nom={x.auteur.nom} /></b>{x.note ? ` — « ${x.note} »` : ""}
                         </div>
                         {x.contributions.length === 0 ? (
@@ -650,7 +650,7 @@ export default function QuetesPage() {
                             <span style={{ color: c.statut === "confirme" ? "var(--green)" : "var(--orange)" }}>
                               {c.statut === "confirme" ? "a livré" : "avait promis"} {lisible(c.quantite, x.unite)}
                             </span>
-                            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--text-muted)" }}>
+                            <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>
                               {Math.round((c.quantite / Math.max(1, x.quantite)) * 100)} % de la quête
                             </span>
                           </div>
@@ -671,13 +671,13 @@ export default function QuetesPage() {
                     <Icon name={e.ic} size={16} style={{ color: e.c }} />
                     <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700 }}>{lisible(x.quantite, x.unite)} × {x.titre}</span>
                     {x.manque != null && x.manque > 0 && (
-                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
+                      <span style={{ fontSize: 12, color: "var(--text-muted)" }}>il en manquait {x.manque} au seuil</span>
                     )}
                     {/* Née d'une requête d'objet : le suivi se fait ici, la
                         discussion reste dans la conversation — et on passe de
                         l'un à l'autre sans avoir à la retrouver. */}
                     {x.requeteId && (
-                      <a href={`/messages?fil=req:${x.requeteId}`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--purple)", color: "var(--purple)", textDecoration: "none", whiteSpace: "nowrap" }}>
+                      <a href={`/messages?fil=req:${x.requeteId}`} style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--purple)", color: "var(--purple)", textDecoration: "none", whiteSpace: "nowrap" }}>
                         <Icon name="package" size={11} />Requête objet →
                       </a>
                     )}

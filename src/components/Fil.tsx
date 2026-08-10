@@ -133,7 +133,7 @@ export function Fil({
       )}
       {salon === "prive" && (
         <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, padding: "7px 10px", borderRadius: 8, background: "rgba(255,140,26,.07)", border: "1px solid rgba(255,140,26,.25)" }}>
-          <Icon name="lock" size={12} style={{ verticalAlign: "-1px", marginRight: 5, color: "var(--orange)" }} />
+          <Icon name="lock" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
           Entre détenteurs et staff. <b>Le demandeur ne voit rien de ce qui s&apos;écrit ici.</b>
         </div>
       )}
@@ -203,7 +203,7 @@ export function Fil({
           return (
             <div key={m.id} style={{ fontSize: 13.5 }}>
               <b style={{ color: "var(--orange)" }}>{m.author ? <Pseudo nom={m.author} /> : null}</b>
-              <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleString("fr-FR")}</span>
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleString("fr-FR")}</span>
               <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
             </div>
           );

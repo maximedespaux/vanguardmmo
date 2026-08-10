@@ -62,7 +62,7 @@ export default function AbsencesPage() {
             <div key={a.id} className="glass-card fx-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <span className="font-heading" style={{ fontWeight: 700 }}>{fmtD(a.startDate)} → {fmtD(a.endDate)}</span>
               {a.reason && <span style={{ fontSize: 13, color: "var(--text-muted)" }}>· {a.reason}</span>}
-              <span style={{ marginLeft: "auto", fontSize: 11, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
+              <span style={{ marginLeft: "auto", fontSize: 12, padding: "3px 10px", borderRadius: 20, border: `1px solid ${st.c}`, color: st.c }}>{st.l}</span>
             </div>
           ); })}
         </div>

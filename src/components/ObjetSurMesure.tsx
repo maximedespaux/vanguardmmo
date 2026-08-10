@@ -208,7 +208,17 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
 
   const ajouter = () => {
     if (!spec) return;
-    setPanier((p) => [...p, { spec, nom: nomComplet, prix: Math.max(0, Number(prix) || 0), note: note.trim() }]);
+    /* L'estimation est OBLIGATOIRE, une par objet. Sans elle, une commande part
+       sans montant : le détenteur ne sait pas ce qu'on est prêt à mettre, et
+       quand la commande devient une quête, il n'y a rien à partager entre ceux
+       qui la farment. Zéro est refusé pour la même raison — c'est une absence
+       déguisée, pas un prix. */
+    const montant = Math.round(Number(prix));
+    if (!Number.isFinite(montant) || montant <= 0) {
+      setEtat({ msg: "Donne ton estimation pour cette pièce : c'est elle qui dit au détenteur ce que tu y mets.", ok: false });
+      return;
+    }
+    setPanier((p) => [...p, { spec, nom: nomComplet, prix: montant, note: note.trim() }]);
     // On garde l'objet et ses réglages : composer la pièce suivante d'un set
     // repart presque toujours des mêmes valeurs.
     setEtat(null);
@@ -337,10 +347,10 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
                   coffre » : sinon « 2 400 » se lit des deux façons, et le
                   vendeur composait son tarif sans savoir ce que l'autre a. */}
               <ChoixPaiement valeur={paiement} onChange={setPaiement} />
-              <label><span style={etiquette}>Prix estimé (facultatif)</span>
-                <input type="number" min={0} value={prix} onChange={(e) => setPrix(e.target.value)}
+              <label><span style={etiquette}>Ton estimation pour cette pièce *</span>
+                <input type="number" min={1} value={prix} onChange={(e) => { setPrix(e.target.value); setEtat(null); }}
                   placeholder={paiement === "airpoints" ? "en Airpoints" : paiement === "mixte" ? "en périns (la part en AP se convient dans la conversation)" : "en périns"}
-                  style={champ} />
+                  style={{ ...champ, borderColor: etat && !etat.ok && !Number(prix) ? "var(--red)" : "var(--border)" }} />
               </label>
               <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Une précision ? (facultatif)" style={champ} />
               <button className="vg-btn" onClick={ajouter} style={{ justifyContent: "center" }}>
@@ -348,7 +358,9 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               </button>
               <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.4 }}>
                 <Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />
-                Le prix n&apos;est qu&apos;une estimation : c&apos;est le détenteur qui annonce son tarif, et il se négocie ensuite dans la conversation.
+                Une estimation par pièce, et elle est nécessaire : elle dit au détenteur ce que tu y mets, et
+                c&apos;est elle qui devient la cagnotte si la guilde doit farmer l&apos;objet. Le tarif final se négocie
+                ensuite dans la conversation.
               </div>
             </div>
           )}

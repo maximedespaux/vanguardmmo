@@ -32,10 +32,23 @@ export async function GET() {
   // reste là-bas, et on doit pouvoir passer de l'un à l'autre sans chercher.
   const demandes = await prisma.bankRequest.findMany({
     where: { queteId: { in: quetes.map((q) => q.id) } },
-    select: { id: true, queteId: true, item: true },
+    select: { id: true, queteId: true, item: true, priceEach: true, prixFinal: true, quantity: true },
   });
-  const parQuete = new Map(demandes.map((d) => [d.queteId!, d.id]));
-  return NextResponse.json(quetes.map((q) => ({ ...serialiserQuete(q), requeteId: parQuete.get(q.id) ?? null })));
+  const parQuete = new Map(demandes.map((d) => [d.queteId!, d]));
+  /* La cagnotte vient de la DEMANDE, jamais d'un champ a part : c'est la que le
+     staff negocie le tarif avec le client, et le jour ou il bouge, un second
+     endroit mentirait. `prixFinal` l'emporte quand il est pose — c'est le total
+     arrete ; sinon on multiplie l'estimation unitaire par la quantite. */
+  const cagnotteDe = (d?: { priceEach: number | null; prixFinal: bigint | null; quantity: number }) => {
+    if (!d) return null;
+    if (d.prixFinal != null) return Number(d.prixFinal);
+    if (d.priceEach) return d.priceEach * Math.max(1, d.quantity || 1);
+    return null;
+  };
+  return NextResponse.json(quetes.map((q) => {
+    const d = parQuete.get(q.id);
+    return { ...serialiserQuete(q, cagnotteDe(d)), requeteId: d?.id ?? null };
+  }));
 }
 
 export async function POST(req: Request) {

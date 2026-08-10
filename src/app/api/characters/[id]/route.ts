@@ -22,6 +22,10 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   if (b.isMain) await prisma.character.updateMany({ where: { userId: a.user.id }, data: { isMain: false } });
   const c = await prisma.character.update({ where: { id: params.id }, data: {
     name: b.name, class: b.class, level: b.level, prestige: b.prestige, isMain: b.isMain, specialization: b.specialization,
+    // Le sexe manquait : il choisit l'illustration du perso, et on ne pouvait
+    // donc plus la corriger apres coup. `undefined` laisse la valeur en place —
+    // une modification partielle ne doit rien effacer au passage.
+    sex: b.sex === "F" || b.sex === "G" ? b.sex : undefined,
   }});
   return NextResponse.json(c);
 }

@@ -1,90 +1,155 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
+import { useSession } from "next-auth/react";
 import { ClassLogo } from "@/components/ClassLogo";
 import { renduPerso, type Sexe } from "@/data/charRenders";
 import { PageHeader } from "@/components/PageHeader";
-import { VgSelect } from "@/components/VgSelect";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
-import { useSession } from "next-auth/react";
+import { FichePerso, Confirmation, type Fiche } from "@/components/FichePerso";
 
-const CLASS_ENUM = ["SPADASSIN","TEMPLIER","ARCANISTE","ENVOUTEUR","ARBALETRIER","SYLPHIDE","PRIMAT","CHANOINE"];
-const MODES = ["DPS","TANK","HYBRIDE"];
+/**
+ * Mes personnages — qui je joue, et avec quoi.
+ *
+ * La page mêlait trois choses sans les distinguer : un formulaire de création
+ * en haut, des cartes en dessous, et sur chaque carte des boutons qui
+ * AJOUTAIENT ou SUPPRIMAIENT des stuffs. Or un stuff ne se crée pas ici — il se
+ * monte dans l'AirBuilder, et c'est lui qui décide s'il existe. Les boutons
+ * fabriquaient donc des profils vides que la page cachait ensuite, faute d'y
+ * trouver la moindre pièce.
+ *
+ * Trois gestes désormais, et trois seulement :
+ *   · LIRE ses stuffs — ce qui est monté, sans pouvoir y toucher d'ici ;
+ *   · MODIFIER la fiche — nom, sexe, classe, niveau, prestige ;
+ *   · DÉSIGNER le principal — avec confirmation, parce que ça déplace ce que
+ *     la guilde voit de nous partout ailleurs.
+ *
+ * La page est ouverte à tous : déclarer ses persos ne demande pas d'être DE la
+ * guilde, un candidat doit pouvoir le faire.
+ */
 type Gear = { id: string; name: string; mode: string };
-type Char = { id: string; name: string; class: string; level: number; prestige: number; isMain: boolean; sex?: string | null; gearProfiles: Gear[]; specializations: any[] };
+type Char = {
+  id: string; name: string; class: string; level: number; prestige: number;
+  isMain: boolean; sex?: string | null; gearProfiles: Gear[];
+};
+
+const MODE_COULEUR = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)");
+
+const carte: React.CSSProperties = {
+  background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginBottom: 14,
+};
 
 export default function PersonnagesPage() {
-  // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
   useCardFx();
-  /* La page est ouverte a tous — declarer ses persos ne demande pas d'etre DE la
-     guilde, un candidat doit pouvoir le faire. Mais sans compte, il n'y a rien a
-     declarer : on invite, plutot que de montrer un formulaire qui echouera. */
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const anonyme = status === "unauthenticated" && process.env.NEXT_PUBLIC_DEV_ALL_ACCESS !== "1";
-  const [chars, setChars] = useState<Char[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [name, setName] = useState(""); const [cls, setCls] = useState("SPADASSIN"); const [prestige, setPrestige] = useState(3); const [level, setLevel] = useState(200); const [isMain, setIsMain] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [confirmDel, setConfirmDel] = useState<string | null>(null);
-  const [gearModal, setGearModal] = useState<{ charId: string; mode: string } | null>(null);
-  const [gearName, setGearName] = useState("");
-  // ok = succès (vert + coche) ; sinon neutre. Avant, la couleur dépendait d'un
-  // préfixe du message, ce qui rendait le texte porteur de logique.
-  const flash = (m: string, ok = false) => { setToast({ msg: m, ok }); setTimeout(() => setToast(null), 2500); };
 
-  const load = async () => { setLoading(true); try { const r = await fetch("/api/characters"); if (r.ok) setChars(await r.json()); } catch {} setLoading(false); };
-  useEffect(() => { load(); }, []);
-  // Quels stuffs sont REELLEMENT equipes ? Les profils DPS / Tank / Hybride sont
-  // crees par defaut mais souvent vides : afficher une pastille pour un stuff vide
-  // laisse croire qu'un build existe. On lit donc l'etat de l'AirBuilder (meme
-  // source que la candidature) et on ne garde que les stuffs portant au moins une
-  // piece. Cle = nom du perso en minuscules -> ensemble des noms de stuffs remplis.
-  const [stuffsRemplis, setStuffsRemplis] = useState<Record<string, Set<string>>>({});
+  const [chars, setChars] = useState<Char[]>([]);
+  const [pret, setPret] = useState(false);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [envoi, setEnvoi] = useState(false);
+
+  /** Ce qu'on est en train d'éditer, de créer, de promouvoir ou de supprimer. */
+  const [edite, setEdite] = useState<string | null>(null);
+  const [fiche, setFiche] = useState<Fiche | null>(null);
+  const [creation, setCreation] = useState<Fiche | null>(null);
+  const [promouvoir, setPromouvoir] = useState<Char | null>(null);
+  const [supprimer, setSupprimer] = useState<Char | null>(null);
+
+  const flash = (msg: string, ok = false) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2800); };
+
+  const charger = useCallback(async () => {
+    try { const r = await fetch("/api/characters"); if (r.ok) setChars(await r.json()); } catch { /* hors ligne */ }
+    setPret(true);
+  }, []);
+  useEffect(() => { charger(); }, [charger]);
+
+  /**
+   * Quels stuffs sont RÉELLEMENT montés ?
+   *
+   * Les profils DPS / Tank / Hybride existent par défaut mais restent souvent
+   * vides : afficher une pastille pour un stuff vide laisse croire qu'un build
+   * existe. On lit donc l'état de l'AirBuilder — la même source que la
+   * candidature — et on ne garde que ceux qui portent au moins une pièce.
+   */
+  const [remplis, setRemplis] = useState<Record<string, Set<string>>>({});
   useEffect(() => {
     type Stuff = { name?: string; eq?: Record<string, unknown> };
     type Blob = { chars?: { name?: string; stuffs?: Stuff[] }[] };
     const equipe = (st: Stuff) => Object.values(st?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item);
-    const lire = (blob: Blob | null) => {
+    const lire = (b: Blob | null) => {
       const out: Record<string, Set<string>> = {};
-      for (const pc of blob?.chars ?? []) {
+      for (const pc of b?.chars ?? []) {
         if (!pc?.name) continue;
         const noms = (pc.stuffs ?? []).filter(equipe).map((st, i) => (st.name?.trim() || `Stuff ${i + 1}`).toLowerCase());
         if (noms.length) out[String(pc.name).trim().toLowerCase()] = new Set(noms);
       }
       return out;
     };
-    let annule = false;
+    let vivant = true;
     (async () => {
       let local: Blob | null = null;
       try { local = JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { /* rien en local */ }
       let distant: Blob | null = null;
       try { const r = await fetch("/api/builder-state"); if (r.ok) distant = (await r.json())?.blob ?? null; } catch { /* hors ligne */ }
-      if (annule) return;
-      // Le local prime : il reflete ce que le joueur vient de faire dans le builder.
-      setStuffsRemplis({ ...lire(distant), ...lire(local) });
+      if (!vivant) return;
+      // Le local prime : il reflète ce que le joueur vient de faire dans le builder.
+      setRemplis({ ...lire(distant), ...lire(local) });
     })();
-    return () => { annule = true; };
-  }, []);
+    return () => { vivant = false; };
+  }, [chars]);
 
-
-  const createChar = async () => {
-    if (!name.trim()) { flash("Donne un nom au personnage."); return; }
-    const r = await fetch("/api/characters", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, class: cls, prestige, level, isMain }) });
-    if (r.ok) { setName(""); setIsMain(false); load(); flash("Personnage créé.", true); } else flash("Erreur lors de la création.");
+  const enregistrer = async () => {
+    if (!edite || !fiche) return;
+    if (!fiche.name.trim()) { flash("Donne un pseudo à ce personnage."); return; }
+    setEnvoi(true);
+    const r = await fetch(`/api/characters/${edite}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: fiche.name.trim(), class: fiche.class, sex: fiche.sex, level: fiche.level, prestige: fiche.prestige }),
+    }).catch(() => null);
+    setEnvoi(false);
+    if (!r?.ok) { flash("Enregistrement impossible."); return; }
+    setEdite(null); setFiche(null); await charger(); flash("Fiche mise à jour.", true);
   };
-  const doDelChar = async () => { if (!confirmDel) return; await fetch(`/api/characters/${confirmDel}`, { method: "DELETE" }); setConfirmDel(null); load(); flash("Personnage supprimé."); };
-  const openGear = (charId: string, mode: string) => { setGearName(`Stuff ${mode}`); setGearModal({ charId, mode }); };
-  const doAddGear = async () => { if (!gearModal) return; await fetch(`/api/characters/${gearModal.charId}/gear`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: gearName || `Stuff ${gearModal.mode}`, mode: gearModal.mode }) }); setGearModal(null); load(); flash("Stuff ajouté.", true); };
-  const delGear = async (gearId: string) => { await fetch(`/api/gear/${gearId}`, { method: "DELETE" }); load(); };
 
-  const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
-  const inp: React.CSSProperties = { background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" };
-  const modeColor = (m: string) => m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)";
+  const creer = async () => {
+    if (!creation) return;
+    if (!creation.name.trim()) { flash("Donne un pseudo à ce personnage."); return; }
+    setEnvoi(true);
+    const r = await fetch("/api/characters", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: creation.name.trim(), class: creation.class, sex: creation.sex, level: creation.level, prestige: creation.prestige, isMain: chars.length === 0 }),
+    }).catch(() => null);
+    setEnvoi(false);
+    if (!r?.ok) { flash("Création impossible."); return; }
+    setCreation(null); await charger(); flash("Personnage créé.", true);
+  };
+
+  const designerPrincipal = async () => {
+    if (!promouvoir) return;
+    setEnvoi(true);
+    const r = await fetch(`/api/characters/${promouvoir.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isMain: true }),
+    }).catch(() => null);
+    setEnvoi(false);
+    setPromouvoir(null);
+    if (!r?.ok) { flash("Changement impossible."); return; }
+    await charger(); flash("Personnage principal changé.", true);
+  };
+
+  const doSupprimer = async () => {
+    if (!supprimer) return;
+    setEnvoi(true);
+    await fetch(`/api/characters/${supprimer.id}`, { method: "DELETE" }).catch(() => null);
+    setEnvoi(false); setSupprimer(null); await charger(); flash("Personnage supprimé.");
+  };
 
   return (
-    <div style={{ padding: 32, maxWidth: 1000, margin: "0 auto" }}>
-      <PageHeader icon="users" title="Mes Personnages" subtitle="Tes persos et leurs stuffs — ce sont eux qu'on retrouve dans les compositions et les demandes." />
+    <div style={{ padding: "24px 22px 60px", maxWidth: 940, margin: "0 auto" }}>
+      <PageHeader icon="users" title="Mes Personnages"
+        subtitle="Tes persos et leurs stuffs — ce sont eux qu'on retrouve dans les compositions et les demandes." />
 
       {anonyme && (
         <div className="glass-card" style={{ padding: 18, marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
@@ -96,113 +161,174 @@ export default function PersonnagesPage() {
         </div>
       )}
 
-      {toast && <div style={{ marginBottom: 14, padding: "9px 12px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)", color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>{toast.ok && <Icon name="check" size={15} />}{toast.msg}</div>}
-
-      {/* Création */}
-      <div className="fx-card" style={card}>
-        <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--orange)", textTransform: "uppercase", fontSize: 16, marginBottom: 12 }}><Icon name="plus" size={16} /> Créer un personnage</h2>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-          <input placeholder="Nom du personnage" value={name} onChange={e => setName(e.target.value)} style={{ ...inp, flex: 1, minWidth: 150 }} />
-          <VgSelect value={cls} onChange={setCls} options={CLASS_ENUM} minWidth={140} />
-          <VgSelect value={prestige} onChange={v => setPrestige(+v)} options={[1,2,3,4,5,6,7,8,9,10].map(p => ({ value: String(p), label: `P${p}` }))} style={{ width: 100 }} />
-          <input type="number" value={level} onChange={e => setLevel(+e.target.value)} style={{ ...inp, width: 90 }} title="Niveau" />
-          <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 13, color: "var(--text-muted)" }}><input type="checkbox" checked={isMain} onChange={e => setIsMain(e.target.checked)} /> Principal</label>
-          <button onClick={createChar} className="vg-btn">Créer</button>
+      {toast && (
+        <div style={{ marginBottom: 14, padding: "10px 13px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)",
+          color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+          {toast.ok && <Icon name="check" size={15} />}{toast.msg}
         </div>
-      </div>
+      )}
 
-      {/* Liste */}
-      {loading ? <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 30 }}>Chargement…</div> :
-       chars.length === 0 ? <div className="fx-card" style={{ ...card, textAlign: "center", color: "var(--text-muted)" }}>Aucun personnage. Crée ton premier ci-dessus</div> :
-       chars.map(c => (
-        <div key={c.id} style={card}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            {/* Illustration du personnage (classe + sexe), meme visuel que la
-                candidature et l'AirBuilder : on reconnait son perso d'un coup d'oeil.
-                Repli sur le logo de classe si l'illustration manque. */}
-            <div style={{ width: 74, height: 102, flexShrink: 0, borderRadius: 11, overflow: "hidden", position: "relative",
-              background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.15), rgba(10,10,12,.9) 72%)",
-              border: "1px solid rgba(255,140,26,.28)", boxShadow: "inset 0 0 18px rgba(0,0,0,.6)",
-              display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe)
-                ? <img src={renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe)!} alt={c.name}
-                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center",
-                      filter: "drop-shadow(0 4px 10px rgba(255,140,26,.25))" }} />
-                : <ClassLogo name={c.class} size={34} />}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="font-heading" style={{ fontWeight: 700, fontSize: 18 }}>{c.name} {c.isMain && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, color: "var(--gold)" }}><Icon name="star" size={11} /> principal</span>}</div>
-              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{c.class} · Niveau {c.level} · Prestige {c.prestige}</div>
-            </div>
-            <button className="vg-touch" onClick={() => setConfirmDel(c.id)} title="Supprimer" aria-label={`Supprimer ${c.name}`} style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={16} /></button>
-          </div>
-          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs</span>
-              {MODES.map(m => <button key={m} className="vg-touch" onClick={() => openGear(c.id, m)} style={{ padding: "6px 10px", borderRadius: 6, fontSize: 12, cursor: "pointer", border: `1px solid ${modeColor(m)}`, background: "transparent", color: modeColor(m) }}>+ {m}</button>)}
-              {/* C'est l'action principale de la carte : c'est dans le Builder qu'on
-                  equipe reellement un personnage. Elle est donc traitee comme un
-                  vrai bouton et non comme un lien discret. */}
-              <Link href="/builder" className="vg-btn" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, padding: "9px 16px", textDecoration: "none" }}><Icon name="sword" size={14} /> Configurer dans le Builder</Link>
-            </div>
-            {(() => {
-              // Un profil cree mais vide ne compte pas : afficher « DPS » alors que rien
-              // n'est equipe laisse croire qu'un build existe. On ne garde que les stuffs
-              // portant au moins une piece dans l'AirBuilder.
-              const remplis = stuffsRemplis[c.name.trim().toLowerCase()];
-              const visibles = c.gearProfiles.filter(g =>
-                remplis?.has((g.name || "").trim().toLowerCase()) || remplis?.has((g.mode || "").trim().toLowerCase()));
-              if (!visibles.length) return (
-                <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 7 }}>
-                  <Icon name="info" size={13} />
-                  Aucun stuff equipe pour l&apos;instant — ouvre le Builder pour en composer un.
+      {!anonyme && (
+        <button onClick={() => setCreation({ name: "", class: "SPADASSIN", sex: "G", level: 200, prestige: 3 })}
+          className="vg-btn" style={{ marginBottom: 16 }}>
+          <Icon name="user-plus" size={16} />Nouveau personnage
+        </button>
+      )}
+
+      {!pret ? (
+        <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 26, textAlign: "center" }}>Chargement…</div>
+      ) : chars.length === 0 && !anonyme ? (
+        <div className="fx-card" style={{ ...carte, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+          Aucun personnage déclaré. Commence par le premier — c&apos;est lui qu&apos;on retrouvera partout.
+        </div>
+      ) : chars.map((c) => {
+        const stuffs = remplis[c.name.trim().toLowerCase()];
+        const visibles = c.gearProfiles.filter((g) =>
+          stuffs?.has((g.name || "").trim().toLowerCase()) || stuffs?.has((g.mode || "").trim().toLowerCase()));
+        const rendu = renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe);
+        const enEdition = edite === c.id;
+
+        return (
+          <div key={c.id} className="fx-card" style={carte}>
+            {enEdition && fiche ? (
+              <>
+                <FichePerso valeur={fiche} onChange={setFiche} compact />
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 15 }}>
+                  <button onClick={() => { setEdite(null); setFiche(null); }} disabled={envoi}
+                    style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
+                    Annuler
+                  </button>
+                  <button onClick={enregistrer} disabled={envoi} className="vg-btn" style={{ fontSize: 12.5 }}>
+                    <Icon name="save" size={14} />{envoi ? "Enregistrement…" : "Enregistrer"}
+                  </button>
                 </div>
-              );
-              return (
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{visibles.map(g => (
-                <span key={g.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)", border: `1px solid ${modeColor(g.mode)}`, borderRadius: 7, padding: "5px 10px", fontSize: 12 }}>
-                  {/* Un clic sur un stuff rempli ouvre directement sa page dans le Builder. */}
-                  <Link href={`/builder?perso=${encodeURIComponent(c.name)}&stuff=${encodeURIComponent(g.name || g.mode)}`}
-                    title={`Ouvrir « ${g.name || g.mode} » dans le Builder`}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "inherit" }}>
-                    <b style={{ color: modeColor(g.mode) }}>{g.mode}</b> {g.name}
-                  </Link>
-                  <button className="vg-touch" onClick={() => delGear(g.id)} title="Retirer ce stuff" aria-label="Retirer ce stuff" style={{ background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>
-                </span>
-              ))}</div>
-              );
-            })()}
-          </div>
-        </div>
-      ))}
+              </>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
+                  <div style={{ width: 68, height: 94, flexShrink: 0, borderRadius: 11, overflow: "hidden", position: "relative",
+                    background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.15), rgba(10,10,12,.9) 72%)",
+                    border: "1px solid rgba(255,140,26,.28)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {rendu
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={rendu} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }} />
+                      : <ClassLogo name={c.class} size={32} />}
+                  </div>
 
-      {/* Confirmation de suppression */}
-      {confirmDel && (
-        <div onClick={() => setConfirmDel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ ...card, width: 360, marginBottom: 0 }}>
-            <div className="font-heading" style={{ fontSize: 16, marginBottom: 8 }}>Supprimer ce personnage ?</div>
-            <p style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 0 }}>Le personnage et tous ses stuffs seront supprimés. Action définitive.</p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-              <button onClick={() => setConfirmDel(null)} style={{ ...inp, cursor: "pointer" }}>Annuler</button>
-              <button onClick={doDelChar} style={{ padding: "9px 16px", borderRadius: 8, background: "var(--red)", color: "#0A0A0C", border: "none", fontWeight: 600, cursor: "pointer" }}>Supprimer</button>
+                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+                    <div className="font-heading" style={{ fontWeight: 700, fontSize: 18, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      {c.name}
+                      {c.isMain && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--gold)",
+                          border: "1px solid var(--gold)", borderRadius: 6, padding: "1px 7px", textTransform: "uppercase", letterSpacing: .5 }}>
+                          <Icon name="star" size={11} />principal
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <ClassLogo name={c.class} size={15} />
+                      {c.class.charAt(0) + c.class.slice(1).toLowerCase()}
+                      <span style={{ opacity: .5 }}>·</span>Niveau {c.level}
+                      <span style={{ opacity: .5 }}>·</span>Prestige {c.prestige}
+                      <span style={{ opacity: .5 }}>·</span>{c.sex === "F" ? "Fille" : "Garçon"}
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 7, flexShrink: 0, flexWrap: "wrap" }}>
+                    {!c.isMain && (
+                      <button onClick={() => setPromouvoir(c)} className="vg-touch"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 9,
+                          border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+                        <Icon name="star" size={13} />En principal
+                      </button>
+                    )}
+                    <button onClick={() => { setEdite(c.id); setFiche({ name: c.name, class: c.class, sex: (c.sex === "F" ? "F" : "G") as Sexe, level: c.level, prestige: c.prestige }); }}
+                      className="vg-touch"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 9,
+                        border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
+                      <Icon name="edit" size={13} />Modifier
+                    </button>
+                    <button onClick={() => setSupprimer(c)} className="vg-touch" aria-label={`Supprimer ${c.name}`} title="Supprimer"
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 9,
+                        border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--red)", cursor: "pointer" }}>
+                      <Icon name="trash" size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Les stuffs se LISENT ici. Ils se montent dans l'AirBuilder :
+                    les ajouter d'ici fabriquait des profils vides que la page
+                    masquait ensuite, faute d'y trouver la moindre pièce. */}
+                <div style={{ borderTop: "1px solid var(--border)", marginTop: 14, paddingTop: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs montés</span>
+                    {visibles.length > 0 ? (
+                      <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+                        {visibles.map((g) => (
+                          <Link key={g.id} href={`/builder?perso=${encodeURIComponent(c.name)}&stuff=${encodeURIComponent(g.name || g.mode)}`}
+                            title={`Ouvrir « ${g.name || g.mode} » dans l'AirBuilder`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)",
+                              border: `1px solid ${MODE_COULEUR(g.mode)}`, borderRadius: 8, padding: "5px 11px", fontSize: 12,
+                              textDecoration: "none", color: "inherit" }}>
+                            <b style={{ color: MODE_COULEUR(g.mode) }}>{g.mode}</b>{g.name}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Aucun pour l&apos;instant.</span>
+                    )}
+                    <Link href={`/builder?perso=${encodeURIComponent(c.name)}`} className="vg-btn"
+                      style={{ marginLeft: "auto", fontSize: 12, padding: "8px 14px" }}>
+                      <Icon name="sword" size={14} />Monter un stuff
+                    </Link>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })}
+
+      {/* ── Les fenêtres, sur <body> : un parent en `transform` (.fx-card)
+          enfermerait un `position:fixed` à l'intérieur de la carte. ── */}
+      {typeof document !== "undefined" && creation && createPortal(
+        <div onClick={() => !envoi && setCreation(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.62)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 18, overflowY: "auto" }}>
+          <div onClick={(e) => e.stopPropagation()}
+            style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, width: "100%", maxWidth: 560, maxHeight: "88vh", overflowY: "auto" }}>
+            <h2 className="font-heading" style={{ margin: "0 0 4px", fontSize: 18, display: "flex", alignItems: "center", gap: 9 }}>
+              <Icon name="user-plus" size={18} style={{ color: "var(--orange)" }} />Nouveau personnage
+            </h2>
+            <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              Choisis sa classe et son sexe : l&apos;illustration suit, c&apos;est elle qu&apos;on verra partout.
+            </p>
+            <FichePerso valeur={creation} onChange={setCreation} />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
+              <button onClick={() => setCreation(null)} disabled={envoi}
+                style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
+                Annuler
+              </button>
+              <button onClick={creer} disabled={envoi} className="vg-btn">
+                {envoi ? "Création…" : "Créer"}
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>, document.body)}
 
-      {/* Ajout de stuff */}
-      {gearModal && (
-        <div onClick={() => setGearModal(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ ...card, width: 360, marginBottom: 0 }}>
-            <div className="font-heading" style={{ fontSize: 16, marginBottom: 10 }}>Nouveau stuff <span style={{ color: modeColor(gearModal.mode) }}>{gearModal.mode}</span></div>
-            <input autoFocus value={gearName} onChange={(e) => setGearName(e.target.value)} style={{ ...inp, width: "100%" }} placeholder="Nom du stuff" />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
-              <button onClick={() => setGearModal(null)} style={{ ...inp, cursor: "pointer" }}>Annuler</button>
-              <button onClick={doAddGear} className="vg-btn">Ajouter</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {typeof document !== "undefined" && promouvoir && createPortal(
+        <Confirmation titre="Changer de personnage principal ?" action="Le désigner" occupe={envoi}
+          onOui={designerPrincipal} onNon={() => setPromouvoir(null)}
+          texte={<><b style={{ color: "var(--text)" }}>{promouvoir.name}</b> deviendra ton personnage principal.
+            C&apos;est lui qui te représente partout — compositions, GuildViewer, demandes à la boutique —
+            et il remplacera {chars.find((x) => x.isMain)?.name ?? "l'actuel"}.</>} />,
+        document.body)}
+
+      {typeof document !== "undefined" && supprimer && createPortal(
+        <Confirmation titre="Supprimer ce personnage ?" action="Supprimer" danger occupe={envoi}
+          onOui={doSupprimer} onNon={() => setSupprimer(null)}
+          texte={<><b style={{ color: "var(--text)" }}>{supprimer.name}</b> et ses stuffs seront retirés de ton compte.
+            Action définitive.</>} />,
+        document.body)}
     </div>
   );
 }

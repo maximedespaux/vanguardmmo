@@ -72,6 +72,9 @@ const lireRequetes = (userId: string) =>
     select: {
       id: true, batchId: true, item: true, quantity: true, cat: true, status: true,
       origine: true, modePaiement: true, prixFinal: true, characterName: true,
+      // `updatedAt` sert au délai de traitement : sans lui, on sait combien de
+      // commandes ont abouti mais pas en combien de temps.
+      updatedAt: true,
       detenteurId: true, dateSouhaitee: true, rendezVous: true, createdAt: true,
     },
   });
@@ -95,7 +98,36 @@ export async function GET() {
   ]);
 
   const commandes = grouperEnCommandes(requetes);
+
+  /* Le devenir de MES commandes. « 1 au total » ne disait rien : une commande
+     servie, une abandonnée et une refusée comptaient pareil.
+     Les taux se calculent sur les commandes CONCLUES seulement — inclure celles
+     en cours les ferait baisser à chaque nouvelle commande, ce qui n'a aucun sens.
+     Le délai est médian et non moyen : une commande oubliée trois semaines tirerait
+     la moyenne et ferait croire que tout traîne. */
+  const cmdParEtat = (e: string) => requetes.filter((r) => r.status === e);
+  const servies = cmdParEtat("REMIS");
+  const abandons = cmdParEtat("ANNULE");
+  const refus = cmdParEtat("REFUSE");
+  const conclues = servies.length + abandons.length + refus.length;
+  const delais = servies
+    .map((r) => (r.updatedAt.getTime() - r.createdAt.getTime()) / 864e5)
+    .filter((j) => j >= 0).sort((a, b) => a - b);
+
+  const bilan = {
+    servies: servies.length,
+    abandons: abandons.length,
+    refus: refus.length,
+    conclues,
+    tauxService: conclues ? Math.round((servies.length / conclues) * 100) : null,
+    delaiMedianJours: delais.length ? Math.round(delais[Math.floor(delais.length / 2)] * 10) / 10 : null,
+    // Un troc ne renseigne pas prixFinal : le total ne couvre que ce qui a été payé
+    // en périns, et le compter autrement serait faux.
+    perinsDepenses: servies.reduce((s, r) => s + Number(r.prixFinal ?? 0), 0),
+  };
+
   return NextResponse.json({
+    bilan,
     // Identité : en lecture seule, et la page le dit. Le pseudo et le rôle sont
     // resynchronisés depuis Discord à chaque connexion — les rendre modifiables
     // ici créerait un conflit qui se rejouerait à la prochaine ouverture.

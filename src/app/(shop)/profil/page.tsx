@@ -24,6 +24,7 @@ type Commande = {
   aUnDetenteur: boolean; lignes: Ligne[];
 };
 type Profil = {
+  bilan?: { servies: number; abandons: number; refus: number; conclues: number; tauxService: number | null; delaiMedianJours: number | null; perinsDepenses: number };
   identite: { pseudo: string; role: string; membreDepuis: string; verifieLe: string | null; partageBuild: boolean; lienBuild: string | null };
   commandes: Commande[];
   compteurs: { commandes: number; enCours: number; personnages: number; stuffs: number };
@@ -151,7 +152,25 @@ export default function ProfilPage() {
               <div className="pf-kpis">
                 <div className="pf-kpi"><b>{p.compteurs.commandes}</b><span>au total</span></div>
                 <div className="pf-kpi"><b>{p.compteurs.enCours}</b><span>en cours</span></div>
+                {/* Le devenir des commandes conclues. « 1 au total » ne disait rien :
+                    une servie, une abandonnée et une refusée comptaient pareil. */}
+                {p.bilan && p.bilan.conclues > 0 && (
+                  <>
+                    <div className="pf-kpi"><b style={{ color: "var(--green)" }}>{p.bilan.servies}</b><span>servie{p.bilan.servies > 1 ? "s" : ""}</span></div>
+                    <div className="pf-kpi"><b style={{ color: p.bilan.abandons ? "var(--red)" : undefined }}>{p.bilan.abandons}</b><span>abandonnée{p.bilan.abandons > 1 ? "s" : ""}</span></div>
+                    {p.bilan.refus > 0 && <div className="pf-kpi"><b>{p.bilan.refus}</b><span>refusée{p.bilan.refus > 1 ? "s" : ""}</span></div>}
+                  </>
+                )}
               </div>
+              {p.bilan && p.bilan.conclues > 0 && (
+                <p className="pf-sub" style={{ marginTop: -6 }}>
+                  {/* Le taux porte sur les commandes CONCLUES : l'inclure celles en cours
+                      le ferait baisser à chaque nouvelle commande, ce qui ne veut rien dire. */}
+                  <b style={{ color: "var(--text)" }}>{p.bilan.tauxService} %</b> de tes {p.bilan.conclues} commandes conclues ont abouti
+                  {p.bilan.delaiMedianJours != null && <> · délai habituel <b style={{ color: "var(--text)" }}>{p.bilan.delaiMedianJours} j</b></>}
+                  {p.bilan.perinsDepenses > 0 && <> · <b style={{ color: "var(--text)" }}>{p.bilan.perinsDepenses.toLocaleString("fr-FR")}</b> périns dépensés</>}
+                </p>
+              )}
               {!p.commandes.length && <p className="pf-vide">Tu n&apos;as encore rien commandé. <a href="/boutique" style={{ color: "var(--orange)" }}>Voir le coffre commun →</a></p>}
               {p.commandes.map((c) => {
                 const e = ETAT[c.statut] ?? { txt: c.statut, couleur: "var(--text-muted)" };

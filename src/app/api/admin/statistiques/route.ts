@@ -28,7 +28,15 @@ export async function GET() {
       select: { userId: true, quantite: true, confirmeAt: true, quete: { select: { titre: true } } },
     }),
     prisma.quete.findMany({ select: { id: true, statut: true, auteurId: true, createdAt: true } }),
-    prisma.bankRequest.findMany({ select: { userId: true, username: true, status: true, createdAt: true } }),
+    prisma.bankRequest.findMany({
+      select: {
+        userId: true, username: true, status: true, createdAt: true,
+        // Le devenir d'une vente : qui l'a fournie, combien elle a rapporté, comment
+        // elle a été payée, et quand elle s'est conclue. Sans `detenteurId` on ne sait
+        // pas QUI vend, sans `updatedAt` on ne sait pas en combien de temps.
+        detenteurId: true, prixFinal: true, modePaiement: true, updatedAt: true,
+      },
+    }),
   ]);
 
   /* Le classement se faisait sur l'XP. Elle a ete retiree : on classe donc sur
@@ -67,7 +75,61 @@ export async function GET() {
     });
   }
 
+  /* ── Le devenir des ventes ────────────────────────────────────────────────
+     « Combien de demandes » ne disait rien : une demande refusée, une abandonnée
+     et une servie comptaient pareil. On sépare donc les issues, et on mesure ce
+     qui coûte vraiment à la guilde — l'abandon, c'est-à-dire quelqu'un qui a
+     demandé et n'a rien eu.
+
+     Note de lecture : un troc ne renseigne pas `prixFinal` (il n'y a pas de somme
+     à réclamer), donc le volume en périns ne couvre que les ventes payées en
+     périns. Le compter comme un manque à gagner serait faux. */
+  const parEtat = (e: string) => demandes.filter((d) => d.status === e);
+  const servies = parEtat("REMIS");
+  const abandons = parEtat("ANNULE");
+  const refus = parEtat("REFUSE");
+  const encours = demandes.filter((d) => ["PENDING", "ACCEPTE_ACHAT", "ACCEPTE_DETTE", "EN_ECHANGE"].includes(d.status));
+  const conclues = servies.length + abandons.length + refus.length;
+
+  /* Délai médian et non moyen : une seule demande oubliée trois mois tirerait la
+     moyenne et ferait croire que tout traîne. */
+  const delais = servies
+    .map((d) => (d.updatedAt.getTime() - d.createdAt.getTime()) / 864e5)
+    .filter((j) => j >= 0)
+    .sort((a, b) => a - b);
+  const delaiMedian = delais.length ? delais[Math.floor(delais.length / 2)] : null;
+
+  /* Qui fournit. `detenteurId` est l'identifiant du membre qui s'est engagé : tant
+     qu'il est nul, la demande n'a personne en face — c'est ce vide qui la fait
+     dormir, et il se compte. */
+  const nomDe = new Map(membres.map((m) => [m.id, m.username]));
+  const parVendeur = new Map<string, { nom: string; servies: number; perins: number }>();
+  for (const d of servies) {
+    if (!d.detenteurId) continue;
+    const e = parVendeur.get(d.detenteurId) ?? { nom: nomDe.get(d.detenteurId) ?? "—", servies: 0, perins: 0 };
+    e.servies++;
+    e.perins += Number(d.prixFinal ?? 0);
+    parVendeur.set(d.detenteurId, e);
+  }
+
+  const ventes = {
+    servies: servies.length,
+    abandons: abandons.length,
+    refus: refus.length,
+    enCours: encours.length,
+    sansDetenteur: encours.filter((d) => !d.detenteurId).length,
+    /* Sur les demandes CONCLUES seulement : inclure celles en cours ferait baisser
+       le taux à mesure que de nouvelles arrivent, ce qui n'a aucun sens. */
+    tauxAbandon: conclues ? Math.round((abandons.length / conclues) * 100) : null,
+    tauxService: conclues ? Math.round((servies.length / conclues) * 100) : null,
+    delaiMedianJours: delaiMedian != null ? Math.round(delaiMedian * 10) / 10 : null,
+    volumePerins: servies.reduce((s, d) => s + Number(d.prixFinal ?? 0), 0),
+    partTroc: servies.length ? Math.round((servies.filter((d) => d.modePaiement === "troc").length / servies.length) * 100) : null,
+    parVendeur: [...parVendeur.values()].sort((a, b) => b.servies - a.servies).slice(0, 10),
+  };
+
   return NextResponse.json({
+    ventes,
     totaux: {
       membresActifs: parMembre.filter((m) => m.actifRecemment).length,
       quetesOuvertes: quetes.filter((q) => q.statut === "ouverte").length,

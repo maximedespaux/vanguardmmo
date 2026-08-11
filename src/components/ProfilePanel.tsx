@@ -31,6 +31,24 @@ const SHORTCUTS: { icon: IconName; label: string; href: string }[] = [
  *  qu'au staff, comme la page elle-meme. */
 const VENTES: { icon: IconName; label: string; href: string } = { icon: "coins", label: "Mes ventes", href: "/mes-ventes" };
 
+/** Ce que /api/profil renvoie, réduit à ce que le panneau affiche. */
+type EtatProfil = {
+  compteurs: { commandes: number; enCours: number; personnages: number; stuffs: number };
+  commandes: { id: string; statut: string; lignes: { item: string | null }[] }[];
+};
+
+/** L'état d'une commande, dit du point de vue de celui qui l'a passée. Court, parce
+ *  qu'il s'affiche dans une largeur de 288 px. */
+const ETATS: Record<string, { txt: string; couleur: string }> = {
+  PENDING: { txt: "en attente", couleur: "var(--gold)" },
+  ACCEPTE_ACHAT: { txt: "à récupérer", couleur: "var(--green)" },
+  ACCEPTE_DETTE: { txt: "à régler", couleur: "var(--green)" },
+  EN_ECHANGE: { txt: "en échange", couleur: "var(--blue)" },
+  REMIS: { txt: "remise", couleur: "var(--text-muted)" },
+  REFUSE: { txt: "refusée", couleur: "var(--red)" },
+  ANNULE: { txt: "annulée", couleur: "var(--text-muted)" },
+};
+
 export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const { data: session } = useSession();
   const u = session?.user as any;
@@ -42,7 +60,17 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
   const [principal, setPrincipal] = useState<{ id: string; name: string } | null>(null);
   const [pseudo, setPseudo] = useState("");
   const [etatPseudo, setEtatPseudo] = useState<"" | "envoi" | "ok" | "erreur">("");
+  /** Où j'en suis : chargé à la PREMIÈRE ouverture du panneau, pas au montage.
+   *  Le panneau est dans l'en-tête de toutes les pages — l'interroger à chaque
+   *  rendu ferait une requête par page visitée, pour une information que la
+   *  plupart du temps personne ne regarde. */
+  const [etat, setEtat] = useState<EtatProfil | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open || etat) return;
+    fetch("/api/profil").then((r) => (r.ok ? r.json() : null)).then((d) => { if (d) setEtat(d); }).catch(() => {});
+  }, [open, etat]);
 
   useEffect(() => {
     if (!open || principal) return;
@@ -145,6 +173,46 @@ export function ProfilePanel({ devAll = false }: { devAll?: boolean }) {
                 : "Nécessaire pour les demandes à la boutique : c'est là que l'objet t'est envoyé par courrier."}
             </div>
           </div>
+
+          {/* Où j'en suis. Le panneau était une porte : il donnait accès à quatre écrans
+              sans jamais rien dire. Un membre l'ouvrait pour savoir où en était sa
+              commande, et devait aller voir ailleurs. Les chiffres tiennent ici, le
+              détail reste sur les pages. Chargé à l'ouverture seulement. */}
+          {etat && (
+            <div style={{ padding: "11px 16px", borderBottom: "1px solid var(--border)" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 8 }}>Où j&apos;en suis</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6, marginBottom: etat.commandes.length ? 9 : 0 }}>
+                {[
+                  { n: etat.compteurs.enCours, l: "commande" + (etat.compteurs.enCours > 1 ? "s" : "") + " en cours", fort: etat.compteurs.enCours > 0 },
+                  { n: etat.compteurs.personnages, l: "personnage" + (etat.compteurs.personnages > 1 ? "s" : ""), fort: false },
+                  { n: etat.compteurs.stuffs, l: "stuff" + (etat.compteurs.stuffs > 1 ? "s" : ""), fort: false },
+                ].map((k) => (
+                  <div key={k.l} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 8px", textAlign: "center" }}>
+                    <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.15, fontVariantNumeric: "tabular-nums", color: k.fort ? "var(--orange)" : "var(--text)" }}>{k.n}</div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", lineHeight: 1.3 }}>{k.l}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Les deux commandes les plus récentes, avec leur état en clair : c'est
+                  la seule chose qu'on vient vraiment vérifier. */}
+              {etat.commandes.slice(0, 2).map((c) => {
+                const e = ETATS[c.statut] ?? { txt: c.statut, couleur: "var(--text-muted)" };
+                return (
+                  <Link key={c.id} href="/profil" onClick={() => setOpen(false)}
+                    style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 8px", borderRadius: 8, textDecoration: "none", background: "var(--bg-3)", border: "1px solid var(--border)", marginBottom: 5 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: e.couleur, flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {c.lignes[0]?.item ?? "Commande"}{c.lignes.length > 1 ? ` +${c.lignes.length - 1}` : ""}
+                    </span>
+                    <span style={{ flexShrink: 0, fontSize: 10.5, fontWeight: 700, color: e.couleur }}>{e.txt}</span>
+                  </Link>
+                );
+              })}
+              <Link href="/profil" onClick={() => setOpen(false)} style={{ display: "block", fontSize: 11.5, color: "var(--orange)", textDecoration: "none", paddingTop: 2 }}>
+                Tout mon profil →
+              </Link>
+            </div>
+          )}
 
           {/* Raccourcis persos */}
           <div style={{ padding: "10px 10px 7px" }}>

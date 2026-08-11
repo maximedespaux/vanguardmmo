@@ -96,9 +96,25 @@ export function RequetesClients() {
         </span>
       </div>
       <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 14px" }}>
-        Personne ne les a au coffre : il faut les farmer. Ouvre la quête et chacun pourra y apporter sa part —
-        la somme convenue avec le client se partage ensuite au prorata de ce que chacun a ramené.
+        Personne ne les a au coffre : il faut les farmer à plusieurs.
       </p>
+      {/* UNE LÉGENDE, pas un paragraphe par carte. Les mêmes trois notions
+          revenaient en toutes lettres sur chaque chantier ; elles sont dites
+          une fois, et les cartes n'affichent plus que leurs chiffres. */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 11.5, color: "var(--text-muted)", margin: "0 0 14px" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 3, background: "linear-gradient(90deg,#4ADE80,#22c55e)" }} />reçu
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <span style={{ width: 10, height: 10, borderRadius: 3, background: "repeating-linear-gradient(45deg,rgba(255,140,26,.55),rgba(255,140,26,.55) 3px,rgba(255,140,26,.18) 3px,rgba(255,140,26,.18) 6px)" }} />promis
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <Icon name="coins" size={12} style={{ color: "var(--gold)" }} />cagnotte, au prorata du livré
+        </span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+          <Icon name="message" size={12} />la discussion avec le client
+        </span>
+      </div>
 
       {erreur && <div style={{ fontSize: 12.5, color: "var(--red)", marginBottom: 10 }}>{erreur}</div>}
 
@@ -110,7 +126,7 @@ export function RequetesClients() {
       {enCours.length > 0 && (
         <div style={{ display: "grid", gap: 9, marginBottom: 16 }}>
           <div className="font-heading" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)" }}>
-            En cours — {enCours.length} commande{enCours.length > 1 ? "s" : ""} lancée{enCours.length > 1 ? "s" : ""}
+            Chantiers en cours — {enCours.length} à plusieurs
           </div>
           {enCours.map((r) => {
             const q = r.quete;
@@ -145,14 +161,13 @@ export function RequetesClients() {
                     sur la règle découvert au moment du partage est le conflit le
                     plus difficile à défaire — elle est donc rappelée là où l'on
                     s'engage. */}
+                {/* La règle en UNE ligne : la légende, en haut, porte le reste.
+                    Elle occupait quatre lignes sur chaque carte — le même
+                    paragraphe répété autant de fois qu'il y a de chantiers. */}
                 {!!q.cagnotte && (
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 9, padding: "8px 11px", background: "var(--bg-2)", border: "1px dashed color-mix(in srgb, var(--gold) 40%, var(--border))", borderRadius: 9, fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.45 }}>
-                    <Icon name="info" size={12} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
-                    <span>
-                      <b style={{ color: "var(--gold)" }}>{fmt(q.cagnotte)} périns</b> à partager, au prorata de ce que
-                      chacun aura <b>réellement livré</b>. Ta part devient acquise quand la livraison est constatée,
-                      pas quand tu l&apos;annonces.
-                    </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 9, fontSize: 11.5, color: "var(--text-muted)" }}>
+                    <Icon name="coins" size={12} style={{ color: "var(--gold)", flexShrink: 0 }} />
+                    <b style={{ color: "var(--gold)" }}>{fmt(q.cagnotte)} périns</b> au prorata du <b>livré</b>, pas du promis.
                   </div>
                 )}
                 <div style={{ height: 9, borderRadius: 6, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden", display: "flex" }}>
@@ -233,7 +248,7 @@ export function RequetesClients() {
       ) : liste.length === 0 ? (
         <div style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55, padding: "14px 2px" }}>
           <Icon name="check" size={15} style={{ color: "var(--green)", flexShrink: 0, marginTop: 1 }} />
-          <span>Aucune commande en attente d&apos;être lancée.</span>
+          <span>Aucune commande n&apos;attend d&apos;être prise.</span>
         </div>
       ) : (
         <div style={{ display: "grid", gap: 9 }}>
@@ -283,7 +298,7 @@ export function RequetesClients() {
                     )}
                     <button className="vg-btn" disabled={ouverture === r.id} onClick={() => ouvrirQuete(r.id)}
                       style={{ padding: "8px 14px", fontSize: 12.5, opacity: ouverture === r.id ? .6 : 1 }}>
-                      <Icon name="target" size={13} />{ouverture === r.id ? "Ouverture…" : "Ouvrir la quête"}
+                      <Icon name="target" size={13} />{ouverture === r.id ? "Ouverture…" : "Lancer le chantier"}
                     </button>
                   </div>
                 </div>

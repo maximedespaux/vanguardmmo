@@ -249,12 +249,9 @@ export function MesCommandes({ entete = true }: { entete?: boolean }) {
         />
       )}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 10 }}>
-        {/* Beaucoup de demandes finissent en quête : le chemin doit être court. */}
-        <Link href="/quetes" style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", textDecoration: "none", fontSize: 12.5, fontWeight: 600 }}>
-          <Icon name="target" size={14} />Les quêtes de la guilde
-        </Link>
-      </div>
+      {/* Le lien « Les quêtes de la guilde » vivait ici : une sortie vers un
+          ailleurs sans rapport avec la commande qu'on est en train de suivre.
+          C'est ce genre de renvoi qui donne l'impression de se perdre. */}
 
       <div className="msg-layout" data-vue={ouvert ? "fil" : "liste"} style={{ display: "grid", gap: 14, alignItems: "start" }}>
         {/* ── Colonne des conversations ── */}
@@ -368,9 +365,9 @@ export function MesCommandes({ entete = true }: { entete?: boolean }) {
                         boutique — avec sa cagnotte et la part de chacun. Le fil,
                         lui, part vite en trente messages. */}
                     {courante.queteId && (
-                      <Link href="/boutique?mode=requetes" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--orange)", color: "var(--orange)", textDecoration: "none" }}>
-                        <Icon name="target" size={11} />Suivre la commande →
-                      </Link>
+                      <span title="Plusieurs membres la farment ensemble" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, padding: "2px 8px", borderRadius: 6, border: "1px solid var(--purple)", color: "var(--purple)" }}>
+                        <Icon name="users" size={11} />Chantier à plusieurs
+                      </span>
                     )}
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>

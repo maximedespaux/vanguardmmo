@@ -168,7 +168,7 @@ export function Fil({
             {salon === "prive" ? "Rien entre vous pour l'instant. Écris ici pour vous mettre d'accord." : "Aucun message. Écris pour ouvrir la discussion."}
           </div>
         )}
-        {visibles.map((m) => {
+        {visibles.map((m, i) => {
           if (m.kind === "system") {
             // Un fait enregistré, pas une parole : liseré et aucun auteur, pour
             // qu'on ne le prenne pas pour l'avis de quelqu'un.
@@ -223,11 +223,43 @@ export function Fil({
               </div>
             );
           }
+          /* UNE PAROLE : bulle alignée du côté de qui parle.
+             Le fil affichait « auteur · date » puis le texte, tout du même côté :
+             sur dix messages, il fallait lire chaque nom pour savoir qui disait
+             quoi. Le côté suffit maintenant, et le nom ne se répète pas quand la
+             même personne enchaîne. */
+          const aMoiTexte = !!moiId && m.userId === moiId;
+          const precedent = visibles[i - 1];
+          const memeAuteur = precedent && precedent.kind === "text" && precedent.userId === m.userId;
+          const initiales = (m.author ?? "?").trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+          const heure = new Date(m.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
           return (
-            <div key={m.id} style={{ fontSize: 13.5 }}>
-              <b style={{ color: "var(--orange)" }}>{m.author ? <Pseudo nom={m.author} /> : null}</b>
-              <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}> · {new Date(m.createdAt).toLocaleString("fr-FR")}</span>
-              <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
+            <div key={m.id} style={{ display: "flex", gap: 9, flexDirection: aMoiTexte ? "row-reverse" : "row", marginTop: memeAuteur ? -4 : 0 }}>
+              {/* Pastille d'initiales et non une photo : le fil ne transporte pas
+                  d'avatar, et en inventer un demanderait une requête par message. */}
+              <div aria-hidden={memeAuteur} style={{ flexShrink: 0, width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700,
+                background: memeAuteur ? "transparent" : aMoiTexte ? "color-mix(in srgb, var(--orange) 18%, transparent)" : "var(--bg-3)",
+                border: memeAuteur ? "1px solid transparent" : `1px solid ${aMoiTexte ? "color-mix(in srgb, var(--orange) 45%, transparent)" : "var(--border)"}`,
+                color: aMoiTexte ? "var(--orange)" : "var(--text-muted)" }}>
+                {memeAuteur ? "" : initiales}
+              </div>
+              <div style={{ maxWidth: "78%", minWidth: 0, display: "flex", flexDirection: "column", alignItems: aMoiTexte ? "flex-end" : "flex-start", gap: 3 }}>
+                {!memeAuteur && (
+                  <div style={{ display: "flex", gap: 7, alignItems: "baseline", flexDirection: aMoiTexte ? "row-reverse" : "row" }}>
+                    <b style={{ fontSize: 12.5, color: aMoiTexte ? "var(--orange)" : "var(--text)" }}>
+                      {aMoiTexte ? "Toi" : m.author ? <Pseudo nom={m.author} /> : "—"}
+                    </b>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{heure}</span>
+                  </div>
+                )}
+                <div title={new Date(m.createdAt).toLocaleString("fr-FR")}
+                  style={{ fontSize: 13.5, lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere", padding: "8px 12px", borderRadius: 12,
+                    borderTopRightRadius: aMoiTexte && !memeAuteur ? 4 : 12, borderTopLeftRadius: !aMoiTexte && !memeAuteur ? 4 : 12,
+                    background: aMoiTexte ? "color-mix(in srgb, var(--orange) 13%, transparent)" : "var(--bg-3)",
+                    border: `1px solid ${aMoiTexte ? "color-mix(in srgb, var(--orange) 32%, transparent)" : "var(--border)"}` }}>
+                  {m.body}
+                </div>
+              </div>
             </div>
           );
         })}

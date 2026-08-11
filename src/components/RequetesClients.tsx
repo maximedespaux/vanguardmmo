@@ -23,7 +23,7 @@ type Requete = {
   note: string | null; cat: string | null; prix: number | null; spec: unknown; quand: string;
 };
 type Apport = { id: string; quantite: number; statut: "annonce" | "confirme"; par: { nom: string }; part: number };
-type Quete = { id: string; quantite: number; confirme: number; annonce: number; reste: number; cagnotte: number | null; contributions: Apport[] };
+type Quete = { id: string; quantite: number; confirme: number; annonce: number; reste: number; cagnotte: number | null; contributions: Apport[]; titre?: string };
 type EnCours = Requete & { quete: Quete };
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
@@ -43,6 +43,27 @@ export function RequetesClients() {
   const [ouverture, setOuverture] = useState<string | null>(null);
   const [erreur, setErreur] = useState("");
   const [ouvertes, setOuvertes] = useState<Record<string, boolean>>({});
+  /** Ce que je m'apprête à réserver sur chaque chantier. */
+  const [reserve, setReserve] = useState<Record<string, string>>({});
+  const [envoi, setEnvoi] = useState<string | null>(null);
+
+  /* RÉSERVER SA PART, depuis l'endroit où on lit le chantier.
+     Il fallait aller sur Quête Guilde pour s'inscrire : on voyait donc ici ce
+     qu'il y avait à faire, sans pouvoir le prendre. Et tant que personne
+     n'annonce, deux personnes farment la même chose sans le savoir. */
+  const reserver = async (queteId: string, quantite: number) => {
+    if (quantite <= 0) return;
+    setEnvoi(queteId); setErreur("");
+    try {
+      const r = await fetch(`/api/quetes/${queteId}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "contribuer", quantite }),
+      });
+      if (!r.ok) setErreur((await r.json().catch(() => ({})))?.error ?? "Réservation impossible.");
+      else { setReserve((p) => ({ ...p, [queteId]: "" })); await charger(); }
+    } catch { setErreur("Impossible de joindre le serveur."); }
+    setEnvoi(null);
+  };
 
   const charger = useCallback(async () => {
     try {
@@ -118,6 +139,22 @@ export function RequetesClients() {
 
                 {/* Ce qui est REÇU (plein) et ce qui est PROMIS (hachuré) :
                     sans le second, deux personnes farment la même chose. */}
+                {/* LA RÈGLE, ÉCRITE SUR LE CHANTIER. Elle vivait dans le
+                    paragraphe d'introduction, au-dessus de la liste : on la
+                    lisait une fois, la première, puis plus jamais. Un désaccord
+                    sur la règle découvert au moment du partage est le conflit le
+                    plus difficile à défaire — elle est donc rappelée là où l'on
+                    s'engage. */}
+                {!!q.cagnotte && (
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 7, marginBottom: 9, padding: "8px 11px", background: "var(--bg-2)", border: "1px dashed color-mix(in srgb, var(--gold) 40%, var(--border))", borderRadius: 9, fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.45 }}>
+                    <Icon name="info" size={12} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }} />
+                    <span>
+                      <b style={{ color: "var(--gold)" }}>{fmt(q.cagnotte)} périns</b> à partager, au prorata de ce que
+                      chacun aura <b>réellement livré</b>. Ta part devient acquise quand la livraison est constatée,
+                      pas quand tu l&apos;annonces.
+                    </span>
+                  </div>
+                )}
                 <div style={{ height: 9, borderRadius: 6, background: "var(--bg-2)", border: "1px solid var(--border)", overflow: "hidden", display: "flex" }}>
                   <div style={{ width: `${pcRecu}%`, background: "linear-gradient(90deg,#4ADE80,#22c55e)" }} />
                   <div style={{ width: `${pcPromis}%`, background: "repeating-linear-gradient(45deg,rgba(255,140,26,.55),rgba(255,140,26,.55) 5px,rgba(255,140,26,.18) 5px,rgba(255,140,26,.18) 10px)" }} />
@@ -127,6 +164,45 @@ export function RequetesClients() {
                   {q.annonce > 0 && <span style={{ color: "var(--orange)" }}><b>{fmt(q.annonce)}</b> promis</span>}
                   <span>{q.reste ? <>reste <b>{fmt(q.reste)}</b></> : "tout est couvert"}</span>
                 </div>
+
+                {/* CE QUE ÇA TE RAPPORTERAIT, avant de farmer.
+                    La part se calculait au partage — donc on découvrait après
+                    coup ce qu'on avait gagné, et c'est là que naissent les
+                    désaccords. Elle s'annonce maintenant AVANT l'engagement :
+                    au prorata de ce que chacun aura ramené, sur la somme
+                    convenue avec le client. */}
+                {q.reste > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 10, paddingTop: 9, borderTop: "1px dashed var(--border)" }}>
+                    <span style={{ fontSize: 12, color: "var(--text-muted)", flexShrink: 0 }}>Je prends</span>
+                    <input type="number" min={1} max={q.reste}
+                      value={reserve[q.id] ?? ""} onChange={(e) => setReserve((p) => ({ ...p, [q.id]: e.target.value }))}
+                      placeholder={String(q.reste)} aria-label={`Quantité à réserver, ${q.reste} restants`}
+                      style={{ width: 88, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 8, padding: "7px 10px", color: "var(--text)", fontSize: 13, textAlign: "right", fontFamily: "inherit" }} />
+                    <span style={{ fontSize: 12, color: "var(--text-muted)" }}>sur {fmt(q.reste)}</span>
+                    {(() => {
+                      const veut = Math.max(0, Math.min(q.reste, Math.floor(Number(reserve[q.id]) || 0)));
+                      // Le total sur lequel la part se calculera : ce qui est
+                      // déjà pris, plus ce que je m'apprête à prendre.
+                      const base = q.confirme + q.annonce + veut;
+                      const part = q.cagnotte && veut && base ? Math.round((q.cagnotte * veut) / base) : 0;
+                      return (
+                        <>
+                          {part > 0 && (
+                            <span style={{ fontSize: 12, color: "var(--gold)", fontWeight: 700 }}
+                              title="Au prorata de ce que chacun aura ramené. Si d'autres s'inscrivent après toi, la part se recalcule sur le total réellement livré.">
+                              ≈ {fmt(part)} périns pour toi
+                            </span>
+                          )}
+                          <button className="vg-btn" disabled={!veut || envoi === q.id}
+                            onClick={() => reserver(q.id, veut)}
+                            style={{ marginLeft: "auto", padding: "7px 13px", fontSize: 12.5, opacity: veut && envoi !== q.id ? 1 : .5 }}>
+                            {envoi === q.id ? "…" : "Je m'en charge"}
+                          </button>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
 
                 {q.contributions.length > 0 && (
                   <div style={{ display: "grid", gap: 4, marginTop: 9, paddingTop: 8, borderTop: "1px dashed var(--border)" }}>

@@ -73,7 +73,44 @@ export async function GET() {
     });
   }
 
+  /* Ce que tu vends le plus. Regroupé sur le NOM de l'objet, accents et casse
+     normalisés : « Tenue d'Arcaniste » et « tenue d'arcaniste » sont le même
+     article, et deux lignes distinctes feraient croire à deux marchés.
+     On garde le libellé le plus fréquent pour l'affichage, pas le premier venu. */
+  const parObjet = new Map<string, { libelles: Map<string, number>; ventes: number; unites: number; perins: number }>();
+  for (const o of retenues) {
+    const nom = (o.request.item ?? "objet").trim();
+    const k = nom.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    const e = parObjet.get(k) ?? { libelles: new Map(), ventes: 0, unites: 0, perins: 0 };
+    e.libelles.set(nom, (e.libelles.get(nom) ?? 0) + 1);
+    e.ventes++;
+    e.unites += o.request.quantity ?? 1;
+    e.perins += Number(o.prix ?? 0);
+    parObjet.set(k, e);
+  }
+  const topObjets = [...parObjet.values()]
+    .map((e) => ({
+      item: [...e.libelles.entries()].sort((a, b) => b[1] - a[1])[0][0],
+      ventes: e.ventes, unites: e.unites, perins: e.perins,
+    }))
+    /* Classé sur les périns et non sur le nombre : vendre dix potions n'est pas
+       le même métier que vendre une arme, et c'est l'argent qu'on vient regarder. */
+    .sort((a, b) => b.perins - a.perins || b.ventes - a.ventes)
+    .slice(0, 8);
+
+  /* Le devenir de ce que tu as pris en charge : ce qui est remis, et ce qui traîne.
+     Une vente engagée n'est pas une vente — la distinction existe déjà dans les
+     totaux, on la détaille ici par état pour voir OÙ ça bloque. */
+  const parEtat = new Map<string, number>();
+  for (const o of enCours) parEtat.set(o.request.status, (parEtat.get(o.request.status) ?? 0) + 1);
+  const issues = {
+    remises: retenues.length,
+    parEtat: [...parEtat.entries()].map(([etat, n]) => ({ etat, n })).sort((a, b) => b.n - a.n),
+  };
+
   return NextResponse.json({
+    topObjets,
+    issues,
     totaux: {
       ventes: retenues.length,
       perins,

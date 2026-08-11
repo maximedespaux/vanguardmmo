@@ -27,6 +27,8 @@ type Bilan = {
   totaux: { ventes: number; perins: number; airpoints: number; enAttente: number; perinsEnAttente: number };
   ventes: Vente[]; engagees: Engagee[];
   mois: { mois: string; perins: number; ventes: number }[];
+  topObjets?: { item: string; ventes: number; unites: number; perins: number }[];
+  issues?: { remises: number; parEtat: { etat: string; n: number }[] };
 };
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
@@ -111,6 +113,77 @@ export default function MesVentesPage() {
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 7, alignItems: "flex-start" }}>
                   <Icon name="info" size={13} style={{ flexShrink: 0, marginTop: 1 }} />
                   <span>Le site ne déplace pas de périns : il dit ce qui te revient, le versement se règle entre vous.</span>
+                </div>
+              </>
+            ) },
+            { clef: "analyse", titre: "Analyse", sous: "Ce qui monte, et ce qui se vend", icon: "bar-chart", compte: null, contenu: (
+              <>
+                {/* UNE SEULE TEINTE pour les deux graphiques, et la LONGUEUR porte la
+                    grandeur. Le validateur de palette refuse vert/or/rouge côte à côte :
+                    en vision protanope, vert et or ne se séparent pas (ΔE 5,8). Avec une
+                    teinte unique, la question ne se pose plus. */}
+                <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 9 }}>
+                  Encaissé mois par mois
+                </div>
+                {(() => {
+                  const max = Math.max(1, ...d.mois.map((m) => m.perins));
+                  return (
+                    <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 132, marginBottom: 6, paddingTop: 16 }}>
+                      {d.mois.map((m) => {
+                        const h = m.perins ? Math.max(3, Math.round((m.perins / max) * 100)) : 0;
+                        return (
+                          <div key={m.mois} title={`${moisCourt(m.mois)} — ${fmt(m.perins)} périns, ${m.ventes} vente${m.ventes > 1 ? "s" : ""}`}
+                            style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", alignItems: "center", height: "100%" }}>
+                            {/* Valeur au-dessus de la barre : un axe chiffré serait plus
+                                lourd et moins lisible pour six colonnes. */}
+                            {m.perins > 0 && (
+                              <span style={{ fontSize: 10.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", marginBottom: 3 }}>{fmt(m.perins)}</span>
+                            )}
+                            <div style={{ width: "100%", maxWidth: 46, height: `${h}%`, minHeight: m.perins ? 3 : 0,
+                              background: "var(--orange)", borderRadius: "4px 4px 0 0", opacity: m.perins ? 1 : 0 }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+                <div style={{ display: "flex", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 6, marginBottom: 20 }}>
+                  {d.mois.map((m) => (
+                    <div key={m.mois} style={{ flex: 1, textAlign: "center", fontSize: 10.5, color: "var(--text-muted)" }}>
+                      {moisCourt(m.mois)}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--text-muted)", marginBottom: 9 }}>
+                  Ce que tu vends le plus
+                </div>
+                {!d.topObjets?.length ? (
+                  <div style={{ ...vide, marginBottom: 20 }}>Rien de vendu pour l&apos;instant : le classement apparaîtra ici.</div>
+                ) : (
+                  <div style={{ display: "grid", gap: 6, marginBottom: 20 }}>
+                    {(() => {
+                      const max = Math.max(1, ...d.topObjets.map((o) => o.perins));
+                      return d.topObjets.map((o) => (
+                        <div key={o.item} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: 10, alignItems: "center" }}>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 12.5, marginBottom: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.item}</div>
+                            <div style={{ height: 7, background: "var(--bg-3)", borderRadius: 4, overflow: "hidden" }}>
+                              <div style={{ width: `${Math.max(2, Math.round((o.perins / max) * 100))}%`, height: "100%", background: "var(--orange)", borderRadius: 4 }} />
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--gold)" }}>{fmt(o.perins)}</div>
+                            <div style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{o.ventes} vente{o.ventes > 1 ? "s" : ""} · {o.unites} u.</div>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5, display: "flex", gap: 7, alignItems: "flex-start" }}>
+                  <Icon name="info" size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+                  <span>Classé sur les périns et non sur le nombre : vendre dix potions n&apos;est pas le même métier que vendre une arme.</span>
                 </div>
               </>
             ) },

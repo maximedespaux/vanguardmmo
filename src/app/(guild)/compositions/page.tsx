@@ -28,6 +28,13 @@ export default function CompositionsPage() {
   const [presences, setPresences] = useState<Presence[]>([]);
   const [instructions, setInstructions] = useState("");
   /**
+   * Écart au build de référence, calculé par /api/compositions/comparatif.
+   * Indexé par id d'inscription. La page ne lit qu'un entier par inscrit : le
+   * calcul (deux blobs de build à comparer par personne) est fait côté serveur.
+   */
+  const [ecartsRef, setEcartsRef] = useState<Record<string, { score: number; sansBuild?: boolean; parMode?: Record<string, { score: number; completude: number; manques: string[] }> }>>({});
+  const [refsDispo, setRefsDispo] = useState<Record<string, { dispo: boolean; sansStats: boolean }>>({});
+  /**
    * Vrai une fois la composition partagée lue au moins une fois.
    * L'état est un blob remplacé EN BLOC : écrire avant de l'avoir lu revient à
    * publier un état vide. Un joueur qui s'inscrivait pendant le chargement
@@ -59,6 +66,12 @@ export default function CompositionsPage() {
       if (!d) return;
       const e = normaliserCompo(d);
       setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
+      // Les écarts se lisent après la composition et n'en bloquent pas l'affichage :
+      // un comparatif indisponible ne doit pas empêcher de s'inscrire.
+      fetch("/api/compositions/comparatif").then(r => (r.ok ? r.json() : null)).then(c => {
+        if (!c) return;
+        setEcartsRef(c.scores ?? {}); setRefsDispo(c.references ?? {});
+      }).catch(() => {});
       setCharge(true);
       // Le texte des anciennes consignes n'est plus edite ici, mais il reste
       // renvoye a chaque enregistrement : l'etat part EN ENTIER, l'oublier
@@ -316,7 +329,12 @@ export default function CompositionsPage() {
               <span style={{ marginLeft: "auto", fontSize: 12, color: meta.color, fontWeight: 600 }}>{done}/{slots.length}</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(235px,1fr))", gap: 12, padding: 18 }}>
-              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id); const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !signups.some(s => s.charId === c.id)); const presentsClasse = annonces.filter(p => norm(p.classe) === norm(slot.classe) && !taken.some(t => t.pseudo.toLowerCase() === p.pseudo.toLowerCase())); return (
+              {slots.map(slot => { const taken = signups.filter(s => s.slotId === slot.id)
+                    // Le mieux optimisé remonte tout seul : c'est ce qui permet à
+                    // l'officier de choisir sans comparer de tête. Un inscrit sans
+                    // écart connu reste à sa place plutôt que de passer pour mauvais.
+                    .slice().sort((a, b) => (ecartsRef[b.id]?.score ?? -1) - (ecartsRef[a.id]?.score ?? -1));
+                  const hasSel = taken.some(s => s.selected); const mine = myChars.filter(c => norm(c.class) === norm(slot.classe) && !signups.some(s => s.charId === c.id)); const presentsClasse = annonces.filter(p => norm(p.classe) === norm(slot.classe) && !taken.some(t => t.pseudo.toLowerCase() === p.pseudo.toLowerCase())); return (
                 <div key={slot.id} style={{ position: "relative", background: hasSel ? `${meta.color}11` : "var(--bg-3)", borderRadius: 12, padding: 14, border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, transition: "all .15s" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 10, background: "var(--bg-2)", border: `1px solid ${hasSel ? meta.color : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><ClassLogo name={slot.classe} size={32} /></div>
@@ -360,6 +378,16 @@ export default function CompositionsPage() {
                       ) : (
                         <><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span></>
                       )}
+                      {(() => {
+                        const ec = ecartsRef[t.id];
+                        // Trois états distincts, à ne pas confondre : pas de référence pour
+                        // le poste, pas de build chez le membre, ou un écart mesuré.
+                        if (!refsDispo[slot.id]?.dispo) return null;
+                        if (!ec || ec.sansBuild) return <span title="Aucun build enregistré dans le builder" style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 99, padding: "1px 7px" }}>sans build</span>;
+                        const c = ec.score >= 90 ? "var(--green)" : ec.score >= 70 ? "var(--gold)" : "var(--red)";
+                        const detail = Object.entries(ec.parMode ?? {}).map(([m, v]) => `${m} ${v.score}% (complet ${v.completude}%${v.manques.length ? ` · à combler : ${v.manques.join(", ")}` : ""})`).join("\n");
+                        return <span title={`Écart au build de référence du poste\n${detail}`} style={{ marginLeft: "auto", flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: c, background: `color-mix(in srgb, ${c} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 45%, transparent)`, borderRadius: 99, padding: "1px 7px", fontVariantNumeric: "tabular-nums" }}>{ec.score}%</span>;
+                      })()}
                       {/* Etre sur un poste ne dit pas qu'on sera la : les deux se
                           lisent maintenant sur la meme ligne. */}
                       {annonces.some(p => p.pseudo.toLowerCase() === t.pseudo.toLowerCase())

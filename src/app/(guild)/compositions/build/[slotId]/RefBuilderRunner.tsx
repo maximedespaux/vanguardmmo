@@ -60,7 +60,15 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
           setSaved("saving");
           clearTimeout(w.__rt);
           w.__rt = setTimeout(() => {
-            fetch(`/api/compositions/ref/${encodeURIComponent(slotId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ blob: s }) }).then((r) => setSaved(r.ok ? "ok" : "idle")).catch(() => setSaved("idle"));
+            // On joint les statistiques CALCULÉES à l'état brut. L'état ne contient que
+            // l'équipement (`stuffs[].eq`) : les totaux sont recalculés par le moteur à
+            // chaque affichage, donc absents du blob. Sans eux, le comparatif de la page
+            // Compositions n'a rien à comparer et refuse de noter. `vgCollectBuilds()` est
+            // la fonction que le moteur utilise déjà pour /api/characters/sync — même
+            // source, mêmes clés que les builds des membres, donc comparables.
+            const calcule = (window as unknown as { vgCollectBuilds?: () => unknown }).vgCollectBuilds?.();
+            const blob = calcule && typeof s === "object" && s ? { ...(s as object), calcule } : s;
+            fetch(`/api/compositions/ref/${encodeURIComponent(slotId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ blob }) }).then((r) => setSaved(r.ok ? "ok" : "idle")).catch(() => setSaved("idle"));
           }, 800);
         };
       } else {

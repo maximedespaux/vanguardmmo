@@ -86,6 +86,18 @@ const EXPLIQUE: Record<string, string> = {
   requetes: "Les commandes des AUTRES, celles que la guilde doit servir. À prendre en charge, seul ou à plusieurs.",
 };
 
+type Panneau = "stock" | "surMesure" | "commande" | "requetes";
+
+/** Le panneau demandé par l'adresse, ou null si elle ne dit rien. */
+function panneauDeLURL(): Panneau | null {
+  if (typeof window === "undefined") return null;
+  const p = new URLSearchParams(window.location.search);
+  // Retour du builder : la pièce attend dans le sur mesure, autant l'ouvrir.
+  if (p.get("piece")) return "surMesure";
+  const m = p.get("mode");
+  return m === "stock" || m === "surMesure" || m === "commande" || m === "requetes" ? m : null;
+}
+
 const REQ_STATUS: Record<string, { l: string; c: string }> = {
   PENDING: { l: "En attente", c: "var(--gold)" },
   ACCEPTE_ACHAT: { l: "Achat accepté", c: "var(--green)" },
@@ -141,7 +153,13 @@ export function EcranEconomie() {
   /** Deux façons de demander, deux panneaux : ce qui dort au coffre, et ce qui
    *  doit être fabriqué. Les mélanger dans une seule liste rendait le sur
    *  mesure invisible — il n'a pas de ligne dans le stock. */
-  const [panneau, setPanneau] = useState<"stock" | "surMesure" | "commande" | "requetes">("stock");
+  /* LE PANNEAU SE LIT DANS L'ADRESSE, DÈS LE PREMIER RENDU.
+     Il partait sur « stock » et un effet le corrigeait ensuite : entre les
+     deux, un rendu montrait le mauvais panneau, et selon l'ordre des effets on
+     y restait. Un lien direct — celui de l'annonce Discord, par exemple —
+     ouvrait donc parfois « Ma commande » à la place du chantier. Lu à
+     l'initialisation, il n'y a plus d'intervalle où se tromper. */
+  const [panneau, setPanneau] = useState<Panneau>(() => panneauDeLURL() ?? "stock");
   const [paiement, setPaiement] = useState<Paiement>("perins");
   /** La question posée à l'entrée : acheter au coffre, ou faire fabriquer. */
   const [choixOuvert, setChoixOuvert] = useState(false);
@@ -152,14 +170,9 @@ export function EcranEconomie() {
   // Ces deux cas court-circuitent la question d'entrée : elle n'a plus lieu
   // d'être quand la réponse est déjà dans l'adresse (`?piece=1` au retour du
   // builder, `?mode=` quand on a déjà choisi une fois).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const p = new URLSearchParams(window.location.search);
-    if (p.get("piece")) { setPanneau("surMesure"); return; }
-    const mode = p.get("mode");
-    if (mode === "stock" || mode === "surMesure" || mode === "commande" || mode === "requetes") { setPanneau(mode); return; }
-    setChoixOuvert(true);
-  }, []);
+  // Reste la seule chose qui ne peut PAS se décider au premier rendu : ouvrir
+  // la question d'entrée. Elle ne se pose que si l'adresse ne répond pas déjà.
+  useEffect(() => { if (!panneauDeLURL()) setChoixOuvert(true); }, []);
   /** Le choix se note dans l'adresse : un retour arrière ne repose pas la question. */
   const repondre = (c: ChoixFait) => {
     setPanneau(c); setChoixOuvert(false);

@@ -19,6 +19,7 @@ import { specDepuisJson } from "@/lib/specObjet";
  * chacun y apportera sa part.
  */
 type Requete = {
+  genre?: "achat" | "requete";
   id: string; item: string; quantite: number; demandeur: string; estLaMienne: boolean;
   note: string | null; cat: string | null; prix: number | null; spec: unknown; quand: string;
 };
@@ -90,13 +91,13 @@ export function RequetesClients() {
   return (
     <div className="glass-card fx-card" style={{ padding: 18, marginBottom: 16 }}>
       <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 7 }}>
-        <Icon name="package" size={14} />Requêtes clients
+        <Icon name="package" size={14} />À livrer
         <span style={{ color: "var(--text-muted)", fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>
           — les commandes que personne n&apos;a encore prises
         </span>
       </div>
       <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 14px" }}>
-        Personne ne les a au coffre : il faut les farmer à plusieurs.
+        Certaines dorment au coffre, d&apos;autres sont à trouver. Les deux se servent ici.
       </p>
       {/* UNE LÉGENDE, pas un paragraphe par carte. Les mêmes trois notions
           revenaient en toutes lettres sur chaque chantier ; elles sont dites
@@ -252,7 +253,23 @@ export function RequetesClients() {
         </div>
       ) : (
         <div style={{ display: "grid", gap: 9 }}>
-          {liste.map((r) => {
+          {/* DEUX TRAVAUX DIFFÉRENTS, donc deux groupes. Sortir un objet du
+              coffre prend deux minutes ; le farmer prend une soirée. Les mêler
+              dans une seule liste obligeait à ouvrir chaque ligne pour savoir
+              dans quoi on s'engageait. */}
+          {(["achat", "requete"] as const).map((genre) => {
+            const dedans = liste.filter((x) => (x.genre ?? "requete") === genre);
+            if (!dedans.length) return null;
+            return (
+              <div key={genre} style={{ display: "grid", gap: 9 }}>
+                <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, textTransform: "uppercase", letterSpacing: 1.1, color: genre === "achat" ? "var(--green)" : "var(--purple)", marginTop: 4 }}>
+                  <Icon name={genre === "achat" ? "vault" : "sprout"} size={13} />
+                  {genre === "achat" ? "À sortir du coffre" : "À farmer"}
+                  <span style={{ color: "var(--text-muted)", fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>
+                    — {dedans.length} {genre === "achat" ? "(l'objet est là, c'est l'affaire de deux minutes)" : "(personne ne l'a : il faut le trouver)"}
+                  </span>
+                </div>
+                {dedans.map((r) => {
             const spec = specDepuisJson(r.spec);
             const ouvert = !!ouvertes[r.id];
             const total = r.prix ? r.prix * r.quantite : null;
@@ -297,6 +314,9 @@ export function RequetesClients() {
                       </button>
                     )}
                     <button className="vg-btn" disabled={ouverture === r.id} onClick={() => ouvrirQuete(r.id)}
+                      title={(r.genre ?? "requete") === "achat"
+                        ? "L'objet est au coffre : ouvrir un chantier n'a de sens que si tu veux vous y mettre à plusieurs."
+                        : undefined}
                       style={{ padding: "8px 14px", fontSize: 12.5, opacity: ouverture === r.id ? .6 : 1 }}>
                       <Icon name="target" size={13} />{ouverture === r.id ? "Ouverture…" : "Lancer le chantier"}
                     </button>
@@ -308,6 +328,9 @@ export function RequetesClients() {
                 {ouvert && spec && (
                   <div style={{ padding: "0 13px 12px" }}><BulleObjet spec={spec} compact /></div>
                 )}
+              </div>
+                );
+                })}
               </div>
             );
           })}

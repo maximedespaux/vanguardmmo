@@ -25,7 +25,7 @@ const fmt = (n: number | string | null) => (n == null ? "?" : Number(n).toLocale
 const PAS_RAFRAICHISSEMENT = 15000;
 
 export function Fil({
-  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", onActivite, coulisses = false,
+  type, id, moiId, estStaff, negociation = false, hauteur = "48vh", onActivite, coulisses = false, tarifFixe = false,
 }: {
   type: "dette" | "requete";
   id: string;
@@ -39,6 +39,8 @@ export function Fil({
   /** Droit d'ouvrir les coulisses — réservé aux détenteurs et au staff, jamais
    *  au demandeur : c'est de lui qu'on y parle. */
   coulisses?: boolean;
+  /** L'objet vient du coffre : il a déjà un tarif, on ne le découvre pas. */
+  tarifFixe?: boolean;
 }) {
   const url = `/api/${type === "dette" ? "debts" : "bank-request"}/${id}/fil`;
   const [fil, setFil] = useState<MsgFil[]>([]);
@@ -252,8 +254,15 @@ export function Fil({
           guilde est simple. */}
       {negociation && !prixConvenu && (
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", paddingTop: 11, borderTop: "1px solid var(--border)" }}>
+          {/* AU COFFRE, LE PRIX EST DÉJÀ FIXÉ. On ne « propose » donc pas un
+              prix, on en demande un AUTRE — c'est une négociation à partir du
+              tarif de la guilde, pas une découverte. Le mot compte : « proposer
+              un prix » sur un objet tarifé laissait croire qu'il n'en avait
+              pas. */}
           <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-            {estStaff ? "Proposer un prix" : offreVive ? "Contre-proposer" : "Proposer un prix"} :
+            {tarifFixe
+              ? (estStaff ? "Ajuster le tarif" : "Demander un autre prix")
+              : (estStaff ? "Proposer un prix" : offreVive ? "Contre-proposer" : "Proposer un prix")} :
           </span>
           <input type="number" min={1} value={offre} onChange={(e) => setOffre(e.target.value)} placeholder="périns"
             style={{ width: 140, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 12px", color: "var(--text)", fontSize: 13.5 }} />

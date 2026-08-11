@@ -345,13 +345,18 @@ export async function prevenirStaff(titre: string, corps: string, lien: string, 
 const SALON_VENTES = process.env.CHANNEL_VENTES || "1515100678467485866";
 const SITE = process.env.NEXTAUTH_URL || "https://vanguardhub.fr";
 
-function embedVente(d: { id: string; item: string | null; quantity: number; username: string }, detenteurs: Detenteur[], pris?: { par: string; prix: number | null }) {
+function embedVente(d: { id: string; item: string | null; quantity: number; username: string; origine?: string | null }, detenteurs: Detenteur[], pris?: { par: string; prix: number | null }) {
   const qui = detenteurs.length
     ? detenteurs.map((x) => `${x.pseudo} (${x.quantite})`).join(" · ")
     : "personne au coffre";
+  /* DE QUOI IL S'AGIT, dit dans le titre. « Demande — Hache » ne disait pas si
+     l'objet dort dans un coffre (on le sort et c'est fini) ou s'il faut le
+     trouver, voire le farmer. Ce sont deux réponses très différentes, et le
+     détenteur décidait s'il ouvrait le lien sans le savoir. */
+  const genre = d.origine === "achat" ? "Achat au coffre" : "Requête d'objet";
   return {
     embeds: [{
-      title: pris ? `Pris en charge — ${d.item ?? "objet"}` : `Demande — ${d.item ?? "objet"}`,
+      title: pris ? `Pris en charge — ${d.item ?? "objet"}` : `${genre} — ${d.item ?? "objet"}`,
       description: pris
         ? `**${pris.par}** s'en occupe${pris.prix ? ` pour **${pris.prix.toLocaleString("fr-FR")} périns**` : ""}.\nLes autres détenteurs n'ont plus à s'en soucier.`
         : `**${d.username}** demande **${d.quantity} × ${d.item ?? "objet"}**.\nAu coffre : ${qui}.\nPremier qui la prend sur le site l'obtient.`,
@@ -413,7 +418,7 @@ export async function annoncerVente(requestId: string): Promise<void> {
   try {
     const d = await prisma.bankRequest.findUnique({
       where: { id: requestId },
-      select: { id: true, item: true, quantity: true, username: true, venteMessageId: true },
+      select: { id: true, item: true, quantity: true, username: true, venteMessageId: true, origine: true },
     });
     if (!d?.item || d.venteMessageId) return;
     const { posterEtRetenir } = await import("@/lib/discord");

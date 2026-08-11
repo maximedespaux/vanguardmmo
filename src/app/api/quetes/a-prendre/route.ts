@@ -74,8 +74,14 @@ export async function GET() {
     : null;
 
   return NextResponse.json({
-    aPrendre: brutes.filter(estRequete).slice(0, 60).map((r) => ({
+    /* TOUT CE QU'IL Y A À SERVIR, pas seulement ce qu'il faut farmer.
+       On ne renvoyait que les requêtes : les achats au coffre — pourtant les
+       plus rapides à servir, l'objet est là — n'apparaissaient nulle part dans
+       « À livrer ». Le staff voyait donc la moitié de son travail. Chaque ligne
+       porte son genre, et l'écran les sépare. */
+    aPrendre: brutes.slice(0, 60).map((r) => ({
       id: r.id,
+      genre: estRequete(r) ? "requete" : "achat",
       item: r.item ?? "Objet",
       quantite: r.quantity || 1,
       demandeur: r.username,

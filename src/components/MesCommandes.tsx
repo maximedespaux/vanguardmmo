@@ -414,6 +414,7 @@ export function MesCommandes({ entete = true }: { entete?: boolean }) {
                   deux cas, jamais l'auteur de la demande. */}
               <Fil
                 coulisses={deLaGuilde && courante.type === "requete" && !courante.jeSuisLAuteur}
+                tarifFixe={courante.categorie === "achat"}
                 key={courante.filId}
                 type={courante.type}
                 id={courante.id}

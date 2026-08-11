@@ -191,7 +191,12 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       // spec. On retombe dessus plutôt que de tout marquer « achat ».
       categorie: (r.origine === "achat" || r.origine === "requete")
         ? r.origine
-        : (r.spec ? "requete" : r.batchId ? "achat" : "requete"),
+        /* `origine` est posée à la création : « achat » quand l'objet vient du
+           catalogue du coffre, « requete » quand il faut le trouver. On la lit
+           en premier — l'heuristique d'avant (une spec ? un batchId ?) se
+           trompait sur un panier d'objets sur mesure. */
+        : (r.origine === "achat" ? "achat" : r.origine === "requete" ? "requete"
+           : r.spec ? "requete" : r.batchId ? "achat" : "requete"),
       queteId: r.queteId ?? null,
       spec: r.spec ?? null,
       demandesDeLAuteur: parAuteur.get(r.userId) ?? 0,

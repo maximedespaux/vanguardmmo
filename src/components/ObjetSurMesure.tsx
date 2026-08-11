@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { BulleObjet } from "@/components/BulleObjet";
+import { TicketCommande, type LigneTicket } from "@/components/TicketCommande";
 import { OuTrouver } from "@/components/OuTrouver";
 import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
@@ -110,6 +111,8 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
   /** Le récapitulatif ouvert avant l'envoi. */
   const [aRelire, setARelire] = useState(false);
   const [etat, setEtat] = useState<{ msg: string; ok: boolean } | null>(null);
+  /** Le ticket affiche apres un envoi reussi. Null le reste du temps. */
+  const [ticket, setTicket] = useState<{ reference: string; lignes: LigneTicket[]; perins: number; airpoints: number; personnage: string; paiement: string; date: Date } | null>(null);
   /** Les pièces composées, en attente d'envoi. On commande rarement une seule
    *  chose : un stuff se complète pièce par pièce, et chacune se négocie à
    *  part — d'où une liste ici, et une demande par pièce à l'arrivée. */
@@ -274,6 +277,19 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     setEnvoi(false); setARelire(false);
     const ok = r.ok ? (j.count ?? panier.length) : 0;
     if (!ok) { setEtat({ ok: false, msg: j.error || `Envoi impossible (erreur ${r.status}).` }); return; }
+    /* Le ticket se remplit AVANT que le panier soit vidé, sinon il n'aurait plus
+       rien à montrer. La référence vient du serveur (le lot créé) ; à défaut on
+       en fabrique une lisible à partir de la date — un ticket sans référence ne
+       se cite pas dans la conversation avec le détenteur. */
+    setTicket({
+      reference: (j.batchId ?? j.id ?? `VG${Date.now().toString(36).toUpperCase()}`).toString().slice(-14).toUpperCase(),
+      lignes: panier.map((p) => ({ nom: p.nom, quantite: 1, perins: p.prix })),
+      perins: panier.reduce((s, p) => s + (p.prix || 0), 0),
+      airpoints: panier.reduce((s, p) => s + (p.prixAp || 0), 0),
+      personnage: perso.trim(),
+      paiement,
+      date: new Date(),
+    });
     setPanier([]); setChoisi(null); setChoix(CHOIX_VIDE); setNote(""); setPrix(""); setPourQuand("");
     // Pile déposée par le builder : on enchaîne sur la pièce suivante plutôt
     // que de renvoyer l'utilisateur au builder entre chaque.
@@ -482,6 +498,10 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
           {etat && <div style={{ marginTop: 10, fontSize: 12.5, color: etat.ok ? "var(--green)" : "var(--red)" }}>{etat.msg}</div>}
         </div>
       </div>
+
+      {/* Le ticket, après l'envoi. Il remplace la phrase « 2 pièce(s) commandée(s) »
+          qui ne disait ni quoi, ni pour combien, ni à quel nom. */}
+      {ticket && <TicketCommande {...ticket} onFermer={() => setTicket(null)} />}
 
       {aRelire && (
         <ConfirmationCommande

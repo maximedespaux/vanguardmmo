@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { BulleObjet } from "@/components/BulleObjet";
+import { OuTrouver } from "@/components/OuTrouver";
 import type { SpecObjet } from "@/lib/specObjet";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
@@ -374,6 +375,12 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               Choisis un objet à gauche : sa bulle se dessine ici.
             </div>
           )}
+
+          {/* D'où vient l'objet demandé : craft, butin de quête, coffre, clé, Tour.
+              Utile juste ici parce qu'une requête sur mesure part souvent d'un objet
+              qu'on ne sait pas où chercher — et parfois il se craft, donc la requête
+              n'était pas nécessaire. */}
+          {spec?.nom && <div style={{ marginTop: 10 }}><OuTrouver nom={spec.nom} compact /></div>}
 
           {choisi && (
             <div style={{ display: "grid", gap: 9, marginTop: 12 }}>

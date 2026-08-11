@@ -104,11 +104,11 @@ export const ESPACES: Espace[] = [
     acces: "guild",
     liens: [
       { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, une pièce sur mesure, et le suivi de ta commande." },
-      // « Mon profil » ne double aucune page : il rassemble ce qui n'existait
-      // nulle part côté membre — l'historique de ses commandes et ses mouvements
-      // de périns — et renvoie vers la Boutique, les Messages et le Builder pour
-      // le reste. Sans lui, « où en est ma commande » demandait trois écrans.
-      { label: "Mon profil", href: "/profil", icon: "user", desc: "Tes commandes passées, tes personnages et tes mouvements de périns." },
+      // « Mon profil » n'est PAS dans la navigation : ses affaires perso ne sont pas
+      // une destination de l'espace Boutique. On y entre par le panneau du
+      // haut-droite, qui affiche déjà l'essentiel et mène au détail — deux portes
+      // pour la même chose auraient fait douter qu'il s'agisse de la même.
+      // La page /profil existe et reste atteignable par ce panneau.
       { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté.", acces: "admin" },
       // Coffre, Crafts et Base des objets etaient trois entrees pour UNE page :
       // ce sont les onglets d'AirGuild, pas des destinations differentes — elles

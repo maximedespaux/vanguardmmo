@@ -147,6 +147,8 @@ export async function POST(req: Request) {
     const totalTarif = b.items.reduce((t: number, it: any) => t + Math.max(0, Math.round(Number(it?.price) || 0)) * Math.max(1, Math.floor(Number(it?.quantity) || 1)), 0);
     const estimTotale = Math.max(0, Math.round(Number(b?.prixEstime) || 0));
     let count = 0;
+    let porteuse: string | null = null;
+    const libelles: string[] = [];
     for (const it of b.items.slice(0, 40)) {
       const name = (it?.name ?? "").toString().slice(0, 200).trim();
       if (!name) continue;
@@ -176,11 +178,23 @@ export async function POST(req: Request) {
       // Le fil s'ouvre AVEC la demande : il doit exister avant qu'on ait quelque
       // chose à s'y dire, sinon personne ne pense à l'ouvrir et la négociation
       // repart sur un autre outil.
-      await ouvrirFilRequete(cree.id, a.user.username, name, cree.quantity, cree.priceEach);
+      // Le fil et l'annonce Discord appartiennent au PANIER, pas à l'article :
+      // trois articles donnaient trois conversations et trois messages pour un
+      // seul achat. On les ouvre sur la première ligne, qui porte le lot.
+      if (!porteuse) {
+        porteuse = cree.id;
+        libelles.push(`${quantite} × ${name}`);
+      } else libelles.push(`${quantite} × ${name}`);
+      count++;
+    }
+    if (porteuse) {
+      await prisma.requestMessage.create({
+        data: { bankRequestId: porteuse, kind: "system",
+          body: `${a.user.username} commande ${libelles.join(", ")}. Le prix peut se négocier ici.` },
+      }).catch(() => null);
       // Le salon des ventes prévient les détenteurs sur leur téléphone ; le
       // site reste l'endroit où l'on prend la commande.
-      void annoncerVente(cree.id);
-      count++;
+      void annoncerVente(porteuse);
     }
     await notifyHolders(b.items.map((it: any) => it?.name ?? ""), a.user.username, a.user.id);
     return NextResponse.json({ ok: true, count, batchId }, { status: 201 });

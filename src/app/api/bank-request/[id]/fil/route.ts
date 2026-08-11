@@ -57,6 +57,22 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const estStaff = canAccessAdmin(a.auth.user.role);
   const moi = a.auth.user.username ?? "?";
 
+  /* UNE COMMANDE CLOSE FERME SA CONVERSATION.
+     L'objet est remis, ou la demande abandonnée : il n'y a plus rien à
+     négocier. Le fil restait pourtant ouvert, et une discussion continuait
+     sous une transaction terminée — personne ne sait alors si elle engage
+     encore quelqu'un. On lit toujours ce qui s'y est dit ; on n'y ajoute plus.
+     Le staff garde la main : c'est lui qu'on relance quand un échange s'est
+     mal passé après coup. */
+  const etat = await prisma.bankRequest.findUnique({ where: { id }, select: { status: true } });
+  const close = etat && ["REMIS", "ANNULE", "REFUSE"].includes(etat.status);
+  if (close && !estStaff) {
+    return NextResponse.json(
+      { error: "Cette commande est terminée : la conversation est close. Ouvre-en une nouvelle depuis la Boutique." },
+      { status: 409 },
+    );
+  }
+
   // ── Accepter une offre ────────────────────────────────────────────────
   // Une offre acceptée fige l'accord sur la requête : sans cette écriture, il
   // ne vivrait que dans une phrase du fil et le staff devrait le ressaisir à la

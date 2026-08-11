@@ -148,9 +148,23 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
   const parAuteur = new Map<string, number>();
   for (const r of requetes) parAuteur.set(r.userId, (parAuteur.get(r.userId) ?? 0) + 1);
 
+  /* UN PANIER = UNE CONVERSATION.
+     Une commande de trois articles creait trois demandes — donc trois fils,
+     trois annonces Discord et trois « abandonner ». C'est le meme achat : on
+     regroupe par `batchId`, la premiere ligne porte la conversation et le titre
+     annonce tout le panier. Les demandes restent separees en base, parce que
+     chacune se refuse ou se remet pour son compte. */
+  const parPanier = new Map<string, typeof requetes>();
+  for (const r of requetes) {
+    const k = r.batchId ?? r.id;
+    (parPanier.get(k) ?? parPanier.set(k, []).get(k)!).push(r);
+  }
+
   const conversations: Conversation[] = [];
 
-  for (const r of requetes) {
+  for (const lot of parPanier.values()) {
+    const r = lot[0];
+    const autres = lot.slice(1);
     const filId = clefRequete(r.id);
     const jeSuisDemandeur = r.userId === user.id;
     const etat = ETAT_REQUETE[r.status] ?? { l: r.status, t: "attente" as const };
@@ -158,7 +172,11 @@ export async function listerConversations(user: User): Promise<Conversation[]> {
       filId,
       type: "requete",
       id: r.id,
-      titre: `${r.item ?? "Demande"}${r.quantity > 1 ? ` ×${r.quantity}` : ""}`,
+      /* Le titre dit TOUT le panier : « Hache ×1 » sur une commande de trois
+         pieces laissait croire qu'on n'en avait demande qu'une. */
+      titre: autres.length
+        ? `${lot.length} objets — ${lot.map((x) => x.item ?? "objet").slice(0, 3).join(", ")}${lot.length > 3 ? "…" : ""}`
+        : `${r.item ?? "Demande"}${r.quantity > 1 ? ` ×${r.quantity}` : ""}`,
       etat: etat.l,
       ton: etat.t,
       etape: etapeDe(r),

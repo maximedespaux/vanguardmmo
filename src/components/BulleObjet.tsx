@@ -1,7 +1,15 @@
 "use client";
 import { Icon } from "@/components/Icon";
 import type { SpecObjet } from "@/lib/specObjet";
-import { iconeDeLigne } from "@/lib/assetsJeu";
+import { iconeDeLigne, iconeDePuce, couleurDePuce, ETIQUETTE_ARTEFACT, ETOILE_PLEINE } from "@/lib/assetsJeu";
+
+/** Une image du jeu, à sa taille de pictogramme. Un `null` ne dessine rien —
+ *  c'est ce qui permet de n'illustrer que ce dont on est sûr. */
+function Vignette({ src, taille = 14 }: { src?: string | null; taille?: number }) {
+  if (!src) return null;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" style={{ width: taille, height: taille, objectFit: "contain", flexShrink: 0 }} />;
+}
 
 /**
  * La bulle d'un objet, telle qu'on la voit dans le builder.
@@ -27,17 +35,44 @@ export function BulleObjet({ spec, compact = false }: { spec: SpecObjet; compact
         <span style={{ fontWeight: 700, fontSize: 13.5, color: couleur, lineHeight: 1.2 }}>
           {spec.nom}
           {spec.up ? <span style={{ color: "var(--gold)" }}> +{spec.up}</span> : null}
-          {spec.etoiles ? <span style={{ color: "var(--gold)" }}> {"★".repeat(Math.min(5, spec.etoiles))}</span> : null}
+          {/* Les étoiles étaient un « ★ » de police, doré à la main. Ce sont les
+              vraies étoiles d'artefact du jeu : c'est ce que le membre a sous
+              les yeux sur sa pièce, et le doute « combien il en a ? » tombe. */}
+          {spec.etoiles ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 1, marginLeft: 4, verticalAlign: "-2px" }}>
+              {Array.from({ length: Math.min(5, spec.etoiles) }, (_, i) => <Vignette key={i} src={ETOILE_PLEINE} taille={13} />)}
+            </span>
+          ) : null}
         </span>
       </div>
 
-      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{spec.slot}</div>
+      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2, display: "flex", alignItems: "center", gap: 6 }}>
+        {spec.slot}
+        {/* Au-delà de +10 la pièce EST un artefact — le bandeau du jeu le dit
+            mieux qu'une phrase, et il est reconnaissable au premier regard.
+            La largeur reste libre : c'est une étiquette 51×14, pas un carré. */}
+        {(spec.up ?? 0) > 10 && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ETIQUETTE_ARTEFACT} alt="Artefact" title="Artefact (+11 à +20)" style={{ height: 13, width: "auto", objectFit: "contain" }} />
+        )}
+      </div>
 
       {(spec.puces?.length ?? 0) > 0 && (
         <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 7 }}>
-          {spec.puces!.map((p, i) => (
-            <span key={i} style={{ fontSize: 11.5, fontWeight: 600, padding: "2px 7px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--gold)" }}>{p}</span>
-          ))}
+          {/* Les pastilles étaient six mots dorés à la file : la rareté, la rune
+              et la maîtrise se ressemblaient. Chacune prend l'image du jeu
+              quand elle en a une, et la rareté reprend SA couleur — celle du
+              moteur, pas l'or commun à tout. Sans image, la pastille ne change
+              pas d'un pixel : c'est le repli, et il est fréquent. */}
+          {spec.puces!.map((p, i) => {
+            const ic = iconeDePuce(p, spec.nom);
+            const col = couleurDePuce(p) ?? "var(--gold)";
+            return (
+              <span key={i} title={p} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, padding: "2px 7px", paddingLeft: ic ? 4 : 7, borderRadius: 20, border: `1px solid ${couleurDePuce(p) ? `${col}66` : "var(--border)"}`, color: col }}>
+                <Vignette src={ic} taille={13} />{p}
+              </span>
+            );
+          })}
         </div>
       )}
 

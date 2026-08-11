@@ -11,6 +11,40 @@ import { prestigeNeed } from "@/data/prestige";
 const DONJONS = dungeonsData as { name: string; icon: string; type: string; prestige: number | null }[];
 
 /**
+ * La roue des cinq éléments, recopiée du manuel du jeu (Client/help.inc).
+ *
+ * Le nom de fichier de l'icône ne suit pas le nom affiché : le jeu écrit
+ * « Électricité » sur la pièce et « Foudre » dans son manuel. On garde les deux,
+ * sinon le lecteur cherche « Foudre » dans une liste qui dit « Électricité ».
+ */
+const ROUE = [
+  { nom: "Feu", fichier: "feu", bat: "le Vent", craint: "l'Eau" },
+  { nom: "Eau", fichier: "eau", bat: "le Feu", craint: "la Foudre" },
+  { nom: "Foudre", fichier: "electricite", bat: "l'Eau", craint: "la Terre" },
+  { nom: "Terre", fichier: "terre", bat: "la Foudre", craint: "le Vent" },
+  { nom: "Vent", fichier: "vent", bat: "la Terre", craint: "le Feu" },
+];
+
+/**
+ * Ce que la phrase d'un boss veut dire.
+ *
+ * Ces quinze phrases sont les seules règles de combat que le jeu énonce, et il
+ * les énonce une fois, dans le chat, au milieu d'un pull. On garde celles qui
+ * changent ce qu'on fait dans la seconde — les autres ne sont que du décor.
+ * L'orbe de couleur est l'asset du jeu lui-même : c'est ce qu'on voit à l'écran.
+ */
+const BOSS: { orbe?: string; icone?: IconName; phrase: string; quoi: string }[] = [
+  { orbe: "eelementtypeyellow01", phrase: "Éclat jaune", quoi: "Au corps à corps, et seulement au corps à corps." },
+  { orbe: "eelementtypegreen01", phrase: "Éclat vert", quoi: "À distance. Les mêlées lâchent et attendent." },
+  { orbe: "eelementtypepurple01", phrase: "Éclat violet", quoi: "Magie. Les physiques ne servent plus à rien." },
+  { icone: "rotate-ccw", phrase: "« Chaque blessure que vous m'infligez sera la vôtre ! »", quoi: "Il renvoie les dégâts. Une variante ne les renvoie qu'au bout de trois secondes — c'est le pire piège, on croit que ça passe." },
+  { icone: "alert", phrase: "« Rage : ne frappez pas avec le mauvais type de dégâts… »", quoi: "Mauvais type de dégâts et il double sa régénération : mieux vaut arrêter que taper faux." },
+  { icone: "hand-point", phrase: "« Cessez d'attaquer ou vous serez punis. »", quoi: "On lâche tout, vraiment. Ce n'est pas du bluff." },
+  { icone: "swords", phrase: "« Deux corps, un seul écho… »", quoi: "Deux boss, une seule mort : ils doivent tomber ensemble ou ils reviennent. On équilibre les PV avant d'achever." },
+  { icone: "skull", phrase: "« Assez joué… »", quoi: "Phase enragée. C'est le moment des potions, pas celui de la gourmandise." },
+];
+
+/**
  * Une instance citée dans le texte renvoie à sa fiche du wiki.
  *
  * Le guide nommait des donjons sans y mener : il fallait retenir le nom, ouvrir
@@ -277,6 +311,27 @@ export default function GuidePage() {
             </div>
           </div>
 
+          {/* Le manuel du jeu dit encore « jusqu'à 4 piercings dans votre armure »
+              partout : c'est l'ancien texte. Le client en a une version corrigee
+              (TID_PIERCING_POSSIBLE_NEW) qui distingue une main et deux mains, et
+              c'est celle-la qui est vraie. Un joueur qui compte 4 emplacements sur
+              son epee a une main achete deux cartes pour rien. */}
+          <div className="gd-note" style={{ marginTop: 14 }}>
+            <b>Combien d&apos;emplacements ?</b> Deux sur les armes à une main et les boucliers,
+            quatre sur les armes à deux mains et les armures. Le manuel du jeu annonce encore
+            « jusqu&apos;à 4 » partout : ne compte pas dessus avant d&apos;acheter tes cartes.
+          </div>
+
+          {/* La fusion est annoncee « gratuite » dans la fenetre du PNJ, et elle
+              l'est — en penyas. Ce qu'elle ne dit pas au meme endroit, c'est ce
+              qu'un echec coute : neuf cartes. C'est LA phrase a retenir. */}
+          <div className="gd-note" style={{ marginTop: 10 }}>
+            <b>Monter une carte d&apos;un cran</b> se fait chez le PNJ d&apos;échange : dix cartes du
+            même palier contre une du palier au-dessus, sans frais. Mais en cas d&apos;échec
+            <b> une seule carte t&apos;est rendue</b> — tu en perds neuf. Ne fusionne que ce que
+            tu es prêt à voir disparaître, et garde tes cartes hautes pour la fin.
+          </div>
+
           <p className="gd-src" style={{ marginTop: 12 }}>
             Chaque niveau de perçage ouvre un emplacement, et chaque emplacement prend une carte.
             Le jeu a des paliers plus hauts — R et SR à l&apos;attaque, 12 % et 15 % en défense, dits « de Baruna » —
@@ -291,6 +346,29 @@ export default function GuidePage() {
             monté de +1 à +20. Cinq éléments — Feu, Eau, Vent, Terre, Électricité — et une seule règle :
             on choisit celui auquel les monstres visés résistent le moins.
           </p>
+
+          {/* Cette carte disait « celui auquel les monstres resistent le moins »
+              sans jamais dire COMMENT le savoir. La roue est ecrite noir sur
+              blanc dans le manuel du jeu, et elle vaut pour l'equipement autant
+              que pour les sorts : « une fois enchante par le feu, votre objet
+              deviendra puissant contre le vent, mais faible contre l'eau ». */}
+          <div className="gd-roue">
+            {ROUE.map((e) => (
+              <div key={e.nom} className="gd-roue-el">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/jeu/mecaniques/element-${e.fichier}.webp`} alt="" />
+                <div className="gd-roue-txt">
+                  <b>{e.nom}</b>
+                  <i><span className="bat">bat {e.bat}</span><span className="craint">craint {e.craint}</span></i>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="gd-src" style={{ marginTop: 10 }}>
+            Ta pièce prend l&apos;élément et ses deux faces : forte contre celui qu&apos;elle bat,
+            faible contre celui qu&apos;elle craint. Et un objet ne porte qu&apos;un élément à la fois —
+            en changer demande un Parchemin de Changement d&apos;Élément, qui garde la valeur (Eau +10 devient Feu +10).
+          </p>
         </div>
 
         <div className="gd-card fx-card">
@@ -302,6 +380,96 @@ export default function GuidePage() {
             <Ou quoi={<Objet nom="Coffret à packet de cartes Epic" texte="Coffret Epic / Rare" />} ou={[<Instance key="a" nom="Mausolée des Divinités" />, <Instance key="b" nom="Sanctuaire Shogun" />]} />
             <Ou quoi={<Objet nom="Coffre à packet de cartes aléatoire" texte="Coffre aléatoire" />} ou={[<Instance key="a" nom="Clairière de la fée" />, <Instance key="b" nom="Temple aérien" />]} />
           </div>
+        </div>
+
+        {/* ── Les astuces au sens strict ──
+            Ce qui suit ne se range pas sous un prestige : ce sont les regles que
+            le jeu enonce UNE fois, dans une fenetre qu'on ferme sans lire ou dans
+            le chat au milieu d'un pull. Rien qui se compte ou se trie ici — pour
+            ca il y a le wiki. Uniquement ce qui change ce qu'on fait maintenant. */}
+        <h2 className="gd-phead" style={{ display: "flex", alignItems: "center", gap: 8 }}><Icon name="help" size={18} />Ce que le jeu ne dit qu&apos;une fois</h2>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="skull" size={18} />Le boss t&apos;explique comment le tuer</h2>
+          <p className="gd-intro" style={{ marginBottom: 14 }}>
+            Un boss d&apos;AirFlyff ne parle pas pour le décor : chacune de ses phrases est une
+            règle de combat. Elle passe une fois dans le chat, souvent pendant que tu tapes.
+            Voilà les huit qui changent quelque chose.
+          </p>
+          <div className="gd-liste">
+            {BOSS.map((b) => (
+              <div key={b.phrase} className="gd-boss">
+                <span className="gd-boss-ic">
+                  {b.orbe
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={`/jeu/interface/${b.orbe}.webp`} alt="" />
+                    : b.icone && <Icon name={b.icone} size={17} style={{ color: "var(--gold)" }} />}
+                </span>
+                <span className="gd-boss-txt"><b>{b.phrase}</b><i>{b.quoi}</i></span>
+              </div>
+            ))}
+          </div>
+          <p className="gd-src" style={{ marginTop: 12 }}>
+            Deux autres phrases imposent l&apos;arme : « vos lames ne servent à rien ici » (magie
+            obligatoire) et « vos arcanes sont vaines » (l&apos;inverse). Le principe est toujours le
+            même — on lit avant de relancer le combo.
+          </p>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="gauge" size={18} />Les taux du serveur, et ce qu&apos;ils changent</h2>
+          <div className="gd-taux">
+            <div><span className="tv">×600</span><span className="tl">Expérience des monstres</span></div>
+            <div><span className="tv">×500</span><span className="tl">Penyas ramassés</span></div>
+            <div><span className="tv">×1</span><span className="tl">Chute d&apos;objets</span></div>
+          </div>
+          <p className="gd-intro" style={{ marginTop: 14 }}>
+            C&apos;est toute l&apos;économie du serveur en trois chiffres : ton niveau et ton
+            porte-monnaie montent à une vitesse folle, <b>ton stuff tombe au taux d&apos;origine</b>.
+            D&apos;où le réflexe à prendre — le temps se met dans le farm d&apos;objets, jamais dans
+            le farm de penyas, et acheter à un membre coûte presque toujours moins cher
+            que courir après la pièce soi-même.
+          </p>
+          {/* Le butin ordinaire n'est PAS dans le client : il est calcule par le
+              serveur. Cette note existe pour qu'une fiche vide ne se lise jamais
+              comme « ca ne tombe pas » — c'est l'erreur que le wiki ferait faire. */}
+          <div className="gd-note" style={{ marginTop: 12 }}>
+            <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
+            Quand une fiche du site ne montre aucune source pour un objet, ça ne veut pas dire
+            qu&apos;il ne tombe pas : le butin ordinaire des monstres est calculé par le serveur et
+            n&apos;est écrit nulle part dans les fichiers du jeu. On n&apos;affiche que ce qu&apos;on peut prouver.
+          </div>
+        </div>
+
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="clock" size={18} />Les huit règles qui font perdre du temps</h2>
+          <p className="gd-intro" style={{ marginBottom: 12 }}>
+            Chacune est écrite dans une fenêtre du jeu qu&apos;on ferme sans la lire, et chacune
+            coûte une soirée quand on l&apos;apprend trop tard.
+          </p>
+          <ul className="gd-regles">
+            <li><b>Tes entrées d&apos;instance se remettent à zéro à 8 h</b>, pas à minuit. Une session lancée à 7 h consomme donc encore les entrées de la veille — et une entrée gardée pour « demain » se perd si tu joues avant 8 h.</li>
+            <li><b>La récompense du calendrier de connexion demande 60 minutes en ligne.</b> Se connecter pour la prendre et repartir ne marche pas.</li>
+            <li><b>Ton prêtre a deux modes : <code>/mode fs</code> et <code>/mode dps</code>.</b> Un sort qui refuse de partir, c&apos;est souvent le mauvais mode et rien d&apos;autre — et comme il y a un délai entre deux bascules, on choisit <i>avant</i> d&apos;entrer.</li>
+            <li><b>Enchanter sans parchemin de protection détruit l&apos;objet</b> (Sprotect, Sprotect Ultime, Gprotect). Et forger une arme unique n&apos;a aucune protection : en cas d&apos;échec, tout ce qu&apos;on a mis dedans est perdu.</li>
+            <li><b>Retirer un perçage enlève la carte du bas — la dernière posée — et coûte un million de penyas.</b> Pose donc en dernier la carte dont tu es le moins sûr.</li>
+            <li><b>Un objet ne porte qu&apos;un élément</b>, et une arme unique ne s&apos;enchante pas. Supprimer un enchantement coûte 100 000 penyas, éveiller un objet aussi.</li>
+            <li><b>Le VIP donne</b> toutes stats +25, penyas +5 %, une entrée journalière de plus et −20 % de temps d&apos;attente sur les instances. À peser contre ce que tu comptes réellement jouer dans la semaine.</li>
+            <li><b>Un seul marchand hors ligne à la fois</b>, tous les emplacements ne conviennent pas, on le retire par un clic droit sur son icône de buff — et les objets non vendus reviennent par la poste, pas dans l&apos;inventaire.</li>
+          </ul>
+        </div>
+
+        {/* Il n'y a pas encore d'entree de navigation vers l'espace reserve (le
+            fichier de nav n'est pas a moi). Ce renvoi la remplace : sans lui, la
+            page de guilde n'existe pour personne. Il ne dit RIEN de son contenu —
+            un visiteur non connecte tombe sur la porte, c'est tout. */}
+        <div className="gd-renvoi">
+          <Icon name="lock" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <span>
+            Tu es de Vanguard ? Il y a une seconde page d&apos;astuces, réservée aux membres :
+            ce qu&apos;on a relevé dans les fichiers du jeu sur les améliorations et l&apos;arène,
+            et qui n&apos;a pas vocation à circuler. <a href="/astuces-guilde">Astuces de guilde →</a>
+          </span>
         </div>
 
         <div className="gd-foot">N&apos;hésitez pas pour la suite à aller en vocal, sinon sur le Wiki du serveur !<br />Votre dévoué Sugot.</div>
@@ -377,6 +545,46 @@ export default function GuidePage() {
         .gd-percgr { margin-top:9px; font-size:11.5px; color:var(--text-muted); }
         .gd-percgr span { display:inline-block; font-weight:700; color:var(--gold); border:1px solid var(--gold);
           border-radius:6px; padding:0 7px; margin:0 2px; }
+        /* La roue des elements : cinq lignes qui se mettent en colonnes quand la
+           place le permet. Le « bat » en vert et le « craint » en rouge portent
+           l'information a eux seuls — on peut lire la roue sans lire les mots. */
+        .gd-roue { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr)); gap:8px; margin-top:14px; }
+        .gd-roue-el { display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:9px;
+          background:var(--bg-3); border:1px solid var(--border); }
+        .gd-roue-el img { width:28px; height:28px; object-fit:contain; flex-shrink:0; image-rendering:pixelated; }
+        .gd-roue-txt { display:flex; flex-direction:column; min-width:0; }
+        .gd-roue-txt b { font-size:13px; }
+        .gd-roue-txt i { font-style:normal; font-size:11.5px; display:flex; gap:9px; flex-wrap:wrap; }
+        .gd-roue-txt .bat { color:var(--green); }
+        .gd-roue-txt .craint { color:var(--red); }
+        /* Les phrases de boss : l'orbe du jeu a gauche, la traduction a droite.
+           C'est volontairement la meme forme que .gd-ou — un lecteur qui a
+           compris l'une comprend l'autre sans effort. */
+        .gd-boss { display:flex; align-items:flex-start; gap:11px; background:var(--bg-3);
+          border-radius:9px; padding:10px 14px; border-left:2px solid var(--orange-dark); }
+        .gd-boss-ic { width:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; padding-top:1px; }
+        .gd-boss-ic img { width:20px; height:20px; object-fit:contain; }
+        .gd-boss-txt { display:flex; flex-direction:column; gap:2px; min-width:0; }
+        .gd-boss-txt b { font-size:13.5px; color:var(--gold); }
+        .gd-boss-txt i { font-style:normal; font-size:13px; color:var(--text); line-height:1.5; }
+        /* Trois chiffres, et c'est tout le sujet : ils doivent se lire d'un coup
+           d'oeil, donc gros et alignes (tabular-nums, sinon le ×1 flotte). */
+        .gd-taux { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); gap:10px; }
+        .gd-taux > div { background:var(--bg-3); border:1px solid var(--border); border-radius:10px;
+          padding:13px 14px; display:flex; flex-direction:column; gap:3px; }
+        .gd-taux .tv { font-family:'Rubik',sans-serif; font-weight:700; font-size:26px; color:var(--gold);
+          font-variant-numeric:tabular-nums; line-height:1; }
+        .gd-taux .tl { font-size:12px; color:var(--text-muted); }
+        .gd-regles { margin:0; padding-left:19px; display:grid; gap:9px; font-size:13.5px; }
+        .gd-regles li { line-height:1.6; }
+        .gd-regles code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
+          background:var(--bg-4); border:1px solid var(--border); border-radius:5px; padding:1px 5px; color:var(--orange); }
+        /* Le renvoi vers l'espace reserve : visible sans etre une reclame. */
+        .gd-renvoi { display:flex; align-items:flex-start; gap:10px; background:var(--bg-2);
+          border:1px dashed var(--orange-dark); border-radius:12px; padding:14px 16px;
+          font-size:13px; color:var(--text-muted); margin-bottom:20px; }
+        .gd-renvoi a { color:var(--orange); text-decoration:none; font-weight:600; white-space:nowrap; }
+        .gd-renvoi a:hover { color:var(--text); }
         /* Les liens d'instance faisaient 21 px de haut : on les rate au doigt.
            On ne grossit pas le texte — la ligne deviendrait un pave — on ouvre
            la zone sensible autour, sans decaler la mise en page. */

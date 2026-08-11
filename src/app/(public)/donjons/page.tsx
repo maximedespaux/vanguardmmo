@@ -6,6 +6,9 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { donjonClient, pvCourt } from "@/components/donjons/donneesClient";
+import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
+import { TourOubliee } from "@/components/donjons/TourOubliee";
 
 /**
  * `drops` est le résumé qui tient sur une carte ; `dropsComplets`, quand il
@@ -22,11 +25,16 @@ type Dungeon = { id: number; name: string; type: string; lvl: string; prestige: 
 const PLAYLIST = "PL64S1j7adQcwMHVfTyRfMkBOu8hS7c08V";
 
 /**
- * Un donjon à `hp: 0` n'est pas un donjon sans données : c'est un donjon sans PV
- * minimal requis (Sietch Kalgas, dont le boss a un aggro fixe — cf. le guide de
- * progression). Afficher « 0 » laissait croire à une fiche incomplète.
+ * Le garde-fou est resté, la seule fiche qu'il couvrait a été comblée.
+ *
+ * Sietch Kalgas était le trou du wiki : son champ PV valait 0, et on avait
+ * supposé un donjon « sans minimum requis ». C'était faux — les captures d'écran
+ * n'en avaient simplement aucune, celle censée le montrer étant en réalité une
+ * capture d'USS Celestia. Le tooltip du téléporteur, lui, annonce 1 700 000 PV :
+ * la valeur est désormais dans `dungeons.json`. On garde ce repli au cas où une
+ * fiche future arriverait sans chiffre : afficher « 0 » ne veut rien dire.
  */
-const hpLabel = (hp: number) => (hp > 0 ? hp.toLocaleString("fr-FR") : "Aucun minimum");
+const hpLabel = (hp: number) => (hp > 0 ? hp.toLocaleString("fr-FR") : "Pas encore relevés");
 
 /**
  * L'icône du jeu, quand on la connaît.
@@ -92,9 +100,12 @@ export default function DonjonsPage() {
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
+  /** Ce que le client du jeu sait de l'instance ouverte. Absent = fiche d'avant la fouille. */
+  const clSel = sel ? donjonClient(sel.id) : undefined;
+
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons : PV, élément, armure conseillée et drops.`} />
+      <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={`Le wiki des ${dungeons.length} donjons du téléporteur, plus les 5 étages de la Tour Oubliée : où on entre, ce qu'on y croise, ce qui tombe.`} />
       <SectionTabs section="pve" />
       {/* L'onglet « Wiki des donjons » a ete retire : il etait seul dans sa barre,
           donc il ne proposait aucun choix — la page EST le wiki. Le suivi quotidien
@@ -126,7 +137,13 @@ export default function DonjonsPage() {
         </div>
       )}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(250px,1fr))", gap: 12 }}>
-        {g.items.map(d => (
+        {g.items.map(d => {
+          const cl = donjonClient(d.id);
+          // Le plus gros PV posé sur la carte : la vraie mesure de « à quoi je
+          // m'attaque ». Les PV conseillés disent ce qu'il faut encaisser, pas ce
+          // qu'il faut abattre, et l'écart va de 85 400 à 570 millions.
+          const grosPV = cl?.monstres.length ? Math.max(...cl.monstres.map(m => m.pv)) : 0;
+          return (
           <div key={d.id} className="fx-card" onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 12, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
@@ -136,25 +153,59 @@ export default function DonjonsPage() {
                 en cherche une ouvre les fiches une par une pour rien. Le champ
                 n'existe que sur les instances Solo — la série ne couvre
                 qu'elles, donc les autres cartes ne disent rien. */}
+            {grosPV > 0 && (
+              <div style={{ marginTop: 7, fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+                <Icon name="skull" size={11} style={{ marginRight: 3 }} />
+                {cl!.monstres.length} espèce{cl!.monstres.length > 1 ? "s" : ""} · le plus coriace à {pvCourt(grosPV)} PV
+              </div>
+            )}
             {d.video !== undefined && (
               <div style={{ marginTop: 7, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 5, color: d.video ? "var(--orange)" : "var(--text-muted)" }}>
                 <Icon name="video" size={11} />{d.video ? "Vidéo disponible" : "Pas encore de vidéo"}
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
       </div>
       ))}
+
+      {/* Après la grille, pas dedans : la Tour Oubliée n'est pas une destination
+          du téléporteur, et la mêler aux vingt-trois ferait croire qu'on y entre
+          pareil. Elle répond quand même à la recherche — quelqu'un qui tape
+          « tour » la cherche, et la voir disparaître pendant qu'on cherche autre
+          chose évite de croire qu'elle fait partie des résultats. */}
+      {(!q || "tour oubliée".includes(q.toLowerCase())) && <TourOubliee />}
+
+      {/* La marge haute du voile vaut la hauteur de la barre de navigation (68 px)
+          plus un souffle. Sans elle, une fiche assez haute pour remplir l'écran
+          passait SOUS la barre et perdait son titre : la barre se peint au-dessus
+          du voile malgré son z-index plus bas, parce qu'elle vit dans un autre
+          contexte d'empilement. Le voile ne peut pas gagner ce duel, il s'écarte. */}
       {sel && (
-        <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 500, width: "100%", marginBottom: 0, maxHeight: "calc(100vh - 40px)", overflowY: "auto" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><Icon name={sel.icon as IconName} framed frameSize={48} tone="orange" /><div style={{ minWidth: 0 }}><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestigeDetail ? ` · Prestige ${sel.prestigeDetail}` : sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div></div></div>
+        <div onClick={() => setSel(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "88px 20px 20px" }}>
+          {/* Élargie de 500 à 720 px : la fiche ne portait que les PV, l'élément et
+              le butin, elle porte maintenant la situation de la carte et son
+              peuplement. À 500 px, chaque ligne de monstre passait sur trois
+              lignes de texte. */}
+          <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 720, width: "100%", marginBottom: 0, maxHeight: "calc(100vh - 108px)", overflowY: "auto" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><Icon name={sel.icon as IconName} framed frameSize={48} tone="orange" /><div style={{ minWidth: 0 }}><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestigeDetail ? ` · Prestige ${sel.prestigeDetail}` : sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div><EcartPrestige site={sel.prestige} client={clSel?.prestigeClient ?? null} /></div></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
               <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{hpLabel(sel.hp)}</div></div>
               <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>
             </div>
             {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
+
+            {/* Tout ce qui vient de la fouille du client : où est la carte, à quoi
+                elle ressemble, qui y est posé. Les fiches d'avant la fouille
+                n'affichent rien de plus qu'avant. */}
+            {clSel && <>
+              <Situation d={clSel} nomAffiche={sel.name} />
+              <PlanDonjon d={clSel} />
+              <Peuplement d={clSel} />
+              <KalgasEnPlus d={clSel} />
+            </>}
 
             {/* La vidéo du donjon, quand elle existe dans la playlist de Sugot.
                 Domaine nocookie : rien n'est déposé chez le visiteur tant qu'il
@@ -162,9 +213,7 @@ export default function DonjonsPage() {
                 lecteur pour une fiche qu'on ne fait qu'entrouvrir. */}
             {sel.video !== undefined && (
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                  <Icon name="video" size={12} />En vidéo
-                </div>
+                <SousTitre icon="video">En vidéo</SousTitre>
                 {sel.video ? (
                   <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)" }}>
                     <iframe
@@ -191,13 +240,14 @@ export default function DonjonsPage() {
               // La fiche montre la liste complète quand on l'a ; la carte, elle, garde le résumé.
               const liste = sel.dropsComplets ?? sel.drops;
               return (<>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "flex", alignItems: "baseline", gap: 7, flexWrap: "wrap" }}>
-                  <span><Icon name="gift" size={12} style={{ marginRight: 5 }} />Drops</span>
-                  {liste.length > 0 && <span style={{ textTransform: "none", letterSpacing: 0, fontSize: 12 }}>{liste.length} objet{liste.length > 1 ? "s" : ""}</span>}
-                </div>
+                <SousTitre icon="gift" apres={liste.length > 0 ? `${liste.length} objet${liste.length > 1 ? "s" : ""}` : undefined}>Drops</SousTitre>
                 {liste.length > 0
                   ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px 4px 6px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}><IconeObjet nom={d} />{d}</span>)}</div>
-                  : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>Personne n&apos;a encore relevé les drops de cette instance.</div>}
+                  : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>
+                      Personne n&apos;a encore relevé les drops de cette instance. Ce n&apos;est pas la
+                      preuve que rien n&apos;y tombe : le butin ordinaire des monstres est calculé par
+                      le serveur, il n&apos;existe nulle part dans les fichiers du jeu.
+                    </div>}
               </>);
             })()}
             <button onClick={() => setSel(null)} style={{ marginTop: 16, width: "100%", padding: 10, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)", cursor: "pointer" }} className="font-heading">Fermer</button>

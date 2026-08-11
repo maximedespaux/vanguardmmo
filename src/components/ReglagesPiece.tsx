@@ -4,7 +4,8 @@ import { RARETES, RANGS_EVEIL, STATS_EVEIL, STATS_SCROLL, ELEMENTS, STATS_DIAMAN
 import {
   carteDePercage, libellePalier, decouperCarte, composerCarte, COULEUR_CARTE,
   PALIERS_ATTAQUE, PALIERS_DEFENSE, CARTES_DEFENSE,
-  ICONE_ELEMENT, ICONE_EVEIL, ICONE_DIAMANT, ICONE_HOLO, ICONE_SCROLL, ICONE_ETOILE, ICONE_UPGRADE, GEMME_PAR_DEFAUT,
+  ICONE_ELEMENT, ICONE_EVEIL, ICONE_DIAMANT, ICONE_HOLO, ICONE_SCROLL, ICONE_UPGRADE, GEMME_PAR_DEFAUT,
+  ICONE_RARETE, COULEUR_RARETE, ETIQUETTE_ARTEFACT, ETOILE_PLEINE, ETOILE_VIDE, planAscension, essenceArme, familleAscension,
 } from "@/lib/assetsJeu";
 
 /**
@@ -32,6 +33,14 @@ function Vignette({ src, taille = 18 }: { src?: string | null; taille?: number }
   if (!src) return null;
   // eslint-disable-next-line @next/next/no-img-element
   return <img src={src} alt="" style={{ width: taille, height: taille, objectFit: "contain", flexShrink: 0 }} />;
+}
+/** Les bandeaux du jeu (« Artefact », « Ultime ») ne sont pas des icônes mais
+ *  des étiquettes larges — 51×14. Passées dans `Vignette` elles s'écrasent dans
+ *  un carré et deviennent illisibles ; ici la hauteur est fixe et la largeur
+ *  suit. */
+function Etiquette({ src, alt, titre }: { src: string; alt: string; titre?: string }) {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt={alt} title={titre ?? alt} style={{ height: 14, width: "auto", objectFit: "contain", flexShrink: 0 }} />;
 }
 /** Une étiquette de section, précédée de son icône — comme les titres de
  *  panneau du builder, où chaque réglage porte le dessin de ce qu'il règle. */
@@ -67,12 +76,30 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
         {r.label} — la pièce que je vise (facultatif)
       </div>
 
+      {/* La rareté se choisissait parmi six mots identiques, tous orange à la
+          sélection. Elle porte maintenant son parchemin et SA couleur — celles
+          du moteur —, donc « Légendaire » se distingue de « Pré-Mythique » sans
+          être lu. « Commun » et « Mythique » n'ont pas de parchemin dans le
+          client : ils gardent leur mot seul, et c'est voulu. */}
       {r.rarete && (
         <div style={ligne}>
-          <span style={etiquette}>Rareté</span>
-          {RARETES.map((x) => (
-            <button key={x} onClick={() => bascule("rarete", x)} style={pastille(choix.rarete === x)}>{x}</button>
-          ))}
+          {/* Pas d'icône par défaut ici : les quatre parchemins ne diffèrent que
+              par la couleur de leur flèche, en montrer un « au hasard » avant le
+              choix se lirait comme une réponse. */}
+          <Titre src={ICONE_RARETE[choix.rarete] ?? null}>Rareté</Titre>
+          {RARETES.map((x) => {
+            const actif = choix.rarete === x;
+            const col = COULEUR_RARETE[x] ?? "var(--orange)";
+            const ic = ICONE_RARETE[x];
+            return (
+              <button key={x} onClick={() => bascule("rarete", x)}
+                style={{ ...pastille(actif), display: "inline-flex", alignItems: "center", gap: 5, paddingLeft: ic ? 6 : 10,
+                  borderColor: actif ? col : `${col}55`, color: col,
+                  background: actif ? `${col}26` : "transparent" }}>
+                <Vignette src={ic} />{x}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -90,14 +117,39 @@ export function ReglagesPiece({ reglages: r, choix, onChange, nom }: {
           {/* Les étoiles n'existent qu'en artefact, c'est-à-dire au-delà de +10. */}
           {r.etoiles && Number(choix.up) > 10 && (
             <>
-              <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4 }}><Vignette src={ICONE_ETOILE} taille={15} />Étoiles</span>
+              {/* Le bandeau « Artefact » du jeu remplace le mot « Étoiles » : au
+                  delà de +10 la pièce change de nature, et c'est ce bandeau-là
+                  qu'on voit en jeu — pas une étoile isolée. */}
+              <span style={{ fontSize: 11.5, color: "var(--text-muted)", marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <Etiquette src={ETIQUETTE_ARTEFACT} alt="Artefact" titre="Artefact : +11 à +20" />
+              </span>
               {[1, 2, 3].map((n) => (
-                <button key={n} onClick={() => bascule("etoiles", String(n))} style={pastille(choix.etoiles === String(n))}>
-                  {"★".repeat(n)}
+                <button key={n} onClick={() => bascule("etoiles", String(n))} style={{ ...pastille(choix.etoiles === String(n)), display: "inline-flex", alignItems: "center", gap: 1, padding: "4px 8px" }}
+                  aria-label={`${n} étoile${n > 1 ? "s" : ""}`} title={`${n} étoile${n > 1 ? "s" : ""} d'ascension`}>
+                  {/* Trois emplacements toujours dessinés : pleines jusqu'à n,
+                      vides ensuite. Le « ★★ » de police ne disait pas sur
+                      combien — on cherchait le maximum ailleurs. */}
+                  {[1, 2, 3].map((i) => <Vignette key={i} src={i <= n ? ETOILE_PLEINE : ETOILE_VIDE} taille={14} />)}
                 </button>
               ))}
             </>
           )}
+        </div>
+      )}
+
+      {/* ── Ce qu'il faudra pour y arriver ───────────────────────────────────
+          L'ascension a un coût, et il est propre à la famille de l'arme : le
+          plan et l'essence ne sont pas les mêmes pour une épée et pour un arc.
+          Le client n'en dessine que neuf familles — le glaive et la doloire
+          partageant les leurs. Une arme hors de ces neuf (arbalète, grimoire…)
+          n'affiche rien du tout : `planAscension` rend `null` et la ligne
+          disparaît, plutôt que de montrer le plan d'une autre arme. */}
+      {r.etoiles && Number(choix.etoiles) > 0 && familleAscension(nom) && (
+        <div style={{ ...ligne, paddingLeft: 62, fontSize: 11.5, color: "var(--text-muted)" }}>
+          <Vignette src={planAscension(nom, choix.etoiles)} taille={20} />
+          <span>Plan d&apos;ascension {choix.etoiles}</span>
+          <Vignette src={essenceArme(nom)} taille={20} />
+          <span>essence de l&apos;arme</span>
         </div>
       )}
 

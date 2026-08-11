@@ -1,0 +1,36 @@
+import { PageHeader } from "@/components/PageHeader";
+import { RechercheObjets } from "@/components/objets/Recherche";
+import { dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
+
+/**
+ * LES OBJETS — la page qui manquait.
+ *
+ * Le site connaissait 12 134 objets nommés sans offrir un seul endroit pour en
+ * chercher un : leurs noms n'apparaissaient qu'en passant, dans le coffre, dans
+ * une requête, dans le builder. On cherchait donc ailleurs, sur un wiki dont les
+ * niveaux sont faux (il montre le niveau DE L'OBJET, pas le niveau requis) et
+ * qui a perdu 108 objets ajoutés par AirFlyff.
+ *
+ * Le mot-clé arrive parfois d'ailleurs (`?q=`) : le plan de farm et les requêtes
+ * d'objet peuvent renvoyer ici avec le nom déjà écrit.
+ */
+export const metadata = { title: "Objets · Vanguard" };
+
+export default async function ObjetsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
+  const total = nombreDObjets();
+
+  return (
+    <>
+      <PageHeader icon="package" title="Les objets"
+        subtitle={`${total.toLocaleString("fr-FR")} objets lus dans le client du jeu — leurs vraies statistiques, et d’où ils viennent.`}
+        right={
+          <span style={{ fontSize: 11.5, color: "var(--text-muted)", textAlign: "right", lineHeight: 1.5 }}>
+            relevé du {dateDuCatalogue()}<br />
+            <span style={{ opacity: 0.75 }}>Spec_Item.txt + propitem</span>
+          </span>
+        } />
+      <RechercheObjets depart={q ?? ""} />
+    </>
+  );
+}

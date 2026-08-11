@@ -60,6 +60,10 @@ export const ESPACES: Espace[] = [
     liens: [
       { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, et le stuff de chacun." },
       { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Monte ton stuff, pièce par pièce." },
+      // Le lexique des mécaniques : ce que veut dire « éveil R1 » ou « perçage
+      // Fulgur », avec les icônes du jeu. Rattaché au builder parce que c'est là
+      // qu'on rencontre ces mots.
+      { label: "Les mécaniques", href: "/builder/mecaniques", icon: "info", desc: "Artefact, rareté, gemmes, runes, perçage : ce que chaque mot veut dire." },
     ],
   },
   {
@@ -74,6 +78,14 @@ export const ESPACES: Espace[] = [
       { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances, leur niveau et leurs butins." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige, ce qu'il rapporte." },
+      // Les objets et les classes viennent du client du jeu, pas de la guilde :
+      // ils appartiennent donc à cet espace-là. Sans ces deux entrées, les pages
+      // n'étaient atteignables qu'en tapant leur adresse — et absentes du
+      // sommaire, qui est généré depuis ce fichier.
+      { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient." },
+      { label: "Classes", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, du Vagabond aux Héros." },
+      // Réservée à la guilde : ce sont les astuces qu'on ne publie pas.
+      { label: "Astuces de guilde", href: "/astuces-guilde", icon: "lock", desc: "Ce qui se dit entre nous, et qu'on ne diffuse pas.", acces: "guild" },
       // Le World Boss est une connaissance du JEU — quand il passe, ce qu'il
       // lache — avant d'etre une affaire de guilde. Sa page reste reservee aux
       // membres : c'est le lien qui porte l'exigence, pas l'espace.
@@ -145,6 +157,10 @@ export const ESPACES: Espace[] = [
 
 /** Entrées hors espaces : elles ne se rangent nulle part, et c'est très bien. */
 export const HORS_ESPACES: Lien[] = [
-  { label: "Accueil", href: "/histoire", icon: "book", desc: "La guilde, son histoire et ses règles.", acces: "public" },
+  // `/` était un simple renvoi vers /histoire ; c'est désormais une vraie page
+  // d'accueil, avec les huit classes et par où commencer. Les deux entrées sont
+  // donc distinctes, et « Accueil » mène enfin à l'accueil.
+  { label: "Accueil", href: "/", icon: "home", desc: "Le jeu, les huit classes, et par où commencer.", acces: "public" },
+  { label: "La guilde", href: "/histoire", icon: "book", desc: "La guilde, son histoire et ses règles.", acces: "public" },
   { label: "Candidature", href: "/candidature", icon: "user-plus", desc: "Rejoindre Vanguard.", acces: "public" },
 ];

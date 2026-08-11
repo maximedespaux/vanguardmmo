@@ -45,7 +45,11 @@ export function VoletSections({ sections, defaut, entete }: {
   return (
     <>
       {entete}
-      <div className="vg-volet" style={{ display: "grid", gridTemplateColumns: "270px 1fr", gap: 14, alignItems: "start" }}>
+      {/* `minWidth: 0` sur les deux colonnes : sans lui, un contenu large — tableau,
+          bloc de code, longue ligne — ÉLARGIT la grille au lieu de défiler dans son
+          panneau, et c'est la page entière qui gagne une barre horizontale. Une page
+          l'avait contourné par une règle locale ; le défaut valait pour toutes. */}
+      <div className="vg-volet" style={{ display: "grid", gridTemplateColumns: "270px minmax(0,1fr)", gap: 14, alignItems: "start" }}>
 
         <div style={{ display: "grid", gap: 8 }}>
           {sections.map((s) => {

@@ -47,7 +47,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="vg-shell">
       <header className="vg-topnav">
-        <Link href="/histoire" className="vg-top-brand">
+        {/* Le logo menait à /histoire, faute de page d'accueil : `/` n'était qu'un
+            renvoi. Maintenant qu'elle existe, il mène là où tout le monde
+            s'attend qu'un logo mène. */}
+        <Link href="/" className="vg-top-brand">
           <img src="/assets/site/logo-bat.webp" alt="Vanguard" className="vg-top-logo" />
           {/* Traitement bicolore, comme « AirBuilder » : la première syllabe en
               orange, la suite en blanc. Charte orange et noir. */}

@@ -220,7 +220,7 @@ function viewBank(){
         isTotal ? 'Le total est un calcul : il se modifie coffre par coffre.'
                 : 'Ce coffre n\'est pas le tien — sélectionne le tien pour y déposer.');
 
-  return `<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span> ${etat}</div>
+  return `${farmBar()}<div class="card"><div class="sec-h"><i class=vgi-bank></i> Coffres <span class="n">coffres individuels</span> ${etat}</div>
    <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap"><div class="mtabs" style="flex:1;min-width:220px">${mtabs}</div>${totalTab}</div></div>
    ${isTotal?'<div class="hint" style="margin-top:8px">Σ <b>Total guilde</b> = la somme de <b>tous</b> les coffres membres. C\'est la <b>référence</b> : la boutique et les crafts se basent dessus, donc le stock de chaque membre compte.</div>':'<div class="hint" style="margin-top:8px">Le stock de ce coffre compte dans le <b>Total guilde</b> (référence boutique &amp; crafts). Dépose ici ce que tu ramènes.</div>'}
    <div class="toolbar" style="margin-top:14px"><input class="inp" id="bankq" placeholder="Rechercher un objet…" value="${esc(bankQ)}" oninput="bankQ=this.value;filterBank(this.value)" style="flex:1;min-width:180px">${canEdit()?'<button class="btn o" onclick="addItem()"><i class=vgi-plus></i> Objet</button>':''}<button class="btn o" onclick="inventaireSheet()" style="font-size:14px;padding:10px 18px"><i class=vgi-bar-chart></i> Qui détient quoi</button><button class="btn" onclick="openJournal()"><i class=vgi-receipt></i> Journal</button></div>
@@ -331,7 +331,7 @@ function itemRow(it,isTotal){const v=isTotal?totalGuild(it.id):qty(S.cur,it.id);
   const price=editable?priceMini(it.id):'';
   const rm=editable?`<span class="rm" onclick="rmItem('${sq(it.id)}',${custom})"><i class=vgi-x></i></span>`:'';
   const ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
-  return `<div class="it" data-s="${esc(ds)}"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()}${isSlot?' · compté en slots':''}</div></div><span class="dot ${h}"></span>${price}${ctrl}${unitTag}${rm}</div>`;
+  return `<div class="it" data-s="${esc(ds)}"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()}${isSlot?' · compté en slots':''}</div></div><span class="dot ${h}"></span>${farmMini(it.id)}${price}${ctrl}${unitTag}${rm}</div>`;
 }
 // Arme suivie par rareté : une ligne d'en-tête (total) + 4 lignes de rareté (stock indépendant, clé id|R#rareté).
 function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' '+(it.classe||'')+' '+it.cat).toLowerCase();
@@ -340,7 +340,7 @@ function weaponRows(it,isTotal){var tot=itemStock(it,isTotal);var ds=(it.item+' 
   // montrait un quand meme — celui de la cle de base — qui contredisait les
   // lignes juste en dessous.
   var price=resumeRaretes(it);
-  var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div>${price}<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
+  var head=`<div class="it" data-s="${esc(ds)}" style="background:rgba(255,255,255,.02)"><div class="logo" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète">${itemAsset(it)}</div><div class="nm" onclick="itemDetail('${sq(it.id)}')" style="cursor:pointer" title="Fiche complète"><div class="a">${esc(it.item)}</div><div class="b">${it.classe?esc(it.classe):it.cat.trim()} · par rareté</div></div>${farmMini(it.id)}${price}<div style="font-family:Rajdhani;font-weight:700;font-size:17px;width:96px;text-align:right;color:var(--gold)">${fmt(tot)}</div></div>`;
   var rows=RARITIES.map(function(r){var key=rarKey(it.id,r[0]);var v=isTotal?totalGuild(key):qty(S.cur,key);
     var ctrl=editable?`<div class="step"><button onclick="adj('${sq(key)}',-1)">−</button><input value="${v}" onchange="setQ('${sq(key)}',this.value)"><button onclick="adj('${sq(key)}',1)"><i class=vgi-plus></i></button></div>`:`<div style="font-family:Rajdhani;font-weight:700;font-size:15px;width:96px;text-align:right">${fmt(v)}</div>`;
     var clr=(editable&&v>0)?`<span class="rm" onclick="setQ('${sq(key)}','0')" title="Vider"><i class=vgi-x></i></span>`:'<span style="width:14px;flex:none"></span>';
@@ -503,8 +503,87 @@ function detail(d){const pr=d.prestige?`<span class="pill pr">Prestige ${d.prest
    <div class="hint"><i class=vgi-target></i> Clique une récompense pour la viser (re-clic = +1). Puis « Verser au coffre » pour remplir la banque de guilde.</div>${body}`;
 }
 function farmAdd(name,ic,dj,cat){const f=S.farm[name];if(f)f.target++;else S.farm[name]={n:name,ic,dj,cat:cat||'Butin',target:1,have:0};save();render();}
-function farmBar(){const keys=Object.keys(S.farm);if(!keys.length)return '';
-  return `<div class="farmbar"><span style="font-family:Rajdhani;font-weight:700;color:var(--orange)"><i class=vgi-target></i> ${keys.length} objectif(s) de farm</span><span class="spacer"></span><button class="btn sm" onclick="openFarm()">Voir / verser au coffre</button><button class="btn sm danger" onclick="agConfirm('Vider les objectifs ?',function(){S.farm={};save();render();})">Vider</button></div>`;}
+
+/**
+ * Viser un objet DEPUIS le coffre.
+ *
+ * On ne pouvait fixer un objectif que depuis l'onglet Donjons, en cliquant un
+ * butin — et cet onglet n'existe plus. Le plan de farm etait donc devenu
+ * impossible a alimenter. On vise maintenant depuis la ligne du coffre, la ou
+ * l'on constate justement qu'il manque quelque chose.
+ */
+function viserObjet(id){
+  if(!canEdit())return agToast('Fixer un objectif de farm demande le rôle Vanguard.',false);
+  var bid=baseId(id);
+  var it=catalog().find(function(x){return x.id===bid;});
+  if(!it)return;
+  var nom=it.item, dejaLa=totalGuild(bid);
+  var f=S.farm[nom];
+  openSheet('<h3><i class=vgi-target></i> Viser — '+esc(nom)+'</h3>'
+   +'<div class="hint">Combien il en faut au coffre. Le plan de farm s\'affiche en tete du Coffre, et chacun voit ce qui reste a ramener.</div>'
+   +'<div class="pxrow" style="margin-bottom:10px"><div class="pxlab"><span class="pxrar" style="color:var(--gold);border-color:#ffd24a55;background:#ffd24a14">Objectif</span></div>'
+     +'<div class="pxin"><input class="inp" id="fT" type="number" min="1" step="1" value="'+(f?f.target:Math.max(1,dejaLa||1))+'"><span class="pxcur">a avoir</span></div>'
+     +'<div class="pxap">'+fmt(dejaLa)+' en stock</div></div>'
+   +'<div class="toolbar" style="justify-content:flex-end;margin:12px 0 0">'
+     +(f?'<button class="btn danger" onclick="delFarm(\''+sqa(nom)+'\');closeSheet();render()">Retirer l\'objectif</button>':'')
+     +'<button class="btn" onclick="closeSheet()">Annuler</button>'
+     +'<button class="btn o" onclick="doViser(\''+sqa(nom)+'\',\''+sqa(it.ic||'')+'\',\''+sqa(it.cat||'Butin')+'\')"><i class=vgi-save></i> Enregistrer</button>'
+   +'</div>');
+}
+function doViser(nom,ic,cat){
+  var el=document.getElementById('fT');
+  var t=Math.max(1,Math.round(+(el||{}).value||1));
+  var f=S.farm[nom];
+  if(f)f.target=t; else S.farm[nom]={n:nom,ic:ic||'',dj:0,cat:cat||'Butin',target:t,have:0};
+  save();closeSheet();render();
+  agToast('Objectif fixé : '+t+' × '+nom,true);
+}
+/** La pastille « visé » sur une ligne du coffre : où on en est, sans ouvrir. */
+function farmMini(id){
+  var bid=baseId(id);
+  var it=catalog().find(function(x){return x.id===bid;});
+  var f=it&&S.farm[it.item];
+  if(!canEdit()&&!f)return '';
+  if(!f)return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none" onclick="event.stopPropagation();viserObjet(\''+sqa(bid)+'\')" title="Fixer un objectif de farm pour cet objet"><i class=vgi-target></i></button>';
+  var eu=totalGuild(bid), t=Math.max(1,+f.target||1);
+  var fini=eu>=t;
+  return '<button class="btn" style="padding:3px 8px;font-size:12px;white-space:nowrap;flex:none;'
+    +(fini?'border-color:var(--green);color:var(--green)':'border-color:var(--orange);color:var(--orange)')+'"'
+    +' onclick="event.stopPropagation();viserObjet(\''+sqa(bid)+'\')" title="Objectif de farm — '+fmt(eu)+' sur '+fmt(t)+'">'
+    +'<i class=vgi-target></i> '+fmt(eu)+'/'+fmt(t)+'</button>';
+}
+/**
+ * LE PLAN DE FARM, en une barre, en tete du coffre.
+ *
+ * Il vivait dans l'onglet Donjons — un onglet SUPPRIME depuis. Les objectifs
+ * restaient en base et la fenetre marchait toujours, mais plus rien ne les
+ * affichait : on avait un plan de farm invisible. Il remonte donc la ou vit le
+ * stock, puisque c'est le stock qu'on vient completer.
+ *
+ * Elle dit OU ON EN EST, pas seulement combien d'objectifs il y a : une barre
+ * d'avancement et « 12 / 40 ramenes ». Un compteur d'objectifs ne repond pas a
+ * la question qu'on se pose en ouvrant le coffre.
+ */
+function farmBar(){
+  var keys=Object.keys(S.farm||{});
+  if(!keys.length)return '';
+  var cible=0, eu=0, finis=0;
+  keys.forEach(function(k){var f=S.farm[k];var t=Math.max(1,+f.target||1),h=Math.max(0,+f.have||0);
+    cible+=t; eu+=Math.min(h,t); if(h>=t)finis++;});
+  var pc=cible?Math.round(eu/cible*100):0;
+  return '<div class="card" style="margin-bottom:14px;border-color:rgba(255,140,26,.3)">'
+    +'<div class="sec-h" style="margin-bottom:9px"><i class=vgi-target></i> Plan de farm '
+      +'<span class="n">'+keys.length+' objectif'+(keys.length>1?'s':'')+(finis?' · '+finis+' atteint'+(finis>1?'s':''):'')+'</span></div>'
+    +'<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+      +'<div style="flex:1;min-width:160px">'
+        +'<div style="height:9px;border-radius:6px;background:var(--bg);border:1px solid var(--border);overflow:hidden">'
+          +'<div style="width:'+pc+'%;height:100%;background:linear-gradient(90deg,#FFD24A,#FF8C1A)"></div></div>'
+        +'<div class="mut" style="font-size:11.5px;margin-top:4px">'+fmt(eu)+' / '+fmt(cible)+' ramenés — '+pc+' %</div>'
+      +'</div>'
+      +'<button class="btn o" onclick="openFarm()"><i class=vgi-target></i> Voir le détail</button>'
+      +(canEdit()?'<button class="btn sm danger" onclick="agConfirm(\'Vider les objectifs de farm ?\',function(){S.farm={};save();render();})">Vider</button>':'')
+    +'</div></div>';
+}
 function openFarm(){const keys=Object.keys(S.farm);openSheet(`<h3><i class=vgi-target></i> Objectifs de farm</h3><div class="hint">« Possédé » se verse dans <b>ton coffre</b> (qui compte dans le Total guilde) puis se remet à 0.</div>${keys.length?keys.map(k=>{const f=S.farm[k];const dj=D.dungeons.find(x=>x.id===f.dj);const pc=f.target?Math.min(100,f.have/f.target*100):0;
    return `<div class="fitem">${img(f.ic)||'<span class="x" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#ffffff08;border-radius:8px"><i class=vgi-package></i></span>'}<div class="fn"><div class="a">${esc(f.n)}</div><div class="b">${dj?'<i class=vgi-'+dj.icon+'></i> '+esc(dj.name):''}</div><div class="prog"><i style="width:${pc}%"></i></div></div>
      <div style="text-align:center"><div class="mut" style="font-size:11px">possédé</div><div class="step"><button onclick="farmHave('${sq(k)}',-1)">−</button><input value="${f.have}" onchange="farmSet('${sq(k)}','have',this.value)"><button onclick="farmHave('${sq(k)}',1)"><i class=vgi-plus></i></button></div></div>

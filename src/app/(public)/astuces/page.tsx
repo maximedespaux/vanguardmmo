@@ -6,6 +6,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 import dungeonsData from "@/data/dungeons.json";
 import ICONES from "@/data/icones-objets.json";
+import { prestigeNeed } from "@/data/prestige";
 
 const DONJONS = dungeonsData as { name: string; icon: string; type: string; prestige: number | null }[];
 
@@ -120,7 +121,15 @@ export default function GuidePage() {
           <h2 className="gd-cardtitle"><Icon name="package" size={18} />Items quête requis (tous prestiges)</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>La quantité totale d&apos;items de quête requis pour tous les prestiges. Ça peut sembler important, mais en vous y prenant bien tout se goupillera — le farm étant l&apos;essence même de Flyff.</p>
           <div className="gd-grid">
-            {([["Nucléus", "160 000"], ["Perin", "1 400"], ["Emblème de protection", "15 000"], ["Badge Jardin prestigieux", "69"], ["Badge Donjon mineur", "4"], ["Badge Donjon", "2"], ["Badge de la tour", "2"], ["Badge World Boss prestigieux", "4"]] as const).map(([l, v]) => (
+            {/* Ces totaux étaient recopiés à la main, et deux avaient déjà dérivé :
+                le Badge Jardin Prestigieux affichait 69 pour 75 réels, et le Périn
+                1 400 pour 500. On les CALCULE désormais depuis PRESTIGE_COSTS, seule
+                source de vérité : un chiffre calculable recopié finit toujours par
+                mentir. L'ordre suit celui du tableau, du plus gros au plus petit. */}
+            {Object.entries(prestigeNeed(1, 10))
+              .sort((a, b) => b[1] - a[1])
+              .map(([l, n]) => [l, n.toLocaleString("fr-FR")] as const)
+              .map(([l, v]) => (
               <div className="gd-qitem" key={l}><span className="ql">{l}</span><span className="qv">{v}</span></div>
             ))}
           </div>

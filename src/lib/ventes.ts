@@ -362,6 +362,52 @@ function embedVente(d: { id: string; item: string | null; quantity: number; user
   };
 }
 
+/**
+ * L'APPEL À PARTICIPER — quand une commande devient un chantier.
+ *
+ * C'est ce message qui fait venir du monde. Sans lui, un chantier n'existe que
+ * pour ceux qui pensent à ouvrir la Boutique, et il dort. Il dit trois choses,
+ * et rien d'autre : ce qu'il faut ramener, ce que ça rapporte, et où
+ * s'inscrire.
+ *
+ * On ne s'inscrit PAS sur Discord. Deux messages simultanés dans un salon et
+ * personne ne sait qui était premier ; le site, lui, borne les réservations au
+ * reste à prendre. Le bouton ramène donc au panneau, toujours.
+ */
+export async function annoncerChantier(requestId: string, queteId: string): Promise<void> {
+  try {
+    const [d, q] = await Promise.all([
+      prisma.bankRequest.findUnique({
+        where: { id: requestId },
+        select: { item: true, quantity: true, username: true, priceEach: true, prixFinal: true, dateSouhaitee: true },
+      }),
+      prisma.quete.findUnique({ where: { id: queteId }, select: { quantite: true } }),
+    ]);
+    if (!d) return;
+    const cagnotte = d.prixFinal != null ? Number(d.prixFinal) : (d.priceEach ?? 0) * Math.max(1, d.quantity || 1);
+    const combien = q?.quantite ?? d.quantity ?? 1;
+    const echeance = d.dateSouhaitee
+      ? `\nVoulu pour le **${d.dateSouhaitee.toLocaleDateString("fr-FR", { day: "2-digit", month: "long" })}**.`
+      : "";
+    const { posterEtRetenir } = await import("@/lib/discord");
+    await posterEtRetenir(SALON_VENTES, {
+      embeds: [{
+        title: `Chantier — ${combien} × ${d.item ?? "objet"}`,
+        description:
+          `Personne ne l'a au coffre : **on le farme à plusieurs**.\n`
+          + (cagnotte > 0
+              ? `**${cagnotte.toLocaleString("fr-FR")} périns** à partager, au prorata de ce que chacun aura **réellement livré**.`
+              : `La somme se négocie encore avec ${d.username}.`)
+          + echeance
+          + `\n\nRéserve ta part sur le site : elle est bornée à ce qui reste, pour que deux personnes ne farment pas la même chose.`,
+        color: 0xc77dff,
+        url: `${SITE}/boutique?mode=requetes`,
+        footer: { text: "On s'inscrit sur le site, pas ici — sinon personne ne sait qui était premier." },
+      }],
+    });
+  } catch { /* Discord est un relais, jamais un point de passage obligé */ }
+}
+
 /** Annonce une nouvelle demande. Silencieux si Discord n'est pas configuré. */
 export async function annoncerVente(requestId: string): Promise<void> {
   try {

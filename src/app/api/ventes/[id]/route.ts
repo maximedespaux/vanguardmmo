@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
 import { canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { detenteursDe, majAnnonceVente, prevenir, prevenirStaff, rendreAuCoffre, retirerDuCoffre, vueVente } from "@/lib/ventes";
+import { annoncerChantier, detenteursDe, majAnnonceVente, prevenir, prevenirStaff, rendreAuCoffre, retirerDuCoffre, vueVente } from "@/lib/ventes";
 import { sansBigInt } from "@/lib/json";
 import { prixMixte } from "@/lib/monnaies";
 
@@ -198,7 +198,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         return NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 });
       }
       const deja = await prisma.bankRequest.findUnique({ where: { id }, select: { queteId: true, reason: true } });
-      if (deja?.queteId) return NextResponse.json({ error: "Une quête existe déjà pour cette demande." }, { status: 409 });
+      if (deja?.queteId) return NextResponse.json({ error: "Un chantier existe déjà pour cette commande." }, { status: 409 });
 
       const quete = await prisma.quete.create({
         data: {
@@ -213,15 +213,21 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       await prisma.requestMessage.create({
         data: {
           bankRequestId: id, kind: "system",
-          body: `${a.user.username} a ouvert une quête de guilde : plusieurs membres peuvent y contribuer.`,
+          body: `${a.user.username} a ouvert un chantier : plusieurs membres vont le farmer ensemble.`,
         },
       });
       await prevenirStaff(
-        "Nouvelle quête depuis une demande",
-        `${dem.item ?? "Objet"} pour ${dem.username} — personne ne l'a au coffre, on le farme.`,
-        `/quetes`,
+        "Un chantier s'ouvre",
+        `${dem.item ?? "Objet"} pour ${dem.username} — personne ne l'a au coffre, on le farme à plusieurs.`,
+        `/boutique?mode=requetes`,
         a.user.id,
       );
+      // L'APPEL SUR DISCORD : c'est lui qui fait venir les participants. Une
+      // notification du site ne se voit que par ceux qui y sont déjà ; le
+      // chantier, lui, a besoin de monde MAINTENANT. Le message dit la somme
+      // et ce qu'il y a à ramener, et renvoie sur le site — on ne s'inscrit
+      // jamais sur Discord, deux messages simultanés et personne n'est premier.
+      void annoncerChantier(id, quete.id).catch(() => {});
       return NextResponse.json({ ok: true, queteId: quete.id });
     }
 

@@ -96,6 +96,7 @@ export function Fil({
   /** Dernière offre encore ouverte : c'est la seule sur laquelle on peut agir. */
   const visibles = fil.filter((m) => (salon === "prive" ? m.prive : !m.prive));
   const nbPrives = fil.filter((m) => m.prive).length;
+  const nbClient = fil.filter((m) => !m.prive).length;
   const offreVive = [...fil].reverse().find((m) => m.kind === "offer" && !m.acceptedAt && !m.refusedAt);
   const prixConvenu = fil.find((m) => m.kind === "offer" && m.acceptedAt);
 
@@ -118,23 +119,43 @@ export function Fil({
           client, et celle qu'on tient ENTRE vendeurs pour savoir qui vend et à
           quel prix. La seconde n'existe que pour ceux qui y ont droit — et le
           serveur ne l'envoie même pas aux autres. */}
+      {/* DEUX SALONS QU'ON NE CONFOND PAS.
+          C'étaient deux boutons identiques, distingués par la seule couleur de
+          l'actif : on écrivait dans l'un en croyant être dans l'autre — et ici
+          se tromper veut dire dire au client ce qui ne devait pas sortir.
+          Chacun a donc son pictogramme et SA couleur, tenue jusqu'au bandeau
+          et au champ de saisie : orange = le client lit, violet = entre nous. */}
       {coulisses && (
         <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-          {([["client", "Avec le client"], ["prive", `Entre nous${nbPrives ? ` (${nbPrives})` : ""}`]] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setSalon(k)}
-              style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontSize: 12, fontWeight: 600, fontFamily: "inherit",
-                border: `1px solid ${salon === k ? "var(--orange)" : "var(--border)"}`,
-                background: salon === k ? "rgba(255,140,26,.14)" : "var(--bg-3)",
-                color: salon === k ? "var(--orange)" : "var(--text-muted)" }}>
-              {l}
-            </button>
-          ))}
+          {([
+            ["client", "Avec le client", "message" as const, "var(--orange)", nbClient],
+            ["prive", "Entre nous", "lock" as const, "var(--purple)", nbPrives],
+          ] as const).map(([k, l, ic, c, n]) => {
+            const on = salon === k;
+            return (
+              <button key={k} onClick={() => setSalon(k)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 13px", borderRadius: 9, cursor: "pointer", fontSize: 12.5, fontWeight: 700, fontFamily: "inherit",
+                  border: `1px solid ${on ? c : "var(--border)"}`,
+                  background: on ? `color-mix(in srgb, ${c} 14%, transparent)` : "var(--bg-3)",
+                  color: on ? c : "var(--text-muted)" }}>
+                <Icon name={ic} size={14} />{l}
+                {n > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: "0 6px", borderRadius: 20, background: on ? `color-mix(in srgb, ${c} 22%, transparent)` : "var(--bg-2)" }}>{n}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
-      {salon === "prive" && (
-        <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, padding: "7px 10px", borderRadius: 8, background: "rgba(255,140,26,.07)", border: "1px solid rgba(255,140,26,.25)" }}>
-          <Icon name="lock" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
-          Entre détenteurs et staff. <b>Le demandeur ne voit rien de ce qui s&apos;écrit ici.</b>
+      {coulisses && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, marginBottom: 9, padding: "7px 11px", borderRadius: 8,
+          color: salon === "prive" ? "var(--purple)" : "var(--text-muted)",
+          background: salon === "prive" ? "rgba(199,125,255,.08)" : "rgba(255,140,26,.06)",
+          border: `1px solid ${salon === "prive" ? "color-mix(in srgb, var(--purple) 35%, transparent)" : "rgba(255,140,26,.22)"}` }}>
+          <Icon name={salon === "prive" ? "lock" : "eye"} size={12} style={{ flexShrink: 0 }} />
+          {salon === "prive"
+            ? <span>Entre détenteurs et staff. <b>Le demandeur ne voit rien d&apos;ici.</b></span>
+            : <span><b>Le client lit tout</b> ce que tu écris ici.</span>}
         </div>
       )}
 
@@ -214,8 +235,12 @@ export function Fil({
       <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
         <input value={msg} onChange={(e) => setMsg(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyerTexte(); } }}
-          placeholder={salon === "prive" ? "Message entre détenteurs…" : "Écrire un message…"}
-          style={{ flex: 1, minWidth: 0, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "11px 13px", color: "var(--text)", fontSize: 14, fontFamily: "inherit" }} />
+          placeholder={salon === "prive" ? "Entre nous — le client ne verra pas…" : "Écrire au client…"}
+          /* La couleur du salon tenue jusqu'ici : le champ de saisie est le
+             dernier endroit où l'on peut encore se rendre compte qu'on écrit
+             dans le mauvais. */
+          style={{ flex: 1, minWidth: 0, background: "var(--bg-3)", borderRadius: 9, padding: "11px 13px", color: "var(--text)", fontSize: 14, fontFamily: "inherit",
+            border: `1px solid ${coulisses && salon === "prive" ? "color-mix(in srgb, var(--purple) 45%, var(--border))" : "var(--border)"}` }} />
         <button className="vg-btn" onClick={envoyerTexte}>Envoyer</button>
       </div>
 

@@ -10,6 +10,8 @@ import { donjonClient, pvCourt, PLANS, TOUR_OUBLIEE } from "@/components/donjons
 import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
 import { TourOubliee } from "@/components/donjons/TourOubliee";
 import { BlocOasis } from "@/components/donjons/BlocOasis";
+import { useReglages } from "@/components/reglages/PanneauReglages";
+import type { SchemaPage } from "@/lib/reglages";
 import type { Vague } from "@/components/oasis/modele";
 
 /**
@@ -85,7 +87,39 @@ function IconeObjet({ nom }: { nom: string }) {
   return <img src={src} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />;
 }
 
+/**
+ * CE QUE LE RANG VANGUARD PEUT RÉGLER SUR CETTE PAGE.
+ *
+ * Demande de Maxime : « avoir la possibilité sur chaque page de faire un paramétrage
+ * en tant que vanguard uniquement ». Le schéma vit ICI, dans la page qu'il règle — la
+ * base ne garde que les valeurs choisies, donc ajouter un réglage ne demande aucune
+ * migration, et en retirer un le fait simplement disparaître.
+ *
+ * TOUS LES DÉFAUTS SONT L'ÉTAT ACTUEL DE LA PAGE. C'est la règle à ne pas casser : un
+ * réglage neuf ne doit rien changer tant que personne ne l'a touché, sinon poser un
+ * interrupteur modifierait le site pour toute la guilde sans que personne l'ait
+ * demandé.
+ */
+const REGLAGES_DONJONS = {
+  page: "/donjons",
+  titre: "Réglages du wiki des donjons",
+  quoi: "Ce que la page montre à toute la guilde. Les valeurs d'origine sont son état actuel.",
+  reglages: [
+    { clef: "cartes", type: "interrupteur", label: "Les cartes du jeu sur les tuiles",
+      aide: "La bande en tête de chaque tuile : le plan du client, ou une lueur élémentaire pour les six donjons qui n'ont pas de carte montrable.", defaut: true },
+    { clef: "tour", type: "interrupteur", label: "Le bloc Tour Oubliée",
+      aide: "Ses cinq étages, après la grille. Ce n'est pas une destination du téléporteur — d'où le bloc séparé.", defaut: true },
+    { clef: "oasis", type: "interrupteur", label: "Le bloc Protection de l'Oasis",
+      aide: "Les 52 vagues de la Tour Infernale. L'ancienne adresse /oasis y mène par une ancre.", defaut: true },
+    { clef: "butins", type: "nombre", label: "Butins listés sur une tuile",
+      aide: "Au-delà, la tuile affiche des points de suspension. Monter ce nombre allonge les tuiles.", defaut: 3, min: 1, max: 8 },
+  ],
+} as const satisfies SchemaPage;
+
 export function PageDonjons({ vagues }: { vagues: Vague[] }) {
+  const { valeurs, bouton, panneau } = useReglages(REGLAGES_DONJONS);
+  const voirCartes = Boolean(valeurs.cartes);
+  const nbButins = Number(valeurs.butins) || 3;
   // Halo curseur + relief sur les cartes de donjon (.fx-card), cf. VgFx.
   useCardFx();
   const dungeons = dungeonsData as Dungeon[];
@@ -149,6 +183,10 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={sousTitre} />
       <SectionTabs section="pve" />
+      {/* L'engrenage n'existe pas dans le rendu pour les autres rangs : ni grise, ni
+          masque en CSS — absent. Un bouton visible qu'on ne peut pas actionner
+          invite a cliquer pour rien. */}
+      {bouton && <div style={{ margin: "-6px 0 14px" }}>{bouton}</div>}
       {/* L'onglet « Wiki des donjons » a ete retire : il etait seul dans sa barre,
           donc il ne proposait aucun choix — la page EST le wiki. Le suivi quotidien
           et le rapport d'instances qui l'accompagnaient sont partis avec lui ; leur
@@ -204,6 +242,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
                 les uns ou les autres. Le dégradé en bas rattache l'image à la tuile
                 au lieu de la poser dessus comme une vignette collée. */}
             {(() => {
+              if (!voirCartes) return null;
               const plan = cl ? PLANS[cl.dossier] : undefined;
               /* SIX DONJONS N'ONT PAS DE CARTE MONTRABLE, et la tuile ne peut pas se
                  contenter de sauter la bande : une grille où certaines tuiles ont un
@@ -253,7 +292,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
             <div style={{ padding: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 12, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
-            {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>}
+            {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{d.drops.slice(0, nbButins).join(", ")}{d.drops.length > nbButins ? "…" : ""}</div>}
             {/* Signalé sur la carte, dans un sens comme dans l'autre : sans ça,
                 personne ne devine qu'il y a une vidéo derrière, et celui qui
                 en cherche une ouvre les fiches une par une pour rien. Le champ
@@ -283,7 +322,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           pareil. Elle répond quand même à la recherche — quelqu'un qui tape
           « tour » la cherche, et la voir disparaître pendant qu'on cherche autre
           chose évite de croire qu'elle fait partie des résultats. */}
-      {chercheTour && <TourOubliee />}
+      {chercheTour && Boolean(valeurs.tour) && <TourOubliee />}
 
       {/* Le troisième bloc, et le plus à part des trois : un événement, pas un
           donjon. Il avait sa propre page — /oasis, qui redirige maintenant ici.
@@ -291,7 +330,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           qui ne peut désigner QUE l'Oasis en ouvre le détail. « tour » n'en fait
           pas partie — il désigne aussi bien la Tour Oubliée, et déplier
           cinquante-deux vagues sur un mot ambigu répond à côté. */}
-      {chercheOasis && <BlocOasis vagues={vagues} ouvrir={!!qMin && MOTS_OASIS.includes(qMin) && !MOTS_TOUR.includes(qMin)} />}
+      {chercheOasis && Boolean(valeurs.oasis) && <BlocOasis vagues={vagues} ouvrir={!!qMin && MOTS_OASIS.includes(qMin) && !MOTS_TOUR.includes(qMin)} />}
 
       {/* La marge haute du voile vaut la hauteur de la barre de navigation (68 px)
           plus un souffle. Sans elle, une fiche assez haute pour remplir l'écran
@@ -369,6 +408,12 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           </div>
         </div>
       )}
+
+      {/* Le tiroir de réglages, rendu UNE fois et en dernier. Il se pose lui-même en
+          `position: fixed` : le mettre plus haut dans l'arbre le ferait enfermer par le
+          premier ancêtre qui porte un `transform` — piège déjà payé sur ce site, une
+          modale s'était retrouvée coincée dans sa carte. */}
+      {panneau}
     </div>
   );
 }

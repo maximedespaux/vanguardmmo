@@ -637,7 +637,7 @@ model GuildRole {
 /// être effacé de la base, son dossier doit lui survivre. `pseudo` fige le nom
 /// du moment, qui aura changé.
 model ActionMembre {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   discordId String // cible
   pseudo    String // son pseudo au moment des faits
   action    String // "role" | "guilde" | "kick" | "ban" | "coffre"
@@ -757,47 +757,44 @@ model BankRequest {
 /// le même objet sans le savoir. Ici chacun se déclare, le premier retenu
 /// verrouille la demande, et le salon Discord l'annonce.
 model OffreVente {
-  id        String      @id @default(cuid())
-  requestId String
-  request   BankRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  userId    String // le détenteur (User.id)
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String      @id @default(cuid())
+  requestId   String
+  request     BankRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  userId      String // le détenteur (User.id)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// Prix demandé. Le tarif de référence est pré-rempli ; un détenteur peut
   /// s'en écarter, l'écart s'affiche à côté — la transparence suffit à réguler.
-  prix      BigInt?
+  prix        BigInt?
   /// Part payée en Airpoints. Un paiement peut être MIXTE : personne n'a
   /// jamais le compte rond dans une seule monnaie, et refuser le mélange
   /// obligeait à renoncer à la vente ou à arrondir au détriment de quelqu'un.
   /// `prix` porte la part en périns, celui-ci la part en Airpoints.
-  prixAp    Int?
+  prixAp      Int?
   /// À combien le vendeur prend l'Airpoint, en périns. Il n'y a pas de taux
   /// officiel : c'est lui qui dit ce qu'il accepte, et l'acheteur compose sa
   /// part en connaissance de cause.
-  tauxAp    Int?
+  tauxAp      Int?
   /// Monnaie principale quand le paiement n'est pas mixte : "perins" ou
   /// "airpoints". Conservée pour les offres à monnaie unique.
-  devise    String      @default("perins")
+  devise      String      @default("perins")
   /// Quand on paie : "comptant" (défaut) ou "dette" — payé plus tard. La dette
   /// n'est ouverte qu'aux membres de la GUILDE : on ne fait pas crédit à
   /// quelqu'un qui peut disparaître du serveur demain. Ce n'est pas la même
   /// transaction, et celui qui remet l'objet doit le savoir avant de le remettre.
-  reglement String      @default("comptant")
+  reglement   String      @default("comptant")
   /// « Je l'ai bien », coché avant de discuter : sans ça on négocie un objet
   /// que personne n'a vérifié.
-  aObjet    Boolean     @default(false)
+  aObjet      Boolean     @default(false)
   /// proposee | retenue | retiree
-  statut    String      @default("proposee")
+  statut      String      @default("proposee")
   /// Un officier a regardé et dit oui. Ce n'est PAS un verrou : la vente avance
   /// sans attendre, sinon une demande dormirait jusqu'à ce qu'un staff passe.
   /// C'est une caution — le client voit qu'un tiers a validé l'échange.
-  valideePar String?
-  valideeLe  DateTime?
-  createdAt DateTime    @default(now())
-  Debt      Debt?       @relation(fields: [debtId], references: [id])
-  debtId    String?
-
-  @@unique([requestId, userId])
-  @@index([requestId])
+  valideePar  String?
+  valideeLe   DateTime?
+  createdAt   DateTime    @default(now())
+  Debt        Debt?       @relation(fields: [debtId], references: [id])
+  debtId      String?
   /// La rangée exacte d'où l'objet est sorti (« …|Glaive|R#premyth ») : une arme
   /// est rangée par rareté, et rendre au hasard ferait revenir une Épique là où
   /// une Pré-mythique était partie.
@@ -805,7 +802,10 @@ model OffreVente {
   /// L'objet est SORTI du coffre de ce détenteur, mis de côté pour cette demande.
   /// Réservé dès qu'il prend la commande : sans ça, deux acheteurs se voyaient
   /// promettre le même objet, et le coffre affichait un stock déjà vendu.
-  reserve   Boolean  @default(false)
+  reserve     Boolean     @default(false)
+
+  @@unique([requestId, userId])
+  @@index([requestId])
 }
 
 // Notification sur le SITE (cloche 🔔) — ex. « X veut ton Glaive » adressé à un détenteur.
@@ -1023,4 +1023,26 @@ model RequestRead {
 
   @@id([userId, filId])
   @@index([userId])
+}
+
+/// LES RÉGLAGES D'UNE PAGE, modifiables depuis la page elle-même.
+///
+/// Demande de Maxime : « avoir la possibilité sur chaque page de faire un
+/// paramétrage en tant que vanguard uniquement ». Une ligne par page, la clé étant
+/// son chemin (« /donjons ») : c'est l'identifiant stable, il ne dépend d'aucun
+/// libellé qu'on renommerait.
+///
+/// `data` est un blob JSON et non des colonnes, pour la même raison
+/// qu'AirGuildState et CompositionState : chaque page déclare SES réglages dans son
+/// code, et en ajouter un ne doit pas demander une migration. Le schéma vit donc
+/// côté page ; la base ne stocke que les valeurs choisies.
+///
+/// `parQui` et `updatedAt` ne sont pas décoratifs : un interrupteur mal mis fait
+/// disparaître une section pour toute la guilde, et sans trace on ne sait pas à qui
+/// demander pourquoi.
+model PageReglages {
+  page      String   @id
+  data      Json
+  parQui    String?
+  updatedAt DateTime @updatedAt
 }

@@ -56,3 +56,22 @@ export function canAccessVerified(
 }
 export function canAccessAdmin(role: Role) { return ADMIN_ROLES.includes(role); }
 export function rankValue(role: Role) { return ROLE_RANK.length - ROLE_RANK.indexOf(role); }
+
+/**
+ * QUI PEUT RÉGLER UNE PAGE — demande de Maxime : « avoir la possibilité sur chaque
+ * page de faire un paramétrage en tant que vanguard uniquement ».
+ *
+ * C'est un cran AU-DESSUS d'admin, et c'est le point de la demande : `canAccessAdmin`
+ * ouvre à quatre rôles (DIRECTION, VANGUARD, GENERAL, OFFICIER). Régler ce qu'une page
+ * montre à toute la guilde n'est pas du même ordre que valider une candidature — un
+ * interrupteur mal mis fait disparaître une section pour tout le monde, sans trace
+ * visible de qui l'a fait.
+ *
+ * DIRECTION EST INCLUS, et c'est une interprétation de ma part : « vanguard
+ * uniquement » exclut GENERAL et OFFICIER, mais DIRECTION est le rang AU-DESSUS de
+ * VANGUARD dans `ROLE_RANK`, et un rang supérieur qui perdrait un pouvoir de son
+ * subordonné serait une exception qu'on finirait par contourner. D'où la comparaison
+ * par rang plutôt qu'une liste : si Maxime veut réellement ce seul rôle, la
+ * modification tient en une ligne — `role === "VANGUARD"`.
+ */
+export function canParametrer(role: Role) { return rankValue(role) >= rankValue("VANGUARD"); }

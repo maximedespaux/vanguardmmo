@@ -1,31 +1,75 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
-import { VoletSections, type SectionVolet } from "@/components/VoletSections";
-import { useCardFx } from "@/components/VgFx";
+import { type SectionVolet } from "@/components/VoletSections";
+// La forme « relevé dans le client du jeu : <fichier> » est née avec les volets
+// de collections. Depuis la fusion c'est la même page : on reprend la brique au
+// lieu d'en redessiner une deuxième qui divergerait au premier ajustement.
+import { Source } from "@/components/collections/briques";
 import { CarteRecette, Recettes, STATUT, type Recette } from "./Piece";
 import { ArbreDuFarm, type ArbreCraft } from "./Arbre";
 
 /**
- * L'ÉCRAN DES CRAFTS. Interactif, donc client — mais la donnée reste derrière
- * /api/crafts (apiGuild) : elle n'est pas embarquée dans le paquet JS de la page.
+ * LES SIX VOLETS DE LA FAMILLE « Les crafts ». Interactifs, donc client — mais
+ * la donnée reste derrière /api/crafts (apiGuild) : elle n'est pas embarquée
+ * dans le paquet JS de la page.
  *
  * Deux sources, complémentaires et qui ne disent pas la même chose :
- *   · les 834 recettes d'échange du client, avec leurs QUANTITÉS et leur STATUT ;
- *   · les 39 arbres de craft maison, avec OÙ FARMER chaque ingrédient.
+ *   · les recettes d'échange du client, avec leurs QUANTITÉS et leur STATUT ;
+ *   · les arbres de craft maison, avec OÙ FARMER chaque ingrédient.
  * La première ne dit pas où farmer, la seconde ne dit pas combien. On les montre
  * côte à côte plutôt que d'en fabriquer une troisième qui aurait l'air complète.
+ *
+ * CE FICHIER NE DESSINE PLUS LE RAIL. /crafts porte désormais DEUX familles —
+ * ce qu'on fabrique et ce qu'on collectionne — dans un seul rail. Il n'y a donc
+ * plus un écran par famille mais un écran (Etabli) qui compose les deux listes
+ * de sections. D'où le crochet : il rend des sections, pas une page.
  */
 
 type Atelier = { titre: string; texte: string; pct: number[]; penya: number[] };
 type Metier = { metier: string; pnj: string[] };
-type Depart = {
+export type Depart = {
   genere: string;
   maison: Recette[];
   arbres: ArbreCraft[];
   ateliers: Atelier[];
   metiers: Metier[];
   total: number; actives: number; eteintes: number; orphelines: number; pnjDistincts: number;
+};
+
+/**
+ * Le titre, la ligne de sous-titre et l'icône de chaque volet, écrits UNE fois.
+ *
+ * Le rail existe dès l'arrivée, avant que le relevé soit chargé : sans cette
+ * table, le squelette et les vraies sections auraient porté deux jeux de
+ * libellés, et le rail aurait changé de mots en cours de route.
+ */
+const META: Record<string, { titre: string; sous: string; icon: IconName }> = {
+  maison: { titre: "Ce qu’AirFlyff a écrit", sous: "masques, mantras, buffs de guilde, couturier", icon: "hammer" },
+  arbre: { titre: "Où farmer chaque morceau", sous: "l’arbre maison, étage par étage", icon: "tree" },
+  comptoirs: { titre: "Les comptoirs à jetons", sous: "GvG, Colisée, FLY SHOP, fragments", icon: "coins" },
+  recherche: { titre: "Qui échange quoi", sous: "qui vend ça, et que vend celui-là", icon: "search" },
+  ateliers: { titre: "Les ateliers du jeu", sous: "les panneaux d’aide, avec leurs vrais chiffres", icon: "wrench" },
+  manques: { titre: "Ce que le client ne dit pas", sous: "pour ne pas chercher ce qui n’y est pas", icon: "help" },
+};
+/** L'ordre du rail. Il suit la lecture : ce qu'on fabrique, où le farmer, ce
+ *  qu'on achète, puis les outils de recherche et les réserves. */
+const ORDRE = ["maison", "arbre", "comptoirs", "recherche", "ateliers", "manques"] as const;
+
+/** La CSS des grilles de cette famille. Posée par l'écran qui compose la page :
+ *  ces classes ne servent qu'aux sections ci-dessous. */
+export const cssCrafts = `
+.cr-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px}
+.cr-metiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
+.cr-ateliers{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px;align-items:start}
+`;
+
+export type EcranCrafts = {
+  sections: SectionVolet[];
+  /** Incrémenté quand un clic sur un PNJ doit rouvrir la recherche. */
+  saut: number;
+  erreur: boolean;
+  d: Depart | null;
 };
 
 /** Un titre de bloc à l'intérieur d'une section, avec ce qu'il faut savoir avant de lire. */
@@ -45,6 +89,23 @@ function Bloc({ icon, titre, compte, note, children }: {
   );
 }
 
+/**
+ * CE QUE LE CLIENT NE DIT PAS — huit trous, pour ne pas chercher ce qui n'y est
+ * pas. Hors du corps du crochet : ce sont des constats de fouille, ils ne
+ * dépendent d'aucune donnée chargée, et le rail a besoin de leur nombre pour
+ * afficher sa pastille avant que le relevé arrive.
+ */
+const MANQUES: [string, React.ReactNode][] = [
+  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, échanges de nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : ces menus sont <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu n’est nulle part dans le client. Ceux-là vivent côté serveur. C’est de là que le wiki tire ses recettes — les deux relevés ne se recouvrent qu’à 22 recettes sur 856.</>],
+  ["Les chances de raffinage +1 → +20", <>Absentes. Le petit fichier qu’on prend pour elles donne autre chose : le <b>coefficient appliqué au bonus</b> selon le palier. Personne n’a les vraies probabilités.</>],
+  ["Les chances de désintégrer une arme en joyaux", <>Le panneau du jeu renvoie explicitement au site officiel plutôt que de donner les nombres.</>],
+  ["Les neuf statistiques du sertissage ultime", <>Le texte dit « les 9 statistiques » sans les nommer. Elles recoupent probablement les neuf gemmes ultimes déjà relevées, mais ce n’est pas prouvé.</>],
+  ["La table d’objets de la récolte", <>Le fichier du collecteur ne donne que les <b>délais</b> par niveau (105, 90, 75, 60, 45, 30) et la batterie maximale (1 800). Aucun objet.</>],
+  ["Les recettes de métier ou de cuisine", <>Il n’y en a pas. Les seules occurrences de « recette » sont trois quêtes coréennes de 2009.</>],
+  ["Où les PNJ sont posés", <>Aucun fichier de placement dans le relevé. C’est la seule réserve sérieuse sur les statuts de cette page.</>],
+  ["Le butin ordinaire des monstres", <>Il n’est pas dans le client : le serveur le calcule. Quand une page du site ne trouve pas d’où vient un objet, ça ne veut <b>jamais</b> dire qu’il ne tombe pas.</>],
+];
+
 /** L'avertissement qu'on répète parce qu'il change ce qu'on fait de la page. */
 function Reserve() {
   return (
@@ -60,7 +121,7 @@ function Reserve() {
   );
 }
 
-export function Atelier() {
+export function useSectionsCrafts(): EcranCrafts {
   const [d, setD] = useState<Depart | null>(null);
   const [erreur, setErreur] = useState(false);
 
@@ -69,8 +130,6 @@ export function Atelier() {
   const [comptoirs, setComptoirs] = useState<Recette[] | null>(null);
   const [q, setQ] = useState("");
   const [trouve, setTrouve] = useState<{ recettes: Recette[]; total: number } | null>(null);
-
-  useCardFx();
 
   useEffect(() => {
     fetch("/api/crafts?vue=depart")
@@ -138,11 +197,19 @@ export function Atelier() {
     setTimeout(() => document.querySelector<HTMLInputElement>("#cr-q")?.focus(), 0);
   };
 
-  if (erreur) {
-    return <p style={{ fontSize: 13, color: "var(--red)" }}>Le relevé des crafts n’a pas pu être chargé.</p>;
-  }
+  // Les six volets existent AVANT le relevé : le rail est la table des matières
+  // de la page, il ne doit ni apparaître en retard ni changer de forme quand la
+  // donnée arrive. Seul le contenu attend.
   if (!d) {
-    return <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Lecture du relevé du client…</p>;
+    return {
+      sections: ORDRE.map((c): SectionVolet => ({
+        clef: c, ...META[c], compte: null,
+        contenu: erreur
+          ? <p style={{ fontSize: 13, color: "var(--red)", margin: 0 }}>Le relevé des crafts n’a pas pu être chargé.</p>
+          : <p style={{ fontSize: 13, color: "var(--text-muted)", margin: 0 }}>Lecture du relevé du client…</p>,
+      })),
+      saut, erreur, d: null,
+    };
   }
 
   const g = (k: string) => parGroupe.get(k) ?? [];
@@ -152,10 +219,7 @@ export function Atelier() {
 
     // ── 1 · le fait maison ────────────────────────────────────────────────────
     {
-      clef: "maison",
-      titre: "Ce qu’AirFlyff a écrit",
-      sous: "masques, mantras, buffs de guilde, couturier",
-      icon: "hammer",
+      clef: "maison", ...META.maison,
       compte: d.maison.length,
       contenu: (
         <>
@@ -244,10 +308,7 @@ export function Atelier() {
 
     // ── 2 · l'arbre ───────────────────────────────────────────────────────────
     {
-      clef: "arbre",
-      titre: "Où farmer chaque morceau",
-      sous: "l’arbre maison, étage par étage",
-      icon: "tree",
+      clef: "arbre", ...META.arbre,
       compte: d.arbres.length,
       contenu: (
         <>
@@ -270,11 +331,13 @@ export function Atelier() {
 
     // ── 3 · les comptoirs ─────────────────────────────────────────────────────
     {
-      clef: "comptoirs",
-      titre: "Les comptoirs à jetons",
-      sous: "GvG, Colisée, FLY SHOP, fragments",
-      icon: "coins",
-      compte: null,
+      clef: "comptoirs", ...META.comptoirs,
+      // Les barèmes se chargent au clic : avant, le compte n'existe pas — d'où la
+      // pastille absente plutôt qu'un zéro, qui se lirait « il n'y a rien ».
+      // `|| null` et non `comptoirs ? ... : null` : quand la lecture ÉCHOUE, l'état
+      // retombe sur une liste vide, et un « 0 » dans le rail annoncerait qu'il n'y a
+      // pas de comptoir alors qu'il y en a 295. Vu à l'écran une fois.
+      compte: comptoirs?.length || null,
       contenu: (
         <>
           <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--text-muted)", margin: "0 0 14px" }}>
@@ -359,10 +422,8 @@ export function Atelier() {
 
     // ── 4 · chercher ──────────────────────────────────────────────────────────
     {
-      clef: "recherche",
-      titre: "Qui échange quoi",
+      clef: "recherche", ...META.recherche,
       sous: `${d.total} recettes, ${d.pnjDistincts} PNJ nommés`,
-      icon: "search",
       compte: null,
       contenu: (
         <>
@@ -437,10 +498,7 @@ export function Atelier() {
 
     // ── 5 · les ateliers du jeu ───────────────────────────────────────────────
     {
-      clef: "ateliers",
-      titre: "Les ateliers du jeu",
-      sous: "les panneaux d’aide, avec leurs vrais chiffres",
-      icon: "wrench",
+      clef: "ateliers", ...META.ateliers,
       compte: d.ateliers.length,
       contenu: (
         <>
@@ -474,24 +532,14 @@ export function Atelier() {
 
     // ── 6 · les trous ─────────────────────────────────────────────────────────
     {
-      clef: "manques",
-      titre: "Ce que le client ne dit pas",
-      sous: "pour ne pas chercher ce qui n’y est pas",
-      icon: "help",
-      compte: null,
+      clef: "manques", ...META.manques,
+      // Huit réserves écrites en dur ci-dessous : ce sont des CONSTATS de fouille,
+      // pas des lignes de relevé. Le compte suit donc la liste elle-même.
+      compte: MANQUES.length,
       contenu: (
         <div style={{ display: "grid", gap: 12 }}>
           <Reserve />
-          {[
-            ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, échanges de nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : ces menus sont <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu n’est nulle part dans le client. Ceux-là vivent côté serveur. C’est de là que le wiki tire ses recettes — les deux relevés ne se recouvrent qu’à 22 recettes sur 856.</>],
-            ["Les chances de raffinage +1 → +20", <>Absentes. Le petit fichier qu’on prend pour elles donne autre chose : le <b>coefficient appliqué au bonus</b> selon le palier. Personne n’a les vraies probabilités.</>],
-            ["Les chances de désintégrer une arme en joyaux", <>Le panneau du jeu renvoie explicitement au site officiel plutôt que de donner les nombres.</>],
-            ["Les neuf statistiques du sertissage ultime", <>Le texte dit « les 9 statistiques » sans les nommer. Elles recoupent probablement les neuf gemmes ultimes déjà relevées, mais ce n’est pas prouvé.</>],
-            ["La table d’objets de la récolte", <>Le fichier du collecteur ne donne que les <b>délais</b> par niveau (105, 90, 75, 60, 45, 30) et la batterie maximale (1 800). Aucun objet.</>],
-            ["Les recettes de métier ou de cuisine", <>Il n’y en a pas. Les seules occurrences de « recette » sont trois quêtes coréennes de 2009.</>],
-            ["Où les PNJ sont posés", <>Aucun fichier de placement dans le relevé. C’est la seule réserve sérieuse sur les statuts de cette page.</>],
-            ["Le butin ordinaire des monstres", <>Il n’est pas dans le client : le serveur le calcule. Quand une page du site ne trouve pas d’où vient un objet, ça ne veut <b>jamais</b> dire qu’il ne tombe pas.</>],
-          ].map(([t, corps], i) => (
+          {MANQUES.map(([t, corps], i) => (
             <div key={i} style={{ padding: "11px 13px", borderRadius: 11, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
               <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 700, marginBottom: 4 }}>
                 <Icon name="x" size={13} style={{ color: "var(--red)", flexShrink: 0 }} />{t}
@@ -499,19 +547,18 @@ export function Atelier() {
               <p style={{ fontSize: 12.5, lineHeight: 1.6, margin: 0, color: "var(--text-muted)" }}>{corps}</p>
             </div>
           ))}
+          {/* D'OÙ SORT CE VOLET. L'en-tête de la page nommait ces fichiers dans sa
+              colonne de droite ; cette colonne est partie (elle étranglait le
+              sous-titre sur un téléphone), la provenance ne devait pas partir avec.
+              Elle atterrit ici, dans le volet qui parle justement de ce que le
+              relevé contient et de ce qu'il ne contient pas. Même forme que la
+              source des volets de collections : c'est la même page maintenant. */}
+          <Source fichier="Exchange_Script.txt + character.inc (les recettes chiffrées) · propitem.txt.txt (l’arbre du farm)"
+            avertissement={<>Le relevé date du <b>client d’octobre 2025</b>. Les deux sources ne se recouvrent presque pas : celle des recettes donne les quantités et le PNJ sans dire où farmer, celle des descriptions dit où farmer sans donner les quantités.</>} />
         </div>
       ),
     },
   ];
 
-  return (
-    <div>
-      <VoletSections key={saut} sections={sections} defaut={saut ? "recherche" : undefined} />
-      <style>{`
-        .cr-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px}
-        .cr-metiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
-        .cr-ateliers{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:11px;align-items:start}
-      `}</style>
-    </div>
-  );
+  return { sections, saut, erreur, d };
 }

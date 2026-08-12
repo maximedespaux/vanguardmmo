@@ -131,9 +131,31 @@ export type HorsClasse = {
   souverain: { nom: string; type: string; description: string; cible: string; rechargeS: number | null; porteeMax: number | null; permanente: boolean }[];
   groupe: { nom: string; description: string; actif: boolean; niveauGroupe: number | null; coutPoints: number | null }[];
   couple: { nom: string; niveaux: { niveau: number; niveauCouple: number; effets: string }[] }[];
-  runes: { nom: string; description: string; nivMax: number }[];
   bonusGroupe: { niveauGroupe: number; bonus: number }[];
 };
+
+/**
+ * Le compte des compétences hors arbre. Il vit ici parce qu'il est affiché DEUX
+ * fois — la pastille du rail et la phrase d'ouverture de la section — et que
+ * deux additions écrites séparément finissent par ne plus dire la même chose.
+ */
+export const nbHorsClasse = (h: HorsClasse) => h.groupe.length + h.souverain.length + h.couple.length;
+
+// ── Le nom des classes ────────────────────────────────────────────────────
+
+/**
+ * Les libelles perimes du client, remis au nom que le jeu emploie.
+ *
+ * « Assistant » n'existe nulle part en jeu : la classe s'appelle ACOLYTE — les
+ * textes de personnage l'ecrivent 20 fois, les quetes 36 fois. Seul
+ * `propJob.inc`, d'ou sortent les noms de classe du releve, a garde l'ancien
+ * libelle. La correction se fait ici, en un seul endroit, parce que ce nom
+ * s'affiche dans le catalogue, dans les fiches et dans les chaines de promotion.
+ */
+const CLASSE_PERIMEE: Record<string, string> = { Assistant: "Acolyte" };
+
+/** Le nom d'une classe tel qu'on l'ecrit a l'ecran. */
+export const classeAffichee = (nom: string) => CLASSE_PERIMEE[nom] ?? nom;
 
 // ── Mise en français des chiffres ─────────────────────────────────────────
 

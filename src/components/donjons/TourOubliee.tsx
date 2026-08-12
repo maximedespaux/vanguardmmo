@@ -18,12 +18,15 @@ import { pvCourt, TOUR_OUBLIEE, PLANS } from "./donneesClient";
 export function TourOubliee() {
   return (
     <div style={{ marginTop: 26 }}>
-      <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+      {/* Un h2, comme le bloc Protection de l'Oasis juste en dessous : les deux
+          sont les grandes parties de la page, sous le h1 du wiki. `fontWeight: 400`
+          est explicite parce qu'un h2 arrive gras par defaut. */}
+      <h2 className="font-heading" style={{ fontSize: 12.5, fontWeight: 400, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
         La Tour Oubliée
         <span style={{ fontSize: 12, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>
           {TOUR_OUBLIEE.length} étages, {TOUR_OUBLIEE.length} cartes séparées
         </span>
-      </div>
+      </h2>
 
       <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 12, fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
         Elle n&apos;est pas dans la grille au-dessus parce qu&apos;elle n&apos;est pas dans le téléporteur :

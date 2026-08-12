@@ -332,10 +332,14 @@ export default function GuidePage() {
             tu es prêt à voir disparaître, et garde tes cartes hautes pour la fin.
           </div>
 
+          {/* La phrase qui suivait annonçait les paliers « de Baruna » — R et SR à
+              l'attaque, 12 % et 15 % en défense — comme du contenu que l'AirBuilder
+              ne proposait « pas encore ». Retirée : Baruna n'est pas intégré sur
+              AirFlyff, donc ce n'est pas un manque du builder mais du contenu qui
+              n'existe pas ici. L'annoncer envoie un joueur chercher des cartes
+              qu'aucun monstre ne lâche. */}
           <p className="gd-src" style={{ marginTop: 12 }}>
             Chaque niveau de perçage ouvre un emplacement, et chaque emplacement prend une carte.
-            Le jeu a des paliers plus hauts — R et SR à l&apos;attaque, 12 % et 15 % en défense, dits « de Baruna » —
-            que l&apos;AirBuilder ne propose pas encore.
           </p>
         </div>
 
@@ -459,16 +463,18 @@ export default function GuidePage() {
           </ul>
         </div>
 
-        {/* Il n'y a pas encore d'entree de navigation vers l'espace reserve (le
-            fichier de nav n'est pas a moi). Ce renvoi la remplace : sans lui, la
-            page de guilde n'existe pour personne. Il ne dit RIEN de son contenu —
-            un visiteur non connecte tombe sur la porte, c'est tout. */}
+        {/* Ce renvoi menait a /astuces-guilde, qui n'existe plus : ses faits ont
+            rejoint /builder/mecaniques. Le lien est donc refait vers la vraie
+            destination — une redirection existe, mais elle est la pour les URL qui
+            ont circule, pas pour la navigation interne du site.
+            Et le cadenas tombe avec la page : ce n'est plus reserve. */}
         <div className="gd-renvoi">
-          <Icon name="lock" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
           <span>
-            Tu es de Vanguard ? Il y a une seconde page d&apos;astuces, réservée aux membres :
-            ce qu&apos;on a relevé dans les fichiers du jeu sur les améliorations et l&apos;arène,
-            et qui n&apos;a pas vocation à circuler. <a href="/astuces-guilde">Astuces de guilde →</a>
+            Ce guide dit par où commencer. Ce que les fichiers du jeu disent d&apos;une pièce —
+            les gemmes dont le nom ne correspond pas à l&apos;effet, les plafonds de sertissage,
+            l&apos;échelle d&apos;amélioration, et pourquoi un build calculé en donjon ne vaut rien
+            en arène — est sur <a href="/builder/mecaniques">Les mécaniques →</a>
           </span>
         </div>
 

@@ -1,39 +1,16 @@
-import { PageHeader } from "@/components/PageHeader";
-import { PageOasis } from "@/components/oasis/PageOasis";
-import { vagues } from "./donnees";
+import { redirect } from "next/navigation";
 
 /**
- * LA PROTECTION DE L'OASIS — le contenu que le site nommait mal.
+ * « Protection de l'Oasis » et « Donjons » étaient deux pages pour une seule
+ * question : dans quoi est-ce que j'entre, et qu'est-ce qui m'y attend ? Le mode
+ * est désormais le troisième bloc de /donjons, après les 23 donjons du téléporteur
+ * et les 5 étages de la Tour Oubliée — entier, ses 52 vagues comprises.
  *
- * Il en affichait 52 paliers sous le titre « Tour sans fin », avec des noms
- * internes de monstres : « Sleepghost 1 », « Wgolem », « Colonew18 ». Trois
- * problèmes en une ligne. Le nom n'existe pas dans le jeu — le mode s'appelle
- * Protection de l'Oasis et la carte Tour Infernale. Il est faux sur le fond — le
- * client a une chaîne pour annoncer la DERNIÈRE vague. Et les noms de monstres
- * n'étaient lisibles par personne — le monstre de la première vague s'appelle
- * « Envahisseur de l'Oasis ».
- *
- * Les 52 vagues sont lues côté serveur : les 12 Ko du relevé ne descendent pas
- * dans le paquet JS de la page, mais le tableau part rendu dans le HTML.
+ * On garde l'adresse : elle a pu être partagée, et elle était indexée. L'ancre
+ * `#oasis` mène directement au bloc et l'ouvre — sans elle, on atterrirait en haut
+ * d'une page de donjons en ayant demandé l'Oasis, ce qui se lit comme un lien
+ * cassé.
  */
 export default function OasisPage() {
-  return (
-    <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader
-        // Bahara, le désert du jeu : c'est l'oasis qu'on défend qui donne son nom
-        // à l'événement.
-        art="/jeu/chargement/maploading_bahara.webp"
-        icon="tower"
-        title="Protection de l'Oasis"
-        subtitle="Les 52 vagues de la Tour Infernale : ce qui arrive sur toi, ce que ça encaisse, ce que ça frappe, et ce que ça paie. Avec ce qui reste à vérifier en jeu, dit sans le cacher."
-      />
-      <PageOasis vagues={vagues()} />
-    </div>
-  );
+  redirect("/donjons#oasis");
 }
-
-export const metadata = {
-  title: "Protection de l'Oasis — les 52 vagues de la Tour Infernale · Flyff AirFlyff",
-  description:
-    "Le mode Protection de l'Oasis d'AirFlyff, vague par vague : monstres, niveaux, points de vie, dégâts et emblèmes de protection. La tour n'est pas sans fin — elle s'arrête à la 52e vague.",
-};

@@ -1,30 +1,19 @@
-import { PageHeader } from "@/components/PageHeader";
-import { Collections } from "@/components/collections/Collections";
+import { redirect } from "next/navigation";
 
 /**
- * /collections — les systèmes « à collectionner » du jeu.
+ * /collections a fusionné dans /crafts.
  *
- * Réservée à la guilde comme les autres pages tirées du client : c'est un
- * travail de fouille qu'on partage entre nous, pas une vitrine.
+ * Les deux pages répondaient à la même question — « qu'est-ce que je peux viser,
+ * et qu'est-ce que ça demande » : ce qu'on fabrique et ce qu'on collectionne sont
+ * les deux faces du jeu de longue haleine. Les six volets des collections sont
+ * devenus une famille du rail de /crafts, aucun n'a été perdu.
  *
- * La page est mince exprès : tout le contenu est un panneau client, parce que
- * les six volets se filtrent, se cherchent et se calculent à l'écran. Rien à
- * lire en base, donc rien à faire côté serveur — l'en-tête et le titre de
- * l'onglet.
+ * On garde l'adresse — elle a pu circuler sur le Discord — mais elle mène
+ * désormais à la page unique. Une URL morte se lit comme un site cassé.
+ *
+ * Les métadonnées suivent la page qui survit : elles sont dans
+ * src/app/(guild)/crafts/page.tsx.
  */
-export const metadata = {
-  title: "Collections · Vanguard",
-  description: "Titres d'honneur, succès, anges, maîtrise d'arme, carnets de cartes et karma PK, relevés dans le client d'AirFlyff.",
-};
-
 export default function CollectionsPage() {
-  return (
-    <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
-      {/* Une créature céleste : la page contient les 20 anges, c'est sa section la
-          plus regardée. */}
-      <PageHeader art="/jeu/chargement/maploading_heaven.webp" icon="trophy" title="Collections"
-        subtitle="Titres, succès, anges, maîtrise d'arme : les systèmes du jeu qu'on décroche à la longue, chiffres du client en main." />
-      <Collections />
-    </div>
-  );
+  redirect("/crafts");
 }

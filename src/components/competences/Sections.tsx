@@ -1,18 +1,20 @@
 "use client";
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { findClass } from "@/data/classes";
 import { Cadre, Encart, Pastille, SousTitre, TD, TH } from "./ui";
-import { coutCumule, fmt, type Entree, type HorsClasse, type Lignee } from "./donnees";
+import { classeAffichee, coutCumule, fmt, nbHorsClasse, type Entree, type HorsClasse, type Lignee } from "./donnees";
 
 /**
- * Les quatre sections qui EXPLIQUENT, à côté du catalogue qui liste.
+ * Les blocs qui EXPLIQUENT, à côté du catalogue qui liste.
  *
- * Elles existent parce que les chiffres du client mentent par omission : la
+ * Ils existent parce que les chiffres du client mentent par omission : la
  * table de coût laisse croire à une courbe régulière alors qu'elle a deux murs,
  * et les paliers Maître et Héros ont un niveau 5 qui n'est pas la suite des
  * quatre premiers. Un catalogue seul ne dit rien de ça.
+ *
+ * Ils sont montés dans le rail de /classes : depuis la fusion des deux pages,
+ * les classes et leurs compétences se lisent au même endroit.
  */
 
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
@@ -196,7 +198,7 @@ export function Paliers({ entrees }: { entrees: Entree[] }) {
 
       <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 12 }}>
         La chaîne de promotion complète — quel palier vient après lequel, et où ces deux-là se
-        placent — est sur <Link href="/classes" style={{ color: "var(--orange)", textDecoration: "none" }}>la page des classes</Link>.
+        placent — est dans « Les échelles », au-dessus dans le rail.
       </p>
     </>
   );
@@ -213,7 +215,7 @@ function ListePalier({ titre, icon, items }: { titre: string; icon: "medal" | "t
             <tr key={e.id}>
               <td style={TD}>
                 <div className="font-heading" style={{ fontSize: 12.5, fontWeight: 600 }}>{e.nom}</div>
-                <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{e.classe}</div>
+                <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{classeAffichee(e.classe)}</div>
               </td>
               <td style={{ ...TD, color: "var(--green)" }}>{e.resume ?? "—"}</td>
             </tr>
@@ -232,13 +234,12 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
   return (
     <>
       <p style={{ fontSize: 13, lineHeight: 1.65, margin: "0 0 14px" }}>
-        {fmt(h.groupe.length + h.souverain.length + h.couple.length + h.runes.length)} compétences ne
-        s&apos;apprennent dans aucun arbre de classe, et n&apos;apparaissent donc pas dans la fenêtre où on
-        a l&apos;habitude de les chercher. Elles viennent d&apos;un titre, d&apos;un groupe, d&apos;un mariage ou
-        d&apos;une gravure.
+        {fmt(nbHorsClasse(h))} compétences ne s&apos;apprennent dans aucun arbre de classe, et
+        n&apos;apparaissent donc pas dans la fenêtre où on a l&apos;habitude de les chercher. Elles
+        viennent d&apos;un titre, d&apos;un groupe ou d&apos;un mariage.
       </p>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 14 }}>
         <SousTitre icon="users" apres={`${h.groupe.length} compétences`}>Le groupe</SousTitre>
         <Cadre minWidth={430}>
           <thead>
@@ -269,7 +270,7 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
         </p>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 14 }}>
         <SousTitre icon="crown" apres={`${h.souverain.length} compétences`}>Le Souverain</SousTitre>
         <Cadre minWidth={430}>
           <thead>
@@ -297,47 +298,28 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
         </p>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14 }}>
-        <div>
-          <SousTitre icon="rune" apres={`${h.runes.length} runes`}>Les runes d&apos;arme baruna</SousTitre>
-          <div style={{ display: "grid", gap: 6 }}>
-            {h.runes.map((r) => (
-              <div key={r.nom} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "9px 11px" }}>
-                <b className="font-heading" style={{ fontSize: 12.5 }}>{r.nom}</b>
-                <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.55, marginTop: 2 }}>{r.description}</div>
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 8 }}>
-            Ce ne sont pas les quatre runes de tenue et de cape : celles-ci se gravent sur une
-            <b> arme baruna</b> et déclenchent leur effet au hasard, en attaquant. « Rune du néant »
-            tue l&apos;ennemi d&apos;un seul coup.
-          </p>
-        </div>
-
-        <div>
-          <SousTitre icon="heart" apres={`${h.couple.length} compétences`}>Le couple</SousTitre>
-          <Cadre minWidth={240}>
-            <thead><tr><th style={TH}>Compétence</th><th style={TH}>Niv. couple</th><th style={TH}>Effet</th></tr></thead>
-            <tbody>
-              {h.couple.flatMap((c) => c.niveaux.map((n, i) => (
-                <tr key={`${c.nom}-${n.niveau}`}>
-                  <td style={TD}>
-                    {i === 0
-                      ? <b className="font-heading" style={{ fontSize: 12.5 }}>{c.nom}</b>
-                      : <span style={{ color: "var(--text-muted)" }}>niveau {n.niveau}</span>}
-                  </td>
-                  <td style={TD}>{n.niveauCouple}</td>
-                  <td style={{ ...TD, color: "var(--green)" }}>{n.effets}</td>
-                </tr>
-              )))}
-            </tbody>
-          </Cadre>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 8 }}>
-            Apprises automatiquement, actives seulement si les deux partenaires sont sur le même
-            canal. Un divorce les remet à zéro.
-          </p>
-        </div>
+      <div>
+        <SousTitre icon="heart" apres={`${h.couple.length} compétences`}>Le couple</SousTitre>
+        <Cadre minWidth={240}>
+          <thead><tr><th style={TH}>Compétence</th><th style={TH}>Niv. couple</th><th style={TH}>Effet</th></tr></thead>
+          <tbody>
+            {h.couple.flatMap((c) => c.niveaux.map((n, i) => (
+              <tr key={`${c.nom}-${n.niveau}`}>
+                <td style={TD}>
+                  {i === 0
+                    ? <b className="font-heading" style={{ fontSize: 12.5 }}>{c.nom}</b>
+                    : <span style={{ color: "var(--text-muted)" }}>niveau {n.niveau}</span>}
+                </td>
+                <td style={TD}>{n.niveauCouple}</td>
+                <td style={{ ...TD, color: "var(--green)" }}>{n.effets}</td>
+              </tr>
+            )))}
+          </tbody>
+        </Cadre>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 8 }}>
+          Apprises automatiquement, actives seulement si les deux partenaires sont sur le même
+          canal. Un divorce les remet à zéro.
+        </p>
       </div>
     </>
   );

@@ -75,7 +75,9 @@ export const ESPACES: Espace[] = [
     href: "/donjons",
     acces: "public",
     liens: [
-      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances, leur niveau et leurs butins." },
+      // La description dit les TROIS blocs de la page depuis que l'Oasis l'a
+      // rejointe : un contenu que le menu ne promet pas ne se trouve pas.
+      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les 23 instances, la Tour Oubliée, et les 52 vagues de l'Oasis." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige, ce qu'il rapporte." },
       // Les objets et les classes viennent du client du jeu, pas de la guilde :
@@ -83,24 +85,33 @@ export const ESPACES: Espace[] = [
       // n'étaient atteignables qu'en tapant leur adresse — et absentes du
       // sommaire, qui est généré depuis ce fichier.
       { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient." },
-      { label: "Classes", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, du Vagabond aux Héros." },
-      // 197 et non 202 : cinq compétences d'arc de l'Acrobate sont écrites DEUX
-      // fois dans propSkill.txt, copies identiques au champ près. La page
-      // /competences dédoublonne à la génération et affiche 197 — un sommaire
-      // qui annonce 202 contredit la page qu'il ouvre.
-      { label: "Compétences", href: "/competences", icon: "sparkles", desc: "Les 197 compétences, leur coût et leur progression." },
+      /* QUATRE ENTRÉES ONT DISPARU D'ICI, et ce n'est pas une perte de contenu :
+         les pages ont FUSIONNÉ dans le compartiment qui les concernait. Demande de
+         Maxime, mot pour mot : « le but est d'avoir le moins de page possible mais
+         retrouver les informations dans les bons compartiment ».
+
+         · Compétences → /classes. Une compétence n'existe que dans la lignée qui
+           l'apprend ; les deux écrans se lisaient l'un avec l'autre.
+         · Protection de l'Oasis → /donjons, troisième bloc après les 23 donjons et
+           la Tour Oubliée. Même question : dans quoi j'entre, et qu'est-ce qui m'y
+           attend.
+         · Collections → /crafts. Fabriquer et collectionner sont les deux faces du
+           même jeu de longue haleine.
+         · Astuces de guilde → /builder/mecaniques, désigné « pas utile » comme page
+           par Maxime alors que ses FAITS sont la meilleure matière des mécaniques.
+
+         Les quatre adresses restent vivantes en redirection : elles ont pu circuler
+         sur le Discord. Mais on ne navigue plus par elles — les liens internes du
+         site pointent la destination directement. Douze entrées, huit désormais. */
+      { label: "Classes & compétences", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, et les 197 compétences qu'elle apprend." },
       // « paw » et non « skull » : Donjons porte déjà skull dans ce groupe, et
       // deux voisins de la même liste avec la même icône ne se distinguent plus.
       { label: "Monstres", href: "/monstres", icon: "paw", desc: "PV, dégâts, élément — et les boss à plusieurs vies." },
-      { label: "Protection de l'Oasis", href: "/oasis", icon: "shield", desc: "Les 52 vagues de la Tour Infernale, et ce qui t'attend." },
       { label: "PNJ", href: "/pnj", icon: "users", desc: "Qui vend quoi, et où le trouver." },
-      // Réservés à la guilde : le détail des recettes et des collections est de la
-      // connaissance qu'on garde entre nous.
-      { label: "Crafts", href: "/crafts", icon: "hammer", desc: "Les recettes, leurs ingrédients et où les farmer.", acces: "guild" },
-      // « trophy » et non « star » : Prestige porte déjà star quatre lignes plus haut.
-      { label: "Collections", href: "/collections", icon: "trophy", desc: "Titres, succès, anges et maîtrise d'arme.", acces: "guild" },
-      // Réservée à la guilde : ce sont les astuces qu'on ne publie pas.
-      { label: "Astuces de guilde", href: "/astuces-guilde", icon: "lock", desc: "Ce qui se dit entre nous, et qu'on ne diffuse pas.", acces: "guild" },
+      // Réservée à la guilde : la page dit quelles recettes sont ÉTEINTES, donc où
+      // la concurrence farme dans le vide. Le libellé porte les deux sujets depuis
+      // que les collections l'ont rejointe.
+      { label: "Crafts & collections", href: "/crafts", icon: "hammer", desc: "Les recettes, l'arbre du farm, les titres, succès, anges et maîtrises.", acces: "guild" },
       // Le World Boss est une connaissance du JEU — quand il passe, ce qu'il
       // lache — avant d'etre une affaire de guilde. Sa page reste reservee aux
       // membres : c'est le lien qui porte l'exigence, pas l'espace.

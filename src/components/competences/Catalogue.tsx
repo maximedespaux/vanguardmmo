@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { VgSelect } from "@/components/VgSelect";
 // `findClass` et pas `CLASSES[cle]` : les clefs de CLASSES sont désaccentuées
@@ -9,7 +9,7 @@ import { VgSelect } from "@/components/VgSelect";
 import { findClass } from "@/data/classes";
 import { Cadre, Encart, Pastille, SousTitre, TD, TH } from "./ui";
 import {
-  PALIERS, PM_MUR, couleurPalier, effetTexte, fmt, ms, nomPalier,
+  PALIERS, PM_MUR, classeAffichee, couleurPalier, effetTexte, fmt, ms, nomPalier,
   type Entree, type Fiche, type Lignee, type Niveau, type Palier,
 } from "./donnees";
 
@@ -30,6 +30,15 @@ import {
  * La fiche s'ouvre EN PLACE, sous la ligne. Pas de fenêtre modale : la
  * progression d'une compétence de métier fait vingt lignes de tableau, et un
  * voile qui se referme au moindre clic à côté est le pire endroit pour lire ça.
+ *
+ * DEUX CHOSES POUR NE PAS DÉROULER 197 LIGNES, depuis que le catalogue vit dans
+ * le rail de /classes :
+ *  · la classe choisie en haut de page arrive par `ligneeChoisie` — on atterrit
+ *    donc sur les ~34 compétences de SA lignée, groupées par palier, et pas sur
+ *    les 197 ;
+ *  · les lignes fermées tiennent sur deux colonnes. La ligne ouverte, elle,
+ *    reprend toute la largeur (`gridColumn: 1 / -1`) : sa fiche porte un tableau
+ *    de treize colonnes, illisible dans une demi-largeur.
  */
 
 const sansAccent = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -57,10 +66,22 @@ const COLONNES: Record<string, { titre: string; ecrit: (v: number | null | undef
 const valeurDegats = (n: Niveau) =>
   n.dmax == null ? "—" : n.dmin != null && n.dmin !== n.dmax ? `${fmt(n.dmin)}–${fmt(n.dmax)}` : fmt(n.dmax);
 
-export function Catalogue({ entrees, lignees }: { entrees: Entree[]; lignees: Lignee[] }) {
+export function Catalogue({ entrees, lignees, ligneeChoisie = "tous", embleme }: {
+  entrees: Entree[];
+  lignees: Lignee[];
+  /** La classe choisie en haut de page, déjà résolue en clef de lignée du relevé. */
+  ligneeChoisie?: string;
+  /** L'emblème officiel d'un nom de classe. Passé par la page, qui possède la
+   *  chaîne de promotion — le relevé ne connaît que des noms. */
+  embleme?: (classe: string) => string | null;
+}) {
   const [q, setQ] = useState("");
-  const [lignee, setLignee] = useState("tous");
+  const [lignee, setLignee] = useState(ligneeChoisie);
   const [palier, setPalier] = useState<"tous" | Palier>("tous");
+  // Changer de classe en haut de page refiltre le catalogue : sinon on choisit
+  // « Arcaniste » et la liste continue de montrer le Templier, trois sections
+  // plus bas. Le filtre reste manoeuvrable ensuite, c'est un point de depart.
+  useEffect(() => { setLignee(ligneeChoisie); }, [ligneeChoisie]);
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [fiches, setFiches] = useState<Record<string, Fiche | "chargement">>({});
   // Une compétence déjà lue ne se redemande pas : la fiche ne bouge jamais.
@@ -107,17 +128,27 @@ export function Catalogue({ entrees, lignees }: { entrees: Entree[]; lignees: Li
     }
     if (palier !== "tous") base = base.filter((e) => e.palier === palier);
     const k = sansAccent(q.trim());
-    if (k) base = base.filter((e) => sansAccent(`${e.nom} ${e.classe} ${e.resume ?? ""} ${e.famille ?? ""}`).includes(k));
+    // La recherche porte sur le nom AFFICHÉ de la classe : taper « acolyte »
+    // doit trouver les compétences que le fichier range sous « Assistant ».
+    if (k) base = base.filter((e) => sansAccent(`${e.nom} ${classeAffichee(e.classe)} ${e.resume ?? ""} ${e.famille ?? ""}`).includes(k));
     return base;
   }, [entrees, lignee, palier, q, parLignee]);
 
-  /** Groupé par palier quand une lignée est choisie : c'est là que l'ordre parle. */
+  /** Groupé par palier quand une lignée est choisie : c'est là que l'ordre parle.
+   *  Le sous-titre porte le nom de la classe de ce palier — « Métier 2 » seul ne
+   *  dit pas qu'on parle du Chevalier. */
   const groupes = useMemo(() => {
-    if (lignee === "tous" || palier !== "tous") return [{ titre: "", items: liste }];
+    if (lignee === "tous" || palier !== "tous") return [{ titre: "", classe: null as string | null, items: liste }];
+    const chaine = parLignee.get(lignee)?.chaine ?? [];
     return PALIERS
-      .map((p) => ({ titre: p.nom, cle: p.cle, items: liste.filter((e) => e.palier === p.cle) }))
+      .map((p, i) => {
+        // Au palier Vagabond, le nom du palier EST le nom de la classe : le
+        // repeter donnait « Vagabond · Vagabond · 3 ».
+        const nom = chaine[i] ? classeAffichee(chaine[i]) : null;
+        return { titre: p.nom, classe: nom === p.nom ? null : nom, items: liste.filter((e) => e.palier === p.cle) };
+      })
       .filter((g) => g.items.length > 0);
-  }, [liste, lignee, palier]);
+  }, [liste, lignee, palier, parLignee]);
 
   const l = lignee === "tous" ? null : parLignee.get(lignee);
 
@@ -138,15 +169,15 @@ export function Catalogue({ entrees, lignees }: { entrees: Entree[]; lignees: Li
       {/* Quand une lignée est choisie, on annonce ce qu'elle pèse : c'est la
           réponse à « et si je monte tout ? », qui ne se lit pas dans la liste. */}
       {l && (
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 13, padding: "11px 14px",
+        <div style={{ display: "flex", alignItems: "center", gap: 11, flexWrap: "wrap", marginBottom: 11, padding: "9px 12px",
           background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11 }}>
           {findClass(l.cle)?.embleme && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={findClass(l.cle)!.embleme} alt="" width={34} height={34} style={{ objectFit: "contain", flexShrink: 0 }} />
+            <img src={findClass(l.cle)!.embleme} alt="" width={30} height={30} style={{ objectFit: "contain", flexShrink: 0 }} />
           )}
-          <div style={{ minWidth: 0, flex: "1 1 200px", fontSize: 12.5, color: "var(--text-muted)" }}>
-            <b className="font-heading" style={{ color: "var(--text)", fontSize: 13.5 }}>{l.chaine.join(" → ")}</b>
-            <div style={{ marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ minWidth: 0, flex: "1 1 200px", fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+            <b className="font-heading" style={{ color: "var(--text)", fontSize: 13 }}>{l.chaine.map(classeAffichee).join(" → ")}</b>
+            <div style={{ marginTop: 1 }}>
               {l.nbCompetences} compétences · {fmt(l.coutPoints)} points pour tout monter au maximum
             </div>
           </div>
@@ -160,46 +191,61 @@ export function Catalogue({ entrees, lignees }: { entrees: Entree[]; lignees: Li
       </div>
 
       {groupes.map((g) => (
-        <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 16 : 0 }}>
-          {g.titre && <SousTitre icon="layers" apres={`${g.items.length}`}>{g.titre}</SousTitre>}
-          <div style={{ display: "grid", gap: 7 }}>
+        <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 14 : 0 }}>
+          {g.titre && <SousTitre icon="layers" apres={`${g.classe ? `${g.classe} · ` : ""}${g.items.length}`}>{g.titre}</SousTitre>}
+          <div className="cp-liste">
             {g.items.map((e) => (
               <Ligne key={e.id} e={e} ouvert={ouvert === e.id} onClick={() => void ouvrir(e.id)}
-                fiche={fiches[e.id]} suivre={suivre} />
+                fiche={fiches[e.id]} suivre={suivre} embleme={embleme?.(e.classe) ?? null} />
             ))}
           </div>
         </div>
       ))}
+
+      <style>{`
+        /* Deux colonnes de lignes fermees, une seule pour la fiche ouverte : sa
+           progression fait treize colonnes de tableau, qui ne rentrent pas dans
+           une demi-largeur. Le pas de 320 px est le point ou le nom, la pastille
+           de palier et le resume tiennent encore sans se couper. */
+        .cp-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:6px;align-items:start}
+        .cp-liste>.cp-ouvert{grid-column:1/-1}
+      `}</style>
     </>
   );
 }
 
 /** Une ligne du catalogue, et la fiche qu'elle déplie. */
-function Ligne({ e, ouvert, onClick, fiche, suivre }: {
-  e: Entree; ouvert: boolean; onClick: () => void; fiche: Fiche | "chargement" | undefined; suivre: (id: string) => void;
+function Ligne({ e, ouvert, onClick, fiche, suivre, embleme }: {
+  e: Entree; ouvert: boolean; onClick: () => void; fiche: Fiche | "chargement" | undefined;
+  suivre: (id: string) => void; embleme: string | null;
 }) {
   const c = couleurPalier(e.palier);
   return (
-    <div id={`comp-${e.id}`} style={{ background: "var(--bg-2)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`, borderRadius: 11, overflow: "hidden" }}>
-      <button onClick={onClick} className="fx-card" style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", textAlign: "left",
-        padding: "11px 13px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "var(--text)" }}>
+    <div id={`comp-${e.id}`} className={ouvert ? "cp-ouvert" : undefined}
+      style={{ background: "var(--bg-2)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`, borderRadius: 10, overflow: "hidden" }}>
+      <button onClick={onClick} className="fx-card" style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", textAlign: "left",
+        padding: "8px 10px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "var(--text)" }}>
+        {embleme && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={embleme} alt="" width={24} height={24} style={{ objectFit: "contain", flexShrink: 0 }} />
+        )}
         <span style={{ minWidth: 0, flex: 1 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <b className="font-heading" style={{ fontSize: 14 }}>{e.nom}</b>
+          <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+            <b className="font-heading" style={{ fontSize: 13 }}>{e.nom}</b>
             <Pastille texte={nomPalier(e.palier)} couleur={c} />
             {e.aPrerequis && <Pastille texte="prérequis" couleur="var(--text-muted)" titre="Une autre compétence doit être montée avant" />}
           </span>
-          <span style={{ display: "block", fontSize: 12, color: "var(--text-muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>
-            {e.classe}
-            {e.nivPerso > 1 && ` · niveau ${e.nivPerso}`}
-            {` · jusqu'au niveau ${e.nivMax}`}
+          <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", marginTop: 1, lineHeight: 1.4, fontVariantNumeric: "tabular-nums" }}>
+            {classeAffichee(e.classe)}
+            {e.nivPerso > 1 && ` · niv. ${e.nivPerso}`}
+            {` · jusqu'à niv. ${e.nivMax}`}
             {e.resume && ` · ${e.resume}`}
           </span>
         </span>
-        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={15} style={{ color: ouvert ? "var(--orange)" : "var(--text-muted)", flexShrink: 0 }} />
+        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={14} style={{ color: ouvert ? "var(--orange)" : "var(--text-muted)", flexShrink: 0 }} />
       </button>
       {ouvert && (
-        <div style={{ borderTop: "1px solid var(--border)", padding: "14px 13px 16px", background: "var(--bg-3)" }}>
+        <div style={{ borderTop: "1px solid var(--border)", padding: "13px 13px 15px", background: "var(--bg-3)" }}>
           {fiche === "chargement" || fiche === undefined
             ? <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Lecture de la fiche…</div>
             : <FicheDetail f={fiche} suivre={suivre} />}
@@ -235,7 +281,7 @@ function FicheDetail({ f, suivre }: { f: Fiche; suivre: (id: string) => void }) 
       {f.desc && <p style={{ fontSize: 13, lineHeight: 1.6, margin: "0 0 13px", color: "var(--text)" }}>{f.desc}</p>}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(118px,1fr))", gap: "11px 14px", marginBottom: 14 }}>
-        <Champ label="Classe" valeur={f.classe} />
+        <Champ label="Classe" valeur={classeAffichee(f.classe)} />
         <Champ label="Palier" valeur={nomPalier(f.palier)} />
         <Champ label="École" valeur={f.famille} />
         <Champ label="Niveau requis" valeur={f.nivPerso > 1 ? f.nivPerso : "aucun"} />

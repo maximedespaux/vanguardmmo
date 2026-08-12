@@ -73,6 +73,20 @@ export function Anges({ anges, poudre, source }: {
         </p>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+          {/* L'icône de l'ange choisi. Les vingt anges du relevé portent tous la
+              leur, mais un <select> ne peut pas afficher d'image : sans cette
+              tuile, les cinq anges qui se montent ne se distinguaient que par
+              leur nom, alors qu'en jeu on les reconnaît à leur apparence. */}
+          <span style={{
+            width: 40, height: 40, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "var(--bg-3)", border: "1px solid var(--border)", overflow: "hidden",
+          }}>
+            {ange.ic ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={`/jeu/icones/${ange.ic}`} alt="" width={32} height={32}
+                style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+            ) : <Icon name="wings" size={18} style={{ color: "var(--text-muted)" }} />}
+          </span>
           <label style={{ display: "grid", gap: 4, flex: "1 1 210px", minWidth: 0 }}>
             <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Ton ange</span>
             <select value={choisi} onChange={(e) => setChoisi(Number(e.target.value))} className="vg-select" style={{ width: "100%" }}>

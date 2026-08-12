@@ -6,14 +6,19 @@
  *   · « Protection de l'Oasis » est le MODE (16 chaînes IDS_OASIS_PROTECTION_*) ;
  *   · « Tour Infernale » est la CARTE sur laquelle il se joue (monde 8, WdTowermap) ;
  *   · « Tour Oubliée » est autre chose — cinq étages de donjon, plus un objet du
- *     même nom. Rien à voir, et c'est la confusion la plus facile à faire ;
+ *     même nom. Rien à voir, et c'est la confusion la plus facile à faire. Elle
+ *     est désormais le bloc voisin du nôtre sur /donjons, ce qui rend la mise en
+ *     garde plus utile encore : les deux se lisent à quinze centimètres l'un de
+ *     l'autre ;
  *   · « Tour sans fin » n'existe nulle part dans le jeu. C'est le nom que notre
  *     relevé maison lui donnait, et il ment sur le fond : le client a une chaîne
  *     « Vous venez de terminer la dernière vague ». Il y a une fin, à la 52e.
  *
  * Ce fichier ne contient AUCUNE lecture de fichier : il est importé aussi bien
  * par la page (serveur) que par les panneaux (navigateur). Le chargement des 52
- * vagues vit dans src/app/(public)/oasis/donnees.ts, côté serveur uniquement.
+ * vagues vit dans src/app/(public)/donjons/donnees.ts, côté serveur uniquement —
+ * il a suivi la page : la Protection de l'Oasis n'a plus d'adresse à elle, c'est
+ * le troisième bloc de /donjons, et /oasis y redirige.
  */
 
 export type MonstreVague = {

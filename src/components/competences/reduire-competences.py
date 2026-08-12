@@ -29,6 +29,10 @@ ACC = {
     "Elementaliste": "Élémentaliste", "Elementaliste Maitre": "Élémentaliste Maître",
     "Elementaliste Heros": "Élémentaliste Héros",
     "Arbaletrier": "Arbalétrier", "Envouteur": "Envoûteur",
+    # « Assistant » n'existe pas en jeu : la classe s'appelle ACOLYTE (20 fois
+    # dans les textes de personnage, 36 dans les quetes). Seul propJob.inc, d'ou
+    # sortent ces libelles, a garde l'ancien nom.
+    "Assistant": "Acolyte",
     "Chevalier Maitre": "Chevalier Maître", "Chevalier Heros": "Chevalier Héros",
     "Lame Maitre": "Lame Maître", "Lame Heros": "Lame Héros",
     "Baladin Maitre": "Baladin Maître", "Baladin Heros": "Baladin Héros",
@@ -110,7 +114,8 @@ PALIER_CLE = {
 }
 
 # Les 44 lignes « Commune (toutes classes) » ne sont pas des competences de
-# joueur : ce sont les etats infliges par les monstres et les runes baruna.
+# joueur : ce sont les etats infliges par les monstres, plus les runes d'arme —
+# lesquelles ne sont pas integrees au serveur et ne sont donc plus versees.
 # Elles sortent du catalogue (elles ont leur propre section, en dur dans la page).
 brut = [c for c in d["competences"] if c["palier"] in PALIER_CLE]
 assert len(brut) == 202, len(brut)
@@ -228,10 +233,13 @@ for p in d["panoplies"]:
         print(f"  corrige {p['classe']}: {p['coutTotalPointsCompetence']} -> {lignees[-1]['coutPoints']}"
               f" ({p['nbCompetences']} -> {len(ids)} competences)")
 
-# ── Ce qui ne s'apprend pas dans un arbre de classe : Souverain, groupe, couple,
-#    runes d'arme baruna. Quatre familles minuscules, une seule chose en commun —
-#    aucune n'apparait dans l'arbre de competences du jeu, donc personne ne les
-#    trouve en cherchant la ou il cherche d'habitude.
+# ── Ce qui ne s'apprend pas dans un arbre de classe : Souverain, groupe,
+#    couple. Trois familles minuscules, une seule chose en commun — aucune
+#    n'apparait dans l'arbre de competences du jeu, donc personne ne les trouve
+#    en cherchant la ou il cherche d'habitude.
+#
+#    Les runes d'arme gravees, elles, ne sont PAS versees : la famille d'objets
+#    qui les porte n'est pas integree au serveur, donc la page ne la montre pas.
 REACC_TEXTE = [
     ("Benediction", "Bénédiction"), ("Teleportation", "Téléportation"),
     ("Teleporte", "Téléporte"), ("Tresor", "Trésor"),
@@ -275,10 +283,6 @@ couple = [{
                 for n in c["niveaux"]],
 } for c in d["competencesCouple"]]
 
-runes = [{"nom": texte(r["nom"]), "description": texte(r["description"]),
-          "nivMax": max((n["niveau"] for n in r["niveaux"]), default=1)}
-         for r in d["runesArmeBaruna"]]
-
 sortie = {
     "source": d["source"],
     "fichiers": d["fichiers"],
@@ -289,7 +293,7 @@ sortie = {
     # page plutot que d'annoncer 197 sans expliquer l'ecart avec les 202 relevees.
     "doublons": doublons,
     "horsClasse": {
-        "souverain": souverain, "groupe": groupe, "couple": couple, "runes": runes,
+        "souverain": souverain, "groupe": groupe, "couple": couple,
         # La derniere ligne du client porte « niveau de groupe 1000 » : c'est une
         # sentinelle de fin de table, pas un palier atteignable. Elle sort.
         "bonusGroupe": [{"niveauGroupe": b["niveauGroupe"], "bonus": b["bonusPourCent"]}

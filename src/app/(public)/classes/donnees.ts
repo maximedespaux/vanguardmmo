@@ -2,13 +2,22 @@
 //  LA CHAÎNE DE PROMOTION — donnees extraites du client AirFlyff
 //
 //  Genere depuis `competences.json` (fouille du client, octobre 2025), qui vit
-//  hors du depot : ce fichier en est la copie reduite — seulement ce que la page
-//  affiche, pas les 202 fiches completes ni leur progression niveau par niveau.
-//  Si un jour on veut le simulateur de competences, c'est la source complete
-//  qu'il faudra verser, pas ce fichier.
+//  hors du depot : ce fichier en est la copie reduite — la STRUCTURE de la
+//  chaine (noms, emblemes, paliers) et le detail des competences de palier, pas
+//  les 197 fiches completes ni leur progression niveau par niveau. Celles-la
+//  arrivent par `/api/competences`, qui lit `public/wiki/competences.json`.
 //
 //  Les libelles sont reaccentues ici : le JSON de la fouille est desaccentue
 //  (« Elementaliste Maitre »), ce qui ne se montre pas a l'ecran.
+//
+//  DEDOUBLONNAGE — corrige a la main le 2026-08-12, quand les deux pages ont
+//  fusionne et se sont contredites a l'ecran. propSkill.txt ecrit DEUX FOIS les
+//  cinq competences d'arc de l'Acrobate : ce fichier comptait donc 21 competences
+//  pour l'Acrobate (16) et 1 284 748 points pour la Sylphide et l'Arbaletrier
+//  (988 398), soit cinq competences de plafond 20 en trop — 5 x 59 270 points.
+//  Les valeurs sont desormais celles du releve dedoublonne, et la page recalcule
+//  de toute facon chaque chiffre depuis `/api/competences` quand il repond :
+//  ce fichier ne sert plus que de repli.
 // ════════════════════════════════════════════════════════════════════════
 
 /** Les six marches de la chaine. Le nom du palier, pas celui de la classe. */
@@ -440,10 +449,10 @@ export const LIGNEES: Lignee[] = [
         "nom": "Acrobate",
         "embleme": "/jeu/classes/jobacrobat.webp",
         "palier": "metier1",
-        "nbCompetences": 21,
+        "nbCompetences": 16,
         "niveauMaxCompetence": 20,
         "niveauRequis": null,
-        "coutPoints": 1244670
+        "coutPoints": 948320
       },
       {
         "nom": "Baladin",
@@ -482,9 +491,9 @@ export const LIGNEES: Lignee[] = [
         "coutPoints": 1888
       }
     ],
-    "nbCompetences": 38,
-    "coutPoints": 1284748,
-    "sommeNiveauxMax": 560,
+    "nbCompetences": 33,
+    "coutPoints": 988398,
+    "sommeNiveauxMax": 460,
     "maitre": {
       "nom": "Expertise du yo-yo",
       "description": "Augmente considérablement les dégâts infligés avec le yo-yo ainsi que la puissance d'attaque du Jester",
@@ -599,10 +608,10 @@ export const LIGNEES: Lignee[] = [
         "nom": "Acrobate",
         "embleme": "/jeu/classes/jobacrobat.webp",
         "palier": "metier1",
-        "nbCompetences": 21,
+        "nbCompetences": 16,
         "niveauMaxCompetence": 20,
         "niveauRequis": null,
-        "coutPoints": 1244670
+        "coutPoints": 948320
       },
       {
         "nom": "Ranger",
@@ -641,9 +650,9 @@ export const LIGNEES: Lignee[] = [
         "coutPoints": 1888
       }
     ],
-    "nbCompetences": 38,
-    "coutPoints": 1284748,
-    "sommeNiveauxMax": 560,
+    "nbCompetences": 33,
+    "coutPoints": 988398,
+    "sommeNiveauxMax": 460,
     "maitre": {
       "nom": "Expertise de l'arc",
       "description": "Augmente considérablement les dégâts infligés avec un arc",

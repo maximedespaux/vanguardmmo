@@ -220,6 +220,47 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     ? `${spec.nom}${resumerPiece(choix) ? ` — ${resumerPiece(choix)}` : ""}`
     : "";
 
+  /**
+   * LA PANOPLIE — les trois pièces sœurs de celle qu'on regarde.
+   *
+   * Demande de Maxime : « quand on intègre par exemple botte Yggdrasil, la possibilité
+   * de mettre la panoplie entièrement pour éviter de perdre du temps ». Le code disait
+   * déjà le besoin sans le combler — voir le commentaire dans `ajouter` : « composer
+   * la pièce suivante d'un set repart presque toujours des mêmes valeurs ».
+   *
+   * LA RÈGLE, VÉRIFIÉE SUR LES DONNÉES avant d'être écrite : dans le relevé de
+   * l'AirBuilder, un ensemble d'armure est l'accord de trois champs — `tier` (la
+   * lignée, « Éternel »), `cls` (la classe) et `sex`. Il y a 64 signatures de ce
+   * genre, et LES 64 couvrent exactement les quatre emplacements d'armure. Aucune
+   * n'est incomplète, ce qui est la preuve que la règle est la bonne : un découpage
+   * faux laisserait des ensembles à deux ou trois pièces.
+   *
+   * `sex` fait partie de la signature et ce n'est pas un détail : « Bottes Flora » est
+   * la version féminine de « Bottes Fortis ». Les confondre proposerait à un joueur
+   * une pièce qu'il ne peut pas porter.
+   *
+   * L'ARME ET LE BOUCLIER N'EN FONT PAS PARTIE. On ne les ajoute donc pas : une
+   * panoplie annoncée « complète » qui embarquerait une arme d'une autre lignée
+   * mentirait sur ce qu'on commande.
+   */
+  const SLOTS_PANOPLIE = ["helmet", "suit", "gauntlet", "boots"] as const;
+  const panoplie = useMemo(() => {
+    if (!choisi || !SLOTS_PANOPLIE.includes(slot as (typeof SLOTS_PANOPLIE)[number])) return [];
+    const meme = (o: ItemBrut) =>
+      (o.tier ?? "") === (choisi.tier ?? "") &&
+      (o.cls ?? "") === (choisi.cls ?? "") &&
+      (o.sex ?? "") === (choisi.sex ?? "");
+    return SLOTS_PANOPLIE
+      .map((s) => ({ slot: s, piece: (items[s] ?? []).find(meme) }))
+      .filter((x): x is { slot: (typeof SLOTS_PANOPLIE)[number]; piece: ItemBrut } => !!x.piece);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choisi, slot, items]);
+
+  /** Ce qui manque au panier : on ne propose pas d'ajouter ce qu'on y a déjà mis. */
+  const panoplieManquante = panoplie.filter(
+    (x) => !panier.some((p) => p.spec.nom === x.piece.n)
+  );
+
   const ajouter = () => {
     if (!spec) return;
     /* L'estimation est OBLIGATOIRE, une par objet. Sans elle, une commande part

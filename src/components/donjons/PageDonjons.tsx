@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
-import { donjonClient, pvCourt, TOUR_OUBLIEE } from "@/components/donjons/donneesClient";
+import { donjonClient, pvCourt, PLANS, TOUR_OUBLIEE } from "@/components/donjons/donneesClient";
 import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
 import { TourOubliee } from "@/components/donjons/TourOubliee";
 import { BlocOasis } from "@/components/donjons/BlocOasis";
@@ -188,7 +188,69 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           // qu'il faut abattre, et l'écart va de 85 400 à 570 millions.
           const grosPV = cl?.monstres.length ? Math.max(...cl.monstres.map(m => m.pv)) : 0;
           return (
-          <div key={d.id} className="fx-card" onClick={() => setSel(d)} style={{ ...card, padding: 16, marginBottom: 0, cursor: "pointer" }}>
+          <div key={d.id} className="fx-card" onClick={() => setSel(d)} style={{ ...card, padding: 0, marginBottom: 0, cursor: "pointer", overflow: "hidden" }}>
+            {/* LA CARTE DU DONJON EN TÊTE DE TUILE. Vingt-trois tuiles de texte sur
+                une page qui dispose de quinze plans du jeu, c'était le reproche de
+                Maxime — « je n'ai pas vu un grand changement » — et il était juste.
+
+                `PLANS[dossier]` peut manquer, et c'est VOULU : six donjons n'ont rien
+                de montrable, dont quatre dont la vue aérienne a été retirée parce
+                qu'elle ne montrait qu'un carré vert ou du noir. La tuile retombe
+                alors sur sa mise en page d'origine — mieux vaut pas d'image qu'un
+                carré vide.
+
+                `aspectRatio` et non une hauteur fixe : les plans du client sont des
+                4/3 et les vues aériennes des carrés ; une hauteur imposée écraserait
+                les uns ou les autres. Le dégradé en bas rattache l'image à la tuile
+                au lieu de la poser dessus comme une vignette collée. */}
+            {(() => {
+              const plan = cl ? PLANS[cl.dossier] : undefined;
+              /* SIX DONJONS N'ONT PAS DE CARTE MONTRABLE, et la tuile ne peut pas se
+                 contenter de sauter la bande : une grille où certaines tuiles ont un
+                 bandeau et d'autres non partait en dents de scie — constaté à l'écran,
+                 pas supposé.
+
+                 On ne met donc PAS une fausse carte. On met une lueur du jeu
+                 (public/jeu/decor/, treize textures qui ne servaient nulle part), et
+                 on la fait DIRE quelque chose : sa couleur suit l'élément du donjon.
+                 La bande garde la même hauteur, la grille s'aligne, et le libellé
+                 avoue franchement qu'il n'y a pas de plan — au lieu de laisser croire
+                 qu'on regarde une carte. */
+              if (!plan) {
+                const LUEUR: Record<string, string> = {
+                  Feu: "crystalglow05", Eau: "crystalglow01", Électricité: "crystalglow06",
+                  Electricite: "crystalglow06", Vent: "crystalglow07", Terre: "crystalglow06",
+                };
+                const f = LUEUR[d.elem] ?? "aurora3";
+                return (
+                  <div style={{ position: "relative", aspectRatio: "16 / 7", overflow: "hidden", borderBottom: "1px solid var(--border)", background: "var(--bg-3)" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/jeu/decor/${f}.webp`} alt="" aria-hidden="true"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", opacity: .38 }} />
+                    <span aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", opacity: .55 }}>
+                      <Icon name={d.icon as IconName} size={30} />
+                    </span>
+                    <span style={{ position: "absolute", left: 8, bottom: 6, fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", background: "rgba(13,13,17,.6)", borderRadius: 4, padding: "1px 6px" }}>
+                      pas de carte dans le client
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <div style={{ position: "relative", aspectRatio: "16 / 7", overflow: "hidden", borderBottom: "1px solid var(--border)" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={plan.src} alt="" aria-hidden="true"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", filter: plan.filtre, opacity: .92 }} />
+                  <span aria-hidden="true" style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(13,13,17,0) 40%, rgba(13,13,17,.85) 100%)" }} />
+                  {/* Le genre est dit, comme sur la fiche : une vue aérienne n'est pas
+                      un plan, et l'annoncer comme tel promettait une carte lisible. */}
+                  <span style={{ position: "absolute", left: 8, bottom: 6, fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", background: "rgba(13,13,17,.6)", borderRadius: 4, padding: "1px 6px" }}>
+                    {plan.genre === "aerien" ? "vue aérienne" : "plan du client"}
+                  </span>
+                </div>
+              );
+            })()}
+            <div style={{ padding: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 12, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
             {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{d.drops.slice(0, 3).join(", ")}{d.drops.length > 3 ? "…" : ""}</div>}
@@ -208,6 +270,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
                 <Icon name="video" size={11} />{d.video ? "Vidéo disponible" : "Pas encore de vidéo"}
               </div>
             )}
+            </div>
           </div>
           );
         })}

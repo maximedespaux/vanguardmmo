@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiGuild } from "@/lib/access";
 import fs from "fs";
 import path from "path";
 
@@ -18,11 +17,26 @@ function loadCatalog() {
   return CATALOG;
 }
 
-// GET /api/shop — catalogue SHOPPABLE pour les membres : uniquement les articles en stock
-// dans le coffre commun, avec prix + icône. Aucune donnée sensible (dettes/membres/log).
+/**
+ * GET /api/shop — le catalogue du coffre commun : les articles EN STOCK, avec leur
+ * categorie, leur classe, leur prix, leur rarete, leur quantite et leur icone.
+ *
+ * CETTE ROUTE EST OUVERTE A TOUS, et c'est un choix, pas un oubli. Demande de Maxime :
+ * « avoir l'espace boutique en visualisation publique pour attirer et donner envie [...]
+ * mais inutilisable sans connexion ». Une vitrine vide n'attire personne : il faut que
+ * le visiteur voie le vrai stock et les vrais prix.
+ *
+ * CE QU'ELLE EXPOSE A ETE RELU LIGNE PAR LIGNE avant de retirer le garde : nom,
+ * categorie, classe, prix, tarifs par rarete, stock, unite, icone. AUCUN nom de membre,
+ * AUCUNE dette, AUCUNE commande, AUCUN journal. C'est un etalage, pas un registre — et
+ * le commentaire d'origine le disait deja.
+ *
+ * CE QUI GARDE LA PORTE, puisque celle-ci s'ouvre : /api/bank-request, qui enregistre
+ * une commande, reste garde par apiGuild(). Un visiteur voit donc l'etal et ne peut rien
+ * en sortir. Si un jour cette route se met a renvoyer autre chose — un nom, une dette,
+ * un historique — LE GARDE DOIT REVENIR EN MEME TEMPS.
+ */
 export async function GET() {
-  const a = await apiGuild();
-  if ("error" in a) return a.error;
 
   const { bankItems, icons, bankCats } = loadCatalog();
   const row = await prisma.airGuildState.findUnique({ where: { id: "main" } });

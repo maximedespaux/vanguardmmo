@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { BandeauVitrine } from "@/components/BandeauVitrine";
+import type { EtatVisiteur } from "@/lib/vitrine";
 import { PageHeader } from "@/components/PageHeader";
 import { VgSelect } from "@/components/VgSelect";
 import { Icon, type IconName } from "@/components/Icon";
@@ -120,7 +122,14 @@ const fmt = (n: string | number | null) => (n == null ? "?" : Number(n).toLocale
  * objet du coffre, le staff répond, on s'arrange dans le fil.
  */
 
-export function EcranEconomie() {
+/**
+ * `etat` vient du serveur (voir la page) : un ecran client ne peut pas lire la session
+ * lui-meme, et le lui faire deviner depuis le navigateur serait faux ET contournable.
+ * Le defaut ouvre les gestes — l'ecran vit aussi dans des contextes deja gardes, et un
+ * defaut ferme y aurait grise des boutons pour des membres.
+ */
+export function EcranEconomie({ etat }: { etat?: EtatVisiteur }) {
+  const peutAgir = etat?.peutAgir ?? true;
   // Halo suivant le curseur + léger relief sur les panneaux (.fx-card), comme
   // sur l'accueil et le dashboard. Un seul écouteur délégué pour toute la page.
   useCardFx();
@@ -261,6 +270,15 @@ export function EcranEconomie() {
   };
 
   const submitCart = async () => {
+    /* LE SERVEUR REFUSE DÉJÀ — /api/bank-request est gardée par apiGuild() — et c'est
+       lui qui protège vraiment. Ce contrôle-ci ne double pas la sécurité, il évite une
+       mauvaise réponse : sans lui, un visiteur voit son panier partir, attendre, puis
+       revenir avec un message d'erreur technique. On lui dit ce qui manque, à la place. */
+    if (!peutAgir) {
+      setARelire(false);
+      flash("Pour commander, il faut être sur le serveur Discord AirFlyff et connecté ici — la boutique est en visite libre.");
+      return;
+    }
     setSending(true);
     const items = lignesDuPanier();
     const r = await fetch("/api/bank-request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, characterName: perso.trim(), paiement, precision: precision.trim() || undefined,
@@ -281,6 +299,11 @@ export function EcranEconomie() {
       {/* Une tuile d'icône plutôt que la bannière : elle dit « Banque » alors que
           tout le reste dit « Boutique ». */}
       <PageHeader icon="cart" title="Boutique" subtitle="Ce qui dort au coffre, une pièce à faire fabriquer — et le suivi de ta commande, au même endroit." />
+
+      {/* Le bandeau ne s'affiche QUE pour qui ne peut pas agir : pour un membre il
+          n'existe pas dans le rendu. Un bandeau permanent expliquant un droit qu'on a
+          deja est du bruit, et on finit par ne plus le lire. */}
+      {etat && <BandeauVitrine etat={etat} quoi="le vrai stock du coffre de Vanguard" action="passer une commande" />}
 
       {toast && <div style={{ marginBottom: 12, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 

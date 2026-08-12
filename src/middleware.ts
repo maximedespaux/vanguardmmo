@@ -23,8 +23,17 @@ const VERIFIED_PREFIXES = ["/build"];
    conversations de commande. `/dettes` et `/requetes` suivent : ce sont des
    adresses de la meme boutique, laissees vivantes parce qu'elles ont circule
    dans des notifications. */
+/* `/boutique` N'Y EST PLUS, et c'est le mode vitrine : demande de Maxime, « avoir
+   l'espace boutique en visualisation publique pour attirer et donner envie [...] mais
+   inutilisable sans connexion ». Un visiteur voit donc le vrai stock et les vrais prix,
+   et ne peut RIEN commander — c'est /api/bank-request qui refuse, gardee par apiGuild.
+
+   CE QUI RESTE FERME, et doit le rester : /messages, /demandes, /dettes et /requetes
+   sont les conversations et les affaires personnelles de chacun. La boutique a demenage
+   dans son propre groupe de routes pour cette raison precise — ouvrir le groupe (shop)
+   entier les aurait exposees avec elle. */
 const GUILD_PREFIXES = ["/dashboard", "/compositions", "/worldboss", "/quetes", "/absences",
-                        "/boutique", "/messages", "/sommaire", "/demandes", "/dettes", "/requetes"];
+                        "/messages", "/sommaire", "/demandes", "/dettes", "/requetes"];
 const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm", "/mes-ventes"];
 const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
 const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
@@ -60,7 +69,7 @@ export const config = {
     "/dashboard/:path*",
     "/compositions/:path*", "/worldboss/:path*",
     "/quetes/:path*", "/absences/:path*", "/build/:path*",
-    "/boutique/:path*", "/messages/:path*", "/sommaire/:path*", "/demandes/:path*", "/dettes/:path*", "/requetes/:path*",
+    "/messages/:path*", "/sommaire/:path*", "/demandes/:path*", "/dettes/:path*", "/requetes/:path*",
     "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*", "/mes-ventes/:path*",
   ],
 };

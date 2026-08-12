@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
 import { StrategieCS } from "@/components/StrategieCS";
+import { AdversairesChambres } from "@/components/chambres/Adversaires";
 import { classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, presencesSeance, prochaineSeance, type CompoState, type Creneau, type Presence, type Seance } from "@/lib/compositions";
 
 import type { Signup } from "@/lib/compositions";
@@ -233,7 +234,13 @@ export default function CompositionsPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1100, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Compositions" subtitle="Les postes des Chambres Secrètes, à respecter — et le Guild Siege, libre." />
+      {/* « Chambres Secrètes » et non « Compositions ». La bannière affichée juste
+          au-dessus DIT « Chambres Secrètes » — elle a toujours porté ce nom, avec sa
+          clé — pendant que le titre et le menu disaient « Compositions ». L'image
+          annonçait donc une page, le menu une autre.
+          Le titre compte même sous une bannière : c'est lui qui devient le h1 pour
+          les moteurs et les lecteurs d'écran, et il contredisait l'image. */}
+      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Chambres Secrètes" subtitle="Qui vient, à quel poste — et comment on joue chaque salle. Le Guild Siege reste libre." />
       <div className="vg-subtabs">
         <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="key" size={15} /> Chambre Secrète</button>
         <button onClick={() => setTab("strat")} className={`vg-subtab ${tab === "strat" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="book" size={15} /> Stratégie</button>
@@ -421,8 +428,18 @@ export default function CompositionsPage() {
       ) : tab === "strat" ? (
         /* Le déroulé et les placements, à côté de la composition qu'ils
            expliquent — mais pas dans la même page : on vient ici pour lire,
-           on allait là-bas pour s'inscrire, et les deux se gênaient. */
-        <StrategieCS isAdmin={isAdmin} texteExistant={instructions} />
+           on allait là-bas pour s'inscrire, et les deux se gênaient.
+
+           DEUX BLOCS, ET C'EST VOULU. `AdversairesChambres` vient AVANT parce qu'il
+           dit CONTRE QUOI on joue, lu dans les fichiers du client : personne ne
+           saisira à la main les points de vie de trente-sept adversaires, et s'il le
+           faisait ils seraient périmés à la prochaine fouille. `StrategieCS` reste
+           l'éditeur du staff : le déroulé, les placements, ce qui ne se déduit
+           d'aucun fichier. Les chiffres se lisent, les tactiques s'écrivent. */
+        <>
+          <AdversairesChambres />
+          <StrategieCS isAdmin={isAdmin} texteExistant={instructions} />
+        </>
       ) : (
         <div style={{ ...card, textAlign: "center", padding: 40 }}>
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="sword" size={44} /></div>

@@ -77,7 +77,11 @@ export const donjonClient = (id: number): DonjonClient | undefined => TABLE.donj
 export const TOUR_OUBLIEE = TABLE.tourOubliee;
 
 /**
- * LES PLANS DE DONJON : vingt-deux sur vingt-trois.
+ * LES PLANS DE DONJON : quinze plans, sept vues aériennes, six donjons sans rien.
+ *
+ * Le compte n'est pas « vingt-deux sur vingt-trois » comme il l'a longtemps annoncé :
+ * quatre vues aériennes ont été retirées après avoir été REGARDÉES, et cinq étages de
+ * la Tour Oubliée se sont ajoutés. Il se recompte en lisant la table, pas la phrase.
  *
  * Les 26 plans du client (`dungeon_*.dds`) sont désormais convertis et versés,
  * ainsi que 71 vues aériennes — une par monde. On les branche par le dossier de
@@ -87,9 +91,13 @@ export const TOUR_OUBLIEE = TABLE.tourOubliee;
  * `genre` distingue les deux, et ce n'est pas cosmétique : un PLAN est le fond de
  * carte du jeu, lisible comme une carte ; une VUE AÉRIENNE est une photo du
  * terrain vue de dessus, jolie mais sans repère. La fiche ne les annonce donc pas
- * de la même façon. Deux donjons n'ont ni l'un ni l'autre (Faille du débutant,
- * Château de Draken côté vue) — la table les omet plutôt que de pointer un
- * fichier absent, et le composant ne rend rien quand la clé manque.
+ * de la même façon.
+ *
+ * SIX DONJONS N'ONT RIEN À MONTRER, et c'est un choix : Faille du débutant et
+ * Château de Draken côté vue n'ont pas de fichier ; les quatre autres en avaient un,
+ * mais il ne montrait rien d'exploitable (voir le détail dans la table). La table
+ * les omet plutôt que d'afficher un carré vide, et le composant ne rend rien quand
+ * la clé manque. Une absence ne raconte rien de faux ; une image cassée, si.
  *
  * Table VÉRIFIÉE fichier par fichier à la génération : chaque `src` existe dans
  * public/. Regénérable depuis src/data/donjons-images.json.
@@ -117,17 +125,46 @@ export const PLANS: Record<string, { src: string; genre?: "plan" | "aerien"; fil
   DuRustia_1: { src: "/jeu/cartes-monde/dungeon_rustia_1.webp", genre: "plan" },
   DuUpresia: { src: "/jeu/cartes-monde/dungeon_upresia.webp", genre: "plan" },
   DuHerneos_1: { src: "/jeu/cartes-monde/dungeon_herneos_1.webp", genre: "plan" },
-  DuFrozen: { src: "/jeu/aerien/dufrozen.webp", genre: "aerien" },
+  /* QUATRE VUES AÉRIENNES ONT ÉTÉ RETIRÉES D'ICI, et c'est la réponse au « certaines
+     map bug » de Maxime. Elles ont été regardées une par une, rendues à l'écran :
+
+     · DuFrozen (Ruines givrées) — du noir traversé d'une bande de neige, ET un
+       gribouillis de développeur laissé dans la texture du jeu : les caractères
+       « xD » en haut à gauche. Même lisible par ailleurs, celle-là ne se montre pas.
+     · DuFidge (Ruines prestigieuses) — un carré VERT UNI avec deux traits.
+     · Skymap (Temple aérien) — des bandes horizontales qui se lisent comme une
+       texture corrompue.
+     · DuRhisisruins01 (Dédale de Rhisis) — du noir, deux bandes olive, et un
+       fragment de construction minuscule dans un coin.
+
+     LA RÈGLE POSÉE : quand aucune image n'est exploitable, on ne montre RIEN. Un
+     carré noir ou vert sous le titre « la vue aérienne » se lit comme un site cassé,
+     alors que l'absence, elle, ne raconte rien de faux. `PlanDonjon` ne rend
+     déjà rien quand la clé manque — deux donjons étaient omis pour cette raison, ils
+     sont six désormais.
+
+     Les fichiers restent sur le disque : ils viennent du client et seront reversés
+     tels quels à la prochaine fouille. Ce qu'on retire, c'est leur affichage.
+
+     Et il n'y avait PAS de remplaçante : les 12 cartes parchemin encore libres ont
+     été ouvertes et leurs cartouches lus — « Île Corail », « Herneos », « Désiréa »,
+     « Mine de Dekanes », un « Temple… », une « Mine… ». Aucune ne désigne un de ces
+     quatre donjons. (Au passage : le cartouche de dungeon_contaminatedtrails1 est en
+     CORÉEN, ces cartes ne sont pas toutes localisées.) */
   DuSanpres: { src: "/jeu/cartes-monde/dungeon_sanpres.webp", genre: "plan" },
-  DuFidge: { src: "/jeu/aerien/dufidge.webp", genre: "aerien" },
-  Skymap: { src: "/jeu/aerien/skymap.webp", genre: "aerien" },
   DuOminous: { src: "/jeu/cartes-monde/dungeon_ominous.webp", genre: "plan" },
   DuCatacombes: { src: "/jeu/aerien/ducatacombes.webp", genre: "aerien" },
   DuDreadfulCave: { src: "/jeu/cartes-monde/dungeon_dreadfulcave.webp", genre: "plan" },
   DuBehamah: { src: "/jeu/cartes-monde/dungeon_behamah.webp", genre: "plan" },
   DuForteress: { src: "/jeu/aerien/duforteress.webp", genre: "aerien" },
   DuContaminatedTrails: { src: "/jeu/cartes-monde/dungeon_contaminatedtrails.webp", genre: "plan" },
-  DuRhisisruins01: { src: "/jeu/aerien/durhisisruins01.webp", genre: "aerien" },
+  /* Les sept vues aériennes qui RESTENT ont été jugées sur ce qu'elles montrent, pas
+     gardées par défaut. Elles ne sont pas des cartes — d'où le titre « La vue
+     aérienne · le terrain vu de dessus, sans repère » — mais on y reconnaît le lieu :
+     Jardin des Rois est un plan de bâtiment très lisible, Sanctuaire de Shogun et
+     Jardin de Jade montrent leurs zones, Paradis Arcanique et Mausolée des divinités
+     leur relief ; Catacombes et Bastion de l'Archange sont sombres, mais le tracé des
+     salles s'y suit. */
   DuKalgas: { src: "/jeu/cartes-monde/dungeon_kalgas.webp", genre: "plan" },
   DuRuneyg: { src: "/jeu/aerien/duruneyg.webp", genre: "aerien" },
   DuElysianIsland: { src: "/jeu/aerien/duelysianisland.webp", genre: "aerien" },

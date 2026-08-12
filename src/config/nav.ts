@@ -167,7 +167,12 @@ export const ESPACES: Espace[] = [
     href: "/compositions",
     acces: "guild",
     liens: [
-      { label: "Compositions", href: "/compositions", icon: "castle", desc: "Chambres Secrètes : postes et présences." },
+      /* « Chambres Secrètes » et non « Compositions » — demande de Maxime, et la
+         bannière de la page portait déjà ce nom : le menu était le seul endroit à
+         dire autre chose. L'ADRESSE, elle, reste /compositions : des inscriptions,
+         des créneaux et des liens de build en base pointent dessus, et la renommer
+         casserait plus que ça n'éclaircit. */
+      { label: "Chambres Secrètes", href: "/compositions", icon: "castle", desc: "Qui vient, à quel poste, et comment on joue chaque salle." },
       { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
       { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff.", acces: "admin" },
       { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." , acces: "admin" },

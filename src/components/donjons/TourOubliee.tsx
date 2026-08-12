@@ -1,6 +1,6 @@
 import React from "react";
 import { Icon } from "@/components/Icon";
-import { pvCourt, TOUR_OUBLIEE, coord } from "./donneesClient";
+import { pvCourt, TOUR_OUBLIEE, PLANS } from "./donneesClient";
 
 /**
  * LA TOUR OUBLIÉE — cinq étages que le wiki ne connaissait pas.
@@ -43,6 +43,20 @@ export function TourOubliee() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: 12 }}>
         {TOUR_OUBLIEE.map((e) => (
           <div key={e.monde} className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 16 }}>
+            {/* La carte de l'étage, en tête de fiche. Elle porte son propre titre
+                imprimé (« Tour Oubliée B1 ») : on ne l'annonce donc pas une
+                deuxième fois au-dessus, et son `alt` reste vide puisque le nom de
+                l'étage est écrit juste en dessous en texte.
+                `aspectRatio` plutôt qu'une hauteur fixe : les cinq cartes sont des
+                4/3 du client, et une hauteur fixe les aurait déformées. */}
+            {PLANS[e.carte] && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={PLANS[e.carte].src}
+                alt=""
+                style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 12, display: "block" }}
+              />
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
               <Icon name="tower" framed frameSize={36} tone="purple" />
               <div style={{ minWidth: 0 }}>
@@ -72,7 +86,12 @@ export function TourOubliee() {
             </div>
             <div style={{ marginTop: 9, fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
               {e.points} emplacements sur une carte de {e.unites[0]} × {e.unites[1]}
-              {e.sortie && <> · sortie vers Flarine ({coord(e.sortie)})</>}
+              {/* La coordonnée du portail de sortie était affichée ici — « (6 980,
+                  3 309) ». Un joueur ne peut rien en faire : le jeu n'a pas de
+                  boussole à coordonnées, et on ne se rend pas à un couple de
+                  nombres. Ce qui sert, c'est la DESTINATION, et elle est la même
+                  pour les cinq étages. */}
+              {e.sortie && <> · la sortie te renvoie à Flarine</>}
             </div>
           </div>
         ))}

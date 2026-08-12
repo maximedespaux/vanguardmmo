@@ -1,6 +1,6 @@
 import React from "react";
 import { Icon, type IconName } from "@/components/Icon";
-import { coord, pvCourt, PLANS, TON_RANG, type DonjonClient } from "./donneesClient";
+import { pvCourt, PLANS, TON_RANG, type DonjonClient } from "./donneesClient";
 
 /** L'étiquette de section de la fiche. Reprise telle quelle du bloc « Drops »
  *  qui existait déjà : une fiche où chaque titre a sa propre graisse se lit comme
@@ -43,16 +43,24 @@ export function Situation({ d, nomAffiche }: { d: DonjonClient; nomAffiche: stri
             <span style={{ ...val, color: "var(--gold)" }}>{d.interne}</span>
           </div>
         )}
+        {/* CES DEUX LIGNES AFFICHAIENT DES COORDONNÉES BRUTES : « Entrée depuis
+            Madrigal · 3 275, 4 242 » et « Tu arrives à · 6 644, 6 454 ». Un joueur
+            ne peut rien en faire — le jeu n'affiche pas ses coordonnées, il n'y a
+            pas de « aller à » où les saisir, et on n'entre pas dans un donjon par
+            une position mais par le TÉLÉPORTEUR. Ce qui sert, c'est la région où on
+            le prend, et elle est dans les données (`depuis`).
+
+            La coordonnée d'arrivée disparaît sans remplacement : elle décrit un
+            point à l'intérieur du donjon, où on est déjà quand on y est.
+
+            Les valeurs restent dans donjons-client.json — le jour où l'on saura
+            poser une croix juste sur la carte de région, c'est de là qu'elle
+            viendra. Ce qu'on retire, c'est l'affichage d'un nombre inutilisable,
+            pas la donnée. */}
         <div style={ligne}>
-          <span style={cle}>Entrée depuis {d.depuis}</span>
-          <span style={val}>{coord(d.entree)}</span>
+          <span style={cle}>Comment on y entre</span>
+          <span style={val}>Par le téléporteur, depuis {d.depuis}</span>
         </div>
-        {d.arrivee && (
-          <div style={ligne}>
-            <span style={cle}>Tu arrives à</span>
-            <span style={val}>{coord(d.arrivee)}</span>
-          </div>
-        )}
         {d.unites && (
           <div style={ligne}>
             <span style={cle}>Taille de la carte</span>

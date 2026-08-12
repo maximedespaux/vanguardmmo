@@ -134,6 +134,22 @@ export const PLANS: Record<string, { src: string; genre?: "plan" | "aerien"; fil
   DuS525: { src: "/jeu/aerien/dus525.webp", genre: "aerien" },
   WdJapanese: { src: "/jeu/aerien/wdjapanese.webp", genre: "aerien" },
   DuKingdomGarden: { src: "/jeu/aerien/dukingdomgarden.webp", genre: "aerien" },
+  /* LES CINQ ÉTAGES DE LA TOUR OUBLIÉE. Ils manquaient : la table est indexée sur
+     le `dossier` des donjons du téléporteur, et un étage de la tour n'a pas de
+     dossier — il a une `carte` (`WdHeaven01`). La clé est donc ici sa carte, ce qui
+     reste dans le contrat de la table (« le dossier de carte du client »).
+
+     Ce sont les meilleures images de tout le lot, et il ne faut surtout PAS leur
+     appliquer le `filtre` du Château de Draken : ce sont des cartes sur parchemin
+     finies, avec la rose des vents, le tracé des salles et — vérifié en ouvrant les
+     fichiers — leur propre titre imprimé dessus en français, « Tour Oubliée B1 » à
+     « B5 », qui correspond exactement au `nom` des données. Rien à recadrer, rien à
+     contraster. */
+  WdHeaven01: { src: "/jeu/cartes-monde/dungeon_wdheaven01.webp", genre: "plan" },
+  WdHeaven02: { src: "/jeu/cartes-monde/dungeon_wdheaven02.webp", genre: "plan" },
+  WdHeaven03: { src: "/jeu/cartes-monde/dungeon_wdheaven03.webp", genre: "plan" },
+  WdHeaven04: { src: "/jeu/cartes-monde/dungeon_wdheaven04.webp", genre: "plan" },
+  WdHeaven05: { src: "/jeu/cartes-monde/dungeon_wdheaven05.webp", genre: "plan" },
 };
 
 /** Les grands nombres de PV se lisent mieux abrégés : 570 350 000 → 570,4 M. */
@@ -143,7 +159,13 @@ export function pvCourt(pv: number): string {
   return pv.toLocaleString("fr-FR");
 }
 
-export const coord = (c: number[]) => `${c[0].toLocaleString("fr-FR")}, ${c[1].toLocaleString("fr-FR")}`;
+/* `coord()` a été retirée, et pas seulement parce qu'elle n'était plus appelée :
+   c'est elle qui produisait les « 3 275, 4 242 » affichés sur les fiches de donjon
+   et les étages de la tour. Un joueur ne peut rien faire d'un couple de nombres —
+   le jeu n'affiche pas sa position et n'offre nulle part où la saisir. Les
+   coordonnées restent dans donjons-client.json pour le jour où l'on saura poser
+   une croix juste sur une carte de région ; ce qui a disparu, c'est la tentation de
+   les remettre à l'écran telles quelles. */
 
 /** La couleur d'un rang, pour qu'on repère un « super » sans lire l'étiquette. */
 export const TON_RANG: Record<string, string> = {

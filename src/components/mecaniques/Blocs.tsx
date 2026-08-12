@@ -253,6 +253,38 @@ export function StyleMecaniques() {
       @media(max-width:620px){ .mc-etage { grid-template-columns:1fr; } }
       .mc-pied { max-width:820px; margin:20px auto 0; font-size:12.5px; line-height:1.65;
         color:var(--text-muted); text-align:center; font-style:italic; }
+      /* La phrase du JEU, citee mot pour mot. Elle n'est pas mise en avant pour
+         faire joli : sur une page tiree de fichiers, il faut voir d'un coup
+         d'oeil ce que le jeu dit lui-meme et ce qu'on en deduit. */
+      .mc-cite { margin:0; padding:9px 13px; border-left:2px solid var(--gold);
+        background:var(--bg-2); border-radius:0 8px 8px 0; font-size:12.5px;
+        line-height:1.6; color:var(--text-muted); font-style:italic; }
+      /* Les sets de costume : une carte par set, et DEUX phrases dedans — celle
+         de la table du site, celle de la boite du jeu. auto-fit et non
+         auto-fill : a trois cartes sur un ecran large, auto-fill laisserait des
+         colonnes vides et les cartes seraient deux fois trop etroites. */
+      .mc-sets { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:9px; }
+      .mc-set { display:grid; gap:5px; align-content:start; padding:11px 13px; border-radius:10px;
+        background:var(--bg-2); border:1px solid var(--border); min-width:0; }
+      .mc-set > b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--gold); }
+      .mc-set-role { font-size:10.5px; text-transform:uppercase; letter-spacing:1px;
+        color:var(--text-muted); font-weight:700; }
+      .mc-set-jeu { font-size:11.5px; line-height:1.55; padding:6px 9px; border-radius:7px;
+        background:var(--bg-3); border:1px solid var(--border); }
+      .mc-set-jeu > i { font-style:normal; display:block; font-size:10px; text-transform:uppercase;
+        letter-spacing:.9px; margin-bottom:2px; }
+      /* TROIS etats et pas deux. Vert : les deux sources se recoupent en entier.
+         Or : une partie seulement se retrouve. Rouge : rien ne se retrouve.
+         L'etat intermediaire existe parce qu'un set dont le jeu annonce moins de
+         lignes que le site n'est pas confirme — le peindre en vert le donnait
+         pour double-source alors qu'il ne l'est pas. */
+      .mc-set-jeu.ok { border-color:color-mix(in srgb, var(--green) 45%, var(--border)); }
+      .mc-set-jeu.ok > i { color:var(--green); }
+      .mc-set-jeu.mi { border-color:color-mix(in srgb, var(--gold) 50%, var(--border)); }
+      .mc-set-jeu.mi > i { color:var(--gold); }
+      .mc-set-jeu.ko { border-color:color-mix(in srgb, var(--red) 55%, var(--border)); }
+      .mc-set-jeu.ko > i { color:var(--red); }
+      .mc-set-src { font-size:11px; line-height:1.5; color:var(--text-muted); }
     `}</style>
   );
 }

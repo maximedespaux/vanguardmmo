@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { clefRecherche, type Compteurs, type Monstre } from "./vocabulaire";
+import { clefRecherche, coupMax, type Compteurs, type Monstre } from "./vocabulaire";
 
 /**
  * LES 1 124 MONSTRES DU CLIENT — lus une fois, gardés en mémoire.
@@ -124,7 +124,10 @@ export function chercher(c: Critere, limite = 48) {
     // exacte, ce qui n'est pas ce qu'on a demandé.
     if (tri === "pvEff" && b.m.pvEff !== a.m.pvEff) return b.m.pvEff - a.m.pvEff;
     if (tri === "niveau" && nombre(b.m.niv) !== nombre(a.m.niv)) return nombre(b.m.niv) - nombre(a.m.niv);
-    if (tri === "degats" && nombre(b.m.atkMax) !== nombre(a.m.atkMax)) return nombre(b.m.atkMax) - nombre(a.m.atkMax);
+    // `coupMax` et non `atkMax` : cinq monstres portent leurs bornes à l'envers
+    // dans le client, et ce tri rangeait donc les plus violents du catalogue tout
+    // en bas d'un classement « Dégâts par coup ».
+    if (tri === "degats" && coupMax(b.m) !== coupMax(a.m)) return coupMax(b.m) - coupMax(a.m);
     if (tri === "exp" && nombre(b.m.exp) !== nombre(a.m.exp)) return nombre(b.m.exp) - nombre(a.m.exp);
     if (b.s !== a.s) return b.s - a.s;
     // Sans mot-clé ni tri, on montre le haut du panier : c'est la réponse utile

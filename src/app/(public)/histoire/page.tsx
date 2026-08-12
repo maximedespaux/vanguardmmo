@@ -1,8 +1,13 @@
 "use client";
 import { useRef } from "react";
+import Link from "next/link";
 import { HeroFlyff } from "@/components/HeroFlyff";
 import { Icon, type IconName } from "@/components/Icon";
 import { useReveal, useCardFx } from "@/components/VgFx";
+import { CLASS_NAMES } from "@/data/classes";
+import dungeons from "@/data/dungeons.json";
+
+const DONJONS = dungeons as unknown[];
 
 /** Pastille d'icône à la charte (carré arrondi, dégradé orange, icône orange). */
 function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: number; icon?: number }) {
@@ -18,9 +23,19 @@ function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: numb
   );
 }
 
+/**
+ * Les chiffres se COMPTENT.
+ *
+ * « 8 classes jouables » et « 23 donjons référencés » étaient écrits à la main,
+ * ici et sur l'accueil — quatre nombres recopiés dans deux fichiers, qui
+ * n'avaient aucun moyen de rester d'accord. Ils se lisent maintenant dans les
+ * mêmes données que les pages qui les affichent en détail : `data/classes.ts` et
+ * `data/dungeons.json`. Ce sont les deux seuls chiffres comptables de la liste ;
+ * « P3 → P10 » et « 1 coffre » ne se comptent pas, ils se décident.
+ */
 const stats: [IconName, string, string][] = [
-  ["users", "8", "classes jouables"],
-  ["map", "23", "donjons référencés"],
+  ["users", String(CLASS_NAMES.length), "classes jouables"],
+  ["map", String(DONJONS.length), "donjons référencés"],
   ["trending-up", "P3 → P10", "accompagnement"],
   ["vault", "1", "coffre commun"],
 ];
@@ -32,15 +47,31 @@ const objectifs: [IconName, string, string][] = [
   ["vault", "Un coffre qui sert", "Le stock de la guilde est là pour équiper les membres, pas pour dormir. Tu demandes, on répond."],
 ];
 
-const features: [IconName, string, string][] = [
-  ["clipboard", "Candidature en ligne", "Profil, spés, stuff et objectifs — transmis automatiquement au staff sur Discord."],
-  ["sword", "AirBuilder", "Compose ton équipement complet (perçage, sertissage, runes, sets, fées, familiers)."],
-  ["star", "Calculateur de prestige", "Suis ton farm palier par palier, ressources cumulées entre deux prestiges."],
-  ["map", "Wiki des 23 donjons", "Drops, PV, prestige et élément + suivi quotidien de tes runs et world boss."],
-  ["graduation", "Guide de progression", "Le guide complet par palier de prestige pour ne jamais rester bloqué."],
-  ["puzzle", "Compositions", "Chambres Secrètes optimales avec présences, et Guild Siege en équipe libre."],
-  ["vault", "Coffre & boutique", "Parcours le coffre, demande un objet, et discute-en directement avec le staff."],
-  ["users", "Suivi de guilde", "Dashboard temps réel : membres, persos, builds publiés et activité."],
+/**
+ * Les fonctionnalités du site — et, depuis peu, un LIEN pour chacune.
+ *
+ * Huit cartes qui décrivaient huit outils sans mener à aucun : la page qui doit
+ * donner envie d'entrer était un cul-de-sac, et il fallait repasser par le menu
+ * pour essayer ce qu'on venait de lire.
+ *
+ * `membres` marque ce qui exige d'être de la guilde. Ces pages vivent dans le
+ * groupe (guild) et passent par `requireGuild()` : en production, un visiteur qui
+ * clique atterrit sur `/login`, pas sur la page. Le dire avant le clic, c'est la
+ * différence entre une promesse et un mur.
+ *
+ * Le libellé « Compositions » a disparu : la page s'appelle CHAMBRES SECRÈTES
+ * depuis la refonte (son adresse, elle, n'a pas bougé). Le menu et la page
+ * disaient déjà le nouveau nom ; celle-ci était la dernière à garder l'ancien.
+ */
+const features: { icon: IconName; titre: string; desc: string; href: string; membres?: boolean }[] = [
+  { icon: "clipboard", titre: "Candidature en ligne", desc: "Profil, spés, stuff et objectifs — transmis automatiquement au staff sur Discord.", href: "/candidature" },
+  { icon: "sword", titre: "AirBuilder", desc: "Compose ton équipement complet (perçage, sertissage, runes, sets, fées, familiers).", href: "/builder" },
+  { icon: "star", titre: "Calculateur de prestige", desc: "Suis ton farm palier par palier, ressources cumulées entre deux prestiges.", href: "/prestige" },
+  { icon: "map", titre: `Wiki des ${DONJONS.length} donjons`, desc: "Drops, PV, prestige et élément, la Tour Oubliée et les vagues de l'Oasis.", href: "/donjons" },
+  { icon: "graduation", titre: "Guide de progression", desc: "Le guide complet par palier de prestige pour ne jamais rester bloqué.", href: "/astuces" },
+  { icon: "puzzle", titre: "Chambres Secrètes", desc: "Des compositions préparées avec les présences, et le Guild Siege en équipe libre.", href: "/compositions", membres: true },
+  { icon: "vault", titre: "Coffre & boutique", desc: "Parcours le coffre, demande un objet, et discute-en directement avec le staff.", href: "/boutique", membres: true },
+  { icon: "users", titre: "Suivi de guilde", desc: "Tableau de bord : membres, persos, builds publiés et activité.", href: "/dashboard", membres: true },
 ];
 
 export default function HistoirePage() {
@@ -57,8 +88,16 @@ export default function HistoirePage() {
     <div ref={ref} style={{ paddingBottom: 60 }}>
       <HeroFlyff />
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 32px" }}>
-        {/* Intro */}
-        <div className="glass-card vg-reveal" style={{ padding: 28, marginTop: 32, borderLeft: "3px solid var(--orange)" }}>
+        {/* Intro.
+            L'illustration est `guildsiege.webp`, prise dans l'interface du client
+            (200×200). C'est la SEULE image que le jeu donne d'une guilde en train
+            de se battre — huit personnages de classes différentes qui chargent
+            ensemble — et c'est exactement le propos du paragraphe qu'elle
+            accompagne. Elle n'est donc pas là pour décorer : elle montre ce que le
+            jeu appelle une guilde. Marquée aria-hidden, le texte dit déjà tout. */}
+        <div className="glass-card vg-reveal hi-intro" style={{ padding: 28, marginTop: 32, borderLeft: "3px solid var(--orange)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/jeu/interface/guildsiege.webp" alt="" aria-hidden="true" width={104} height={104} className="hi-siege" />
           <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>
             On ne cherche pas à être nombreux. On cherche des joueurs <b style={{ color: "var(--orange)" }}>présents</b> :
             qui viennent en vocal, qui préviennent quand ils ne peuvent pas, et sur qui on peut compter en Chambre Secrète.
@@ -103,14 +142,27 @@ export default function HistoirePage() {
           Un site et un bot Discord qui partagent la même base — ce qui se passe ici se retrouve sur Discord, et inversement.
         </p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 14 }}>
-          {features.map(([ic, t, d], i) => (
-            <div key={t} className="vg-reveal fx-card" style={{ display: "flex", gap: 14, alignItems: "flex-start", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: 16, transitionDelay: `${i * 45}ms` }}>
-              <IconBadge name={ic} size={44} icon={22} />
-              <div>
-                <div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{t}</div>
-                <div style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5, marginTop: 2 }}>{d}</div>
+          {features.map((f, i) => (
+            <Link key={f.titre} href={f.href} className="vg-reveal fx-card hi-feat" style={{ transitionDelay: `${i * 45}ms` }}>
+              <IconBadge name={f.icon} size={44} icon={22} />
+              <div style={{ minWidth: 0 }}>
+                <div className="font-heading" style={{ fontWeight: 600, fontSize: 15, display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                  {f.titre}
+                  {/* Le cadenas du client (lock.webp) plutôt qu'une icône maison : le
+                      jeu s'en sert exactement pour ça — ce qui n'est pas encore
+                      ouvert — et un joueur le reconnaît sans légende. */}
+                  {f.membres && (
+                    <span className="hi-verrou" title="Réservé aux membres de la guilde">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/jeu/interface/lock.webp" alt="" width={10} height={12} />
+                      membres
+                    </span>
+                  )}
+                </div>
+                <div style={{ color: "var(--text-muted)", fontSize: 13, lineHeight: 1.5, marginTop: 2 }}>{f.desc}</div>
               </div>
-            </div>
+              <Icon name="arrow-right" size={15} className="hi-feat-fl" />
+            </Link>
           ))}
         </div>
 
@@ -124,6 +176,32 @@ export default function HistoirePage() {
           <a href="/candidature" className="vg-btn"><Icon name="clipboard" size={17} /> Postuler maintenant</a>
         </div>
       </div>
+
+      <style>{`
+        /* L'illustration flotte a gauche du paragraphe et le texte l'epouse : en
+           bloc au-dessus, elle aurait repousse la phrase d'accroche sous la ligne
+           de flottaison. Sous 560 px elle passe au-dessus, centree — un texte a
+           moins de 200 px de large ne se lit plus. */
+        .hi-intro{overflow:hidden}
+        .hi-siege{float:left;margin:0 18px 10px 0;border-radius:12px;border:1px solid var(--border);
+          object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+        @media(max-width:560px){.hi-siege{float:none;display:block;margin:0 auto 16px}}
+
+        /* Les huit cartes de fonctionnalite sont devenues des LIENS : couleur et
+           soulignement explicites, sinon les huit titres passent en bleu souligne. */
+        .hi-feat{display:flex;gap:14px;align-items:flex-start;background:var(--bg-2);
+          border:1px solid var(--border);border-radius:12px;padding:16px;
+          text-decoration:none;color:var(--text);transition:border-color .18s,transform .18s}
+        .hi-feat:hover{border-color:rgba(255,140,26,.45);transform:translateY(-2px)}
+        /* La fleche ne bouge qu'au survol : affichee en permanence, huit fleches
+           immobiles ajoutent du bruit sans rien dire de plus que le curseur. */
+        .hi-feat-fl{margin-left:auto;flex-shrink:0;align-self:center;color:var(--orange);
+          opacity:0;transform:translateX(-4px);transition:opacity .18s,transform .18s}
+        .hi-feat:hover .hi-feat-fl{opacity:1;transform:none}
+        .hi-verrou{display:inline-flex;align-items:center;gap:3px;font-size:10px;text-transform:uppercase;
+          letter-spacing:.6px;color:var(--text-muted);font-family:'Alef',sans-serif;font-weight:400}
+        .hi-verrou img{width:10px;height:12px;object-fit:contain;image-rendering:pixelated;opacity:.85}
+      `}</style>
     </div>
   );
 }

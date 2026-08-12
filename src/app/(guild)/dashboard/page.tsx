@@ -190,8 +190,17 @@ export default function DashboardPage() {
                 <span style={{ width: 130, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
                   <ClassLogo name={c.classe} size={22} /> {cap(c.classe)}
                 </span>
+                {/* Deux corrections à la même barre.
+                    1. UNE seule teinte, plus le dégradé de deux : la barre d'une
+                       classe rare finissait entièrement dans le clair du dégradé et
+                       celle d'une classe jouée dans l'orange franc — la couleur
+                       semblait alors porter une information qu'elle ne portait pas.
+                       C'est la LONGUEUR qui compare, jamais la teinte.
+                    2. Plancher à 1,5 % : une classe jouée par un seul personnage sur
+                       cent recevait une barre de 1 % de large, donc invisible — et une
+                       barre absente se lit « pas de donnée », pas « une seule ». */}
                 <div style={{ flex: 1, height: 10, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden" }}>
-                  <div style={{ width: `${(c.count / maxClass) * 100}%`, height: "100%", background: "linear-gradient(90deg,#FFB552,#FF8C1A)" }} />
+                  <div style={{ width: `${Math.max(1.5, (c.count / maxClass) * 100)}%`, height: "100%", borderRadius: 5, background: "var(--orange)" }} />
                 </div>
                 {/* La barre est relative à la classe la plus jouée (bonne pour comparer),
                     mais 100 % se lisait comme « au maximum ». La part du total donne

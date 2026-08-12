@@ -1,18 +1,19 @@
 import {
   CARTES_ATTAQUE, CARTES_DEFENSE, COULEUR_CARTE,
-  ICONE_ELEMENT, ICONE_EVEIL, ICONE_SCROLL, ICONE_DIAMANT, ICONE_HOLO, ICONE_GEMME, ICONE_UPGRADE,
+  ICONE_ELEMENT, ICONE_EVEIL, ICONE_SCROLL, ICONE_DIAMANT, ICONE_HOLO, ICONE_UPGRADE,
   ICONE_RARETE, COULEUR_RARETE, ICONE_RUNE_ARME, ICONE_RUNE_MARTEAU, ICONE_RUNE_STAT, ICONE_RUNE_VIERGE,
   ETIQUETTE_ARTEFACT, ETIQUETTE_ULTIME, ETOILE_PLEINE, ETOILE_VIDE,
   planAscension, essenceArme,
 } from "@/lib/assetsJeu";
 import {
-  RARETES, STATS_DIAMANT, STATS_HOLO, STATS_GEMME, STATS_EVEIL, STATS_SCROLL, reglagesDeSlot,
+  RARETES, STATS_DIAMANT, STATS_HOLO, STATS_EVEIL, STATS_SCROLL, reglagesDeSlot,
 } from "@/lib/specsFlyff";
 import { Bareme, Bonus, Case, Chip, Deux, Groupe, LigneObjet, Point, Vignette, grille, note } from "./Blocs";
 import {
-  ECHELLE, PARCHEMINS_ABSOLUS, PARCHEMINS_TAUX,
-  cartesDElement, cartesDePercage, comptoirDeLuca, famillesDeJoyau, iconeDe, iconePercage,
-  nombreDeGemmesMenteuses, nombreDeGemmesNommees, objet, objets, runes, tableauDesGemmes,
+  ECHELLE, PARCHEMINS_ABSOLUS,
+  cartesDElement, cartesDePercage, comptoirDeLuca, eveilFixe, famillesDeJoyau, iconeDe, iconePercage,
+  nombreDeGemmesMenteuses, nombreDeGemmesNommees, objet, objets, ordresDeSertissage, panneau,
+  parcheminsClasses, plafondDeStat, plafondsDeSertissage, rareteChiffree, runes, tableauDesGemmes,
 } from "./releves";
 
 /**
@@ -69,13 +70,13 @@ const ARME_ARTEFACT = reglagesDeSlot("weapon", { artefact: true });
 const ARME_SIMPLE = reglagesDeSlot("weapon");
 const TENUE = reglagesDeSlot("suit");
 const BIJOU = reglagesDeSlot("jewel");
-const FASHION = reglagesDeSlot("fashion");
 
 /* ═══ 1. Les gemmes mentent ══════════════════════════════════════════════════ */
 
 export function Gemmes() {
   const table = tableauDesGemmes();
   const menteuses = nombreDeGemmesMenteuses();
+  const ordres = ordresDeSertissage();
   const familles = famillesDeJoyau();
   const sertisseur = familles.find((f) => f.sertisseur)?.sertisseur ?? "";
   const neufs = table.map((g) => g.neuf).filter((o): o is NonNullable<typeof o> => !!o);
@@ -97,17 +98,79 @@ export function Gemmes() {
           d&apos;origine. Le nom que tu lis dans l&apos;infobulle décrit donc l&apos;effet
           d&apos;une <i>autre</i> gemme.
         </p>
+        {/* La colonne de droite porte maintenant le PLAFOND de la statistique.
+            Sans lui, « Attaque » et « PV max » se lisaient comme equivalents
+            alors qu'ils ne jouent pas dans le meme ordre de grandeur — et c'est
+            precisement ce qui decide quelle gemme on cherche. */}
         <Deux
           gauche="Ce que dit l'infobulle"
-          droite="Ce que la gemme donne"
-          lignes={table.map((g) => [g.nom, g.reel, g.juste] as [React.ReactNode, React.ReactNode, boolean?])}
+          droite="Ce que la gemme donne, et jusqu'où"
+          lignes={table.map((g) => {
+            const max = plafondDeStat(g.reel);
+            return [
+              g.nom,
+              max != null ? <>{g.reel} <span style={{ opacity: .75 }}>· jusqu&apos;à +{max}</span></> : g.reel,
+              g.juste,
+            ] as [React.ReactNode, React.ReactNode, boolean?];
+          })}
         />
         <p className="mc-src">
           La colonne de droite n&apos;est pas notre interprétation : c&apos;est le <b>libellé des
           {" "}{neufs.length} Diamants qu&apos;AirFlyff a ajoutés</b>, recopié tel quel, coquilles
           comprises. Ces neuf-là disent ce qu&apos;ils font et suivent l&apos;ordre du fichier ;
-          c&apos;est la preuve que c&apos;est le fichier qui fait loi, pas l&apos;infobulle.
+          c&apos;est la preuve que c&apos;est le fichier qui fait loi, pas l&apos;infobulle. Les
+          plafonds viennent de la table de valeurs du builder, où ils sont les seuls à être écrits.
         </p>
+
+        {/* La demonstration par recoupement. Elle vaut mieux qu'une
+            affirmation : deux fichiers que personne n'a ecrits ensemble
+            tombent d'accord rang par rang, et c'est CET ordre-la qui ne
+            correspond pas aux noms des gemmes. */}
+        {ordres.rangs.length > 0 && (
+          <>
+            <p>
+              Et ça ne repose pas sur notre lecture : <b>deux fichiers indépendants</b> donnent le
+              même ordre. Le client nomme ses {ordres.rangs.length} Diamants rang par rang ; la table
+              de valeurs du builder liste les {ordres.fichier.length} statistiques dans son propre
+              ordre. Les deux tombent d&apos;accord{" "}
+              {ordres.concordent
+                ? <><b>sur les {ordres.rangs.length} rangs</b></>
+                : <><b>sur {ordres.justes} rangs sur {ordres.rangs.length}</b></>}
+              {" "}— et c&apos;est cet ordre-là que les noms de gemmes ne suivent pas.
+            </p>
+            {/* `Deux` et pas `Bareme` : la colonne de droite d'un bareme est en
+                white-space:nowrap, faite pour des nombres courts. Une phrase
+                comme « la table dit Melee Stealhp (meme stat, autre mot) » y
+                debordait du panneau sur telephone. `Deux` replie, et sa coche
+                verte dit deja ce qu'on veut montrer — les deux fichiers sont
+                d'accord. */}
+            <Deux
+              gauche="Le Diamant du client, rang par rang"
+              droite="La table de valeurs du builder"
+              lignes={ordres.rangs.map((r) => [
+                `${String(r.rang).padStart(2, "0")} · ${r.diamant}`,
+                r.doublet ? `${r.table} — même stat, autre mot` : r.table,
+                r.concorde,
+              ] as [React.ReactNode, React.ReactNode, boolean?])}
+            />
+            {ordres.doublets > 0 && (
+              <p className="mc-src">
+                Sur ces {ordres.rangs.length} rangs, <b>{ordres.doublets} disent la même statistique
+                avec deux vocabulaires</b> — HP et PV, PvP et JcJ, « siphon de vie » et « steal
+                HP ». Ce sont les deux langues du client, pas deux effets : on les rapproche, et on
+                le dit ici plutôt que de faire passer une normalisation pour une donnée.
+              </p>
+            )}
+            {!ordres.memeRangPartout && (
+              <p className="mc-src">
+                Le builder, lui, porte ces {ordres.fichier.length} statistiques <b>deux fois dans
+                deux ordres différents</b> : celui de sa liste déroulante et celui de sa table de
+                valeurs. C&apos;est la même bascule d&apos;ordre que celle qui fait mentir les
+                gemmes, et elle a laissé sa trace jusque dans nos fichiers.
+              </p>
+            )}
+          </>
+        )}
         <p className="mc-src">
           L&apos;exemple est pris sur la Topaze, mais le décalage est le même rang 01→09 dans les
           {" "}{familles.length} familles — <b>{nombreDeGemmesNommees()} gemmes nommées</b> en tout.
@@ -150,7 +213,20 @@ export function Gemmes() {
 
 /* ═══ 2. Rareté ══════════════════════════════════════════════════════════════ */
 
+/** Les trois statistiques qu'un tank cherche. Elles servent à INTERROGER le
+ *  vivier de rareté, pas à décrire son contenu : la phrase à l'écran se construit
+ *  sur le résultat de la recherche, si bien qu'elle se corrige toute seule le jour
+ *  où AirFlyff en ajoute une au tirage. Écrite à la main, elle resterait affirmée
+ *  après avoir cessé d'être vraie — et c'est justement la ligne sur laquelle
+ *  quelqu'un décide de ne pas dépenser ses parchemins. */
+const STATS_DEFENSIVES = ["PV max", "Endurance", "Défense"];
+
 export function Rarete() {
+  const r = rareteChiffree();
+  const dansLeVivier = (nom: string) =>
+    r.vivier.some((v) => v.stat.localeCompare(nom, "fr", { sensitivity: "base" }) === 0);
+  const absentes = STATS_DEFENSIVES.filter((s) => !dansLeVivier(s));
+  const presentes = STATS_DEFENSIVES.filter(dansLeVivier);
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <p style={note}>
@@ -158,13 +234,72 @@ export function Rarete() {
         les lignes bonus. Chaque palier a sa couleur — la même que dans l&apos;AirBuilder.
       </p>
       <div style={grille}>
-        {RARETES.map((r) => <Case key={r} src={ICONE_RARETE[r]} nom={r} couleur={COULEUR_RARETE[r]} />)}
+        {RARETES.map((r2) => <Case key={r2} src={ICONE_RARETE[r2]} nom={r2} couleur={COULEUR_RARETE[r2]} />)}
       </div>
       <p style={note}>
         Tu ne verras que {Object.keys(ICONE_RARETE).length} parchemins : <b>Commun</b> est
         l&apos;état de base et le client n&apos;en livre pas pour <b>Mythique</b>. Plutôt que de te
         montrer celui du palier d&apos;à côté, on n&apos;en montre aucun.
       </p>
+
+      {/* Ce qui decide de la valeur d'une arme rare n'est pas le palier mais le
+          TIRAGE : combien de lignes, et dans quel vivier elles se prennent. Ces
+          deux tables ne sont dans aucune infobulle du jeu — elles viennent de la
+          table de valeurs du builder, d'ou la reserve a l'ecran. */}
+      {r.lignes.length > 0 && (
+        <Point titre="Ce que « Légendaire » tire vraiment : le nombre de lignes" marque="verifier">
+          <p>
+            Le palier ne dit pas combien de lignes bonus l&apos;arme reçoit — c&apos;est un tirage, et
+            il est très déséquilibré. <b>Une seule ligne</b> est le cas le plus fréquent, et les
+            {" "}<b>{r.lignes[r.lignes.length - 1]?.amount} lignes</b> sont l&apos;exception qui fait
+            le prix d&apos;une arme.
+          </p>
+          <Bareme
+            lignes={r.lignes.map((l) => [
+              `${l.amount} ligne${l.amount > 1 ? "s" : ""} bonus`,
+              `${l.chance} %`,
+            ] as [string, string])}
+          />
+          {r.vivier.length > 0 && (
+            <>
+              <p>
+                Et les lignes se tirent dans un vivier de <b>{r.vivier.length} statistiques</b>, chacune
+                entre <b>+{Math.min(...r.vivier.map((v) => v.min))}</b> et
+                {" "}<b>+{Math.max(...r.vivier.map((v) => v.max))}</b> :
+              </p>
+              <div style={grille}>
+                {r.vivier.map((v) => <Chip key={v.stat} texte={`${v.stat} +${v.min} → +${v.max}`} />)}
+              </div>
+              <p className="mc-src">
+                {absentes.length === STATS_DEFENSIVES.length
+                  ? <>
+                      {/* Le separateur est le meme partout : une enumeration en
+                          « ni » se ponctue « ni A, ni B, ni C » du debut a la
+                          fin, et traiter le dernier a part donnait « ni B ni C »
+                          sans virgule. */}
+                      Ce vivier est <b>orienté dégâts</b> : {absentes.map((s, i) => (
+                        <span key={s}>{i === 0 ? "ni " : ", ni "}{s}</span>
+                      ))} n&apos;y figurent. Un tank ne gagne donc <b>rien de garanti</b> à monter la
+                      rareté de son arme, et c&apos;est le genre de chose qu&apos;on n&apos;apprend
+                      qu&apos;après avoir dépensé les parchemins.
+                    </>
+                  : <>
+                      Ce vivier porte {presentes.length === 1 ? "une statistique défensive" : `${presentes.length} statistiques défensives`}
+                      {" "}(<b>{presentes.join(", ")}</b>) : un tank y trouve donc son compte, contrairement à
+                      ce que cette page a longtemps dit.
+                    </>}
+              </p>
+            </>
+          )}
+          <p className="mc-src">
+            Ces deux tables viennent de la table de valeurs du builder, pas d&apos;une infobulle du
+            jeu : <b>elles n&apos;ont pas été rejouées</b>.{" "}
+            {r.somme === 100
+              ? <>Les chances font bien {r.somme} % au total, ce qui est bon signe sans être une preuve.</>
+              : <>Attention, elles font {r.somme} % au total et non 100 — la table est donc incomplète ou mal lue.</>}
+          </p>
+        </Point>
+      )}
     </div>
   );
 }
@@ -269,7 +404,7 @@ export function Plafonds() {
   const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
   const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
   const luca = comptoirDeLuca();
-  const taux = objets(PARCHEMINS_TAUX);
+  const taux = parcheminsClasses();
   const absolus = objets(PARCHEMINS_ABSOLUS);
   // Le palier est dans le nom du parchemin (« … Absolu +6 ») : on le lit plutôt
   // que de le déduire du nombre de parchemins, qui ne dit rien du premier.
@@ -355,14 +490,75 @@ export function Plafonds() {
         </Point>
       )}
 
-      <Point titre="Ce que les parchemins ajoutent vraiment">
+      <Point titre="Ce que les parchemins ajoutent vraiment — et ceux qui n'ajoutent rien" marque="piege">
         <p>
-          Les taux affichés sont des <b>bonus</b>, pas des probabilités de base. Les voici avec la
-          phrase exacte du client :
+          On lisait ici « les taux affichés sont des bonus, pas des probabilités de base ». C&apos;est
+          vrai de la moitié d&apos;entre eux seulement, et la confusion coûte cher :{" "}
+          <b>{taux.ajoutent.length} parchemins s&apos;ajoutent au taux ou le garantissent</b>, et
+          {" "}<b>{taux.remplacent.length} le remplacent</b> — ceux-là n&apos;empilent rien, glisser
+          deux « Parchemin d&apos;amélioration » ne fait pas 200 %.
         </p>
-        <div style={{ display: "grid", gap: 5 }}>
-          {taux.map((o) => <LigneObjet key={o.cle} o={o} />)}
-        </div>
+        {taux.ajoutent.length > 0 && (
+          <>
+            <p className="mc-src">Ceux qui <b>s&apos;ajoutent</b>, ou garantissent le coup :</p>
+            <div style={{ display: "grid", gap: 5 }}>
+              {taux.ajoutent.map((x) => (
+                <LigneObjet
+                  key={x.fiche.cle}
+                  o={x.fiche}
+                  apres={
+                    <Bonus
+                      b={[
+                        [x.genre === "garantit" ? "réussite" : "taux", x.pct] as [string, number],
+                      ]}
+                    />
+                  }
+                />
+              ))}
+            </div>
+          </>
+        )}
+        {taux.remplacent.length > 0 && (
+          <>
+            <p className="mc-src">
+              Ceux qui <b>remplacent</b> le taux, chacun sur sa propre tranche de paliers — c&apos;est
+              la tranche qui compte, pas le pourcentage :
+            </p>
+            <Bareme
+              lignes={taux.remplacent.map((x) => [
+                `${x.fiche.n}${x.plage ? ` — ${x.plage}` : ""}`,
+                `${x.pct} %`,
+              ] as [string, string])}
+            />
+            {taux.remplacent.some((x) => x.pasArmure) && (
+              <p className="mc-src">
+                Et l&apos;un d&apos;eux ne marche <b>que sur les armes</b> : son infobulle exclut les
+                armures et les boucliers, ce que personne ne relit avant de l&apos;essayer.
+              </p>
+            )}
+          </>
+        )}
+        {taux.autres.length > 0 && (
+          <div style={{ display: "grid", gap: 5 }}>
+            {taux.autres.map((x) => <LigneObjet key={x.fiche.cle} o={x.fiche} />)}
+          </div>
+        )}
+        {/* « La limite que TOUS partagent » etait faux : seuls les Sfusion
+            ecrivent « une seule tentative », les trois Parchemins
+            d'amelioration n'en parlent pas. On compte ceux qui le disent
+            plutot que d'etendre la phrase aux six. */}
+        {taux.unTir > 0 && (
+          <p className="mc-src">
+            La limite qu&apos;aucune interface ne rappelle : un parchemin n&apos;est actif que pour
+            {" "}<b>une seule tentative</b>, il ne reste pas posé sur la pièce.{" "}
+            {taux.unTir < taux.total
+              ? <>Mais attention à la portée : <b>{taux.unTir} des {taux.total}</b> l&apos;écrivent
+                dans leur infobulle. Les {taux.total - taux.unTir} autres n&apos;en disent rien —
+                ça ne veut pas dire qu&apos;ils durent, ça veut dire que <i>le client ne le
+                précise pas</i>.</>
+              : <>Les {taux.total} l&apos;écrivent dans leur infobulle.</>}
+          </p>
+        )}
         {absolus.length > 0 && (
           <>
             <p>
@@ -407,6 +603,7 @@ function Palier({ famille, palier, nom, couleur }: { famille: string; palier: st
 
 export function Percage() {
   const c = cartesDePercage();
+  const annuler = panneau(/annuler un effet de piercing/i);
   const sansImage = [...c.attaque, ...c.defense]
     .flatMap((f) => f.paliers.filter((p) => !iconePercage(f.famille, p.palier)).map((p) => p.palier))
     .length;
@@ -458,6 +655,22 @@ export function Percage() {
         dessin d&apos;un autre. Et l&apos;<b>Air</b> n&apos;a pas de rang R là où les quatre autres
         éléments en ont un — ce n&apos;est pas un oubli de notre part, c&apos;est le client.
       </p>
+
+      {annuler && (
+        <Point titre="Se tromper de carte se paie, et pas qu'en carte" marque="piege">
+          <p>
+            Le panneau du jeu, seul endroit où c&apos;est écrit, pose deux règles d&apos;un coup : on
+            ne retire que <b>la dernière carte sertie</b>, et l&apos;opération a un tarif fixe.
+          </p>
+          <p className="mc-cite">« {annuler.texte} »</p>
+          <p>
+            Comme pour les gemmes de costume, on ouvre donc <b>en dernier</b> les emplacements dont on
+            est le moins sûr : sur une arme à {ARME_ARTEFACT.percage?.max} emplacements, une erreur au
+            {" "}2<sup>e</sup> perçage se paie autant de fois qu&apos;il y a de cartes posées après
+            elle.
+          </p>
+        </Point>
+      )}
     </div>
   );
 }
@@ -467,6 +680,9 @@ export function Percage() {
 export function Eveil() {
   const cartes = cartesDElement();
   const obsoletes = cartes.filter((x) => x.obsolete).length;
+  const fixes = eveilFixe(/^II_SYS_SYS_SCR_FIX_AWAKE_/);
+  const changer = panneau(/changement d.él[eé]ment/i);
+  const eveiller = panneau(/éveil d.objet/i);
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <p style={note}>
@@ -501,9 +717,81 @@ export function Eveil() {
         <p style={note}>
           À noter : le client dit « foudre » là où le builder dit
           {" "}« {Object.keys(ICONE_ELEMENT).find((k) => /lectric/i.test(k)) ?? "Électricité"} ».
-          Même élément, deux mots.
+          Même élément, deux mots. Les cinq pastilles montrées ici sont celles du builder
+          {" "}(<b>/airbuilder/icons/elements/</b>) ; la fouille du client en a livré une seconde
+          série (<b>/jeu/mecaniques/element-*</b>) qu&apos;on n&apos;affiche pas, pour que le même
+          élément ait le même dessin ici et dans l&apos;AirBuilder.
         </p>
       </Groupe>
+
+      {changer && (
+        <Point titre="Changer d'élément ne recommence pas à zéro" marque="profit">
+          <p>
+            C&apos;est la bonne nouvelle que le jeu n&apos;annonce que dans sa fenêtre de
+            transformation, et personne ne va la lire avant d&apos;avoir monté vingt niveaux
+            d&apos;élément :
+          </p>
+          <p className="mc-cite">« {changer.texte} »</p>
+          {/* L'exemple du jeu est a +10, et il ne faut PAS le reecrire a +20 :
+              la page affichait sa citation a +10 puis « Eau +20 devient Feu +20 »
+              juste en dessous, et le chiffre du site contredisait celui du jeu
+              dans la meme respiration. La regle est la conservation, quel que
+              soit le palier — on le dit comme ca, et le plafond reste une
+              precision separee. */}
+          <p>
+            Autrement dit, <b>la valeur suit l&apos;élément</b> : l&apos;exemple du jeu la montre à
+            +10, et rien dans la phrase ne la limite — jusqu&apos;au plafond de
+            {" "}<b>+{ARME_ARTEFACT.elementMax}</b> qu&apos;une arme peut atteindre. Une arme
+            élémentarisée au mauvais élément n&apos;est donc <b>pas perdue</b>, et elle se vend au
+            prix d&apos;une arme élémentarisée, pas au prix d&apos;une arme nue.
+          </p>
+        </Point>
+      )}
+
+      {fixes.lignes.length > 0 && (
+        <Point titre={`L'éveil ne se tire pas forcément : ${fixes.total} parchemins posent la ligne qu'on veut`}>
+          <p>
+            À côté de l&apos;éveil au hasard, le client vend des parchemins d&apos;éveil
+            {" "}<b>fixe</b> : la statistique est écrite sur le parchemin. Il y en a pour
+            {" "}<b>{fixes.lignes.length} statistiques</b> — soit{" "}
+            {fixes.lignes.length > STATS_EVEIL.length
+              ? <><b>{fixes.lignes.length - STATS_EVEIL.length} de plus</b> que ce que le formulaire du
+                site propose</>
+              : <>autant que le formulaire du site en propose</>}
+            {" "}— chacune en rang 1 et rang 2.
+          </p>
+          <Bareme
+            lignes={fixes.lignes.map((l) => [
+              `${l.label || l.code}${l.pieces.length ? ` — ${l.pieces.join(", ")}` : ""}`,
+              `R1 +${l.r1}${l.pourcent ? " %" : ""} · R2 +${l.r2}${l.pourcent ? " %" : ""}`,
+            ] as [string, string])}
+          />
+          <p className="mc-src">
+            La colonne de gauche n&apos;est pas décorative : chaque parchemin nomme{" "}
+            <b>les pièces sur lesquelles il se pose</b>, et ce n&apos;est pas la même liste pour
+            tous — la Force ne va pas sur des bottes, les Soins ne vont pas sur un casque. Aucune
+            interface du jeu ne récapitule ça.
+          </p>
+          {fixes.pasDouble.length === 0 && (
+            <p className="mc-src">
+              Sur cette série, <b>le rang 2 vaut exactement le double du rang 1</b>, sans exception.
+              Ce n&apos;est pas vrai de la série pour costumes : voir <b>Costumes &amp; gemmes de
+              costume</b>.
+            </p>
+          )}
+          {/* Le panneau du jeu commence par un code couleur du client
+              (« #cfff ») : on l'enleve sur ses chiffres hexa SEULEMENT. Un \w+
+              mangeait le mot qui suit et la phrase demarrait sur un verbe nu.
+              Et ce commentaire est ICI, au-dessus de la condition : entre
+              accolades juste apres un `&& (`, il compte comme l'expression a
+              rendre et met la page en 500. */}
+          {eveiller && (
+            <p className="mc-src">
+              Et l&apos;opération a un tarif : « {eveiller.texte.replace(/^#[0-9a-fA-F]{3,6}/, "")} »
+            </p>
+          )}
+        </Point>
+      )}
     </div>
   );
 }
@@ -513,34 +801,56 @@ export function Eveil() {
 export function Sertissage() {
   const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
   const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
+  const plafonds = plafondsDeSertissage();
+  const ordres = ordresDeSertissage();
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <p style={note}>
         Une arme porte <b>{dia} diamants</b>, et <b>{nHolo} holographiques</b> de plus une fois
         passée en artefact — soit {dia + nHolo} emplacements en tout, ce que presque personne ne
-        sait (voir <b>Les plafonds cachés</b>). Les <b>gemmes</b> sont l&apos;affaire des
-        costumes : {FASHION.gemmes} emplacements, un dessin par pièce — la tête, le torse, les
-        gants et les bottes ne portent pas la même.
+        sait (voir <b>Les plafonds cachés</b>). Ce qui se sertit sur un <b>costume</b> n&apos;est
+        pas un diamant mais un joyau de la pièce, et ça n&apos;obéit pas aux mêmes règles : tout est
+        dans <b>Costumes &amp; gemmes de costume</b>, juste en dessous.
       </p>
       <div style={grille}>
         <Case src={ICONE_DIAMANT} nom="Diamant" />
         <Case src={ICONE_HOLO} nom="Diamant holographique" />
-        <Case src={ICONE_GEMME.fhead} nom="Gemme — chapeau" />
-        <Case src={ICONE_GEMME.ftop} nom="Gemme — haut" />
-        <Case src={ICONE_GEMME.fhand} nom="Gemme — gants" />
-        <Case src={ICONE_GEMME.ffoot} nom="Gemme — bottes" />
       </div>
 
-      <Groupe titre={`Les ${STATS_DIAMANT.length} statistiques du sertissage, dans l'ordre du fichier`}>
+      <Groupe titre={`Les ${plafonds.length || STATS_DIAMANT.length} statistiques du sertissage, et jusqu'où elles montent`}>
         <p style={note}>
-          Cet ordre-là est la clef de tout : c&apos;est lui qu&apos;AirFlyff a changé sans
-          retoucher les noms des gemmes, et c&apos;est pour ça que
+          L&apos;ordre de cette liste est la clef de tout : c&apos;est lui qu&apos;AirFlyff a changé
+          sans retoucher les noms des gemmes, et c&apos;est pour ça que
           {" "}<b>{nombreDeGemmesMenteuses()} noms sur {tableauDesGemmes().length} mentent</b>
-          {" "}(section <b>Les gemmes mentent</b>).
+          {" "}(section <b>Les gemmes mentent</b>). Les plafonds, eux, ne sont écrits dans aucune
+          infobulle : ils viennent de la table de valeurs du builder.
         </p>
+        {/* Le rang affiche est celui de la table de VALEURS, pas celui de la
+            liste deroulante : c'est l'ordre auquel les neuf Diamants du client
+            repondent rang pour rang (cf. Les gemmes mentent). Numeroter la
+            liste deroulante ferait de la page un troisieme temoin faux. */}
         <div style={grille}>
-          {STATS_DIAMANT.map((s, i) => <Chip key={s} texte={`${String(i + 1).padStart(2, "0")} · ${s}`} />)}
+          {plafonds.length > 0
+            ? plafonds.map((p, i) => (
+              <Chip key={p.stat} texte={`${String(i + 1).padStart(2, "0")} · ${p.stat} +${p.max}`} />
+            ))
+            : STATS_DIAMANT.map((s, i) => <Chip key={s} texte={`${String(i + 1).padStart(2, "0")} · ${s}`} />)}
         </div>
+        {plafonds.length > 0 && !ordres.memeRangPartout && (
+          <p style={note}>
+            À noter, et c&apos;est le nœud de l&apos;affaire : le builder porte ces
+            {" "}{plafonds.length} statistiques <b>deux fois, dans deux ordres différents</b> — celui
+            de sa liste déroulante et celui de sa table de valeurs. C&apos;est le second qui
+            correspond au jeu.
+          </p>
+        )}
+        <p style={note}>
+          Ces valeurs sont des <b>plafonds</b>, pas le gain d&apos;une gemme : le fichier ne dit pas
+          ce que la première pierre rapporte, ni comment les {dia + nHolo} se répartissent jusque-là.
+          Et les libellés sont ceux de la table, en l&apos;état : « Melee Stealhp » y désigne ce que
+          le client appelle ailleurs le <b>siphon de vie</b> — les doublets de vocabulaire sont
+          listés dans <b>Les gemmes mentent</b>.
+        </p>
       </Groupe>
 
       <Groupe titre={`Les ${nHolo} holographiques, et ce qu'ils donnent`}>
@@ -551,12 +861,6 @@ export function Sertissage() {
           {STATS_HOLO.length} valeurs pour {nHolo} emplacements : on choisit, on ne cumule pas
           tout.
         </p>
-      </Groupe>
-
-      <Groupe titre={`Les gemmes de costume : ${STATS_GEMME.length} statistiques possibles`}>
-        <div style={grille}>
-          {STATS_GEMME.map((s) => <Chip key={s} texte={s} />)}
-        </div>
       </Groupe>
     </div>
   );

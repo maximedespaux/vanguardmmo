@@ -32,6 +32,20 @@ export type Fiche = {
   cle: string;
   ic?: string;
   d?: string;
+  /** La famille du relevé : « arme », « stuff », « mode »… C'est elle qui dit
+   *  qu'une pièce est un costume, et non son nom. */
+  f?: string;
+  /** L'emplacement du client (`PARTS_HAT`, `PARTS_CAP`…). Deux séries
+   *  distinctes : les `PARTS_HAT/CLOTH/GLOVE/BOOTS` sont les emplacements de
+   *  MODE, les `PARTS_CAP/UPPER_BODY/HAND/FOOT` ceux de l'armure. C'est la
+   *  preuve, dans le relevé, qu'un costume s'ajoute à l'armure au lieu de la
+   *  remplacer : ce ne sont pas les mêmes cases. */
+  em?: string;
+  /** Le TYPE affiché — « Coiffe (mode) », « Cape », « Masque »… C'est ce libellé
+   *  que le guide de progression emploie pour compter la garde-robe, là où cette
+   *  page compte par `em`. Les deux ne donnent pas le même total, et l'écart est
+   *  affiché plutôt que laissé sans explication (voir `costumesQuiPaientSeuls`). */
+  t?: string;
   /** Les bonus tels que le client les liste : [statistique, valeur]. */
   b?: [string, number][];
 };
@@ -426,7 +440,58 @@ export const ECHELLE: { de: string; titre: string; cles: string[] }[] = [
 /** Les parchemins qui changent le TAUX, avec la phrase du client. Les trois
  *  premiers sont des bonus de réussite, les cinq derniers une réussite
  *  garantie — d'où deux groupes plutôt qu'une liste. */
-export const PARCHEMINS_TAUX = ["II_SYS_SYS_SCR_SMELTING", "II_SYS_SYS_SCR_SUPERSMELTING", "II_SYS_SYS_SCR_NOR_SMELTING01", "II_SYS_SYS_SCR_NOR_SMELTING02", "II_SYS_SYS_SCR_NOR_SMELTING03"];
+export const PARCHEMINS_TAUX = ["II_SYS_SYS_SCR_SMELTING", "II_SYS_SYS_SCR_SUPERSMELTING", "II_SYS_SYS_SCR_NOR_SMELTING01", "II_SYS_SYS_SCR_NOR_SMELTING02", "II_SYS_SYS_SCR_NOR_SMELTING03", "II_SYS_SYS_SCR_SMELTING2"];
+
+/**
+ * DEUX FAMILLES DE PARCHEMINS QU'ON LISAIT COMME UNE SEULE.
+ *
+ * La page disait « les taux affichés sont des bonus, pas des probabilités de
+ * base ». C'est vrai du Sfusion (« augmentant le taux … de 10 % ») et faux des
+ * trois Parchemins d'amélioration (« 100 % de chance d'amélioration d'une arme
+ * de +3 à +6 ») : ceux-là ne s'ajoutent à rien, ils REMPLACENT le taux. Confondre
+ * les deux fait empiler un parchemin sur un autre en croyant cumuler.
+ *
+ * Le tri se fait donc sur la phrase du client, pas sur une liste écrite à la
+ * main : « augmentant le taux … de N % » → bonus ; « N % de chance » →
+ * probabilité. Ce qui ne dit ni l'un ni l'autre reste dans `garanti`.
+ */
+export function parcheminsClasses() {
+  const l = objets(PARCHEMINS_TAUX);
+  const lire = (o: Fiche) => {
+    const d = o.d ?? "";
+    const bonus = /augmentant le taux[^.]*?de\s*(\d+)\s*%/i.exec(d);
+    const remplace = /(\d+)\s*%\s*de chance/i.exec(d);
+    const garanti = /garantissant[^.]*?(\d+)\s*%/i.exec(d);
+    // « efficace jusqu'à un enchantement +7 », « de +3 à +6 », « une arme +9 ».
+    const plage = /(?:de\s*)?\+(\d+)\s*(?:à|a)\s*\+(\d+)/.exec(d);
+    const jusqua = /jusqu.à(?: un enchantement)?\s*\+(\d+)/i.exec(d);
+    const seul = /une arme\s*\+(\d+)/i.exec(d);
+    return {
+      fiche: o,
+      pct: Number(bonus?.[1] ?? remplace?.[1] ?? garanti?.[1] ?? 0),
+      genre: bonus ? "ajoute" : garanti ? "garantit" : remplace ? "remplace" : "autre",
+      plage: plage ? `+${plage[1]} → +${plage[2]}` : jusqua ? `jusqu'à +${jusqua[1]}` : seul ? `+${seul[1]}` : "",
+      // Les deux limites que seul le client écrit, et que personne ne relit.
+      unTir: /une seule tentative/i.test(d),
+      pasArmure: /ne fonctionne pas pour les armures/i.test(d),
+      pasElement: /ne fonctionne pas pour les élémentarisations/i.test(d),
+      surElement: /élémentarisation/i.test(d),
+    };
+  };
+  const tout = l.map(lire);
+  return {
+    ajoutent: tout.filter((x) => x.genre === "ajoute" || x.genre === "garantit"),
+    remplacent: tout.filter((x) => x.genre === "remplace"),
+    autres: tout.filter((x) => x.genre === "autre"),
+    total: tout.length,
+    /** COMBIEN L'ÉCRIVENT, et pas « tous ». La page annonçait « la limite que
+     *  tous partagent : un parchemin n'est actif que pour une seule tentative ».
+     *  Seuls les trois Sfusion le disent ; les trois Parchemins d'amélioration
+     *  n'en parlent pas. Étendre la phrase aux six revenait à inventer une
+     *  limite sur la moitié d'entre eux — on compte donc ceux qui l'écrivent. */
+    unTir: tout.filter((x) => x.unTir).length,
+  };
+}
 export const PARCHEMINS_ABSOLUS = ["II_SYS_SYS_SCR_ENCHANT_ABSOLUTE06", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE07", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE08", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE09", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE10"];
 
 /**
@@ -444,6 +509,760 @@ export function comptoirDeLuca() {
   const uniques = cites.filter((o) => (vus.has(o.n) ? false : (vus.add(o.n), true)));
   const monnaies = uniques.filter((o) => /monnaie d.échange/i.test(o.d ?? ""));
   return { objets: uniques.filter((o) => !monnaies.includes(o)), monnaies };
+}
+
+/* ── LE SECOND TÉMOIN : la table de l'AirBuilder ───────────────────────────
+ *
+ * Jusqu'ici cette page n'avait qu'une source, `objets-fiches.json` — ce que le
+ * client ÉCRIT sur un objet. Il en existe une deuxième, indépendante et déjà
+ * dans le dépôt : `public/airbuilder/data.json`, la table de valeurs du moteur
+ * du builder. Les deux ne disent pas la même chose : la première donne les NOMS
+ * et les phrases, la seconde donne les CHIFFRES.
+ *
+ * C'est précieux pour deux raisons.
+ *
+ *  · Les plafonds de sertissage, les valeurs de gemme de costume et les
+ *    probabilités de lignes de rareté ne sont écrits NULLE PART dans les
+ *    infobulles. Sans cette table, il faudrait les taper à la main.
+ *  · Là où les deux sources se recoupent, l'accord vaut démonstration et le
+ *    désaccord vaut avertissement. Les neuf Diamants du client et la liste
+ *    `GEMU` du builder tombent rang pour rang dans le même ordre : c'est ce qui
+ *    transforme « les gemmes mentent » d'affirmation en constat vérifiable par
+ *    deux fichiers que personne n'a écrits ensemble.
+ *
+ * Rien n'est recopié : si le builder est reversé, les chiffres de la page
+ * suivent, et si un accord se casse la page le dit d'elle-même.
+ */
+
+type Chiffre = { fr: string; v: number; t?: number };
+type TableBuilder = {
+  GEMU?: Chiffre[];
+  GEMC?: Chiffre[];
+  DIASTATS?: string[];
+  ITEMS?: { fashion?: PieceFashion[] };
+  MECH?: { arme?: MecaArme };
+};
+type PieceFashion = {
+  n: string; set?: string; piece?: string; sex?: string; ic?: string;
+  cat?: string; b?: [string, number][]; setb?: [string, number][];
+};
+type MecaArme = {
+  rarete_pool?: { stat: string; min: number; max: number }[];
+  rarete_lignes?: { amount: number; chance: number }[];
+  eveil?: Record<string, number>;
+};
+
+let TABLE: TableBuilder | null = null;
+function builder(): TableBuilder {
+  if (TABLE) return TABLE;
+  try {
+    const f = path.join(process.cwd(), "public", "airbuilder", "data.json");
+    TABLE = JSON.parse(fs.readFileSync(f, "utf8")) as TableBuilder;
+  } catch {
+    TABLE = {};
+  }
+  return TABLE;
+}
+
+/**
+ * Les neuf statistiques de sertissage AVEC leur plafond, dans l'ordre de la
+ * table de valeurs.
+ *
+ * La page listait les neuf noms et rien d'autre : on savait qu'une gemme donne
+ * de la Force sans savoir jusqu'où. Le plafond est ce qui permet de comparer
+ * deux builds, et c'est justement ce que l'infobulle ne dit pas.
+ */
+export const plafondsDeSertissage = () =>
+  (builder().GEMU ?? []).map((g) => ({ stat: g.fr, max: g.v }));
+
+/**
+ * LES DOUBLETS DE VOCABULAIRE DU CLIENT, et pourquoi il faut les traiter.
+ *
+ * AirFlyff nomme plusieurs fois la même statistique avec deux mots : « HP max »
+ * et « PV max », « Dégâts PvP » et « Dégâts JcJ », « Siphon de vie » et « Melee
+ * Stealhp ». Comparer les libellés à la lettre faisait donc passer trois rangs
+ * pour un désaccord entre les deux fichiers, alors que les deux parlent de la
+ * même chose — et ça sous-estimait précisément la démonstration qu'on veut
+ * faire. Deux plafonds disparaissaient au passage, faute d'être retrouvés.
+ *
+ * On ramène donc chaque libellé à un mot canonique avant de comparer. C'est une
+ * équivalence de VOCABULAIRE, pas une supposition sur le jeu : PvP et JcJ sont
+ * la même abréviation dans deux langues, HP et PV aussi. La page dit à l'écran
+ * combien de rangs passent par un doublet, pour qu'on ne prenne pas cette
+ * normalisation pour une donnée.
+ */
+const DOUBLETS: [RegExp, string][] = [
+  // L'ordre compte : « melee stealhp » d'abord, sinon rien ne l'attrape.
+  [/melee\s*steal\s*hp|steal\s*hp/g, "siphon de vie"],
+  [/\bsyphon\b/g, "siphon"],
+  [/\bhp\b/g, "pv"],
+  [/\bpvp\b/g, "jcj"],
+  [/\bmp\b/g, "pm"],
+];
+
+/** Le libellé ramené à son mot canonique : sans accents, sans « max », et avec
+ *  les doublets du client résolus. */
+function canon(s: string): string {
+  let x = sansAccent(s).replace(/[^a-z0-9 ]+/g, " ").replace(/\bmax\b/g, " ");
+  for (const [re, vers] of DOUBLETS) x = x.replace(re, vers);
+  return x.replace(/\s+/g, " ").trim();
+}
+
+/** Deux libellés désignent-ils la même statistique, doublets compris ? La
+ *  comparaison reste sur le début du mot : le client écrit « Dexteritée » là où
+ *  la table écrit « Dextérité ». */
+function memeStatique(a: string, b: string): boolean {
+  const x = canon(a), y = canon(b);
+  return !!x && !!y && (x.startsWith(y) || y.startsWith(x));
+}
+
+/** Le libellé passe-t-il par un doublet plutôt que par une égalité franche ?
+ *  C'est ce qui permet de le DIRE à l'écran au lieu de le masquer. */
+const parDoublet = (a: string, b: string) =>
+  memeStatique(a, b) && !(() => {
+    const x = sansAccent(a).replace(/[^a-z0-9 ]+/g, " ").replace(/\bmax\b/g, " ").replace(/\s+/g, " ").trim();
+    const y = sansAccent(b).replace(/[^a-z0-9 ]+/g, " ").replace(/\bmax\b/g, " ").replace(/\s+/g, " ").trim();
+    return !!x && !!y && (x.startsWith(y) || y.startsWith(x));
+  })();
+
+/** Le plafond d'une statistique, quel que soit le mot employé pour la nommer. */
+export function plafondDeStat(nom: string): number | null {
+  for (const { stat, max } of plafondsDeSertissage()) {
+    if (memeStatique(nom, stat)) return max;
+  }
+  return null;
+}
+
+/**
+ * LA PREUVE DU DÉCALAGE, PAR RECOUPEMENT DE DEUX FICHIERS.
+ *
+ * Le builder porte les mêmes neuf statistiques DEUX FOIS, dans deux ordres qui
+ * ne se ressemblent pas : `DIASTATS` alimente la liste déroulante que le joueur
+ * voit, `GEMU` porte les valeurs. On compare donc, rang par rang, l'ordre de
+ * `GEMU` aux neuf Diamants d'AirFlyff — deux fichiers que personne n'a écrits
+ * ensemble. Là où les neuf rangs concordent, l'ordre réel est établi ; et il
+ * n'est pas celui de la liste déroulante.
+ *
+ * `concordent` retombe à `false` tout seul si l'un des deux fichiers est
+ * corrigé : c'est le but, la page cesserait alors d'affirmer.
+ */
+export function ordresDeSertissage() {
+  const fichier = plafondsDeSertissage().map((x) => x.stat);
+  const affiche = builder().DIASTATS ?? [];
+  const table = tableauDesGemmes();
+  const rangs = table.map((g, i) => ({
+    rang: g.rang,
+    diamant: g.reel,
+    table: fichier[i] ?? "",
+    concorde: !!fichier[i] && memeStatique(g.reel, fichier[i]),
+    /** Concordance obtenue en résolvant un doublet de vocabulaire, pas par
+     *  égalité franche des libellés. */
+    doublet: !!fichier[i] && parDoublet(g.reel, fichier[i]),
+  }));
+  // La comparaison des deux ordres se fait sur les noms canoniques : « PV max »
+  // et « HP max » sont le même rang, « Intelligence » en rang 1 ou en rang 9 ne
+  // l'est pas.
+  const memeRangPartout = fichier.length === affiche.length
+    && fichier.every((s, i) => memeStatique(s, affiche[i] ?? ""));
+  return {
+    fichier, affiche,
+    rangs,
+    concordent: rangs.length > 0 && rangs.every((r) => r.concorde),
+    justes: rangs.filter((r) => r.concorde).length,
+    doublets: rangs.filter((r) => r.doublet).length,
+    /** Les deux listes du builder rangent-elles les neuf dans le même ordre ? */
+    memeRangPartout,
+  };
+}
+
+/**
+ * Ce que la rareté tire vraiment : le vivier de statistiques et le nombre de
+ * lignes.
+ *
+ * La section Rareté ne montrait que les six parchemins. Ce qui décide de la
+ * valeur d'une arme rare n'est pourtant pas le palier mais le TIRAGE : combien
+ * de lignes, prises dans quel vivier. Ces deux tables ne sont dans aucune
+ * infobulle.
+ */
+export function rareteChiffree() {
+  const m = builder().MECH?.arme ?? {};
+  const lignes = (m.rarete_lignes ?? []).slice().sort((a, b) => a.amount - b.amount);
+  return {
+    vivier: m.rarete_pool ?? [],
+    lignes,
+    /** Les chances doivent faire 100 : si elles ne le font pas, on le montre. */
+    somme: lignes.reduce((n, l) => n + l.chance, 0),
+  };
+}
+
+/** Les valeurs d'éveil que porte la table du builder, statistique par
+ *  statistique. Elles ne concordent pas avec les parchemins d'éveil FIXE du
+ *  client — d'où la réserve à l'écran plutôt qu'un choix arbitraire entre les
+ *  deux. */
+export const eveilDuBuilder = () =>
+  Object.entries(builder().MECH?.arme?.eveil ?? {}).map(([stat, v]) => ({ stat, v }));
+
+/* ── LES COSTUMES ─────────────────────────────────────────────────────────
+ *
+ * LE TROU DU SITE. Le mot « fashion » traverse quatre fichiers de code et
+ * n'était expliqué sur aucune page : ni quelles pièces en sont, ni si leurs
+ * bonus comptent dans les statistiques, ni ce qu'on y sertit, ni ce qu'on perd
+ * en défaisant. Tout ce qui suit se lit dans les fichiers ; ce qui ne s'y lit
+ * pas est signalé comme absent plutôt que comblé.
+ */
+
+/** Les quatre emplacements de costume, dans l'ordre où le jeu les range. Les
+ *  libellés ne sont pas écrits ici : ils sont LUS dans la description des
+ *  joyaux (« Joyau utilisé pour les coiffes »). */
+const JOYAUX_COSTUME: { cle: string; img: string; morceau: string; imgMorceau: string; coffret: string }[] = [
+  { cle: "II_GEN_MAT_GARNET", img: "gemme-costume-grenat", morceau: "II_SYS_SYS_SCR_GARNET", imgMorceau: "gemme-costume-morceau-grenat", coffret: "II_SYS_SYS_SCR_BX_GARNET" },
+  { cle: "II_GEN_MAT_TURQUOISE", img: "gemme-costume-turquoise", morceau: "II_SYS_SYS_SCR_TURQUOISE", imgMorceau: "gemme-costume-morceau-turquoise", coffret: "II_SYS_SYS_SCR_BX_TURQUOISE" },
+  { cle: "II_GEN_MAT_AQUAMARINE", img: "gemme-costume-aigue-marine", morceau: "II_SYS_SYS_SCR_AQUAMARINE", imgMorceau: "gemme-costume-morceau-aigue-marine", coffret: "II_SYS_SYS_SCR_BX_AIGUEMARINE" },
+  { cle: "II_GEN_MAT_AMETHYST", img: "gemme-costume-amethyste", morceau: "II_SYS_SYS_SCR_AMETHYST", imgMorceau: "gemme-costume-morceau-amethyste", coffret: "II_SYS_SYS_SCR_BX_AMETHYST" },
+];
+
+/**
+ * LES QUATRE FAMILLES DE JOYAU DE COSTUME, une par pièce.
+ *
+ * Le fait qui compte, et qu'aucune interface ne dit : le joyau dépend de la
+ * PIÈCE. Un Grenat ne va que sur une coiffe, une Améthyste que sur des bottes.
+ * La pièce se lit dans la description du joyau, la liste des statistiques
+ * possibles dans celle du coffret : les deux phrases sont celles que le joueur a
+ * sous les yeux, donc elles ne peuvent pas se désynchroniser de son écran.
+ *
+ * À côté du joyau brut, AirFlyff a posé des joyaux NOMMÉS (`…_GARNET_FOR`) —
+ * exactement le geste qu'il a fait sur les Diamants d'arme. On les compte plutôt
+ * que de l'annoncer.
+ */
+export function joyauxDeCostume() {
+  const { TOUT: tout } = charger();
+  return JOYAUX_COSTUME.map(({ cle, img, morceau, imgMorceau, coffret }) => {
+    const brut = objet(cle);
+    const nommees = tout.filter((o) => (o.cle ?? "").startsWith(`${cle}_`));
+    const boite = objet(coffret);
+    // « … aux statistiques prédéfinies (FOR, END, DEX, INT, Attaque, Puissance
+    // magique. » — la parenthèse du client n'est pas toujours refermée, d'où la
+    // découpe sur la dernière ouvrante plutôt que sur une paire.
+    const apres = (boite?.d ?? "").split("(").slice(1).join("(");
+    const stats = apres
+      ? apres.replace(/[).\s]+$/, "").split(/\s*,\s*/).map((s) => s.trim()).filter(Boolean)
+      : [];
+    return {
+      brut,
+      nom: brut?.n ?? cle,
+      /** « Joyau utilisé pour les coiffes. » → « coiffes ». */
+      piece: /pour (?:les|la|le|l.)\s*([^.]+)/i.exec(brut?.d ?? "")?.[1]?.trim() ?? "",
+      img: `/jeu/mecaniques/${img}.webp`,
+      imgMorceau: `/jeu/mecaniques/${imgMorceau}.webp`,
+      morceau: objet(morceau),
+      coffret: boite,
+      stats,
+      nommees,
+    };
+  });
+}
+
+/** Ce que le builder propose pour un emplacement de gemme de costume, avec les
+ *  valeurs. `GEMC` compte plus d'entrées que de noms : le nom qui revient est
+ *  celui que DEUX pièces partagent, et c'est la trace de la structure « quatre
+ *  statistiques communes plus deux par pièce ». */
+export function gemmesCostumeDuBuilder() {
+  const entrees = builder().GEMC ?? [];
+  const vus = new Map<string, number>();
+  for (const g of entrees) vus.set(g.fr, (vus.get(g.fr) ?? 0) + 1);
+
+  /**
+   * LES QUATRE PALIERS — et pourquoi cette page a d'abord cru ne pas les avoir.
+   *
+   * `public/airbuilder/data.json` → GEMC ne porte QU'UNE valeur par statistique,
+   * la plus haute. Cette page en a donc conclu que « le fichier ne dit ni combien
+   * la première gemme donne, ni comment les 4 se répartissent » — pendant que le
+   * guide de progression affichait, deux clics plus loin, les quatre paliers de
+   * chacune des 11 gemmes. Ils sont dans un SECOND fichier du dépôt,
+   * `src/data/builder-data.json` → costumeGems.
+   *
+   * Les deux se recoupent : le dernier palier de `costumeGems` est exactement la
+   * valeur de GEMC. C'est le contrôle qui autorise à afficher la marche ici, et il
+   * est recalculé plutôt qu'affirmé (`concordent` plus bas).
+   */
+  const paliers = new Map<string, number[]>();
+  try {
+    const f = path.join(process.cwd(), "src", "data", "builder-data.json");
+    const brut = JSON.parse(fs.readFileSync(f, "utf8")) as {
+      costumeGems?: { stat: string; levels: number[] }[];
+    };
+    for (const g of brut.costumeGems ?? []) {
+      if (g?.stat && Array.isArray(g.levels) && g.levels.length) paliers.set(g.stat, g.levels);
+    }
+  } catch {
+    /* Le fichier peut manquer : la page retombe alors sur le seul plafond. */
+  }
+
+  /**
+   * LE SEUL LIBELLÉ QUI DIFFÈRE ENTRE LES DEUX FICHIERS.
+   *
+   * GEMC écrit « Heal Rate », costumeGems écrit « Soin % » — et c'est, dans les
+   * deux fichiers, la statistique qui apparaît DEUX fois (celle que deux pièces se
+   * partagent). Même rang, même valeur haute, deux mots.
+   *
+   * On ne fusionne pas en silence : l'appariement est déclaré ici et AFFICHÉ comme
+   * un rapprochement de vocabulaire, exactement comme la page le fait déjà pour
+   * HP/PV et PvP/JcJ sur les diamants. Sans lui, la pastille « Heal Rate »
+   * resterait seule sans ses paliers, ce qui se lit comme une donnée manquante.
+   */
+  const DOUBLET: Record<string, string> = { "Heal Rate": "Soin %" };
+
+  const uniques = [...vus.keys()].map((fr) => {
+    const e = entrees.find((x) => x.fr === fr)!;
+    const autreNom = DOUBLET[fr];
+    const lv = paliers.get(fr) ?? (autreNom ? paliers.get(autreNom) ?? null : null);
+    return {
+      stat: fr, v: e.v, pourcent: e.t === 1,
+      /** Les 4 paliers, du premier au dernier, ou `null` si le second relevé ne
+       *  les porte pas pour cette statistique. */
+      paliers: lv,
+      /** Le nom que l'AUTRE fichier emploie, quand ce n'est pas le même mot. */
+      parDoublet: paliers.has(fr) ? null : (autreNom ?? null),
+      /** Le dernier palier vaut-il bien le plafond de l'autre fichier ? */
+      concorde: lv ? lv[lv.length - 1] === e.v : null,
+    };
+  });
+
+  const avecPaliers = uniques.filter((u) => u.paliers);
+  const doublets = uniques.filter((u) => u.parDoublet && u.paliers);
+  return {
+    entrees, uniques,
+    repetes: [...vus.entries()].filter(([, n]) => n > 1).map(([fr]) => fr),
+    /** Combien de statistiques ont leurs 4 paliers, et combien concordent avec le
+     *  plafond de GEMC. Affiché pour que le recoupement soit vérifiable à l'écran. */
+    nPaliers: avecPaliers.length,
+    nConcordent: avecPaliers.filter((u) => u.concorde).length,
+    /** Le nombre de paliers, lu et non écrit (4 aujourd'hui). */
+    marches: avecPaliers[0]?.paliers?.length ?? 0,
+    /** Les statistiques dont les paliers ne se retrouvent que via un doublet de
+     *  vocabulaire, avec les deux mots. Affiché, jamais tu. */
+    doublets: doublets.map((u) => ({ stat: u.stat, autre: u.parDoublet! })),
+  };
+}
+
+/**
+ * LES SETS DE COSTUME, et ce que chacun donne.
+ *
+ * Deux choses à établir, et les fichiers les établissent tous les deux :
+ *
+ *  · La PIÈCE seule ne donne rien. Les 24 pièces du builder ont un champ de
+ *    bonus VIDE et un bonus de SET rempli ; les pièces du client n'ont pas de
+ *    ligne de bonus non plus. C'est le set porté entier qui paie.
+ *  · Les trois sets partagent leurs dessins. On ne peut donc pas voir, sur
+ *    quelqu'un, lequel des trois il porte — et le nom du set n'apparaît que dans
+ *    l'infobulle.
+ *
+ * Le contrôle croisé est la partie utile : le client vend une boîte par set et
+ * ANNONCE son bonus dans la description de la boîte. Là où la boîte et le
+ * builder disent la même chose, la ligne est double-sourcée ; là où ils
+ * divergent, la page le montre au lieu de choisir.
+ */
+export function setsDeFashion() {
+  const pieces = builder().ITEMS?.fashion ?? [];
+  const parSet = new Map<string, PieceFashion[]>();
+  for (const p of pieces) {
+    const s = p.set ?? "?";
+    if (!parSet.has(s)) parSet.set(s, []);
+    parSet.get(s)!.push(p);
+  }
+  return {
+    total: pieces.length,
+    /** Les pièces se comptent, les dessins aussi : moins de dessins que de
+     *  pièces, c'est la définition d'une apparence partagée. */
+    dessins: new Set(pieces.map((p) => p.ic).filter(Boolean)).size,
+    /** Une pièce du builder porte-t-elle un bonus à elle ? */
+    piecesAvecBonusPropre: pieces.filter((p) => (p.b ?? []).length > 0).length,
+    sets: [...parSet.entries()].map(([nom, l]) => {
+      // Le dernier mot du nom de set (« Fulgurant ») retrouve la boîte du
+      // client (« Tenue du roi dragon fulgurant (G) ») sans table à tenir.
+      const mot = sansAccent(nom.split(/\s+/).pop() ?? "");
+      const boite = charger().TOUT.find(
+        (o) => /^Tenue du roi dragon .+ \(G\)$/.test(o.n) && sansAccent(o.n).includes(mot)
+      );
+      const bonus = (l[0]?.setb ?? []) as [string, number][];
+      const annonce = boite?.d ?? "";
+      // LA COMPARAISON PORTE SUR LES NOMBRES, ET SUR UN SAC DE NOMBRES.
+      //
+      // Sur les libellés, rien ne se comparerait : le jeu écrit « HP 5% » là où
+      // le builder écrit « PV max % +5 ». Un nombre, si.
+      //
+      // Mais chercher chaque nombre du builder DANS LA PHRASE ne suffit pas, et
+      // c'est l'erreur que cette page a affichée : une ligne que le jeu
+      // n'annonce pas se croit retrouvée parce qu'une AUTRE ligne porte le même
+      // nombre. Sur le set Fulgurant, le builder liste « Endurance % +5 » que la
+      // boîte ne nomme jamais, et son 5 se retrouvait dans « HP 5% » — le set
+      // passait pour double-sourcé sur 5 lignes sur 5.
+      //
+      // On travaille donc sur un SAC de nombres qu'on CONSOMME : chaque ligne du
+      // site prend un nombre du jeu et le retire. Ce qui reste du côté du site
+      // est ce qu'il dit en plus, et la multiplicité est respectée — le jeu écrit
+      // bien deux fois « 15 » sur Fulgurant, donc deux lignes à 15 sont
+      // légitimes.
+      const nombres = (annonce.match(/\d+/g) ?? []).map(Number);
+      const nombresDuJeu = nombres.length;
+      const sac = [...nombres];
+      const enTrop = bonus.filter(([, v]) => {
+        const i = sac.indexOf(v);
+        if (i < 0) return true;
+        sac.splice(i, 1);
+        return false;
+      });
+      const retrouves = bonus.length - enTrop.length;
+      const toutesRetrouvees = enTrop.length === 0 && bonus.length > 0;
+      return {
+        nom,
+        role: l[0]?.cat ?? "",
+        emplacements: [...new Set(l.map((p) => p.piece).filter(Boolean))] as string[],
+        genres: [...new Set(l.map((p) => p.sex).filter(Boolean))] as string[],
+        bonus,
+        /** Ce que la boîte du client annonce, mot pour mot, ou "". */
+        annonce,
+        boite: boite ?? null,
+        /** Combien des chiffres du builder se retrouvent dans la phrase du jeu. */
+        retrouves,
+        /** Combien de valeurs la phrase du jeu porte, elle. */
+        nombresDuJeu,
+        /** Les lignes du site que la phrase du jeu ne couvre pas. */
+        enTrop,
+        /** Tous les chiffres du site apparaissent dans la phrase du jeu. */
+        toutesRetrouvees,
+        /** Les deux listes ont la même longueur : sans ça, l'une dit quelque
+         *  chose que l'autre ignore, même si tous les nombres se retrouvent. */
+        memeCompte: !!annonce && nombresDuJeu === bonus.length,
+        concordent: !!annonce && toutesRetrouvees && nombresDuJeu === bonus.length,
+      };
+    }),
+  };
+}
+
+/** Les pièces de costume telles que le CLIENT les nomme, pour montrer leurs
+ *  vraies icônes. Un seul jeu suffit à l'écran : quatre dessins, et le relevé
+ *  dit lui-même combien de pièces les partagent. */
+export function piecesDeFashion() {
+  const { TOUT: tout } = charger();
+  // L'ordre du haut vers le bas, celui de la fenêtre du jeu. Le relevé, lui,
+  // range par identifiant : sans ce tri, les bottes passaient avant la couronne.
+  const ORDRE = ["CAP", "UPPER", "HAND", "FOOT"];
+  const l = tout
+    .filter((o) => /^II_ARM_M_MSEAKINGLOOK(CAP|UPPER|HAND|FOOT)$/.test(o.cle ?? ""))
+    .sort((a, b) => {
+      const r = (o: Fiche) => ORDRE.findIndex((p) => (o.cle ?? "").endsWith(p));
+      return r(a) - r(b);
+    });
+  const toutes = tout.filter((o) => /^II_ARM_[MF]_[MF]SEAKINGLOOK(CAP|UPPER|HAND|FOOT)(_\d+)?$/.test(o.cle ?? ""));
+  return {
+    montrees: l,
+    total: toutes.length,
+    dessins: new Set(toutes.map((o) => o.ic).filter(Boolean)).size,
+    /** Aucune de ces pièces ne porte de ligne de bonus dans le relevé. */
+    avecBonus: toutes.filter((o) => (o.b ?? []).length > 0).length,
+  };
+}
+
+/**
+ * LE CONTRE-EXEMPLE, ET POURQUOI IL DOIT ÊTRE À L'ÉCRAN.
+ *
+ * La page affirmait « une couronne ou des bottes de costume, seules, ne donnent
+ * rien », en réservant l'exception à la cape et au masque. C'est FAUX, et le
+ * relevé le dit : sur les quatre emplacements de mode qui prennent des gemmes,
+ * des centaines de pièces portent une ligne de bonus à elles seules — une
+ * Couronne de Suzeraineté vaut PV max +9999 sans aucun set. Ce qui est propre
+ * aux trois sets du Roi Dragon, c'est qu'ils paient par le SET et pas par la
+ * pièce ; d'autres costumes font exactement l'inverse.
+ *
+ * On compte donc, et on montre un exemple par emplacement — celui dont la
+ * valeur de bonus est la plus haute, pour que le contre-exemple soit net. Rien
+ * n'est choisi à la main : si le client change, l'exemple change.
+ *
+ * Les quatre emplacements sont ceux de la MODE (`PARTS_HAT`, `PARTS_CLOTH`,
+ * `PARTS_GLOVE`, `PARTS_BOOTS`), pas ceux de l'armure (`PARTS_CAP`,
+ * `PARTS_UPPER_BODY`, `PARTS_HAND`, `PARTS_FOOT`) : ce sont deux séries
+ * distinctes dans le relevé, et c'est ce qui prouve que le costume s'ajoute à la
+ * tenue au lieu de la remplacer.
+ */
+const EMPLACEMENTS_MODE: { em: string; nom: string }[] = [
+  { em: "PARTS_HAT", nom: "coiffe" },
+  { em: "PARTS_CLOTH", nom: "tenue" },
+  { em: "PARTS_GLOVE", nom: "gants" },
+  { em: "PARTS_BOOTS", nom: "bottes" },
+];
+
+/** Les deux emplacements de mode qui NE prennent PAS de gemme — il n'existe pas
+ *  de famille de joyau pour eux — et qui portent en revanche leurs propres
+ *  lignes de bonus. Ils sont nommés ici parce que le relevé n'a pas de champ qui
+ *  dise « celui-ci prend des gemmes » : c'est la description des quatre joyaux
+ *  (coiffes, tenues, gants, bottes) qui le décide. */
+const EMPLACEMENTS_SANS_GEMME: { em: string; nom: string; art: string }[] = [
+  // L'article est porté ici et pas dans la phrase : « la {nom} » donnait « la
+  // masque » à l'écran, et une faute d'accord fait douter de tout le reste.
+  { em: "PARTS_CLOAK", nom: "cape", art: "la" },
+  { em: "PARTS_MASK", nom: "masque", art: "le" },
+];
+
+export function costumesQuiPaientSeuls() {
+  const { TOUT: tout } = charger();
+  const mode = tout.filter((o) => o.f === "mode");
+  const sur = mode.filter((o) => EMPLACEMENTS_MODE.some((e) => e.em === o.em));
+  const avecBonus = sur.filter((o) => (o.b ?? []).length > 0);
+  const plus = (o: Fiche) => Math.max(...(o.b ?? []).map(([, v]) => v), 0);
+  const exemples = EMPLACEMENTS_MODE.map(({ em, nom }) => {
+    const l = avecBonus.filter((o) => o.em === em);
+    const meilleur = l.slice().sort((a, b) => plus(b) - plus(a))[0];
+    return meilleur ? { emplacement: nom, fiche: meilleur, sur: l.length } : null;
+  }).filter((x): x is { emplacement: string; fiche: Fiche; sur: number } => !!x);
+  /**
+   * LES 74 PIÈCES QUI SÉPARENT CETTE PAGE DE CELLE DU GUIDE.
+   *
+   * Le guide (/astuces) compte la garde-robe par le TYPE affiché — « Coiffe
+   * (mode) », « Tenue (mode) »… — et trouve 2 623 pièces sur ces quatre
+   * emplacements. Cette page compte par l'EMPLACEMENT D'ÉQUIPEMENT (`em`) et en
+   * trouve 2 549. L'écart n'est pas une erreur de l'une des deux : 74 pièces sont
+   * de la mode par leur famille et par leur type, mais le client les range sur les
+   * emplacements de l'ARMURE (PARTS_CAP, PARTS_UPPER_BODY, PARTS_HAND,
+   * PARTS_FOOT) et non sur ceux du costume.
+   *
+   * La conséquence est celle qui compte ici : un joyau de costume se pose sur un
+   * emplacement de COSTUME, donc ces 74 pièces ne prennent pas de gemme. C'est
+   * pour ça que cette page compte par `em` — et on affiche le nombre plutôt que de
+   * laisser deux écrans annoncer deux totaux sans raison visible.
+   */
+  const emCostume = new Set(EMPLACEMENTS_MODE.map((e) => e.em));
+  const surEmplacementArmure = mode.filter(
+    (o) => !emCostume.has(o.em ?? "") && /^(Coiffe|Tenue|Gants|Chaussures) \(mode\)$/.test(o.t ?? "")
+  );
+
+  return {
+    emplacements: EMPLACEMENTS_MODE.length,
+    total: sur.length,
+    avecBonus: avecBonus.length,
+    /** Les 74 : de la mode qui occupe un emplacement d'armure, donc sans gemme. */
+    horsEmplacement: surEmplacementArmure.length,
+    /** Le total que donne le comptage par type — celui du guide. */
+    totalParType: sur.length + surEmplacementArmure.length,
+    exemples,
+    /** La cape et le masque : combien de pièces, combien portent un bonus. */
+    sansGemme: EMPLACEMENTS_SANS_GEMME.map(({ em, nom, art }) => {
+      const l = mode.filter((o) => o.em === em);
+      return { nom, art, total: l.length, avecBonus: l.filter((o) => (o.b ?? []).length > 0).length };
+    }),
+  };
+}
+
+/**
+ * L'ÉVEIL DU COSTUME — il existe, et le builder du site l'ignore.
+ *
+ * Le client vend des parchemins d'éveil FIXE : au lieu de tirer une ligne au
+ * hasard, ils en posent une connue d'avance. Il y en a une série pour
+ * l'équipement et une série pour le costume, et les deux ne valent pas la même
+ * chose. Tout est lu dans le nom et la description (« FOR+10 »), y compris la
+ * liste des pièces éligibles quand la description la donne.
+ */
+export function eveilFixe(motif: RegExp) {
+  const { TOUT: tout } = charger();
+
+  /**
+   * La statistique et le rang se lisent dans la CLÉ, pas dans le nom.
+   *
+   * Le nom ne les porte pas au même endroit d'une série à l'autre : le costume
+   * écrit « … rang 1 (MP) », l'équipement « … fixe FOR (Rang 1) ». Lire « la
+   * dernière parenthèse » donnait donc « Rang 1 » comme nom de statistique et
+   * repliait les onze lignes de l'équipement sur deux. La clé, elle, a la même
+   * forme des deux côtés : `…_<STAT>_R<n>`, éventuellement suivi de `_LINK`.
+   */
+  const lire = (o: Fiche) => {
+    const d = o.d ?? "";
+    const reste = (o.cle ?? "").replace(motif, "");
+    const k = /^(.+?)_R(\d)(_LINK)?$/.exec(reste);
+    const m = /([A-Za-zÉÈ]+)\s*\+\s*(\d+)\s*(%?)/.exec(d);
+    // Le libellé lisible est dans le nom : « (MP) » en fin, ou le mot qui suit
+    // « fixe ». On ne garde jamais « Rang 1 » comme libellé.
+    const paren = /\(([^)]+)\)\s*$/.exec(o.n)?.[1] ?? "";
+    const label = paren && !/rang/i.test(paren)
+      ? paren
+      : (/fixe\s+(.+?)\s*\(/i.exec(o.n)?.[1] ?? k?.[1] ?? "");
+    return {
+      fiche: o,
+      /** La clé de regroupement — stable, et la même dans les deux séries. */
+      code: k?.[1] ?? "",
+      label: label.trim(),
+      rang: k?.[2] ?? "",
+      /** Les versions liées sont le même parchemin sous une seconde clé : on
+       *  les compte à part au lieu de gonfler le total. */
+      liee: !!k?.[3],
+      valeur: Number(m?.[2] ?? 0),
+      pourcent: m?.[3] === "%",
+      /** « … de votre choix. (Casque, Torse, Bouclier, Arme) » */
+      pieces: /choix\.?\s*\(([^)]+)/i.exec(d)?.[1]?.split(/\s*,\s*/).map((s) => s.trim()).filter(Boolean) ?? [],
+    };
+  };
+  const l = tout.filter((o) => motif.test(o.cle ?? "")).map(lire).filter((x) => x.valeur > 0 && x.code);
+  const distincts = l.filter((x) => !x.liee);
+  const parCode = new Map<string, { code: string; label: string; r1: number; r2: number; pourcent: boolean; pieces: string[] }>();
+  for (const x of distincts) {
+    const e = parCode.get(x.code) ?? { code: x.code, label: x.label, r1: 0, r2: 0, pourcent: x.pourcent, pieces: x.pieces };
+    if (x.rang === "2") e.r2 = x.valeur; else e.r1 = x.valeur;
+    if (x.pieces.length) e.pieces = x.pieces;
+    if (x.label) e.label = e.label || x.label;
+    parCode.set(x.code, e);
+  }
+  const lignes = [...parCode.values()];
+  return {
+    total: distincts.length,
+    liees: l.length - distincts.length,
+    lignes,
+    /** Celles dont le rang 2 ne vaut PAS le double du rang 1. Écrire « R2 = le
+     *  double » serait faux pour celles-là, et c'est exactement le genre de
+     *  raccourci qui fait acheter le mauvais parchemin. */
+    pasDouble: lignes.filter((x) => x.r1 > 0 && x.r2 > 0 && x.r2 !== x.r1 * 2),
+  };
+}
+
+/**
+ * LES MASQUES DU ROI DRAGON — l'apparence et le bonus sont deux choses.
+ *
+ * Trois « saveurs » (endurant, agile, spartiate) portent des bonus différents et
+ * tournent en boucle chez le même PNJ ; huit masques recolorés n'ont, eux,
+ * AUCUNE ligne de bonus. C'est la réponse chiffrée à « est-ce que je perds
+ * quelque chose en changeant l'apparence » : les deux séries existent, et une
+ * seule paie.
+ *
+ * La rotation est lue dans les recettes du client (`crafts.json`), pas décrite :
+ * si AirFlyff l'ouvre ou la ferme, la page suit.
+ */
+/** Les objets que le client appelle « Teinture ». Ils se comptent au lieu
+ *  d'être annoncés : la page dit qu'il n'existe pas de teinture de costume, et
+ *  ce constat repose entièrement sur ce compte-là. */
+export const teintures = () =>
+  charger().TOUT.filter((o) => /teinture/i.test(o.n));
+
+export function masquesDuDragon() {
+  const { TOUT: tout } = charger();
+  const saveurs = tout.filter((o) => /^Masque (endurant|agile|spartiate) du roi dragon/i.test(o.n));
+  // UNE RECOLORATION SE RECONNAÎT À SON FICHIER D'IMAGE, pas à l'absence de
+  // bonus : définir la famille par « ceux qui ne donnent rien » puis annoncer
+  // qu'aucun ne donne rien serait un raisonnement circulaire, et la page
+  // n'aurait rien démontré.
+  //
+  // Le discriminant est ailleurs, et il est net. Le masque de base et ses trois
+  // saveurs partagent UN SEUL fichier d'image — c'est le même masque, seul
+  // l'effet change. Une recoloration, elle, a forcément son propre fichier,
+  // puisque c'est le dessin qui change. On garde donc les masques dont l'image
+  // porte la même racine (« itm_mseaskingmask ») mais N'EST PAS le fichier des
+  // saveurs.
+  const racines = [...new Set(
+    saveurs.map((o) => (o.ic ?? "").replace(/\.webp$/i, "").replace(/[0-9-]+$/, "")).filter(Boolean)
+  )];
+  const imagesDesSaveurs = new Set(saveurs.map((o) => o.ic).filter(Boolean));
+  const recolores = tout.filter(
+    (o) => /^Masque /i.test(o.n)
+      && !imagesDesSaveurs.has(o.ic)
+      && racines.some((r) => (o.ic ?? "").startsWith(r))
+  );
+  // Une saveur par jeu de bonus : les 18 clés ne décrivent que trois effets.
+  const parBonus = new Map<string, Fiche>();
+  for (const o of saveurs) {
+    const k = JSON.stringify(o.b ?? []);
+    if (!parBonus.has(k)) parBonus.set(k, o);
+  }
+  const rotations = recettes().filter(
+    (r) => /masque \w+ du roi dragon/i.test(r.e?.[0]?.n ?? "")
+      && /masque \w+ du roi dragon/i.test(r.s?.[0]?.n ?? "")
+  );
+  return {
+    saveurs: [...parBonus.values()],
+    nSaveurs: saveurs.length,
+    recolores,
+    sansBonus: recolores.filter((o) => !(o.b ?? []).length).length,
+    rotations: rotations.length,
+    /** Le taux que la recette affiche, s'il est le même partout. */
+    tauxRotation: [...new Set(rotations.map((r) => r.s?.[0]?.c).filter((c) => c != null))],
+    couturier: rotations[0]?.pnj?.[0] ?? "",
+  };
+}
+
+/* ── Les panneaux du jeu (crafts.json) ────────────────────────────────────── */
+
+type Ingredient = { n: string; ic?: string; q?: number; c?: number | null };
+type Recette = { id: number; g?: string; pnj?: string[]; e?: Ingredient[]; s?: Ingredient[] };
+type Panneau = { titre: string; texte: string; pct: number[]; penya: string[] };
+
+let CRAFTS: { recettes: Recette[]; ateliers: Panneau[] } | null = null;
+function crafts() {
+  if (CRAFTS) return CRAFTS;
+  try {
+    const f = path.join(process.cwd(), "public", "wiki", "crafts.json");
+    const d = JSON.parse(fs.readFileSync(f, "utf8")) as { recettes?: Recette[]; ateliers?: Panneau[] };
+    CRAFTS = { recettes: d.recettes ?? [], ateliers: d.ateliers ?? [] };
+  } catch {
+    CRAFTS = { recettes: [], ateliers: [] };
+  }
+  return CRAFTS;
+}
+const recettes = () => crafts().recettes;
+
+/**
+ * UN PANNEAU D'AIDE DU JEU, par son titre.
+ *
+ * Ces textes sont ceux que la fenêtre de transformation affiche en jeu : c'est
+ * le jeu qui parle, et il est la seule source sur ce qu'une opération détruit.
+ * La page des crafts les montre tous ; ici on ne cite QUE celui qui répond à la
+ * question posée, et on renvoie à /crafts pour le reste — c'est le même relevé,
+ * pas une seconde liste à maintenir.
+ */
+export const panneau = (motif: RegExp): Panneau | null =>
+  crafts().ateliers.find((a) => motif.test(a.titre)) ?? null;
+
+/**
+ * LE MÉLANGE DE COSTUMES — la seule opération de costume qui coûte cher.
+ *
+ * Le panneau du jeu annonce une liste de résultats possibles ; on la compte et
+ * on regarde combien de ces résultats sont des sets qui donnent des bonus. Le
+ * rapport entre les deux est la seule chose qui décide si le geste vaut le coup,
+ * et il n'est écrit nulle part.
+ */
+export function melangeDeCostumes() {
+  const p = panneau(/mélange de costumes/i);
+  if (!p) return null;
+  // La liste commence après « Liste d'Acquisition » et tient une ligne par
+  // résultat. On garde les lignes qui nomment une tenue ou un uniforme.
+  const lignes = p.texte.split("\n").map((s) => s.trim()).filter(Boolean);
+  const debut = lignes.findIndex((s) => /liste d.acquisition/i.test(s));
+  const sorties = (debut >= 0 ? lignes.slice(debut + 1) : []).filter((s) => /^(tenue|uniforme|costume)/i.test(s));
+  const min = Number(/de\s*(\d+)\s*(?:a|à)\s*(\d+)\s*costumes/i.exec(p.texte)?.[1] ?? 0);
+  const max = Number(/de\s*(\d+)\s*(?:a|à)\s*(\d+)\s*costumes/i.exec(p.texte)?.[2] ?? 0);
+  return {
+    texte: p.texte,
+    sorties,
+    /** Les sorties qui appartiennent à un set du builder — les seules qui
+     *  portent un bonus connu. */
+    avecBonus: sorties.filter((s) => /dragon (immortel|fulgurant|intouchable)/i.test(s)),
+    min, max,
+    protection: objet("II_SYS_SYS_SCR_COSTUMEDEFENDER"),
+    /** COMBIEN D'AUTRES FENÊTRES DE TRANSFORMATION, et pourquoi ça se compte.
+     *  Ce nombre était écrit à la main (« les 22 autres ») : il devenait faux au
+     *  premier panneau ajouté, et il comptait les deux panneaux Baruna, qui sont
+     *  hors sujet et ne doivent apparaître dans aucun compte. */
+    autresPanneaux: crafts().ateliers.filter(
+      (a) => a !== p && !/baruna/i.test(a.titre) && !/baruna/i.test(a.texte)
+    ).length,
+  };
+}
+
+/** La recette qui fabrique un joyau de costume : combien de morceaux, chez qui,
+ *  à quel taux. Lue dans les recettes du client. */
+export function recetteDeJoyau(nom: string) {
+  const r = recettes().find((x) => (x.s ?? []).some((s) => s.n === nom));
+  if (!r) return null;
+  return {
+    pnj: r.pnj?.[0] ?? "",
+    entrants: r.e ?? [],
+    taux: r.s?.[0]?.c ?? null,
+  };
 }
 
 /* ── L'arène : la seconde table d'équilibrage ─────────────────────────────── */

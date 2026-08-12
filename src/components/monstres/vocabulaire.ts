@@ -132,6 +132,54 @@ export function faiblesses(res: Record<string, number>) {
   return { faible, resiste };
 }
 
+/**
+ * LE COUP LE PLUS FORT QU'IL PORTE — et pourquoi ce n'est pas simplement `atkMax`.
+ *
+ * Cinq monstres du catalogue portent leurs deux bornes de dégâts À L'ENVERS dans
+ * le client : la borne « basse » est la plus haute. Pour la Divinité du Chaos,
+ * atkMin vaut 360 000 et atkMax 36 001. Prendre `atkMax` tel quel annonce un coup
+ * DIX FOIS trop faible, et range le monstre le plus violent de sa famille en
+ * dernier dans un classement par dégâts.
+ *
+ * Les cinq, relevés sur les données : Général d'Ishtar, Elémentaire du Cahos
+ * (Trash), Divinité du Chaos (Big Boss), Esprit tourmenté protecteur, et
+ * Navi & Titania.
+ *
+ * Vit ici et non dans une page : /monstres, /worldboss et la recherche montrent
+ * les MÊMES monstres, et ont affiché deux chiffres différents pour le même
+ * monstre tant que chacune faisait son calcul. Une seule fonction, un seul
+ * nombre.
+ */
+export const coupMax = (m: { atkMin: number | null; atkMax: number | null }) =>
+  Math.max(m.atkMin ?? 0, m.atkMax ?? 0);
+
+/** La borne la plus basse, une fois les deux remises dans l'ordre. Sert à écrire
+ *  la fourchette « 36 001 à 360 000 » sans la donner à l'envers. */
+export const coupMin = (m: { atkMin: number | null; atkMax: number | null }) =>
+  Math.min(m.atkMin ?? 0, m.atkMax ?? 0);
+
+/** Vrai quand le client donne les bornes à l'envers : la fiche peut alors le
+ *  DIRE au lieu de corriger en silence. */
+export const bornesInversees = (m: { atkMin: number | null; atkMax: number | null }) =>
+  m.atkMin != null && m.atkMax != null && m.atkMax < m.atkMin;
+
+/**
+ * « au feu », « à l'eau », « à l'électricité », « au vent », « à la terre ».
+ *
+ * La préposition change avec le mot, et « résiste au eau » se lit comme une
+ * faute de frappe sur une page qui prétend citer le client. Table partagée pour
+ * que la fiche, la recherche et le bestiaire des world boss disent la même
+ * phrase.
+ */
+export const A_L_ELEMENT: Record<string, string> = {
+  feu: "au feu", eau: "à l'eau", electricite: "à l'électricité",
+  vent: "au vent", terre: "à la terre",
+};
+
+/** « à l'eau et au vent » — les éléments enchaînés avec la bonne préposition. */
+export const enListe = (es: string[]) =>
+  es.map((e) => A_L_ELEMENT[e] ?? ELEMENT_FR[e] ?? e).join(" et ");
+
 /** Coups par seconde, à partir du délai en millisecondes. C'est la donnée que le
  *  tank regarde : 4 millions de dégâts toutes les 4 secondes et les mêmes toutes
  *  les 250 ms ne sont pas le même combat. */

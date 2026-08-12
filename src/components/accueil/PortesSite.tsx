@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/Icon";
+import dungeons from "@/data/dungeons.json";
 
 /**
  * Les quatre choses qu'on vient faire ici sans être encore membre.
@@ -9,12 +10,18 @@ import { Icon, type IconName } from "@/components/Icon";
  * et le middleware ne les protège pas. C'est la contrainte de cette page — un
  * visiteur qui clique et tombe sur `/login` aurait été renvoyé par la porte
  * qu'on venait de lui ouvrir.
+ *
+ * « 23 instances » était écrit à la main. C'est le seul des quatre chiffres qui se
+ * COMPTE — les trois autres (« sans connexion », « P3 → P10 », « palier par
+ * palier ») sont des promesses, pas des mesures — et c'est justement celui qui
+ * devient faux tout seul le jour où une instance rejoint le relevé. La carte le
+ * lit désormais dans les mêmes données que la page où elle mène.
  */
 const PORTES: { href: string; icon: IconName; titre: string; texte: string; chiffre: string }[] = [
   {
     href: "/donjons", icon: "skull", titre: "Les donjons",
     texte: "Le niveau, l'élément, le prestige exigé et le butin de chaque instance — plus la vidéo du run quand elle existe.",
-    chiffre: "23 instances",
+    chiffre: `${(dungeons as unknown[]).length} instances`,
   },
   {
     href: "/builder", icon: "shirt", titre: "AirBuilder",

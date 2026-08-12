@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 import {
-  cadence, court, ELEMENT_FR, ELEMENTS, entier, faiblesses, iconeElement,
-  TON_ELEMENT, tonRang, type Compteurs, type Monstre,
+  cadence, coupMax, court, ELEMENT_FR, ELEMENTS, enListe, entier, faiblesses,
+  iconeElement, TON_ELEMENT, tonRang, type Compteurs, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -245,10 +245,12 @@ export function CarteMonstre({ m }: { m: Monstre }) {
           <Icon name="heart" size={11} style={{ marginRight: 4 }} />
           {court(m.pvEff)} PV{seReleve ? ` (${m.vies} vies)` : ""}
         </span>
-        {m.atkMax ? (
+        {/* `coupMax` : la même valeur que la fiche du monstre et que le bestiaire des
+            world boss, pour que la vignette et la fiche ne se contredisent pas au clic. */}
+        {coupMax(m) ? (
           <span style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px" }}>
             <Icon name="sword" size={11} style={{ marginRight: 4 }} />
-            {court(m.atkMax)} / coup
+            {court(coupMax(m))} / coup
           </span>
         ) : null}
         {m.def != null ? (
@@ -261,7 +263,7 @@ export function CarteMonstre({ m }: { m: Monstre }) {
 
       <span style={{ display: "flex", gap: 9, flexWrap: "wrap", fontSize: 11, color: "var(--text-muted)" }}>
         {faible.length > 0 && (
-          <span style={{ color: "var(--green)" }}>Faible au {faible.map((e) => ELEMENT_FR[e].toLowerCase()).join(" et au ")}</span>
+          <span style={{ color: "var(--green)" }}>Faible {enListe(faible)}</span>
         )}
         {m.rage?.length ? <span><Icon name="flame" size={10} /> rage sous {m.rage[0].pv} %</span> : null}
         {m.invoque?.length ? <span><Icon name="users" size={10} /> invoque</span> : null}

@@ -1,5 +1,6 @@
 import { Shell } from "@/components/Shell";
 import { PageAccueil } from "@/components/accueil/PageAccueil";
+import { chiffresAccueil, phraseAccueil } from "@/components/accueil/chiffres";
 
 /**
  * `/` — l'accueil public.
@@ -17,17 +18,22 @@ import { PageAccueil } from "@/components/accueil/PageAccueil";
  * client : c'est la seule façon d'exporter `metadata`. La page d'accueil est
  * celle qu'un moteur de recherche voit en premier, et le titre du gabarit racine
  * (« Vanguard Hub ») ne dit ni le jeu ni le serveur.
+ *
+ * C'est aussi ce qui permet de COMPTER les chiffres au lieu de les écrire : deux
+ * des quatre vivent dans `public/wiki/`, que seul le serveur peut lire (voir
+ * `components/accueil/chiffres.ts`). Ils descendent en props — la description
+ * pour les moteurs est faite du même comptage, donc les deux ne peuvent plus se
+ * contredire.
  */
 export const metadata = {
   title: "Vanguard — guilde AirFlyff",
-  description:
-    "La guilde Vanguard sur le serveur privé Flyff AirFlyff : les 23 instances et leurs butins, la provenance de 4 970 objets, les paliers de prestige et l'AirBuilder. Consultable sans compte.",
+  description: phraseAccueil(),
 };
 
 export default function Home() {
   return (
     <Shell>
-      <PageAccueil />
+      <PageAccueil chiffres={chiffresAccueil()} />
     </Shell>
   );
 }

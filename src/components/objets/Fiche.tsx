@@ -7,6 +7,9 @@ import { IconeObjet } from "./IconeObjet";
 import {
   classeFr, COULEUR_GRADE, emblemeClasse, emplacementFr, penyas, RESISTANCES, type ObjetFiche,
 } from "./vocabulaire";
+// 9 Ko de comptes précalculés (scripts/extraire-fashion.mjs), pas les 3 Mo du
+// catalogue : ce fichier est un composant client.
+import FASHION from "@/data/fashion-bonus.json";
 
 /**
  * LA FICHE D'UN OBJET.
@@ -41,6 +44,36 @@ function Ligne({ quoi, children, aide }: { quoi: string; children: React.ReactNo
         {quoi}{aide && <Icon name="info" size={11} style={{ marginLeft: 4, opacity: 0.55, transform: "translateY(1px)" }} />}
       </span>
       <span style={{ marginLeft: "auto", textAlign: "right", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>{children}</span>
+    </div>
+  );
+}
+
+/**
+ * SITUER UNE PIÈCE DE FASHION dans son emplacement.
+ *
+ * Ne s'affiche que pour la famille « mode », et seulement si l'emplacement est
+ * reconnu : le relevé nomme six emplacements, et le client suffixe quatre d'entre
+ * eux par « (mode) » pour les distinguer des pièces d'armure homonymes. Un
+ * emplacement inconnu n'affiche RIEN plutôt qu'un compte inventé.
+ *
+ * Le chiffre n'interprète pas la pièce, il la situe : « 196 des 294 capes portent
+ * un bonus » dit que sur une cape c'est la norme, là où « 54 des 707 coiffes »
+ * dit que c'est l'exception. Le tableau des plafonds, lui, reste sur le guide —
+ * le recopier ici en ferait une deuxième source à tenir à jour.
+ */
+function ModeSituee({ o }: { o: ObjetFiche }) {
+  if (o.f !== "mode") return null;
+  const nom = (o.t ?? "").replace(/\s*\(mode\)$/, "");
+  const e = FASHION.emplacements.find((x) => x.nom === nom);
+  if (!e) return null;
+  return (
+    <div style={{ marginTop: 12, paddingTop: 11, borderTop: "1px dashed var(--border)", fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6 }}>
+      <b style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{e.avecBonus}</b> des{" "}
+      <b style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{e.pieces}</b> pièces de type
+      « {nom} » portent un bonus. Le plafond de chaque bonus dépend de l&apos;emplacement —{" "}
+      <Link href="/astuces" style={{ color: "var(--orange)", textDecoration: "none", fontWeight: 600, borderBottom: "1px dotted currentColor" }}>
+        le tableau complet est dans le guide
+      </Link>.
     </div>
   );
 }
@@ -165,6 +198,15 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
                   })}
                 </div>
               ) : null}
+
+              {/* Une valeur seule ne dit pas si elle est bonne. Sur une pièce de
+                  fashion, la question qu'on se pose devant « Endurance +20 » est
+                  « c'est beaucoup ? » — et la réponse dépend de l'emplacement : le
+                  même bonus plafonne à 20 sur une cape et à 7 sur une coiffe. On
+                  donne ici le seul chiffre qui situe la pièce sans l'interpréter
+                  (combien de pièces de cet emplacement portent un bonus), et on mène
+                  au tableau complet plutôt que de le recopier. */}
+              <ModeSituee o={o} />
             </div>
           )}
 

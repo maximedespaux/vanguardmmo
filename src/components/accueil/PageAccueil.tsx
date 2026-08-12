@@ -8,6 +8,10 @@ import { AvisAcces } from "@/components/accueil/AvisAcces";
 import { BandeauCartes } from "@/components/accueil/BandeauCartes";
 import { ClassesHeros } from "@/components/accueil/ClassesHeros";
 import { PortesSite } from "@/components/accueil/PortesSite";
+// `import type` et rien d'autre : `chiffres.ts` lit le disque avec `fs`, et ce
+// fichier-ci est un composant client. Un import de type est effacé à la
+// compilation — le module serveur ne suit donc jamais jusqu'au navigateur.
+import type { ChiffreAccueil } from "@/components/accueil/chiffres";
 
 /**
  * L'accueil du site.
@@ -27,18 +31,29 @@ import { PortesSite } from "@/components/accueil/PortesSite";
  * soit un chiffre lisible dans les données déjà versées au dépôt.
  */
 
-/** Chiffres du site, tous vérifiables dans le dépôt — pas des slogans. */
-const CHIFFRES: [IconName, string, string][] = [
-  ["users", "8", "spécialisations de fin de partie"],
-  ["skull", "23", "instances documentées"],
-  ["package", "4 970", "objets dont on sait la provenance"],
-  ["tower", "52", "paliers de la Tour Infernale"],
+/**
+ * L'icône de chaque chiffre. Les chiffres eux-mêmes ne sont plus ici : ils
+ * étaient écrits à la main (« 8 », « 23 », « 4 970 », « 52 ») et se seraient
+ * démentis au premier versement de données. Ils sont désormais COMPTÉS côté
+ * serveur et arrivent en props — voir `components/accueil/chiffres.ts`.
+ *
+ * La correspondance se fait sur le début du libellé, et le repli est prévu : un
+ * libellé qu'on n'aurait pas prévu prend une icône neutre plutôt que de faire
+ * disparaître sa carte.
+ */
+const ICONE_CHIFFRE: [string, IconName][] = [
+  ["spécialisations", "users"],
+  ["instances", "skull"],
+  ["objets", "package"],
+  ["vagues", "tower"],
 ];
+const iconeDe = (libelle: string): IconName =>
+  ICONE_CHIFFRE.find(([d]) => libelle.startsWith(d))?.[1] ?? "sparkles";
 
 /** Les 20 logos de cape que le jeu propose aux guildes (24×24 dans le client). */
 const CAPES = Array.from({ length: 20 }, (_, i) => `cape-logo-${String(i + 1).padStart(2, "0")}.webp`);
 
-export function PageAccueil() {
+export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
   const ref = useRef<HTMLDivElement>(null);
   // Révélation au défilement, avec le repli de useReveal : sans lui, un élément
   // raté par l'observateur reste invisible pour de bon.
@@ -81,20 +96,20 @@ export function PageAccueil() {
         </BandeauCartes>
 
         <div className="vg-reveal" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 12, marginTop: 14 }}>
-          {CHIFFRES.map(([ic, n, l]) => (
-            <div key={l} className="fx-stat fx-card">
+          {chiffres.map((c) => (
+            <div key={c.libelle} className="fx-stat fx-card">
               <span style={{
                 width: 40, height: 40, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                 borderRadius: 12, color: "var(--orange)", border: "1px solid rgba(255,140,26,.32)",
                 background: "linear-gradient(180deg,rgba(255,140,26,.22),rgba(255,140,26,.05))",
               }}>
-                <Icon name={ic} size={19} />
+                <Icon name={iconeDe(c.libelle)} size={19} />
               </span>
               <div>
                 {/* tabular-nums : « 4 970 » et « 8 » côte à côte sautaient d'un pixel
                     au survol quand les chiffres n'ont pas la même largeur. */}
-                <div className="n" style={{ fontVariantNumeric: "tabular-nums" }}>{n}</div>
-                <div className="l">{l}</div>
+                <div className="n" style={{ fontVariantNumeric: "tabular-nums" }}>{c.n.toLocaleString("fr-FR")}</div>
+                <div className="l">{c.libelle}</div>
               </div>
             </div>
           ))}
@@ -104,11 +119,24 @@ export function PageAccueil() {
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "46px 0 4px", display: "flex", alignItems: "center", gap: 12 }}>
           <Icon name="swords" framed frameSize={34} tone="orange" /> <span className="vg-h2">Les huit fins de partie</span>
         </h2>
+        {/* L'accueil et /classes racontaient les huit spécialisations tous les deux,
+            sans se citer. Le doublon exact était la CLASSE D'ORIGINE : /classes la
+            dessine dans la chaîne de promotion, avec les paliers et leurs coûts.
+            Elle part d'ici. L'arme, en revanche, n'est écrite nulle part ailleurs
+            sur le site — la garder n'est pas une redite (cf. ClassesHeros).
+            On tranche — l'accueil donne l'envie et la porte, le détail appartient à
+            /classes, qui a les données pour le tenir. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px 0 18px", letterSpacing: ".2px", maxWidth: 720 }}>
-          Chaque classe a son emblème de héros dans le jeu. Ce sont ceux-là, tels que le client les affiche —
-          avec l&apos;arme qu&apos;AirFlyff leur autorise et la classe dont elles viennent.
+          Chaque classe a son emblème de héros dans le jeu. Ce sont ceux-là, tels que le client les affiche.
+          Ce qu&apos;elles apprennent, ce qu&apos;elles coûtent et par quels paliers on y arrive est sur{" "}
+          <Link href="/classes" className="acc-lien-t">la page des classes</Link>.
         </p>
         <ClassesHeros />
+        <div className="vg-reveal" style={{ marginTop: 14 }}>
+          <Link href="/classes" className="acc-lien-2">
+            <Icon name="graduation" size={16} /> Les huit en détail
+          </Link>
+        </div>
 
         {/* ── Par où entrer ── */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "46px 0 4px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -156,6 +184,10 @@ export function PageAccueil() {
           font-family:'Rubik',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:13px;
           text-decoration:none;color:var(--text);background:var(--bg-3);border:1px solid var(--border)}
         .acc-lien-2:hover{border-color:rgba(255,140,26,.45);color:var(--orange)}
+        /* Un lien AU FIL DU TEXTE, pas un bouton : dans un paragraphe, .acc-lien-2
+           se serait posé comme un pavé au milieu de la phrase. */
+        .acc-lien-t{color:var(--orange);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
+        .acc-lien-t:hover{color:var(--text)}
         /* Les 32px de marge du conteneur ne laissaient que 296px de contenu sur un
            écran de 360 : les cartes de classe en demandent 215 minimum, la grille
            tentait deux colonnes et débordait. On rend la marge à la page. */

@@ -8,6 +8,75 @@ import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 
 const fmt = (n: number) => n.toLocaleString("fr-FR");
+
+/**
+ * Le mot-clé qui retrouve la ressource dans le catalogue d'objets.
+ *
+ * Pourquoi une table et pas le nom affiché : le client n'écrit pas ces noms comme
+ * le wiki de prestige. Le badge s'y appelle « Badge du Jardin Préstigieux » — avec
+ * un « du » et un accent — et le badge de world boss « Badge Worldboss
+ * Préstigieux », en un mot. Un lien bâti sur le nom affiché tombait donc sur zéro
+ * résultat, ce qui est PIRE qu'une absence de lien : ça laisse croire que l'objet
+ * n'existe pas dans le jeu.
+ *
+ * Les neuf valeurs ont été rejouées une à une contre /api/objets. Une seule ne
+ * tenait pas la promesse : « jardin prestigieux » ramenait d'abord le TICKET
+ * d'instance (« Jardin préstigieux (1h) ») et le badge en second. Le mot-clé porte
+ * donc le mot « badge », et le badge revient seul.
+ */
+const RECHERCHE: Record<string, string> = {
+  "Badge Jardin Prestigieux": "badge du jardin",
+  "Nucléus neutre": "nucleus neutre",
+  "Emblème de protection": "embleme de protection",
+  "Badge de la Tour": "badge de la tour",
+  "Périn": "perin",
+  "Nucléus parfait": "nucleus parfait",
+  "Badge World Boss prestigieux": "worldboss",
+  "Badge de donjon mineur": "badge de donjon mineur",
+  "Badge Donjon": "badge des donjons",
+};
+
+/**
+ * OÙ EST LE MUR — la répartition d'une ressource sur les paliers demandés.
+ *
+ * Le total répond à « combien », jamais à « quand ». 75 badges du P1 au P10, ça
+ * ressemble à un effort régulier ; en réalité le seul saut P9→P10 en réclame 25,
+ * soit un tiers du tout. C'est le genre de rapport qu'un nombre ne dit pas et
+ * qu'une longueur dit d'un coup d'œil.
+ *
+ * Les deux règles de la barre, les mêmes que partout sur le site :
+ *  · UNE seule teinte — celle que la carte emploie déjà pour son chiffre. C'est la
+ *    LONGUEUR qui porte la grandeur. Colorer par valeur ne marche pas : le vert et
+ *    le doré de la charte ne se distinguent pas pour un daltonien protan.
+ *  · Plancher à 1,5 %, sinon un petit palier perd sa barre et l'absence se lit
+ *    comme une donnée manquante.
+ *
+ * Et si un seul palier réclame la ressource, il n'y a rien à comparer : on
+ * n'affiche rien du tout plutôt qu'une barre pleine qui ferait croire à un maximum.
+ */
+function ParPalier({ cle, de, a, teinte }: { cle: string; de: number; a: number; teinte: string }) {
+  const lignes: [number, number][] = [];
+  for (let p = de; p < a; p++) {
+    const v = PRESTIGE_COSTS[p]?.[cle];
+    if (v) lignes.push([p, v]);
+  }
+  if (lignes.length < 2) return null;
+  const haut = Math.max(...lignes.map(([, v]) => v));
+  return (
+    <div className="pr-palier">
+      <div className="pr-palier-t">Réparti sur {lignes.length} paliers</div>
+      {lignes.map(([p, v]) => (
+        <div key={p} className="pr-palier-l">
+          <span className="pr-palier-p">P{p}→{p + 1}</span>
+          <span aria-hidden="true" className="pr-palier-b">
+            <span style={{ width: `${Math.max(1.5, (v / haut) * 100)}%`, background: teinte }} />
+          </span>
+          <span className="pr-palier-v">{fmt(v)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 // Icône d'une ressource : vraie image si présente (override connu, ou PNG déposé dans
 // /public/assets/items/prestige/<slug>.png par l'admin) → sinon une icône SVG stylée en repli.
 // Déposer un PNG au bon nom suffit à basculer sur la vraie icône, sans toucher au code.
@@ -131,7 +200,14 @@ export default function PrestigePage() {
 
   return (
     <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
-      <PageHeader banner="/assets/site/banners/banner-guides.webp" icon="star" title="Calculateur de Prestige" subtitle="Ton prestige actuel, ta cible : le total des ressources de chaque palier." />
+      {/* La porte du désert du jeu, en fond d'en-tête : passer un prestige, c'est
+          franchir une porte. Elle vient des écrans de générique du client
+          (public/jeu/credits/) — les onze grandes images de ce dossier sont les
+          seules du jeu sans logo ni barre de chargement incrustés, contrairement à
+          celles de /jeu/chargement/, qu'il faut recadrer.
+          Le bandeau restait le même que sur le guide : deux pages voisines de la
+          même section portaient exactement la même image. */}
+      <PageHeader art="/jeu/credits/shotcredit10.webp" banner="/assets/site/banners/banner-guides.webp" title="Calculateur de Prestige" subtitle="Ton prestige actuel, ta cible : le total des ressources de chaque palier." />
       <SectionTabs section="guides" />
 
       {/* Sélecteur */}
@@ -193,9 +269,43 @@ export default function PrestigePage() {
                     <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>/ {fmt(total)}</span>
                     <span style={{ marginLeft: "auto", fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 13, color: ok ? "var(--green)" : "var(--orange)" }}>{ok ? "Complet" : `reste ${fmt(rem)}`}</span>
                   </div>
+
+                  {/* La barre reprend la teinte du chiffre de la carte — verte quand
+                      la ressource est complète, orange sinon — et jamais deux
+                      teintes dans la même série. */}
+                  <ParPalier cle={k} de={cur} a={tgt} teinte={ok ? "var(--green)" : "var(--orange)"} />
+
+                  {/* La page nommait neuf ressources sans jamais mener à aucune :
+                      pour savoir à quoi ressemble un « Badge Worldboss », il fallait
+                      quitter la page et chercher ailleurs. */}
+                  {RECHERCHE[k] && (
+                    <a className="pr-fiche" href={`/objets?q=${encodeURIComponent(RECHERCHE[k])}`}
+                      title="Voir la fiche de l'objet — réservé aux membres de la guilde">
+                      {/* Le cadenas du client (lock.webp, 13x16) plutôt qu'une icône
+                          maison : cette page est publique, /objets vit dans le groupe
+                          (guild) et passe par requireGuild(). En production, un
+                          visiteur atterrit sur /login au lieu de la fiche. Le dire
+                          avant le clic coûte onze pixels. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/jeu/interface/lock.webp" alt="" width={11} height={13} />
+                      Voir la fiche de l&apos;objet
+                    </a>
+                  )}
                 </div>
               );
             })}
+          </div>
+
+          {/* Ces ressources se farment et se craftent : deux pages du site le
+              disent, aucune n'était atteignable d'ici. */}
+          <div className="glass-card fx-card" style={{ padding: 15, marginBottom: 18, display: "flex", gap: 11, alignItems: "flex-start", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.65 }}>
+            <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
+            <span>
+              Le compte ne dit pas où farmer. Les badges se <b style={{ color: "var(--text)" }}>craftent</b> à partir de
+              composants d&apos;instance — recettes complètes dans <a className="pr-lien" href="/crafts">Crafts et collections</a>,
+              réservé aux membres — et l&apos;ordre dans lequel s&apos;y prendre, palier par palier, est dans le{" "}
+              <a className="pr-lien" href="/astuces">guide de progression</a>, ouvert à tous.
+            </span>
           </div>
 
           {/* Détail par palier (repliable) */}
@@ -232,6 +342,22 @@ export default function PrestigePage() {
         .pr-card{background:linear-gradient(180deg,#191920,#131318);border-radius:13px;padding:13px 15px;transition:transform .15s,box-shadow .15s}
         .pr-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.32)}
         .pr-card input:focus{outline:none;border-color:var(--orange)}
+        /* La repartition par palier : trois colonnes fixes pour que les paliers et
+           les valeurs s'alignent d'une carte a l'autre, la barre prend le reste. */
+        .pr-palier{margin-top:11px;padding-top:10px;border-top:1px solid color-mix(in srgb, var(--border) 60%, transparent)}
+        .pr-palier-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:6px}
+        .pr-palier-l{display:grid;grid-template-columns:52px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:4px}
+        .pr-palier-p{font-size:10.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+        .pr-palier-b{display:block;height:4px;border-radius:3px;overflow:hidden;
+          background:color-mix(in srgb, var(--border) 70%, transparent)}
+        .pr-palier-b>span{display:block;height:100%;border-radius:3px}
+        .pr-palier-v{font-size:11px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
+        .pr-fiche{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11.5px;
+          color:var(--text-muted);text-decoration:none;transition:color .15s}
+        .pr-fiche:hover{color:var(--orange)}
+        .pr-fiche img{width:11px;height:13px;object-fit:contain;image-rendering:pixelated;opacity:.8}
+        .pr-lien{color:var(--orange);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
+        .pr-lien:hover{color:var(--text)}
         .pr-toggle{background:var(--bg-3);border:1px solid var(--border);color:var(--text-muted);border-radius:9px;padding:9px 16px;font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;transition:color .15s,border-color .15s}
         .pr-toggle:hover{color:var(--orange);border-color:var(--orange)}
         @keyframes prIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

@@ -3,12 +3,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
 import { CarteFx } from "@/components/astuces/CarteFx";
 import { StyleMecaniques } from "@/components/mecaniques/Blocs";
+import { Fashion } from "@/components/mecaniques/SectionsFashion";
 import {
   Artefact, Eveil, FAMILLES, Gemmes, Percage, Plafonds, Rarete, Runes, Sertissage,
 } from "@/components/mecaniques/SectionsObjets";
 import { Arene, Farm, Gvg, Taxe } from "@/components/mecaniques/SectionsTerrain";
 import {
-  ARENE_ARMES, GVG_BAREME, cartesDePercage, nombreDeGemmes, nombreDeGemmesMenteuses, runes,
+  ARENE_ARMES, GVG_BAREME, cartesDePercage, joyauxDeCostume, nombreDeGemmes,
+  nombreDeGemmesMenteuses, runes, setsDeFashion,
 } from "@/components/mecaniques/releves";
 import { ICONE_ELEMENT } from "@/lib/assetsJeu";
 import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
@@ -65,6 +67,8 @@ export default function MecaniquesPage() {
   const nRunes = runes().total;
   const nGemmes = nombreDeGemmes();
   const menteuses = nombreDeGemmesMenteuses();
+  const joyauxCostume = joyauxDeCostume();
+  const setsCostume = setsDeFashion();
 
   const sections: SectionVolet[] = [
     {
@@ -95,9 +99,23 @@ export default function MecaniquesPage() {
       contenu: <Eveil />,
     },
     {
-      clef: "sertissage", titre: "Sertissage & gemmes", sous: "diamants, holos, gemmes de costume", icon: "gem",
+      clef: "sertissage", titre: "Sertissage d'une arme", sous: "diamants et holographiques", icon: "gem",
       compte: (arme.sertissage?.diamants ?? 0) + (arme.sertissage?.holo ?? 0),
       contenu: <Sertissage />,
+    },
+    // Le costume vient JUSTE APRÈS le sertissage d'arme, et pas en fin de rail :
+    // c'est le même geste — poser une pierre sur une pièce — avec d'autres
+    // règles, et on ne comprend le piège des gemmes de costume qu'en ayant les
+    // diamants d'arme encore en tête.
+    {
+      clef: "fashion", titre: "Costumes & gemmes de costume", icon: "shirt",
+      compte: joyauxCostume.length,
+      // Pas « N apparences » ici : le compte de dessins vaut pour les deux
+      // genres et se lirait comme N looks differents, alors que le fait est
+      // l'inverse — les sets se ressemblent. Les deux nombres cites sont donc
+      // ceux qui n'ont qu'une lecture.
+      sous: `${setsCostume.sets.length} sets d'apparence identique, ${joyauxCostume.length} joyaux — un par pièce`,
+      contenu: <Fashion />,
     },
     {
       clef: "runes", titre: "Runes", sous: "celle de l'arme n'est pas celle de la tenue", icon: "rune", compte: nRunes,

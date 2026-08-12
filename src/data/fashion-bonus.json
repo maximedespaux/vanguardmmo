@@ -1,0 +1,644 @@
+{
+ "genere": "2026-08-12",
+ "source": "public/wiki/objets-fiches.json + src/data/builder-data.json (costumeGems)",
+ "releve": "2026-08-11",
+ "total": 3099,
+ "avecBonus": 464,
+ "emplacements": [
+  {
+   "nom": "Cape",
+   "pieces": 294,
+   "avecBonus": 196
+  },
+  {
+   "nom": "Masque",
+   "pieces": 182,
+   "avecBonus": 112
+  },
+  {
+   "nom": "Coiffe",
+   "pieces": 707,
+   "avecBonus": 54
+  },
+  {
+   "nom": "Tenue",
+   "pieces": 670,
+   "avecBonus": 35
+  },
+  {
+   "nom": "Gants",
+   "pieces": 578,
+   "avecBonus": 32
+  },
+  {
+   "nom": "Chaussures",
+   "pieces": 668,
+   "avecBonus": 35
+  }
+ ],
+ "bonus": [
+  {
+   "nom": "Vitesse de déplacement",
+   "pieces": 140,
+   "ou": {
+    "Cape": 30,
+    "Coiffe": 7,
+    "Tenue": 10,
+    "Chaussures": 20
+   }
+  },
+  {
+   "nom": "PV max",
+   "pieces": 90,
+   "ou": {
+    "Cape": 1000,
+    "Masque": 777,
+    "Coiffe": 9999,
+    "Chaussures": 100
+   }
+  },
+  {
+   "nom": "Toutes les statistiques",
+   "pieces": 71,
+   "ou": {
+    "Cape": 35,
+    "Masque": 20
+   }
+  },
+  {
+   "nom": "PV max %",
+   "pieces": 67,
+   "ou": {
+    "Cape": 20,
+    "Masque": 15,
+    "Coiffe": 7,
+    "Tenue": 10,
+    "Gants": 7,
+    "Chaussures": 5
+   }
+  },
+  {
+   "nom": "Endurance",
+   "pieces": 64,
+   "ou": {
+    "Cape": 20,
+    "Masque": 15,
+    "Coiffe": 7,
+    "Tenue": 10,
+    "Gants": 9,
+    "Chaussures": 7
+   }
+  },
+  {
+   "nom": "Dextérité",
+   "pieces": 59,
+   "ou": {
+    "Cape": 20,
+    "Masque": 15,
+    "Coiffe": 7,
+    "Tenue": 7,
+    "Gants": 7,
+    "Chaussures": 10
+   }
+  },
+  {
+   "nom": "Intelligence",
+   "pieces": 51,
+   "ou": {
+    "Cape": 20,
+    "Masque": 15,
+    "Coiffe": 10,
+    "Tenue": 7
+   }
+  },
+  {
+   "nom": "Force",
+   "pieces": 49,
+   "ou": {
+    "Cape": 20,
+    "Masque": 15,
+    "Coiffe": 7,
+    "Tenue": 9,
+    "Gants": 10,
+    "Chaussures": 7
+   }
+  },
+  {
+   "nom": "Attaque %",
+   "pieces": 47,
+   "ou": {
+    "Cape": 20,
+    "Masque": 10,
+    "Coiffe": 7,
+    "Tenue": 7,
+    "Gants": 10
+   }
+  },
+  {
+   "nom": "Dégâts critiques",
+   "pieces": 45,
+   "ou": {
+    "Cape": 15,
+    "Masque": 5,
+    "Coiffe": 15,
+    "Gants": 7,
+    "Chaussures": 7
+   }
+  },
+  {
+   "nom": "Blocage corps à corps",
+   "pieces": 32,
+   "ou": {
+    "Cape": 5,
+    "Masque": 10,
+    "Coiffe": 3,
+    "Tenue": 4
+   }
+  },
+  {
+   "nom": "Taux critique",
+   "pieces": 27,
+   "ou": {
+    "Cape": 13,
+    "Masque": 10,
+    "Tenue": 5,
+    "Chaussures": 10
+   }
+  },
+  {
+   "nom": "Blocage à distance",
+   "pieces": 27,
+   "ou": {
+    "Cape": 5,
+    "Masque": 10,
+    "Coiffe": 3,
+    "Tenue": 4
+   }
+  },
+  {
+   "nom": "Vitesse d'attaque (points)",
+   "pieces": 19,
+   "ou": {
+    "Cape": 260,
+    "Masque": 200
+   }
+  },
+  {
+   "nom": "PM max",
+   "pieces": 19,
+   "ou": {
+    "Masque": 150,
+    "Coiffe": 50,
+    "Chaussures": 700
+   }
+  },
+  {
+   "nom": "PC max",
+   "pieces": 17,
+   "ou": {
+    "Masque": 150,
+    "Coiffe": 50,
+    "Chaussures": 700
+   }
+  },
+  {
+   "nom": "Défense %",
+   "pieces": 14,
+   "ou": {
+    "Cape": 13,
+    "Coiffe": 7,
+    "Tenue": 10
+   }
+  },
+  {
+   "nom": "Attaque",
+   "pieces": 11,
+   "ou": {
+    "Cape": 320,
+    "Coiffe": 50
+   }
+  },
+  {
+   "nom": "PM max %",
+   "pieces": 11,
+   "ou": {
+    "Cape": 10,
+    "Masque": 15,
+    "Coiffe": 7
+   }
+  },
+  {
+   "nom": "Boîte cadeau",
+   "pieces": 9,
+   "ou": {
+    "Cape": 1
+   }
+  },
+  {
+   "nom": "Temps d'incantation %",
+   "pieces": 9,
+   "ou": {
+    "Cape": 20
+   }
+  },
+  {
+   "nom": "Dégâts JcJ",
+   "pieces": 9,
+   "ou": {
+    "Cape": 12,
+    "Masque": 15
+   }
+  },
+  {
+   "nom": "Dégâts sur monstres %",
+   "pieces": 8,
+   "ou": {
+    "Cape": 5,
+    "Masque": 15
+   }
+  },
+  {
+   "nom": "Dégâts magiques",
+   "pieces": 6,
+   "ou": {
+    "Cape": 100
+   }
+  },
+  {
+   "nom": "Expérience %",
+   "pieces": 6,
+   "ou": {
+    "Cape": 10
+   }
+  },
+  {
+   "nom": "Défense",
+   "pieces": 5,
+   "ou": {
+    "Cape": 100,
+    "Coiffe": 50,
+    "Gants": 10
+   }
+  },
+  {
+   "nom": "Taux de butin %",
+   "pieces": 4,
+   "ou": {
+    "Cape": 50
+   }
+  },
+  {
+   "nom": "Parade",
+   "pieces": 3,
+   "ou": {
+    "Cape": 20
+   }
+  },
+  {
+   "nom": "Renvoi de dégâts",
+   "pieces": 3,
+   "ou": {
+    "Cape": 5
+   }
+  },
+  {
+   "nom": "Dégâts d'arc",
+   "pieces": 3,
+   "ou": {
+    "Cape": 200
+   }
+  },
+  {
+   "nom": "Penyas gagnés %",
+   "pieces": 2,
+   "ou": {
+    "Cape": 50
+   }
+  },
+  {
+   "nom": "Endurance %",
+   "pieces": 2,
+   "ou": {
+    "Cape": 10
+   }
+  },
+  {
+   "nom": "Dégâts sur boss %",
+   "pieces": 2,
+   "ou": {
+    "Cape": 30
+   }
+  },
+  {
+   "nom": "Dégâts magiques %",
+   "pieces": 2,
+   "ou": {
+    "Cape": 5
+   }
+  },
+  {
+   "nom": "Vitesse d'attaque %",
+   "pieces": 2,
+   "ou": {
+    "Coiffe": 5
+   }
+  }
+ ],
+ "sommets": [
+  {
+   "objet": "Couronne de Suzeraineté (F)",
+   "emplacement": "Coiffe",
+   "bonus": "PV max",
+   "valeur": 9999
+  },
+  {
+   "objet": "Cape du champion",
+   "emplacement": "Cape",
+   "bonus": "PV max",
+   "valeur": 1000
+  },
+  {
+   "objet": "Cape du Dragon (Zodiac Chinois)",
+   "emplacement": "Cape",
+   "bonus": "Attaque",
+   "valeur": 320
+  },
+  {
+   "objet": "Cute Goggles 30D",
+   "emplacement": "Masque",
+   "bonus": "Vitesse d'attaque (points)",
+   "valeur": 200
+  },
+  {
+   "objet": "FITA Cloak",
+   "emplacement": "Cape",
+   "bonus": "Défense",
+   "valeur": 100
+  },
+  {
+   "objet": "Cape du farmeur doré",
+   "emplacement": "Cape",
+   "bonus": "Penyas gagnés %",
+   "valeur": 50
+  },
+  {
+   "objet": "Chapeau Bubble",
+   "emplacement": "Coiffe",
+   "bonus": "PC max",
+   "valeur": 50
+  },
+  {
+   "objet": "Chapeau de Shade",
+   "emplacement": "Coiffe",
+   "bonus": "PM max",
+   "valeur": 50
+  },
+  {
+   "objet": "Masquerade Helmet (JP)",
+   "emplacement": "Coiffe",
+   "bonus": "Attaque",
+   "valeur": 50
+  },
+  {
+   "objet": "Masquerade Helmet (JP)",
+   "emplacement": "Coiffe",
+   "bonus": "Défense",
+   "valeur": 50
+  },
+  {
+   "objet": "Cape donjon dorée",
+   "emplacement": "Cape",
+   "bonus": "Dégâts sur boss %",
+   "valeur": 30
+  },
+  {
+   "objet": "Dragon Cloak of the Hero 2015",
+   "emplacement": "Cape",
+   "bonus": "Force",
+   "valeur": 20
+  },
+  {
+   "objet": "Dragon Cloak of the Hero 2015",
+   "emplacement": "Cape",
+   "bonus": "Dextérité",
+   "valeur": 20
+  },
+  {
+   "objet": "Dragon Cloak of the Hero 2015",
+   "emplacement": "Cape",
+   "bonus": "Intelligence",
+   "valeur": 20
+  },
+  {
+   "objet": "Dragon Cloak of the Hero 2015",
+   "emplacement": "Cape",
+   "bonus": "Endurance",
+   "valeur": 20
+  },
+  {
+   "objet": "Cape de toreador Super",
+   "emplacement": "Cape",
+   "bonus": "Parade",
+   "valeur": 20
+  },
+  {
+   "objet": "Cloak of Valor",
+   "emplacement": "Cape",
+   "bonus": "Attaque %",
+   "valeur": 20
+  },
+  {
+   "objet": "Grève de Suzeraineté (F)",
+   "emplacement": "Chaussures",
+   "bonus": "Vitesse de déplacement",
+   "valeur": 20
+  },
+  {
+   "objet": "Masque de la Panthère Noir Amélioré",
+   "emplacement": "Masque",
+   "bonus": "Force",
+   "valeur": 15
+  },
+  {
+   "objet": "Masque de la Panthère Noir Amélioré",
+   "emplacement": "Masque",
+   "bonus": "Endurance",
+   "valeur": 15
+  },
+  {
+   "objet": "Masque de la Panthère Noir Amélioré",
+   "emplacement": "Masque",
+   "bonus": "Dextérité",
+   "valeur": 15
+  },
+  {
+   "objet": "Masque de la Panthère Noir Amélioré",
+   "emplacement": "Masque",
+   "bonus": "Intelligence",
+   "valeur": 15
+  },
+  {
+   "objet": "Masque PvE 3",
+   "emplacement": "Masque",
+   "bonus": "Dégâts sur monstres %",
+   "valeur": 15
+  },
+  {
+   "objet": "Masque PvP 3",
+   "emplacement": "Masque",
+   "bonus": "Dégâts JcJ",
+   "valeur": 15
+  },
+  {
+   "objet": "Cape de Triomphe 2015",
+   "emplacement": "Cape",
+   "bonus": "Dégâts JcJ",
+   "valeur": 12
+  },
+  {
+   "objet": "Cape du dragon immortel",
+   "emplacement": "Cape",
+   "bonus": "PM max %",
+   "valeur": 10
+  },
+  {
+   "objet": "Cape draconique Fulgurante",
+   "emplacement": "Cape",
+   "bonus": "Endurance %",
+   "valeur": 10
+  },
+  {
+   "objet": "Cuirasse de Suzeraineté (F)",
+   "emplacement": "Tenue",
+   "bonus": "Défense %",
+   "valeur": 10
+  },
+  {
+   "objet": "Gants Chinois",
+   "emplacement": "Gants",
+   "bonus": "Défense",
+   "valeur": 10
+  },
+  {
+   "objet": "Joli ruban",
+   "emplacement": "Coiffe",
+   "bonus": "Défense %",
+   "valeur": 7
+  },
+  {
+   "objet": "Joli serre-tête",
+   "emplacement": "Coiffe",
+   "bonus": "Attaque %",
+   "valeur": 7
+  },
+  {
+   "objet": "Cape de Bataille",
+   "emplacement": "Cape",
+   "bonus": "Renvoi de dégâts",
+   "valeur": 5
+  }
+ ],
+ "gemmes": [
+  {
+   "stat": "Force",
+   "paliers": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Endurance",
+   "paliers": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Dextérité",
+   "paliers": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Intelligence",
+   "paliers": [
+    5,
+    15,
+    25,
+    40
+   ]
+  },
+  {
+   "stat": "Attaque",
+   "paliers": [
+    400,
+    800,
+    1400,
+    2100
+   ]
+  },
+  {
+   "stat": "Dégâts magiques",
+   "paliers": [
+    800,
+    1600,
+    2800,
+    4200
+   ]
+  },
+  {
+   "stat": "Dégâts critiques",
+   "paliers": [
+    8,
+    16,
+    32,
+    65
+   ]
+  },
+  {
+   "stat": "Dégâts magiques %",
+   "paliers": [
+    3,
+    7,
+    12,
+    32
+   ]
+  },
+  {
+   "stat": "Soin %",
+   "paliers": [
+    10,
+    20,
+    40,
+    75
+   ]
+  },
+  {
+   "stat": "PV max",
+   "paliers": [
+    2276,
+    4552,
+    11380,
+    28500
+   ]
+  },
+  {
+   "stat": "Défense",
+   "paliers": [
+    200,
+    400,
+    700,
+    900
+   ]
+  }
+ ],
+ "gemmesBrutes": 12,
+ "gemmesDoublons": 1
+}

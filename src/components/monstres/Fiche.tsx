@@ -5,8 +5,8 @@ import { EnteteVolet, VoletSections, type SectionVolet } from "@/components/Vole
 import { useCardFx } from "@/components/VgFx";
 import { CarteMonstre } from "./Recherche";
 import {
-  AVERTISSEMENT_BUTIN, cadence, court, ELEMENT_FR, ELEMENTS, entier, faiblesses,
-  iconeElement, TON_ELEMENT, tonRang, type Monstre,
+  AVERTISSEMENT_BUTIN, bornesInversees, cadence, coupMax, coupMin, court, ELEMENT_FR,
+  ELEMENTS, enListe, entier, faiblesses, iconeElement, TON_ELEMENT, tonRang, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -106,11 +106,15 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
             </div>
             {faible.length > 0 || resiste.length > 0 ? (
               <p style={{ fontSize: 13, margin: "0 0 8px" }}>
+                {/* `enListe` et non « au » + le nom : la préposition change avec le mot,
+                    et cette ligne affichait « il prend plus de dégâts au terre » et
+                    « il encaisse mieux le eau ». Table partagée avec le bestiaire des
+                    world boss, qui montre les mêmes monstres. */}
                 {faible.length > 0 && (
-                  <>Il prend plus de dégâts <b style={{ color: "var(--green)" }}>{faible.map((e) => "au " + ELEMENT_FR[e].toLowerCase()).join(" et ")}</b>. </>
+                  <>Il prend plus de dégâts <b style={{ color: "var(--green)" }}>{enListe(faible)}</b>. </>
                 )}
                 {resiste.length > 0 && (
-                  <>Il encaisse mieux <b style={{ color: "var(--red)" }}>{resiste.map((e) => "le " + ELEMENT_FR[e].toLowerCase()).join(" et ")}</b>.</>
+                  <>Il résiste <b style={{ color: "var(--red)" }}>{enListe(resiste)}</b>.</>
                 )}
               </p>
             ) : (
@@ -151,9 +155,16 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
       contenu: (
         <div style={{ display: "grid", gap: 14 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 9 }}>
+            {/* `coupMax` et non `atkMax` : cinq monstres du client portent leurs deux
+                bornes à l'envers, et cette tuile annonçait pour eux un coup dix fois
+                trop faible — 36 k pour la Divinité du Chaos, là où /worldboss disait
+                360 k du même monstre. La fourchette est remise dans l'ordre, et
+                l'inversion est DITE plutôt que corrigée en silence. */}
             <Tuile icon="sword" titre="Dégâts par coup" ton="var(--red)"
-              valeur={m.atkMax ? court(m.atkMax) : "—"}
-              sous={m.atkMin != null && m.atkMax != null && m.atkMin !== m.atkMax ? `${entier(m.atkMin)} à ${entier(m.atkMax)}` : undefined} />
+              valeur={coupMax(m) ? court(coupMax(m)) : "—"}
+              sous={coupMin(m) !== coupMax(m)
+                ? `${entier(coupMin(m))} à ${entier(coupMax(m))}${bornesInversees(m) ? " — bornes inversées dans le client" : ""}`
+                : undefined} />
             <Tuile icon="clock" titre="Cadence" ton="var(--gold)"
               valeur={cadence(m.delai) ?? "—"} sous={m.delai ? `${entier(m.delai)} ms entre deux coups` : undefined} />
             {m.distance ? <Tuile icon="target" titre="Attaque à distance" ton="var(--blue)" valeur={`${m.distance} m`} /> : null}
@@ -161,11 +172,11 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
 
           {/* Les dégâts par seconde, calculés : c'est la seule façon de comparer un
               boss qui frappe fort lentement et un boss qui frappe vite. */}
-          {m.atkMax && m.delai ? (
+          {coupMax(m) && m.delai ? (
             <div style={{ fontSize: 13, color: "var(--text-muted)" }}>
               Soit environ{" "}
               <b style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>
-                {court(Math.round((m.atkMax * 1000) / m.delai))}
+                {court(Math.round((coupMax(m) * 1000) / m.delai))}
               </b>{" "}
               de dégâts par seconde sur une seule cible, avant réduction par ta défense.
               {m.rage?.length ? " À multiplier par sa rage une fois qu'elle est déclenchée." : ""}
@@ -212,7 +223,7 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
                 <p key={i} style={{ fontSize: 13, margin: "0 0 4px" }}>
                   Sous <b style={{ fontVariantNumeric: "tabular-nums" }}>{r.pv} %</b> de ses PV, ses dégâts sont
                   multipliés par <b style={{ color: "var(--red)", fontVariantNumeric: "tabular-nums" }}>{r.x.toLocaleString("fr-FR")}</b>
-                  {m.atkMax ? <> — soit jusqu&apos;à <b style={{ fontVariantNumeric: "tabular-nums" }}>{court(Math.round(m.atkMax * r.x))}</b> par coup.</> : "."}
+                  {coupMax(m) ? <> — soit jusqu&apos;à <b style={{ fontVariantNumeric: "tabular-nums" }}>{court(Math.round(coupMax(m) * r.x))}</b> par coup.</> : "."}
                 </p>
               ))}
               <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>

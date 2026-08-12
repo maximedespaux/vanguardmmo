@@ -2,20 +2,31 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { type SectionVolet } from "@/components/VoletSections";
-import { Anges } from "./Anges";
 import { Cartes } from "./Cartes";
 import { Karma } from "./Karma";
-import { Maitrise } from "./Maitrise";
 import { Succes } from "./Succes";
 import { Titres } from "./Titres";
 import { type Collections as TCollections } from "./donnees";
 
 /**
- * LES SIX VOLETS DE LA FAMILLE « Collections ».
+ * LES QUATRE VOLETS DE LA FAMILLE « Collections ».
  *
- * Titres, succès, anges, maîtrise d'arme, carnets de cartes, karma PK : six
- * choses dont le site ne disait rien, et qui posent toutes la même question —
- * « qu'est-ce qu'il me reste à décrocher ? ».
+ * Titres, succès, carnets de cartes, karma PK : quatre choses dont le site ne
+ * disait rien, et qui posent toutes la même question — « qu'est-ce qu'il me
+ * reste à décrocher ? ».
+ *
+ * ILS ÉTAIENT SIX. La maîtrise d'arme et les anges (avec leur poudre féerique)
+ * sont partis sur /builder/mecaniques, sur demande de Maxime : « j'aimerais
+ * concentrer sur une page pour comprendre en réalisant le build ». Ce sont des
+ * MÉCANIQUES DE BUILD et pas des collections — on ne DÉCROCHE pas une maîtrise
+ * d'arme, on la MONTE sur la pièce qu'on compose. Un sujet, une page : les
+ * garder ici les aurait fait dire deux fois.
+ *
+ * NE PAS SUPPRIMER `./Anges` NI `./Maitrise` : ce sont toujours eux qui rendent
+ * les deux volets, mais c'est désormais `mecaniques/SectionsBuild.tsx` qui les
+ * importe. Il les enveloppe en plus d'un filtre que cette page n'avait pas —
+ * leurs paliers annoncent de l'expérience, du taux de chute et des périns de
+ * récompense, qui n'ont rien à faire à l'écran.
  *
  * Elles avaient leur page, /collections. Elles n'en ont plus besoin : « ce qu'on
  * fabrique » et « ce qu'on collectionne » sont deux faces de la même chose, ce
@@ -39,7 +50,7 @@ type Volet = {
   contenu: (d: TCollections) => ReactNode;
 };
 
-/** Les six volets, titres et comptes compris. Le compte de chaque entrée se lit
+/** Les quatre volets, titres et comptes compris. Le compte de chaque entrée se lit
  *  sur le relevé : un nombre écrit à la main serait faux à la prochaine fouille. */
 const VOLETS: Volet[] = [
   {
@@ -56,16 +67,6 @@ const VOLETS: Volet[] = [
     clef: "succes", titre: "Succès", sous: "Les marches, rangées par famille", icon: "medal",
     compte: (d) => d.nbSucces,
     contenu: (d) => <Succes familles={d.succesFamilles} nbSucces={d.nbSucces} source={d.sources.succes} />,
-  },
-  {
-    clef: "anges", titre: "Anges", sous: "Combien de poudre féerique, du niveau X au Y", icon: "fairy",
-    compte: (d) => d.anges.length,
-    contenu: (d) => <Anges anges={d.anges} poudre={d.poudre} source={d.sources.anges} />,
-  },
-  {
-    clef: "maitrise", titre: "Maîtrise d'arme", sous: "Ce que le niveau 100 demande", icon: "sword",
-    compte: (d) => d.maitrise.armes.length,
-    contenu: (d) => <Maitrise m={d.maitrise} source={d.sources.maitrise} />,
   },
   {
     clef: "cartes", titre: "Carnets de cartes", sous: "Les bonus, avec les illustrations", icon: "card",

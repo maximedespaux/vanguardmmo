@@ -57,13 +57,21 @@ export const GRADE_FR: Record<Grade, string> = { unique: "Unique", ultimate: "Ul
 /**
  * Les couleurs sont RELEVÉES SUR LES IMAGES, pas choisies : blanc cassé pour le
  * commun, bleu pour le rare, rose pour l'épique, or pour le légendaire — et pour les
- * grades, vert pour l'unique, orange pour l'ultime. Le texte et l'image doivent
+ * grades, vert pour l'unique, OR pour l'ultime. Le texte et l'image doivent
  * s'accorder, sinon un objet aurait un cadre doré et un mot bleu.
+ *
+ * L'ULTIME ÉTAIT ÉCRIT `--orange` ICI, et `--gold` dans `objets/vocabulaire.ts` : le
+ * même objet n'avait donc pas la même couleur selon la brique qui l'affichait. Ce
+ * fichier est celui qui avait dérivé. L'échantillonnage de `item_edgeultimate.webp`
+ * donne 255,255,0 puis 230,156,0 — du jaune vers l'ambre, aucun orange ; les valeurs
+ * sont recopiées dans le commentaire de `COULEUR_GRADE`. Rien ne bouge à l'écran
+ * aujourd'hui : `Etiquette`, seule à lire cette table, n'est encore importée nulle
+ * part. C'est justement le moment de l'accorder, avant qu'un écran s'en serve.
  */
 export const RARETE_TON: Record<Rarete, string> = {
   common: "#D8D8E0", rare: "var(--blue)", epic: "#FF4FA3", legendary: "var(--gold)",
 };
-export const GRADE_TON: Record<Grade, string> = { unique: "var(--green)", ultimate: "var(--orange)" };
+export const GRADE_TON: Record<Grade, string> = { unique: "var(--green)", ultimate: "var(--gold)" };
 
 const RATIO_CARTE = 110 / 250;
 const RATIO_CADENAS = 32 / 51;

@@ -124,7 +124,79 @@
 .seg .sg:hover{color:var(--text)}
 .seg .sg.on{background:linear-gradient(180deg,#FFD86A,var(--gold));color:#1a1205;font-weight:700}
 .fullbtn{font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--mut);float:right}.fullbtn.on{border-color:var(--gold);color:var(--gold)}
-#stats .l{display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(44,44,54,.5)}#stats .l b{color:var(--green)}
+/* ─────────── LE RESUME DU BUILD ───────────────────────────────────────────
+   Le gabarit portait `<div class="stats" id="stats">` depuis le premier jour,
+   et cette feuille ne lui donnait AUCUN style : le panneau n'etait jamais
+   rempli (renderStats() n'avait pas d'appelant), personne ne pouvait le voir.
+   Il a maintenant la meme carcasse que `.panel`, juste au-dessus des carnets.  */
+.stats{background:linear-gradient(180deg,rgba(22,22,29,.93),rgba(13,13,17,.95));border:1px solid var(--border);
+  border-radius:15px;padding:16px;margin:16px auto 0;max-width:1080px;box-shadow:0 12px 38px rgba(0,0,0,.45)}
+.stats:empty{display:none}
+.stats h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--orange);margin:0 0 13px;display:flex;align-items:center;gap:8px}
+#stats .l{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(44,44,54,.5)}#stats .l b{color:var(--green);flex:none}
+/* Le releve porte des libelles tres longs, non traduits, en un seul bloc :
+   « Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic » sur trois armes
+   Luzaka. Dans une colonne de 215 px minimum, sans coupe forcee, un libelle de
+   ce gabarit pousse la grille et fait apparaitre une barre horizontale sur toute
+   la page a 375 px de large.                                                   */
+#stats .l>span{min-width:0;overflow-wrap:anywhere}
+/* Les quatre familles cote a cote : un stuff complet donne une quarantaine de
+   lignes, et en une colonne on ne comparait plus rien. */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
+.statcol{min-width:0}
+.statcol .sh{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;
+  display:flex;align-items:center;gap:6px}
+/* Les quatre des du jeu : le libelle (FOR/END/DEX/INT) est INCRUSTE dans
+   l'image, on n'ecrit donc pas le nom a cote — c'est le dessin que le joueur
+   reconnait dans sa fenetre de personnage.
+   MESURE, parce que le cadrage n'est pas cosmetique : l'image du client fait
+   50x50 et son texte n'occupe que les lignes 5 a 21. Affichee entiere dans un
+   carre de 30 px, plus de la moitie de la tuile etait du gris vide et le libelle
+   tombait a 10 px. On CADRE donc sur la bande de texte (cover + position haute)
+   au lieu de la contenir : meme encombrement, libelle plus grand, pas de vide.  */
+.dice{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+.die{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:11px;padding:6px 12px 6px 7px}
+.die img{width:36px;height:18px;object-fit:cover;object-position:top;border-radius:3px;image-rendering:pixelated;flex:none}
+.die b{font-family:Rubik;font-weight:700;font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
+.die.nil{opacity:.5}.die.nil b{color:var(--mut)}
+/* ─────────── LA PANOPLIE ──────────────────────────────────────────────────
+   Quatre vignettes, celles qu'on porte allumees. Le compte est ecrit a cote
+   pour qui ne distingue pas l'allume de l'eteint.                            */
+.panwrap{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.panres{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--bg3);
+  border:1px solid var(--border);border-radius:12px;padding:8px 12px}
+.panres.full{background:linear-gradient(180deg,rgba(74,222,128,.09),rgba(0,0,0,0))}
+.panres .pt{font-family:Rubik;font-weight:700;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.panres .pn{font-family:Rubik;font-weight:700;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
+.panres .pok{font-size:11.5px;font-weight:700;color:var(--green);display:inline-flex;align-items:center;gap:5px}
+.panres .pill{margin-left:auto}
+.panbloc{background:rgba(255,210,74,.05)}
+.pancases{display:flex;gap:7px;flex-wrap:wrap}
+.pancase{display:flex;flex-direction:column;align-items:center;gap:3px;width:52px;
+  border:1px solid var(--border);border-radius:9px;padding:5px 3px;background:rgba(0,0,0,.3)}
+.pancase img{width:30px;height:30px;object-fit:contain}
+.pancase i{width:22px;height:22px;color:var(--mut)}
+.pancase b{font-family:Rubik;font-weight:600;font-size:9.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;text-align:center;line-height:1.15}
+/* Non portee : l'icone reste lisible mais grisee — on doit reconnaitre la piece
+   qui manque, pas seulement voir un trou. */
+.pancase:not(.on) img{filter:grayscale(1);opacity:.45}
+.pancase.on{border-color:var(--gold);background:rgba(255,210,74,.12)}
+.pancase.on b{color:var(--gold)}
+.pancase.bloq{border-style:dashed;border-color:#f8717166}
+/* L'emplacement porte deja une piece, mais d'une autre lignee : c'est celle que
+   « Tout poser » ecraserait. Un liseré dore en pointille — la meme teinte que le
+   compte ecrit a cote, pour qu'on relie les deux —, et surtout PAS le meme
+   dessin qu'un trou : c'est la case qui coute quelque chose. */
+.pancase.occ{border-style:dashed;border-color:rgba(255,210,74,.55)}
+.pancase.occ img{filter:grayscale(.5);opacity:.65}
+.pancases.mini-cases .pancase{width:34px;padding:3px}
+.pancases.mini-cases .pancase img{width:26px;height:26px}
+/* La piece appartient a l'ensemble le plus porte : cerne dore sur la
+   silhouette, pour voir la panoplie s'allumer sans lire de compte.
+   OUTLINE et pas box-shadow : `slotHTML` pose un box-shadow EN LIGNE pour la
+   teinte de rarete, et une regle de feuille ne gagne jamais contre lui. */
+.slot.panon{outline:1.5px solid var(--gold);outline-offset:1px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .sheet{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:560px;max-width:100%;max-height:88vh;overflow:auto;padding:16px}
 .sheet h3{font-family:Rubik;margin:0 0 10px;color:var(--orange);text-transform:uppercase;letter-spacing:1px}
@@ -174,6 +246,9 @@
 .sheet-foot .pill.dem{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400;font-weight:700}
 .sheet-foot .pill.dem:hover{filter:brightness(1.06)}
 .actions-top .btn{padding:9px 16px;font-size:12.5px;border-radius:10px}
+/* « Les mécaniques » est un LIEN, pas un bouton : il doit se ranger dans la
+   rangée sans se souligner ni changer de hauteur. */
+.actions-top a.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;line-height:1}
 /* Les boutons secondaires se lisaient a peine : gris sur gris. On remonte le
    contraste du fond et du texte, et l'icone passe en orange pour accrocher
    l'oeil sans transformer chaque bouton en bouton principal.                 */

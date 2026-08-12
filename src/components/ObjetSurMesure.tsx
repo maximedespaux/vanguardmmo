@@ -5,6 +5,7 @@ import { BulleObjet } from "@/components/BulleObjet";
 import { TicketCommande, type LigneTicket } from "@/components/TicketCommande";
 import { OuTrouver } from "@/components/OuTrouver";
 import type { SpecObjet } from "@/lib/specObjet";
+import { DE_STAT } from "@/components/objets/vocabulaire";
 import { ReglagesPiece } from "@/components/ReglagesPiece";
 import { ChampPseudo } from "@/components/ChampPseudo";
 import { ChoixPaiement, type Paiement } from "@/components/ChoixPaiement";
@@ -50,6 +51,61 @@ const champ: React.CSSProperties = {
   padding: "9px 11px", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: "100%",
 };
 const etiquette: React.CSSProperties = { display: "block", fontSize: 11.5, textTransform: "uppercase", letterSpacing: .8, color: "var(--text-muted)", marginBottom: 4 };
+
+/**
+ * LES BONUS PROPRES DE LA PIÈCE — le champ que personne n'affichait.
+ *
+ * Le relevé du builder porte `b`, un tableau de paires [statistique, valeur].
+ * Ni la boutique ni cet écran ne le montraient : on choisissait une cape à sa
+ * couleur de rareté, sans voir les trois lignes qu'elle donne. C'est pourtant ce
+ * qui décide entre deux pièces du même palier.
+ *
+ * RÉSERVE MESURÉE : 90 des 390 objets du relevé en portent. Les 256 armures n'en
+ * ont AUCUN — sur elles, ce bloc ne s'affiche donc pas du tout, et il n'y a pas
+ * d'encadré pour expliquer le trou : une absence de donnée ne se raconte pas,
+ * elle se tait. Ce qui compte est que là où la donnée existe, elle soit à
+ * l'écran.
+ *
+ * LES QUATRE STATISTIQUES DE BASE portent le dé du jeu (`DE_STAT`) : le libellé
+ * « FOR », « END », « DEX », « INT » est incrusté dans l'image et il est déjà en
+ * français. Les autres lignes — Précision, Taux critique, Dégâts JcJ — n'ont pas
+ * de tuile dans le client, elles gardent donc leur texte. Le dé est CADRÉ sur sa
+ * bande de texte (`objectFit: cover` + `objectPosition: top`) : l'image du client
+ * fait 50 px de haut dont les 28 du bas sont vides, et affichée entière dans un
+ * carré de 18 px son libellé tombait à 6 px de haut — les quatre dés devenaient
+ * quatre taches grises identiques.
+ *
+ * TROIS STATISTIQUES NE S'AFFICHENT PAS, règle de la maison : l'Expérience, le
+ * Taux de drop et le Taux de penyas. Une seule pièce du relevé est concernée —
+ * la « Cape Farmeur », qui donne Vitesse +30 et Taux de penyas +20 : sa ligne de
+ * vitesse reste, l'autre part. Un COÛT en penyas n'est pas visé par la règle,
+ * seulement les récompenses.
+ */
+const STAT_RECOMPENSE = /^(exp[ée]rience|taux de drop|taux de penyas)$/i;
+function BonusDePiece({ b }: { b?: [string, number][] }) {
+  const lignes = (b ?? []).filter(([stat]) => !STAT_RECOMPENSE.test(stat));
+  if (!lignes.length) return null;
+  return (
+    <div style={{ marginTop: 10, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 11, padding: "10px 12px" }}>
+      <span style={etiquette}>Ce que la pièce donne</span>
+      <div style={{ display: "grid", gap: 4 }}>
+        {lignes.map(([stat, valeur], i) => (
+          <div key={`${stat}-${i}`} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5 }}>
+            {DE_STAT[stat] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={DE_STAT[stat]} alt="" aria-hidden="true" width={26} height={14}
+                style={{ objectFit: "cover", objectPosition: "top", borderRadius: 3, imageRendering: "pixelated", flexShrink: 0 }} />
+            ) : (
+              <Icon name="chevron-right" size={13} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+            )}
+            <span style={{ flex: 1, minWidth: 0 }}>{stat}</span>
+            <b style={{ color: "var(--green)", fontVariantNumeric: "tabular-nums" }}>+{valeur.toLocaleString("fr-FR")}</b>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Le dépôt laissé par l'AirBuilder, lu UNE fois pour toute la page.
@@ -432,6 +488,12 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
               Choisis un objet à gauche : sa bulle se dessine ici.
             </div>
           )}
+
+          {/* Ce que la pièce donne AVANT qu'on y touche. Le relevé du builder
+              porte ce champ depuis toujours et aucun écran ne l'affichait : on
+              commandait une cape en sachant sa couleur de rareté, pas ses trois
+              lignes de bonus. */}
+          <BonusDePiece b={choisi?.b} />
 
           {/* D'où vient l'objet demandé : craft, butin de quête, coffre, clé, Tour.
               Utile juste ici parce qu'une requête sur mesure part souvent d'un objet

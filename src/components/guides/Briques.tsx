@@ -140,22 +140,35 @@ export function Objet({ nom, texte, taille = 17 }: { nom: string; texte?: string
 /**
  * LE CADENAS DU JEU, posé sur un lien qui demande plus que d'être là.
  *
- * Ces deux pages sont PUBLIQUES. `/crafts` et `/objets` vivent dans le groupe (guild)
- * et passent par requireGuild() ; `/builder/mecaniques` vit dans (verified) et passe
- * par requireVerified(). Un visiteur qui suit ces liens n'atterrit pas sur la page mais
+ * Ces deux pages sont PUBLIQUES. `/objets` vit dans le groupe (guild) et passe par
+ * requireGuild() ; `/builder/mecaniques` vit dans (verified) et passe par
+ * requireVerified(). Un visiteur qui suit ces liens n'atterrit pas sur la page mais
  * sur /login — un mur sans explication. On le dit AVANT le clic.
  *
- * Deux marches, donc deux mots : « membres » pour la guilde, « compte » pour une
- * connexion Discord. En développement, DEV_ALL_ACCESS masque les deux — c'est pour ça
- * qu'ils se relisent dans l'arborescence et pas dans le navigateur.
+ * TROIS MARCHES, DONC TROIS MOTS. Les deux premiers disent une porte fermée :
+ * « membres » pour la guilde, « compte » pour une connexion Discord. Le troisième est
+ * né du mode vitrine et dit tout autre chose — « en partie » : la porte s'ouvre, une
+ * pièce reste fermée. C'est l'état de `/crafts` depuis qu'elle est passée en vitrine :
+ * les collections se lisent sans compte, les recettes non. Sans ce mot, le lien
+ * mentait dans les deux sens possibles — un cadenas « membres » sur une page qu'on peut
+ * visiter, ou aucun cadenas sur une page dont la moitié se refuse.
+ *
+ * En développement, DEV_ALL_ACCESS masque les deux premières marches — c'est pour ça
+ * qu'elles se relisent dans l'arborescence et pas dans le navigateur.
  *
  * L'image est lock.webp, le cadenas du client lui-même (13x16) : le même dessin que le
  * jeu pose sur ce qui n'est pas encore ouvert, qu'un joueur reconnaît sans légende.
  */
-export function Verrou({ quoi }: { quoi: "membres" | "compte" }) {
+const POURQUOI: Record<string, string> = {
+  membres: "Réservé aux membres de la guilde",
+  compte: "Demande un compte : connexion Discord",
+  "en partie": "La page se visite ; une partie est réservée aux membres",
+};
+
+export function Verrou({ quoi }: { quoi: "membres" | "compte" | "en partie" }) {
   return (
     <span
-      title={quoi === "membres" ? "Réservé aux membres de la guilde" : "Demande un compte : connexion Discord"}
+      title={POURQUOI[quoi]}
       style={{
         display: "inline-flex", alignItems: "center", gap: 3, fontSize: 10.5, fontWeight: 400,
         textTransform: "uppercase", letterSpacing: .6, color: "var(--text-muted)", verticalAlign: 1,

@@ -1,15 +1,18 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import dungeonsData from "@/data/dungeons.json";
-import ICONES_OBJETS from "@/data/icones-objets.json";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon, type IconName } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { NomObjet } from "@/components/objets/NomObjet";
+import ICONES_OBJETS from "@/data/icones-objets.json";
 import { donjonClient, pvCourt, PLANS, TOUR_OUBLIEE } from "@/components/donjons/donneesClient";
 import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
 import { TourOubliee } from "@/components/donjons/TourOubliee";
 import { BlocOasis } from "@/components/donjons/BlocOasis";
+import { HorsTeleporteur, LIEUX_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
+import { aDesFaiblesses, FaiblessesDonjon } from "@/components/donjons/elements";
 import { useReglages } from "@/components/reglages/PanneauReglages";
 import type { SchemaPage } from "@/lib/reglages";
 import type { Vague } from "@/components/oasis/modele";
@@ -80,12 +83,29 @@ const MOTS_OASIS = "protection de l'oasis tour infernale vagues emblèmes";
  * Un objet absent de la table n'affiche pas d'icône, et c'est tout : ajouter
  * une ligne au fichier suffit à en poser une.
  */
-function IconeObjet({ nom }: { nom: string }) {
-  const src = (ICONES_OBJETS as Record<string, string>)[nom];
-  if (!src) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="" width={20} height={20} style={{ objectFit: "contain", flexShrink: 0 }} />;
-}
+const iconeButin = (nom: string): string | null => (ICONES_OBJETS as Record<string, string>)[nom] ?? null;
+
+/**
+ * LA RÉCOMPENSE EN MONNAIE NE S'AFFICHE PAS, ET C'EST UNE RÈGLE DE LA MAISON.
+ *
+ * Les taux de chute, l'expérience et les PENYAS DE RÉCOMPENSE ne sont ni une
+ * colonne, ni une pastille, ni une mention. Un COÛT en penyas reste — c'est un
+ * prix d'opération — mais une penya qu'on RAMASSE est une récompense, et elle
+ * n'aide personne à choisir un donjon : elle tombe partout.
+ *
+ * `dungeons.json` en portait une, et elle passait à l'écran depuis longtemps :
+ * la Faille du débutant annonce « Penya » en tête de ses butins, sur la tuile
+ * comme dans la fiche. Depuis que la liste est faite de `NomObjet`, elle était
+ * même devenue un lien vers une fiche de catalogue qui n'existe pas.
+ *
+ * On filtre à L'AFFICHAGE et pas dans le fichier : la donnée reste où elle est,
+ * c'est sa présence sur l'écran que la règle interdit. Le test porte sur le nom
+ * réduit (sans accent, sans pluriel), parce que le relevé écrit aussi bien
+ * « Penya » que « Penyas ».
+ */
+const RECOMPENSES_TAIRE = /^(penyas?|exp|experience|xp)$/;
+const butinsMontrables = (liste: string[]): string[] =>
+  liste.filter((n) => !RECOMPENSES_TAIRE.test(n.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase()));
 
 /**
  * CE QUE LE RANG VANGUARD PEUT RÉGLER SUR CETTE PAGE.
@@ -111,6 +131,8 @@ const REGLAGES_DONJONS = {
       aide: "Ses cinq étages, après la grille. Ce n'est pas une destination du téléporteur — d'où le bloc séparé.", defaut: true },
     { clef: "oasis", type: "interrupteur", label: "Le bloc Protection de l'Oasis",
       aide: "Les 52 vagues de la Tour Infernale. L'ancienne adresse /oasis y mène par une ancre.", defaut: true },
+    { clef: "horsTeleporteur", type: "interrupteur", label: "Le bloc Hors du téléporteur",
+      aide: "Les quatre zones à ticket et les quatre cartes de donjon que le téléporteur ne propose pas, avec leur carte du client.", defaut: true },
     { clef: "butins", type: "nombre", label: "Butins listés sur une tuile",
       aide: "Au-delà, la tuile affiche des points de suspension. Monter ce nombre allonge les tuiles.", defaut: 3, min: 1, max: 8 },
   ],
@@ -168,6 +190,11 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
   const qMin = q.trim().toLowerCase();
   const chercheTour = !qMin || MOTS_TOUR.includes(qMin);
   const chercheOasis = !qMin || MOTS_OASIS.includes(qMin);
+  /* Sans accents des DEUX côtés : les mots du bloc sont dépliés sans accent
+     (« rartesia », « ile corail »), donc la frappe doit l'être aussi — sinon
+     taper « Rartésia » ne trouvait pas Rartésia. */
+  const chercheLieux =
+    !qMin || MOTS_HORS_TELEPORTEUR.includes(qMin.normalize("NFD").replace(/[̀-ͯ]/g, ""));
 
   /**
    * Le sous-titre se compte, il ne s'écrit pas : trois nombres qui viennent de
@@ -175,7 +202,8 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
    * ligne s'ajoute quelque part, la phrase se corrige seule. Sans relevé, la
    * troisième moitié de phrase disparaît plutôt que d'annoncer « 0 vagues ».
    */
-  const sousTitre = `Les ${dungeons.length} donjons du téléporteur, les ${TOUR_OUBLIEE.length} étages de la Tour Oubliée`
+  const sousTitre = `Les ${dungeons.length} donjons du téléporteur, les ${LIEUX_HORS_TELEPORTEUR} lieux qu'il ne propose pas, `
+    + `les ${TOUR_OUBLIEE.length} étages de la Tour Oubliée`
     + (vagues.length ? ` et les ${vagues.length} vagues de la Protection de l'Oasis` : "")
     + " : où on entre, ce qu'on y croise, ce qui tombe.";
 
@@ -207,7 +235,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
       </div>
       {/* « Aucun donjon » ne veut plus dire « rien sur cette page » : la recherche
           peut ne rien trouver dans la grille et désigner un des deux blocs du bas. */}
-      {wikiList.length === 0 && !chercheTour && !chercheOasis && <div style={{ color: "var(--text-muted)", padding: "18px 2px", fontSize: 13 }}>Aucun donjon ne correspond.</div>}
+      {wikiList.length === 0 && !chercheTour && !chercheOasis && !chercheLieux && <div style={{ color: "var(--text-muted)", padding: "18px 2px", fontSize: 13 }}>Aucun donjon ne correspond.</div>}
       {groupes.map((g) => (
       <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 20 : 0 }}>
       {g.titre && (
@@ -291,8 +319,23 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
             })()}
             <div style={{ padding: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><Icon name={d.icon as IconName} framed frameSize={36} tone="orange" /><div style={{ minWidth: 0 }}><div className="font-heading" style={{ fontWeight: 600, fontSize: 15 }}>{d.name}</div><div style={{ fontSize: 12, color: "var(--text-muted)" }}>{d.type} · {d.lvl}{d.prestige ? ` · P${d.prestige}` : ""}</div></div></div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12 }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="sparkles" size={11} style={{ marginRight: 3 }} />{d.elem}</span>{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
-            {d.drops.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{d.drops.slice(0, nbButins).join(", ")}{d.drops.length > nbButins ? "…" : ""}</div>}
+            {/* LA PASTILLE « ÉLÉMENT » A CHANGÉ DE CONTENU. Elle affichait `d.elem`,
+                qui vaut « Terre » sur les vingt-trois donjons sans exception : une
+                pastille identique partout ne fait choisir personne. À sa place, les
+                icônes du jeu pour ce à quoi les créatures posées sont FAIBLES —
+                lu dans leur table de résistances, et ça varie d'une instance à
+                l'autre. Voir components/donjons/elements.tsx. Quand le client ne
+                connaît pas l'instance, la pastille n'apparaît pas plutôt que
+                d'afficher un mot vide de sens. */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12, alignItems: "center" }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span>{cl && aDesFaiblesses(cl) && <span title="Ce à quoi les créatures posées sont faibles" style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name="target" size={11} style={{ color: "var(--green)" }} /><FaiblessesDonjon d={cl} bulle={false} /></span>}{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
+            {/* La liste passe par `butinsMontrables` : « Penya » ouvrait les butins de
+                la Faille du débutant, et une penya de récompense ne se montre pas. Le
+                compte des points de suspension suit la liste FILTRÉE, sinon la tuile
+                promettait un objet de plus que la fiche n'en montre. */}
+            {(() => {
+              const montrables = butinsMontrables(d.drops);
+              return montrables.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{montrables.slice(0, nbButins).join(", ")}{montrables.length > nbButins ? "…" : ""}</div>;
+            })()}
             {/* Signalé sur la carte, dans un sens comme dans l'autre : sans ça,
                 personne ne devine qu'il y a une vidéo derrière, et celui qui
                 en cherche une ouvre les fiches une par une pour rien. Le champ
@@ -322,6 +365,12 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           pareil. Elle répond quand même à la recherche — quelqu'un qui tape
           « tour » la cherche, et la voir disparaître pendant qu'on cherche autre
           chose évite de croire qu'elle fait partie des résultats. */}
+      {/* HORS DU TÉLÉPORTEUR, juste après la grille et avant la Tour Oubliée : ce
+          sont encore des destinations, alors que la Tour et l'Oasis ont chacune
+          leur propre façon d'y entrer. L'ordre de la page reste « du plus proche
+          du téléporteur au plus à part ». */}
+      {chercheLieux && Boolean(valeurs.horsTeleporteur) && <HorsTeleporteur />}
+
       {chercheTour && Boolean(valeurs.tour) && <TourOubliee />}
 
       {/* Le troisième bloc, et le plus à part des trois : un événement, pas un
@@ -345,9 +394,26 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
               lignes de texte. */}
           <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 720, width: "100%", marginBottom: 0, maxHeight: "calc(100vh - 108px)", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><Icon name={sel.icon as IconName} framed frameSize={48} tone="orange" /><div style={{ minWidth: 0 }}><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestigeDetail ? ` · Prestige ${sel.prestigeDetail}` : sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div><EcartPrestige site={sel.prestige} client={clSel?.prestigeClient ?? null} /></div></div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+            {/* LA SECONDE TUILE DISAIT « ÉLÉMENT BOSS : TERRE ». Elle le disait sur
+                les vingt-trois fiches — le champ vaut « Terre » partout dans
+                dungeons.json, sans exception. Un renseignement identique sur toutes
+                les fiches n'en est pas un, et la série ressemble au copier-coller
+                déjà constaté sur les prestiges du tooltip (cf. EcartPrestige).
+
+                Ce qui la remplace change, lui, ce qu'on emporte : les éléments
+                auxquels les créatures POSÉES sont faibles, lus dans leur table de
+                résistances. La tuile disparaît quand le client ne connaît pas
+                l'instance — mieux vaut une colonne qu'une tuile vide. */}
+            <div style={{ display: "grid", gridTemplateColumns: clSel && aDesFaiblesses(clSel) ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 14 }}>
               <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{hpLabel(sel.hp)}</div></div>
-              <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Élément boss</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--blue)" }}>{sel.elem}</div></div>
+              {clSel && aDesFaiblesses(clSel) && (
+                <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Ils sont faibles à</div>
+                  <div className="font-heading" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                    <FaiblessesDonjon d={clSel} taille={18} />
+                  </div>
+                </div>
+              )}
             </div>
             {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
 
@@ -392,11 +458,20 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
             )}
             {(() => {
               // La fiche montre la liste complète quand on l'a ; la carte, elle, garde le résumé.
-              const liste = sel.dropsComplets ?? sel.drops;
+              // Filtrée de la même façon que la tuile : le compte annoncé à côté du titre
+              // doit être celui des objets réellement listés dessous.
+              const liste = butinsMontrables(sel.dropsComplets ?? sel.drops);
               return (<>
                 <SousTitre icon="gift" apres={liste.length > 0 ? `${liste.length} objet${liste.length > 1 ? "s" : ""}` : undefined}>Drops</SousTitre>
+                {/* CHAQUE BUTIN MÈNE MAINTENANT QUELQUE PART. Demande de Maxime, mot
+                    pour mot : « il faut aussi que ça redirige les objets ou les
+                    drops ». `NomObjet` fait les deux d'un coup — la fiche du
+                    catalogue, et la provenance quand le client la connaît — et il
+                    ne charge la provenance qu'à l'ouverture de la bulle : une fiche
+                    de donjon peut porter trente-deux butins, trente-deux requêtes au
+                    chargement auraient coûté plus que la page. */}
                 {liste.length > 0
-                  ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px 4px 6px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}><IconeObjet nom={d} />{d}</span>)}</div>
+                  ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px 4px 6px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}><NomObjet nom={d} icone={iconeButin(d)} taille={18} /></span>)}</div>
                   : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>
                       Personne n&apos;a encore relevé les drops de cette instance. Ce n&apos;est pas la
                       preuve que rien n&apos;y tombe : le butin ordinaire des monstres est calculé par

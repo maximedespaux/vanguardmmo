@@ -1,0 +1,401 @@
+{
+ "genere": "2026-08-12",
+ "source": "public/wiki/monstres.json + public/wiki/ou-trouver.json + cartouches lus sur public/jeu/cartes-monde/",
+ "lieux": [
+  {
+   "groupe": "ticket",
+   "clef": "corail",
+   "nom": "Île Corail",
+   "cartouche": "Île Corail",
+   "carte": "/jeu/cartes-monde/dungeon_cisland.webp",
+   "especes": 27,
+   "poses": 3057,
+   "nivMin": 43,
+   "nivMax": 69,
+   "gros": {
+    "nom": "Capitaine Merel",
+    "niv": 69,
+    "pv": 14300,
+    "rang": "normal",
+    "poses": 158
+   },
+   "objets": [],
+   "ticket": {
+    "nom": "Ticket Ile Corail",
+    "icone": "itm_systicketcisland.webp",
+    "durees": [
+     1,
+     15
+    ],
+    "flycoin": 500,
+    "pnj": "FLY SHOP"
+   }
+  },
+  {
+   "groupe": "ticket",
+   "clef": "azria",
+   "nom": "Azria",
+   "cartouche": "Azria",
+   "carte": "/jeu/cartes-monde/world_azria.webp",
+   "especes": 11,
+   "poses": 6505,
+   "nivMin": 73,
+   "nivMax": 210,
+   "gros": {
+    "nom": "Hyoubi renard hivernal",
+    "niv": 210,
+    "pv": 2036000,
+    "rang": "capitaine",
+    "poses": 2030
+   },
+   "paliers": [
+    {
+     "zone": "Azria 2",
+     "especes": 8,
+     "nivMin": 73,
+     "nivMax": 115
+    },
+    {
+     "zone": "Azria",
+     "especes": 3,
+     "nivMin": 190,
+     "nivMax": 210
+    }
+   ],
+   "objets": [],
+   "ticket": {
+    "nom": "Ticket Azria",
+    "icone": "itm_systicketkebaras.webp",
+    "durees": [
+     1,
+     7,
+     15
+    ],
+    "flycoin": 400,
+    "pnj": "FLY SHOP"
+   }
+  },
+  {
+   "groupe": "ticket",
+   "clef": "rartesia",
+   "nom": "Rartesia",
+   "cartouche": "Rartesia",
+   "carte": "/jeu/cartes-monde/world_rartesia.webp",
+   "especes": 7,
+   "poses": 1013,
+   "nivMin": 116,
+   "nivMax": 126,
+   "gros": {
+    "nom": "Tortue Tyran",
+    "niv": 121,
+    "pv": 10890024,
+    "rang": "super",
+    "poses": 1
+   },
+   "objets": [
+    {
+     "nom": "Carapace de la tortue Tyran",
+     "icone": null
+    },
+    {
+     "nom": "Energie des boss madrigalien",
+     "icone": null
+    },
+    {
+     "nom": "fiole de rang 1",
+     "icone": null
+    },
+    {
+     "nom": "Fleur rartesiac",
+     "icone": null
+    },
+    {
+     "nom": "Fleur rartesioc",
+     "icone": null
+    }
+   ],
+   "ticket": {
+    "nom": "Ticket Rartesia",
+    "icone": "itm_rartesia01.webp",
+    "durees": [
+     1,
+     7,
+     15
+    ],
+    "flycoin": 800,
+    "pnj": "FLY SHOP"
+   }
+  },
+  {
+   "groupe": "ticket",
+   "clef": "sombresia",
+   "nom": "Sombrésia",
+   "cartouche": "Sombrésia",
+   "carte": "/jeu/cartes-monde/world_darkrartesia.webp",
+   "especes": 7,
+   "poses": 710,
+   "nivMin": 129,
+   "nivMax": 165,
+   "gros": {
+    "nom": "Serviteur d'Ivillis",
+    "niv": 161,
+    "pv": 120000000,
+    "rang": "super",
+    "poses": 1
+   },
+   "objets": [],
+   "ticket": {
+    "nom": "Ticket Sombrésia",
+    "icone": "itm_systicketdarkrartesia-32.webp",
+    "durees": [
+     1
+    ],
+    "flycoin": 1000,
+    "pnj": "FLY SHOP"
+   }
+  },
+  {
+   "groupe": "client",
+   "clef": "mas",
+   "nom": "Mine de Mas",
+   "cartouche": "Mine de Mas",
+   "carte": "/jeu/cartes-monde/dungeon_masdungeon.webp",
+   "especes": 14,
+   "poses": 710,
+   "nivMin": 5,
+   "nivMax": 35,
+   "gros": {
+    "nom": "Géant Bang Mutant",
+    "niv": 29,
+    "pv": 88035,
+    "rang": "boss",
+    "poses": 2
+   },
+   "objets": [
+    {
+     "nom": "Aile dorée de Mas",
+     "icone": null
+    },
+    {
+     "nom": "Ame de monstre de la Mine de mas",
+     "icone": null
+    },
+    {
+     "nom": "Cheveux de Serus Uriel",
+     "icone": null
+    },
+    {
+     "nom": "Cheveux de Veduque",
+     "icone": null
+    },
+    {
+     "nom": "Coeur de Serus Uriel",
+     "icone": null
+    },
+    {
+     "nom": "Coeurs de Veduque",
+     "icone": null
+    },
+    {
+     "nom": "Fragment de Cœur",
+     "icone": "itm_evebalflower.webp"
+    },
+    {
+     "nom": "Griffes de Grand Veduque",
+     "icone": null
+    },
+    {
+     "nom": "Griffes de Veduque",
+     "icone": null
+    },
+    {
+     "nom": "masque PvE Rang 1",
+     "icone": null
+    },
+    {
+     "nom": "Morceau d'étoile de Mas",
+     "icone": null
+    },
+    {
+     "nom": "Morceau de coeur de Shade",
+     "icone": null
+    },
+    {
+     "nom": "Racine de Tarin de Mas",
+     "icone": null
+    },
+    {
+     "nom": "Raisin de Flaris",
+     "icone": null
+    }
+   ]
+  },
+  {
+   "groupe": "client",
+   "clef": "dekanes",
+   "nom": "Mine de Dekanes",
+   "cartouche": "Mine de Dekanes",
+   "carte": "/jeu/cartes-monde/dungeon_dekanes.webp",
+   "especes": 22,
+   "poses": 1225,
+   "nivMin": 30,
+   "nivMax": 30,
+   "gros": {
+    "nom": "Trillipy Sanguin Perfide",
+    "niv": 30,
+    "pv": 7144500,
+    "rang": "boss",
+    "poses": 3
+   },
+   "objets": [
+    {
+     "nom": "Ame d'insect géants Dekanes",
+     "icone": null
+    },
+    {
+     "nom": "Ame de monstre de Dekanes",
+     "icone": null
+    },
+    {
+     "nom": "Ame de sentinelles géants dekanes",
+     "icone": null
+    },
+    {
+     "nom": "Bave de Trillipy Sanguin Perfide",
+     "icone": null
+    },
+    {
+     "nom": "Bave de Trillipy Verdatre Perfide",
+     "icone": null
+    },
+    {
+     "nom": "Bave de Trillipy Violet Perfide",
+     "icone": null
+    },
+    {
+     "nom": "Fluide de Reine Tyroglyphe Bleue",
+     "icone": null
+    },
+    {
+     "nom": "Fluide de Reine Tyroglyphe Rose",
+     "icone": null
+    },
+    {
+     "nom": "Fragment de clé 1",
+     "icone": null
+    },
+    {
+     "nom": "Fragment de clé 2",
+     "icone": null
+    },
+    {
+     "nom": "Fragment de clé 3",
+     "icone": null
+    },
+    {
+     "nom": "Masque PvE Rang 3",
+     "icone": null
+    },
+    {
+     "nom": "Pioche de Sentinelle Keakoon",
+     "icone": null
+    },
+    {
+     "nom": "Pioche de Sentinelle Keakoon d'Elite",
+     "icone": null
+    },
+    {
+     "nom": "Pioche de Sentinelle Keakoon Mutant",
+     "icone": null
+    },
+    {
+     "nom": "Pollen de Reine Tyroglyphe Bleue",
+     "icone": null
+    },
+    {
+     "nom": "Pollen de Reine Tyroglyphe Rose",
+     "icone": null
+    },
+    {
+     "nom": "Ribenuum",
+     "icone": null
+    },
+    {
+     "nom": "Sceau de Nevil",
+     "icone": null
+    },
+    {
+     "nom": "Triduum",
+     "icone": null
+    }
+   ]
+  },
+  {
+   "groupe": "client",
+   "clef": "ivillis",
+   "nom": "Temple d'Ivillis",
+   "cartouche": "Temple d'Ivillis",
+   "carte": "/jeu/cartes-monde/dungeon_ibless.webp",
+   "especes": 12,
+   "poses": 305,
+   "nivMin": 45,
+   "nivMax": 70,
+   "gros": {
+    "nom": "Ivillis Mushellizer",
+    "niv": 65,
+    "pv": 300000,
+    "rang": "demi-boss",
+    "poses": 1
+   },
+   "objets": [
+    {
+     "nom": "Ame de monstre Ivillis",
+     "icone": null
+    },
+    {
+     "nom": "Joyaux à écailles",
+     "icone": null
+    },
+    {
+     "nom": "Joyaux à Plume",
+     "icone": null
+    },
+    {
+     "nom": "Joyaux d'ivillis",
+     "icone": null
+    },
+    {
+     "nom": "Joyaux Gluant",
+     "icone": null
+    },
+    {
+     "nom": "Masque PvE Rang 2",
+     "icone": null
+    },
+    {
+     "nom": "Symbole du Ivillis Guarder",
+     "icone": null
+    }
+   ]
+  },
+  {
+   "groupe": "client",
+   "clef": "volcane",
+   "nom": "Volcane",
+   "cartouche": "Volcane",
+   "carte": "/jeu/cartes-monde/dungeon_volcane.webp",
+   "especes": 2,
+   "poses": 298,
+   "nivMin": 118,
+   "nivMax": 120,
+   "gros": {
+    "nom": "Psyclope X",
+    "niv": 120,
+    "pv": 140000,
+    "rang": "capitaine",
+    "poses": 185
+   },
+   "objets": []
+  }
+ ]
+}

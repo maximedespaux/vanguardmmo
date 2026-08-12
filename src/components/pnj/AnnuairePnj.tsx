@@ -8,6 +8,7 @@ import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { NomObjet } from "@/components/objets/NomObjet";
 import { Portrait } from "@/components/pnj/Portrait";
+import { aUneCarte, CarteVille, REGIONS_CARTOGRAPHIEES } from "@/components/pnj/CarteVille";
 
 /**
  * L'ANNUAIRE DES PNJ — « qui vend quoi, qui fabrique quoi, et où ».
@@ -243,6 +244,16 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
         <Icon name="arrow-left" size={13} /> Revenir à la liste
       </button>
 
+      {/* LA CARTE DE SA RÉGION, à côté de son visage. La pastille bleue disait
+          « Flarine » et s'arrêtait là ; le client porte le plan des onze régions
+          où il place ses PNJ, et aucun n'était affiché. Sur les quatre plans de
+          VILLE, les pictogrammes posés sur le plan sont les marchands eux-mêmes :
+          on y trouve l'étal, pas seulement la ville.
+
+          Elle n'apparaît que si la table la connaît (`aUneCarte`) — 154 des 293
+          PNJ n'ont aucune ville dans le client, et un cadre vide se lirait comme
+          une image cassée. La pastille du nom reste : la carte montre où, elle
+          n'écrit pas le nom. */}
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 16 }}>
         <Portrait img={v.img} nom={v.nom} taille={116} />
         <div style={{ flex: "1 1 240px", minWidth: 0 }}>
@@ -254,6 +265,7 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
           </div>
           {v.quoi && <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.55, margin: 0 }}>{v.quoi}</p>}
         </div>
+        {aUneCarte(v.ville) && <CarteVille ville={v.ville} largeur={300} />}
       </div>
 
       {!fiche ? (
@@ -481,16 +493,28 @@ export function AnnuairePnj() {
         </div>
       )}
 
+      {/* LE TITRE ANNONÇAIT « 131 VISAGES » EN DUR. Le chiffre était juste — c'est le
+          nombre de fichiers de public/jeu/pnj/ — mais écrit à la main : le jour où une
+          fouille en verse un de plus, la phrase devient fausse sans que rien ne le
+          signale. Ce qui se compte vraiment et qui intéresse, ce sont les visages
+          RATTACHÉS à quelqu'un, et l'annuaire le renvoie déjà. Tant qu'il n'a pas
+          répondu, le titre ne prétend à aucun nombre.
+          (Le commentaire est ICI et pas dans la prop : entre les accolades d'un
+          attribut on est en contexte d'EXPRESSION, où un commentaire entre accolades
+          devient un bloc vide et casse la compilation — piège déjà payé six fois sur
+          ce site. Et il ne peut pas non plus citer une fin de commentaire, ce qui a
+          coûté un aller-retour de plus.) */}
       <VoletSections
         sections={sections}
         entete={
-          <EnteteVolet icon="users" titre="131 visages qui n'avaient jamais servi"
+          <EnteteVolet icon="users"
+            titre={portraits ? `${portraits} visages qui n'avaient jamais servi` : "Les visages qui n'avaient jamais servi"}
             marque={annuaire ? { texte: `${annuaire.length} PNJ utiles`, couleur: "var(--orange)" } : undefined}
             sous={
               <>
                 Aucun visage n&apos;est attribué à la ressemblance : c&apos;est le jeu qui dit, PNJ par PNJ,
-                quel fichier lui appartient. {portraits ? <b style={NUM}>{portraits}</b> : "Une partie"} sont
-                sur cette page.
+                quel fichier lui appartient. Sa fiche montre aussi la carte de sa région, quand le
+                client en dessine une — <b style={NUM}>{REGIONS_CARTOGRAPHIEES}</b> régions le sont.
               </>
             }
           />

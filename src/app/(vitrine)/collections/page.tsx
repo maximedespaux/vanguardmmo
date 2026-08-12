@@ -12,7 +12,14 @@ import { redirect } from "next/navigation";
  * désormais à la page unique. Une URL morte se lit comme un site cassé.
  *
  * Les métadonnées suivent la page qui survit : elles sont dans
- * src/app/(guild)/crafts/page.tsx.
+ * src/app/(vitrine)/crafts/page.tsx.
+ *
+ * POURQUOI CE FICHIER A CHANGÉ DE GROUPE. Il vivait dans (guild), dont le layout
+ * appelle requireGuild() — et un layout s'exécute AVANT le redirect de la page.
+ * L'ancienne adresse envoyait donc un visiteur sur /login au lieu de /crafts, qui
+ * l'accueille désormais. Une redirection qui redirige ailleurs que sa destination
+ * est pire qu'une adresse morte : elle fait croire à un refus. Elle suit donc sa
+ * destination dans (vitrine), qui n'appelle aucun garde.
  */
 export default function CollectionsPage() {
   redirect("/crafts");

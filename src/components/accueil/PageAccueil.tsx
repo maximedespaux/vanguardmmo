@@ -7,7 +7,7 @@ import { useReveal, useCardFx } from "@/components/VgFx";
 import { AvisAcces } from "@/components/accueil/AvisAcces";
 import { BandeauCartes } from "@/components/accueil/BandeauCartes";
 import { ClassesHeros } from "@/components/accueil/ClassesHeros";
-import { PortesSite } from "@/components/accueil/PortesSite";
+import { PORTES_PUBLIQUES, PortesSite } from "@/components/accueil/PortesSite";
 // `import type` et rien d'autre : `chiffres.ts` lit le disque avec `fs`, et ce
 // fichier-ci est un composant client. Un import de type est effacé à la
 // compilation — le module serveur ne suit donc jamais jusqu'au navigateur.
@@ -52,6 +52,17 @@ const iconeDe = (libelle: string): IconName =>
 
 /** Les 20 logos de cape que le jeu propose aux guildes (24×24 dans le client). */
 const CAPES = Array.from({ length: 20 }, (_, i) => `cape-logo-${String(i + 1).padStart(2, "0")}.webp`);
+
+/**
+ * Combien de portes, et combien sous cadenas — COMPTÉ sur la liste, jamais écrit.
+ *
+ * La phrase d'introduction des portes annonce ces deux nombres. Les taper à la
+ * main les rendrait faux à la première porte ajoutée, et c'est exactement le
+ * défaut que le site a déjà payé trois fois (« trente-sept classes », un total de
+ * prestige recopié, un classement coupé à 60 sous un compteur annonçant 94).
+ */
+const NB_PORTES = PORTES_PUBLIQUES.length;
+const NB_VERROU = PORTES_PUBLIQUES.filter((p) => p.verrou).length;
 
 export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -119,40 +130,76 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "46px 0 4px", display: "flex", alignItems: "center", gap: 12 }}>
           <Icon name="swords" framed frameSize={34} tone="orange" /> <span className="vg-h2">Les huit fins de partie</span>
         </h2>
-        {/* L'accueil et /classes racontaient les huit spécialisations tous les deux,
-            sans se citer. Le doublon exact était la CLASSE D'ORIGINE : /classes la
-            dessine dans la chaîne de promotion, avec les paliers et leurs coûts.
-            Elle part d'ici. L'arme, en revanche, n'est écrite nulle part ailleurs
-            sur le site — la garder n'est pas une redite (cf. ClassesHeros).
-            On tranche — l'accueil donne l'envie et la porte, le détail appartient à
-            /classes, qui a les données pour le tenir. */}
+        {/* LE DOUBLON DES HUIT CLASSES, tranché en deux passes — voici la seconde.
+            La première avait retiré la CLASSE D'ORIGINE de chaque carte : /classes
+            la dessine dans la chaîne de promotion, avec les paliers et leurs coûts.
+            Restait le symptôme : cet écran menait DIX FOIS à /classes — les huit
+            cartes, un lien au fil du texte, et un bouton dessous — et introduisait
+            les emblèmes par deux phrases dont la première ne faisait que décrire
+            des images déjà sous les yeux.
+            L'accueil donne l'envie et LA porte : les cartes sont la porte, une
+            ligne dit où est le détail, et le bouton qui répétait la même
+            destination est parti. L'ARME reste — c'est le seul endroit du site qui
+            dise avec quoi une classe se bat (la seule pastille d'arme de /classes
+            est celle d'une compétence LÉGENDAIRE, donc autre chose ; cf.
+            ClassesHeros). */}
+        {/* « Leur emblème de héros, et l'arme qu'elles portent » a sauté : les huit
+            cartes MONTRENT l'emblème et ÉCRIVENT l'arme, juste dessous. Décrire ce
+            qui est déjà sous les yeux est le pire des remplissages. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px 0 18px", letterSpacing: ".2px", maxWidth: 720 }}>
-          Chaque classe a son emblème de héros dans le jeu. Ce sont ceux-là, tels que le client les affiche.
-          Ce qu&apos;elles apprennent, ce qu&apos;elles coûtent et par quels paliers on y arrive est sur{" "}
-          <Link href="/classes" className="acc-lien-t">la page des classes</Link>.
+          Ce qu&apos;elles apprennent, ce que ça coûte et par quels paliers on y arrive :
+          sur <Link href="/classes" className="acc-lien-t">la page des classes</Link>.
         </p>
         <ClassesHeros />
-        <div className="vg-reveal" style={{ marginTop: 14 }}>
-          <Link href="/classes" className="acc-lien-2">
-            <Icon name="graduation" size={16} /> Les huit en détail
-          </Link>
-        </div>
 
-        {/* ── Par où entrer ── */}
+        {/* ── Ce que le site fait ──
+            Ce bloc s'appelait « Par où commencer » et montrait quatre portes
+            ouvertes. Il répond maintenant à la question de fond de la vitrine :
+            qu'est-ce que ce site sait faire, et qu'est-ce qui s'ouvre en se
+            connectant. Les huit cartes « fonctionnalités » de /histoire ont été
+            rapatriées ici — voir la note de PORTES_PUBLIQUES. */}
         <h2 className="font-heading vg-reveal" style={{ fontSize: 24, textTransform: "uppercase", letterSpacing: 1, margin: "46px 0 4px", display: "flex", alignItems: "center", gap: 12 }}>
-          <Icon name="compass-rose" framed frameSize={34} tone="orange" /> <span className="vg-h2">Par où commencer</span>
+          <Icon name="compass-rose" framed frameSize={34} tone="orange" /> <span className="vg-h2">Ce que le site fait</span>
         </h2>
+        {/* Les deux nombres restent COMPTÉS, la phrase autour a maigri : le cadenas
+            est dessiné sur chacune des portes concernées et dit déjà « membres ».
+            « s'ouvrent en te connectant avec Discord » ÉTAIT FAUX et la promesse
+            était sérieuse : les trois adresses sous cadenas sont dans
+            GUILD_PREFIXES, dont la liste de rôles exclut RECRUE. Un joueur qui se
+            connecte sans être de la guilde est renvoyé sur `/?error=guild` — donc
+            par la porte qu'on venait de lui promettre. Ce qui les ouvre, c'est
+            d'être MEMBRE, et c'est ce que la phrase dit maintenant. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px 0 18px", letterSpacing: ".2px", maxWidth: 720 }}>
-          Quatre portes ouvertes à tout le monde, membre ou pas.
+          {NB_PORTES - NB_VERROU} ouvertes sans compte. Les {NB_VERROU} autres sont réservées aux membres de la guilde.
         </p>
         <PortesSite />
 
         {/* ── Rejoindre ── */}
-        <div className="vg-reveal" style={{
-          marginTop: 46, padding: "34px 28px", borderRadius: 16, textAlign: "center",
-          border: "1px solid var(--orange-dark)",
-          background: "radial-gradient(circle at 50% 30%, rgba(255,140,26,.11), transparent 70%)",
-        }}>
+        <div className="vg-reveal acc-join">
+          {/* L'ILLUSTRATION OFFICIELLE D'AIRFLYFF — `accueil/login_screen_01.webp`,
+              l'écran de connexion du serveur.
+              C'est la seule des sept images de `public/jeu/accueil/` qui soit
+              exploitable telle quelle, et elle vaut la place : elle porte le NOM du
+              serveur et sa devise, peinte par AirFlyff et non reprise de l'éditeur —
+              aucun logo Gala, aucune barre de chargement, aucun avertissement d'âge
+              incrusté (les six autres en portent, voir le compte rendu). Sur la page
+              qui doit donner envie de rejoindre, c'est l'image la plus utile du dépôt.
+              Elle a un vrai `alt` et non `alt=""` : elle n'est pas décorative ici,
+              c'est l'identité du serveur dont parle tout le paragraphe.
+              Le recadrage est calculé, pas approximatif : `object-position` à 72 %
+              garde la devise et les quatre aventuriers du bas de l'image, que le
+              cadrage centré coupait. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="acc-join-art"
+            src="/jeu/accueil/login_screen_01.webp"
+            alt="L'illustration officielle d'AirFlyff : quatre aventuriers face à un colosse de pierre en flammes, sous la devise du serveur « L'air se raréfie »."
+            width={1400}
+            height={785}
+            loading="lazy"
+            decoding="async"
+          />
+          <div className="acc-join-in">
           {/* Les logos de cape du jeu : la seule image que le client donne d'une
               GUILDE. Purement décoratifs, donc masqués aux lecteurs d'écran, et
               enfermés dans un conteneur qui coupe le dépassement. */}
@@ -167,19 +214,65 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
           <div className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
             Vanguard, c&apos;est une de ces capes
           </div>
+          {/* Ce paragraphe s'ouvrait sur « Peu de membres, mais présents. Discord et
+              vocal obligatoires » — les mots EXACTS du hero de la même page, deux
+              écrans plus haut (voir HeroFlyff). Un lecteur qui retombe sur la phrase
+              qu'il vient de lire croit s'être perdu : elle part.
+              CE QUI L'AVAIT REMPLACÉE EST PARTI AUSSI — « pas de niveau minimum, pas
+              de quota de présence ». Aucune page, aucune donnée du dépôt ne dit ça
+              (vérifié : le mot « quota » n'apparaît nulle part ailleurs). C'était
+              une RÈGLE DE GUILDE inventée, écrite sur la page qui doit donner envie
+              de postuler, donc lue comme un engagement — et seul Maxime peut le
+              prendre. Reste ce que le site tient vraiment : la condition ferme, et
+              l'invitation à lire les règles avant de postuler. */}
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 auto 22px", maxWidth: 560, lineHeight: 1.7 }}>
-            Peu de membres, mais présents. Discord et vocal obligatoires — c&apos;est la seule condition ferme.
+            Une seule condition ferme : être joignable en vocal.
             Lis d&apos;abord ce qu&apos;on attend, puis présente-nous tes personnages.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/candidature" className="vg-btn"><Icon name="clipboard" size={17} /> Postuler</Link>
             <Link href="/histoire" className="acc-lien-2"><Icon name="book" size={16} /> La guilde et ses règles</Link>
           </div>
+          </div>
         </div>
       </div>
 
       <style>{`
         .acc-wrap{max-width:1040px;margin:0 auto;padding:0 32px}
+        /* LE BLOC « REJOINDRE » ET SON ILLUSTRATION.
+           overflow:hidden sur le bloc : l'image fait 1400 px de large et deborderait
+           des coins arrondis — et c'est la PAGE qui gagnerait une barre horizontale,
+           donc tout le site se decalerait sur mobile (deja paye sur la frise de
+           cartes du bandeau). */
+        .acc-join{position:relative;overflow:hidden;margin-top:46px;border-radius:16px;text-align:center;
+          border:1px solid var(--orange-dark);background:#08080b}
+        /* LE CADRAGE, CALCULE — pas choisi a l'oeil, parce qu'il decide si le nom du
+           serveur est dans l'image ou coupe.
+           L'illustration fait 1400x785. A la largeur du bloc (976 px) elle ferait
+           547 px de haut : la moitie d'un ecran pour une image. On en garde 300, donc
+           247 px de jeu vertical.
+           object-position a 72 % donnait un decalage de 178 px, soit la bande source
+           32-87 % : le mot AIRFLYFF (vers 78-91 % de la hauteur) etait coupe en deux
+           et le ruban de la devise passait entierement dessous — alors que c'est
+           exactement ce que le texte de remplacement de l'image annonce.
+           Cale EN BAS, le decalage vaut 247 px et la bande visible court de 45 % a
+           100 % : le nom tombe au tiers bas du cadre (y 180-251 sur 300), les quatre
+           aventuriers dans le haut, et il reste 50 px de prairie sous le ruban pour
+           le raccord. */
+        .acc-join-art{display:block;width:100%;height:300px;object-fit:cover;object-position:center bottom}
+        /* Le degrade de raccord est un calque a part, pose SUR l'image : en
+           background du conteneur il serait passe DERRIERE elle.
+           60 px et non 130, et il n'atteint l'opacite pleine qu'au dernier pixel :
+           l'ancien couvrait le tiers bas de l'image a 82 %, c'est-a-dire pile la
+           bande ou le nom du serveur se trouve. Il n'eteint plus que la prairie. */
+        .acc-join::after{content:"";position:absolute;left:0;right:0;top:240px;height:60px;pointer-events:none;
+          background:linear-gradient(180deg,transparent,#08080b)}
+        .acc-join-in{position:relative;z-index:1;padding:30px 28px 34px;
+          background:radial-gradient(circle at 50% 0%, rgba(255,140,26,.13), transparent 68%)}
+        /* En etroit l'image est deja presque entiere dans le cadre (a 400 px de large
+           elle ne fait plus que 224 px de haut), donc le raccord se contente de
+           45 px — le meme calcul, a l'echelle. */
+        @media(max-width:640px){.acc-join-art{height:190px}.acc-join::after{top:145px;height:45px}}
         .acc-lien-2{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;
           font-family:'Rubik',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:13px;
           text-decoration:none;color:var(--text);background:var(--bg-3);border:1px solid var(--border)}

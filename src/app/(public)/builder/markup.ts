@@ -12,6 +12,17 @@ export const BUILDER_MARKUP = `<div class="wrap">
   <div class="actions actions-top">
     <button class="btn ghost" onclick="vgMesPersos()">${ico("users", { size: 16 })} Mes personnages</button>
     <button class="btn" onclick="vgPartager()">${ico("link", { size: 16 })} Partager le build</button>
+    <!-- « J'aimerais concentrer sur une page pour comprendre en réalisant le
+         build » : le builder parle en abrégé — « R1 », « Fulgur 10 % », « ★★ »,
+         « maîtrise 78/100 ». Ces mots s'apprennent en voyant la pierre, et la
+         planche qui les montre était à deux clics de nav. Elle est ici.
+         ATTENTION : tout ce fichier est UN SEUL LITTÉRAL DE GABARIT. Pas un
+         accent grave dans les commentaires — il fermerait le littéral et
+         mettrait la page en 500. La classe vg-meca (sans accent grave, donc)
+         sert au masquage pour un visiteur non connecté : /builder/mecaniques vit
+         dans le groupe (verified), son layout appelle requireVerified, et un
+         lien qui rebondit sur /login vaut moins que pas de lien du tout. -->
+    <a class="btn ghost vg-meca" href="/builder/mecaniques" title="Ce que « R1 », « Fulgur 10 % » ou « ★★ » veulent dire, avec les images du jeu">${ico("gem", { size: 16 })} Les mécaniques</a>
     <button class="btn ghost btn-aide" onclick="vgSaveHelp()" title="Comment marchent la sauvegarde, les versions et la publication ?" aria-label="Comment ça marche ?">${ico("info", { size: 17 })}</button>
   </div>
 

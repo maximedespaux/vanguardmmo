@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { pvCourt, PLANS, TON_RANG, type DonjonClient } from "./donneesClient";
+import { IconeElementDonjon } from "./elements";
 
 /** L'étiquette de section de la fiche. Reprise telle quelle du bloc « Drops »
  *  qui existait déjà : une fiche où chaque titre a sa propre graisse se lit comme
@@ -176,8 +177,17 @@ export function Peuplement({ d }: { d: DonjonClient }) {
               {/* Le nombre de points de réapparition, pas le nombre de monstres : le
                   serveur décide du rythme, la carte ne fixe que les emplacements. */}
               <Puce ic="grid" ton="var(--text-muted)">{m.points} emplacement{m.points > 1 ? "s" : ""}</Puce>
-              {m.elem && m.elem !== "Aucun" && <Puce ic="sparkles" ton="var(--blue)">{m.elem}</Puce>}
-              {m.faible && <Puce ic="target" ton="var(--green)">Faible au {m.faible.toLowerCase()}</Puce>}
+              {/* Les deux pastilles élémentaires portent le dessin du jeu plutôt qu'un
+                  pictogramme maison : c'est la même image que sur /monstres, sur les
+                  tuiles de donjon et sur la Tour Oubliée. Le mot reste, parce qu'une
+                  ligne de monstre en porte jusqu'à six et qu'on ne lit pas six
+                  dessins d'affilée. */}
+              {m.elem && m.elem !== "Aucun" && (
+                <Puce ic="sparkles" ton="var(--blue)"><IconeElementDonjon elem={m.elem} taille={12} />{m.elem}</Puce>
+              )}
+              {m.faible && (
+                <Puce ic="target" ton="var(--green)"><IconeElementDonjon elem={m.faible} taille={12} />Faible au {m.faible.toLowerCase()}</Puce>
+              )}
               {m.rage && <Puce ic="flame" ton="var(--red)">Rage sous {m.rage[0]} % de PV : ×{m.rage[1]} dégâts</Puce>}
               {m.invoque?.map((i) => (
                 <Puce key={i.nom} ic="users" ton="var(--gold)">À {i.pv} % de PV, invoque {i.n} {i.nom}</Puce>

@@ -176,12 +176,16 @@ export default function GuidePage() {
   ];
 
   /** Un sujet, une page : d'ici on ne fait que mener. */
-  const SUITE: { href: string; icon: IconName; titre: string; quoi: string; verrou?: "membres" | "compte" }[] = [
+  const SUITE: { href: string; icon: IconName; titre: string; quoi: string; verrou?: "membres" | "compte" | "en partie" }[] = [
     { href: "/donjons", icon: "castle", titre: "Les donjons", quoi: "Points de vie, élément, boss de chaque instance." },
     { href: "/monstres", icon: "paw", titre: "Les monstres", quoi: "Points de vie, résistances, boss." },
     { href: "/prestige", icon: "star", titre: "Le prestige", quoi: "Ce que demande chaque palier, et ce qu'il te reste." },
     { href: "/builder/mecaniques", icon: "gem", titre: "Les mécaniques", quoi: "Perçage, gemmes, éveil, runes, costume.", verrou: "compte" },
-    { href: "/crafts", icon: "hammer", titre: "Crafts et collections", quoi: "Recettes et carnets.", verrou: "membres" },
+    /* « en partie » et non « membres » : depuis le mode vitrine la page s'ouvre à
+       tout le monde. Les titres, succès, anges, maîtrises, carnets et karma se lisent
+       sans compte ; les recettes et leur statut restent aux membres. Promettre le tout
+       ferait un lien qui déçoit, marquer « membres » un lien qui refuse à tort. */
+    { href: "/crafts", icon: "hammer", titre: "Crafts et collections", quoi: "Titres, succès, anges, cartes — et les recettes.", verrou: "en partie" },
     { href: "/objets", icon: "package", titre: "Les objets", quoi: "Où trouver une pièce, nom par nom.", verrou: "membres" },
   ];
 

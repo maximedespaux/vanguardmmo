@@ -1,5 +1,6 @@
 "use client";
 import { Icon } from "@/components/Icon";
+import { Faiblesses, SchemaVies } from "@/components/monstres/Graphiques";
 import TABLE from "@/data/chambres-adversaires.json";
 
 /**
@@ -42,25 +43,21 @@ function court(n: number) {
 /** Le délai du client est en millisecondes entre deux coups. */
 const parSeconde = (m: Adversaire) => (m.delai > 0 ? (m.atkMax / (m.delai / 1000)) : 0);
 
-const ELEMENT_FR: Record<string, string> = {
-  feu: "Feu", eau: "Eau", electricite: "Électricité", vent: "Vent", terre: "Terre",
-};
-
 /**
- * Les faiblesses sont LUES dans les cinq colonnes de résistance, jamais déduites de
- * la roue élémentaire. La déduction se trompe : des monstres de ce jeu résistent à
- * trois éléments à la fois, et « il est de terre donc faible à l'électricité »
- * inventerait une faiblesse qui n'existe pas dans le fichier.
- * Une valeur NÉGATIVE est une faiblesse (il prend plus), une POSITIVE une résistance.
+ * IL Y AVAIT ICI UNE TABLE `ELEMENT_FR` ET UNE FONCTION `elements()`, qui
+ * écrivaient « faible au feu, eau · résiste au vent » en français dans la
+ * dernière colonne. C'était la troisième copie de la même idée sur le site.
+ *
+ * La brique `Faiblesses` de components/monstres/Graphiques.tsx fait le même
+ * travail avec les CINQ ICÔNES DU JEU, tient dans 40 px au lieu d'une colonne
+ * large sur trente-sept lignes, et porte le détail chiffré dans une bulle. Elle
+ * lit les résistances exactement de la même façon — dans les cinq colonnes du
+ * client, jamais déduites de la roue élémentaire, parce que des monstres de ce
+ * jeu résistent à trois éléments à la fois.
+ *
+ * Le contrat de la brique demande un `res` dont les clés sont
+ * feu/eau/electricite/vent/terre : c'est déjà la forme du relevé.
  */
-function elements(m: Adversaire) {
-  const e = Object.entries(m.res ?? {});
-  return {
-    faible: e.filter(([, v]) => v < 0).map(([k]) => ELEMENT_FR[k] ?? k),
-    resiste: e.filter(([, v]) => v > 0).map(([k]) => ELEMENT_FR[k] ?? k),
-    neutre: e.length > 0 && e.every(([, v]) => v === 0),
-  };
-}
 
 export function AdversairesChambres() {
   const parMenace = [...ADV].sort((a, b) => parSeconde(b) - parSeconde(a));
@@ -110,16 +107,37 @@ export function AdversairesChambres() {
             <Chiffre valeur={court(cogneur.atkMax)} quoi="le coup le plus fort" ton="var(--red)" />
           </div>
 
+          {/* LE PARAGRAPHE DES PLUSIEURS VIES EST DEVENU UN SCHÉMA. Il expliquait en
+              trois lignes qu'une barre à zéro ne veut pas dire mort ; `SchemaVies`
+              met les deux quantités à la MÊME échelle et la démonstration se fait
+              d'un regard — c'est la brique écrite pour ça (components/monstres/
+              Graphiques.tsx), et elle porte déjà sa propre mise en garde « invisible
+              en jeu » sur le chiffre.
+
+              Le schéma est celui du PIRE cas relevé, pas d'un exemple choisi : le
+              plus gros sac de points de vie effectifs de la salle. */}
           <div style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6 }}>
-            <b style={{ color: "var(--red)" }}>Un adversaire à plusieurs vies ne meurt pas quand sa barre atteint zéro.</b>{" "}
-            Ils sont {aVies.length} dans ces salles. La colonne <b>PV à sortir</b> multiplie déjà les
-            points de vie par le nombre de vies : c&apos;est le seul chiffre sur lequel préparer un run.
+            <b style={{ color: "var(--red)" }}>Une barre à zéro ne veut pas dire mort.</b>{" "}
+            {aVies.length} de ces {ADV.length} adversaires se relèvent.
+            {plusGros.vies > 1 && (
+              <div style={{ margin: "10px 0 6px" }}>
+                <SchemaVies pv={plusGros.pv} vies={plusGros.vies} pvEff={plusGros.pvEff} taille="petite" />
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 5 }}>
+                  {plusGros.nom}, le plus gros de la salle.
+                </div>
+              </div>
+            )}
+            La colonne <b>PV à sortir</b> fait déjà cette multiplication : c&apos;est le seul chiffre
+            sur lequel préparer un run.
             {menaceNestPasLaPlusGrosse && (
               <div style={{ marginTop: 8 }}>
                 <b style={{ color: "var(--gold)" }}>Et le plus gros n&apos;est pas le plus dangereux.</b>{" "}
-                {plusGros.nom} porte le plus de points de vie ({court(plusGros.pvEff)}), mais c&apos;est {cogneur.nom} qui
-                frappe le plus fort — {court(cogneur.atkMax)} par coup toutes les {fr(cogneur.delai)} ms,
-                soit {court(Math.round(parSeconde(cogneur)))} par seconde. Un tank qui se prépare sur la
+                {/* Deux-points et non « c'est X qui… » : plusieurs de ces noms portent
+                    déjà une virgule (« Nyzzara, la mère dévoreuse »), et la relative
+                    s'y raccrochait de travers à la lecture. */}
+                Le coup le plus fort vient de <b style={{ color: "var(--text)" }}>{cogneur.nom}</b> :{" "}
+                {court(cogneur.atkMax)} par coup toutes les {fr(cogneur.delai)} ms, soit{" "}
+                {court(Math.round(parSeconde(cogneur)))} par seconde. Un tank qui se prépare sur la
                 barre de vie se prépare sur le mauvais.
               </div>
             )}
@@ -161,7 +179,6 @@ export function AdversairesChambres() {
           </thead>
           <tbody>
             {parVie.map((m, i) => {
-              const el = elements(m);
               const ps = parSeconde(m);
               return (
                 <tr key={m.id} style={{ borderTop: i ? "1px solid color-mix(in srgb, var(--border) 45%, transparent)" : "none" }}>
@@ -185,15 +202,7 @@ export function AdversairesChambres() {
                     <Barre part={ps / maxSeconde} teinte="var(--red)" />
                   </td>
                   <td style={{ ...td, textAlign: "left", whiteSpace: "normal", fontSize: 11.5 }}>
-                    {el.neutre ? (
-                      <span style={{ color: "var(--text-muted)" }}>indifférent</span>
-                    ) : (
-                      <>
-                        {el.faible.length > 0 && <span style={{ color: "var(--green)" }}>faible au {el.faible.join(", ").toLowerCase()}</span>}
-                        {el.faible.length > 0 && el.resiste.length > 0 && <span style={{ color: "var(--text-muted)" }}> · </span>}
-                        {el.resiste.length > 0 && <span style={{ color: "var(--red)" }}>résiste au {el.resiste.join(", ").toLowerCase()}</span>}
-                      </>
-                    )}
+                    <Faiblesses res={m.res} />
                   </td>
                 </tr>
               );

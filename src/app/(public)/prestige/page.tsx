@@ -190,7 +190,10 @@ export default function PrestigePage() {
             <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
             <span>
               Les badges se craftent à partir de composants d&apos;instance :{" "}
-              <a className="pr-lien" href="/crafts">Crafts et collections</a> <Verrou quoi="membres" />.
+              {/* « en partie » : la page s'ouvre depuis le mode vitrine, mais c'est
+                  justement la moitié RECETTES — celle dont il est question ici — qui
+                  reste aux membres. Le mot le dit avant le clic. */}
+              <a className="pr-lien" href="/crafts">Crafts et collections</a> <Verrou quoi="en partie" />.
               L&apos;ordre dans lequel s&apos;y prendre est dans le{" "}
               <a className="pr-lien" href="/astuces">guide de progression</a>.
             </span>

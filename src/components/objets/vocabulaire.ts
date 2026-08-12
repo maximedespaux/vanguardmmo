@@ -132,10 +132,11 @@ export const emblemeClasse = (code: string | undefined) =>
  * dominants relevés dans les fichiers, opacité pleine :
  *   item_edgeunique   → 41,255,41  (vert pur)            → var(--green)
  *   item_edgeultimate → 255,255,0 puis 230,156,0 (ambre) → var(--gold)
- * D'où le désaccord à signaler avec `GRADE_TON` de `components/jeu/Rarete.tsx`, qui
- * donne `--orange` à l'ultime : le fichier ne porte pas d'orange, il porte du jaune
- * et de l'ambre. Les CADRES eux-mêmes viennent de Rarete.tsx (`IconeGrade`) — il n'y
- * a plus de table de chemins ici, c'était la même chose écrite deux fois.
+ * `GRADE_TON` de `components/jeu/Rarete.tsx` donnait `--orange` à l'ultime, et le
+ * même objet changeait donc de couleur selon la brique qui l'affichait. C'est réglé :
+ * Rarete.tsx dit `--gold` comme ici, ces deux tables ne se contredisent plus. Les
+ * CADRES eux-mêmes viennent de Rarete.tsx (`IconeGrade`) — il n'y a plus de table de
+ * chemins ici, c'était la même chose écrite deux fois.
  */
 export const COULEUR_GRADE: Record<string, string> = {
   Unique: "var(--green)",
@@ -179,14 +180,51 @@ const EMPLACEMENT: Record<string, string> = {
 };
 export const emplacementFr = (e: string | undefined) => (e ? EMPLACEMENT[e] ?? null : null);
 
-/** Les cinq résistances, dans l'ordre des pastilles du jeu. */
-export const RESISTANCES: { clef: string; label: string; couleur: string }[] = [
-  { clef: "feu", label: "Feu", couleur: "#F87171" },
-  { clef: "eau", label: "Eau", couleur: "#4EA8FF" },
-  { clef: "vent", label: "Vent", couleur: "#33D6A6" },
-  { clef: "terre", label: "Terre", couleur: "#4ADE80" },
-  { clef: "foudre", label: "Foudre", couleur: "#FFD24A" },
+/**
+ * LES CINQ RÉSISTANCES, dans l'ordre des pastilles du jeu — et le dessin que le
+ * client leur donne.
+ *
+ * `image` a été ajoutée parce que le mot seul se répétait : les cinq mêmes
+ * libellés sur chaque fiche d'armure, alors que le client dessine ses cinq
+ * éléments et que ces images servent déjà sur /monstres et sur le World Boss. Le
+ * même élément a donc la même image d'un écran à l'autre, ce qui est tout
+ * l'intérêt.
+ *
+ * ATTENTION AU NOM : le catalogue d'objets appelle la cinquième « foudre », la
+ * table des monstres l'appelle « electricite », et le fichier du client s'appelle
+ * `element-electricite.webp`. La colonne garde son nom de données, l'image suit
+ * le nom du fichier — les confondre affichait une image absente.
+ */
+export const RESISTANCES: { clef: string; label: string; couleur: string; image: string }[] = [
+  { clef: "feu", label: "Feu", couleur: "#F87171", image: "/jeu/mecaniques/element-feu.webp" },
+  { clef: "eau", label: "Eau", couleur: "#4EA8FF", image: "/jeu/mecaniques/element-eau.webp" },
+  { clef: "vent", label: "Vent", couleur: "#33D6A6", image: "/jeu/mecaniques/element-vent.webp" },
+  { clef: "terre", label: "Terre", couleur: "#4ADE80", image: "/jeu/mecaniques/element-terre.webp" },
+  { clef: "foudre", label: "Foudre", couleur: "#FFD24A", image: "/jeu/mecaniques/element-electricite.webp" },
 ];
+
+/**
+ * L'ÉLÉMENT PORTÉ PAR UNE PIÈCE — et une traduction qui manquait.
+ *
+ * Le champ `el` du catalogue n'est pas en français : il porte le code du client,
+ * `FIRE`, `WATER`, `ELECTRICITY`, `EARTH`, `WIND`. La fiche l'affichait tel quel,
+ * donc 223 objets annonçaient « Élément porté : FIRE ». Un code interne n'est pas
+ * un renseignement — la table le traduit et lui donne son dessin du jeu.
+ *
+ * `null` dès qu'un code inconnu se présente : la ligne garde alors son texte brut
+ * plutôt que d'hériter du dessin d'un autre élément. Sur un élément d'arme, on le
+ * croirait.
+ */
+const ELEMENT_PORTE: Record<string, { label: string; image: string }> = {
+  FIRE: { label: "Feu", image: "/jeu/mecaniques/element-feu.webp" },
+  WATER: { label: "Eau", image: "/jeu/mecaniques/element-eau.webp" },
+  WIND: { label: "Vent", image: "/jeu/mecaniques/element-vent.webp" },
+  EARTH: { label: "Terre", image: "/jeu/mecaniques/element-terre.webp" },
+  ELECTRICITY: { label: "Électricité", image: "/jeu/mecaniques/element-electricite.webp" },
+};
+
+export const elementPorte = (el: string | undefined) =>
+  (el ? ELEMENT_PORTE[el.trim().toUpperCase()] : undefined) ?? null;
 
 /**
  * Comparaison tolérante aux accents : le jeu écrit « Ame de démon » sans

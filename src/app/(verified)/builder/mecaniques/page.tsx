@@ -3,12 +3,14 @@ import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
 import { CarteFx } from "@/components/astuces/CarteFx";
 import { StyleMecaniques } from "@/components/mecaniques/Blocs";
+import { VoletAnges, VoletMaitrise } from "@/components/mecaniques/SectionsBuild";
 import { Fashion } from "@/components/mecaniques/SectionsFashion";
 import {
   Ailleurs, Artefact, Eveil, FAMILLES, Gemmes, Percage, Plafonds, Rarete, Runes, Sertissage,
 } from "@/components/mecaniques/SectionsObjets";
 import {
-  cartesDePercage, joyauxDeCostume, nombreDeGemmes, nombreDeGemmesMenteuses, runes, setsDeFashion,
+  cartesDePercage, chiffresAnges, chiffresMaitrise, joyauxDeCostume, nombreDeGemmes,
+  nombreDeGemmesMenteuses, runes, setsDeFashion,
 } from "@/components/mecaniques/releves";
 import { ICONE_ELEMENT } from "@/lib/assetsJeu";
 import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
@@ -74,6 +76,10 @@ export default function MecaniquesPage() {
   const joyauxCostume = joyauxDeCostume();
   const setsCostume = setsDeFashion();
   const slots = (arme.sertissage?.diamants ?? 0) + (arme.sertissage?.holo ?? 0);
+  // Les deux mécaniques arrivées de /crafts. Les comptes se lisent côté serveur
+  // pour que le rail ne change pas de forme quand le relevé arrive au navigateur.
+  const maitrise = chiffresMaitrise();
+  const anges = chiffresAnges();
 
   const sections: SectionVolet[] = [
     {
@@ -124,6 +130,31 @@ export default function MecaniquesPage() {
     {
       clef: "runes", titre: "Runes", sous: "celle de l'arme n'est pas celle de la tenue", icon: "rune", compte: nRunes,
       contenu: <Runes />,
+    },
+    /* ── Les deux mécaniques arrivées de /crafts ────────────────────────────
+       Elles y étaient rangées avec les collections. On ne DÉCROCHE pas une
+       maîtrise d'arme et on ne collectionne pas la poudre féerique : on les
+       MONTE sur la pièce qu'on compose, comme un perçage ou un éveil. Elles
+       ferment donc le rail, après ce qui se pose sur la pièce elle-même. */
+    {
+      clef: "maitrise", titre: "Maîtrise d'arme", icon: "target",
+      compte: maitrise?.armes ?? null,
+      sous: maitrise
+        ? `Ce que le niveau ${maitrise.niveauMax} demande, en monstres`
+        : "Ce que le niveau 100 demande, en monstres",
+      contenu: <VoletMaitrise />,
+    },
+    {
+      clef: "anges", titre: "Anges & poudre féerique", icon: "fairy",
+      compte: anges?.montables ?? null,
+      // « du niveau X au Y » se lisait comme un gabarit qu'on aurait oublié de
+      // remplir. Le rail dit ce que le volet CALCULE, avec le seul chiffre qu'il
+      // tient du relevé : le nombre de niveaux. La casse du nom vient du client
+      // et ne se retouche pas à la main (cf. collections/Anges.tsx).
+      sous: anges
+        ? `Combien de ${anges.poudre}, sur ${anges.niveaux} niveaux`
+        : "Combien de poudre féerique, niveau par niveau",
+      contenu: <VoletAnges />,
     },
   ];
 

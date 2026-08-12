@@ -29,6 +29,228 @@ const SLOTS={
 const LAYOUT={top:['ring1','earring1','necklace','earring2','ring2'],right:['helmet','suit','gauntlet','boots'],bottom:['fhead','ftop','fhand','ffoot'],pets:['ramasseur','familier','fairy']};
 function leftCol(){const cls=C().cls;let second='shield';if(cls==='Arbaletrier'||cls==='Sylphide')second=null;else if(cls==='Spadassin')second='weapon2';return ['weapon',second,'mantra','cape','masque'].filter(Boolean);}
 const ARMOR=['helmet','suit','gauntlet','boots'];
+const FASHION=['fhead','ftop','fhand','ffoot'];
+
+/* ══════════════════ LA PANOPLIE, EN UN GESTE ══════════════════════════════
+ *
+ * Le besoin, mot pour mot : « quand on integre par exemple botte Yggdrasil,
+ * mettre la panoplie entierement pour eviter de perdre du temps ». Composer un
+ * stuff complet, c'etait ouvrir quatre fois la meme fenetre et rechercher
+ * quatre fois la meme lignee.
+ *
+ * IL N'Y A PAS DE CHAMP « PANOPLIE » DANS LE RELEVE. La signature d'un
+ * ensemble est l'accord de TROIS champs : `tier` (la lignee), `cls` (la classe)
+ * et `sex`. Verifie sur le releve avant d'etre ecrit : les quatre emplacements
+ * portent 64 armures chacun, ces trois champs produisent 64 signatures, et LES
+ * 64 couvrent les quatre emplacements — exactement une piece par emplacement,
+ * jamais deux. Une signature qui rendrait deux casques signalerait une regle
+ * fausse ; ce n'est pas le cas.
+ *
+ * `sex` FAIT PARTIE DE LA SIGNATURE et ce n'est pas un detail : « Souliers des
+ * eternels (F) » est la version feminine de « Chaussures des eternels (G) ».
+ * Les confondre proposerait une piece que le joueur ne peut pas porter.
+ *
+ * L'ARME ET LE BOUCLIER N'EN FONT PAS PARTIE. Ils portent bien un `tier`, mais
+ * leur lignee ne se complete pas en quatre pieces — et « Yggdrasil » est
+ * justement une lignee d'ARMES, pas une panoplie d'armure. Les ajouter
+ * remplacerait l'arme du joueur sans qu'il l'ait demande.
+ *
+ * Meme mecanique pour le COSTUME, avec sa propre signature : `set` + `sex`, et
+ * la un fait s'y ajoute — aucune des pieces ne paie seule, c'est le set qui
+ * paie, et il ne paie qu'aux quatre pieces portees (cf. /builder/mecaniques).
+ * D'ou le bonus de set compte dans le resume UNIQUEMENT a 4/4.
+ * Cote serveur, `src/lib/panoplie.ts` fait le meme travail sur la CLE du
+ * client (II_ARM_M_MER_BOOTS_SET_01 et ses trois soeurs) : deux relevés, deux
+ * chemins, meme resultat.
+ */
+
+/** La signature d'une armure, ou `null` si la piece n'est rattachable a aucun
+ *  ensemble (un `tier` ou une `cls` manquants). */
+function panSig(it){
+  if(!it||!it.tier||!it.cls)return null;
+  return 'A|'+it.tier+'|'+it.cls+'|'+(it.sex||'');
+}
+/** La signature d'une piece de costume : le set et le genre. */
+function panSigMode(it){
+  if(!it||!it.set)return null;
+  return 'M|'+it.set+'|'+(it.sex||'');
+}
+/** Les emplacements couverts par une famille de signature. */
+function panSlots(sig){return (sig&&sig.charAt(0)==='M')?FASHION:ARMOR;}
+/** La fonction de signature qui va avec l'emplacement. */
+function panSigDe(slot,it){return FASHION.indexOf(slot)>=0?panSigMode(it):panSig(it);}
+
+/** Les pieces d'un ensemble, dans l'ordre ou l'on s'equipe (de la tete aux
+ *  pieds) : c'est celui de ARMOR et de FASHION, pas celui du fichier. */
+function panPieces(sig){
+  const out=[];if(!sig)return out;
+  panSlots(sig).forEach(function(s){
+    const arr=(s==='fhead'||s==='ftop'||s==='fhand'||s==='ffoot')?(ITEMS.fashion||[]):(ITEMS[s]||[]);
+    for(let i=0;i<arr.length;i++){
+      const it=arr[i];
+      if(FASHION.indexOf(s)>=0&&it.piece!==s)continue;
+      if(panSigDe(s,it)===sig){out.push({slot:s,item:it});break;}
+    }
+  });
+  return out;
+}
+
+/**
+ * L'etat d'une panoplie dans le stuff courant.
+ *
+ * @param mode `true` pour le costume, sinon l'armure.
+ * @param sigVoulue signature imposee (celle de la piece qu'on regarde dans la
+ *   fenetre de choix) ; sinon on prend la signature LA PLUS PORTEE — c'est
+ *   celle que le joueur est en train de monter.
+ * Rend `null` s'il n'y a rien a proposer : aucune piece rattachable, ou un
+ * ensemble d'une seule piece. Mieux vaut pas de bouton qu'un bouton qui
+ * n'ajouterait rien.
+ */
+function panEtat(mode,sigVoulue){
+  const st=ST();const slots=mode?FASHION:ARMOR;
+  const cnt={},sigDe={};
+  slots.forEach(function(s){
+    const e=st.eq[s];const g=e&&e.item&&panSigDe(s,e.item);
+    if(!g)return;cnt[g]=(cnt[g]||0)+1;sigDe[s]=g;
+  });
+  let sig=sigVoulue||null;
+  if(!sig)Object.keys(cnt).forEach(function(g){if(!sig||cnt[g]>cnt[sig])sig=g;});
+  if(!sig)return null;
+  const pieces=panPieces(sig);
+  if(pieces.length<2)return null;
+  const manquantes=pieces.filter(function(p){return sigDe[p.slot]!==sig;});
+  /* DEUX SORTES DE « MANQUANTES », et la difference coute cher.
+   *
+   * Un emplacement qui n'appartient pas a l'ensemble est soit VIDE, soit OCCUPE
+   * par une piece d'une autre lignee. Le geste n'est pas le meme : remplir un
+   * trou ne perd rien, ecraser un casque Eternel perd la piece ET tous ses
+   * reglages (upgrade, cartes de percage, eveil), et le builder n'a PAS
+   * d'annulation — sa propre pastille de sauvegarde le dit.
+   *
+   * Le compte etait fondu en un seul jusqu'ici : le bouton annonçait
+   * « Completer (3) » sur un stuff ou une seule piece manquait vraiment, et les
+   * deux autres partaient a la poubelle sans un mot. Le nombre est desormais
+   * separe, et c'est le libelle du bouton qui change quand il y a du
+   * remplacement dans le lot. */
+  const occupees=manquantes.filter(function(p){const e=st.eq[p.slot];return !!(e&&e.item);});
+  const vides=manquantes.filter(function(p){const e=st.eq[p.slot];return !(e&&e.item);});
+  const accessible=function(p){return C().prestige>=(p.item.pr||0);};
+  const bloquees=manquantes.filter(function(p){return !accessible(p);});
+  return {sig:sig,mode:!!mode,
+    nom:panNom(pieces,sig),
+    pieces:pieces,portees:pieces.length-manquantes.length,
+    manquantes:manquantes,bloquees:bloquees,
+    /** Les trous a remplir, et les pieces d'une autre lignee qui sauteraient. */
+    aPoser:vides.filter(accessible),aRemplacer:occupees.filter(accessible),
+    porte:function(slot){return sigDe[slot]===sig;},
+    /** `true` si cet emplacement porte une piece, mais d'un autre ensemble. */
+    occupe:function(slot){const e=st.eq[slot];return !!(e&&e.item)&&sigDe[slot]!==sig;}};
+}
+
+/** Le nom de l'ensemble : le `tier` pour une armure — il EST la lignee, et il
+ *  s'affiche deja partout ailleurs avec sa couleur —, le nom de set pour un
+ *  costume. Les deux occupent la meme place dans la signature, d'ou la lecture
+ *  unique. On ne recalcule pas de suffixe commun comme cote serveur : ici le
+ *  nom est deja dans la donnee. */
+function panNom(pieces,sig){
+  return sig.split('|')[1];
+}
+
+/** La couleur de l'ensemble : celle que ses pieces portent deja.
+ *
+ *  RENDUE EN HEXA, jamais en variable CSS : l'appelant y colle une opacite
+ *  (« …55 »), et `var(--gold)55` n'est pas une couleur — la declaration entiere
+ *  est jetee par le navigateur, silencieusement. Les pieces de costume n'ont pas
+ *  de champ `col`, d'ou le repli ecrit en clair. */
+function panCouleur(p){
+  const un=p&&p.pieces&&p.pieces[0]&&p.pieces[0].item;
+  return (un&&un.col)||'#FFD24A';
+}
+
+/**
+ * Poser la panoplie. Le besoin est celui de Maxime, mot pour mot : « quand on
+ * integre par exemple botte Yggdrasil, mettre la panoplie ENTIEREMENT pour
+ * eviter de perdre du temps ». Le geste pose donc AUSSI les emplacements deja
+ * occupes par une autre lignee — sinon il ne ferait pas ce qu'on lui demande.
+ *
+ * CE QUI A ETE CORRIGE ICI : ce commentaire affirmait l'inverse (« ce qui est
+ * deja equipe n'est PAS remplace »), et le code, lui, remplaçait. Verifie : avec
+ * des bottes Yggdrasil et un heaume des Eternels aux pieds et sur la tete, un
+ * clic changeait le heaume sans le dire. Ce n'est plus le libelle qui mentait :
+ * quand du remplacement est dans le lot, le bouton s'appelle « Tout poser » et
+ * non « Completer », le nombre de pieces ecrasees est ecrit a cote, et le
+ * message de retour le redit. Le builder n'a pas d'annulation — sa pastille de
+ * sauvegarde le dit elle-meme —, donc le joueur doit le savoir AVANT de cliquer.
+ *
+ * Une piece hors de portee de prestige est LAISSEE et nommee : l'equiper
+ * afficherait un stuff que le personnage ne peut pas porter.
+ */
+function panCompleter(mode,sigVoulue){
+  if(_ro())return;
+  const p=panEtat(mode,sigVoulue);
+  if(!p||!p.manquantes.length)return;
+  const st=ST();let mis=0,ecrasees=0;
+  p.manquantes.forEach(function(m){
+    if(C().prestige<(m.item.pr||0))return;
+    if(st.eq[m.slot]&&st.eq[m.slot].item)ecrasees++;
+    st.eq[m.slot]={item:m.item,cfg:defCfg(m.slot)};
+    defaultCfg(m.slot,m.item.tier,C().cls);
+    mis++;
+  });
+  render();
+  try{if(pickSlot)drawPick(curQ());}catch(x){}
+  if(!mis)return agToast('Prestige '+(p.bloquees[0]&&p.bloquees[0].item.pr)+' requis pour le reste de la panoplie '+p.nom+'.',false);
+  agToast('Panoplie '+p.nom+' : '+mis+' piece'+(mis>1?'s':'')+' equipee'+(mis>1?'s':'')
+    +(ecrasees?' · '+ecrasees+' remplacee'+(ecrasees>1?'s':''):'')
+    +(p.bloquees.length?' · '+p.bloquees.length+' hors prestige':''),true);
+}
+
+/**
+ * LE BLOC PANOPLIE de la fenetre de choix : les quatre pieces en IMAGE, celles
+ * qu'on porte allumees, et un seul bouton pour poser le reste.
+ *
+ * Les images plutot qu'une liste de noms : on reconnait un casque a son dessin
+ * avant d'avoir lu « Casque des eternels », et les quatre dessins cote a cote
+ * disent d'un coup d'oeil ce qui manque.
+ */
+function panBloc(slot){
+  const e=E(slot);if(!e||!e.item)return '';
+  const mode=FASHION.indexOf(slot)>=0;
+  const sig=panSigDe(slot,e.item);
+  const p=panEtat(mode,sig);
+  if(!p)return '';
+  const col=panCouleur(p);
+  const cases=p.pieces.map(function(x){
+    const on=p.porte(x.slot);
+    const bloq=!on&&C().prestige<(x.item.pr||0);
+    /* Troisieme etat, et il n'existait pas : l'emplacement porte deja une piece,
+       mais d'une autre lignee. Sans lui, la case se dessinait exactement comme un
+       trou — et c'est justement celle qui va se faire ecraser. */
+    const occ=!on&&!bloq&&p.occupe(x.slot);
+    const lbl=(SLOTS[x.slot]||{}).lbl||x.slot;
+    return '<span class="pancase'+(on?' on':'')+(bloq?' bloq':'')+(occ?' occ':'')+'" title="'+esc(x.item.n)
+      +(bloq?' — prestige '+x.item.pr:'')+(occ?' — remplacerait la piece portee':'')+'">'
+      +(x.item.ic&&IC[x.item.ic]?'<img src="'+IC[x.item.ic]+'" alt="">':'<i class=vgi-'+((SLOTS[x.slot]||{}).ico||'shirt-armor')+'></i>')
+      +'<b>'+esc(lbl)+'</b></span>';
+  }).join('');
+  /* Le bouton dit ce qu'il fait. « Completer » quand il ne remplit que des
+     trous ; « Tout poser » des qu'il ecrase, avec le compte a cote. */
+  const reste=p.aPoser.length+p.aRemplacer.length;
+  const act=reste
+    ? '<span class="pill on" onclick="panCompleter('+(mode?'true':'false')+',\''+esc(p.sig).replace(/'/g,"\\'")+'\')">'
+      +'<i class=vgi-plus></i> '+(p.aRemplacer.length?'Tout poser':'Completer')+' ('+reste+')</span>'
+      +(p.aRemplacer.length?'<span class="mini" style="color:var(--gold)">dont '+p.aRemplacer.length
+        +' piece'+(p.aRemplacer.length>1?'s':'')+' remplacee'+(p.aRemplacer.length>1?'s':'')+' — sans annulation</span>':'')
+    : (p.manquantes.length
+      ? '<span class="mini">Prestige '+(p.bloquees[0]&&p.bloquees[0].item.pr)+' requis pour le reste</span>'
+      : '<span class="mini" style="color:var(--green)"><i class=vgi-check></i> Panoplie complete</span>');
+  return '<div class="grp panbloc" style="border-color:'+col+'55">'
+    +'<div class="gh" style="color:'+col+'"><i class=vgi-shirt-armor></i> Panoplie '+esc(p.nom)
+    +' <span class="mini" style="color:var(--mut)">'+p.portees+'/'+p.pieces.length+'</span></div>'
+    +'<div class="pancases">'+cases+'</div>'
+    +'<div class="row" style="margin-top:8px">'+act+'</div></div>';
+}
+
 function pool(s){if(s==='weapon2')return 'weapon';if(SLOTS[s]&&SLOTS[s].pool)return SLOTS[s].pool;if(s==='mantra')return 'mantra';if(s==='masque')return 'masque';if(s==='ramasseur')return 'ramasseur';return s.replace(/[0-9]/g,'');}
 
 function newStuff(n){return {name:n||'Stuff',eq:{}};}
@@ -87,10 +309,30 @@ function slotHTML(slot){try{const e=E(slot),cfg=SLOTS[slot]||{lbl:slot};const sm
      qu'on lise son nom. L'emplacement etait uniformement gris : rien ne
      distinguait une Yggdrasil d'une piece de depart. */
   const teinte=(e&&e.item&&e.item.col)?` style="border-color:${e.item.col}77;box-shadow:inset 0 0 0 1px ${e.item.col}22, inset 0 0 14px ${e.item.col}1a"`:'';
-  return `<div class="slot ${small?'small':''}${e?' plein':''}"${teinte} onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" aria-label="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" aria-label="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
+  /* La panoplie s'ALLUME sur la silhouette : les pieces qui appartiennent a
+     l'ensemble le plus porte gardent un liseré dore. C'est ce qui fait qu'on voit
+     « il m'en manque une » sans lire un compte. */
+  const pan=(e&&e.item&&_panSigActive(slot)&&_panSigActive(slot)===panSigDe(slot,e.item))?' panon':'';
+  return `<div class="slot ${small?'small':''}${e?' plein':''}${pan}"${teinte} onclick="openPick('${slot}')" onmouseenter="itipSlot(event,'${slot}')" onmousemove="itipMove(event)" onmouseleave="itipHide()" aria-label="${esc(cfg.lbl)}">${badge}${rk}${inner}<span class="lbl">${esc(cfg.lbl)}</span></div>`;}catch(_e){const cf2=SLOTS[slot]||{lbl:slot};return `<div class="slot" onclick="openPick('${slot}')" aria-label="${esc(cf2.lbl)}"><span class="ico"><i class=vgi-alert></i></span><span class="lbl">${esc(cf2.lbl)}</span></div>`;}}
+
+/* La signature de l'ensemble le plus porte, calculee UNE fois par rendu.
+   `slotHTML` est appele vingt fois : sans ce cache, on rebalayait les 256
+   armures du releve a chaque emplacement. Le jeton est remis a zero en tete de
+   `render()`. */
+var _panJeton=null,_panVu={};
+function _panSigActive(slot){
+  const mode=FASHION.indexOf(slot)>=0;const k=mode?'M':'A';
+  if(_panVu.jeton!==_panJeton){_panVu={jeton:_panJeton};}
+  if(_panVu[k]===undefined){
+    let p=null;try{p=panEtat(mode);}catch(x){}
+    _panVu[k]=(p&&p.portees>=2)?p.sig:'';
+  }
+  return _panVu[k];
+}
 
 function render(){
   var _pt=document.getElementById('ptabs');if(!_pt){if((render._n=(render._n||0)+1)<90)requestAnimationFrame(render);return;}render._n=0;vgSyncChip();
+  _panJeton=(_panJeton||0)+1;
   _pt.innerHTML=state.chars.map((c,i)=>`<div class="ptab ${i===state.cur?'on':''}" onclick="switchChar(${i})">${IC['class_'+c.cls.toLowerCase()]?`<img src="${IC['class_'+c.cls.toLowerCase()]}">`:`<i class=vgi-${SIL[c.cls]||'user'}></i>`} ${esc(c.name)} ${state.chars.length>1?`<span class="x" onclick="event.stopPropagation();delChar(${i})" title="Supprimer ce perso"><i class=vgi-x></i></span>`:''}</div>`).join('')+`<div class="addp" onclick="addChar()">+ Perso</div>`;
   const c=C();
   document.getElementById('setup').innerHTML=`
@@ -109,6 +351,10 @@ function render(){
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${clsFr(c.cls)} · Niv ${c.lvl} · P${c.prestige}`;
   renderFamNote();renderCarnets();
+  /* Le resume se recalcule a CHAQUE rendu, donc a chaque piece posee. Il ne
+     l'etait jamais : `renderStats()` n'avait aucun appelant et le panneau du
+     gabarit restait vide depuis le premier jour. */
+  renderStats();
   }catch(err){console.error('[AirBuilder] rendu partiel ignoré (donnée corrompue)',err);}
   save();vgDD();
 }
@@ -143,17 +389,77 @@ function etuiHtml(coul,col){
 }
 function renderCarnets(){const c=C();ST();
   document.getElementById('carnetsPanel').innerHTML=`<h3><i class=vgi-book></i> Carnets des Arcanes — ${esc(c.name)} <span style="color:var(--mut);font-weight:400;font-size:12px;text-transform:none">liés au personnage, partagés entre ses stuffs</span></h3>
-   <div class="carnets">${CARNETS.map((cn,i)=>{const on=(c.carnets||[]).includes(i);const full=(c.carnetsFull||[]).includes(i);const bonus=full?cn.complet:cn.base;
+   <div class="carnets">${CARNETS.map((cn,i)=>{const on=(c.carnets||[]).includes(i);const full=(c.carnetsFull||[]).includes(i);
+     /* MEME FILTRE QUE LE RESUME, et pour la meme raison : quatre carnets du
+        releve donnent de l'Experience, du Taux de drop ou du Taux de penyas, et
+        cette ligne les ecrivait en clair. Deux d'entre eux — « Jour de chance »
+        et « Clefs de la reussite » — n'ont QUE ça : leur ligne de bonus est donc
+        vide, et on n'y met rien plutot qu'un euphemisme invente. Le choix de ce
+        qu'on ecrit a leur place appartient a Maxime, pas a ce fichier. */
+     const bonus=(full?cn.complet:cn.base).filter(b=>!STAT_RECOMPENSE.test(b[0]));
      return `<div class="carn ${on?'on':''}" style="border-left:3px solid ${cn.col};box-shadow:inset 14px 0 22px -16px ${cn.col}">
          <div class="cn" onclick="toggleCarnet(${i})">${etuiHtml(cn.etui_couleur,cn.col)}${esc(cn.nom)}</div>
          <div style="font-size:11px;color:var(--mut);margin-bottom:4px">Étui ${esc(cn.etui_couleur)} · ${esc(cn.rarete)} · ${cn.tier===1?'1 carte de chaque (set complet)':cn.copies+' carte(s) de chaque'}</div>
          <div class="cc-cards">${cn.cartes.map(ca=>`<span class="cc-card r-${(ca.rarete||'').toLowerCase()}">${esc(ca.nom)}</span>`).join('')}</div>
          ${on&&cn.tier>1?`<div class="seg"><div class="sg ${!full?'on':''}" onclick="setMode(${i},false)"><i class=vgi-star></i> Base</div><div class="sg ${full?'on':''}" onclick="setMode(${i},true)"><i class=vgi-star></i> Complet</div></div>`:''}
-         <div class="cb">${bonus.map(b=>esc(b[0])+' +'+b[1]).join(' · ')}</div></div>`;}).join('')}</div>`;}
-function totals(){const c=C();const acc={};const add=(k,v)=>{if(v)acc[k]=(acc[k]||0)+v;};
-  const st=ST();for(const s in st.eq){const e=st.eq[s];if(!e||s==='familier')continue;(e.item.b||[]).forEach(b=>add(b[0],b[1]));if(s==='weapon'){weaponTotals(add,e);}}
+         ${bonus.length?`<div class="cb">${bonus.map(b=>esc(b[0])+' +'+b[1]).join(' · ')}</div>`:''}</div>`;}).join('')}</div>`;}
+/**
+ * LE RESUME DU BUILD — ce qui s'additionne vraiment.
+ *
+ * Cette fonction appelait `weaponTotals()`, QUI N'A JAMAIS EXISTE dans le
+ * moteur : le premier stuff avec une arme la faisait lever une
+ * ReferenceError. Personne ne s'en apercevait parce que `renderStats()`, son
+ * seul appelant, n'etait jamais appele non plus — le panneau `#stats` du
+ * gabarit restait vide en permanence. Les deux sont reparees ensemble :
+ * `render()` appelle le resume, et le perçage remplace l'appel fantome.
+ *
+ * CE QUI EST COMPTE, et rien d'autre :
+ *   · les bonus propres de chaque piece (`b` du releve) ;
+ *   · les cartes de perçage, dont la table de valeurs est dans ce moteur
+ *     (PIERCECARD) — sur les QUATRE emplacements qui se percent, pas la seule
+ *     arme comme le voulait l'appel d'origine ;
+ *   · le bonus de set du costume, une seule fois, aux quatre pieces portees ;
+ *   · les carnets des arcanes.
+ * L'eveil, le scroll et le sertissage ne le sont PAS : le builder retient la
+ * STATISTIQUE choisie, jamais la valeur obtenue, et un total invente se
+ * comparerait entre deux builds comme s'il etait mesure. Le panneau porte donc
+ * sa legende, qui dit ce que le nombre couvre.
+ */
+function totals(){const acc={};const add=(k,v)=>{if(v)acc[k]=(acc[k]||0)+v;};
+  const st=ST();for(const s in st.eq){const e=st.eq[s];if(!e||!e.item||s==='familier')continue;
+    (e.item.b||[]).forEach(b=>add(b[0],b[1]));
+    if(e.cfg&&e.cfg.pierce){try{const pt=pierceTotals(e.cfg,s);if(pt&&pt.brut)pt.brut.forEach(b=>add(b[0],b[1]));}catch(x){}}
+  }
+  /* Le costume : aucune piece ne paie seule, c'est le SET qui paie — et il ne
+     paie qu'aux quatre pieces portees. Les quatre pieces d'un set portent le
+     MEME tableau `setb` dans le releve : on l'ajoute donc une fois, pas quatre. */
+  const mode=panEtat(true);
+  if(mode&&!mode.manquantes.length){
+    const un=st.eq[FASHION[0]];
+    ((un&&un.item&&un.item.setb)||[]).forEach(b=>add(b[0],b[1]));
+  }
   const _c=C();(_c.carnets||[]).forEach(ci=>{const cn=CARNETS[ci];if(!cn)return;((_c.carnetsFull||[]).includes(ci)?cn.complet:cn.base).forEach(b=>add(b[0],b[1]));});
   return acc;}
+/**
+ * LES TROIS STATISTIQUES QUI NE VONT PAS A L'ECRAN.
+ *
+ * Regle de la maison, mot pour mot : les TAUX DE DROP, l'EXPERIENCE et les
+ * PENYAS DE RECOMPENSE ne sont ni colonne, ni tri, ni pastille, ni mention.
+ * Elles restent dans les DONNEES — et c'est pour ça que le filtre est ici, a
+ * l'AFFICHAGE, et pas dans `totals()` : ce total-la part aussi dans
+ * `exportBuild()` et dans `vgCollectBuilds()` (donc vers /api/characters/sync).
+ * Le vider a la source amputerait la donnee ; on ne la montre simplement pas.
+ *
+ * Ce filtre a ete pose apres coup : le releve porte quatre carnets et une cape
+ * (« Cape Farmeur ») qui donnent de l'Experience, du Taux de drop et du Taux de
+ * penyas. Personne ne les voyait tant que `renderStats()` n'avait pas
+ * d'appelant ; le rallumer les a fait apparaitre d'un coup dans la colonne
+ * Utilitaire.
+ *
+ * UN COUT en penyas n'est PAS concerne : la regle vise les recompenses, pas les
+ * prix d'operation.
+ */
+const STAT_RECOMPENSE=/^(exp[ée]rience|taux de drop|taux de penyas)$/i;
 // Catégorie d'une stat pour le résumé groupé.
 function statCat(k){var s=(k||'').toLowerCase();
   if(s.indexOf("vitesse d'attaque")>=0)return 'off';
@@ -161,15 +467,89 @@ function statCat(k){var s=(k||'').toLowerCase();
   if(/endurance|défense|defense|block/.test(s))return 'def';
   if(/pv max|mp max|mp_max/.test(s))return 'vit';
   return 'uti';}
-function renderStats(){var t=totals();var G={off:[],def:[],vit:[],uti:[]};
-  Object.entries(t).sort(function(a,b){return b[1]-a[1];}).forEach(function(p){G[statCat(p[0])].push(p);});
+/**
+ * LES QUATRE DES DE STATISTIQUE DU JEU.
+ *
+ * Ce sont les tuiles que le client dessine dans la fenetre de personnage, et
+ * elles portent DEJA leur libelle en francais : « FOR », « END », « DEX »,
+ * « INT ». Le site les emploie deja ailleurs (`DE_STAT` de
+ * src/components/objets/vocabulaire.ts) ; les chemins sont recopies ici parce
+ * que ce moteur est du JS vanilla qui n'importe rien. Si l'un bouge la-bas, il
+ * bouge ici.
+ */
+var DEIMG={'Force':'/jeu/interface/statdice_str.webp','Endurance':'/jeu/interface/statdice_sta.webp',
+  'Dextérité':'/jeu/interface/statdice_dex.webp','Intelligence':'/jeu/interface/statdice_int.webp'};
+
+/** Le bandeau d'une panoplie dans le resume : ses pieces en image, et le geste
+ *  qui pose ce qui manque. Rien du tout quand il n'y a pas d'ensemble a
+ *  proposer — un bandeau vide ferait croire a une panoplie ratee. */
+function panResume(mode){
+  const p=panEtat(mode);if(!p)return '';
+  const col=panCouleur(p);
+  const complete=!p.manquantes.length;
+  const reste=p.aPoser.length+p.aRemplacer.length;
+  const cases=p.pieces.map(function(x){
+    const on=p.porte(x.slot);
+    const occ=!on&&p.occupe(x.slot);
+    return '<span class="pancase'+(on?' on':'')+(occ?' occ':'')+'" title="'+esc(x.item.n)
+      +(occ?' — remplacerait la piece portee':'')+'">'
+      +(x.item.ic&&IC[x.item.ic]?'<img src="'+IC[x.item.ic]+'" alt="">':'<i class=vgi-shirt-armor></i>')+'</span>';
+  }).join('');
+  return '<div class="panres'+(complete?' full':'')+'" style="border-color:'+col+'55">'
+    +'<span class="pt" style="color:'+col+'">'+(mode?'<i class=vgi-shirt></i> Costume ':'<i class=vgi-shirt-armor></i> Panoplie ')+esc(p.nom)+'</span>'
+    +'<span class="pancases mini-cases">'+cases+'</span>'
+    +'<span class="pn">'+p.portees+'/'+p.pieces.length+'</span>'
+    +(complete
+      ? '<span class="pok"><i class=vgi-check></i> complete</span>'
+      /* Meme regle que dans la fenetre de choix : le libelle dit s'il y a
+         remplacement, parce qu'un survol ne se lit pas au doigt. */
+      : (reste?'<span class="pill" onclick="panCompleter('+(mode?'true':'false')+')"><i class=vgi-plus></i> '
+        +(p.aRemplacer.length?'Tout poser ('+reste+', dont '+p.aRemplacer.length+' remplacée'+(p.aRemplacer.length>1?'s':'')+')':'Completer')
+        +'</span>':''))
+    +'</div>';
+}
+
+function renderStats(){var n=document.getElementById('stats');if(!n)return;
+  var t=totals();var G={off:[],def:[],vit:[],uti:[]};
+  Object.entries(t).filter(function(p){return !STAT_RECOMPENSE.test(p[0]);})
+    .sort(function(a,b){return b[1]-a[1];}).forEach(function(p){G[statCat(p[0])].push(p);});
   var META={off:['<i class=vgi-sword-cross></i> Offensif','#F87171'],def:['<i class=vgi-shield></i> Défensif','#4EA8FF'],vit:['<i class=vgi-heart></i> Vitalité','#4ADE80'],uti:['<i class=vgi-sparkles></i> Utilitaire','#FFD24A']};
   var html='<h3><i class=vgi-bar-chart></i> Résumé du build</h3>',any=false;
+  /* Les panoplies EN TETE du resume : c'est le premier geste qui reste a faire
+     sur un stuff a moitie monte, et un bonus de set qui s'allume seul se
+     comprend en voyant les quatre pieces s'allumer. */
+  var pans=panResume(false)+panResume(true);
+  if(pans)html+='<div class="panwrap">'+pans+'</div>';
+  /* Les quatre statistiques de base, dans les tuiles du jeu. Elles restent
+     affichees a zero : ce sont les quatre lignes que tout joueur cherche, et un
+     cadre qui apparait et disparait se lit moins bien qu'un cadre a zero. */
+  html+='<div class="dice">'+['Force','Endurance','Dextérité','Intelligence'].map(function(s){
+    var v=t[s]||0;
+    return '<span class="die'+(v?'':' nil')+'"><img src="'+DEIMG[s]+'" alt="'+s+'" title="'+s+'"><b>'
+      +(v?'+'+v.toLocaleString('fr-FR'):'—')+'</b></span>';}).join('')+'</div>';
+  /* Les quatre familles COTE A COTE. En une seule colonne, un stuff complet
+     donnait quarante lignes a derouler et on ne comparait plus rien. */
+  var cols='';
   ['off','def','vit','uti'].forEach(function(g){if(!G[g].length)return;any=true;
-    html+='<div style="margin:9px 0 2px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:'+META[g][1]+'">'+META[g][0]+'</div>'+
-      G[g].map(function(p){return '<div class="l"><span>'+esc(p[0])+'</span><b>+'+(+p[1]).toLocaleString('fr-FR')+'</b></div>';}).join('');});
-  if(!any)html+='<div style="color:var(--mut);font-size:12px">Équipe des pièces pour voir le résumé…</div>';
-  document.getElementById('stats').innerHTML=html;}
+    cols+='<div class="statcol"><div class="sh" style="color:'+META[g][1]+'">'+META[g][0]+'</div>'+
+      G[g].map(function(p){return '<div class="l"><span>'+esc(p[0])+'</span><b>+'+(+p[1]).toLocaleString('fr-FR')+'</b></div>';}).join('')+'</div>';});
+  if(any)html+='<div class="statgrid">'+cols+'</div>'
+    /* La legende du nombre, pas un aveu d'ignorance : elle dit CE QUI est
+       additionne, pour qu'on ne compare pas deux builds sur un total qui ne
+       couvre pas la meme chose. */
+    +'<div class="mini" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,44,54,.6)">'
+    +'Additionne les bonus des pièces, les cartes de perçage, le bonus de set du costume à 4/4 et les carnets.</div>';
+  /* L'INVITATION NE S'AFFICHE QUE SI RIEN N'EST EQUIPE.
+     Elle disait « Équipe des pièces pour voir le résumé… » des que le total etait
+     vide — et il l'est TRES souvent avec des pieces aux doigts : AUCUNE des 256
+     armures du releve ne porte de bonus propre, leur valeur est dans l'upgrade,
+     le percage et l'eveil. Un stuff a deux pieces d'armure affichait donc, sous
+     un bandeau de panoplie bien visible, une phrase qui demandait d'equiper des
+     pieces. Sans piece du tout la phrase est juste ; avec des pieces on ne dit
+     rien, la rangee de des a zero suffit. */
+  else if(!Object.keys((ST()||{}).eq||{}).length)
+    html+='<div style="color:var(--mut);font-size:12px">Équipe des pièces pour voir le résumé…</div>';
+  n.innerHTML=html;}
 
 window.C=C;
 function switchChar(i){state.cur=i;render();}
@@ -325,6 +705,15 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
   if(cfg&&cfg.tier&&RARCOL[cfg.tier])tags.push(`<span class="tag" style="background:${col}1a;color:${col};border:1px solid ${col}66">${esc(cfg.tier)}</span>`);
   if(it.tier)tags.push(`<span class="tag" style="background:${(it.col||'#cfd2dc')}14;color:${it.col||'var(--mut)'};border:1px solid ${(it.col||'#cfd2dc')}55">${esc(it.tier)}</span>`);
   if(it.set)tags.push(`<span class="tag" style="background:#ffffff0d;color:var(--mut);border:1px solid #ffffff24">Set ${esc(it.set)}</span>`);
+  /* « Cette piece fait partie d'un ensemble de quatre » : c'est ce qu'on veut
+     savoir AVANT de l'equiper, pas apres. Le nombre est compte sur le releve.
+     GATE SUR L'EMPLACEMENT et non sur les champs de la piece : une arme et un
+     bouclier portent aussi un `tier` et une `cls`, et sans ce garde-fou un
+     bouclier Eternel se serait vu annoncer la panoplie de la tenue. */
+  if(slot&&(ARMOR.indexOf(slot)>=0||FASHION.indexOf(slot)>=0)){
+    const _sg=panSigDe(slot,it);const _np=_sg?panPieces(_sg).length:0;
+    if(_np>1)tags.push(`<span class="tag" style="background:rgba(255,210,74,.10);color:var(--gold);border:1px solid rgba(255,210,74,.4)"><i class=vgi-shirt-armor></i> Panoplie · ${_np} pièces</span>`);
+  }
   if(tags.length)h+=`<div class="tags">${tags.join('')}</div>`;
   /* Conditions pour equiper, juste sous le nom, comme en jeu. */
   const cond=[];
@@ -366,7 +755,10 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
     if(slot==='fairy'&&cfg&&cfg.lvl)cf+=`<div class="crow"><span class="lab">Niveau fée</span><b style="font-size:12px">${cfg.lvl}</b></div>`;
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
   return h;}
-function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
+/* L'emplacement est passe a la bulle : c'est lui qui autorise l'etiquette de
+   panoplie. Sans lui, `itipBuild` ne savait pas si l'objet survole etait une
+   piece d'armure ou une arme. */
+function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it,null,pickSlot);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
 function itipTeinte(el,it,cfg){const c=couleurPiece(it,cfg);el.style.borderColor=c?c+'88':'';el.style.boxShadow=c?`0 14px 36px #000d, 0 0 0 1px ${c}22 inset`:'';}
 function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item,e.cfg);el.style.display='block';itipMove(ev);}
 function itipMove(ev){if(!_itipEl||_itipEl.style.display!=='block')return;const pad=14,w=_itipEl.offsetWidth,h=_itipEl.offsetHeight;let x=ev.clientX+pad,y=ev.clientY+pad;if(x+w>window.innerWidth-8)x=ev.clientX-w-pad;if(x<8)x=8;if(y+h>window.innerHeight-8)y=window.innerHeight-h-8;if(y<8)y=8;_itipEl.style.left=x+'px';_itipEl.style.top=y+'px';}
@@ -383,6 +775,10 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
       pk+=`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(sec)} ${sec==='Doré'?'(œufs dorés)':''}</div>`+arr.map(x=>`<div class="itl" onclick="equipFam('${x.id}','${esc(x.n)}')">${IC[x.id]?`<img src="${IC[x.id]}">`:'<i class=vgi-paw></i>'}<div class="n">${esc(x.n)}</div></div>`).join('');}
     document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>Familier</h3><input class="srch" placeholder="Familier…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>${pk}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();return;}
   if(e){try{body=panelFor(slot,e);}catch(err){body=`<div class="sec"><div class="mini" style="color:var(--red)">Réinitialise cette pièce (ancienne sauvegarde).</div></div>`;}}
+  /* LA PANOPLIE, AVANT les reglages de la piece : quand on vient d'equiper des
+     bottes, le geste suivant n'est pas de les sertir, c'est de prendre les trois
+     soeurs. Le bloc se place donc au-dessus, dans la meme fenetre. */
+  if(e){try{const pb=panBloc(slot);if(pb)body='<div class="wp" style="margin-top:0">'+pb+'</div>'+body;}catch(err){}}
   const items=listFor(slot).filter(it=>!q||it.n.toLowerCase().includes(q.toLowerCase()));
   const grpKey=(slot==='mantra'||slot==='masque')?'cat':(slot==='ramasseur'?null:(['fhead','ftop','fhand','ffoot'].includes(slot)?'cat':'tier'));
   const byTier={};items.forEach(it=>{const g=grpKey?(it[grpKey]||'—'):'';(byTier[g]=byTier[g]||[]).push(it);});
@@ -737,7 +1133,13 @@ function pierceTotals(cfg,slot){const el=pierceElDe(cfg,slot);const card=PIERCEC
     lg.forEach(function(t){const lab=t[0],val=t[1],u=t[2],k=lab+'|'+u;
       if(par[k]===undefined){par[k]=0;ordre.push([lab,u,k]);}par[k]+=val;});});
   const lines=ordre.filter(function(o){return par[o[2]];}).map(function(o){return [o[0],(par[o[2]]>0?'+':'')+par[o[2]]+o[1]];});
-  return{card:card,el:el,cases:cases,lines:lines};}
+  /* `brut` : les memes lignes, en NOMBRES, pour le resume du build. Le libelle
+     porte son unite (« Force » contre « PV 5 % »), parce que les bonus des
+     pieces sont ecrits ainsi dans le releve — « PV max » et « PV max % » y sont
+     deux lignes distinctes. Les fondre additionnerait des points et des
+     pourcentages. */
+  const brut=ordre.filter(function(o){return par[o[2]];}).map(function(o){return [o[0]+(o[1]?' '+o[1]:''),par[o[2]]];});
+  return{card:card,el:el,cases:cases,lines:lines,brut:brut};}
 function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.pn;
   const fam=PIERCE_FAM(slot);
   const ELEM=Object.keys(PIERCECARD).filter(k=>PIERCECARD[k].fam===fam);

@@ -1,246 +1,371 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import type { Role } from "@prisma/client";
 import { canAccessAdmin } from "@/config/roles";
-import { ClassLogo } from "@/components/ClassLogo";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
-import { useCardFx } from "@/components/VgFx";
+import { useCardFx, useReveal } from "@/components/VgFx";
+import { PortesSite, type Porte } from "@/components/accueil/PortesSite";
+import { useReglages } from "@/components/reglages/PanneauReglages";
+import type { SchemaPage } from "@/lib/reglages";
+import type { Dashboard, Profil } from "./donnees";
+import { Classes, Grandeurs } from "./Grandeurs";
+import { OuJenSuis } from "./OuJenSuis";
+import { GROUPES, PORTE_SOMMAIRE, porteDe } from "./portes";
 
-type Prio = { level: "haute" | "moyenne" | "basse"; label: string; count: number; href: string };
-type Deficit = { item: string; stock: number; target: number; manque: number };
-type Data = {
-  members: { total: number; active: number; inactive: number; roles: { role: string; count: number }[] };
-  characters: { total: number; mains: number; secondaries: number; withoutBuild: number; classes: { classe: string; count: number }[] };
-  builds: { total: number; withoutBuild: number };
-  absences: { active: number; pending: number };
-  coffre: { under: number; total: number; topDeficits: Deficit[] };
-  candidatures: { pending: number; waiting: number; total: number };
-  worldboss: { upcoming: number; next: string | null };
-  priorities: Prio[];
+/**
+ * L'ACCUEIL DE LA GUILDE — /dashboard.
+ *
+ * Demande de Maxime, mot pour mot : « améliore la partie accueil et la
+ * description, faire un même système pour l'accueil guilde (par défaut l'accueil
+ * de la guilde) pour retrouver les informations et fonctionnalités, pour cliquer
+ * plus facilement, un accès plus simple ».
+ *
+ * ┌──────────────── CE QUE LA PAGE ÉTAIT, ET CE QUI N'ALLAIT PAS ────────────────┐
+ * │ Elle s'appelait « GuildViewer · Tableau de bord » et alignait, dans cet       │
+ * │ ordre : une bannière au mot anglais, un bandeau orange « Mets à jour ton      │
+ * │ build » qui s'affichait même quand tout était à jour, sept cartes de trois    │
+ * │ chiffres nus, un graphique de classes, puis trois « hubs » qui répétaient     │
+ * │ des chiffres déjà affichés au-dessus.                                        │
+ * │ Trois défauts, et le troisième est le vrai sujet :                            │
+ * │  1. les chiffres nus ne disent pas s'ils sont bons — deux absences, c'est peu │
+ * │     ou beaucoup ? La réponse est dans le rapport, jamais dans le nombre ;     │
+ * │  2. rien sur le membre lui-même, alors que c'est SA page d'accueil ;          │
+ * │  3. sur une trentaine de pages réservées, la page en atteignait SEPT. Pour    │
+ * │     les autres il fallait retrouver le bon menu déroulant. « Un accès plus    │
+ * │     simple » ne demandait pas un plus beau tableau : il demandait des PORTES. │
+ * └──────────────────────────────────────────────────────────────────────────────┘
+ *
+ * ELLE REPREND LE SYSTÈME DE L'ACCUEIL PUBLIC, sans le recopier :
+ * `components/accueil/PortesSite.tsx` est le MÊME composant, appelé avec une autre
+ * liste et une autre densité de colonnes. Un visiteur et un membre apprennent donc
+ * la même forme une seule fois.
+ *
+ * TROIS CHOSES QU'ELLE NE FAIT PLUS, et pourquoi :
+ *
+ *   · LE BANDEAU « METS À JOUR TON BUILD » est parti. Il s'affichait toujours,
+ *     donc il ne voulait rien dire, et il disait trois fois la même chose que la
+ *     porte AirBuilder et que le bloc « où j'en suis » — lequel, lui, ne le dit
+ *     que s'il y a vraiment un personnage sans stuff.
+ *   · LES TROIS « HUBS » DU BAS sont partis : ils reprenaient mot pour mot les
+ *     chiffres des cartes du dessus, avec un bouton en plus.
+ *   · LA PAGE NE S'ARRÊTE PLUS SUR UN ÉCRAN DE CHARGEMENT. Elle rendait
+ *     « Chargement du dashboard… » à la place de TOUT, et « Impossible de charger
+ *     les données » à la place de TOUT quand une clef manquait au relevé — c'est
+ *     ce qui a fait tomber la page entière le jour où l'API a cessé de renvoyer
+ *     `debts`. L'en-tête et les portes n'ont besoin d'aucune donnée : elles
+ *     s'affichent tout de suite, et les mesures arrivent dedans.
+ */
+
+/**
+ * CE QUE LE RANG VANGUARD PEUT RÉGLER ICI.
+ *
+ * La règle de la maison, respectée à la lettre : TOUS LES DÉFAUTS SONT L'ÉTAT
+ * LIVRÉ. Tant que personne n'ouvre le panneau, la page se comporte exactement
+ * comme si les réglages n'existaient pas — et si la base est injoignable, pareil.
+ */
+const SCHEMA: SchemaPage = {
+  page: "/dashboard",
+  titre: "L'accueil de la guilde",
+  quoi: "Quels blocs on montre, dans quel ordre, et combien de personnages on liste.",
+  reglages: [
+    { clef: "montrerPriorites", type: "interrupteur", defaut: true, label: "Les priorités du jour", aide: "Le bandeau du staff, tout en haut. Il ne s'affiche de toute façon qu'au staff." },
+    { clef: "montrerOuJenSuis", type: "interrupteur", defaut: true, label: "« Où j'en suis »", aide: "Les personnages du membre connecté, et lesquels n'ont pas de stuff." },
+    { clef: "montrerGrandeurs", type: "interrupteur", defaut: true, label: "L'état de la guilde", aide: "Les barres : membres actifs, personnages équipés, coffre, candidatures." },
+    { clef: "montrerClasses", type: "interrupteur", defaut: true, label: "Les classes représentées", aide: "La répartition des personnages de la guilde, classe par classe." },
+    { clef: "portesEnPremier", type: "interrupteur", defaut: false, label: "Les portes avant les chiffres", aide: "Par défaut on voit d'abord où on en est, puis les portes." },
+    /* LE MODE COMPACT, et pourquoi il existe.
+       Vingt-et-une portes, c'est vingt-et-une lignes de description : environ deux
+       cents mots de plus qu'avant sur cette page, alors que la consigne de la maison
+       est que le nombre de mots BAISSE. Ces mots ne sont pas de la prose neuve — ce
+       sont les libellés que la nav écrit déjà dans ses menus — et c'est justement
+       cette ligne qui, d'après nav.ts, « répond à je m'y perds ». Trancher pour
+       Maxime aurait été présomptueux : l'interrupteur le laisse décider en un clic,
+       et son défaut est ce qu'on livre. */
+    { clef: "descriptionsDesPortes", type: "interrupteur", defaut: true, label: "La description sous chaque porte", aide: "Décoché, une porte n'affiche que son nom et son compte — la page tient sur beaucoup moins de hauteur." },
+    { clef: "persosMontres", type: "nombre", defaut: 4, min: 1, max: 12, label: "Personnages listés dans « Où j'en suis »", aide: "Au-delà, un lien mène à la page des personnages." },
+  ],
 };
 
-const PRIO_COLOR = { haute: "var(--red)", moyenne: "var(--gold)", basse: "var(--text-muted)" } as const;
-const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+const PRIO_COULEUR = { haute: "var(--red)", moyenne: "var(--gold)", basse: "var(--text-muted)" } as const;
 
-function Stat({ value, label, color }: { value: React.ReactNode; label: string; color?: string }) {
+/**
+ * Un titre de section, à la charte des autres pages du site.
+ *
+ * `tardif` RETIRE l'apparition au défilement, et ce n'est pas un détail de goût :
+ * voir la note « CE QUI NE PORTE PAS .vg-reveal » plus bas. Un titre qui n'apparaît
+ * qu'une fois le relevé arrivé ne doit PAS porter la classe, sinon il reste
+ * invisible pour de bon.
+ */
+function Titre({ icon, children, sous, tardif }: { icon: IconName; children: React.ReactNode; sous?: string; tardif?: boolean }) {
   return (
-    <div>
-      <div className="font-heading" style={{ fontSize: 30, fontWeight: 700, color: color ?? "var(--text)", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>{label}</div>
+    <div className={tardif ? undefined : "vg-reveal"} style={{ margin: "34px 0 14px" }}>
+      <h2 className="font-heading" style={{ fontSize: 20, textTransform: "uppercase", letterSpacing: 1, margin: 0, display: "flex", alignItems: "center", gap: 11 }}>
+        <Icon name={icon} framed frameSize={32} tone="orange" /> <span className="vg-h2">{children}</span>
+      </h2>
+      {sous && <p style={{ margin: "8px 0 0", fontFamily: "'Alef',sans-serif", fontSize: 13, color: "var(--text-muted)", letterSpacing: ".2px" }}>{sous}</p>}
     </div>
   );
 }
 
-// Carte de chiffres CLIQUABLE : elle mène directement à l'outil concerné.
-// Avant, un bouton « + » dépliait un détail sur place — un clic pour voir, un autre
-// pour aller à l'outil. La carte entière est désormais le lien : on va là où on peut
-// agir (les dettes vers leur suivi, les membres vers leur fiche…).
-function StatCard({ icon, title, summary, href }: { icon: IconName; title: string; summary: React.ReactNode; href: string }) {
-  return (
-    <Link href={href} className="dash-card fx-card dash-stat-link" style={{ position: "relative", display: "block", textDecoration: "none", color: "inherit" }}>
-      <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12, display: "flex", alignItems: "center", gap: 7 }}>
-        <Icon name={icon} size={16} style={{ color: "var(--orange)" }} />{title}
-        <Icon name="arrow-right" size={14} className="dash-stat-arrow" style={{ marginLeft: "auto", color: "var(--orange)" }} />
-      </div>
-      {summary}
-    </Link>
-  );
+/** Le temps que les relevés arrivent : une bande neutre, pas un mot d'attente. */
+function Attente() {
+  return <div className="dash-attente" aria-hidden="true" />;
 }
 
-function GoLink({ href, label, show = true }: { href: string; label: string; show?: boolean }) {
-  if (!show) return null;
-  return <Link href={href} className="vg-btn" style={{ textDecoration: "none", marginTop: 4, fontSize: 12, padding: "8px 14px", alignSelf: "flex-start" }}>{label} →</Link>;
-}
-
-function Hub({ icon, title, metric, href, cta }: { icon: IconName; title: string; metric: React.ReactNode; href: string; cta: string }) {
-  return (
-    <div className="dash-card dash-hub fx-card" style={{ padding: 17, display: "flex", flexDirection: "column", gap: 5 }}>
-      <div className="font-heading" style={{ fontSize: 17, fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: 9 }}><Icon name={icon} size={18} style={{ color: "var(--orange)" }} />{title}</div>
-      <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{metric}</div>
-      <Link href={href} className="dash-hub-cta" style={{ marginTop: 10, alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 7, padding: "10px 17px", borderRadius: 9, fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 12, textTransform: "uppercase", letterSpacing: 0.8, textDecoration: "none" }}>{cta} <span className="dash-hub-arrow">→</span></Link>
-    </div>
-  );
-}
-
-export default function DashboardPage() {
-  // Mêmes effets que l'accueil : halo suivant le curseur + léger relief sur les
-  // cartes portant la classe .fx-card. Un seul écouteur délégué pour toute la page.
+export default function AccueilGuildePage() {
+  const conteneur = useRef<HTMLDivElement>(null);
+  // Mêmes effets que l'accueil public : révélation au défilement (avec le repli de
+  // useReveal, sans lequel un élément raté par l'observateur reste invisible pour
+  // de bon) et halo au curseur sur les .fx-card.
+  useReveal(conteneur);
   useCardFx();
+  /* ┌──────────── CE QUI NE PORTE PAS `.vg-reveal`, ET POURQUOI ────────────┐
+     │ `useReveal` RELÈVE LA LISTE DES `.vg-reveal` UNE SEULE FOIS, au       │
+     │ montage (son effet ne dépend que de la référence). Un bloc qui        │
+     │ n'apparaît qu'à l'arrivée du relevé n'est donc jamais observé, jamais │
+     │ balayé — et `.vg-reveal` vaut `opacity:0` dans globals.css. Il reste  │
+     │ INVISIBLE POUR DE BON.                                               │
+     │ Mesuré dans le navigateur sur cette page : les priorités, « Où j'en   │
+     │ suis », l'état de la guilde et les classes restaient à opacity 0      │
+     │ après un défilement complet, à 1280 px comme à 375 px. La page        │
+     │ n'affichait que ses titres au-dessus du vide.                        │
+     │ D'où la règle, locale et sans risque : TOUT CE QUI DÉPEND DE `etatD`  │
+     │ OU DE `etatP` REND SANS `.vg-reveal`. Les portes et l'en-tête, eux,   │
+     │ sont là dès le premier rendu et gardent leur apparition.             │
+     │ (Le vrai correctif est dans `useReveal` — voir `demandesGlobales`.)   │
+     └──────────────────────────────────────────────────────────────────────┘ */
+
   const { data: session } = useSession();
-  const DEV_ALL = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
-  const isAdmin = DEV_ALL || canAccessAdmin((session?.user as any)?.role ?? "RECRUE");
-  const [d, setD] = useState<Data | null>(null);
-  const [loading, setLoading] = useState(true);
+  const DEV_TOUT = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  const role = ((session?.user as { role?: Role } | undefined)?.role ?? "RECRUE") as Role;
+  const staff = DEV_TOUT || canAccessAdmin(role);
+
+  const { valeurs, bouton, panneau } = useReglages(SCHEMA);
+  const voir = (clef: string) => Boolean(valeurs[clef]);
+
+  const [d, setD] = useState<Dashboard | null>(null);
+  const [p, setP] = useState<Profil | null>(null);
+  /** L'état de CHAQUE relevé, séparément : l'un peut manquer sans l'autre. */
+  const [etatD, setEtatD] = useState<"attente" | "ok" | "panne">("attente");
+  const [etatP, setEtatP] = useState<"attente" | "ok" | "panne">("attente");
 
   useEffect(() => {
-    (async () => {
-      try { const r = await fetch("/api/dashboard"); if (r.ok) setD(await r.json()); } catch {}
-      setLoading(false);
-    })();
+    let vivant = true;
+    // Les deux relevés en parallèle et TRAITÉS SÉPARÉMENT. Dans un seul try/catch,
+    // un profil indisponible emportait les chiffres de la guilde avec lui.
+    fetch("/api/dashboard")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: Dashboard) => { if (vivant) { setD(j); setEtatD("ok"); } })
+      .catch(() => { if (vivant) setEtatD("panne"); });
+    fetch("/api/profil")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: Profil) => { if (vivant) { setP(j); setEtatP("ok"); } })
+      .catch(() => { if (vivant) setEtatP("panne"); });
+    return () => { vivant = false; };
   }, []);
 
-  if (loading) return <div style={{ padding: 30, color: "var(--text-muted)" }}>Chargement du dashboard…</div>;
-  if (!d) return <div style={{ padding: 30, color: "var(--red)" }}>Impossible de charger les données.</div>;
+  /**
+   * Les portes, groupe par groupe, avec leur compte du moment.
+   *
+   * Une porte dont la définition ne se résout pas (adresse disparue de la nav)
+   * est ÉCARTÉE plutôt qu'affichée à moitié — voir `porteDe`. Un groupe qui se
+   * vide disparaît avec elle : un titre de section au-dessus du vide se lit comme
+   * une panne.
+   */
+  const avecTexte = voir("descriptionsDesPortes");
+  const groupes = useMemo(
+    () =>
+      GROUPES
+        .filter((g) => !g.admin || staff)
+        .map((g) => ({
+          ...g,
+          portes: g.defs
+            .map((def) => porteDe(def, d, p))
+            .filter((x): x is Porte => x !== null)
+            // Mode compact : on vide le texte, PortesSite ne rend alors pas la ligne.
+            .map((x) => (avecTexte ? x : { ...x, texte: "" })),
+        }))
+        .filter((g) => g.portes.length > 0),
+    [d, p, staff, avecTexte],
+  );
 
-  const maxClass = Math.max(1, ...d.characters.classes.map((c) => c.count));
-  const wbNext = d.worldboss.next ? new Date(d.worldboss.next).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null;
+  // COMPTÉ, jamais écrit : le sous-titre annonce ce nombre, et le taper à la main
+  // le rendrait faux à la première porte ajoutée ou au premier changement de rang.
+  const nbPortes = groupes.reduce((s, g) => s + g.portes.length, 0) + 1;
+
+  const prios = voir("montrerPriorites") && staff ? d?.priorities ?? [] : [];
+
+  const blocMoi = (
+    <>
+      {voir("montrerOuJenSuis") && (
+        <>
+          <Titre icon="user">Où j&apos;en suis</Titre>
+          {etatP === "attente" && <Attente />}
+          {etatP === "ok" && p && <div><OuJenSuis p={p} max={Number(valeurs.persosMontres)} /></div>}
+          {etatP === "panne" && (
+            <div className="dash-panne">
+              <Icon name="alert" size={14} style={{ flexShrink: 0 }} />
+              Tes personnages n&apos;ont pas pu être chargés. Le reste de la page est à jour.
+            </div>
+          )}
+        </>
+      )}
+
+      {voir("montrerGrandeurs") && (
+        <>
+          {/* Pas de sous-titre. Il disait « chaque barre est une part d'un tout,
+              c'est la longueur qui compare, jamais la couleur » : une note sur notre
+              propre convention de dessin, alors que chaque ligne porte déjà
+              « 12 / 14 membres » et « 86 % » à droite de sa barre. */}
+          <Titre icon="gauge">L&apos;état de la guilde</Titre>
+          {etatD === "attente" && <Attente />}
+          {etatD === "ok" && d && <div className="dash-carte"><Grandeurs d={d} staff={staff} /></div>}
+          {etatD === "panne" && (
+            <div className="dash-panne">
+              <Icon name="alert" size={14} style={{ flexShrink: 0 }} />
+              Les chiffres de la guilde n&apos;ont pas répondu. Les portes ci-dessous fonctionnent quand même.
+            </div>
+          )}
+        </>
+      )}
+
+      {voir("montrerClasses") && etatD === "ok" && d && (
+        <>
+          <Titre icon="sword-cross" tardif>Les classes représentées</Titre>
+          <div className="dash-carte"><Classes d={d} /></div>
+        </>
+      )}
+    </>
+  );
+
+  const blocPortes = (
+    <>
+      {groupes.map((g) => (
+        <div key={g.clef}>
+          <Titre icon={g.icon} sous={g.sous}>{g.titre}</Titre>
+          {/* 330 px et non les 400 du défaut : quatre portes veulent 2×2 sur
+              l'accueil public, une vingtaine veut trois colonnes. Voir la note de
+              la grille dans PortesSite. */}
+          <PortesSite portes={g.portes} min={330} />
+        </div>
+      ))}
+
+      {/* L'index complet, à part : ce n'est pas un outil, c'est le filet. */}
+      <div style={{ marginTop: 22 }}>
+        <PortesSite portes={[avecTexte ? PORTE_SOMMAIRE : { ...PORTE_SOMMAIRE, texte: "" }]} min={330} />
+      </div>
+    </>
+  );
 
   return (
-    <div style={{ padding: "28px 32px", maxWidth: 1100, margin: "0 auto" }}>
-      {/* Le tableau de bord n'est plus une fonctionnalité à part : c'est la vue
-          d'entrée du GuildViewer, dans l'organisation en 3 outils. */}
-      <PageHeader banner="/assets/site/banners/banner-dashboard.webp" title="GuildViewer · Tableau de bord" subtitle="L'état de Vanguard en un coup d'œil : membres, personnages, builds, coffre, absences et candidatures." />
+    <div ref={conteneur} className="dash-accueil" style={{ padding: "28px 32px 64px", maxWidth: 1100, margin: "0 auto" }}>
+      {/* L'ART DE L'EN-TÊTE EST UNE CAPTURE DU VRAI AIRFLYFF —
+          `accueil/flyff00000.webp`, la seule image du dépôt prise sur le serveur
+          lui-même et non dans l'imagerie de base du jeu. C'est la règle : ce qui
+          vaut la place, c'est ce qu'AirFlyff a changé.
+          Le recadrage est CALCULÉ, pas choisi à l'œil, et sa valeur est celle du
+          bloc de style plus bas (24 %) : le détail du calcul y est. Aucun texte du
+          jeu n'entre dans le cadre — vérifié en recadrant le fichier source sur la
+          bande réellement visible (19,1 %–39,4 % de la hauteur).
+          `banner` n'est pas repris : notre bannière disait « Dashboard », le mot
+          anglais dessiné dans l'image, et cette page ne s'appelle plus comme ça. */}
+      <PageHeader
+        art="/jeu/accueil/flyff00000.webp"
+        icon="home"
+        title="L'accueil de la guilde"
+        /* « ... vers ce qui est réservé aux membres » était FAUX, et vérifié groupe de
+           routes par groupe de routes : sur les 23 portes, /builder et /personnages
+           vivent dans (public), /boutique et /crafts dans (vitrine) — quatre pages
+           qu'un visiteur ouvre sans compte. Le sous-titre dit maintenant ce que les
+           23 portes ont réellement en commun : ce sont les outils de la guilde. */
+        subtitle={`Ce qui t'attend, où tu en es, et ${nbPortes} portes vers les outils de la guilde.`}
+        right={bouton}
+      />
 
-      {/* ── CTA AirBuilder ── */}
-      <Link href="/builder" className="dash-cta" style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", marginBottom: 24, borderRadius: 14, textDecoration: "none", background: "linear-gradient(90deg, rgba(255,140,26,0.18), rgba(255,140,26,0.04))", border: "1px solid var(--orange)" }}>
-        <span style={{ color: "var(--orange)", display: "flex" }}><Icon name="sword" size={28} /></span>
-        <div style={{ flex: 1 }}>
-          <div className="font-heading" style={{ fontSize: 16, fontWeight: 700, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 0.5 }}>Mets à jour ton build</div>
-          <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Tiens ton stuff à jour sur AirBuilder pour que le staff puisse t&apos;accompagner.</div>
+      {/* ── Priorités du jour (staff) ──
+          Le seul bloc qui n'a pas bougé : il était déjà le plus utile de la page.
+          Il ne s'affiche que s'il y a quelque chose, et il le dit quand il n'y a
+          rien — un bandeau vide laisse croire que le relevé n'est pas passé. */}
+      {voir("montrerPriorites") && staff && etatD === "ok" && (
+        <div className="dash-prio">
+          <div className="font-heading dash-prio-t">
+            <Icon name="zap" size={15} /> Priorités du jour
+          </div>
+          {prios.length === 0 ? (
+            <div style={{ color: "var(--green)", fontSize: 14, display: "flex", alignItems: "center", gap: 7 }}>
+              <Icon name="check" size={16} /> Rien à signaler — tout est à jour.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {prios.map((pr, i) => (
+                <Link key={i} href={pr.href} className="dash-prio-row">
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: PRIO_COULEUR[pr.level], flexShrink: 0 }} />
+                  <span className="font-heading" style={{ fontSize: 18, fontWeight: 700, color: PRIO_COULEUR[pr.level], minWidth: 28, fontVariantNumeric: "tabular-nums" }}>{pr.count}</span>
+                  <span style={{ fontSize: 14 }}>{pr.label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{pr.level} →</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-        <span className="font-heading" style={{ color: "var(--orange)", fontWeight: 700, whiteSpace: "nowrap" }}>Ouvrir AirBuilder →</span>
-      </Link>
+      )}
 
-      {/* ── Ma progression ──
-          Avant les priorités du staff : sur SON tableau de bord, un membre veut
-          d'abord savoir où il en est. */}
+      {/* L'ordre des deux moitiés est le seul réglage qui change la STRUCTURE de la
+          page, et son défaut est celui qu'on livre : sur son accueil, un membre
+          veut d'abord savoir où il en est. */}
+      {voir("portesEnPremier") ? <>{blocPortes}{blocMoi}</> : <>{blocMoi}{blocPortes}</>}
 
-      {/* ── Priorités (staff seulement) ── */}
-      {isAdmin && <div className="dash-card dash-prio" style={{ marginBottom: 24 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 14, display: "flex", alignItems: "center", gap: 7 }}><Icon name="zap" size={15} /> Priorités du jour</div>
-        {d.priorities.length === 0 ? (
-          <div style={{ color: "var(--green)", fontSize: 14, display: "flex", alignItems: "center", gap: 7 }}><Icon name="check" size={16} /> Rien à signaler — tout est à jour.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {d.priorities.map((p, i) => (
-              <Link key={i} href={p.href} className="dash-prio-row" style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 12px", borderRadius: 9, textDecoration: "none", background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-                <span style={{ width: 9, height: 9, borderRadius: "50%", background: PRIO_COLOR[p.level], flexShrink: 0 }} />
-                <span className="font-heading" style={{ fontSize: 18, fontWeight: 700, color: PRIO_COLOR[p.level], minWidth: 28 }}>{p.count}</span>
-                <span style={{ fontSize: 14, color: "var(--text)" }}>{p.label}</span>
-                <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{p.level} →</span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>}
-
-      {/* ── Cartes chiffres (dépliables) ── */}
-      <div className="dash-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 16, marginBottom: 24 }}>
-        <StatCard href="/guildviewer" icon="users" title="Membres" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.members.total} label="total" />
-            <Stat value={d.members.active} label="actifs" color="var(--green)" />
-            <Stat value={d.members.inactive} label="inactifs" color="var(--text-muted)" />
-          </div>} />
-
-        {isAdmin && <StatCard href="/guildviewer" icon="sword" title="Personnages" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.characters.total} label="total" />
-            <Stat value={d.characters.mains} label="principaux" color="var(--gold)" />
-            <Stat value={d.characters.secondaries} label="secondaires" />
-          </div>} />}
-
-        {isAdmin && <StatCard href="/guildviewer" icon="shield" title="Builds" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.builds.total} label="enregistrés" color="var(--blue)" />
-            <Stat value={d.builds.withoutBuild} label="sans build" color={d.builds.withoutBuild ? "var(--red)" : "var(--green)"} />
-          </div>} />}
-
-        <StatCard href="/coffre" icon="vault" title="Coffre de guilde" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.coffre.under} label="à compléter" color={d.coffre.under ? "var(--red)" : "var(--green)"} />
-            <Stat value={d.coffre.total} label="objets suivis" />
-          </div>} />
-
-        {/* La carte « Dettes » vivait ici. Elle est partie avec le système de
-            dettes, retiré du site le 2026-07-27 : l'API a cessé de renvoyer
-            `debts`, la carte a continué de le lire, et TOUTE la page tombait
-            sur l'écran d'erreur — pas seulement la carte. */}
-
-        <StatCard href="/absences" icon="moon" title="Absences" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.absences.active} label="en cours" color="var(--purple)" />
-            <Stat value={d.absences.pending} label="à valider" color={d.absences.pending ? "var(--gold)" : "var(--text-muted)"} />
-          </div>} />
-
-        {isAdmin && <StatCard href="/candidatures" icon="clipboard" title="Candidatures" summary={
-          <div style={{ display: "flex", gap: 22 }}>
-            <Stat value={d.candidatures.pending} label="en attente" color={d.candidatures.pending ? "var(--gold)" : "var(--green)"} />
-            <Stat value={d.candidatures.waiting} label="en suivi" color="var(--blue)" />
-          </div>} />}
-
-        <StatCard href="/worldboss" icon="dragon" title="World Boss" summary={
-          <>
-            <Stat value={d.worldboss.upcoming} label="à venir" color={d.worldboss.upcoming ? "var(--red)" : "var(--text-muted)"} />
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10 }}>{wbNext ? `Prochain : ${wbNext}` : "Aucun programmé"}</div>
-          </>} />
-      </div>
-
-      {/* ── Répartition des classes ── */}
-      <div className="dash-card" style={{ marginBottom: 8 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--text-muted)", marginBottom: 12 }}>Classes représentées</div>
-        {d.characters.classes.length === 0 ? (
-          <div style={{ color: "var(--text-muted)", fontSize: 14 }}>Aucun personnage pour l&apos;instant.</div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {d.characters.classes.map((c) => (
-              <div key={c.classe} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ width: 130, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-                  <ClassLogo name={c.classe} size={22} /> {cap(c.classe)}
-                </span>
-                {/* Deux corrections à la même barre.
-                    1. UNE seule teinte, plus le dégradé de deux : la barre d'une
-                       classe rare finissait entièrement dans le clair du dégradé et
-                       celle d'une classe jouée dans l'orange franc — la couleur
-                       semblait alors porter une information qu'elle ne portait pas.
-                       C'est la LONGUEUR qui compare, jamais la teinte.
-                    2. Plancher à 1,5 % : une classe jouée par un seul personnage sur
-                       cent recevait une barre de 1 % de large, donc invisible — et une
-                       barre absente se lit « pas de donnée », pas « une seule ». */}
-                <div style={{ flex: 1, height: 10, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden" }}>
-                  <div style={{ width: `${Math.max(1.5, (c.count / maxClass) * 100)}%`, height: "100%", borderRadius: 5, background: "var(--orange)" }} />
-                </div>
-                {/* La barre est relative à la classe la plus jouée (bonne pour comparer),
-                    mais 100 % se lisait comme « au maximum ». La part du total donne
-                    le sens réel : 3 personnages sur 14, c'est 21 % de la guilde. */}
-                <span className="font-heading" style={{ fontSize: 14, fontWeight: 600, width: 28, textAlign: "right" }}>{c.count}</span>
-                <span style={{ fontSize: 11.5, color: "var(--text-muted)", width: 42, textAlign: "right" }}>
-                  {d.characters.total ? Math.round((c.count / d.characters.total) * 100) : 0} %
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Relié aux 3 fonctionnalités ── */}
-      <div className="font-heading" style={{ fontSize: 13, letterSpacing: 2, textTransform: "uppercase", color: "var(--text-muted)", margin: "32px 0 6px", display: "flex", alignItems: "center", gap: 10 }}>
-        <Icon name="link" size={15} /> Relié à tes outils<span style={{ flex: 1, height: 1, background: "var(--border)" }} />
-      </div>
-      <div className="dash-hubs" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(255px, 1fr))", gap: 14 }}>
-        <Hub icon="sword" title="AirBuilder" metric={<>{d.builds.total} builds suivis · <b style={{ color: "var(--gold)" }}>{d.builds.withoutBuild} sans stuff</b></>} href="/builder" cta="Ouvrir" />
-        {isAdmin && <Hub icon="vault" title="AirGuild" metric={<><b style={{ color: "var(--red)" }}>{d.coffre.under} objets</b> sous le seuil</>} href="/plan-farm" cta="Plan de farm" />}
-        {isAdmin && <Hub icon="eye" title="GuildViewer" metric={<>{d.members.total} membres · <b style={{ color: "var(--gold)" }}>{d.characters.withoutBuild} à accompagner</b></>} href="/guildviewer" cta="Ouvrir" />}
-      </div>
+      {panneau}
 
       <style>{`
-        .dash-card{background:linear-gradient(180deg,#191920,#121218);border:1px solid var(--border);border-radius:15px;padding:16px;transition:transform .15s,border-color .15s,box-shadow .15s}
-        .dash-card:hover{transform:translateY(-2px);border-color:#3a3a46;box-shadow:0 8px 26px rgba(0,0,0,.35)}
-        .dash-prio{border-color:rgba(255,140,26,.28);background:linear-gradient(180deg,rgba(255,140,26,.06),#121218);padding:18px}
-        .dash-prio:hover{transform:none;border-color:rgba(255,140,26,.45)}
-        .dash-prio-row{transition:background .15s,border-color .15s}
-        .dash-prio-row:hover{background:#23232c !important;border-color:var(--orange) !important}
-        .dash-hub{border-color:#3a2c16}
-        .dash-hub:hover{border-color:var(--orange)}
-        .dash-cta{transition:transform .15s,box-shadow .15s}
-        .dash-cta:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(255,140,26,.25)}
-        @keyframes dashIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-        .dash-grid>*,.dash-hubs>*{animation:dashIn .5s ease both}
-        .dash-grid>*:nth-child(1){animation-delay:.03s}.dash-grid>*:nth-child(2){animation-delay:.07s}.dash-grid>*:nth-child(3){animation-delay:.11s}.dash-grid>*:nth-child(4){animation-delay:.15s}.dash-grid>*:nth-child(5){animation-delay:.19s}.dash-grid>*:nth-child(6){animation-delay:.23s}.dash-grid>*:nth-child(7){animation-delay:.27s}.dash-grid>*:nth-child(8){animation-delay:.31s}
-        .dash-hubs>*:nth-child(1){animation-delay:.05s}.dash-hubs>*:nth-child(2){animation-delay:.12s}.dash-hubs>*:nth-child(3){animation-delay:.19s}
-        @media(prefers-reduced-motion:reduce){.dash-grid>*,.dash-hubs>*{animation:none}}
+        /* LE RECADRAGE DE L'ART DE L'EN-TETE, et il n'est pas decoratif.
+           globals.css cadre tous les arts de page a « center 38 % », ce qui convient
+           aux artworks peints. Celle-ci est une CAPTURE d'ecran du serveur, et elle
+           porte donc du texte : l'interface du client occupe son cinquieme haut, les
+           PSEUDOS DES AUTRES JOUEURS et une infobulle d'objet vivent vers 43-56 % de
+           la hauteur, et le bandeau de discussion tout en bas.
+           Les valeurs sont MESUREES dans le navigateur, pas estimees. A 38 % la bande
+           visible tombait en plein sur les pseudos. A 30 % elle courait de 23,9 % a
+           44,2 % — ce qui mordait encore de 1,2 point sur le haut des pseudos. A 24 %
+           elle couvre 19,1 %-39,4 % : sous l'interface, au-dessus des pseudos, aucun
+           texte du jeu dans le cadre.
+           La regle reste locale a cette page — globals.css n'est pas touche. */
+        .dash-accueil .vg-pagehead-art{object-position:center 24%}
+        .dash-carte{background:linear-gradient(180deg,#191920,#121218);border:1px solid var(--border);
+          border-radius:15px;padding:12px 10px}
+        .dash-prio{background:linear-gradient(180deg,rgba(255,140,26,.06),#121218);
+          border:1px solid rgba(255,140,26,.28);border-radius:15px;padding:18px;margin-bottom:4px}
+        .dash-prio-t{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange);
+          margin-bottom:14px;display:flex;align-items:center;gap:7px}
+        .dash-prio-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;
+          text-decoration:none;color:var(--text);background:var(--bg-3);border:1px solid var(--border);
+          transition:background .15s,border-color .15s}
+        .dash-prio-row:hover{background:#23232c;border-color:var(--orange)}
+
+        /* L'attente est une bande, pas une phrase. « Chargement... » a la place d'un
+           bloc fait sauter la page quand le texte cede sa place au contenu ; une
+           bande de la meme hauteur ne bouge pas. */
+        .dash-attente{height:86px;border-radius:15px;border:1px solid var(--border);
+          background:linear-gradient(90deg,#141419,#1c1c24,#141419);background-size:200% 100%;
+          animation:dashOnde 1.4s ease-in-out infinite}
+        @keyframes dashOnde{0%{background-position:0% 0}100%{background-position:-200% 0}}
+        @media(prefers-reduced-motion:reduce){.dash-attente{animation:none}}
+
+        /* Une panne de relevé se dit A SA PLACE, sur une ligne, et n'emporte pas la
+           page : c'est exactement ce qui est arrive le jour ou l'API a cesse de
+           renvoyer une clef que la page lisait encore. */
+        .dash-panne{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gold);
+          background:color-mix(in srgb, var(--gold) 8%, transparent);
+          border:1px solid color-mix(in srgb, var(--gold) 28%, transparent);
+          border-radius:10px;padding:9px 12px}
+
+        @media(max-width:640px){
+          .dash-prio{padding:14px}
+          .dash-carte{padding:8px 4px}
+        }
       `}</style>
     </div>
   );

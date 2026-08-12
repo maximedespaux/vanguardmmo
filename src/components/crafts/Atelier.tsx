@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
+import { GesteReserve } from "@/components/BandeauVitrine";
 import { type SectionVolet } from "@/components/VoletSections";
+import type { EtatVisiteur } from "@/lib/vitrine";
 // La forme « relevé dans le client du jeu : <fichier> » est née avec les volets
 // de collections. Depuis la fusion c'est la même page : on reprend la brique au
 // lieu d'en redessiner une deuxième qui divergerait au premier ajustement.
@@ -56,6 +58,140 @@ const META: Record<string, { titre: string; sous: string; icon: IconName }> = {
  *  qu'on achète, puis les outils de recherche et les réserves. */
 const ORDRE = ["maison", "arbre", "comptoirs", "recherche", "ateliers", "manques"] as const;
 
+/**
+ * CE QUI NE SE MONTRE PAS, quel que soit le lecteur. Règle de la maison, sans
+ * exception : rien qui porte ce nom ne se compte ni ne s'affiche.
+ *
+ * ATTENTION, CE FILTRE NE COUVRE QUE LES ATELIERS. Le relevé porte aussi 64 recettes
+ * du comptoir Yggdrasil et un arbre (« Rune d'énergie d'isthar ») qui nomment Baruna,
+ * et ceux-là passent par /api/crafts (vues `comptoirs` et `recherche`), dont les
+ * COMPTES — total, actives, éteintes, orphelines — sont calculés côté serveur sur
+ * l'ensemble. Les filtrer ici ferait mentir ces compteurs. Le seul endroit où ce
+ * retrait se fait sans créer de contradiction est src/app/api/crafts/route.ts, dans
+ * `charger()`, avant que les comptes soient faits — plus la fonction `chiffres()` de
+ * src/app/(vitrine)/crafts/page.tsx, qui compte le fichier brut. Les deux sont hors
+ * de ce lot.
+ */
+const SANS = /baruna/i;
+
+/**
+ * CE QUE CHAQUE VOLET CONTIENT, DIT À CELUI QUI NE PEUT PAS L'OUVRIR.
+ *
+ * Le mode vitrine ne consiste pas à cacher poliment : il consiste à montrer qu'il y a
+ * quelque chose. Un visiteur qui trouve six panneaux vides s'en va ; un visiteur qui
+ * lit ce qu'il y a derrière revient avec un compte.
+ *
+ * AUCUN CHIFFRE DANS CES SIX PHRASES, et c'est une règle, pas un oubli : ces comptes
+ * vivent dans le relevé, que le visiteur ne charge pas. Les écrire ici les figerait à
+ * la main et ils démentiraient le relevé au premier versement — le site a déjà payé ça
+ * trois fois. Les seuls chiffres que voit un visiteur sont ceux de l'en-tête de page,
+ * comptés sur les fichiers à chaque rendu.
+ */
+const PROMESSE: Record<string, string> = {
+  maison: "Les menus qu’AirFlyff a écrits lui-même — masques, mantras, buffs de guilde, couturier, rachat de matériaux — avec les quantités exactes de chaque rang.",
+  arbre: "Les arbres de fabrication maison : sur quel monstre et dans quelle zone ramasser chaque morceau, étage par étage.",
+  comptoirs: "Les barèmes des comptoirs à jetons : Guerre de Guilde, Colisée, FLY SHOP, fragments de cartes, Yggdrasil.",
+  recherche: "Chercher un objet ou un PNJ : qui vend ça, et que vend celui-là — les deux questions au même endroit.",
+  /* PAS « avec leurs taux ». Sur les vingt-et-un panneaux, TROIS seulement portent un
+     pourcentage — et un visiteur ne peut pas le vérifier avant d'avoir un compte, ce
+     qui est exactement la situation où une promesse trop large se retourne. On promet
+     ce qu'il y a : le texte du jeu, mot pour mot, et les chiffres quand il en donne. */
+  ateliers: "Les fenêtres de transformation du jeu, mot pour mot : sertissage, forge, désintégration, mélange de costumes — et les chiffres quand le panneau en donne.",
+  manques: "Ce que le client ne dit pas — pour ne pas passer une soirée à chercher ce qui n’y est nulle part.",
+};
+
+/** Les trois portes ouvertes sans compte, quand celle-ci est fermée. */
+const AILLEURS: { href: string; icon: IconName; quoi: string }[] = [
+  { href: "/astuces", icon: "compass", quoi: "Par où commencer" },
+  { href: "/prestige", icon: "star", quoi: "Ce que coûte un prestige" },
+  { href: "/donjons", icon: "skull", quoi: "Les instances" },
+];
+
+/**
+ * LE CHAMP DE RECHERCHE, extrait pour être rendu DEUX fois : vivant pour un membre,
+ * inerte sous <GesteReserve> pour un visiteur.
+ *
+ * Extrait et non recopié : deux copies d'un même champ divergent au premier
+ * ajustement, et c'est la version morte — celle qu'on ne teste jamais — qui aurait
+ * gardé l'ancien texte d'invite.
+ */
+function ChampRecherche({ q, surQ, inerte = false }: { q: string; surQ: (v: string) => void; inerte?: boolean }) {
+  return (
+    <label style={{ position: "relative", display: "block", marginBottom: 14 }}>
+      <Icon name="search" size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--text-muted)" }} />
+      {/* `inerte` SORT LE CHAMP DU PARCOURS AU CLAVIER, et ce n'est pas un détail de
+          confort. <GesteReserve> enveloppe son enfant dans un conteneur
+          aria-hidden + pointer-events:none : la souris ne l'atteint plus, mais la
+          touche Tab, elle, y entrait encore — un lecteur au clavier tombait dans un
+          champ que son lecteur d'écran n'annonce pas et où la frappe ne fait rien.
+          Un élément focusable sous aria-hidden est interdit par ARIA pour cette
+          raison exacte. `disabled` plutôt que `tabIndex={-1}` : il coupe aussi la
+          saisie, et l'explication est déjà posée par-dessus par GesteReserve. */}
+      <input id="cr-q" value={q} onChange={(e) => surQ(e.target.value)}
+        disabled={inerte}
+        placeholder="un objet, ou le nom d’un PNJ — « Perin », « Bibi », « Emblème »…"
+        style={{
+          width: "100%", padding: "10px 12px 10px 35px", fontFamily: "inherit", fontSize: 13,
+          background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--text)",
+        }} />
+    </label>
+  );
+}
+
+/**
+ * UN VOLET DE CRAFTS VU PAR QUI N'EST PAS MEMBRE.
+ *
+ * Trois étages, dans cet ordre — et l'ordre est le message :
+ *  1. CE QU'IL Y A DERRIÈRE, en clair et lisible. Ce n'est pas la donnée, c'est sa
+ *     description : rien ici ne se recopie dans un tableur de guilde rivale.
+ *  2. LE GESTE, quand le volet en porte un — le champ de recherche, le bouton des
+ *     barèmes. Rendu, visible, et neutralisé par <GesteReserve>, qui pose le cadenas
+ *     et la raison PAR-DESSUS. Un contrôle simplement absent ne se raconte pas ; un
+ *     contrôle grisé qui dit pourquoi, si. Les quatre volets sans geste reçoivent la
+ *     même pastille, seule.
+ *  3. OÙ ALLER MAINTENANT. Un mur sans issue est un cul-de-sac ; trois portes
+ *     ouvertes, non.
+ *
+ * CE QU'ON NE FAIT PAS : un faux squelette de contenu. Des barres grises floutées
+ * feraient croire à une donnée chargée puis masquée, alors qu'elle n'a jamais
+ * traversé le réseau. Le refus est prononcé par /api/crafts, côté serveur, et cette
+ * page ne fait même pas la demande.
+ */
+function VoletFerme({ etat, clef, geste }: { etat: EtatVisiteur; clef: string; geste?: React.ReactNode }) {
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      <p style={{ fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", margin: 0 }}>{PROMESSE[clef]}</p>
+
+      {geste ? (
+        <GesteReserve etat={etat} pourquoi="Réservé aux membres de Vanguard">{geste}</GesteReserve>
+      ) : (
+        <span style={{
+          display: "inline-flex", alignItems: "center", gap: 7, justifySelf: "start",
+          fontSize: 12.5, fontWeight: 600, background: "var(--bg-2)", border: "1px solid var(--orange)",
+          borderRadius: 20, padding: "7px 14px", color: "var(--text)",
+        }}>
+          <Icon name="lock" size={13} style={{ color: "var(--orange)" }} />Réservé aux membres de Vanguard
+        </span>
+      )}
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--border)" }}>
+        <span style={{ fontSize: 11.5, textTransform: "uppercase", letterSpacing: ".7px", color: "var(--text-muted)", marginTop: 10 }}>
+          Ouvert sans compte
+        </span>
+        {AILLEURS.map((a) => (
+          <a key={a.href} href={a.href} style={{
+            display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, textDecoration: "none",
+            fontSize: 12.5, fontWeight: 600, color: "var(--text)", background: "var(--bg-3)",
+            border: "1px solid var(--border)", borderRadius: 9, padding: "6px 11px",
+          }}>
+            <Icon name={a.icon} size={13} style={{ color: "var(--orange)" }} />{a.quoi}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** La CSS des grilles de cette famille. Posée par l'écran qui compose la page :
  *  ces classes ne servent qu'aux sections ci-dessous. */
 export const cssCrafts = `
@@ -96,10 +232,23 @@ function Bloc({ icon, titre, compte, note, children }: {
  * afficher sa pastille avant que le relevé arrive.
  */
 const MANQUES: [string, React.ReactNode][] = [
-  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, échanges de nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : ces menus sont <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu n’est nulle part dans le client. Ceux-là vivent côté serveur. C’est de là que le wiki tire ses recettes — les deux relevés ne se recouvrent qu’à 22 recettes sur 856.</>],
+  /* LE « sur 856 » EST PARTI. L'en-tête de la page affiche « 834 échanges de PNJ »,
+     compté sur crafts.json ; cette phrase annonçait 856 juste en dessous. Deux
+     nombres pour deux relevés différents — l'extrait du dépôt et la fouille source —
+     mais rien à l'écran ne les distinguait, et le lecteur voyait la page se
+     contredire. Le relevé source n'est pas dans le dépôt : 856 ne se recalcule pas,
+     donc il ne peut pas rester écrit à la main. Le fait utile est le RECOUVREMENT
+     minuscule, pas son dénominateur — c'est lui qui est gardé. */
+  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, échanges de nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : ces menus sont <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu n’est nulle part dans le client. Ceux-là vivent côté serveur. C’est de là que le wiki tire ses recettes — et les deux relevés ne se recouvrent qu’à <b>22 recettes</b>.</>],
   ["Les chances de raffinage +1 → +20", <>Absentes. Le petit fichier qu’on prend pour elles donne autre chose : le <b>coefficient appliqué au bonus</b> selon le palier. Personne n’a les vraies probabilités.</>],
   ["Les chances de désintégrer une arme en joyaux", <>Le panneau du jeu renvoie explicitement au site officiel plutôt que de donner les nombres.</>],
-  ["Les neuf statistiques du sertissage ultime", <>Le texte dit « les 9 statistiques » sans les nommer. Elles recoupent probablement les neuf gemmes ultimes déjà relevées, mais ce n’est pas prouvé.</>],
+  /* CE TROU EST BOUCHÉ DEPUIS, et le laisser sous forme de « probablement » était
+     faux dans les deux sens : le panneau du jeu ne les nomme toujours pas, mais le
+     site les nomme, avec leur plafond, et la démonstration est faite sur deux
+     fichiers indépendants (GEMU du builder et les neuf Diamants du client tombent
+     rang pour rang). Un sujet, une page : /builder/mecaniques en est propriétaire,
+     donc une phrase et un lien, pas un développement. */
+  ["Les neuf statistiques du sertissage ultime", <>Le panneau du jeu dit « les 9 statistiques » sans les nommer. Elles sont nommées, avec leur plafond, sur <a href="/builder/mecaniques" style={{ color: "var(--orange)" }}>les mécaniques</a> — deux fichiers du client les donnent dans le même ordre.</>],
   ["La table d’objets de la récolte", <>Le fichier du collecteur ne donne que les <b>délais</b> par niveau (105, 90, 75, 60, 45, 30) et la batterie maximale (1 800). Aucun objet.</>],
   ["Les recettes de métier ou de cuisine", <>Il n’y en a pas. Les seules occurrences de « recette » sont trois quêtes coréennes de 2009.</>],
   ["Où les PNJ sont posés", <>Aucun fichier de placement dans le relevé. C’est la seule réserve sérieuse sur les statuts de cette page.</>],
@@ -121,7 +270,21 @@ function Reserve() {
   );
 }
 
-export function useSectionsCrafts(): EcranCrafts {
+/**
+ * @param etat — l'état du visiteur, rendu par `etatVisiteur()` côté serveur et
+ *   descendu en prop. Quand il ne peut pas agir, ce crochet NE DEMANDE RIEN : ni au
+ *   montage, ni au clic sur les barèmes, ni à la frappe dans la recherche. Trois
+ *   raisons, dans l'ordre d'importance :
+ *     · un 403 par volet dans la console d'un visiteur ressemble à une panne du site,
+ *       et c'est la première chose qu'un joueur curieux ouvre ;
+ *     · l'attente « Lecture du relevé du client… » n'aboutirait jamais ;
+ *     · le serveur n'a pas à traiter des demandes dont on connaît déjà la réponse.
+ *   Ce n'est PAS le verrou. Le verrou est `apiGuild()` dans /api/crafts, inchangé :
+ *   quelqu'un qui appelle la route à la main se fait refuser par le serveur, pas par
+ *   cet écran. Ici on évite un bruit, là-bas on refuse.
+ */
+export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
+  const ouvert = etat.peutAgir;
   const [d, setD] = useState<Depart | null>(null);
   const [erreur, setErreur] = useState(false);
 
@@ -132,25 +295,35 @@ export function useSectionsCrafts(): EcranCrafts {
   const [trouve, setTrouve] = useState<{ recettes: Recette[]; total: number } | null>(null);
 
   useEffect(() => {
+    if (!ouvert) return;
     fetch("/api/crafts?vue=depart")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setD)
+      /* BARUNA NE S'AFFICHE PAS, ET NE SE COMPTE PAS. Deux des vingt-trois panneaux
+         d'atelier du client portent ce nom (« Gemme d'arme de Baruna », « Retirer une
+         gemme (Baruna) ») et arrivaient à l'écran tels quels. Le filtre est posé ICI,
+         sur la donnée qui vient d'atterrir, et pas au rendu : `d.ateliers.length`
+         nourrit à la fois la pastille du volet et la phrase de l'en-tête, si bien
+         qu'un filtre au rendu aurait laissé un compteur qui annonce plus de panneaux
+         qu'il n'en montre — le défaut le plus cher de ce site.
+         Rien n'est perdu : le retrait d'une gemme ultime a son propre panneau, et
+         c'est celui-là qui porte la mise en garde utile. */
+      .then((x: Depart) => setD({ ...x, ateliers: x.ateliers.filter((a) => !SANS.test(a.titre + " " + a.texte)) }))
       .catch(() => setErreur(true));
-  }, []);
+  }, [ouvert]);
 
   const chargerComptoirs = useCallback(() => {
-    if (comptoirs) return;
+    if (comptoirs || !ouvert) return;
     fetch("/api/crafts?vue=comptoirs")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((x) => setComptoirs(x.recettes))
       .catch(() => setComptoirs([]));
-  }, [comptoirs]);
+  }, [comptoirs, ouvert]);
 
   // La recherche part après une pause : une requête par touche frappée réveillerait
   // le serveur dix fois pour un mot de dix lettres.
   useEffect(() => {
     const k = q.trim();
-    if (k.length < 2) { setTrouve(null); return; }
+    if (!ouvert || k.length < 2) { setTrouve(null); return; }
     const t = setTimeout(() => {
       fetch(`/api/crafts?vue=recherche&q=${encodeURIComponent(k)}`)
         .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -158,7 +331,7 @@ export function useSectionsCrafts(): EcranCrafts {
         .catch(() => setTrouve({ recettes: [], total: 0 }));
     }, 220);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, ouvert]);
 
   const parGroupe = useMemo(() => {
     const m = new Map<string, Recette[]>();
@@ -196,6 +369,47 @@ export function useSectionsCrafts(): EcranCrafts {
     // Après le remontage : sans l'attente, l'input n'existe pas encore.
     setTimeout(() => document.querySelector<HTMLInputElement>("#cr-q")?.focus(), 0);
   };
+
+  /**
+   * LE VISITEUR — six volets fermés, mais six volets QUI EXISTENT.
+   *
+   * Ce branchement passe AVANT celui de l'attente, et il ne partage rien avec lui :
+   * ce n'est pas un chargement qui n'aboutit pas, c'est un refus. Les deux se
+   * ressemblaient à l'écran (un panneau, une phrase grise) et se seraient confondus
+   * dans la tête du lecteur — l'un dit « patiente », l'autre « reviens avec un
+   * compte », et ce ne sont pas les mêmes gestes.
+   *
+   * Le rail garde ses six titres, ses six sous-titres et son ordre : c'est la table
+   * des matières de la page, et c'est ELLE qui donne envie. Les pastilles de compte
+   * restent vides — ces comptes sont dans le relevé qu'on ne charge pas, et un zéro
+   * s'y lirait « il n'y a rien ».
+   *
+   * Deux volets portent un GESTE et le rendent pour de vrai, inerte : la recherche et
+   * le bouton des barèmes. Voir <VoletFerme>.
+   */
+  if (!ouvert) {
+    return {
+      sections: ORDRE.map((c): SectionVolet => ({
+        clef: c, ...META[c], compte: null,
+        contenu: (
+          <VoletFerme etat={etat} clef={c}
+            geste={
+              c === "recherche" ? <ChampRecherche q="" surQ={() => {}} inerte />
+                : c === "comptoirs" ? (
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700,
+                    padding: "10px 14px", borderRadius: 10, background: "rgba(255,140,26,.1)",
+                    border: "1px solid color-mix(in srgb, var(--orange) 45%, transparent)", color: "var(--orange)",
+                  }}>
+                    <Icon name="download" size={14} /> Charger les barèmes
+                  </span>
+                ) : undefined
+            } />
+        ),
+      })),
+      saut, erreur: false, d: null,
+    };
+  }
 
   // Les six volets existent AVANT le relevé : le rail est la table des matières
   // de la page, il ne doit ni apparaître en retard ni changer de forme quand la
@@ -427,15 +641,9 @@ export function useSectionsCrafts(): EcranCrafts {
       compte: null,
       contenu: (
         <>
-          <label style={{ position: "relative", display: "block", marginBottom: 14 }}>
-            <Icon name="search" size={15} style={{ position: "absolute", left: 12, top: 12, color: "var(--text-muted)" }} />
-            <input id="cr-q" value={q} onChange={(e) => setQ(e.target.value)}
-              placeholder="un objet, ou le nom d’un PNJ — « Perin », « Bibi », « Emblème »…"
-              style={{
-                width: "100%", padding: "10px 12px 10px 35px", fontFamily: "inherit", fontSize: 13,
-                background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, color: "var(--text)",
-              }} />
-          </label>
+          {/* Le même champ que celui rendu inerte pour un visiteur : une seule
+              définition, donc aucune chance que les deux divergent. */}
+          <ChampRecherche q={q} surQ={setQ} />
 
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14, fontSize: 12, color: "var(--text-muted)" }}>
             {([["on", d.actives], ["off", d.eteintes], ["orphelin", d.orphelines]] as const).map(([k, n]) => (

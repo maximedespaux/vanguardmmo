@@ -1,0 +1,2294 @@
+{
+ "genere": "2026-08-12",
+ "source": "data-00.air → defineattribute.h (codes) · data-02.air → textClient.inc + data-01.air → textclient.txt.txt (libellés du client) · public/wiki/objets-fiches.json (libellés du relevé, réalignés)",
+ "definis": 155,
+ "employes": 74,
+ "sansLibelle": [
+  "DST_ADDDROP"
+ ],
+ "nonDefinis": [
+  "DST_CHANCEDROP"
+ ],
+ "stats": [
+  {
+   "code": "DST_STR",
+   "n": 1,
+   "objets": 173,
+   "fr": "Force",
+   "source": "releve"
+  },
+  {
+   "code": "DST_DEX",
+   "n": 2,
+   "objets": 158,
+   "fr": "Dextérité",
+   "source": "releve"
+  },
+  {
+   "code": "DST_INT",
+   "n": 3,
+   "objets": 289,
+   "fr": "Intelligence",
+   "source": "releve"
+  },
+  {
+   "code": "DST_STA",
+   "n": 4,
+   "objets": 256,
+   "fr": "Endurance",
+   "source": "releve"
+  },
+  {
+   "code": "DST_YOY_DMG",
+   "n": 5,
+   "objets": 0,
+   "fr": "Puissance d'attaque du yo-yo",
+   "source": "client",
+   "client": "Puissance d'attaque du yo-yo"
+  },
+  {
+   "code": "DST_BOW_DMG",
+   "n": 6,
+   "objets": 3,
+   "fr": "Dégâts d'arc",
+   "source": "releve",
+   "client": "Puissance d'attaque de l'arc"
+  },
+  {
+   "code": "DST_CHR_RANGE",
+   "n": 7,
+   "objets": 0
+  },
+  {
+   "code": "DST_BLOCK_RANGE",
+   "n": 8,
+   "objets": 93,
+   "fr": "Blocage à distance",
+   "source": "releve",
+   "ambigu": [
+    {
+     "libelle": "Endurance",
+     "objets": [
+      58488
+     ]
+    }
+   ]
+  },
+  {
+   "code": "DST_CHR_CHANCECRITICAL",
+   "n": 9,
+   "objets": 198,
+   "fr": "Taux critique",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CHR_BLEEDING",
+   "n": 10,
+   "objets": 0
+  },
+  {
+   "code": "DST_SPEED",
+   "n": 11,
+   "objets": 227,
+   "fr": "Vitesse de déplacement",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ABILITY_MIN",
+   "n": 12,
+   "objets": 0
+  },
+  {
+   "code": "DST_ABILITY_MAX",
+   "n": 13,
+   "objets": 0
+  },
+  {
+   "code": "DST_BLOCK_MELEE",
+   "n": 14,
+   "objets": 119,
+   "fr": "Blocage corps à corps",
+   "source": "releve",
+   "ambigu": [
+    {
+     "libelle": "Blocage à distance",
+     "objets": [
+      58488
+     ]
+    }
+   ]
+  },
+  {
+   "code": "DST_MASTRY_EARTH",
+   "n": 15,
+   "objets": 0,
+   "fr": "Maîtrise de la Terre",
+   "source": "client",
+   "client": "Maîtrise de la Terre"
+  },
+  {
+   "code": "DST_STOP_MOVEMENT",
+   "n": 16,
+   "objets": 0
+  },
+  {
+   "code": "DST_MASTRY_FIRE",
+   "n": 17,
+   "objets": 2,
+   "fr": "Maîtrise du feu",
+   "source": "releve",
+   "client": "Maîtrise du Feu"
+  },
+  {
+   "code": "DST_MASTRY_WATER",
+   "n": 18,
+   "objets": 0,
+   "fr": "Maîtrise de l'Eau",
+   "source": "client",
+   "client": "Maîtrise de l'Eau"
+  },
+  {
+   "code": "DST_MASTRY_ELECTRICITY",
+   "n": 19,
+   "objets": 1,
+   "fr": "Maîtrise de la foudre",
+   "source": "releve",
+   "client": "Maîtrise de la Foudre"
+  },
+  {
+   "code": "DST_MASTRY_WIND",
+   "n": 20,
+   "objets": 1,
+   "fr": "Maîtrise du vent",
+   "source": "releve",
+   "client": "Maîtrise du Vent"
+  },
+  {
+   "code": "DST_KNUCKLE_DMG",
+   "n": 21,
+   "objets": 0,
+   "fr": "Puissance d'attaque des poings",
+   "source": "client",
+   "client": "Puissance d'attaque des poings"
+  },
+  {
+   "code": "DST_PVP_DMG_RATE",
+   "n": 22,
+   "objets": 18,
+   "fr": "Dégâts JcJ %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ATTACKSPEED",
+   "n": 24,
+   "objets": 218,
+   "fr": "Vitesse d'attaque (points)",
+   "source": "releve"
+  },
+  {
+   "code": "DST_SWD_DMG",
+   "n": 25,
+   "objets": 0,
+   "fr": "Puissance d'attaque de l'épée",
+   "source": "client",
+   "client": "Puissance d'attaque de l'épée"
+  },
+  {
+   "code": "DST_ADJDEF",
+   "n": 26,
+   "objets": 59,
+   "fr": "Défense",
+   "source": "releve",
+   "client": "Augmente votre défense (DEF) de"
+  },
+  {
+   "code": "DST_RESIST_MAGIC",
+   "n": 27,
+   "objets": 1,
+   "fr": "Résistance magique",
+   "source": "releve"
+  },
+  {
+   "code": "DST_RESIST_ELECTRICITY",
+   "n": 28,
+   "objets": 0
+  },
+  {
+   "code": "DST_REFLECT_DAMAGE",
+   "n": 29,
+   "objets": 51,
+   "fr": "Renvoi de dégâts",
+   "source": "releve",
+   "client": "Renvoi des dégâts"
+  },
+  {
+   "code": "DST_RESIST_FIRE",
+   "n": 30,
+   "objets": 0
+  },
+  {
+   "code": "DST_RESIST_WIND",
+   "n": 31,
+   "objets": 0
+  },
+  {
+   "code": "DST_RESIST_WATER",
+   "n": 32,
+   "objets": 0
+  },
+  {
+   "code": "DST_RESIST_EARTH",
+   "n": 33,
+   "objets": 0
+  },
+  {
+   "code": "DST_AXE_DMG",
+   "n": 34,
+   "objets": 0,
+   "fr": "Puissance d'attaque de la hache",
+   "source": "client",
+   "client": "Puissance d'attaque de la hache"
+  },
+  {
+   "code": "DST_HP_MAX",
+   "n": 35,
+   "objets": 273,
+   "fr": "PV max",
+   "source": "releve",
+   "client": "Augmente vos points de vie (PV) de",
+   "contradiction": true
+  },
+  {
+   "code": "DST_MP_MAX",
+   "n": 36,
+   "objets": 169,
+   "fr": "PM max",
+   "source": "releve"
+  },
+  {
+   "code": "DST_FP_MAX",
+   "n": 37,
+   "objets": 159,
+   "fr": "PC max",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HP",
+   "n": 38,
+   "objets": 108,
+   "fr": "PV rendus",
+   "source": "releve"
+  },
+  {
+   "code": "DST_MP",
+   "n": 39,
+   "objets": 21,
+   "fr": "PM rendus",
+   "source": "releve"
+  },
+  {
+   "code": "DST_FP",
+   "n": 40,
+   "objets": 15,
+   "fr": "PC rendus",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HP_RECOVERY",
+   "n": 41,
+   "objets": 0
+  },
+  {
+   "code": "DST_MP_RECOVERY",
+   "n": 42,
+   "objets": 0
+  },
+  {
+   "code": "DST_FP_RECOVERY",
+   "n": 43,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_HP",
+   "n": 44,
+   "objets": 6,
+   "fr": "PV rendus à la mise à mort",
+   "source": "releve"
+  },
+  {
+   "code": "DST_KILL_MP",
+   "n": 45,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_FP",
+   "n": 46,
+   "objets": 0
+  },
+  {
+   "code": "DST_ADJ_HITRATE",
+   "n": 47,
+   "objets": 288,
+   "fr": "Précision",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CLEARBUFF",
+   "n": 49,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHR_STEALHP_IMM",
+   "n": 50,
+   "objets": 0
+  },
+  {
+   "code": "DST_ATTACKSPEED_RATE",
+   "n": 51,
+   "objets": 26,
+   "fr": "Vitesse d'attaque %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HP_MAX_RATE",
+   "n": 52,
+   "objets": 232,
+   "fr": "PV max %",
+   "source": "releve",
+   "ambigu": [
+    {
+     "libelle": "Blocage corps à corps",
+     "objets": [
+      58488
+     ]
+    }
+   ],
+   "client": "PV max."
+  },
+  {
+   "code": "DST_MP_MAX_RATE",
+   "n": 53,
+   "objets": 36,
+   "fr": "PM max %",
+   "source": "releve",
+   "client": "PM max."
+  },
+  {
+   "code": "DST_FP_MAX_RATE",
+   "n": 54,
+   "objets": 2,
+   "fr": "PC max %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CHR_WEAEATKCHANGE",
+   "n": 55,
+   "objets": 3,
+   "fr": "Change l'élément de l'arme",
+   "source": "releve",
+   "client": "Augmentation de la force",
+   "contradiction": true
+  },
+  {
+   "code": "DST_CHR_STEALHP",
+   "n": 56,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHR_CHANCESTUN",
+   "n": 57,
+   "objets": 0
+  },
+  {
+   "code": "DST_AUTOHP",
+   "n": 58,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHR_CHANCEDARK",
+   "n": 59,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHR_CHANCEPOISON",
+   "n": 60,
+   "objets": 0
+  },
+  {
+   "code": "DST_IMMUNITY",
+   "n": 61,
+   "objets": 1,
+   "fr": "Immunité",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ADDMAGIC",
+   "n": 62,
+   "objets": 40,
+   "fr": "Dégâts magiques",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CHR_DMG",
+   "n": 63,
+   "objets": 27,
+   "fr": "Dégâts subis réduits",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CHRSTATE",
+   "n": 64,
+   "objets": 1,
+   "fr": "Applique un état",
+   "source": "releve"
+  },
+  {
+   "code": "DST_PARRY",
+   "n": 65,
+   "objets": 32,
+   "fr": "Parade",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ATKPOWER_RATE",
+   "n": 66,
+   "objets": 264,
+   "fr": "Attaque %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_EXPERIENCE",
+   "n": 67,
+   "objets": 28,
+   "fr": "Expérience %",
+   "source": "releve",
+   "client": "EXP",
+   "contradiction": true
+  },
+  {
+   "code": "DST_JUMPING",
+   "n": 68,
+   "objets": 3,
+   "fr": "Saut",
+   "source": "releve"
+  },
+  {
+   "code": "DST_CHR_CHANCESTEALHP",
+   "n": 69,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHR_CHANCEBLEEDING",
+   "n": 70,
+   "objets": 0
+  },
+  {
+   "code": "DST_RECOVERY_EXP",
+   "n": 71,
+   "objets": 0
+  },
+  {
+   "code": "DST_ADJDEF_RATE",
+   "n": 72,
+   "objets": 59,
+   "fr": "Défense %",
+   "source": "releve",
+   "client": "Défense"
+  },
+  {
+   "code": "DST_MP_DEC_RATE",
+   "n": 73,
+   "objets": 3,
+   "fr": "Coût en PM réduit %",
+   "source": "releve",
+   "client": "Réduction de la consommation de PM",
+   "contradiction": true
+  },
+  {
+   "code": "DST_FP_DEC_RATE",
+   "n": 74,
+   "objets": 1,
+   "fr": "Coût en PC réduit %",
+   "source": "releve",
+   "client": "Réduction de la consommation de PF",
+   "contradiction": true
+  },
+  {
+   "code": "DST_SPELL_RATE",
+   "n": 75,
+   "objets": 152,
+   "fr": "Temps d'incantation %",
+   "source": "releve",
+   "client": "Vitesse d'incantation"
+  },
+  {
+   "code": "DST_CAST_CRITICAL_RATE",
+   "n": 76,
+   "objets": 0,
+   "fr": "Puissance des sorts",
+   "source": "client",
+   "client": "Puissance des sorts"
+  },
+  {
+   "code": "DST_CRITICAL_BONUS",
+   "n": 77,
+   "objets": 267,
+   "fr": "Dégâts critiques",
+   "source": "releve",
+   "client": "Dégâts critiques"
+  },
+  {
+   "code": "DST_SKILL_LEVEL",
+   "n": 78,
+   "objets": 0
+  },
+  {
+   "code": "DST_MONSTER_DMG",
+   "n": 79,
+   "objets": 78,
+   "fr": "Dégâts sur monstres %",
+   "source": "releve",
+   "client": "Dégâts PvE"
+  },
+  {
+   "code": "DST_PVP_DMG",
+   "n": 80,
+   "objets": 43,
+   "fr": "Dégâts JcJ",
+   "source": "releve",
+   "client": "Dégâts PvP"
+  },
+  {
+   "code": "DST_MELEE_STEALHP",
+   "n": 81,
+   "objets": 5,
+   "fr": "Siphon de vie (corps à corps)",
+   "source": "releve",
+   "client": "Siphon de vie (PV)"
+  },
+  {
+   "code": "DST_HEAL",
+   "n": 82,
+   "objets": 0,
+   "fr": "Soin",
+   "source": "client",
+   "client": "Soin"
+  },
+  {
+   "code": "DST_ATKPOWER",
+   "n": 83,
+   "objets": 43,
+   "fr": "Attaque",
+   "source": "releve",
+   "client": "Augmente votre attaque (ATQ) de"
+  },
+  {
+   "code": "DST_ONEHANDMASTER_DMG",
+   "n": 85,
+   "objets": 0,
+   "fr": "Augmente les dégâts infligés avec une arme à une main",
+   "source": "client",
+   "client": "Augmente les dégâts infligés avec une arme à une main"
+  },
+  {
+   "code": "DST_TWOHANDMASTER_DMG",
+   "n": 86,
+   "objets": 0,
+   "fr": "Augmente les dégâts infligés avec une arme à deux mains",
+   "source": "client",
+   "client": "Augmente les dégâts infligés avec une arme à deux mains"
+  },
+  {
+   "code": "DST_YOYOMASTER_DMG",
+   "n": 87,
+   "objets": 0,
+   "fr": "Augmente les dégâts infligés avec un yo-yo",
+   "source": "client",
+   "client": "Augmente les dégâts infligés avec un yo-yo"
+  },
+  {
+   "code": "DST_BOWMASTER_DMG",
+   "n": 88,
+   "objets": 0,
+   "fr": "Augmente les dégâts infligés avec un arc",
+   "source": "client",
+   "client": "Augmente les dégâts infligés avec un arc"
+  },
+  {
+   "code": "DST_KNUCKLEMASTER_DMG",
+   "n": 89,
+   "objets": 0,
+   "fr": "Augmente les dégâts infligés avec des poings",
+   "source": "client",
+   "client": "Augmente les dégâts infligés avec des poings"
+  },
+  {
+   "code": "DST_HAWKEYE_RATE",
+   "n": 90,
+   "objets": 0
+  },
+  {
+   "code": "DST_RESIST_MAGIC_RATE",
+   "n": 91,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIFTBOX",
+   "n": 92,
+   "objets": 14,
+   "fr": "Boîte cadeau",
+   "source": "releve",
+   "client": "Vous rend chanceux quand vous la portez.",
+   "contradiction": true
+  },
+  {
+   "code": "DST_RESTPOINT_RATE",
+   "n": 93,
+   "objets": 2,
+   "fr": "Points de repos %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_IGNORE_DMG_PVP",
+   "n": 94,
+   "objets": 0
+  },
+  {
+   "code": "DST_TAKE_PVP_DMG_PHYSICAL_RATE",
+   "n": 95,
+   "objets": 0
+  },
+  {
+   "code": "DST_TAKE_PVP_DMG_MAGIC_RATE",
+   "n": 96,
+   "objets": 0
+  },
+  {
+   "code": "DST_TAKE_PVE_DMG_PHYSICAL_RATE",
+   "n": 97,
+   "objets": 0
+  },
+  {
+   "code": "DST_TAKE_PVE_DMG_MAGIC_RATE",
+   "n": 98,
+   "objets": 0
+  },
+  {
+   "code": "DST_DROP_ITEM_ALLGRADE_RATE",
+   "n": 99,
+   "objets": 26,
+   "fr": "Taux de butin %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_DROP_ITEM_ONEMORE_CHANCE",
+   "n": 100,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIVE_PVE_DMG_ELEMENT_FIRE_RATE",
+   "n": 101,
+   "objets": 2,
+   "fr": "Dégâts de feu (JcE) %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_PVE_DMG_ELEMENT_WATER_RATE",
+   "n": 102,
+   "objets": 11,
+   "fr": "Dégâts d'eau (JcE) %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_PVE_DMG_ELEMENT_ELECT_RATE",
+   "n": 103,
+   "objets": 12,
+   "fr": "Dégâts de foudre (JcE) %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_PVE_DMG_ELEMENT_WIND_RATE",
+   "n": 104,
+   "objets": 2,
+   "fr": "Dégâts de vent (JcE) %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_PVE_DMG_ELEMENT_EARTH_RATE",
+   "n": 105,
+   "objets": 12,
+   "fr": "Dégâts de terre (JcE) %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ADJ_ITEM_EQUIP_LEVEL",
+   "n": 106,
+   "objets": 0
+  },
+  {
+   "code": "DST_SKILL_LEVELUP_ALL",
+   "n": 107,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_STUN",
+   "n": 108,
+   "objets": 1,
+   "fr": "Dégâts sur cible étourdie %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_DARK",
+   "n": 109,
+   "objets": 1,
+   "fr": "Dégâts sur cible aveuglée %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_POISON",
+   "n": 110,
+   "objets": 1,
+   "fr": "Dégâts sur cible empoisonnée %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_SLOW",
+   "n": 111,
+   "objets": 1,
+   "fr": "Dégâts sur cible ralentie %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_BLEEDING",
+   "n": 112,
+   "objets": 18,
+   "fr": "Dégâts sur cible qui saigne %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_SILENT",
+   "n": 113,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_LOOT",
+   "n": 114,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_SETSTONE",
+   "n": 115,
+   "objets": 0
+  },
+  {
+   "code": "DST_GIVE_DMG_RATE_ENEMY_SLEEPING",
+   "n": 116,
+   "objets": 0
+  },
+  {
+   "code": "DST_STR_PERCENT",
+   "n": 117,
+   "objets": 13,
+   "fr": "Force %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_STA_PERCENT",
+   "n": 118,
+   "objets": 24,
+   "fr": "Endurance %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_DEX_PERCENT",
+   "n": 119,
+   "objets": 13,
+   "fr": "Dextérité %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_INT_PERCENT",
+   "n": 120,
+   "objets": 21,
+   "fr": "Intelligence %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_MONSTER_DMG_BOSS",
+   "n": 121,
+   "objets": 4,
+   "fr": "Dégâts sur boss %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_MONSTER_RESIST_BOSS",
+   "n": 122,
+   "objets": 0
+  },
+  {
+   "code": "DST_PENYA_RATE",
+   "n": 123,
+   "objets": 29,
+   "fr": "Penyas gagnés %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_ADDMAGIC_RATE",
+   "n": 124,
+   "objets": 32,
+   "fr": "Dégâts magiques %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HEAL_RATE",
+   "n": 125,
+   "objets": 16,
+   "fr": "Soins %",
+   "source": "releve"
+  },
+  {
+   "code": "DST_WEAPON_EXP_RATE",
+   "n": 126,
+   "objets": 7,
+   "fr": "Maîtrise d'arme %",
+   "source": "releve",
+   "client": "Exp. de Maîtrise"
+  },
+  {
+   "code": "DST_RECV_GENERIC_DMG_RATE",
+   "n": 127,
+   "objets": 0
+  },
+  {
+   "code": "DST_ADDDROP",
+   "n": 128,
+   "objets": 1
+  },
+  {
+   "code": "DST_GOLD",
+   "n": 10000,
+   "objets": 0
+  },
+  {
+   "code": "DST_PXP",
+   "n": 10001,
+   "objets": 0
+  },
+  {
+   "code": "DST_RESIST_ALL",
+   "n": 10002,
+   "objets": 0
+  },
+  {
+   "code": "DST_STAT_ALLUP",
+   "n": 10003,
+   "objets": 164,
+   "fr": "Toutes les statistiques",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HPDMG_UP",
+   "n": 10004,
+   "objets": 0,
+   "fr": "PV et puissance d'attaque augmentés",
+   "source": "client",
+   "client": "PV et puissance d'attaque augmentés"
+  },
+  {
+   "code": "DST_DEFHITRATE_DOWN",
+   "n": 10005,
+   "objets": 0,
+   "fr": "Défense et précision augmenté.",
+   "source": "client",
+   "client": "Défense et précision augmenté."
+  },
+  {
+   "code": "DST_CURECHR",
+   "n": 10006,
+   "objets": 2,
+   "fr": "Soigne un état",
+   "source": "releve"
+  },
+  {
+   "code": "DST_HP_RECOVERY_RATE",
+   "n": 10007,
+   "objets": 0
+  },
+  {
+   "code": "DST_MP_RECOVERY_RATE",
+   "n": 10008,
+   "objets": 0
+  },
+  {
+   "code": "DST_FP_RECOVERY_RATE",
+   "n": 10009,
+   "objets": 0
+  },
+  {
+   "code": "DST_LOCOMOTION",
+   "n": 10010,
+   "objets": 1,
+   "fr": "Vitesse de vol",
+   "source": "releve"
+  },
+  {
+   "code": "DST_MASTRY_ALL",
+   "n": 10011,
+   "objets": 0,
+   "fr": "Maîtrise de tous les éléments.",
+   "source": "client",
+   "client": "Maîtrise de tous les éléments."
+  },
+  {
+   "code": "DST_ALL_RECOVERY",
+   "n": 10012,
+   "objets": 0
+  },
+  {
+   "code": "DST_ALL_RECOVERY_RATE",
+   "n": 10013,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_ALL",
+   "n": 10014,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_HP_RATE",
+   "n": 10015,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_MP_RATE",
+   "n": 10016,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_FP_RATE",
+   "n": 10017,
+   "objets": 0
+  },
+  {
+   "code": "DST_KILL_ALL_RATE",
+   "n": 10018,
+   "objets": 0
+  },
+  {
+   "code": "DST_ALL_DEC_RATE",
+   "n": 10019,
+   "objets": 0
+  },
+  {
+   "code": "DST_FORCE_DAMAGE_MAX_HP_RATE",
+   "n": 10020,
+   "objets": 0
+  },
+  {
+   "code": "DST_FORCE_DAMAGE_SAFE_HP_RATE",
+   "n": 10021,
+   "objets": 0
+  },
+  {
+   "code": "DST_FORCE_DAMAGE_VALUE",
+   "n": 10022,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_HP_RATE",
+   "n": 10030,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_MP_RATE",
+   "n": 10031,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_FP_RATE",
+   "n": 10032,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_HP_VALUE",
+   "n": 10033,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_MP_VALUE",
+   "n": 10034,
+   "objets": 0
+  },
+  {
+   "code": "DST_HEAL_FP_VALUE",
+   "n": 10035,
+   "objets": 0
+  },
+  {
+   "code": "DST_DEBUFF_ALL_CLEAR",
+   "n": 10036,
+   "objets": 0
+  },
+  {
+   "code": "DST_CHANCEDROP",
+   "n": null,
+   "objets": 3,
+   "nonDefini": true,
+   "fr": "Chance de butin",
+   "source": "releve"
+  }
+ ],
+ "codesNonDst": [
+  {
+   "valeur": "WI_INSTANCE_OMINOUS",
+   "objets": 1
+  },
+  {
+   "valeur": "WI_INSTANCE_BUFF3",
+   "objets": 1
+  },
+  {
+   "valeur": "WI_INSTANCE_HALLO3",
+   "objets": 1
+  }
+ ],
+ "bonusSansValeur": [
+  {
+   "cle": "II_SYS_SYS_VIR_PENALTYSTR",
+   "code": "DST_STR",
+   "valeur": null
+  },
+  {
+   "cle": "II_SYS_SYS_VIR_PENALTYSTA",
+   "code": "DST_STA",
+   "valeur": null
+  },
+  {
+   "cle": "II_SYS_SYS_VIR_PENALTYINT",
+   "code": "DST_INT",
+   "valeur": null
+  },
+  {
+   "cle": "II_SYS_SYS_VIR_PENALTYDEX",
+   "code": "DST_DEX",
+   "valeur": null
+  },
+  {
+   "cle": "II_GEN_FOO_INS_SUPERHOTDOG",
+   "code": "DST_HP",
+   "valeur": 0
+  },
+  {
+   "cle": "II_CHR_REF_REF_HOLD",
+   "code": "DST_MP",
+   "valeur": null
+  },
+  {
+   "cle": "II_CHR_POT_DRI_VITALX",
+   "code": "DST_FP",
+   "valeur": null
+  },
+  {
+   "cle": "II_GEN_MAT_ELL_ELLDINKEY",
+   "code": "DST_HP",
+   "valeur": null
+  },
+  {
+   "cle": "II_CHR_POT_DRI_VITALX_NOTTRADE",
+   "code": "DST_FP",
+   "valeur": null
+  },
+  {
+   "cle": "II_CHR_REF_REF_HOLD_NOTTRADE",
+   "code": "DST_MP",
+   "valeur": null
+  },
+  {
+   "cle": "II_SYS_SYS_OTHER_ARTEFACT",
+   "code": "DST_MP_MAX",
+   "valeur": null
+  }
+ ],
+ "valeurSansBonus": [
+  {
+   "cle": "II_WEA_SWO_BLOODYUM",
+   "rang": 1,
+   "valeur": "15"
+  },
+  {
+   "cle": "II_WEA_SWO_BLOODYUM",
+   "rang": 2,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_WEA_SWO_BLOODYUM",
+   "rang": 3,
+   "valeur": "6"
+  },
+  {
+   "cle": "II_WEA_SWT_BLOODYUM",
+   "rang": 1,
+   "valeur": "3"
+  },
+  {
+   "cle": "II_WEA_SWT_BLOODYUM",
+   "rang": 2,
+   "valeur": "8"
+  },
+  {
+   "cle": "II_WEA_SWT_BLOODYUM",
+   "rang": 3,
+   "valeur": "12"
+  },
+  {
+   "cle": "II_WEA_AXE_BLOODYUM",
+   "rang": 1,
+   "valeur": "15"
+  },
+  {
+   "cle": "II_WEA_AXE_BLOODYUM",
+   "rang": 2,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_WEA_AXE_BLOODYUM",
+   "rang": 3,
+   "valeur": "6"
+  },
+  {
+   "cle": "II_WEA_AXT_BLOODYUM",
+   "rang": 1,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_WEA_AXT_BLOODYUM",
+   "rang": 2,
+   "valeur": "30"
+  },
+  {
+   "cle": "II_WEA_AXT_BLOODYUM",
+   "rang": 3,
+   "valeur": "15"
+  },
+  {
+   "cle": "II_WEA_KNU_BLOODYUM",
+   "rang": 1,
+   "valeur": "20"
+  },
+  {
+   "cle": "II_WEA_KNU_BLOODYUM",
+   "rang": 2,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_WEA_KNU_BLOODYUM",
+   "rang": 3,
+   "valeur": "8"
+  },
+  {
+   "cle": "II_WEA_CHE_BLOODYUM",
+   "rang": 1,
+   "valeur": "50"
+  },
+  {
+   "cle": "II_WEA_CHE_BLOODYUM",
+   "rang": 2,
+   "valeur": "30"
+  },
+  {
+   "cle": "II_WEA_CHE_BLOODYUM",
+   "rang": 3,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_WEA_WAN_BLOODY2UM",
+   "rang": 1,
+   "valeur": "25"
+  },
+  {
+   "cle": "II_WEA_WAN_BLOODY2UM",
+   "rang": 2,
+   "valeur": "15"
+  },
+  {
+   "cle": "II_WEA_WAN_BLOODY2UM",
+   "rang": 3,
+   "valeur": "5"
+  },
+  {
+   "cle": "II_WEA_STA_BLOODYUM",
+   "rang": 1,
+   "valeur": "30"
+  },
+  {
+   "cle": "II_WEA_STA_BLOODYUM",
+   "rang": 2,
+   "valeur": "15"
+  },
+  {
+   "cle": "II_WEA_STA_BLOODYUM",
+   "rang": 3,
+   "valeur": "8"
+  },
+  {
+   "cle": "II_WEA_BOW_BLOODYUM",
+   "rang": 1,
+   "valeur": "25"
+  },
+  {
+   "cle": "II_WEA_BOW_BLOODYUM",
+   "rang": 2,
+   "valeur": "13"
+  },
+  {
+   "cle": "II_WEA_BOW_BLOODYUM",
+   "rang": 3,
+   "valeur": "5"
+  },
+  {
+   "cle": "II_WEA_YOY_BLOODYUM",
+   "rang": 1,
+   "valeur": "25"
+  },
+  {
+   "cle": "II_WEA_YOY_BLOODYUM",
+   "rang": 2,
+   "valeur": "13"
+  },
+  {
+   "cle": "II_WEA_YOY_BLOODYUM",
+   "rang": 3,
+   "valeur": "5"
+  },
+  {
+   "cle": "II_ARM_S_CLO_CLO_DRAGON",
+   "rang": 2,
+   "valeur": "4"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO01SUIT",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO01GLOVES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO01SHOES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO02SUIT",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO02GLOVES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO02SHOES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO03SUIT",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO03GLOVES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_ARM_M_CHR_TUXEDO03SHOES",
+   "rang": 1,
+   "valeur": "1"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_RED",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_BLUE",
+   "rang": 1,
+   "valeur": "60"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_GREEN",
+   "rang": 1,
+   "valeur": "30"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_WHITE",
+   "rang": 1,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_TS_BUFF_POWER_LOVE01",
+   "rang": 2,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_TS_BUFF_POWER_LOVE02",
+   "rang": 2,
+   "valeur": "20"
+  },
+  {
+   "cle": "II_TS_BUFF_POWER_LOVE03",
+   "rang": 2,
+   "valeur": "30"
+  },
+  {
+   "cle": "II_WEA_STA_COLOGRADE_1",
+   "rang": 5,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_SYS_SYS_SCR_MADRIGALGIFT",
+   "rang": 1,
+   "valeur": "20000"
+  },
+  {
+   "cle": "II_SYS_SYS_SCR_MADRIGALGIFT",
+   "rang": 2,
+   "valeur": "10"
+  },
+  {
+   "cle": "II_SYS_SYS_SCR_JACK_BUFF",
+   "rang": 6,
+   "valeur": "5"
+  },
+  {
+   "cle": "II_SYS_SYS_SCR_SESAME_180",
+   "rang": 1,
+   "valeur": "200"
+  },
+  {
+   "cle": "II_SYS_SYS_OTHER_ARTEFACT",
+   "rang": 1,
+   "valeur": "200"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_DROP",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_SYS_SYS_QUE_ANGEL_NOOB",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_1",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_2",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_3",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_4",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_5",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_6",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_7",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_8",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_ANGE_RELOOK_9",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_FEE_NOEL_1",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_FEE_NOEL_2",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_FEE_NOEL_3",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_FEE_NOEL_4",
+   "rang": 1,
+   "valeur": "100"
+  },
+  {
+   "cle": "II_FEE_NOEL_5",
+   "rang": 1,
+   "valeur": "100"
+  }
+ ],
+ "colonnesNonNommees": [
+  {
+   "rang": 136,
+   "distinctes": 84,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 10284
+    },
+    {
+     "v": "60",
+     "objets": 483
+    },
+    {
+     "v": "15",
+     "objets": 233
+    },
+    {
+     "v": "105",
+     "objets": 171
+    },
+    {
+     "v": "120",
+     "objets": 152
+    },
+    {
+     "v": "121",
+     "objets": 151
+    },
+    {
+     "v": "75",
+     "objets": 144
+    },
+    {
+     "v": "90",
+     "objets": 114
+    }
+   ]
+  },
+  {
+   "rang": 137,
+   "distinctes": 7,
+   "valeurs": [
+    {
+     "v": "300",
+     "objets": 13050
+    },
+    {
+     "v": "20",
+     "objets": 7
+    },
+    {
+     "v": "40",
+     "objets": 5
+    },
+    {
+     "v": "60",
+     "objets": 3
+    },
+    {
+     "v": "80",
+     "objets": 3
+    },
+    {
+     "v": "120",
+     "objets": 2
+    },
+    {
+     "v": "154",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 138,
+   "distinctes": 32,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 12943
+    },
+    {
+     "v": "4",
+     "objets": 41
+    },
+    {
+     "v": "17",
+     "objets": 12
+    },
+    {
+     "v": "13",
+     "objets": 7
+    },
+    {
+     "v": "1",
+     "objets": 5
+    },
+    {
+     "v": "9",
+     "objets": 5
+    },
+    {
+     "v": "14",
+     "objets": 5
+    },
+    {
+     "v": "15",
+     "objets": 4
+    }
+   ]
+  },
+  {
+   "rang": 139,
+   "distinctes": 27,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 12948
+    },
+    {
+     "v": "2",
+     "objets": 42
+    },
+    {
+     "v": "13",
+     "objets": 15
+    },
+    {
+     "v": "17",
+     "objets": 12
+    },
+    {
+     "v": "1",
+     "objets": 5
+    },
+    {
+     "v": "15",
+     "objets": 4
+    },
+    {
+     "v": "4",
+     "objets": 4
+    },
+    {
+     "v": "23",
+     "objets": 4
+    }
+   ]
+  },
+  {
+   "rang": 140,
+   "distinctes": 4,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 13035
+    },
+    {
+     "v": "5",
+     "objets": 32
+    },
+    {
+     "v": "2",
+     "objets": 3
+    },
+    {
+     "v": "3",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 141,
+   "distinctes": 24,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 12964
+    },
+    {
+     "v": "50",
+     "objets": 35
+    },
+    {
+     "v": "100",
+     "objets": 10
+    },
+    {
+     "v": "200",
+     "objets": 8
+    },
+    {
+     "v": "2500",
+     "objets": 6
+    },
+    {
+     "v": "1000",
+     "objets": 5
+    },
+    {
+     "v": "5",
+     "objets": 5
+    },
+    {
+     "v": "10000",
+     "objets": 4
+    }
+   ]
+  },
+  {
+   "rang": 142,
+   "distinctes": 5,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 13067
+    },
+    {
+     "v": "3",
+     "objets": 1
+    },
+    {
+     "v": "7",
+     "objets": 1
+    },
+    {
+     "v": "9",
+     "objets": 1
+    },
+    {
+     "v": "10",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 143,
+   "distinctes": 6,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 13059
+    },
+    {
+     "v": "6",
+     "objets": 4
+    },
+    {
+     "v": "19",
+     "objets": 4
+    },
+    {
+     "v": "9",
+     "objets": 2
+    },
+    {
+     "v": "8",
+     "objets": 1
+    },
+    {
+     "v": "10",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 144,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 7925
+    },
+    {
+     "v": "0",
+     "objets": 5146
+    }
+   ]
+  },
+  {
+   "rang": 145,
+   "distinctes": 3,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 10340
+    },
+    {
+     "v": "1",
+     "objets": 2208
+    },
+    {
+     "v": "2",
+     "objets": 523
+    }
+   ]
+  },
+  {
+   "rang": 146,
+   "distinctes": 3,
+   "valeurs": [
+    {
+     "v": "2",
+     "objets": 12998
+    },
+    {
+     "v": "0",
+     "objets": 72
+    },
+    {
+     "v": "1",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 147,
+   "distinctes": 7,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13064
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_DEATHRUNE",
+     "objets": 2
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_HPRUNE",
+     "objets": 1
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_FPRUNE",
+     "objets": 1
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_MPRUNE",
+     "objets": 1
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_POISONRUNE",
+     "objets": 1
+    },
+    {
+     "v": "SI_SKILL_BARUNA_WEA_WOUNDRUNE",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 148,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13064
+    },
+    {
+     "v": "1",
+     "objets": 7
+    }
+   ]
+  },
+  {
+   "rang": 149,
+   "distinctes": 5,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13064
+    },
+    {
+     "v": "300",
+     "objets": 3
+    },
+    {
+     "v": "5000",
+     "objets": 2
+    },
+    {
+     "v": "100",
+     "objets": 1
+    },
+    {
+     "v": "500",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 150,
+   "distinctes": 3,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13064
+    },
+    {
+     "v": "IST_ANOTHER",
+     "objets": 4
+    },
+    {
+     "v": "IST_SELF",
+     "objets": 3
+    }
+   ]
+  },
+  {
+   "rang": 151,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13070
+    },
+    {
+     "v": "SI_RIN_SUP_PROTECT",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 152,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13070
+    },
+    {
+     "v": "1",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 153,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13070
+    },
+    {
+     "v": "5000",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 154,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13070
+    },
+    {
+     "v": "IST_SELF",
+     "objets": 1
+    }
+   ]
+  },
+  {
+   "rang": 155,
+   "distinctes": 1,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13071
+    }
+   ]
+  },
+  {
+   "rang": 156,
+   "distinctes": 1,
+   "valeurs": [
+    {
+     "v": "=",
+     "objets": 13071
+    }
+   ]
+  },
+  {
+   "rang": 157,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 12532
+    },
+    {
+     "v": "0",
+     "objets": 539
+    }
+   ]
+  },
+  {
+   "rang": 158,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 12566
+    },
+    {
+     "v": "0",
+     "objets": 505
+    }
+   ]
+  },
+  {
+   "rang": 159,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 12566
+    },
+    {
+     "v": "0",
+     "objets": 505
+    }
+   ]
+  },
+  {
+   "rang": 160,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 12566
+    },
+    {
+     "v": "0",
+     "objets": 505
+    }
+   ]
+  },
+  {
+   "rang": 161,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 12535
+    },
+    {
+     "v": "0",
+     "objets": 536
+    }
+   ]
+  },
+  {
+   "rang": 162,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 12999
+    },
+    {
+     "v": "1",
+     "objets": 72
+    }
+   ]
+  },
+  {
+   "rang": 164,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 13069
+    },
+    {
+     "v": "0",
+     "objets": 2
+    }
+   ]
+  },
+  {
+   "rang": 167,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "1",
+     "objets": 13069
+    },
+    {
+     "v": "0",
+     "objets": 2
+    }
+   ]
+  },
+  {
+   "rang": 168,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 12980
+    },
+    {
+     "v": "1",
+     "objets": 91
+    }
+   ]
+  },
+  {
+   "rang": 169,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 6548
+    },
+    {
+     "v": "1",
+     "objets": 6523
+    }
+   ]
+  },
+  {
+   "rang": 170,
+   "distinctes": 2,
+   "valeurs": [
+    {
+     "v": "0",
+     "objets": 6548
+    },
+    {
+     "v": "1",
+     "objets": 6523
+    }
+   ]
+  }
+ ],
+ "concordance": {
+  "pierreDeTouche": {
+   "quoi": "public/airbuilder/data.json → ITEMS[*].b, relevé fait main",
+   "temoins": 70,
+   "absents": 0,
+   "lignesComparees": 257,
+   "identiques": 235,
+   "taux": 91.4,
+   "divergences": [
+    {
+     "i": 20154,
+     "n": "Baguette de Luzaka oubliée (DPS)",
+     "rang": 0,
+     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
+     "client": "DST_SPELL_RATE = 40"
+    },
+    {
+     "i": 20154,
+     "n": "Baguette de Luzaka oubliée (DPS)",
+     "rang": 1,
+     "main": null,
+     "client": "DST_ATKPOWER_RATE = 15"
+    },
+    {
+     "i": 20154,
+     "n": "Baguette de Luzaka oubliée (DPS)",
+     "rang": 2,
+     "main": null,
+     "client": "DST_ADDMAGIC_RATE = 10"
+    },
+    {
+     "i": 20154,
+     "n": "Baguette de Luzaka oubliée (DPS)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_INT = 40"
+    },
+    {
+     "i": 20154,
+     "n": "Baguette de Luzaka oubliée (DPS)",
+     "rang": 4,
+     "main": null,
+     "client": "DST_ADDMAGIC = 300"
+    },
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 0,
+     "main": "Block Melee = 6",
+     "client": "DST_HP_MAX_RATE = 36"
+    },
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 2,
+     "main": null,
+     "client": "DST_BLOCK_RANGE = 6"
+    },
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 40"
+    },
+    {
+     "i": 20155,
+     "n": "Bâton de Luzaka oublié (DPS)",
+     "rang": 0,
+     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
+     "client": "DST_SPELL_RATE = 40"
+    },
+    {
+     "i": 20155,
+     "n": "Bâton de Luzaka oublié (DPS)",
+     "rang": 1,
+     "main": null,
+     "client": "DST_ATKPOWER_RATE = 15"
+    },
+    {
+     "i": 20155,
+     "n": "Bâton de Luzaka oublié (DPS)",
+     "rang": 2,
+     "main": null,
+     "client": "DST_ADDMAGIC_RATE = 10"
+    },
+    {
+     "i": 20155,
+     "n": "Bâton de Luzaka oublié (DPS)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_INT = 40"
+    },
+    {
+     "i": 20155,
+     "n": "Bâton de Luzaka oublié (DPS)",
+     "rang": 4,
+     "main": null,
+     "client": "DST_ADDMAGIC = 300"
+    },
+    {
+     "i": 58489,
+     "n": "Bâton de Luzaka oublié (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 40"
+    },
+    {
+     "i": 58484,
+     "n": "Epée de Luzaka oubliée (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 20"
+    },
+    {
+     "i": 58486,
+     "n": "Poing de Luzaka oublié (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 40"
+    },
+    {
+     "i": 20153,
+     "n": "Sceptre de Luzaka oublié (DPS)",
+     "rang": 0,
+     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
+     "client": "DST_SPELL_RATE = 40"
+    },
+    {
+     "i": 20153,
+     "n": "Sceptre de Luzaka oublié (DPS)",
+     "rang": 1,
+     "main": null,
+     "client": "DST_ATKPOWER_RATE = 15"
+    },
+    {
+     "i": 20153,
+     "n": "Sceptre de Luzaka oublié (DPS)",
+     "rang": 2,
+     "main": null,
+     "client": "DST_ADDMAGIC_RATE = 10"
+    },
+    {
+     "i": 20153,
+     "n": "Sceptre de Luzaka oublié (DPS)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_INT = 40"
+    },
+    {
+     "i": 20153,
+     "n": "Sceptre de Luzaka oublié (DPS)",
+     "rang": 4,
+     "main": null,
+     "client": "DST_ADDMAGIC = 300"
+    },
+    {
+     "i": 58491,
+     "n": "Yo-yo de Luzaka oublié (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 40"
+    }
+   ]
+  },
+  "releveFrancais": {
+   "quoi": "public/wiki/objets-fiches.json → objets[*].b, relevé précédent du même fichier client",
+   "temoins": 2312,
+   "absents": 12,
+   "lignesComparees": 4282,
+   "identiques": 4279,
+   "taux": 99.9,
+   "divergences": [
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 0,
+     "main": "Blocage corps à corps = 6",
+     "client": "DST_HP_MAX_RATE = 36"
+    },
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 2,
+     "main": "Endurance = 40",
+     "client": "DST_BLOCK_RANGE = 6"
+    },
+    {
+     "i": 58488,
+     "n": "Baguette de Luzaka oubliée (TANK)",
+     "rang": 3,
+     "main": null,
+     "client": "DST_STA = 40"
+    }
+   ]
+  }
+ }
+}

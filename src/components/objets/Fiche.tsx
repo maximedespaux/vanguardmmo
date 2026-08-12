@@ -7,7 +7,7 @@ import { OuTrouver } from "@/components/OuTrouver";
 import { IconeObjet } from "./IconeObjet";
 import {
   BADGE_ULTIME, CADENAS, COULEUR_GRADE, DE_STAT,
-  classeFr, emblemeClasse, emplacementFr, RESISTANCES, type ObjetFiche,
+  classeFr, elementPorte, emblemeClasse, emplacementFr, RESISTANCES, type ObjetFiche,
 } from "./vocabulaire";
 // 9 Ko de comptes précalculés (scripts/extraire-fashion.mjs), pas les 3 Mo du
 // catalogue : ce fichier est un composant client.
@@ -214,7 +214,11 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
 
         {/* ── Ce que ça fait ──────────────────────────────────────────── */}
         <div style={{ display: "grid", gap: 14 }}>
-          {(o.dn || o.b?.length || o.va || o.bm || o.ae) && (
+          {/* `o.el` MANQUAIT DANS CETTE CONDITION, et ça se voyait sur les cartes de
+              perçage : 204 objets ne portent QUE leur élément — la Carte Flamma, la
+              Carte Fulgur, toute la série — et le bloc étant fermé, leur fiche
+              n'affichait rien du tout. Compté sur le catalogue, pas supposé. */}
+          {(o.dn || o.b?.length || o.va || o.bm || o.ae || o.el) && (
             <div className="glass-card fx-card" style={carte}>
               <div style={titreBloc}><Icon name="zap" size={13} /> Ce que ça apporte</div>
 
@@ -230,7 +234,25 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
               {o.va ? <Vitesse v={o.va} /> : null}
               {o.bm ? <Ligne quoi="Bonus magique">+{o.bm}</Ligne> : null}
               {o.ae ? <Ligne quoi="Attaque élémentaire">+{o.ae}</Ligne> : null}
-              {o.el ? <Ligne quoi="Élément porté">{o.el}</Ligne> : null}
+              {/* « Élément porté : FIRE » — c'était le code du client, affiché tel
+                  quel sur 223 objets. Il est traduit, et le dessin du jeu vient
+                  avec : le même élément a la même image ici, sur /monstres et sur
+                  les donjons. Un code inconnu garderait son texte brut. */}
+              {o.el ? (
+                <Ligne quoi="Élément porté">
+                  {(() => {
+                    const e = elementPorte(o.el);
+                    if (!e) return o.el;
+                    return (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={e.image} alt="" width={16} height={16} style={{ objectFit: "contain" }} />
+                        {e.label}
+                      </span>
+                    );
+                  })()}
+                </Ligne>
+              ) : null}
 
               {o.b?.length ? (
                 <div style={{ marginTop: 12, paddingTop: 11, borderTop: "1px dashed var(--border)", display: "grid", gap: 5 }}>
@@ -246,12 +268,19 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
             <div className="glass-card fx-card" style={carte}>
               <div style={titreBloc}><Icon name="shield" size={13} /> Résistances</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {/* LE DESSIN DU JEU REMPLACE LE MOT. « Feu 7 % » devient l'icône de feu
+                    du client suivie du chiffre : cinq pastilles se lisent alors d'un
+                    coup d'œil, et l'image est celle que le joueur a sous les yeux en
+                    jeu. Le mot reste dans `alt` et `title` — c'est le seul texte
+                    qu'un lecteur d'écran verra, et il doit dire lequel des cinq. */}
                 {RESISTANCES.filter((x) => o.re?.[x.clef]).map((x) => (
-                  <span key={x.clef} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
-                    padding: "5px 11px", borderRadius: 20, color: x.couleur, ...NUM,
+                  <span key={x.clef} title={x.label} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 600,
+                    padding: "4px 11px 4px 7px", borderRadius: 20, color: x.couleur, ...NUM,
                     background: `color-mix(in srgb, ${x.couleur} 10%, transparent)`,
                     border: `1px solid color-mix(in srgb, ${x.couleur} 35%, transparent)` }}>
-                    {x.label} {Math.round((o.re?.[x.clef] ?? 0) * 100)} %
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={x.image} alt={x.label} width={16} height={16} style={{ objectFit: "contain", flexShrink: 0 }} />
+                    {Math.round((o.re?.[x.clef] ?? 0) * 100)} %
                   </span>
                 ))}
               </div>

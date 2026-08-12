@@ -42,6 +42,14 @@ export default async function BuilderPage({
           .vg-page{max-width:none!important;padding:0!important}
         `}</style>
       )}
+      {/* La planche des mécaniques vit dans le groupe (verified) : son layout
+          appelle requireVerified. Pour un visiteur, le lien du builder ne
+          mènerait donc qu'à /login — on le retire plutôt que de l'y envoyer.
+          Vérifié DANS LE CODE et pas à l'exécution : en local
+          NEXT_PUBLIC_DEV_ALL_ACCESS court-circuite le middleware, aucun refus
+          n'est observable ici. */}
+      {!connecte && <style>{`.vg-meca{display:none!important}`}</style>}
+
       {/* Un visiteur voit tout mais ne compose pas. Le dire AVANT qu'il clique :
           sans ce bandeau, il essaie, rien ne bouge, et il croit que c'est cassé. */}
       {!connecte && !enIframe && (

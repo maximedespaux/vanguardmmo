@@ -1,6 +1,7 @@
 import React from "react";
 import { Icon } from "@/components/Icon";
 import { pvCourt, TOUR_OUBLIEE, PLANS } from "./donneesClient";
+import { IconeElementDonjon } from "./elements";
 
 /**
  * LA TOUR OUBLIÉE — cinq étages que le wiki ne connaissait pas.
@@ -76,14 +77,22 @@ export function TourOubliee() {
               <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--orange)" }}>
                 <Icon name="heart" size={11} style={{ marginRight: 3 }} />{pvCourt(e.pv)} PV
               </span>
+              {/* LE PICTOGRAMME MAISON A CÉDÉ LA PLACE AU DESSIN DU JEU. Les cinq
+                  éléments ont leur image dans le client (`/jeu/mecaniques/element-*`),
+                  elle sert déjà sur /monstres et sur les tuiles de donjon : le même
+                  élément a la même image partout, ce qui est tout l'intérêt. Le mot
+                  reste à côté — c'est un étage unique, il y a la place, et l'image
+                  seule demanderait de connaître le dessin par cœur. */}
               {e.elem && (
-                <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--blue)" }}>
-                  <Icon name="sparkles" size={11} style={{ marginRight: 3 }} />{e.elem}
+                <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--blue)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <IconeElementDonjon elem={e.elem} taille={12} />{e.elem}
                 </span>
               )}
               {e.faible && (
-                <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--green)" }}>
-                  <Icon name="target" size={11} style={{ marginRight: 3 }} />Faible au {e.faible.toLowerCase()}
+                <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="target" size={11} />
+                  <IconeElementDonjon elem={e.faible} taille={12} />
+                  faible
                 </span>
               )}
             </div>

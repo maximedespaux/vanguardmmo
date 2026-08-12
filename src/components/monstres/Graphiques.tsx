@@ -139,7 +139,18 @@ export function Faiblesses({ res, bulle = true }: {
 }) {
   const { faible, resiste } = faiblesses(res);
   if (faible.length === 0 && resiste.length === 0) {
-    return <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>—</span>;
+    /* PAS UN TIRET. Un « — » se lit « on n'a pas le relevé », et c'est faux : le
+       relevé est là, il ne porte que des zéros. Vérifié sur les deux tables — les
+       1 124 monstres et les 37 adversaires des Chambres ont TOUS leur bloc `res` ;
+       le cas « aucune ligne » n'existe pas. Ce qu'il faut dire est donc l'inverse
+       d'une absence : l'élément qu'on emporte ne change rien contre celui-là, ce
+       qui est un renseignement, et un renseignement qui change un geste.
+       C'est aussi le mot que la colonne des Chambres écrivait avant de passer à
+       cette brique — 10 de ses 37 lignes l'ont perdu en chemin. */
+    return (
+      <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}
+        title="Aucune faiblesse ni résistance : l'élément n'y change rien.">indifférent</span>
+    );
   }
   const rangee = (es: string[], bord: string, quoi: string) => (
     <span style={{ display: "inline-flex", gap: 3 }}>

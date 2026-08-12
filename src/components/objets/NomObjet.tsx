@@ -25,11 +25,20 @@ import { OuTrouver } from "@/components/OuTrouver";
  */
 export function NomObjet({ nom, icone, couleur, taille = 20 }: {
   nom: string;
-  /** Fichier d'icône du client, sans le dossier. */
+  /**
+   * L'icône, sous l'une des deux formes qui circulent sur ce site :
+   *  · un simple nom de FICHIER (« itm_ring01.webp ») — c'est ce que renvoient
+   *    /api/pnj et les relevés du client, tous rangés sous /jeu/icones/ ;
+   *  · un CHEMIN COMPLET commençant par « / » — c'est ce que porte
+   *    src/data/icones-objets.json, dont les images vivent sous /assets/items/
+   *    et /airbuilder/icons/. Sans ce cas, préfixer aveuglément par /jeu/icones/
+   *    fabriquait une adresse inexistante et l'image se cassait.
+   */
   icone?: string | null;
   couleur?: string;
   taille?: number;
 }) {
+  const src = icone ? (icone.startsWith("/") ? icone : `/jeu/icones/${icone}`) : null;
   return (
     <Bulle
       largeur={300}
@@ -43,9 +52,9 @@ export function NomObjet({ nom, icone, couleur, taille = 20 }: {
         </span>
       }
     >
-      {icone ? (
+      {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/jeu/icones/${icone}`} alt="" width={taille} height={taille}
+        <img src={src} alt="" width={taille} height={taille}
           style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0 }} />
       ) : null}
       <span style={{ color: couleur ?? "inherit" }}>{nom}</span>

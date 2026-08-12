@@ -1308,3 +1308,63 @@ export function recetteDeJoyau(nom: string) {
  * Les deux relevés ne sont pas perdus : ils sont dans l'historique de ce fichier,
  * et le déménagement est signalé au fil principal pour que la page propriétaire
  * les accueille. Ne pas les rétablir ici. */
+
+/* ── CE QUI ARRIVE ICI : LES MÉCANIQUES QU'ON COMPREND EN CONSTRUISANT ────────
+ *
+ * La maîtrise d'arme, les anges et la poudre féerique étaient sur /crafts, où
+ * elles avaient atterri en venant de /collections. Maxime ne les y retrouvait
+ * plus : « j'aimerais concentrer sur une page pour comprendre en réalisant le
+ * build ». Ce ne sont pas des collections — on ne les décroche pas, on les MONTE
+ * sur la pièce qu'on est en train de composer. Elles appartiennent donc à la
+ * planche des mécaniques de build.
+ *
+ * Les DEUX ÉCRANS existaient déjà (`components/collections/Maitrise.tsx` et
+ * `Anges.tsx`) et sont repris tels quels : les redessiner aurait fait diverger
+ * deux calculateurs sur les mêmes paliers. Ils sont CLIENTS et lisent
+ * `/wiki/collections.json` par un fetch ; ce qui suit ne sert qu'aux COMPTES du
+ * rail, qui doivent être exacts au premier rendu — une pastille vide, puis un
+ * nombre qui apparaît, fait bouger le rail sous le curseur.
+ */
+type ReleveCollections = {
+  anges?: { montable?: boolean; couts?: number[] }[];
+  poudre?: { n?: string };
+  maitrise?: { niveauMax?: number; armes?: unknown[]; paliers?: unknown[] };
+};
+let COLLECTIONS: ReleveCollections | null = null;
+function collections(): ReleveCollections {
+  if (COLLECTIONS) return COLLECTIONS;
+  try {
+    const f = path.join(process.cwd(), "public", "wiki", "collections.json");
+    COLLECTIONS = JSON.parse(fs.readFileSync(f, "utf8")) as ReleveCollections;
+  } catch {
+    // Le relevé absent n'est pas une erreur de page : le volet se chargera (ou
+    // le dira) côté navigateur, et le rail se contente de ne pas afficher de
+    // compte. Un `0` écrit ici se lirait comme « aucun ange ».
+    COLLECTIONS = {};
+  }
+  return COLLECTIONS;
+}
+
+/** Ce que le rail doit savoir de la maîtrise d'arme : le nombre d'armes qui en
+ *  profitent et le niveau où elle s'arrête. `null` = relevé absent. */
+export function chiffresMaitrise() {
+  const m = collections().maitrise;
+  if (!m?.armes?.length) return null;
+  return { armes: m.armes.length, niveauMax: m.niveauMax ?? 0, paliers: m.paliers?.length ?? 0 };
+}
+
+/** Les anges : combien se montent réellement, sur combien, et le nom exact de la
+ *  monnaie de montée — le client l'écrit « Poudre féerique », on ne le
+ *  pluralise pas à la main. */
+export function chiffresAnges() {
+  const c = collections();
+  const a = c.anges;
+  if (!a?.length) return null;
+  const montables = a.filter((x) => x.montable);
+  return {
+    total: a.length,
+    montables: montables.length,
+    niveaux: (montables[0]?.couts?.length ?? 0) + 1,
+    poudre: c.poudre?.n ?? "",
+  };
+}

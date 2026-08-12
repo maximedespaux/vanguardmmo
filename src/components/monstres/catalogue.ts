@@ -169,13 +169,20 @@ export function comptes(c: Critere) {
  * pas le savoir, et c'est exactement ce qui fait croire à un bug quand le boss
  * se relève.
  */
-export function classementBoss(combien = 60) {
+/* `combien` est FACULTATIF, et par défaut on ne coupe pas. Le classement était
+   plafonné à 60 alors que le filtre `vies > 1` désigne exactement les 94 boss
+   annoncés par le compteur posé juste au-dessus du tableau : on lisait « 94 boss
+   qui se relèvent », on déroulait, et on en trouvait 60 sans que rien ne dise
+   que 34 manquaient. Un plafond qui ne s'annonce pas se lit comme un inventaire
+   complet. 94 lignes d'un objet réduit ne pèsent rien — il n'y avait aucune
+   raison de couper. */
+export function classementBoss(combien?: number) {
   const { TOUT: tout } = charger();
-  return tout
+  const rangs = tout
     .map((e) => e.m)
     .filter((m) => (m.vies ?? 0) > 1)
-    .sort((a, b) => b.pvEff - a.pvEff || nombre(b.atkMax) - nombre(a.atkMax))
-    .slice(0, combien);
+    .sort((a, b) => b.pvEff - a.pvEff || nombre(b.atkMax) - nombre(a.atkMax));
+  return combien ? rangs.slice(0, combien) : rangs;
 }
 
 /** Les frappeurs : dégâts par coup les plus élevés. Le tank n'a pas le même

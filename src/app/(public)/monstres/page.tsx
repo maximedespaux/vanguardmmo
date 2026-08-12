@@ -20,12 +20,19 @@ export default function MonstresPage() {
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader
+        // Clockworks, le colosse mécanique : il est DANS ce catalogue, et c'est
+        // même lui qui sert d'exemple à la page (le seul à résister à trois
+        // éléments d'un coup). L'image annonce donc la page, elle ne l'illustre
+        // pas au hasard.
+        art="/jeu/chargement/maploading_clockwork.webp"
         icon="skull"
         title="Les monstres et les boss"
         subtitle={`Les ${meta.total.toLocaleString("fr-FR")} monstres du client d'AirFlyff : ce qu'ils encaissent, ce qu'ils te font, ce qu'ils lâchent, et où ils sont. Avec le seul chiffre qui compte pour un boss — les PV à sortir, vies comprises.`}
       />
       <EcranMonstres
-        boss={classementBoss(60)}
+        // Sans argument : TOUS les boss à plusieurs vies, soit les 94 que le
+        // compteur du tableau annonce. Le 60 qui était ici en cachait 34.
+        boss={classementBoss()}
         frappeurs={classementFrappeurs(20)}
         compteurs={meta.compteurs}
         total={meta.total}

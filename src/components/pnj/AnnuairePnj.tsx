@@ -471,7 +471,9 @@ export function AnnuairePnj() {
 
   return (
     <>
-      <PageHeader icon="users" title="Les PNJ d'AirFlyff"
+      {/* Un intérieur habité, avec une PNJ debout derrière son comptoir : c'est à
+          ça que ressemble la rencontre dont parle la page. */}
+      <PageHeader art="/jeu/chargement/maploading_guildhouse.webp" icon="users" title="Les PNJ d'AirFlyff"
         subtitle="Qui vend quoi, qui fabrique quoi, et dans quelle ville le trouver." />
 
       {erreur && (

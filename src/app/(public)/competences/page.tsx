@@ -84,7 +84,9 @@ export default function CompetencesPage() {
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
-      <PageHeader icon="sparkles" title="Les compétences"
+      {/* Deux personnages en pleine attaque, traînées de coup comprises : une
+          compétence en train de partir, ce qui est exactement le sujet. */}
+      <PageHeader art="/jeu/chargement/maploading_arena.webp" icon="sparkles" title="Les compétences"
         subtitle="Toutes les compétences d'AirFlyff relevées dans le client : ce qu'elles coûtent, ce qu'elles font à chaque niveau, et ce qu'il faut monter avant." />
 
       {erreur && (

@@ -20,6 +20,9 @@ export default function OasisPage() {
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader
+        // Bahara, le désert du jeu : c'est l'oasis qu'on défend qui donne son nom
+        // à l'événement.
+        art="/jeu/chargement/maploading_bahara.webp"
         icon="tower"
         title="Protection de l'Oasis"
         subtitle="Les 52 vagues de la Tour Infernale : ce qui arrive sur toi, ce que ça encaisse, ce que ça frappe, et ce que ça paie. Avec ce qui reste à vérifier en jeu, dit sans le cacher."

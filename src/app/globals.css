@@ -185,6 +185,19 @@ input:focus, textarea:focus { outline:none; border-color:var(--orange) !importan
 .vg-pagehead-bannerh1{margin:0;line-height:0;align-self:flex-start;max-width:100%}
 .vg-pagehead-banner{height:76px;width:auto;max-width:min(100%,380px);object-fit:contain;align-self:flex-start;filter:drop-shadow(0 5px 18px rgba(0,0,0,.55))}
 @media(max-width:760px){.vg-pagehead-banner{height:56px}}
+/* ── Artwork du jeu en fond d'en-tête (`art` de PageHeader) ──
+   Les visuels viennent des écrans de chargement du client (1024x768). ATTENTION :
+   chacun porte, INCRUSTÉS dans l'image, le logo « Flyff », une barre de
+   chargement et la ligne de copyright de l'éditeur — tous dans le tiers BAS.
+   D'où `object-position:center 38%` : on ne montre qu'une tranche haute, prise
+   au-dessus de ce bandeau. Changer ce pourcentage vers le bas fait remonter une
+   barre de progression et un copyright d'éditeur dans notre en-tête.
+   L'opacité et le voile ne sont pas cosmétiques : le titre est du texte blanc
+   par-dessus, et il doit rester lisible sur une image claire (désert, neige). */
+.vg-pagehead-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 38%;opacity:.5;filter:saturate(.8)}
+.vg-pagehead-artveil{position:absolute;inset:0;background:linear-gradient(100deg,rgba(13,13,17,.95) 0%,rgba(13,13,17,.82) 44%,rgba(13,13,17,.42) 100%)}
+.vg-pagehead.has-art{min-height:112px;display:flex;align-items:center}
+.vg-pagehead.has-art .vg-pagehead-row{flex:1}
 /* ── Sous-onglets de section ── */
 .vg-subtabs{display:inline-flex;gap:3px;margin:-4px 0 22px;padding:5px;background:linear-gradient(180deg,rgba(24,24,30,.72),rgba(15,15,20,.72));border:1px solid var(--border);border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 2px 10px rgba(0,0,0,.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);flex-wrap:wrap}
 .vg-subtab{position:relative;padding:8px 19px;border-radius:9px;font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;text-decoration:none;color:var(--text-muted);background:transparent;border:none;cursor:pointer;transition:color .15s,background .15s}

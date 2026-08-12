@@ -103,6 +103,13 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes }: {
             si le tank tient. Un monstre ordinaire frappe toutes les 3 à 6 secondes. Les boss des Chambres
             Secrètes sont entre 250 et 375 ms, et certains boss du Chaos descendent à 101 ms — à plusieurs
             millions de dégâts par coup, ce n&apos;est pas le même métier.
+            {/* Le nombre vient de la liste reçue, jamais d'une constante : si la page
+                en demande 30 demain, la phrase suivra. Un classement tronqué qui ne
+                dit pas où il s'arrête se lit comme la liste complète. */}
+            <span style={{ display: "block", marginTop: 8, color: "var(--text-muted)", fontSize: 12 }}>
+              Ce tableau montre les {frappeurs.length} monstres qui frappent le plus fort, pas tout le catalogue —
+              la recherche, elle, range les 1 124 par dégâts par coup si tu le lui demandes.
+            </span>
           </div>
           <TableauBoss lignes={frappeurs} colonne="degats" />
         </div>
@@ -138,6 +145,25 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
   const td: React.CSSProperties = {
     textAlign: "right", padding: "8px 10px", fontSize: 12.5, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
   };
+  /* La barre du classement. « 30 Md » et « 24 Md » se lisent comme deux nombres
+     voisins ; deux barres montrent tout de suite le rapport de force. Elle ne
+     s'ajoute QUE dans la colonne qui trie — une barre dans une colonne qu'on ne
+     classe pas invite à comparer des lignes qui ne sont pas rangées pour ça.
+
+     Une seule teinte, celle que la colonne emploie déjà pour son chiffre : c'est
+     la LONGUEUR qui porte la grandeur, jamais la couleur. Et `aria-hidden`, parce
+     que le nombre exact est juste au-dessus — un lecteur d'écran n'a rien à
+     gagner à entendre décrire un rectangle. */
+  const valeurTriee = (m: Monstre) => (colonne === "pvEff" ? m.pvEff : m.atkMax) ?? 0;
+  const maxTrie = Math.max(1, ...lignes.map(valeurTriee));
+  const Barre = ({ m, teinte }: { m: Monstre; teinte: string }) => (
+    <span aria-hidden="true" style={{ display: "block", height: 3, marginTop: 5, borderRadius: 2, background: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
+      {/* Plancher à 1,5 % : sans lui, une ligne 6 000 fois plus faible que la
+          première n'a plus de barre du tout, et l'absence se lit comme un trou
+          dans les données plutôt que comme « très peu ». */}
+      <span style={{ display: "block", height: "100%", borderRadius: 2, background: teinte, width: `${Math.max(1.5, (valeurTriee(m) / maxTrie) * 100)}%` }} />
+    </span>
+  );
   return (
     <div className="glass-card" style={{ padding: 0, overflowX: "auto" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
@@ -171,14 +197,16 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
                   {m.groupe && <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>{m.groupe}</span>}
                 </td>
                 <td style={{ ...td, color: tonRang(m.rang) }}>{m.niv ?? "—"}</td>
-                <td style={{ ...td, fontWeight: 700, color: colonne === "pvEff" ? "var(--orange)" : "var(--text)" }}>
+                <td style={{ ...td, fontWeight: 700, minWidth: 96, color: colonne === "pvEff" ? "var(--orange)" : "var(--text)" }}>
                   {court(colonne === "pvEff" ? m.pvEff : m.pv)}
+                  {colonne === "pvEff" && <Barre m={m} teinte="var(--orange)" />}
                 </td>
                 <td style={{ ...td, color: (m.vies ?? 0) > 1 ? "var(--red)" : "var(--text-muted)", fontWeight: (m.vies ?? 0) > 1 ? 700 : 400 }}>
                   {m.vies ?? "1"}
                 </td>
-                <td style={{ ...td, fontWeight: colonne === "degats" ? 700 : 400, color: colonne === "degats" ? "var(--red)" : "var(--text)" }}>
+                <td style={{ ...td, fontWeight: colonne === "degats" ? 700 : 400, minWidth: colonne === "degats" ? 96 : undefined, color: colonne === "degats" ? "var(--red)" : "var(--text)" }}>
                   {m.atkMax ? court(m.atkMax) : "—"}
+                  {colonne === "degats" && <Barre m={m} teinte="var(--red)" />}
                 </td>
                 <td style={{ ...td, color: "var(--text-muted)" }}>{cadence(m.delai) ?? "—"}</td>
                 <td style={{ ...td, textAlign: "left", color: "var(--green)" }}>

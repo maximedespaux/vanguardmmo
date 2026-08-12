@@ -32,7 +32,8 @@ export const metadata: Metadata = {
 export default function CraftsPage() {
   return (
     <>
-      <PageHeader icon="hammer" title="Les crafts"
+      {/* Un coffre ouvert et des matériaux étalés : la matière première d'un craft. */}
+      <PageHeader art="/jeu/chargement/maploading_ibless.webp" icon="hammer" title="Les crafts"
         subtitle="834 échanges de PNJ relevés dans le client, et les 39 arbres de craft maison — avec les quantités, les statuts, et où farmer chaque morceau."
         right={
           <span style={{ fontSize: 11.5, color: "var(--text-muted)", textAlign: "right", lineHeight: 1.5 }}>

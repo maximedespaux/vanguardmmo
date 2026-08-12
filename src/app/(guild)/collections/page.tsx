@@ -20,7 +20,9 @@ export const metadata = {
 export default function CollectionsPage() {
   return (
     <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
-      <PageHeader icon="trophy" title="Collections"
+      {/* Une créature céleste : la page contient les 20 anges, c'est sa section la
+          plus regardée. */}
+      <PageHeader art="/jeu/chargement/maploading_heaven.webp" icon="trophy" title="Collections"
         subtitle="Titres, succès, anges, maîtrise d'arme : les systèmes du jeu qu'on décroche à la longue, chiffres du client en main." />
       <Collections />
     </div>

@@ -84,6 +84,14 @@ export const ESPACES: Espace[] = [
       // sommaire, qui est généré depuis ce fichier.
       { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient." },
       { label: "Classes", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, du Vagabond aux Héros." },
+      { label: "Compétences", href: "/competences", icon: "sparkles", desc: "Les 202 compétences, leur coût et leur progression." },
+      { label: "Monstres", href: "/monstres", icon: "skull", desc: "PV, dégâts, élément — et les boss à plusieurs vies." },
+      { label: "Protection de l'Oasis", href: "/oasis", icon: "shield", desc: "Les 52 vagues de la Tour Infernale, et ce qui t'attend." },
+      { label: "PNJ", href: "/pnj", icon: "users", desc: "Qui vend quoi, et où le trouver." },
+      // Réservés à la guilde : le détail des recettes et des collections est de la
+      // connaissance qu'on garde entre nous.
+      { label: "Crafts", href: "/crafts", icon: "hammer", desc: "Les recettes, leurs ingrédients et où les farmer.", acces: "guild" },
+      { label: "Collections", href: "/collections", icon: "star", desc: "Titres, succès, anges et maîtrise d'arme.", acces: "guild" },
       // Réservée à la guilde : ce sont les astuces qu'on ne publie pas.
       { label: "Astuces de guilde", href: "/astuces-guilde", icon: "lock", desc: "Ce qui se dit entre nous, et qu'on ne diffuse pas.", acces: "guild" },
       // Le World Boss est une connaissance du JEU — quand il passe, ce qu'il

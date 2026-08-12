@@ -753,7 +753,7 @@ export const LIGNEES: Lignee[] = [
         "coutPoints": 10158
       },
       {
-        "nom": "Assistant",
+        "nom": "Acolyte",
         "embleme": "/jeu/classes/jobassist.webp",
         "palier": "metier1",
         "nbCompetences": 17,
@@ -937,7 +937,7 @@ export const LIGNEES: Lignee[] = [
         "coutPoints": 10158
       },
       {
-        "nom": "Assistant",
+        "nom": "Acolyte",
         "embleme": "/jeu/classes/jobassist.webp",
         "palier": "metier1",
         "nbCompetences": 17,

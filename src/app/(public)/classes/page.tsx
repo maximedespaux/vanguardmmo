@@ -191,8 +191,16 @@ export default function ClassesPage() {
           ))}
         </div>
         <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.55 }}>
-          Trente-sept classes sur ce chemin, un emblème officiel pour chacune. Le niveau maximum d&apos;un perso est {LIMITES.niveauMaxPersonnage} :
-          le palier Héros s&apos;ouvre à {LIMITES.niveauMaxGeneral}, le légendaire à {LIMITES.niveauMaxLegendaire}.
+          {/* Le compte de « trente-sept classes » était faux, et il trahissait le
+              système. Maître et Héros ne sont PAS des classes : ce sont des paliers
+              de la même classe de Métier 2 — les données du client le disent
+              explicitement, « Chevalier Maître » est promu de « Chevalier ». Seul le
+              troisième métier donne huit noms neufs. D'où vingt-et-un noms de classe
+              distincts, et cinq paliers pour les porter. */}
+          <b style={{ color: "var(--text)" }}>Vingt-et-un noms de classe</b>, et cinq paliers pour les porter : Maître et Héros ne sont pas
+          de nouvelles classes mais des promotions de ton Métier 2 — un Chevalier devient Chevalier Maître, puis Chevalier Héros. Seul le
+          troisième métier change de nom. Le niveau maximum d&apos;un perso est {LIMITES.niveauMaxPersonnage} : le palier Héros s&apos;ouvre
+          à {LIMITES.niveauMaxGeneral}, le légendaire à {LIMITES.niveauMaxLegendaire}.
         </div>
       </div>
 

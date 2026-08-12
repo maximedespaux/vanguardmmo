@@ -1,0 +1,1336 @@
+{
+ "genere": "fusion du carnet des arcanes fait main et du relevé du client",
+ "sources": {
+  "faitMain": "public/airbuilder/data.json → CARNETS (noms, raretés, quantités)",
+  "client": "public/wiki/collections.json → decks (illustrations, bonus éveillé, sujets)"
+ },
+ "jonction": "par la signature des cartes, PAS par l'index : les deux numérotations diffèrent (le carnet 5 du fait-main est le 15e du client)",
+ "carnets": 15,
+ "cartes": 63,
+ "illustrations": 59,
+ "orphelins": [],
+ "liste": [
+  {
+   "rang": 1,
+   "idClient": 1,
+   "nom": "L'appel de l'aventure",
+   "etui": "Étui 1",
+   "rarete": "Commun",
+   "couleur": "#9aa0aa",
+   "palier": 1,
+   "copies": 1,
+   "difficulte": false,
+   "complet": [
+    [
+     "Vitesse",
+     15
+    ],
+    [
+     "Expérience",
+     20
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Vitesse de déplacement %",
+     "valeur": 15,
+     "labelFaitMain": "Vitesse"
+    },
+    {
+     "label": "Expérience %",
+     "valeur": 20,
+     "labelFaitMain": "Expérience"
+    }
+   ],
+   "eveille": [
+    [
+     "Vitesse de déplacement %",
+     15
+    ],
+    [
+     "Expérience %",
+     20
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Nerco",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_1.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Dwarpet",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_2.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Lawolf",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_3.webp",
+     "sujet": "monstre",
+     "niveau": 13
+    }
+   ]
+  },
+  {
+   "rang": 2,
+   "idClient": 2,
+   "nom": "Domaine élémentaire",
+   "etui": "Étui 1",
+   "rarete": "Commun",
+   "couleur": "#9aa0aa",
+   "palier": 1,
+   "copies": 1,
+   "difficulte": false,
+   "complet": [
+    [
+     "Toutes stats",
+     10
+    ],
+    [
+     "Vitesse d'incantation",
+     25
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Toutes stats",
+     "valeur": 10,
+     "labelFaitMain": "Toutes stats"
+    },
+    {
+     "label": "Vitesse d'incantation %",
+     "valeur": 25,
+     "labelFaitMain": "Vitesse d'incantation"
+    }
+   ],
+   "eveille": [
+    [
+     "Toutes stats",
+     10
+    ],
+    [
+     "Vitesse d'incantation %",
+     25
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Martin",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_4.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Lui",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_5.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Mia",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_6.webp",
+     "sujet": "monstre",
+     "niveau": 23
+    }
+   ]
+  },
+  {
+   "rang": 3,
+   "idClient": 3,
+   "nom": "Le poids du destin",
+   "etui": "Étui 1",
+   "rarete": "Commun",
+   "couleur": "#9aa0aa",
+   "palier": 1,
+   "copies": 1,
+   "difficulte": false,
+   "complet": [
+    [
+     "Toutes stats",
+     10
+    ],
+    [
+     "Attaque",
+     200
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Toutes stats",
+     "valeur": 10,
+     "labelFaitMain": "Toutes stats"
+    },
+    {
+     "label": "Attaque",
+     "valeur": 200,
+     "labelFaitMain": "Attaque"
+    }
+   ],
+   "eveille": [
+    [
+     "Toutes stats",
+     10
+    ],
+    [
+     "Attaque",
+     200
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Bobochan",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_7.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Losha",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_8.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte zombieger",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_9.webp",
+     "sujet": "monstre",
+     "niveau": 55
+    }
+   ]
+  },
+  {
+   "rang": 4,
+   "idClient": 4,
+   "nom": "Prédestination",
+   "etui": "Étui 1",
+   "rarete": "Commun",
+   "couleur": "#9aa0aa",
+   "palier": 1,
+   "copies": 1,
+   "difficulte": false,
+   "complet": [
+    [
+     "Expérience",
+     40
+    ],
+    [
+     "Vitesse",
+     15
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Expérience %",
+     "valeur": 40,
+     "labelFaitMain": "Expérience"
+    },
+    {
+     "label": "Vitesse de déplacement %",
+     "valeur": 15,
+     "labelFaitMain": "Vitesse"
+    }
+   ],
+   "eveille": [
+    [
+     "Expérience %",
+     40
+    ],
+    [
+     "Vitesse de déplacement %",
+     15
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Maire de Flaris",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_10.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Luda",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_11.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Luia",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": "couleur_ii_sys_sys_monsterdeck_12.webp",
+     "sujet": "monstre",
+     "niveau": 91
+    }
+   ]
+  },
+  {
+   "rang": 5,
+   "idClient": 15,
+   "nom": "Recherche de Gloire",
+   "etui": "Étui 1",
+   "rarete": "Commun",
+   "couleur": "#9aa0aa",
+   "palier": 1,
+   "copies": 1,
+   "difficulte": false,
+   "complet": [
+    [
+     "Taux de penyas",
+     5
+    ],
+    [
+     "Vitesse",
+     15
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Penyas %",
+     "valeur": 5,
+     "labelFaitMain": "Taux de penyas"
+    },
+    {
+     "label": "Vitesse de déplacement %",
+     "valeur": 15,
+     "labelFaitMain": "Vitesse"
+    }
+   ],
+   "eveille": [
+    [
+     "Penyas %",
+     5
+    ],
+    [
+     "Vitesse de déplacement %",
+     15
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Macoodoo",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": null,
+     "sujet": "monstre",
+     "niveau": 112
+    },
+    {
+     "nom": "Carte Maitre des cartes",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": null,
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Sasha",
+     "rarete": "Commune",
+     "quantite": 1,
+     "art": null,
+     "sujet": null,
+     "niveau": null
+    }
+   ]
+  },
+  {
+   "rang": 6,
+   "idClient": 5,
+   "nom": "Le potentiel de l'esprit",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Maîtrise d'arme",
+     25
+    ],
+    [
+     "Précision",
+     25
+    ],
+    [
+     "Taux critique",
+     15
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "XP de maîtrise d'arme %",
+     "valeur": 15,
+     "labelFaitMain": "Maîtrise d'arme"
+    },
+    {
+     "label": "Précision %",
+     "valeur": 15,
+     "labelFaitMain": "Précision"
+    },
+    {
+     "label": "Taux de critique %",
+     "valeur": 10,
+     "labelFaitMain": "Taux critique"
+    }
+   ],
+   "eveille": [
+    [
+     "XP de maîtrise d'arme %",
+     25
+    ],
+    [
+     "Précision %",
+     25
+    ],
+    [
+     "Taux de critique %",
+     15
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Carte Bob Maître des nucléus",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_13.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Balboa",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_14.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Taiaha",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_15.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Wretched Soul",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_16.webp",
+     "sujet": null,
+     "niveau": null
+    }
+   ]
+  },
+  {
+   "rang": 7,
+   "idClient": 6,
+   "nom": "Jour de chance",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Taux de drop",
+     15
+    ],
+    [
+     "Taux de penyas",
+     8
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Chance de butin %",
+     "valeur": 10,
+     "labelFaitMain": "Taux de drop"
+    },
+    {
+     "label": "Penyas %",
+     "valeur": 5,
+     "labelFaitMain": "Taux de penyas"
+    }
+   ],
+   "eveille": [
+    [
+     "Chance de butin %",
+     15
+    ],
+    [
+     "Penyas %",
+     8
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Isruel",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_17.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Angie",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_18.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte garuda",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_19.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte dantalian",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_24.webp",
+     "sujet": "monstre",
+     "niveau": 106
+    }
+   ]
+  },
+  {
+   "rang": 8,
+   "idClient": 7,
+   "nom": "Un corps, deux esprits",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Endurance %",
+     8
+    ],
+    [
+     "Endurance",
+     35
+    ],
+    [
+     "PV max",
+     2500
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Endurance %",
+     "valeur": 5,
+     "labelFaitMain": "Endurance %"
+    },
+    {
+     "label": "Endurance",
+     "valeur": 25,
+     "labelFaitMain": "Endurance"
+    },
+    {
+     "label": "PV max",
+     "valeur": 1500,
+     "labelFaitMain": "PV max"
+    }
+   ],
+   "eveille": [
+    [
+     "Endurance %",
+     8
+    ],
+    [
+     "Endurance",
+     35
+    ],
+    [
+     "PV max",
+     2500
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Knight Guardian",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_25.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Souverain Prestigieux",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": null,
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Obnis",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_27.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Général ishtar",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_28.webp",
+     "sujet": "monstre",
+     "niveau": 121
+    }
+   ]
+  },
+  {
+   "rang": 9,
+   "idClient": 8,
+   "nom": "Plume du savoir",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Intelligence %",
+     8
+    ],
+    [
+     "Dégâts magiques %",
+     15
+    ],
+    [
+     "Puissance magique",
+     350
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Intelligence %",
+     "valeur": 5,
+     "labelFaitMain": "Intelligence %"
+    },
+    {
+     "label": "Dégâts magiques %",
+     "valeur": 10,
+     "labelFaitMain": "Dégâts magiques %"
+    },
+    {
+     "label": "Puissance magique",
+     "valeur": 250,
+     "labelFaitMain": "Puissance magique"
+    }
+   ],
+   "eveille": [
+    [
+     "Intelligence %",
+     8
+    ],
+    [
+     "Dégâts magiques %",
+     15
+    ],
+    [
+     "Puissance magique",
+     350
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Laola",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_29.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Auxilior",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_30.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Keokuk",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_31.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Stalagmite",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_32.webp",
+     "sujet": "monstre",
+     "niveau": 220
+    }
+   ]
+  },
+  {
+   "rang": 10,
+   "idClient": 9,
+   "nom": "Indomptables",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Force %",
+     8
+    ],
+    [
+     "Dextérité %",
+     8
+    ],
+    [
+     "Dégâts critiques",
+     35
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Force %",
+     "valeur": 5,
+     "labelFaitMain": "Force %"
+    },
+    {
+     "label": "Dextérité %",
+     "valeur": 5,
+     "labelFaitMain": "Dextérité %"
+    },
+    {
+     "label": "Dégâts critiques %",
+     "valeur": 25,
+     "labelFaitMain": "Dégâts critiques"
+    }
+   ],
+   "eveille": [
+    [
+     "Force %",
+     8
+    ],
+    [
+     "Dextérité %",
+     8
+    ],
+    [
+     "Dégâts critiques %",
+     35
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Rocky",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_33.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Zoro",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_34.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Mordillos",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_35.webp",
+     "sujet": "monstre",
+     "niveau": 120
+    },
+    {
+     "nom": "Carte Nyx",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_42.webp",
+     "sujet": "monstre",
+     "niveau": 120
+    }
+   ]
+  },
+  {
+   "rang": 11,
+   "idClient": 10,
+   "nom": "Bénédiction de Rhisis",
+   "etui": "Étui 2",
+   "rarete": "Rare",
+   "couleur": "#4ea8ff",
+   "palier": 2,
+   "copies": 2,
+   "difficulte": true,
+   "complet": [
+    [
+     "Soins %",
+     60
+    ],
+    [
+     "Intelligence",
+     40
+    ],
+    [
+     "PV max",
+     1500
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Soins %",
+     "valeur": 40,
+     "labelFaitMain": "Soins %"
+    },
+    {
+     "label": "Intelligence",
+     "valeur": 30,
+     "labelFaitMain": "Intelligence"
+    },
+    {
+     "label": "PV max",
+     "valeur": 1000,
+     "labelFaitMain": "PV max"
+    }
+   ],
+   "eveille": [
+    [
+     "Soins %",
+     60
+    ],
+    [
+     "Intelligence",
+     40
+    ],
+    [
+     "PV max",
+     1500
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Marche",
+     "rarete": "Commune",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_43.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Handel",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_44.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Siren",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_45.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Remardda",
+     "rarete": "Rare",
+     "quantite": 2,
+     "art": "couleur_ii_sys_sys_monsterdeck_46.webp",
+     "sujet": "monstre",
+     "niveau": 80
+    }
+   ]
+  },
+  {
+   "rang": 12,
+   "idClient": 11,
+   "nom": "Clefs de la réussite",
+   "etui": "Étui 3",
+   "rarete": "Épique & Légendaire",
+   "couleur": "#f87171",
+   "palier": 3,
+   "copies": 3,
+   "difficulte": true,
+   "complet": [
+    [
+     "Taux de drop",
+     30
+    ],
+    [
+     "Taux de penyas",
+     15
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Chance de butin %",
+     "valeur": 15,
+     "labelFaitMain": "Taux de drop"
+    },
+    {
+     "label": "Penyas %",
+     "valeur": 8,
+     "labelFaitMain": "Taux de penyas"
+    }
+   ],
+   "eveille": [
+    [
+     "Chance de butin %",
+     30
+    ],
+    [
+     "Penyas %",
+     15
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Pretresse mystérieuse",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_47.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Kraken",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_48.webp",
+     "sujet": "monstre",
+     "niveau": 129
+    },
+    {
+     "nom": "Carte Harpiness matriarche",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_49.webp",
+     "sujet": "monstre",
+     "niveau": 180
+    },
+    {
+     "nom": "Carte Dragon de Jade",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_50.webp",
+     "sujet": "monstre",
+     "niveau": 182
+    },
+    {
+     "nom": "Carte Inconnu",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_51.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Elaine",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_74.webp",
+     "sujet": null,
+     "niveau": null
+    }
+   ]
+  },
+  {
+   "rang": 13,
+   "idClient": 12,
+   "nom": "Protecteur de Roika",
+   "etui": "Étui 3",
+   "rarete": "Épique & Légendaire",
+   "couleur": "#f87171",
+   "palier": 3,
+   "copies": 3,
+   "difficulte": true,
+   "complet": [
+    [
+     "Endurance %",
+     16
+    ],
+    [
+     "PV max %",
+     40
+    ],
+    [
+     "Endurance",
+     90
+    ],
+    [
+     "PV max",
+     4000
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Endurance %",
+     "valeur": 8,
+     "labelFaitMain": "Endurance %"
+    },
+    {
+     "label": "PV max %",
+     "valeur": 20,
+     "labelFaitMain": "PV max %"
+    },
+    {
+     "label": "Endurance",
+     "valeur": 45,
+     "labelFaitMain": "Endurance"
+    },
+    {
+     "label": "PV max",
+     "valeur": 2000,
+     "labelFaitMain": "PV max"
+    }
+   ],
+   "eveille": [
+    [
+     "Endurance %",
+     16
+    ],
+    [
+     "PV max %",
+     40
+    ],
+    [
+     "Endurance",
+     90
+    ],
+    [
+     "PV max",
+     4000
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Bubble",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_52.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Meteo rouge",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_53.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Lucifer",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_54.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Clockworks",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_55.webp",
+     "sujet": "monstre",
+     "niveau": 80
+    },
+    {
+     "nom": "Carte Reonan",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_56.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Amos",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_57.webp",
+     "sujet": null,
+     "niveau": null
+    }
+   ]
+  },
+  {
+   "rang": 14,
+   "idClient": 13,
+   "nom": "Secret d'érudit",
+   "etui": "Étui 3",
+   "rarete": "Épique & Légendaire",
+   "couleur": "#f87171",
+   "palier": 3,
+   "copies": 3,
+   "difficulte": true,
+   "complet": [
+    [
+     "Intelligence %",
+     16
+    ],
+    [
+     "Dégâts magiques %",
+     30
+    ],
+    [
+     "Puissance magique",
+     1000
+    ],
+    [
+     "Dégâts aux monstres",
+     16
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Intelligence %",
+     "valeur": 8,
+     "labelFaitMain": "Intelligence %"
+    },
+    {
+     "label": "Dégâts magiques %",
+     "valeur": 15,
+     "labelFaitMain": "Dégâts magiques %"
+    },
+    {
+     "label": "Puissance magique",
+     "valeur": 500,
+     "labelFaitMain": "Puissance magique"
+    },
+    {
+     "label": "Dégâts contre monstres (PvE) %",
+     "valeur": 8,
+     "labelFaitMain": "Dégâts aux monstres"
+    }
+   ],
+   "eveille": [
+    [
+     "Intelligence %",
+     16
+    ],
+    [
+     "Dégâts magiques %",
+     30
+    ],
+    [
+     "Puissance magique",
+     1000
+    ],
+    [
+     "Dégâts contre monstres (PvE) %",
+     16
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Ivillis",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_58.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Rangda",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_59.webp",
+     "sujet": "monstre",
+     "niveau": 70
+    },
+    {
+     "nom": "Carte Entaness",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_60.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Roi Patate",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_61.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Reodos",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_62.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Ainher",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_63.webp",
+     "sujet": "pnj",
+     "niveau": null
+    }
+   ]
+  },
+  {
+   "rang": 15,
+   "idClient": 14,
+   "nom": "Les Insurgés",
+   "etui": "Étui 3",
+   "rarete": "Épique & Légendaire",
+   "couleur": "#f87171",
+   "palier": 3,
+   "copies": 3,
+   "difficulte": true,
+   "complet": [
+    [
+     "Force %",
+     16
+    ],
+    [
+     "Dextérité %",
+     16
+    ],
+    [
+     "Dégâts critiques",
+     85
+    ],
+    [
+     "Dégâts aux monstres",
+     16
+    ]
+   ],
+   "bonus": [
+    {
+     "label": "Force %",
+     "valeur": 8,
+     "labelFaitMain": "Force %"
+    },
+    {
+     "label": "Dextérité %",
+     "valeur": 8,
+     "labelFaitMain": "Dextérité %"
+    },
+    {
+     "label": "Dégâts critiques %",
+     "valeur": 55,
+     "labelFaitMain": "Dégâts critiques"
+    },
+    {
+     "label": "Dégâts contre monstres (PvE) %",
+     "valeur": 8,
+     "labelFaitMain": "Dégâts aux monstres"
+    }
+   ],
+   "eveille": [
+    [
+     "Force %",
+     16
+    ],
+    [
+     "Dextérité %",
+     16
+    ],
+    [
+     "Dégâts critiques %",
+     85
+    ],
+    [
+     "Dégâts contre monstres (PvE) %",
+     16
+    ]
+   ],
+   "cartes": [
+    {
+     "nom": "Carte Shade",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_64.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Azra",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_65.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte zerkattak",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_66.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Anagrero",
+     "rarete": "Épique",
+     "quantite": 3,
+     "art": "couleur_ii_sys_sys_monsterdeck_67.webp",
+     "sujet": null,
+     "niveau": null
+    },
+    {
+     "nom": "Carte Sury",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_68.webp",
+     "sujet": "pnj",
+     "niveau": null
+    },
+    {
+     "nom": "Carte Hael",
+     "rarete": "Légendaire",
+     "quantite": 4,
+     "art": "couleur_ii_sys_sys_monsterdeck_69.webp",
+     "sujet": "pnj",
+     "niveau": null
+    }
+   ]
+  }
+ ]
+}

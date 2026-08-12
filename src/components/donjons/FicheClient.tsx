@@ -77,16 +77,27 @@ export function Situation({ d, nomAffiche }: { d: DonjonClient; nomAffiche: stri
   );
 }
 
-/** Le plan du donjon, quand il a été extrait du client. Deux donjons sur
- *  vingt-trois pour l'instant — les autres n'affichent rien plutôt qu'un cadre
- *  vide qui laisserait croire à une image cassée. */
+/**
+ * L'image du donjon, quand le client en donne une : vingt-deux sur vingt-trois.
+ * Le vingt-troisième (Faille du débutant) n'affiche rien plutôt qu'un cadre vide
+ * qui laisserait croire à une image cassée.
+ *
+ * Le TITRE suit le `genre` de la table, il n'est pas fixe. Onze des vingt-deux
+ * images sont des vues aériennes — une photo du terrain vue de dessus — et les
+ * annoncer « Le plan » promettait une carte lisible : sur les Ruines givrées, on
+ * voyait une bande de neige au milieu du noir sous un titre qui disait « plan ».
+ * La distinction existait déjà dans les données ; c'est l'affichage qui l'ignorait.
+ */
 export function PlanDonjon({ d }: { d: DonjonClient }) {
   const plan = PLANS[d.dossier];
   if (!plan) return null;
   const cadre = plan.cadre;
+  const aerien = plan.genre === "aerien";
   return (
     <div style={{ marginBottom: 14 }}>
-      <SousTitre icon="map" apres="tel qu'il sort du client">Le plan</SousTitre>
+      <SousTitre icon="map" apres={aerien ? "le terrain vu de dessus, sans repère" : "tel qu'il sort du client"}>
+        {aerien ? "La vue aérienne" : "Le plan"}
+      </SousTitre>
       {/* Plafonné à 460 px et centré : à pleine largeur, un plan carré prenait
           autant de hauteur que tout le reste de la fiche réuni et repoussait le
           peuplement sous la ligne de flottaison. */}
@@ -95,9 +106,12 @@ export function PlanDonjon({ d }: { d: DonjonClient }) {
             remplit déjà son fichier. Avec, elle est agrandie du facteur qui ramène
             la zone utile à la largeur du cadre, puis décalée pour poser le coin
             haut-gauche de cette zone sur le coin du cadre — d'où le ratio du cadre,
-            qui suppose une image source carrée (c'est le cas des deux plans versés). */}
+            qui suppose une image source CARRÉE. Un seul plan est recadré à ce jour,
+            le Château de Draken, et son fichier fait bien 1 280 × 1 280 : `top` en
+            pourcentage se calcule sur la hauteur du conteneur, donc un cadre non
+            carré sur une source non carrée décalerait l'image verticalement. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={plan.src} alt={`Plan de ${d.interne}`} loading="lazy"
+        <img src={plan.src} alt={`${aerien ? "Vue aérienne" : "Plan"} de ${d.interne}`} loading="lazy"
           style={cadre
             // `maxWidth: none` est indispensable : une règle globale plafonne toutes
             // les images à 100 % de leur parent, et elle annulait silencieusement

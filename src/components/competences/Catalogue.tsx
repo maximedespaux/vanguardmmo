@@ -14,7 +14,11 @@ import {
 } from "./donnees";
 
 /**
- * LE CATALOGUE — les 202 compétences, cherchées comme on les cherche.
+ * LE CATALOGUE — les 197 compétences, cherchées comme on les cherche.
+ *
+ * 197 et non 202 : le fichier du client écrit DEUX FOIS cinq compétences d'arc de
+ * l'Acrobate. C'est `Sections.tsx` qui l'explique au lecteur ; ici on note juste
+ * que le nombre affiché vient de `entrees.length`, jamais d'une constante.
  *
  * Trois façons d'arriver sur une compétence, et elles ne se remplacent pas :
  *  · par le nom, quand on sait déjà lequel on veut ;

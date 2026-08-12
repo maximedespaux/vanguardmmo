@@ -193,7 +193,13 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
       contenu: nbMecaniques === 0 ? (
         <Vide>
           Aucune mécanique scriptée dans le client pour ce monstre : il frappe, et c&apos;est tout.
-          Sur les 1 124 monstres, 909 ont un bloc de comportement — celui-ci n&apos;en a pas, ou il est vide.
+          {/* Le chiffre est celui que CETTE fiche sait compter — les mêmes champs que
+              `nbMecaniques` juste au-dessus, comptés sur les 1 124 monstres du
+              catalogue : 410 en ont au moins un. Un « 909 ont un bloc de
+              comportement » figurait ici ; il ne se retrouve dans aucun champ du
+              fichier, et surtout il laissait croire que ce monstre-là fait
+              exception alors que les deux tiers du catalogue sont dans son cas. */}
+          {" "}Ils sont 714 sur 1 124 dans ce cas : ne rien voir ici est la norme, pas un trou dans le wiki.
         </Vide>
       ) : (
         <div style={{ display: "grid", gap: 13 }}>

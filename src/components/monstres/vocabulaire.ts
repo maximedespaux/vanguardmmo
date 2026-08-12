@@ -5,6 +5,19 @@
  * peut donc jamais être importé par un composant client. Tout ce qui doit être
  * lisible des deux côtés (types, libellés, couleurs, mises en forme) vit ici, et
  * ici seulement — c'est le même découpage que `components/objets/`.
+ *
+ * ┌─────────── CE QUI A QUITTÉ CE FICHIER, ET POURQUOI ───────────┐
+ * │ `exp`, `penya` et les taux de butin ne sont PLUS dans le type  │
+ * │ `Monstre`. Ils restent dans `public/wiki/monstres.json` — on   │
+ * │ ne touche pas au relevé — mais ils ne peuvent plus atteindre   │
+ * │ un écran : le compilateur refuse `m.exp`. C'est la demande de  │
+ * │ Maxime prise au mot (« taux de drop, exp, penyas : on s'en     │
+ * │ fiche »), et un type est le seul garde-fou qui tienne quand    │
+ * │ six écrans montrent les mêmes monstres.                       │
+ * │ `AVERTISSEMENT_BUTIN` est parti avec eux : il expliquait       │
+ * │ l'absence des tables de butin ordinaires, c'est-à-dire d'une   │
+ * │ chose dont on se fiche.                                        │
+ * └────────────────────────────────────────────────────────────────┘
  */
 
 /** Le monstre tel que `public/wiki/monstres.json` le porte. Les noms de champs
@@ -27,7 +40,6 @@ export type Monstre = {
   esq: number | null;
   /** Force, endurance, dextérité, intelligence — dans cet ordre. */
   sta: (number | null)[];
-  vitAtk: number | null;
   /** Délai entre deux attaques, en millisecondes. */
   delai: number | null;
   elem: string | null;
@@ -35,9 +47,6 @@ export type Monstre = {
   res: Record<string, number>;
   agro: string | null;
   vole: boolean;
-  penya: number | null;
-  exp: number | null;
-  madrigal: number | null;
   zone: string | null;
   /** Porte une clé `NEWSERV` : c'est du contenu ajouté par AirFlyff. */
   maison: boolean;
@@ -49,13 +58,13 @@ export type Monstre = {
   invoque?: { m: string; n: number; c: number }[];
   renfort?: { m: string; n: number; pv: number };
   fuit?: number;
-  esqPct?: number;
   distance?: number;
   aggro?: number;
-  sansPenalite?: boolean;
   tache?: boolean;
-  butin?: { o: string; p: number; q: number }[];
-  butinClient?: { o: string; p: number; niv: number }[];
+  /** Le NOM des objets, jamais leur taux : `p` n'est pas déclaré, donc aucun
+   *  écran ne peut l'afficher même si le fichier le porte encore. */
+  butin?: { o: string; q: number }[];
+  butinClient?: { o: string; niv: number }[];
   titre?: { t: string; n: number };
   groupe?: string;
   lieux?: { z: string; n: number }[];
@@ -95,7 +104,7 @@ export const TON_RANG: Record<string, string> = {
 
 export const tonRang = (r: string | null) => (r && TON_RANG[r]) || "var(--text-muted)";
 
-/** Les 5 éléments du jeu et leur icône, vérifiées présentes dans
+/** Les 5 éléments du jeu et leur icône, vérifiées servies depuis
  *  `public/jeu/mecaniques/`. « aucun » n'a pas d'image : c'est une absence, pas
  *  un élément, et lui coller une icône ferait croire le contraire. */
 export const ELEMENTS = ["feu", "eau", "electricite", "vent", "terre"] as const;
@@ -117,9 +126,9 @@ export const iconeElement = (e: string | null) =>
  *
  * On pourrait appliquer la roue élémentaire (feu > vent > terre > électricité >
  * eau > feu), mais quelques monstres sortent du moule : Clockworks porte +0,5 sur
- * trois éléments à la fois. Déduire au lieu de lire donnerait une faiblesse qui
- * n'existe pas — donc on lit les cinq colonnes du client, et rien d'autre.
- * Une valeur négative = il prend PLUS de dégâts de cet élément.
+ * trois éléments à la fois, et des boss sont faibles à leur PROPRE élément — ce
+ * que la roue ne produit jamais. Donc on lit les cinq colonnes du client, et rien
+ * d'autre. Une valeur négative = il prend PLUS de dégâts de cet élément.
  */
 export function faiblesses(res: Record<string, number>) {
   const faible: string[] = [];
@@ -131,6 +140,21 @@ export function faiblesses(res: Record<string, number>) {
   }
   return { faible, resiste };
 }
+
+/** Les cinq colonnes dans l'ordre du jeu, prêtes pour le graphique. */
+export const colonnesRes = (res: Record<string, number>) =>
+  ELEMENTS.map((e) => ({ e, v: typeof res?.[e] === "number" ? res[e] : 0 }));
+
+/**
+ * L'ÉCHELLE DU GRAPHIQUE DE RÉSISTANCES, relevée sur les données.
+ *
+ * Les 5 606 valeurs du catalogue ne prennent que dix valeurs distinctes, et
+ * 99,8 % d'entre elles tiennent entre −0,3 et +0,5. Neuf monstres portent 100,
+ * 150 ou 718 — hors de toute échelle commune. On borne donc à 0,5 et on écrit le
+ * nombre à côté de la barre : une barre pleine avec « +718 » lisible dit la
+ * vérité, alors qu'une échelle à 718 écraserait les 1 115 autres monstres à zéro.
+ */
+export const RES_ECHELLE = 0.5;
 
 /**
  * LE COUP LE PLUS FORT QU'IL PORTE — et pourquoi ce n'est pas simplement `atkMax`.
@@ -163,22 +187,11 @@ export const coupMin = (m: { atkMin: number | null; atkMax: number | null }) =>
 export const bornesInversees = (m: { atkMin: number | null; atkMax: number | null }) =>
   m.atkMin != null && m.atkMax != null && m.atkMax < m.atkMin;
 
-/**
- * « au feu », « à l'eau », « à l'électricité », « au vent », « à la terre ».
- *
- * La préposition change avec le mot, et « résiste au eau » se lit comme une
- * faute de frappe sur une page qui prétend citer le client. Table partagée pour
- * que la fiche, la recherche et le bestiaire des world boss disent la même
- * phrase.
- */
-export const A_L_ELEMENT: Record<string, string> = {
-  feu: "au feu", eau: "à l'eau", electricite: "à l'électricité",
-  vent: "au vent", terre: "à la terre",
-};
-
-/** « à l'eau et au vent » — les éléments enchaînés avec la bonne préposition. */
-export const enListe = (es: string[]) =>
-  es.map((e) => A_L_ELEMENT[e] ?? ELEMENT_FR[e] ?? e).join(" et ");
+/** Dégâts par seconde sur une cible : le seul moyen de comparer un boss qui
+ *  frappe fort lentement et un boss qui frappe deux fois moins fort quatre fois
+ *  plus vite. Partagé pour que /monstres et /worldboss ne divergent pas. */
+export const parSeconde = (m: { atkMin: number | null; atkMax: number | null; delai: number | null }) =>
+  m.delai && m.delai > 0 ? Math.round((coupMax(m) * 1000) / m.delai) : 0;
 
 /** Coups par seconde, à partir du délai en millisecondes. C'est la donnée que le
  *  tank regarde : 4 millions de dégâts toutes les 4 secondes et les mêmes toutes
@@ -191,8 +204,32 @@ export function cadence(delaiMs: number | null): string | null {
     : `1 coup toutes les ${(delaiMs / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} s`;
 }
 
-/** L'avertissement à ne jamais omettre. Une fiche muette sur le butin laisse
- *  croire que le monstre ne lâche rien — c'est faux, et c'est le serveur qui
- *  calcule les tables ordinaires. Le texte est ici pour être identique partout. */
-export const AVERTISSEMENT_BUTIN =
-  "Le butin ordinaire des monstres n’est PAS dans les fichiers du jeu : le serveur le calcule. Ce qui est listé ici, ce sont les seules tables écrites dans le client — le butin de quête et les six butins déclarés en dur. Une fiche sans butin ne veut donc jamais dire « ça ne lâche rien ».";
+/**
+ * LES HUIT PORTRAITS QU'ON A LE DROIT DE MONTRER.
+ *
+ * Le client porte 118 illustrations de cartes de monstre (110 × 250,
+ * `public/jeu/cartes/couleur_ii_sys_sys_monsterdeck_<n>.webp`) dont la collection
+ * est le sujet de /crafts. Douze d'entre elles portent le nom EXACT d'un monstre
+ * du catalogue — mais un nom identique ne prouve pas que le dessin représente la
+ * bête. Les douze ont donc été OUVERTES une par une, et seules celles dont
+ * l'illustration correspond visiblement au monstre sont ici :
+ *
+ *   Lawolf → un loup bleu ; Dantalian → un sorcier encapuchonné ; Mordillos →
+ *   un lycan violet (son identifiant client est MI_LYCANOS01) ; Nyx → un ange
+ *   noir ailé (MI_ANGELWHITE3) ; Kraken → une bête marine à tentacules ;
+ *   Dragon de Jade → un dragon vert ; Clockworks → le colosse mécanique ;
+ *   Rangda → une figure en robe noire couverte de crânes.
+ *
+ * ÉCARTÉES malgré le nom identique : « Stalagmite » (une créature végétale, quand
+ * le monstre est MI_GPOTATO02) et « Remardda » (un fauve de boss, quand le monstre
+ * est de niveau 12). Un portrait faux est pire que pas de portrait — c'est le même
+ * arbitrage que les quatre vues aériennes retirées du site.
+ */
+const PORTRAITS: Record<string, number> = {
+  MI_LAWOLF2: 3, MI_DANTALIAN02: 24, MI_LYCANOS01: 35, MI_ANGELWHITE3: 42,
+  MI_HERNKRAKEN01: 48, MI_NEWDRAGON: 50, MI_CLOCKWORK1: 55,
+  MI_RANGDA01: 59, MI_RANGDA01_1: 59,
+};
+
+export const portraitDe = (id: string) =>
+  PORTRAITS[id] ? `/jeu/cartes/couleur_ii_sys_sys_monsterdeck_${PORTRAITS[id]}.webp` : null;

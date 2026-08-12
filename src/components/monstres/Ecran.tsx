@@ -2,11 +2,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { RechercheMonstres } from "./Recherche";
+import { Faiblesses, SchemaVies } from "./Graphiques";
 import {
-  AVERTISSEMENT_BUTIN, cadence, court, ELEMENT_FR, entier, faiblesses,
-  iconeElement, tonRang, type Compteurs, type Monstre,
+  cadence, coupMax, court, ELEMENT_FR, entier, iconeElement, tonRang,
+  type Compteurs, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -15,47 +17,56 @@ import {
  * On cherche par nom quand on sait déjà qui on affronte. On lit le classement
  * quand on prépare un run et qu'on veut savoir à quoi on s'attaque. On regarde
  * les frappeurs quand on est tank et que la question est « est-ce que je tiens ».
- * Trois questions différentes, donc trois entrées — pas trois pages, parce
- * qu'elles partagent le même catalogue.
  *
  * Le classement et les frappeurs sont calculés côté serveur et passés en
  * propriétés : ils ne bougent jamais, les recalculer à chaque affichage aurait
  * relu 1 124 lignes pour un résultat identique.
+ *
+ * ┌───────────── CE QUI A QUITTÉ CETTE PAGE ─────────────┐
+ * │ L'avertissement sur le butin ordinaire coiffait la    │
+ * │ page entière pour expliquer l'absence des TAUX de     │
+ * │ butin. On ne montre plus de taux : l'explication      │
+ * │ n'avait plus d'objet, elle est partie avec eux.       │
+ * │ Le paragraphe de six lignes sur les vies est devenu   │
+ * │ un schéma (`SchemaVies`) — même fait, deux blocs      │
+ * │ dessinés, zéro phrase.                                │
+ * └──────────────────────────────────────────────────────┘
  */
 
 type Onglet = "chercher" | "boss" | "frappeurs";
 
-export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes }: {
+export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs }: {
   boss: Monstre[]; frappeurs: Monstre[]; compteurs: Compteurs; total: number;
   groupes: { nom: string; n: number }[];
+  /** Compté sur le catalogue, jamais écrit : cf. `catalogue.faits()`. */
+  agressifs: number;
 }) {
   useCardFx();
   const [onglet, setOnglet] = useState<Onglet>("chercher");
+  const roi = boss[0];
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
 
-      {/* Ce que le catalogue contient, en chiffres — avant les filtres. C'est ce
-          qui donne l'échelle : « 142 monstres au-dessus du milliard de PV » dit
-          plus sur le haut niveau d'AirFlyff qu'un paragraphe. */}
+      {/* Ce que le catalogue contient, en chiffres. C'est ce qui donne l'échelle :
+          « 142 monstres au-dessus du milliard de PV » dit plus sur le haut niveau
+          d'AirFlyff qu'un paragraphe. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(146px,1fr))", gap: 9 }}>
-        <Chiffre icon="paw" valeur={entier(total)} quoi="monstres dans le client" />
-        <Chiffre icon="skull" valeur={entier(compteurs.vies)} quoi="boss qui se relèvent" ton="var(--red)" />
+        <Chiffre icon="paw" valeur={entier(total)} quoi="monstres" />
+        <Chiffre icon="sparkles" valeur={entier(compteurs.maison)} quoi="ajoutés par AirFlyff" ton="var(--purple)" />
+        <Chiffre icon="skull" valeur={entier(compteurs.vies)} quoi="se relèvent" ton="var(--red)" />
         <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--orange)" />
         <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--gold)" />
-        <Chiffre icon="sparkles" valeur={entier(compteurs.maison)} quoi="ajoutés par AirFlyff" ton="var(--purple)" />
-        <Chiffre icon="map-pin" valeur={entier(compteurs.localises)} quoi="localisés sur une carte" ton="var(--blue)" />
       </div>
 
-      {/* L'avertissement est en haut de page, pas au fond d'une fiche : quelqu'un
-          qui parcourt la recherche sans ouvrir une seule fiche doit l'avoir lu. */}
-      <div style={{ border: "1px dashed var(--border)", borderRadius: 11, padding: "12px 14px", fontSize: 12.5, color: "var(--text-muted)", display: "flex", gap: 9, alignItems: "flex-start" }}>
-        <Icon name="alert" size={15} style={{ color: "var(--gold)", flexShrink: 0, transform: "translateY(1px)" }} />
-        <span>{AVERTISSEMENT_BUTIN}</span>
+      <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+        <Invisible enJeu={`Dans le Flyff d'origine, une bonne partie des monstres attend d'être frappée. Ici ils sont ${entier(agressifs)} sur ${entier(total)} à attaquer à vue : l'agressivité a cessé d'être une information de fiche, c'est la règle.`}>
+          <span>Plus aucun monstre passif</span>
+        </Invisible>
       </div>
 
       <div className="vg-subtabs" style={{ margin: 0 }}>
-        {([["chercher", "Chercher un monstre"], ["boss", "Les boss par PV à sortir"], ["frappeurs", "Ceux qui frappent le plus fort"]] as const).map(([k, l]) => (
+        {([["chercher", "Chercher"], ["boss", "Les boss par PV à sortir"], ["frappeurs", "Ceux qui frappent le plus fort"]] as const).map(([k, l]) => (
           <button key={k} onClick={() => setOnglet(k)} className={`vg-subtab ${onglet === k ? "active" : ""}`}>{l}</button>
         ))}
       </div>
@@ -64,18 +75,26 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes }: {
 
       {onglet === "boss" && (
         <div style={{ display: "grid", gap: 14 }}>
-          <div className="glass-card" style={{ padding: "14px 16px", fontSize: 13, lineHeight: 1.55 }}>
-            <b style={{ color: "var(--red)" }}>Un boss à plusieurs vies ne meurt pas quand sa barre atteint zéro.</b>{" "}
-            Il repart à plein PV et son compteur descend d&apos;une vie. Les PV à sortir valent donc{" "}
-            <b>PV × vies</b>, et le chiffre affiché en jeu ne le dit nulle part : Azharyon annonce 2 milliards,
-            il en faut 30. {compteurs.vies} monstres du client fonctionnent comme ça. C&apos;est le premier
-            chiffre à connaître avant de composer un groupe.
-          </div>
+          {/* Le schéma remplace le paragraphe : deux rangées à la même échelle
+              disent en une image ce que six lignes disaient en mots. Il est dessiné
+              sur le PREMIER du classement — le cas extrême du catalogue, et celui
+              qui fait le plus croire à un bug quand le boss remonte à plein. */}
+          {roi && (
+            <div className="glass-card" style={{ padding: "14px 16px", display: "grid", gap: 9 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                <Link href={`/monstres/${roi.id}`} className="font-heading" style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", textDecoration: "none" }}>
+                  {roi.nom}
+                </Link>
+                <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{roi.groupe}</span>
+              </div>
+              <SchemaVies pv={roi.pv} vies={roi.vies ?? 1} pvEff={roi.pvEff} />
+            </div>
+          )}
 
           <TableauBoss lignes={boss} colonne="pvEff" />
 
-          {/* Les regroupements par donjon : utile pour savoir de quel contenu on
-              parle quand on voit un boss remonter dans le classement. */}
+          {/* Les regroupements par donjon : de quel contenu on parle quand on voit
+              un boss remonter dans le classement. */}
           <div>
             <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 9px" }}>
               Les contenus reconstitués
@@ -88,28 +107,16 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes }: {
                 </span>
               ))}
             </div>
-            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "8px 0 0" }}>
-              Les rosters sont reconstruits par préfixe d&apos;identifiant interne : un monstre créé par le
-              serveur au fil d&apos;un run n&apos;y figure pas, et son absence ne veut pas dire qu&apos;il n&apos;existe pas.
-            </p>
           </div>
         </div>
       )}
 
       {onglet === "frappeurs" && (
         <div style={{ display: "grid", gap: 14 }}>
-          <div className="glass-card" style={{ padding: "14px 16px", fontSize: 13, lineHeight: 1.55 }}>
-            Les PV disent combien de temps dure le combat ; les dégâts par coup et la <b>cadence</b> disent
-            si le tank tient. Un monstre ordinaire frappe toutes les 3 à 6 secondes. Les boss des Chambres
-            Secrètes sont entre 250 et 375 ms, et certains boss du Chaos descendent à 101 ms — à plusieurs
-            millions de dégâts par coup, ce n&apos;est pas le même métier.
-            {/* Le nombre vient de la liste reçue, jamais d'une constante : si la page
-                en demande 30 demain, la phrase suivra. Un classement tronqué qui ne
-                dit pas où il s'arrête se lit comme la liste complète. */}
-            <span style={{ display: "block", marginTop: 8, color: "var(--text-muted)", fontSize: 12 }}>
-              Ce tableau montre les {frappeurs.length} monstres qui frappent le plus fort, pas tout le catalogue —
-              la recherche, elle, range les 1 124 par dégâts par coup si tu le lui demandes.
-            </span>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+            <Invisible enJeu="Un monstre ordinaire frappe toutes les 3 à 6 secondes. Les boss des Chambres Secrètes sont à 250–375 ms, et certains boss du Chaos à 101 ms : le même chiffre par coup n'est plus le même combat.">
+              <span>Les {frappeurs.length} plus violents du catalogue, par coup</span>
+            </Invisible>
           </div>
           <TableauBoss lignes={frappeurs} colonne="degats" />
         </div>
@@ -152,9 +159,8 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
 
      Une seule teinte, celle que la colonne emploie déjà pour son chiffre : c'est
      la LONGUEUR qui porte la grandeur, jamais la couleur. Et `aria-hidden`, parce
-     que le nombre exact est juste au-dessus — un lecteur d'écran n'a rien à
-     gagner à entendre décrire un rectangle. */
-  const valeurTriee = (m: Monstre) => (colonne === "pvEff" ? m.pvEff : m.atkMax) ?? 0;
+     que le nombre exact est juste au-dessus. */
+  const valeurTriee = (m: Monstre) => (colonne === "pvEff" ? m.pvEff : coupMax(m));
   const maxTrie = Math.max(1, ...lignes.map(valeurTriee));
   const Barre = ({ m, teinte }: { m: Monstre; teinte: string }) => (
     <span aria-hidden="true" style={{ display: "block", height: 3, marginTop: 5, borderRadius: 2, background: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
@@ -166,22 +172,30 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
   );
   return (
     <div className="glass-card" style={{ padding: 0, overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
         <thead>
           <tr style={{ borderBottom: "1px solid var(--border)" }}>
             <th style={{ ...th, textAlign: "left", width: 34 }}>#</th>
             <th style={{ ...th, textAlign: "left" }}>Monstre</th>
             <th style={th}>Niv.</th>
-            <th style={th}>{colonne === "pvEff" ? "PV à sortir" : "PV"}</th>
+            <th style={th}>
+              {colonne === "pvEff" ? (
+                /* La pastille est sur l'EN-TÊTE de la colonne, à l'endroit exact
+                   où le chiffre se lit — et une seule fois pour 94 lignes, sinon
+                   plus rien n'est marqué. */
+                <Invisible enJeu="La barre de vie du jeu n'annonce que les PV d'une vie. Multiplie par le nombre de vies : c'est ce que cette colonne fait.">
+                  <span>PV à sortir</span>
+                </Invisible>
+              ) : "PV"}
+            </th>
             <th style={th}>Vies</th>
             <th style={th}>Dégâts / coup</th>
             <th style={th}>Cadence</th>
-            <th style={{ ...th, textAlign: "left" }}>Faible à</th>
+            <th style={{ ...th, textAlign: "left" }}>Élément</th>
           </tr>
         </thead>
         <tbody>
           {lignes.map((m, i) => {
-            const { faible } = faiblesses(m.res);
             const ic = iconeElement(m.elem);
             return (
               <tr key={m.id} style={{ borderTop: i ? "1px solid color-mix(in srgb, var(--border) 50%, transparent)" : "none" }}>
@@ -205,13 +219,11 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
                   {m.vies ?? "1"}
                 </td>
                 <td style={{ ...td, fontWeight: colonne === "degats" ? 700 : 400, minWidth: colonne === "degats" ? 96 : undefined, color: colonne === "degats" ? "var(--red)" : "var(--text)" }}>
-                  {m.atkMax ? court(m.atkMax) : "—"}
+                  {coupMax(m) ? court(coupMax(m)) : "—"}
                   {colonne === "degats" && <Barre m={m} teinte="var(--red)" />}
                 </td>
                 <td style={{ ...td, color: "var(--text-muted)" }}>{cadence(m.delai) ?? "—"}</td>
-                <td style={{ ...td, textAlign: "left", color: "var(--green)" }}>
-                  {faible.length ? faible.map((e) => ELEMENT_FR[e]).join(", ") : "—"}
-                </td>
+                <td style={{ ...td, textAlign: "left" }}><Faiblesses res={m.res} /></td>
               </tr>
             );
           })}

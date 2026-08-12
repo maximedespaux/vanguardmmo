@@ -1,0 +1,180 @@
+"use client";
+import { Bulle, Invisible } from "@/components/Bulle";
+import {
+  colonnesRes, court, ELEMENT_FR, ELEMENTS, faiblesses, iconeElement, RES_ECHELLE,
+} from "./vocabulaire";
+
+/**
+ * LES TROIS DESSINS DE LA PAGE MONSTRES — ce qui remplace les paragraphes.
+ *
+ * Demande de Maxime : « enlever les descriptions et textes : les images parlent
+ * beaucoup plus, et les graphiques, des schémas ». Chacun de ces trois-là a
+ * remplacé une phrase, et pas un fait n'est parti avec elle :
+ *
+ *   `SchemaVies`     ← « il repart à plein PV et son compteur descend d'une vie… »
+ *   `Resistances`    ← « il prend plus de dégâts au feu et résiste à l'eau… »
+ *   `Faiblesses`     ← la colonne « Faible à » écrite en français dans un tableau
+ *
+ * Aucune dépendance : des `div` et des variables CSS. Une seule teinte par
+ * graphique — c'est la LONGUEUR qui porte la grandeur, jamais la couleur (le vert
+ * et le doré ne se distinguent pas pour un daltonien protan).
+ */
+
+/**
+ * LE SCHÉMA DES VIES — le champion de « on ne le devine pas en jouant ».
+ *
+ * La barre de vie du jeu annonce les PV d'UNE vie. Azharyon affiche 2 milliards et
+ * il en faut 30. Aucun joueur ne peut le savoir en combat : il voit seulement le
+ * boss remonter à plein, et croit à un bug.
+ *
+ * Le dessin dit la chose en une image : le bloc du haut est ce que la barre montre,
+ * la rangée du bas est le combat réel. Les deux sont à la MÊME échelle — c'est tout
+ * l'intérêt, et c'est pour ça que le bloc du haut ne fait qu'un `vies`-ième de la
+ * largeur au lieu d'être plein.
+ */
+export function SchemaVies({ pv, vies, pvEff, taille = "normale" }: {
+  pv: number; vies: number; pvEff: number; taille?: "normale" | "petite";
+}) {
+  const h = taille === "petite" ? 9 : 13;
+  const etiquette: React.CSSProperties = {
+    fontSize: taille === "petite" ? 10 : 11, textTransform: "uppercase",
+    letterSpacing: ".6px", color: "var(--text-muted)",
+  };
+  const valeur: React.CSSProperties = {
+    fontVariantNumeric: "tabular-nums", fontWeight: 700,
+    fontSize: taille === "petite" ? 12 : 14,
+  };
+  return (
+    <div style={{ display: "grid", gap: taille === "petite" ? 7 : 10 }}>
+      <div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
+          <span style={etiquette}>Ce que la barre annonce</span>
+          <span className="font-heading" style={{ ...valeur, color: "var(--text-muted)" }}>{court(pv)}</span>
+        </div>
+        <div style={{ display: "flex", gap: 2, height: h }}>
+          <span style={{ width: `${100 / vies}%`, background: "color-mix(in srgb, var(--orange) 32%, transparent)", border: "1px solid color-mix(in srgb, var(--orange) 55%, transparent)", borderRadius: 3 }} />
+        </div>
+      </div>
+      <div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
+          <span style={etiquette}>Ce qu&apos;il faut sortir</span>
+          {/* La pastille est POSÉE SUR LE CHIFFRE, pas dans un encadré en tête de
+              page : c'est ici qu'un joueur lit le nombre et c'est ici qu'il doit
+              apprendre que le jeu ne le lui montrera jamais. */}
+          <Invisible enJeu={`La barre de vie n'affiche que ${court(pv)}, les PV d'une seule vie. À zéro il repart à plein tant qu'il lui en reste : ${vies} barres à vider.`}>
+            <span className="font-heading" style={{ ...valeur, color: "var(--red)" }}>{court(pvEff)}</span>
+          </Invisible>
+          <span style={{ ...etiquette, marginLeft: "auto" }}>{vies} vies</span>
+        </div>
+        <div style={{ display: "flex", gap: 2, height: h }} aria-hidden="true">
+          {Array.from({ length: vies }, (_, i) => (
+            <span key={i} style={{ flex: 1, background: "color-mix(in srgb, var(--red) 40%, transparent)", border: "1px solid color-mix(in srgb, var(--red) 62%, transparent)", borderRadius: 3 }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * LES CINQ COLONNES DE RÉSISTANCE, en graphique.
+ *
+ * On les LIT, on ne les déduit jamais de la roue élémentaire : des monstres
+ * résistent à trois éléments à la fois, et des boss sont faibles à leur propre
+ * élément. Le sens est porté par le CÔTÉ de l'axe (à gauche : il prend plus) et
+ * par le signe du nombre — deux encodages qui ne dépendent pas de la couleur.
+ */
+export function Resistances({ res }: { res: Record<string, number> }) {
+  const lignes = colonnesRes(res);
+  const rien = lignes.every((l) => l.v === 0);
+  return (
+    <div style={{ display: "grid", gap: 5 }}>
+      <div style={{ display: "flex", fontSize: 10.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".6px" }}>
+        <span style={{ flex: 1 }}>← il prend plus</span>
+        <span>il encaisse mieux →</span>
+      </div>
+      {lignes.map(({ e, v }) => {
+        const part = Math.min(1, Math.abs(v) / RES_ECHELLE);
+        const ton = v < 0 ? "var(--green)" : "var(--red)";
+        return (
+          <div key={e} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={iconeElement(e)!} alt={ELEMENT_FR[e]} title={ELEMENT_FR[e]} width={16} height={16} style={{ objectFit: "contain", flexShrink: 0 }} />
+            <span style={{ flex: 1, display: "flex", height: 10, minWidth: 0 }} aria-hidden="true">
+              <span style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+                {v < 0 && <span style={{ width: `${Math.max(1.5, part * 100)}%`, background: ton, borderRadius: "3px 0 0 3px" }} />}
+              </span>
+              <span style={{ width: 1, background: "var(--border)" }} />
+              <span style={{ flex: 1 }}>
+                {v > 0 && <span style={{ display: "block", width: `${Math.max(1.5, part * 100)}%`, height: "100%", background: ton, borderRadius: "0 3px 3px 0" }} />}
+              </span>
+            </span>
+            <span style={{ width: 52, textAlign: "right", fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: v === 0 ? "var(--text-muted)" : ton, fontWeight: v === 0 ? 400 : 700 }}>
+              {v === 0 ? "0" : `${v > 0 ? "+" : ""}${v.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}`}
+            </span>
+          </div>
+        );
+      })}
+      {rien && (
+        <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>Tous les éléments lui font le même mal.</div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * LES FAIBLESSES EN ICÔNES — pour une cellule de tableau ou une vignette.
+ *
+ * Remplace la colonne « Faible à » qui écrivait « Eau, Vent » en français : deux
+ * icônes du jeu se reconnaissent d'un coup d'œil et tiennent dans 40 px, là où les
+ * mots demandaient une colonne large sur 94 lignes.
+ */
+export function Faiblesses({ res, bulle = true }: {
+  res: Record<string, number>;
+  /** `false` DANS UN LIEN. Une bulle est un `<button>`, et un bouton dans une
+   *  ancre est du HTML invalide : le clic partirait sur la fiche au lieu d'ouvrir
+   *  la bulle. Les vignettes de résultat s'en servent sans bulle, les tableaux
+   *  avec. */
+  bulle?: boolean;
+}) {
+  const { faible, resiste } = faiblesses(res);
+  if (faible.length === 0 && resiste.length === 0) {
+    return <span style={{ color: "var(--text-muted)", fontSize: 11.5 }}>—</span>;
+  }
+  const rangee = (es: string[], bord: string, quoi: string) => (
+    <span style={{ display: "inline-flex", gap: 3 }}>
+      {es.map((e) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={e} src={iconeElement(e)!} alt={`${quoi} ${ELEMENT_FR[e]}`} title={`${quoi} ${ELEMENT_FR[e]}`} width={17} height={17}
+          style={{ objectFit: "contain", borderRadius: 5, boxShadow: `0 0 0 1.5px ${bord}` }} />
+      ))}
+    </span>
+  );
+  const icones = (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+      {faible.length > 0 && rangee(faible, "var(--green)", "faible")}
+      {resiste.length > 0 && rangee(resiste, "var(--red)", "résiste")}
+    </span>
+  );
+  if (!bulle) return icones;
+  return (
+    <Bulle quoi={
+      <span style={{ display: "grid", gap: 6 }}>
+        {ELEMENTS.map((e) => {
+          const v = res?.[e] ?? 0;
+          return (
+            <span key={e} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={iconeElement(e)!} alt="" width={14} height={14} style={{ objectFit: "contain" }} />
+              <span style={{ flex: 1 }}>{ELEMENT_FR[e]}</span>
+              <b style={{ color: v < 0 ? "var(--green)" : v > 0 ? "var(--red)" : "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+                {v > 0 ? "+" : ""}{v.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}
+              </b>
+            </span>
+          );
+        })}
+        <span style={{ color: "var(--text-muted)" }}>Négatif : il prend plus.</span>
+      </span>
+    }>{icones}</Bulle>
+  );
+}

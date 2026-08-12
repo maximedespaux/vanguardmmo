@@ -1,29 +1,37 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
 import { Icon, type IconName } from "@/components/Icon";
+import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
+import { NomObjet } from "@/components/objets/NomObjet";
 import { Portrait } from "@/components/pnj/Portrait";
 
 /**
- * L'ANNUAIRE DES PNJ — la matière que personne n'avait ouverte.
+ * L'ANNUAIRE DES PNJ — « qui vend quoi, qui fabrique quoi, et où ».
  *
- * Le client d'AirFlyff porte 131 portraits de dialogue (200×240, canal alpha)
- * dans `Char/data.air`. Ils n'étaient affichés nulle part : ni sur le site, ni
- * sur le wiki. Le problème n'était pas de les extraire mais de savoir QUI est
- * sur chaque image — un visage attribué au mauvais marchand est pire que pas de
- * visage. L'appariement ne devine rien : `character.inc` donne, pour chaque
- * PNJ, un `SetImage( IDS_CHARACTER_INC_xxxxxx )`, et cet identifiant se résout
- * dans `character.txt` en un nom de fichier (`char_Boboku.tga`). C'est le jeu
- * lui-même qui dit qui porte quel visage. 121 des 131 portraits trouvent ainsi
- * leur PNJ ; les 10 restants ne sont câblés à personne dans ce client.
+ * Le client d'AirFlyff porte 131 portraits de dialogue (200×240, canal alpha) que rien
+ * n'affichait. L'appariement ne devine rien : `character.inc` donne, pour chaque PNJ,
+ * un `SetImage( IDS_CHARACTER_INC_xxxxxx )` qui se résout dans `character.txt` en un
+ * nom de fichier. C'est le jeu qui dit qui porte quel visage.
  *
- * Ce qu'un joueur vient chercher ici n'est pas une liste : c'est « qui vend
- * quoi, et où le trouver ». D'où le rail par MÉTIER plutôt que par ordre
- * alphabétique — les 578 PNJ du fichier ne servent à rien, les artisans et les
- * boutiques oui. Les prix affichés sortent des lignes `AddShopItem` du client,
- * donc ce sont les vrais, en perins.
+ * ┌──────────── CE QUE CETTE PASSE A CHANGÉ ────────────┐
+ * │ 1. LES PRIX SONT PARTIS. Ils tenaient une colonne sur │
+ * │    chaque ligne d'étal. Ce qui sert, c'est de savoir  │
+ * │    QUE ce marchand a l'objet, et par quelle monnaie   │
+ * │    il se paie — perins, jeton, nucléus. Pas combien.  │
+ * │ 2. ON CHERCHE PAR OBJET. « Qui vend une potion ? » se │
+ * │    posait forcément et l'annuaire n'y répondait pas ;  │
+ * │    il fallait ouvrir les fiches une par une.          │
+ * │ 3. LES RECETTES SONT DEVENUES DES NOMS. La liste des  │
+ * │    ingrédients appartient à /crafts : ici on dit CHEZ │
+ * │    QUI, et on renvoie là-bas pour le détail. C'était  │
+ * │    le même sujet développé sur deux pages.            │
+ * │ 4. Chaque nom d'objet mène quelque part — sa fiche du │
+ * │    catalogue, et sa provenance quand le client la sait.│
+ * └──────────────────────────────────────────────────────┘
  */
 
 type Objet = { n: string; p?: number; i: string | null };
@@ -37,16 +45,19 @@ type Vignette = {
   nbVend: number; nbTroc: number; nbCraft: number; nbCraftTotal: number; craftEteints: number; quetes: number;
 };
 type Fiche = Vignette & { vend: Objet[]; troc: Troc[]; craft: Recette[] };
+type Trouve = {
+  cle: string; nom: string; img: string | null; metier: string | null; ville: string | null;
+  comment: string; articles: { n: string; i: string | null }[];
+};
 
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
-const fmt = (n: number) => n.toLocaleString("fr-FR");
 
 /** Les familles, dans l'ordre où elles servent : on fabrique, on achète, puis le reste. */
 const FAMILLES: { clef: string; titre: string; sous: string; icon: IconName }[] = [
-  { clef: "craft", titre: "Chez qui tu fabriques", sous: "Les artisans et leurs recettes", icon: "hammer" },
-  { clef: "boutique", titre: "Qui vend quoi", sous: "Les marchands, avec leurs prix", icon: "basket" },
+  { clef: "craft", titre: "Chez qui tu fabriques", sous: "Les artisans", icon: "hammer" },
+  { clef: "boutique", titre: "Qui vend quoi", sous: "Les marchands", icon: "basket" },
   { clef: "service", titre: "Les services", sous: "Coiffeur, familiers, bazar, mairie", icon: "sparkles" },
-  { clef: "guilde", titre: "Guerre de guilde", sous: "Inscription et paiement des jetons", icon: "shield" },
+  { clef: "guilde", titre: "Guerre de guilde", sous: "Inscription et jetons", icon: "shield" },
   { clef: "pvp", titre: "Arènes", sous: "Le colisée et les jetons rouges", icon: "swords" },
   { clef: "monde", titre: "Les entrées", sous: "Tour, chambres secrètes, salle du temps", icon: "torii" },
   { clef: "quete", titre: "À qui tu rends", sous: "Les PNJ de fin de quête", icon: "scroll" },
@@ -63,22 +74,24 @@ function Pastille({ texte, couleur, titre }: { texte: string; couleur: string; t
   );
 }
 
-/** Ce que le PNJ apporte, en trois mots — c'est ce qui fait choisir une vignette. */
+/** Ce que le PNJ apporte, en trois mots — c'est ce qui fait choisir une vignette.
+ *  Des COMPTES et des natures, plus de montants : « 14 articles » situe l'étal,
+ *  « 14 articles à 1 200 perins » ne situait rien de plus. */
 function resume(p: Vignette): string {
   const bouts: string[] = [];
-  if (p.nbVend) bouts.push(`${p.nbVend} article${p.nbVend > 1 ? "s" : ""} en perins`);
-  if (p.nbTroc) bouts.push(`${p.nbTroc} contre des jetons`);
   if (p.nbCraft) bouts.push(`${p.nbCraft} recette${p.nbCraft > 1 ? "s" : ""}`);
-  if (!bouts.length && p.quetes) bouts.push(`${p.quetes} quête${p.quetes > 1 ? "s" : ""} à rendre`);
+  if (p.nbTroc) bouts.push(`${p.nbTroc} contre jetons`);
+  if (p.nbVend) bouts.push(`${p.nbVend} article${p.nbVend > 1 ? "s" : ""}`);
+  if (!bouts.length && p.quetes) bouts.push(`${p.quetes} quête${p.quetes > 1 ? "s" : ""}`);
   return bouts.join(" · ") || "Dialogue seulement";
 }
 
 /** Une vignette de la grille : le visage, le nom, le métier, la ville. */
 function CartePnj({ p, onOuvrir }: { p: Vignette; onOuvrir: () => void }) {
   return (
-    /* `aria-label` explicite : le nom du PNJ vit dans des <span> imbriqués, et
-       l'arbre d'accessibilité rendait le bouton SANS nom — inutilisable au
-       lecteur d'écran comme au pilotage clavier. */
+    /* `aria-label` explicite : le nom du PNJ vit dans des <span> imbriqués, et l'arbre
+       d'accessibilité rendait le bouton SANS nom — inutilisable au lecteur d'écran
+       comme au pilotage clavier. */
     <button onClick={onOuvrir} className="fx-card pnj-vignette"
       aria-label={`${p.nom}${p.metier ? `, ${p.metier}` : ""} — ouvrir sa fiche`}
       style={{ display: "flex", gap: 11, textAlign: "left", cursor: "pointer", fontFamily: "inherit", color: "inherit",
@@ -93,38 +106,42 @@ function CartePnj({ p, onOuvrir }: { p: Vignette; onOuvrir: () => void }) {
             {p.monnaies.slice(0, 2).join(", ")}{p.monnaies.length > 2 ? "…" : ""}
           </span>
         )}
-        <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-          <Icon name="map-pin" size={11} />
-          {p.ville ?? "ville non relevée"}
-        </span>
+        {p.ville && (
+          <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
+            <Icon name="map-pin" size={11} />{p.ville}
+          </span>
+        )}
       </span>
     </button>
   );
 }
 
-/** L'inventaire de vente, tel que le client l'écrit — prix en perins. */
+/** Une rangée d'articles : icône + nom cliquable. Le nom mène à sa fiche du catalogue
+ *  et à sa provenance ; l'icône du client suffit à reconnaître la pièce. */
+function Articles({ liste, couleur }: { liste: { n: string; i: string | null }[]; couleur?: string }) {
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {liste.map((o, i) => (
+        <span key={i} style={{ fontSize: 11.5, padding: "4px 9px", borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
+          <NomObjet nom={o.n} icone={o.i} couleur={couleur} taille={17} />
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** L'étal de vente. Plafonné à 30 lignes : au-delà, l'étal est un catalogue et c'est
+ *  la recherche par objet qui répond, pas le déroulé. */
 function Vente({ vend }: { vend: Objet[] }) {
   const [tout, setTout] = useState(false);
-  const montres = tout ? vend : vend.slice(0, 24);
+  const montres = tout ? vend : vend.slice(0, 30);
   return (
     <>
-      <div style={{ display: "grid", gap: 6 }}>
-        {montres.map((o, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 10px", borderRadius: 9,
-            background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-            {o.i ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={`/jeu/icones/${o.i}`} alt="" width={26} height={26} style={{ flexShrink: 0, objectFit: "contain" }} />
-            ) : <span style={{ width: 26, flexShrink: 0 }} />}
-            <span style={{ flex: 1, minWidth: 0, fontSize: 12.5 }}>{o.n}</span>
-            {o.p != null && <b style={{ fontSize: 12.5, color: "var(--gold)", whiteSpace: "nowrap", ...NUM }}>{fmt(o.p)} perins</b>}
-          </div>
-        ))}
-      </div>
-      {vend.length > 24 && (
+      <Articles liste={montres} />
+      {vend.length > 30 && (
         <button onClick={() => setTout(!tout)} style={{ marginTop: 9, fontFamily: "inherit", cursor: "pointer", fontSize: 12,
-          padding: "7px 13px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700 }}>
-          {tout ? "Ne montrer que les 24 premiers" : `Montrer les ${vend.length - 24} autres`}
+          padding: "6px 12px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700 }}>
+          {tout ? "Replier" : `+ ${vend.length - 30}`}
         </button>
       )}
     </>
@@ -132,85 +149,56 @@ function Vente({ vend }: { vend: Objet[] }) {
 }
 
 /**
- * L'étal à jetons, groupé par monnaie.
+ * L'ÉTAL À JETONS, groupé par monnaie.
  *
- * C'est la mécanique maison d'AirFlyff : on paie avec un OBJET (jeton rouge,
- * nucléus, médaille de donjon) et pas avec des perins. Le client dit ce qui est
- * en vente et contre quoi, mais PAS combien il en faut — cette quantité est
- * décidée côté serveur. On l'écrit noir sur blanc plutôt que d'afficher une
- * colonne vide qui laisserait croire que c'est gratuit.
+ * C'est la mécanique maison d'AirFlyff : on paie avec un OBJET — jeton rouge, nucléus,
+ * médaille de donjon — et pas avec des perins. Le client dit ce qui est en vente et
+ * contre quoi ; la QUANTITÉ exigée, elle, est décidée côté serveur. Ce trou-là reste
+ * signalé, mais dans une bulle et pas en paragraphe : il protège d'un farm inutile,
+ * c'est la seule raison qui vaille de garder une réserve.
  */
 function TrocEtal({ troc }: { troc: Troc[] }) {
-  const [tout, setTout] = useState(false);
   const groupes = useMemo(() => {
     const m = new Map<string, Troc[]>();
-    for (const t of troc) {
-      const l = m.get(t.m) ?? [];
-      l.push(t);
-      m.set(t.m, l);
-    }
+    for (const t of troc) m.set(t.m, [...(m.get(t.m) ?? []), t]);
     return [...m.entries()].sort((a, b) => b[1].length - a[1].length);
   }, [troc]);
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      {groupes.map(([monnaie, liste]) => {
-        const montres = tout ? liste : liste.slice(0, 10);
-        return (
-          <div key={monnaie}>
-            <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
-              {liste[0].mi ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={`/jeu/icones/${liste[0].mi}`} alt="" width={22} height={22} style={{ objectFit: "contain" }} />
-              ) : null}
+      {groupes.map(([monnaie, liste]) => (
+        <div key={monnaie}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 7 }}>
+            {liste[0].mi ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={`/jeu/icones/${liste[0].mi}`} alt="" width={22} height={22} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+            ) : null}
+            <Invisible enJeu={`Le client dit qu'on paie en ${monnaie}, jamais COMBIEN il en faut : la quantité est fixée côté serveur. Compte-la dans la fenêtre du PNJ avant de partir farmer.`}>
               <b style={{ fontSize: 12.5, color: "var(--gold)" }}>contre du {monnaie}</b>
-              <span style={{ fontSize: 11, color: "var(--text-muted)", ...NUM }}>{liste.length}</span>
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {montres.map((t, i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, padding: "5px 10px",
-                  borderRadius: 8, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-                  {t.i ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={`/jeu/icones/${t.i}`} alt="" width={18} height={18} style={{ objectFit: "contain" }} />
-                  ) : null}
-                  {t.n}
-                </span>
-              ))}
-              {!tout && liste.length > 10 && (
-                <span style={{ fontSize: 11.5, padding: "5px 10px", color: "var(--text-muted)", ...NUM }}>
-                  + {liste.length - 10}
-                </span>
-              )}
-            </div>
+            </Invisible>
+            <span style={{ fontSize: 11, color: "var(--text-muted)", ...NUM }}>{liste.length}</span>
           </div>
-        );
-      })}
-      {troc.length > 10 && (
-        <button onClick={() => setTout(!tout)} style={{ justifySelf: "start", fontFamily: "inherit", cursor: "pointer", fontSize: 12,
-          padding: "7px 13px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700 }}>
-          {tout ? "Replier l'étal" : "Tout montrer"}
-        </button>
-      )}
-      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>
-        Le client dit contre quoi ça s&apos;échange, jamais <b>combien</b> il en faut : cette quantité est fixée
-        côté serveur. Vérifie le tarif dans la fenêtre du PNJ avant de farmer.
-      </p>
+          <Articles liste={liste.map((t) => ({ n: t.n, i: t.i }))} />
+        </div>
+      ))}
     </div>
   );
 }
 
-/** Une recette : ce que tu donnes, ce que tu récupères. */
-function Craft({ craft }: { craft: Recette[] }) {
-  /**
-   * Le piège du couturier, généralisé.
-   *
-   * Chez Karlagarfeld, quatre coffrets différents demandent EXACTEMENT les mêmes
-   * ingrédients. En jeu, une fenêtre d'échange ne peut proposer qu'un seul
-   * résultat pour une entrée donnée : les suivants sont probablement
-   * inatteignables. Plutôt que d'écrire ça en dur pour ce PNJ, on le détecte —
-   * la même collision existe ailleurs, et elle réapparaîtra au prochain patch.
-   */
+/**
+ * CE QU'IL FABRIQUE — les RÉSULTATS, pas les recettes.
+ *
+ * La liste des ingrédients vivait ici ET sur /crafts, mot pour mot. Cette page répond
+ * à « chez qui ? » ; le détail d'une recette appartient à la page des crafts, qui en
+ * est propriétaire. Un nom, une icône, un lien.
+ *
+ * Reste un piège qui ne se voit que d'ici, parce qu'il se voit en comparant les
+ * recettes d'UN MÊME PNJ : chez Karlagarfeld, quatre coffrets différents demandent
+ * exactement les mêmes ingrédients. En jeu, une fenêtre d'échange ne rend qu'un
+ * résultat pour une entrée donnée — les suivants sont probablement inatteignables. On
+ * le détecte au lieu de l'écrire en dur : la collision réapparaîtra au prochain patch.
+ */
+function Craft({ craft, eteints }: { craft: Recette[]; eteints: number }) {
   const collisions = useMemo(() => {
     const vus = new Map<string, number>();
     for (const r of craft) {
@@ -222,45 +210,31 @@ function Craft({ craft }: { craft: Recette[] }) {
   }, [craft]);
 
   return (
-    <div style={{ display: "grid", gap: 9 }}>
-      {collisions > 0 && (
-        <div style={{ display: "flex", gap: 9, alignItems: "flex-start", padding: "11px 13px", borderRadius: 10,
-          background: "rgba(255,210,74,.07)", border: "1px solid color-mix(in srgb, var(--gold) 30%, transparent)" }}>
-          <Icon name="alert" size={15} style={{ color: "var(--gold)", flexShrink: 0, marginTop: 1 }} />
-          <span style={{ fontSize: 12.5, lineHeight: 1.55 }}>
-            <b style={NUM}>{collisions}</b> de ces recettes réclament <b>exactement</b> les mêmes ingrédients
-            qu&apos;une autre. Une fenêtre d&apos;échange ne rend qu&apos;un résultat par entrée : en jeu, tu
-            n&apos;obtiendras probablement que le premier. Teste avec un exemplaire avant de farmer la pile.
-          </span>
-        </div>
-      )}
-      {craft.map((r, i) => (
-        <div key={i} style={{ padding: "10px 12px", borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: r.e.length ? 8 : 0 }}>
-            {r.i ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={`/jeu/icones/${r.i}`} alt="" width={26} height={26} style={{ flexShrink: 0, objectFit: "contain" }} />
-            ) : <Icon name="package" size={20} style={{ color: "var(--text-muted)", flexShrink: 0 }} />}
-            <b className="font-heading" style={{ fontSize: 13, color: "var(--green)" }}>{r.s ?? (r.l || "Résultat non nommé")}</b>
-          </div>
-          {r.e.length > 0 && (
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {r.e.map((e, j) => (
-                <span key={j} style={{ fontSize: 11.5, padding: "3px 9px", borderRadius: 7, background: "var(--bg-3)",
-                  border: "1px solid var(--border)", color: "var(--text-muted)", ...NUM }}>
-                  {e.n} ×{fmt(e.q)}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+    <div style={{ display: "grid", gap: 10 }}>
+      <Articles liste={craft.map((r) => ({ n: r.s || r.l || "Résultat non nommé", i: r.i }))} couleur="var(--green)" />
+
+      <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center", fontSize: 12 }}>
+        <Link href="/crafts" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", fontWeight: 700, textDecoration: "none" }}>
+          <Icon name="hammer" size={13} /> Les recettes, ingrédient par ingrédient
+        </Link>
+        {collisions > 0 && (
+          <Invisible enJeu={`${collisions} de ces recettes réclament exactement les mêmes ingrédients qu'une autre. Une fenêtre d'échange ne rend qu'un résultat par entrée : en jeu tu n'obtiendras probablement que le premier. Teste avec un exemplaire avant de farmer la pile.`}>
+            <b style={{ color: "var(--gold)", ...NUM }}>{collisions} en collision</b>
+          </Invisible>
+        )}
+        {eteints > 0 && (
+          <Invisible enJeu={`${eteints} recette${eteints > 1 ? "s" : ""} existe${eteints > 1 ? "nt" : ""} dans le client mais la ligne est commentée : l'équipe l'a éteinte au lieu de la supprimer. Elle n'apparaît pas chez le PNJ en jeu — ne compte pas dessus.`}>
+            <b style={{ color: "var(--red)", ...NUM }}>{eteints} éteinte{eteints > 1 ? "s" : ""}</b>
+          </Invisible>
+        )}
+      </div>
     </div>
   );
 }
 
 /** La fiche ouverte : qui c'est, où il est, et tout ce qu'il propose. */
 function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; onFermer: () => void }) {
+  const rien = fiche && !fiche.craft.length && !fiche.vend.length && !fiche.troc.length;
   return (
     <div>
       <button onClick={onFermer} style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 14, cursor: "pointer",
@@ -276,18 +250,9 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 9 }}>
             {v.metier && <Pastille texte={v.metier} couleur="var(--orange)" />}
             {v.ville && <Pastille texte={v.ville} couleur="var(--blue)" titre="La carte sur laquelle le jeu le place" />}
-            {v.quetes > 0 && <Pastille texte={`${v.quetes} quête${v.quetes > 1 ? "s" : ""} à rendre`} couleur="var(--gold)" />}
+            {v.quetes > 0 && <Pastille texte={`${v.quetes} quête${v.quetes > 1 ? "s" : ""}`} couleur="var(--gold)" />}
           </div>
           {v.quoi && <p style={{ fontSize: 13, color: "var(--text-muted)", lineHeight: 1.55, margin: 0 }}>{v.quoi}</p>}
-          {!v.ville && (
-            <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.55, margin: "8px 0 0" }}>
-              Les cartes du client ne le posent nulle part : soit il n&apos;est pas placé sur cette version, soit son
-              emplacement est décidé côté serveur. On préfère te le dire plutôt que d&apos;inventer une ville.
-            </p>
-          )}
-          <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 10, opacity: .8, fontFamily: "monospace" }}>
-            {v.cle}{v.srt ? ` · ${v.srt}` : ""}
-          </div>
         </div>
       </div>
 
@@ -297,49 +262,32 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
         <>
           {fiche.craft.length > 0 && (
             <>
-              <SousTitre icon="hammer" texte="Ce qu'il fabrique pour toi" compte={fiche.nbCraftTotal} />
-              <Craft craft={fiche.craft} />
-              {fiche.nbCraftTotal > fiche.craft.length && (
-                <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 9 }}>
-                  {fiche.nbCraftTotal - fiche.craft.length} autres recettes chez lui ne sont pas détaillées ici.
-                </p>
-              )}
+              <SousTitre icon="hammer" texte="Il fabrique" compte={fiche.nbCraftTotal} />
+              <Craft craft={fiche.craft} eteints={fiche.craftEteints} />
             </>
-          )}
-
-          {fiche.craftEteints > 0 && (
-            <div style={{ display: "flex", gap: 9, alignItems: "flex-start", marginTop: 14, padding: "11px 13px", borderRadius: 10,
-              background: "rgba(255,90,90,.07)", border: "1px solid color-mix(in srgb, var(--red) 30%, transparent)" }}>
-              <Icon name="alert" size={15} style={{ color: "var(--red)", flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 12.5, lineHeight: 1.55 }}>
-                <b style={{ ...NUM }}>{fiche.craftEteints}</b> recette{fiche.craftEteints > 1 ? "s" : ""} existe{fiche.craftEteints > 1 ? "nt" : ""} dans
-                le client mais {fiche.craftEteints > 1 ? "sont" : "est"} <b>éteinte{fiche.craftEteints > 1 ? "s" : ""}</b> chez lui :
-                l&apos;équipe a commenté la ligne au lieu de supprimer la recette. Ne compte pas dessus.
-              </span>
-            </div>
           )}
 
           {fiche.troc.length > 0 && (
             <>
-              <SousTitre icon="coins" texte="Ce qu'il te donne contre des jetons" compte={fiche.troc.length} />
+              <SousTitre icon="coins" texte="Contre des jetons" compte={fiche.troc.length} />
               <TrocEtal troc={fiche.troc} />
             </>
           )}
 
           {fiche.vend.length > 0 && (
             <>
-              <SousTitre icon="basket" texte="Ce qu'il te vend en perins" compte={fiche.vend.length} />
+              <SousTitre icon="basket" texte="Il vend" compte={fiche.vend.length} />
               <Vente vend={fiche.vend} />
             </>
           )}
 
-          {fiche.craft.length === 0 && fiche.vend.length === 0 && fiche.troc.length === 0 && (
-            <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>
-              Le client ne lui attache ni inventaire de vente écrit noir sur blanc, ni recette.
-              {v.quetes > 0 && ` Il sert de point d'arrivée à ${v.quetes} quête${v.quetes > 1 ? "s" : ""}.`}
-              {" "}Beaucoup de marchands vendent « toute une catégorie » au lieu d&apos;une liste d&apos;objets : ce
-              genre d&apos;étal ne peut pas être énuméré depuis les fichiers.
-            </p>
+          {/* Un étal écrit « toute cette catégorie » n'est pas énumérable : c'est le
+              seul cas où l'absence de liste ne veut pas dire l'absence d'étal, et un
+              joueur qui l'ignore croit le PNJ vide. Une bulle, pas un paragraphe. */}
+          {rien && (
+            <Bulle quoi="Beaucoup de marchands vendent « toute une catégorie » au lieu d'une liste d'objets : ces étals-là ne peuvent pas être énumérés depuis les fichiers. Va voir sa fenêtre en jeu.">
+              <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Aucun article écrit noir sur blanc</span>
+            </Bulle>
           )}
         </>
       )}
@@ -367,14 +315,34 @@ function Grille({ liste, onOuvrir, vide }: { liste: Vignette[]; onOuvrir: (v: Vi
   );
 }
 
+/** Le résultat d'une recherche PAR OBJET : le porteur, et ce qui a répondu chez lui. */
+function LigneTrouve({ t, onOuvrir }: { t: Trouve; onOuvrir: () => void }) {
+  return (
+    <div style={{ display: "flex", gap: 11, alignItems: "flex-start", padding: 10, borderRadius: 11, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
+      <Portrait img={t.img} nom={t.nom} taille={44} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={onOuvrir} className="font-heading" style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
+            fontFamily: "inherit", fontSize: 13.5, fontWeight: 700, color: "var(--orange)" }}>{t.nom}</button>
+          <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
+            {t.comment}{t.metier ? ` · ${t.metier}` : ""}{t.ville ? ` · ${t.ville}` : ""}
+          </span>
+        </div>
+        <div style={{ marginTop: 6 }}><Articles liste={t.articles} /></div>
+      </div>
+    </div>
+  );
+}
+
 export function AnnuairePnj() {
   useCardFx();
   const [annuaire, setAnnuaire] = useState<Vignette[] | null>(null);
   const [erreur, setErreur] = useState(false);
   const [portraits, setPortraits] = useState(0);
   const [q, setQ] = useState("");
-  /** `ou` retient DEPUIS QUELLE section la fiche a été ouverte : sans ça, changer
-   *  de métier dans le rail laisserait la fiche d'un autre métier affichée. */
+  const [trouvesObjet, setTrouvesObjet] = useState<Trouve[]>([]);
+  /** `ou` retient DEPUIS QUELLE section la fiche a été ouverte : sans ça, changer de
+   *  métier dans le rail laisserait la fiche d'un autre métier affichée. */
   const [choix, setChoix] = useState<{ v: Vignette; ou: string } | null>(null);
   const [fiches, setFiches] = useState<Record<string, Fiche>>({});
 
@@ -404,6 +372,21 @@ export function AnnuairePnj() {
     return () => { vivant = false; };
   }, [choix, fiches]);
 
+  /** La recherche par OBJET part côté serveur, amortie : les inventaires ne
+   *  descendent jamais au navigateur, donc on ne peut pas filtrer sur place. */
+  useEffect(() => {
+    const k = clef(q);
+    if (k.length < 3) { setTrouvesObjet([]); return; }
+    let vivant = true;
+    const t = setTimeout(() => {
+      fetch(`/api/pnj?objet=${encodeURIComponent(q.trim())}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d: { resultats: Trouve[] } | null) => vivant && setTrouvesObjet(d?.resultats ?? []))
+        .catch(() => {});
+    }, 260);
+    return () => { vivant = false; clearTimeout(t); };
+  }, [q]);
+
   const parFamille = useMemo(() => {
     const m: Record<string, Vignette[]> = {};
     for (const p of annuaire ?? []) (m[p.famille] ??= []).push(p);
@@ -420,8 +403,8 @@ export function AnnuairePnj() {
   }, [q, annuaire]);
 
   /** Vue transversale : tous ceux qui prennent un jeton, quel que soit leur métier.
-   *  C'est la question qu'on se pose en vidant son sac — « qui prend ça ? » —
-   *  et elle ne tombe dans aucune des familles du client. */
+   *  C'est la question qu'on se pose en vidant son sac — « qui prend ça ? » — et elle
+   *  ne tombe dans aucune des familles du client. */
   const aJetons = useMemo(
     () => (annuaire ?? []).filter((p) => p.nbTroc > 0).sort((a, b) => b.nbTroc - a.nbTroc),
     [annuaire]
@@ -438,22 +421,38 @@ export function AnnuairePnj() {
 
   const sections: SectionVolet[] = [
     {
-      clef: "chercher", titre: "Chercher quelqu'un", sous: "Par nom, métier ou ville", icon: "search",
+      clef: "chercher", titre: "Chercher", sous: "Un nom, un métier, une ville — ou un objet", icon: "search",
       compte: annuaire?.length ?? null,
       contenu: choix && choix.ou === "chercher"
         ? <FichePnj v={choix.v} fiche={fiches[choix.v.cle] ?? null} onFermer={fermer} />
         : (
           <>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Angie, couturier, Flarine…"
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Angie · couturier · Flarine · potion de vie"
               style={{ width: "100%", padding: "10px 13px", borderRadius: 10, background: "var(--bg-2)",
                 border: "1px solid var(--border)", color: "var(--text)", fontFamily: "inherit", fontSize: 13.5, marginBottom: 13 }} />
-            {clef(q).length < 2
-              ? <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
-                  Tape deux lettres. Tu peux chercher un nom (« Bobochan »), un métier (« joaillier »,
-                  « armurier »), une ville (« Saincity ») ou une monnaie (« jeton rouge », « nucléus ») —
-                  les quatre marchent.
-                </p>
-              : <Grille liste={trouves} onOuvrir={ouvrir("chercher")} vide={`Personne ne correspond à « ${q} ».`} />}
+
+            {trouvesObjet.length > 0 && (
+              <>
+                <SousTitre icon="package" texte="Cet objet est chez" compte={trouvesObjet.length} />
+                <div style={{ display: "grid", gap: 8, marginBottom: 6 }}>
+                  {trouvesObjet.map((t, i) => (
+                    <LigneTrouve key={`${t.cle}-${t.comment}-${i}`} t={t}
+                      onOuvrir={() => {
+                        const v = (annuaire ?? []).find((x) => x.cle === t.cle);
+                        if (v) setChoix({ v, ou: "chercher" });
+                      }} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {clef(q).length >= 2 && (
+              <>
+                {trouvesObjet.length > 0 && <SousTitre icon="users" texte="Ces PNJ" compte={trouves.length} />}
+                <Grille liste={trouves} onOuvrir={ouvrir("chercher")}
+                  vide={trouvesObjet.length ? "Aucun PNJ ne porte ce nom." : `Rien sous « ${q} ».`} />
+              </>
+            )}
           </>
         ),
     },
@@ -471,8 +470,8 @@ export function AnnuairePnj() {
 
   return (
     <>
-      {/* Un intérieur habité, avec une PNJ debout derrière son comptoir : c'est à
-          ça que ressemble la rencontre dont parle la page. */}
+      {/* Un intérieur habité, avec une PNJ debout derrière son comptoir : c'est à ça
+          que ressemble la rencontre dont parle la page. */}
       <PageHeader art="/jeu/chargement/maploading_guildhouse.webp" icon="users" title="Les PNJ d'AirFlyff"
         subtitle="Qui vend quoi, qui fabrique quoi, et dans quelle ville le trouver." />
 
@@ -489,25 +488,14 @@ export function AnnuairePnj() {
             marque={annuaire ? { texte: `${annuaire.length} PNJ utiles`, couleur: "var(--orange)" } : undefined}
             sous={
               <>
-                Le client d&apos;AirFlyff porte 131 portraits de dialogue que rien n&apos;affichait. On ne les a pas
-                attribués à la ressemblance : c&apos;est le jeu qui dit, PNJ par PNJ, quel fichier lui appartient —
-                {" "}<b>121 des 131</b> trouvent ainsi leur propriétaire, {portraits ? <b style={NUM}>{portraits}</b> : "une partie"} se
-                retrouvent sur cette page. Les prix sont ceux du client, en perins.
+                Aucun visage n&apos;est attribué à la ressemblance : c&apos;est le jeu qui dit, PNJ par PNJ,
+                quel fichier lui appartient. {portraits ? <b style={NUM}>{portraits}</b> : "Une partie"} sont
+                sur cette page.
               </>
             }
           />
         }
       />
-
-      <div className="glass-card" style={{ padding: "14px 16px", marginTop: 16, display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <Icon name="info" size={15} style={{ color: "var(--blue)", flexShrink: 0, marginTop: 2 }} />
-        <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6, margin: 0 }}>
-          Deux réserves qu&apos;on assume. Un étal de marchand est parfois écrit « toute cette catégorie » au lieu
-          d&apos;une liste d&apos;objets : ces inventaires-là ne peuvent pas être énumérés, et le PNJ apparaît alors
-          sans article. Et la ville vient des cartes du client : quand elle manque, c&apos;est que rien ne l&apos;y
-          place — pas qu&apos;il n&apos;existe pas.
-        </p>
-      </div>
 
       <style>{`
         .pnj-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}

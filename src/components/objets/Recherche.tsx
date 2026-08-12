@@ -2,28 +2,44 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { IconeObjet } from "./IconeObjet";
-import { classeFr, COULEUR_GRADE, emblemeClasse, FAMILLES, penyas, type Famille, type ObjetFiche } from "./vocabulaire";
+import { BADGE_ULTIME, COULEUR_GRADE, classeFr, emblemeClasse, FAMILLES, type Famille, type ObjetFiche } from "./vocabulaire";
 
 /**
  * CHERCHER UN OBJET — le catalogue du client du jeu, 12 134 lignes.
  *
- * Rien n'arrive en bloc : le catalogue pèse 3 Mo, la route en renvoie 50 lignes
- * à la fois. On ne pagine pas non plus, exprès — au-delà de cinquante réponses
- * la bonne façon d'avancer est d'affiner le mot-clé, pas de tourner des pages.
- * Le compte total est affiché pour qu'on sache qu'on n'a pas tout vu.
+ * Rien n'arrive en bloc : le catalogue pèse 3 Mo, la route en renvoie 50 lignes à la
+ * fois. On ne pagine pas non plus, exprès — au-delà de cinquante réponses la bonne
+ * façon d'avancer est d'affiner le mot-clé, pas de tourner des pages.
  *
- * La frappe est amortie de 220 ms. Sans ça, taper « epee de luzaka » lançait
- * quatorze requêtes dont treize jetées, et les réponses arrivaient dans le
- * désordre : c'est le `jeton` qui écarte celles qui reviennent trop tard.
+ * La frappe est amortie de 220 ms. Sans ça, taper « epee de luzaka » lançait quatorze
+ * requêtes dont treize jetées, et les réponses arrivaient dans le désordre : c'est le
+ * `jeton` qui écarte celles qui reviennent trop tard.
+ *
+ * ┌──────────── CE QUI A CHANGÉ DANS LA VITRINE ────────────┐
+ * │ · Le PRIX a quitté la carte. Un montant de PNJ ne dit    │
+ * │   rien du marché entre joueurs, et il occupait la place   │
+ * │   d'un renseignement qui, lui, sert : les bonus.          │
+ * │ · Un filtre AJOUTS AIRFLYFF est arrivé. C'est le tri qui  │
+ * │   compte sur un serveur privé — 1 455 objets sortent des  │
+ * │   espaces de noms propres au serveur, et ceux-là          │
+ * │   n'existent nulle part ailleurs.                         │
+ * │ · Les bonus se montrent sur la carte, pas seulement leur  │
+ * │   nombre : c'est ce qui fait choisir entre deux pièces.   │
+ * └─────────────────────────────────────────────────────────┘
  */
 
+type Comptes = { maison: number; bonus: number; unique: number; ultime: number };
 type Reponse = {
   objets: ObjetFiche[]; total: number; montres: number;
   familles: Record<string, number>;
+  comptes: Comptes;
   catalogue: { objets: number; genere: string };
 };
+
+const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 
 const champ: React.CSSProperties = {
   background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10,
@@ -43,6 +59,13 @@ function Pastille({ on, onClick, children, couleur = "var(--orange)" }: { on: bo
   );
 }
 
+/** Le compte que porte une pastille. En dernier, toujours, pour que l'œil suive une
+ *  seule colonne quand les pastilles s'alignent. */
+function Compte({ n, on }: { n: number | undefined; on: boolean }) {
+  if (!n) return null;
+  return <span style={{ ...NUM, opacity: on ? 0.7 : 0.55 }}>{n.toLocaleString("fr-FR")}</span>;
+}
+
 export function RechercheObjets({ depart = "" }: { depart?: string }) {
   useCardFx();
   const [q, setQ] = useState(depart);
@@ -50,6 +73,7 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
   const [grade, setGrade] = useState<"" | "Unique" | "Ultime">("");
   const [niveau, setNiveau] = useState("");
   const [avecBonus, setAvecBonus] = useState(false);
+  const [maison, setMaison] = useState(false);
   const [r, setR] = useState<Reponse | null>(null);
   const [charge, setCharge] = useState(false);
   const jeton = useRef(0);
@@ -63,16 +87,18 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
     if (grade) p.set("grade", grade);
     if (niveau) p.set("niveau", niveau);
     if (avecBonus) p.set("bonus", "1");
+    if (maison) p.set("maison", "1");
     const d = await fetch(`/api/objets?${p}`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
     // Une réponse qui arrive après la suivante ne doit pas l'écraser.
     if (mien !== jeton.current) return;
     setR(d); setCharge(true);
-  }, [q, famille, grade, niveau, avecBonus]);
+  }, [q, famille, grade, niveau, avecBonus, maison]);
 
   useEffect(() => { const t = setTimeout(chercher, 220); return () => clearTimeout(t); }, [chercher]);
 
-  const filtre = Boolean(q.trim() || famille || grade || niveau || avecBonus);
+  const filtre = Boolean(q.trim() || famille || grade || niveau || avecBonus || maison);
   const familles = useMemo(() => r?.familles ?? {}, [r]);
+  const c = r?.comptes;
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
@@ -89,7 +115,7 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
             Portable au niveau
             <input value={niveau} onChange={(e) => setNiveau(e.target.value.replace(/\D/g, "").slice(0, 3))}
               inputMode="numeric" placeholder="—"
-              style={{ ...champ, width: 66, textAlign: "center", padding: "9px 6px", fontVariantNumeric: "tabular-nums" }} />
+              style={{ ...champ, width: 66, textAlign: "center", padding: "9px 6px", ...NUM }} />
           </span>
         </div>
 
@@ -99,39 +125,53 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
             <Pastille key={f.clef} on={famille === f.clef} onClick={() => setFamille(famille === f.clef ? "" : f.clef)}>
               <Icon name={f.icon} size={13} />
               {f.label}
-              {familles[f.clef] ? (
-                <span style={{ fontVariantNumeric: "tabular-nums", opacity: famille === f.clef ? 0.7 : 0.55 }}>{familles[f.clef]}</span>
-              ) : null}
+              <Compte n={familles[f.clef]} on={famille === f.clef} />
             </Pastille>
           ))}
         </div>
 
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", borderTop: "1px solid var(--border)", paddingTop: 11 }}>
-          <Pastille on={grade === "Unique"} couleur={COULEUR_GRADE.Unique} onClick={() => setGrade(grade === "Unique" ? "" : "Unique")}>Unique</Pastille>
-          <Pastille on={grade === "Ultime"} couleur={COULEUR_GRADE.Ultime} onClick={() => setGrade(grade === "Ultime" ? "" : "Ultime")}>Ultime</Pastille>
+          {/* Le tri qui vaut la place sur un serveur privé : ce qui n'existe qu'ici.
+              Le repère « hors jeu » est posé À CÔTÉ de la pastille et non autour :
+              `Invisible` rend un bouton, et un bouton dans un bouton n'est pas du HTML
+              valide — le clic du filtre se serait perdu. */}
+          <Pastille on={maison} onClick={() => setMaison(!maison)}>
+            <Icon name="sparkles" size={13} /> Ajouts AirFlyff
+            <Compte n={c?.maison} on={maison} />
+          </Pastille>
+          <Invisible enJeu="Le client range les noms d'objets dans trois espaces : IDS_PROPITEM_TXT_ pour le Flyff d'origine, IDS_AIRFLYFF_TXT_ et IDS_PROPITEM_NEWSERV_ pour ce que le serveur a ajouté. Aucun écran du jeu ne fait la différence.">
+            <></>
+          </Invisible>
+          <Pastille on={grade === "Unique"} couleur={COULEUR_GRADE.Unique} onClick={() => setGrade(grade === "Unique" ? "" : "Unique")}>
+            Unique <Compte n={c?.unique} on={grade === "Unique"} />
+          </Pastille>
+          <Pastille on={grade === "Ultime"} couleur={COULEUR_GRADE.Ultime} onClick={() => setGrade(grade === "Ultime" ? "" : "Ultime")}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={BADGE_ULTIME} alt="Ultime" height={11} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+            <Compte n={c?.ultime} on={grade === "Ultime"} />
+          </Pastille>
           <Pastille on={avecBonus} onClick={() => setAvecBonus(!avecBonus)}>
-            <Icon name="sparkles" size={13} /> Qui portent des bonus
+            <Icon name="zap" size={13} /> Qui portent des bonus
+            <Compte n={c?.bonus} on={avecBonus} />
           </Pastille>
           {filtre && (
-            <button onClick={() => { setQ(""); setFamille(""); setGrade(""); setNiveau(""); setAvecBonus(false); }}
+            <button onClick={() => { setQ(""); setFamille(""); setGrade(""); setNiveau(""); setAvecBonus(false); setMaison(false); }}
               style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Icon name="x" size={13} /> Tout remettre à zéro
+              <Icon name="x" size={13} /> Remettre à zéro
             </button>
           )}
         </div>
       </div>
 
-      {/* Le compte : combien on montre, combien il y en a. Sans ça, cinquante
-          lignes laissent croire qu'il n'y en a que cinquante. */}
+      {/* Le compte : combien on montre, combien il y en a. Sans ça, cinquante lignes
+          laissent croire qu'il n'y en a que cinquante. */}
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12.5, color: "var(--text-muted)", flexWrap: "wrap" }}>
         {!charge && !r ? "Recherche…" : r ? (
           <>
-            <b style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{r.total.toLocaleString("fr-FR")}</b>
-            {r.total === 1 ? "objet trouvé" : "objets trouvés"}
-            {r.total > r.montres && <span>· les {r.montres} plus proches sont affichés, affine le nom pour voir les autres</span>}
-            <span style={{ marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>
-              catalogue du client : {r.catalogue.objets.toLocaleString("fr-FR")} objets nommés
-            </span>
+            <b style={{ color: "var(--text)", ...NUM }}>{r.total.toLocaleString("fr-FR")}</b>
+            {r.total === 1 ? "objet" : "objets"}
+            {r.total > r.montres && <span>· les {r.montres} plus proches sont affichés</span>}
+            <span style={{ marginLeft: "auto", ...NUM }}>sur {r.catalogue.objets.toLocaleString("fr-FR")}</span>
           </>
         ) : "La recherche n’a pas répondu."}
       </div>
@@ -139,8 +179,7 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
       {r && r.objets.length === 0 && (
         <div className="glass-card" style={{ padding: "26px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: 13.5 }}>
           <Icon name="search" size={22} style={{ opacity: 0.5 }} />
-          <p style={{ margin: "9px 0 0" }}>Rien sous ce nom. Essaie un mot plus court : la recherche cherche dans le nom, pas dans la description.</p>
-          <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>992 objets du client n’ont aucun nom français : ceux-là ne sont pas cherchables, et n’auraient rien à montrer.</p>
+          <p style={{ margin: "9px 0 0" }}>Rien sous ce nom. Essaie un mot plus court.</p>
         </div>
       )}
 
@@ -151,10 +190,18 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
   );
 }
 
-/** Une ligne de résultat : de quoi reconnaître la pièce sans ouvrir la fiche. */
+/**
+ * Une carte de résultat : de quoi reconnaître la pièce sans ouvrir la fiche.
+ *
+ * Les DEUX premiers bonus s'affichent, pas leur nombre. « 5 bonus » ne permet de
+ * choisir entre rien ; « Attaque +15 % · Taux critique +70 » si. Deux et pas cinq
+ * parce qu'au-delà la carte devient un pavé et la grille perd sa régularité — les
+ * autres sont sur la fiche.
+ */
 function Carte({ o }: { o: ObjetFiche }) {
   const couleur = o.g ? COULEUR_GRADE[o.g] : null;
   const emb = emblemeClasse(o.cl);
+  const bonus = o.b?.slice(0, 2) ?? [];
   return (
     <Link href={`/objets/${o.i}`} className="glass-card fx-card"
       style={{ padding: 11, display: "flex", gap: 11, alignItems: "flex-start", textDecoration: "none", color: "var(--text)",
@@ -166,17 +213,35 @@ function Carte({ o }: { o: ObjetFiche }) {
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, flexWrap: "wrap" }}>
           {o.t ?? "—"}
-          {o.nr ? <b style={{ fontVariantNumeric: "tabular-nums", color: "var(--text)", fontWeight: 600 }}>niv. {o.nr}</b> : null}
+          {o.nr ? <b style={{ ...NUM, color: "var(--text)", fontWeight: 600 }}>niv. {o.nr}</b> : null}
+          {o.af === 1 && <Icon name="sparkles" size={11} style={{ color: "var(--orange)" }} />}
           {emb && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={emb} alt={classeFr(o.cl) ?? ""} title={classeFr(o.cl) ?? ""} width={15} height={15} style={{ objectFit: "contain" }} />
           )}
         </span>
-        {(o.dn || o.px || o.b?.length) && (
-          <span style={{ display: "flex", gap: 9, fontSize: 11, color: "var(--text-muted)", marginTop: 4, flexWrap: "wrap", fontVariantNumeric: "tabular-nums" }}>
-            {o.dn ? <span>{o.f === "arme" ? "Dégâts" : "Déf."} <b style={{ color: "var(--text)" }}>{o.dn}{o.dx && o.dx !== o.dn ? `–${o.dx}` : ""}</b></span> : null}
-            {o.b?.length ? <span><Icon name="sparkles" size={10} /> {o.b.length} bonus</span> : null}
-            {o.px ? <span style={{ marginLeft: "auto", color: "var(--gold)" }}>{penyas(o.px)}</span> : null}
+        {o.dn ? (
+          <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: 4, ...NUM }}>
+            {o.f === "arme" ? "Dégâts" : "Déf."} <b style={{ color: "var(--text)" }}>{o.dn}{o.dx && o.dx !== o.dn ? `–${o.dx}` : ""}</b>
+          </span>
+        ) : null}
+        {bonus.length > 0 && (
+          <span style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
+            {bonus.map(([libelle, valeur], i) => {
+              const pct = libelle.endsWith("%");
+              return (
+                <span key={i} style={{ fontSize: 10.5, padding: "2px 7px", borderRadius: 7, background: "var(--bg-3)",
+                  border: "1px solid var(--border)", color: "var(--text-muted)", ...NUM }}>
+                  {pct ? libelle.replace(/\s*%$/, "") : libelle}{" "}
+                  <b style={{ color: valeur < 0 ? "var(--red)" : "var(--green)" }}>
+                    {valeur > 0 ? "+" : ""}{valeur.toLocaleString("fr-FR")}{pct ? " %" : ""}
+                  </b>
+                </span>
+              );
+            })}
+            {o.b && o.b.length > 2 && (
+              <span style={{ fontSize: 10.5, padding: "2px 5px", color: "var(--text-muted)", ...NUM }}>+{o.b.length - 2}</span>
+            )}
           </span>
         )}
       </span>

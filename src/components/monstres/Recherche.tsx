@@ -3,9 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
+import { Faiblesses } from "./Graphiques";
 import {
-  cadence, coupMax, court, ELEMENT_FR, ELEMENTS, enListe, entier, faiblesses,
-  iconeElement, TON_ELEMENT, tonRang, type Compteurs, type Monstre,
+  cadence, coupMax, court, ELEMENT_FR, ELEMENTS, entier, iconeElement,
+  portraitDe, TON_ELEMENT, tonRang, type Compteurs, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -14,18 +15,29 @@ import {
  * Rien n'arrive en bloc : le catalogue pèse 612 Ko, la route en renvoie 48 lignes
  * à la fois. On ne pagine pas non plus, exprès — au-delà de cinquante réponses la
  * bonne façon d'avancer est d'affiner le mot-clé ou de poser un filtre, pas de
- * tourner des pages. Le compte total est affiché pour qu'on sache qu'on n'a pas
- * tout vu.
+ * tourner des pages.
  *
  * La frappe est amortie de 220 ms, et le `jeton` écarte les réponses qui
  * reviennent après la suivante : sans lui, taper « azharyon » lançait huit
  * requêtes et la plus lente écrasait la bonne.
+ *
+ * ┌──────── CE QUI A CHANGÉ DE PLACE, ET POURQUOI ────────┐
+ * │ « Contenu AirFlyff » était une pastille parmi treize.  │
+ * │ C'est le tri qui a le plus de valeur sur un serveur    │
+ * │ privé — 235 monstres contre 889 du jeu d'origine — et  │
+ * │ il ouvre donc la recherche, en trois branches qui      │
+ * │ portent leurs comptes.                                │
+ * │ Le tri « Expérience » est parti : l'expérience ne      │
+ * │ s'affiche nulle part, et ranger sur une colonne        │
+ * │ invisible classe sans dire pourquoi.                   │
+ * └───────────────────────────────────────────────────────┘
  */
 
 type Reponse = {
   monstres: Monstre[]; total: number; montres: number;
   rangs: Record<string, number>;
   elements: Record<string, number>;
+  provenances: { maison: number; base: number; tout: number };
   catalogue: { total: number; genere?: string; compteurs: Compteurs };
 };
 
@@ -44,8 +56,9 @@ const TRIS = [
   { clef: "pvEff", label: "PV à sortir" },
   { clef: "niveau", label: "Niveau" },
   { clef: "degats", label: "Dégâts par coup" },
-  { clef: "exp", label: "Expérience" },
 ] as const;
+
+type Provenance = "" | "maison" | "base";
 
 const champ: React.CSSProperties = {
   background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10,
@@ -67,6 +80,30 @@ function Pastille({ on, onClick, children, couleur = "var(--orange)" }: {
   );
 }
 
+/** Les trois branches de provenance : plus hautes et plus larges que les pastilles,
+ *  parce qu'elles ne sont pas un filtre parmi d'autres mais l'entrée de la page. */
+function Branche({ on, onClick, icon, label, compte, couleur }: {
+  on: boolean; onClick: () => void; icon: Parameters<typeof Icon>[0]["name"];
+  label: string; compte?: number; couleur: string;
+}) {
+  return (
+    <button onClick={onClick} className="fx-card" style={{
+      flex: "1 1 150px", display: "flex", alignItems: "center", gap: 9, cursor: "pointer",
+      fontFamily: "inherit", textAlign: "left", padding: "10px 13px", borderRadius: 11,
+      background: on ? `color-mix(in srgb, ${couleur} 15%, var(--bg-3))` : "var(--bg-3)",
+      border: `1px solid ${on ? couleur : "var(--border)"}`,
+    }}>
+      <Icon name={icon} size={17} style={{ color: couleur, flexShrink: 0 }} />
+      <span style={{ minWidth: 0, flex: 1 }}>
+        <span className="font-heading" style={{ display: "block", fontSize: 13, fontWeight: 700, color: on ? couleur : "var(--text)" }}>{label}</span>
+        <span className="font-heading" style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+          {compte == null ? "—" : entier(compte)}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function RechercheMonstres({ depart = "" }: { depart?: string }) {
   useCardFx();
   const [q, setQ] = useState(depart);
@@ -74,7 +111,7 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
   const [element, setElement] = useState("");
   const [nivMin, setNivMin] = useState("");
   const [nivMax, setNivMax] = useState("");
-  const [maison, setMaison] = useState(false);
+  const [provenance, setProvenance] = useState<Provenance>("");
   const [vies, setVies] = useState(false);
   const [tri, setTri] = useState<(typeof TRIS)[number]["clef"]>("pertinence");
   const [r, setR] = useState<Reponse | null>(null);
@@ -90,42 +127,54 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
     if (element) p.set("element", element);
     if (nivMin) p.set("nivMin", nivMin);
     if (nivMax) p.set("nivMax", nivMax);
-    if (maison) p.set("maison", "1");
+    if (provenance) p.set("provenance", provenance);
     if (vies) p.set("vies", "1");
     if (tri !== "pertinence") p.set("tri", tri);
     const d = await fetch(`/api/monstres?${p}`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
     if (mien !== jeton.current) return; // une réponse en retard n'écrase pas la bonne
     setR(d); setCharge(true);
-  }, [q, rang, element, nivMin, nivMax, maison, vies, tri]);
+  }, [q, rang, element, nivMin, nivMax, provenance, vies, tri]);
 
   useEffect(() => { const t = setTimeout(chercher, 220); return () => clearTimeout(t); }, [chercher]);
 
-  const filtre = Boolean(q.trim() || rang || element || nivMin || nivMax || maison || vies || tri !== "pertinence");
+  const filtre = Boolean(q.trim() || rang || element || nivMin || nivMax || provenance || vies || tri !== "pertinence");
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
 
       <div className="glass-card" style={{ padding: 16, display: "grid", gap: 12 }}>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Branche on={!provenance} onClick={() => setProvenance("")} icon="paw"
+            label="Tout le catalogue" compte={r?.provenances.tout} couleur="var(--orange)" />
+          <Branche on={provenance === "maison"} onClick={() => setProvenance("maison")} icon="sparkles"
+            label="Ajoutés par AirFlyff" compte={r?.provenances.maison} couleur="var(--purple)" />
+          <Branche on={provenance === "base"} onClick={() => setProvenance("base")} icon="book"
+            label="Jeu d'origine" compte={r?.provenances.base} couleur="var(--text-muted)" />
+        </div>
+
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ position: "relative", flex: "1 1 260px", minWidth: 0 }}>
             <Icon name="search" size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            {/* Le placeholder ne dit plus que les accents sont sans importance : la
+                recherche le fait, et l'annoncer coûtait dix mots pour un joueur qui
+                tape de toute façon sans accents. */}
             <input value={q} onChange={(e) => setQ(e.target.value)} autoFocus
-              placeholder="Le nom du monstre — les accents et les apostrophes n'ont pas d'importance"
-              style={{ ...champ, paddingLeft: 34 }} />
+              placeholder="Nom du monstre" style={{ ...champ, paddingLeft: 34 }} />
           </span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: "var(--text-muted)" }}>
             Niveau
             <input value={nivMin} onChange={(e) => setNivMin(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              inputMode="numeric" placeholder="de"
+              inputMode="numeric" placeholder="de" aria-label="Niveau minimum"
               style={{ ...champ, width: 60, textAlign: "center", padding: "9px 6px", fontVariantNumeric: "tabular-nums" }} />
             <input value={nivMax} onChange={(e) => setNivMax(e.target.value.replace(/\D/g, "").slice(0, 3))}
-              inputMode="numeric" placeholder="à"
+              inputMode="numeric" placeholder="à" aria-label="Niveau maximum"
               style={{ ...champ, width: 60, textAlign: "center", padding: "9px 6px", fontVariantNumeric: "tabular-nums" }} />
           </span>
         </div>
 
-        {/* Les rangs, avec leur nom de jeu entre parenthèses : personne ne dit
-            « RANK_LOW », tout le monde dit « le Jeune » et « le Géant ». */}
+        {/* Les rangs sous leur nom de jeu : personne ne dit « RANK_LOW », tout le
+            monde dit « le Jeune » et « le Géant ». */}
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
           <Pastille on={!rang} onClick={() => setRang("")}>Tous les rangs</Pastille>
           {RANGS.map((x) => (
@@ -162,9 +211,6 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
           <Pastille on={vies} couleur="var(--red)" onClick={() => setVies(!vies)}>
             <Icon name="heart" size={13} /> Ceux qui se relèvent
           </Pastille>
-          <Pastille on={maison} couleur="var(--purple)" onClick={() => setMaison(!maison)}>
-            <Icon name="sparkles" size={13} /> Contenu AirFlyff
-          </Pastille>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 7, marginLeft: "auto", flexWrap: "wrap" }}>
             <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Ranger par</span>
             <span className="vg-subtabs" style={{ margin: 0 }}>
@@ -176,7 +222,7 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
         </div>
 
         {filtre && (
-          <button onClick={() => { setQ(""); setRang(""); setElement(""); setNivMin(""); setNivMax(""); setMaison(false); setVies(false); setTri("pertinence"); }}
+          <button onClick={() => { setQ(""); setRang(""); setElement(""); setNivMin(""); setNivMax(""); setProvenance(""); setVies(false); setTri("pertinence"); }}
             style={{ justifySelf: "start", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5, padding: 0 }}>
             <Icon name="x" size={13} /> Tout remettre à zéro
           </button>
@@ -189,11 +235,8 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
         {!charge && !r ? "Recherche…" : r ? (
           <>
             <b style={{ color: "var(--text)", fontVariantNumeric: "tabular-nums" }}>{r.total.toLocaleString("fr-FR")}</b>
-            {r.total === 1 ? "monstre trouvé" : "monstres trouvés"}
-            {r.total > r.montres && <span>· les {r.montres} premiers sont affichés, affine le nom ou pose un filtre</span>}
-            <span style={{ marginLeft: "auto", fontVariantNumeric: "tabular-nums" }}>
-              catalogue du client : {r.catalogue.total.toLocaleString("fr-FR")} monstres
-            </span>
+            {r.total === 1 ? "trouvé" : "trouvés"}
+            {r.total > r.montres && <span>· {r.montres} affichés</span>}
           </>
         ) : "La recherche n’a pas répondu."}
       </div>
@@ -201,8 +244,8 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
       {r && r.monstres.length === 0 && (
         <div className="glass-card" style={{ padding: "26px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: 13.5 }}>
           <Icon name="search" size={22} style={{ opacity: 0.5 }} />
-          <p style={{ margin: "9px 0 0" }}>Rien sous ce nom. Essaie un mot plus court : la recherche cherche dans le nom, pas dans la description.</p>
-          <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>Les PNJ, les gardes, les citoyens, les familiers et les œufs ne sont pas là : ce catalogue ne porte que ce qui se combat.</p>
+          <p style={{ margin: "9px 0 0" }}>Rien sous ce nom.</p>
+          <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>Ce catalogue ne porte que ce qui se combat : ni PNJ, ni familiers, ni œufs.</p>
         </div>
       )}
 
@@ -218,14 +261,21 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
  *  vies — c'est le seul chiffre qui dit la vérité du combat. */
 export function CarteMonstre({ m }: { m: Monstre }) {
   const ic = iconeElement(m.elem);
-  const { faible } = faiblesses(m.res);
   const seReleve = (m.vies ?? 0) > 1;
+  /* Le portrait n'existe que pour huit monstres du catalogue (cf. `portraitDe`) :
+     quand il manque, on ne met RIEN à sa place — un cadre vide ferait croire à une
+     image cassée, et un pictogramme générique répété 1 124 fois n'apprend rien. */
+  const portrait = portraitDe(m.id);
   return (
     <Link href={`/monstres/${m.id}`} className="glass-card fx-card"
       style={{ padding: 12, display: "grid", gap: 7, textDecoration: "none", color: "var(--text)",
         borderColor: seReleve ? "color-mix(in srgb, var(--red) 32%, var(--border))" : undefined }}>
 
       <span style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
+        {portrait && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={portrait} alt="" width={26} height={59} style={{ width: 26, height: 59, objectFit: "cover", borderRadius: 5, flexShrink: 0, border: "1px solid var(--border)" }} />
+        )}
         <span style={{ minWidth: 0, flex: 1 }}>
           <span className="font-heading" style={{ display: "block", fontSize: 13.5, fontWeight: 700, lineHeight: 1.25 }}>{m.nom}</span>
           <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, flexWrap: "wrap" }}>
@@ -240,17 +290,17 @@ export function CarteMonstre({ m }: { m: Monstre }) {
         )}
       </span>
 
-      <span style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11.5, fontVariantNumeric: "tabular-nums" }}>
-        <span style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px" }}>
+      <span style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11.5, fontVariantNumeric: "tabular-nums", alignItems: "center" }}>
+        <span style={{ background: "var(--bg-3)", border: `1px solid ${seReleve ? "color-mix(in srgb, var(--red) 45%, var(--border))" : "var(--border)"}`, borderRadius: 6, padding: "2px 8px" }}>
           <Icon name="heart" size={11} style={{ marginRight: 4 }} />
-          {court(m.pvEff)} PV{seReleve ? ` (${m.vies} vies)` : ""}
+          {court(m.pvEff)} PV{seReleve ? ` · ${m.vies} vies` : ""}
         </span>
-        {/* `coupMax` : la même valeur que la fiche du monstre et que le bestiaire des
+        {/* `coupMax` : la même valeur que la fiche du monstre et que le relevé des
             world boss, pour que la vignette et la fiche ne se contredisent pas au clic. */}
         {coupMax(m) ? (
           <span style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "2px 8px" }}>
             <Icon name="sword" size={11} style={{ marginRight: 4 }} />
-            {court(coupMax(m))} / coup
+            {court(coupMax(m))}
           </span>
         ) : null}
         {m.def != null ? (
@@ -259,23 +309,16 @@ export function CarteMonstre({ m }: { m: Monstre }) {
             {entier(m.def)}
           </span>
         ) : null}
+        <span style={{ marginLeft: "auto" }}><Faiblesses res={m.res} bulle={false} /></span>
       </span>
 
-      <span style={{ display: "flex", gap: 9, flexWrap: "wrap", fontSize: 11, color: "var(--text-muted)" }}>
-        {faible.length > 0 && (
-          <span style={{ color: "var(--green)" }}>Faible {enListe(faible)}</span>
-        )}
-        {m.rage?.length ? <span><Icon name="flame" size={10} /> rage sous {m.rage[0].pv} %</span> : null}
+      <span style={{ display: "flex", gap: 9, flexWrap: "wrap", fontSize: 11, color: "var(--text-muted)", alignItems: "center" }}>
+        {m.delai ? <span style={{ fontVariantNumeric: "tabular-nums" }}><Icon name="clock" size={10} style={{ marginRight: 4 }} />{cadence(m.delai)}</span> : null}
+        {m.rage?.length ? <span><Icon name="flame" size={10} /> rage {m.rage[0].pv} %</span> : null}
         {m.invoque?.length ? <span><Icon name="users" size={10} /> invoque</span> : null}
         {m.soigne?.length ? <span><Icon name="sparkles" size={10} /> se soigne</span> : null}
         {m.maison && <span style={{ color: "var(--purple)", marginLeft: "auto" }}>AirFlyff</span>}
       </span>
-
-      {m.delai ? (
-        <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
-          <Icon name="clock" size={10} style={{ marginRight: 4 }} />{cadence(m.delai)}
-        </span>
-      ) : null}
     </Link>
   );
 }

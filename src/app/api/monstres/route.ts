@@ -18,7 +18,8 @@ import type { Critere } from "@/components/monstres/catalogue";
 
 const RANGS = ["faible", "normal", "capitaine", "demi-boss", "boss", "super", "materiau"];
 const ELEMENTS = ["feu", "eau", "electricite", "vent", "terre", "aucun"];
-const TRIS = ["pertinence", "pvEff", "niveau", "degats", "exp"];
+const TRIS = ["pertinence", "pvEff", "niveau", "degats"];
+const PROVENANCES = ["maison", "base"];
 
 /** Un niveau hors bornes est une saisie en cours, pas un filtre : on l'ignore
  *  plutôt que de renvoyer une liste vide sans expliquer pourquoi. Le jeu monte
@@ -33,6 +34,7 @@ export async function GET(req: Request) {
   const rang = p.get("rang") ?? "";
   const element = p.get("element") ?? "";
   const tri = p.get("tri") ?? "";
+  const provenance = p.get("provenance") ?? "";
 
   const c: Critere = {
     q: p.get("q") ?? "",
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
     element: ELEMENTS.includes(element) ? element : "",
     niveauMin: niveau(p.get("nivMin")),
     niveauMax: niveau(p.get("nivMax")),
-    maison: p.get("maison") === "1",
+    provenance: PROVENANCES.includes(provenance) ? (provenance as "maison" | "base") : undefined,
     plusieursVies: p.get("vies") === "1",
     tri: (TRIS.includes(tri) ? tri : "pertinence") as Critere["tri"],
   };

@@ -1,900 +1,328 @@
 "use client";
-import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
-import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
+import { EnteteVolet } from "@/components/VoletSections";
 import { Icon, type IconName } from "@/components/Icon";
+import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
-import dungeonsData from "@/data/dungeons.json";
-import ICONES from "@/data/icones-objets.json";
 import { prestigeNeed } from "@/data/prestige";
-import { SectionFashion } from "./Fashion";
-
-const DONJONS = dungeonsData as { name: string; icon: string; type: string; prestige: number | null }[];
+import { FrisePaliers, ARMURE_COMMUNE } from "@/components/guides/FrisePaliers";
+import { DONJONS, IconeRessource, Instance, Objet, Verrou, court, fr } from "@/components/guides/Briques";
 
 /**
- * Ce que le total demandé par le prestige vaut RÉELLEMENT, calculé.
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  PAR OÙ COMMENCER — et rien d'autre.
+ * ══════════════════════════════════════════════════════════════════════════════
  *
- * La carte des recettes annonçait « il en faut 69 en tout jusqu'au P10 » pour le
- * badge Jardin Prestigieux. C'était le vieux chiffre : le tableau des coûts en
- * demande 75 (3+6+6+10+15+10+25). La grille des items de quête, elle, avait déjà
- * été recalculée — les deux se contredisaient donc à trois écrans d'intervalle.
- * Un chiffre calculable ne se recopie pas.
+ * CE QUE CETTE PAGE POSSÈDE : l'ORDRE. Dans quel ordre s'y prendre, ce que le palier
+ * suivant ouvre, et les règles de la vie du serveur qu'on n'apprend qu'en les payant.
+ *
+ * CE QU'ELLE NE POSSÈDE PLUS. Elle portait quatorze cartes et quatre panneaux, dont
+ * trois entiers sur des sujets qui ont leur page : perçage, élément d'une pièce,
+ * fashion, gemmes de costume, runes, éveil (→ /builder/mecaniques, qui a une section
+ * pour chacun), provenance des runes, parchemins, étuis et coffrets de cartes
+ * (→ /objets, qui les lit dans ou-trouver.json), recettes (→ /crafts), phrases de boss
+ * (→ /monstres), totaux de ressources (→ /prestige, qui les calcule). Chacun de ces
+ * développements se réduit ici à une phrase et un lien. Les deux blocs qui n'existaient
+ * nulle part ailleurs — les phrases de boss et trois recettes de badge — sont gardés
+ * dans src/components/guides/aDeplacer.ts en attendant leur page.
+ *
+ * CE QUI A DISPARU POUR DE BON, sur demande : les taux du serveur (expérience, penyas,
+ * chute d'objets), les prix en penyas d'un défaut d'enchantement ou d'un retrait de
+ * perçage, et l'avertissement sur le butin ordinaire absent du client — il n'existait
+ * que pour expliquer l'absence d'un chiffre dont on se fiche.
+ *
+ * ET LA FORME. Plus de rail à quatre panneaux : ce qui reste tient dans une page qui se
+ * lit de haut en bas, et tout y est visible d'un coup. La prose est devenue une frise,
+ * des barres, une grille de pastilles ; les précisions secondaires sont passées sous
+ * des bulles, où elles ne prennent plus la place des chiffres.
  */
+
+/** Le total demandé du P1 au P10, calculé. Aucun de ces nombres ne s'écrit à la main. */
 const TOTAUX = prestigeNeed(1, 10);
 
-/**
- * La roue des cinq éléments, recopiée du manuel du jeu (Client/help.inc).
- *
- * Le nom de fichier de l'icône ne suit pas le nom affiché : le jeu écrit
- * « Électricité » sur la pièce et « Foudre » dans son manuel. On garde les deux,
- * sinon le lecteur cherche « Foudre » dans une liste qui dit « Électricité ».
- */
-const ROUE = [
-  { nom: "Feu", fichier: "feu", bat: "le Vent", craint: "l'Eau" },
-  { nom: "Eau", fichier: "eau", bat: "le Feu", craint: "la Foudre" },
-  { nom: "Foudre", fichier: "electricite", bat: "l'Eau", craint: "la Terre" },
-  { nom: "Terre", fichier: "terre", bat: "la Foudre", craint: "le Vent" },
-  { nom: "Vent", fichier: "vent", bat: "la Terre", craint: "le Feu" },
-];
+/** Les points de vie qu'une instance demande, lus dans le relevé du client. */
+const pv = (nom: string) => DONJONS.find((d) => d.name.toLowerCase() === nom.toLowerCase())?.hp ?? 0;
 
 /**
- * Les cartes de perçage d'ATTAQUE, avec la statistique qu'elles poussent.
- *
- * `de` est la plaque du jeu lui-même (`statdice_*.webp`, 50×50) : le joueur voit
- * exactement ce carré dans sa fenêtre de personnage, écrit en français — FOR,
- * END, DEX, INT. Mettre la plaque à côté de la carte fait le lien que le texte
- * seul demandait de deviner.
- *
- * L'Air n'a PAS de plaque, et c'est normal : « déplacement » et « soins » ne sont
- * pas des statistiques de la fenêtre. On n'affiche donc rien — plutôt qu'une
- * plaque approchante qui laisserait croire à une cinquième statistique.
+ * Le rendement de Tower Defense, seul nombre de cette page qui ne vient pas d'un
+ * fichier : c'est le relevé de Sugot, et il est attribué comme tel dans la bulle.
+ * Ce qu'on en TIRE, en revanche, se calcule — et c'est ça qui manquait : personne ne
+ * fait la division de tête, donc personne ne sait que le stock d'emblèmes du P10 tient
+ * en une vingtaine d'entrées.
  */
-const PERCAGE_ATTAQUE: { nom: string; quoi: string; de?: string }[] = [
-  { nom: "Feu", quoi: "Force", de: "str" },
-  { nom: "Eau", quoi: "Intelligence", de: "int" },
-  { nom: "Air", quoi: "Déplacement, soins" },
-  { nom: "Terre", quoi: "Endurance", de: "sta" },
-  { nom: "Foudre", quoi: "Dextérité", de: "dex" },
-];
+const EMBLEMES_PAR_ENTREE = 700;
+const ENTREES_TOWER = Math.ceil(TOTAUX["Emblème de protection"] / EMBLEMES_PAR_ENTREE);
 
-/** Les cartes de perçage de DÉFENSE : même élément, autre nom, autre effet. */
-const PERCAGE_DEFENSE: [string, string, string][] = [
-  ["Volcano", "PV %", "volcano"],
-  ["Océane", "PM %, soins", "oceane"],
-  ["Néant", "PF %", "neant"],
-  ["Séisme", "Défense %", "seisme"],
-  ["Fulgur", "Attaque %", "fulgur"],
-];
+type Priorite = { ic: React.ReactNode; palier?: number; titre: React.ReactNode; quoi: React.ReactNode };
 
-/**
- * Ce que la phrase d'un boss veut dire.
- *
- * Ces quinze phrases sont les seules règles de combat que le jeu énonce, et il
- * les énonce une fois, dans le chat, au milieu d'un pull. On garde celles qui
- * changent ce qu'on fait dans la seconde — les autres ne sont que du décor.
- * L'orbe de couleur est l'asset du jeu lui-même : c'est ce qu'on voit à l'écran.
- */
-const BOSS: { orbe?: string; icone?: IconName; phrase: string; quoi: string }[] = [
-  { orbe: "eelementtypeyellow01", phrase: "Éclat jaune", quoi: "Au corps à corps, et seulement au corps à corps." },
-  { orbe: "eelementtypegreen01", phrase: "Éclat vert", quoi: "À distance. Les mêlées lâchent et attendent." },
-  { orbe: "eelementtypepurple01", phrase: "Éclat violet", quoi: "Magie. Les physiques ne servent plus à rien." },
-  { icone: "rotate-ccw", phrase: "« Chaque blessure que vous m'infligez sera la vôtre ! »", quoi: "Il renvoie les dégâts. Une variante ne les renvoie qu'au bout de trois secondes — c'est le pire piège, on croit que ça passe." },
-  { icone: "alert", phrase: "« Rage : ne frappez pas avec le mauvais type de dégâts… »", quoi: "Mauvais type de dégâts et il double sa régénération : mieux vaut arrêter que taper faux." },
-  { icone: "hand-point", phrase: "« Cessez d'attaquer ou vous serez punis. »", quoi: "On lâche tout, vraiment. Ce n'est pas du bluff." },
-  { icone: "swords", phrase: "« Deux corps, un seul écho… »", quoi: "Deux boss, une seule mort : ils doivent tomber ensemble ou ils reviennent. On équilibre les PV avant d'achever." },
-  { icone: "skull", phrase: "« Assez joué… »", quoi: "Phase enragée. C'est le moment des potions, pas celui de la gourmandise." },
-];
-
-/**
- * Les règles qui coûtent une soirée quand on les apprend trop tard.
- *
- * En tableau et non en JSX libre : le titre de la section annonçait « les huit
- * règles » avec le huit écrit à la main. En ajouter une neuvième aurait laissé le
- * titre mentir. Le compte se lit maintenant dans la liste.
- *
- * Deux entrées ont maigri : elles redisaient ce que les cartes « élément » et
- * « perçage » expliquent déjà en détail. Ne reste ici que ce qui ne se trouve
- * nulle part ailleurs — le prix, et le piège.
- */
-const REGLES: React.ReactNode[] = [
-  <><b>Tes entrées d&apos;instance se remettent à zéro à 8 h</b>, pas à minuit. Une session lancée à 7 h consomme donc encore les entrées de la veille — et une entrée gardée pour « demain » se perd si tu joues avant 8 h.</>,
-  <><b>La récompense du calendrier de connexion demande 60 minutes en ligne.</b> Se connecter pour la prendre et repartir ne marche pas.</>,
-  <><b>Ton prêtre a deux modes : <code>/mode fs</code> et <code>/mode dps</code>.</b> Un sort qui refuse de partir, c&apos;est souvent le mauvais mode et rien d&apos;autre — et comme il y a un délai entre deux bascules, on choisit <i>avant</i> d&apos;entrer.</>,
-  <><b>Enchanter sans parchemin de protection détruit l&apos;objet</b> (Sprotect, Sprotect Ultime, Gprotect). Et forger une arme unique n&apos;a aucune protection : en cas d&apos;échec, tout ce qu&apos;on a mis dedans est perdu.</>,
-  <><b>Retirer un perçage enlève la carte du bas — la dernière posée — et coûte un million de penyas.</b> Pose donc en dernier la carte dont tu es le moins sûr.</>,
-  <><b>Défaire coûte cher :</b> supprimer un enchantement, 100 000 penyas ; éveiller un objet, autant. Et une arme unique ne s&apos;enchante pas du tout.</>,
-  <><b>Le VIP donne</b> toutes stats +25, penyas +5 %, une entrée journalière de plus et −20 % de temps d&apos;attente sur les instances. À peser contre ce que tu comptes réellement jouer dans la semaine.</>,
-  <><b>Un seul marchand hors ligne à la fois</b>, tous les emplacements ne conviennent pas, on le retire par un clic droit sur son icône de buff — et les objets non vendus reviennent par la poste, pas dans l&apos;inventaire.</>,
-];
-
-/**
- * Une instance citée dans le texte renvoie à sa fiche du wiki.
- *
- * Le guide nommait des donjons sans y mener : il fallait retenir le nom, ouvrir
- * le wiki, le retrouver dans une grille de vingt-trois cartes. Le lien ouvre
- * directement la bonne fiche, avec ses PV, son armure et ses drops.
- */
-function Instance({ nom }: { nom: string }) {
-  const d = DONJONS.find((x) => x.name.toLowerCase() === nom.toLowerCase());
-  if (!d) return <b>{nom}</b>;
-  return (
-    <a href={`/donjons?instance=${encodeURIComponent(d.name)}`} className="gd-lien">
-      <Icon name={d.icon as IconName} size={13} />{d.name}
-    </a>
-  );
-}
-
-/** Un objet, avec son icône du jeu quand on la connaît. */
-function Objet({ nom, texte }: { nom: string; texte?: string }) {
-  const src = (ICONES as Record<string, string>)[nom];
-  return (
-    <span className="gd-objet">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {src && <img src={src} alt="" width={16} height={16} />}
-      {texte ?? nom}
-    </span>
-  );
-}
-
-/**
- * « Cet objet · où le trouver ».
- *
- * Ces lignes reprenaient le style des items de quête — libellé à gauche, gros
- * chiffre doré à droite. Ça marche pour « Nucléus · 160 000 », pas pour un
- * objet suivi d'un ou deux liens : le contenu ne tenait pas dans les colonnes
- * de 248 px et chaque ligne se repliait sur deux hauteurs. Une seule colonne,
- * et de la place des deux côtés.
- */
-function Ou({ quoi, ou }: { quoi: React.ReactNode; ou: React.ReactNode[] }) {
-  return (
-    <div className="gd-ou">
-      <span className="quoi">{quoi}</span>
-      <span className="ou">
-        <Icon name="chevron-right" size={12} />
-        {ou.map((x, i) => <span key={i} className="lieu">{x}</span>)}
-      </span>
-    </div>
-  );
-}
-
-function Tip({ title, prio, mt, icon, children }: { title?: string; prio?: string; mt?: boolean; icon?: IconName; children: React.ReactNode }) {
-  return (
-    <div className="gd-tip" style={mt ? { marginTop: 10 } : undefined}>
-      {title && <h4>{icon && <Icon name={icon} size={17} style={{ display: "inline-block", marginRight: 7, color: "var(--gold)" }} />}{title}{prio ? <span className="gd-prio">{prio}</span> : null}</h4>}
-      <p>{children}</p>
-    </div>
-  );
-}
-
-function Note({ children }: { children: React.ReactNode }) {
-  return <div className="gd-note">{children}</div>;
-}
-
-/**
- * Le cadenas du jeu, posé sur un lien qui exige d'être membre.
- *
- * Cette page est PUBLIQUE ; `/crafts` et `/objets` vivent dans le groupe (guild)
- * et passent par `requireGuild()`. En production, un visiteur qui suit ces liens
- * n'atterrit pas sur la page mais sur `/login?error=guild` — un mur sans
- * explication. On le dit AVANT le clic plutôt qu'après.
- *
- * L'image est `lock.webp`, le cadenas du client lui-même (13×16). C'est le même
- * dessin que le jeu montre sur ce qui n'est pas encore ouvert : un joueur le
- * reconnaît sans légende, ce qu'aucune icône maison ne peut offrir.
- */
-function Reserve() {
-  return (
-    <span className="gd-verrou" title="Réservé aux membres de la guilde">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/jeu/interface/lock.webp" alt="" width={11} height={13} />
-      membres
-    </span>
-  );
-}
-
-/**
- * Le MÊME cadenas, mais pour l'autre marche : « il faut un compte », pas « il
- * faut être de la guilde ».
- *
- * `/builder/mecaniques` était donné ici comme librement accessible — un
- * commentaire disait même « le cadenas tombe avec la page : ce n'est plus
- * réservé ». C'est faux : la page vit dans `src/app/(verified)/`, dont le layout
- * appelle `requireVerified()` → `requireAuth()`. Un visiteur non connecté part
- * sur `/login`, exactement comme pour `/objets`. La marche est plus BASSE que la
- * guilde (un candidat membre du serveur Discord passe), donc elle ne peut pas
- * réutiliser le mot « membres » : elle dit « compte ».
- *
- * En dev, DEV_ALL_ACCESS masque les trois cas d'un coup — c'est pour ça qu'ils
- * se relisent dans l'arborescence, pas dans le navigateur.
- */
-function Compte() {
-  return (
-    <span className="gd-verrou" title="Demande un compte : connexion Discord (membre du serveur)">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/jeu/interface/lock.webp" alt="" width={11} height={13} />
-      compte
-    </span>
-  );
-}
-
-function Prestige({ badge, title, subtitle, isOpen, onToggle, icon, children }: { badge: string; title: React.ReactNode; subtitle: string; isOpen: boolean; onToggle: () => void; icon?: IconName; children: React.ReactNode }) {
-  return (
-    <div className={`gd-prestige ${isOpen ? "open" : ""}`}>
-      <div className="gd-head" onClick={onToggle}>
-        <div className="gd-badge">{badge}</div>
-        <div className="gd-pt"><h3 style={{ display: "flex", alignItems: "center", gap: 8 }}>{icon && <Icon name={icon} size={18} style={{ color: "var(--gold)" }} />}{title}</h3><div className="gd-ps">{subtitle}</div></div>
-        <div className="gd-arrow">▶</div>
-      </div>
-      <div className="gd-body">{children}</div>
-    </div>
-  );
-}
+/** Une icône de la barre d'outils du site, pour les priorités qui n'ont pas d'objet. */
+const ic = (nom: IconName) => <Icon name={nom} size={20} style={{ color: "var(--orange)" }} />;
 
 export default function GuidePage() {
   // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
   useCardFx();
-  const [open, setOpen] = useState<Record<string, boolean>>({ p3: true });
-  const toggle = (id: string) => setOpen(o => ({ ...o, [id]: !o[id] }));
-  const P = (id: string) => ({ isOpen: !!open[id], onToggle: () => toggle(id) });
 
   /**
-   * Les six paliers de la trame de Sugot.
+   * LES PRIORITÉS DE SUGOT — ce qu'il faut FAIRE, une ligne chacune.
    *
-   * En tableau : le rail à gauche affiche le compte de chaque section, et ce
-   * compte doit venir du contenu. Écrit à la main, il aurait vieilli au premier
-   * palier ajouté — c'est exactement comme ça que « Trente-sept classes » est
-   * arrivé sur une autre page.
+   * C'était un accordéon de six paliers, en prose, où chaque conseil se noyait dans un
+   * paragraphe. Ici chaque priorité porte l'icône de l'objet qu'elle sert, son palier
+   * quand il en faut un, et une seule phrase. Le détail qui n'est pas indispensable
+   * passe sous une bulle : il reste à portée de curseur sans occuper l'écran.
    */
-  const PALIERS: { id: string; badge: string; icon?: IconName; titre: string; sous: string; corps: React.ReactNode }[] = [
+  const PRIORITES: Priorite[] = [
     {
-      id: "p3", badge: "P3", titre: "Le début de l'aventure", sous: "Quelles instances favoriser",
-      corps: (
-        <>
-          <Tip icon="sprout" title="Faille du débutant">Toujours utile pour récupérer les Jetons d&apos;Air et les échanger au PNJ devant l&apos;instance contre des consommables et CS gratuits. (Tout ce qui est gratuit n&apos;est pas à payer !)</Tip>
-          <Tip icon="ghost" title="Instance Vampirique">4 entrées par jour. Les armes : soit les vendre au PNJ pour 5 périn/u, soit les transformer en morceaux d&apos;armes vampiriques au PNJ Pépito (à côté de la forge à Flaris).</Tip>
-          <Tip icon="tree" title="Forêt d'Euphrasia / Grotte d'Herneos">À faire pour vous constituer un stock de perles niveau 3.</Tip>
-          <Tip icon="snow" title="Ruines Givrées">1 entrée. Tuez tous les mobs et le boss pour récupérer les items servant à crafter des meubles (durabilité 7 jours, cumulables jusqu&apos;à 30 jours).</Tip>
-          {/* La recette « 40 lianes + 1 terreau » était écrite ici ET dans la carte
-              des crafts, trois écrans plus loin. Elle reste là-bas, où elle est
-              complète (source de chaque composant, total à atteindre) ; ici on
-              dit seulement qu'il faut s'y prendre tôt, qui est le conseil. */}
-          <Tip icon="landmark" title="Ruines Prestigieuses" prio="À anticiper">1 entrée/jour. À faire dès le départ : tuez les mobs et le boss. C&apos;est la seule source du badge Jardin Prestigieux, celui dont le prestige demande le plus grand nombre — anticipez au plus tôt.</Tip>
-          <Tip icon="rocket" title="USS Celestia">Petite instance, CD de 2h. Essayez d&apos;avoir un ramasseur PVE en lien avec votre classe, que vous pourrez muter pour peu de prix via les jetons rookies (1 mutagène + 7 clés).</Tip>
-          <Note><Icon name="sparkles" size={14} style={{ display: "inline-block", marginRight: 6 }} />Faites toutes ces instances en priorité. Il vous faudra peu de PV : <b>150K en élément vent +20</b> permet de toutes les faire. Ensuite, si possible, commencez un set <b>Shaitan</b> si vous souhaitez faire <Instance nom="Behemoth" /> et <Instance nom="Bastion de l'Archange" /> (450k HP).</Note>
-          {/* « Oasis » menait nulle part : le mode qui s'y joue est documenté, mais
-              sur la page des donjons. On y mène — et vers /donjons#oasis, pas vers
-              l'ancienne adresse /oasis, qui n'est plus qu'une redirection. */}
-          <Tip icon="tower" title="Badge de la Tour" prio="À prioriser" mt>Quête récupérable à <a href="/donjons#oasis" className="gd-lien">Oasis</a>. 15K mobs en 1vs1 ou 40K en AoE. Conseil : visez l&apos;AoE avec une classe magique — le <b>Primat qui OS les mobs</b> est votre partenaire idéal. Il en faut <b>{TOTAUX["Badge de la Tour"]}</b> jusqu&apos;au prestige 10 ; en faire un 3<sup>e</sup> sera votre gagne-pain pour passer directement au P5 si vous achetez vos nucléus.</Tip>
-        </>
-      ),
+      ic: <Objet nom="Jeton d'Air" texte="" taille={22} />,
+      titre: <Instance nom="Faille du débutant" />,
+      quoi: <>Les Jetons d&apos;Air s&apos;échangent au PNJ devant l&apos;instance : consommables et tickets de Chambre Secrète, gratuits.</>,
     },
     {
-      id: "p4", badge: "P4", icon: "smile", titre: "Rien ne changera", sous: "Continuez sur votre lancée",
-      corps: <Tip>Rien ne change à ce prestige — poursuivez les objectifs du P3.</Tip>,
+      ic: ic("ghost"),
+      titre: <b>Instance Vampirique</b>,
+      quoi: <>4 entrées par jour. Pépito, près de la forge de Flaris, change les armes en morceaux vampiriques.</>,
     },
     {
-      id: "p5", badge: "P5", titre: "Enfin un prestige intéressant !", sous: "3 choses très importantes se débloquent",
-      corps: (
-        <>
-          <Tip icon="dragon" title="Sietch Kalgas">Une instance longue, très longue (attendez-vous à courir). Très intéressante : pas de PV minimal requis car le boss a un aggro fixe. Tapez avec un perso en tournant autour, et avec votre second personnage tapez librement sans jamais vous faire toucher. Il vous faut <b>2 personnages P5</b>.</Tip>
-          <Tip icon="tower" title="Tower Defense" prio="À prioriser">3 entrées/jour, 700 emblèmes de protection si vous allez au bout par entrée. Une statue s&apos;affiche sur la mini-map (croix rouge) : défendez la tour. Surveillez les 2 premières vagues, puis lancez vos AoE sans ciblage avec vos dugkug toutes les 60s via le Ftool et partez faire autre chose. <Icon name="alert" size={14} style={{ display: "inline-block", marginRight: 3 }} />L&apos;AoE Primat en combo Halo peut bugger/s&apos;arrêter : cliquez et décalez votre perso pour relancer.</Tip>
-          <Tip icon="medal" title="Quête Badge Donjon Mineur" prio="À prioriser">Il en faut <b>{TOTAUX["Badge de donjon mineur"]}</b> par personnage jusqu&apos;au P10. Pour en avoir 1, faites Vampirique / <Instance nom="Behemoth" /> / <Instance nom="Bastion de l'Archange" /> / <Instance nom="USS Celestia" /> sur 3 jours.</Tip>
-          <Note>Optionnel (ou pas) : le <b>Jardin Prestigieux</b> (en haut de l&apos;escalier d&apos;Oasis, à gauche, le téléporteur). Le CW y est tous les jours à <b>18h30</b> pour récupérer un buff de 2h (le temps s&apos;arrête lors des déconnexions).</Note>
-        </>
-      ),
+      ic: <Objet nom="Perles niv 3" texte="" taille={22} />,
+      titre: <><Instance nom="Forêt d'Euphrasia" /> · <Instance nom="Grotte d'Herneos" /></>,
+      quoi: <>Le stock de perles niveau 3 se fait ici.</>,
     },
     {
-      id: "p6", badge: "P6", titre: "Peu de gains", sous: "Mais un déblocage utile",
-      corps: <Tip>Vous débloquez le <b>second étage des <Instance nom="Ruine Prestigieuse" /></b>, ce qui permet d&apos;accumuler encore plus de badges Jardin prestigieux.</Tip>,
+      ic: ic("snow"),
+      titre: <Instance nom="Ruines givrées" />,
+      quoi: <>1 entrée. Mobs et boss donnent les{" "}
+        <Bulle quoi={<>Durabilité 7 jours, cumulable jusqu&apos;à 30. Les recettes sont sur <b>Crafts et collections</b>.</>}>pièces de meuble</Bulle>.</>,
     },
     {
-      id: "p7", badge: "P7", titre: "Fin du guide débutant", sous: "Nouvelle zone de farm + Jardin de Jade",
-      corps: (
-        <>
-          <Tip icon="sprout-farm" title="Nouvelle zone de Farm">Accessible au téléporteur du Jardin Prestigieux (Oasis). Zone parfaite pour farm des nucléus parfaits (échangeables contre n&apos;importe quel autre nucléus), des branches (à revendre), des perins à foison, et une grande quantité d&apos;ori/pl très utiles.</Tip>
-          <Tip icon="leaf" title="Jardin de Jade">Instance pour farm les items quête servant à votre rune d&apos;arme <b>Yggdrasil</b>. C&apos;est laborieux, mais voici une astuce : vous pouvez ne faire que les mobs pour avoir les marteaux (prix avoisinant 1P/u ; le nombre exact et le pourquoi sont dans <b>Les runes d&apos;arme</b>). Plus vous anticipez tôt, mieux c&apos;est — le taux de drop est bas sans cape ni Goldéa.</Tip>
-          <Note><Icon name="sparkles" size={14} style={{ display: "inline-block", marginRight: 6 }} /><b>Astuce de pauvre (Sugot) :</b> restat full END via les parchemins à Isruel, restez en stuff DPS, dugkug en continu via Ftool, prenez une dizaine/vingtaine de mobs (ça tape un peu fort, ne soyez pas trop gourmand) et hop, AoE. Uniquement sur les mobs, sans toucher au boss. Faites votre stock de marteaux et vendez le surplus : ça financera vos 4 runes vierges Yggdrasil.</Note>
-        </>
-      ),
+      ic: <Objet nom="Badge Jardin Prestigieux" texte="" taille={22} />,
+      palier: 3,
+      titre: <Instance nom="Ruine Prestigieuse" />,
+      quoi: <>1 entrée par jour, dès le premier jour : seule source du badge que le prestige réclame le plus — <b>{fr(TOTAUX["Badge Jardin Prestigieux"])}</b> en tout.</>,
     },
     {
-      id: "p8", badge: "P8", titre: "Le Temple Aérien", sous: "Dernière étape avant le P10",
-      corps: (
-        <>
-          <Tip>Pour ceux ayant des tanks (Prestige 3) à environ <b>1M3 HP</b>, n&apos;hésitez pas à passer rapidement prestige 8 avec votre DPS principal (il vous faudra quand même un perso prestige 5 dans ces recommandations).</Tip>
-          <Tip icon="torii" title="Temple Aérien">Instance très rapide (3h de CD), nécessitant seulement <b>360k HP</b> (armure +20 vent). Dernière étape pour valider votre quête Badge Donjon, qui demande encore une fois pendant 3 jours : <Instance nom="Sentier de Rhisis" /> / <Instance nom="Dédale de Rhisis" /> / <Instance nom="Sietch Kalgas" /> / <Instance nom="Temple aérien" />.</Tip>
-          <Note><Icon name="target" size={14} style={{ display: "inline-block", marginRight: 6 }} />À partir d&apos;ici, tout se joue sur la préparation des items de quête. Le <a href="/prestige" className="gd-lien">calculateur de prestige</a> fait le compte de ce qui te reste, palier par palier.</Note>
-        </>
-      ),
+      ic: ic("rocket"),
+      titre: <Instance nom="USS Celestia" />,
+      quoi: <>Deux heures d&apos;attente. Un ramasseur PVE de ta classe se mute pour 1 mutagène et 7 clés.</>,
+    },
+    {
+      ic: <Objet nom="Badge de la Tour" texte="" taille={22} />,
+      titre: <>Badge de la Tour</>,
+      quoi: <>Quête à <a href="/donjons#oasis" className="gd-lien">Oasis</a> : 15 000 monstres en 1 contre 1, ou 40 000{" "}
+        <Bulle quoi={<>Un Primat magique qui tue les monstres d&apos;un coup est le partenaire idéal. Un badge de plus mène droit au P5 si tu achètes tes nucléus.</>}>à l&apos;AoE</Bulle>. Il en faut <b>{fr(TOTAUX["Badge de la Tour"])}</b>.</>,
+    },
+    {
+      ic: <IconeRessource nom="Emblème de protection" taille={22} alt="" />,
+      palier: 5,
+      titre: <b>Tower Defense</b>,
+      quoi: <>3 entrées par jour,{" "}
+        <Bulle quoi={<>Rendement relevé par Sugot. La statue à défendre apparaît en croix rouge sur la mini-carte ; l&apos;AoE Primat en combo Halo peut s&apos;arrêter — décale ton personnage pour la relancer.</>}>{EMBLEMES_PAR_ENTREE} emblèmes</Bulle>{" "}
+        par entrée terminée : <b>{ENTREES_TOWER}</b> entrées suffisent aux <b>{fr(TOTAUX["Emblème de protection"])}</b> du P10.</>,
+    },
+    {
+      ic: ic("dragon"),
+      palier: 5,
+      titre: <Instance nom="Sietch Kalgas" />,
+      quoi: <><Invisible enJeu={`sa fiche demande ${court(pv("Sietch Kalgas"))} de points de vie ; l'aggro du boss est fixe, on la fait donc très loin en dessous`}>Aggro fixe</Invisible> : deux personnages P5, l&apos;un tourne autour, l&apos;autre frappe sans jamais être touché.</>,
+    },
+    {
+      ic: <Objet nom="Badge de donjon mineur" texte="" taille={22} />,
+      palier: 5,
+      titre: <>Badge de donjon mineur</>,
+      quoi: <><b>{fr(TOTAUX["Badge de donjon mineur"])}</b> jusqu&apos;au P10. Un badge = Vampirique, <Instance nom="Behemoth" />, <Instance nom="Bastion de l'Archange" /> et <Instance nom="USS Celestia" /> sur trois jours.</>,
+    },
+    {
+      ic: <IconeRessource nom="Nucléus parfait" taille={22} alt="" />,
+      palier: 7,
+      titre: <b>Zone de farm du Jardin</b>,
+      quoi: <>Au téléporteur du Jardin Prestigieux : la source des nucléus parfaits, <b>{fr(TOTAUX["Nucléus parfait"])}</b> jusqu&apos;au P10.</>,
+    },
+    {
+      ic: <Objet nom="Marteau Runique Yggdrasil" texte="" taille={22} />,
+      palier: 7,
+      titre: <Instance nom="Jardin de Jade" />,
+      quoi: <>Les marteaux de la <a href="/builder/mecaniques" className="gd-lien">rune Yggdrasil</a> <Verrou quoi="compte" /> :{" "}
+        <Bulle quoi={<>L&apos;astuce de Sugot : restat full END aux parchemins d&apos;Isruel, stuff DPS, dugkug en continu au Ftool, AoE sur les monstres seulement — jamais le boss.</>}>le farm le plus long</Bulle>, à commencer tôt.</>,
+    },
+    {
+      ic: ic("flower"),
+      titre: <b>Jardin Prestigieux</b>,
+      quoi: <>Le CW y passe chaque jour à <b>18 h 30</b> : un buff de deux heures, dont le temps s&apos;arrête hors connexion.</>,
+    },
+    {
+      ic: ic("torii"),
+      palier: 8,
+      titre: <Instance nom="Temple aérien" />,
+      quoi: <>Trois heures d&apos;attente : la dernière étape de la quête du{" "}
+        <Bulle quoi={<><Instance nom="Sentier de Rhisis" />, <Instance nom="Dédale de Rhisis" />, <Instance nom="Sietch Kalgas" /> et <Instance nom="Temple aérien" />, sur trois jours.</>}>badge Donjon</Bulle>.</>,
     },
   ];
 
   /**
-   * Les quatre sections du rail.
+   * LES RÈGLES QUI COÛTENT UNE SOIRÉE.
    *
-   * `compte` est le nombre de BLOCS du panneau — pas un chiffre du jeu. Celui de
-   * la première se lit dans `PALIERS`, les trois autres se comptent à l'œil dans
-   * le panneau juste en dessous ; si tu ajoutes ou retires un bloc, corrige le
-   * compte de la même main. Le rail sert à savoir ce qu'il y a dedans SANS
-   * l'ouvrir : un compte faux vaut moins que pas de compte du tout.
+   * Elles étaient huit ; il en reste six. Ce qui est parti : les prix en penyas d'un
+   * défaut d'enchantement et d'un retrait de perçage, et le bonus de penyas du VIP.
+   * Ce qui reste des deux règles de mécanique tient en une ligne et un lien — la page
+   * des mécaniques en est propriétaire — mais elle reste, parce qu'une mise en garde
+   * qui protège d'un objet détruit est utile même réduite à sa moitié.
    */
-  const sections: SectionVolet[] = [
-    {
-      clef: "paliers", titre: "Palier par palier", sous: "La trame de Sugot, P3 → P8", icon: "sparkles", compte: PALIERS.length,
-      contenu: (
-        <div className="gd-panneau">
-          {/* Ces totaux étaient recopiés à la main, et deux avaient déjà dérivé :
-              le Badge Jardin Prestigieux affichait 69 pour 75 réels, et le Périn
-              1 400 pour 500. On les CALCULE depuis PRESTIGE_COSTS, seule source
-              de vérité. L'ordre suit celui du tableau, du plus gros au plus petit. */}
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="package" size={18} />Items de quête requis, tous prestiges</h2>
-            <p style={{ color: "var(--text-muted)", fontSize: 13, marginBottom: 14 }}>
-              Le total demandé du P1 au P10. Ça peut sembler important, mais en vous y prenant bien tout se
-              goupillera — le farm étant l&apos;essence même de Flyff.
-            </p>
-            <div className="gd-grid">
-              {Object.entries(TOTAUX)
-                .sort((a, b) => b[1] - a[1])
-                .map(([l, n]) => (
-                  <div className="gd-qitem" key={l}><span className="ql">{l}</span><span className="qv">{n.toLocaleString("fr-FR")}</span></div>
-                ))}
-            </div>
-            {/* Le même calcul existe en outil sur une autre page : le guide donne le
-                total, le calculateur donne le RESTANT depuis ton palier actuel. Sans
-                le lien, on refaisait la soustraction de tête. */}
-            <div className="gd-note" style={{ marginTop: 14 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              Ce tableau est le total. Pour savoir ce qu&apos;il te reste depuis ton palier actuel, et le
-              détail de chaque saut, ouvre le <a href="/prestige" className="gd-lien">calculateur de prestige</a>.
-            </div>
-          </div>
+  const REGLES: React.ReactNode[] = [
+    <><Invisible enJeu="aucune fenêtre du jeu ne donne cette heure">Tes entrées d&apos;instance</Invisible> se remettent à zéro à <b>8 h</b>, pas à minuit : une entrée gardée pour demain se perd si tu joues avant.</>,
+    <>Le calendrier de connexion ne donne sa récompense qu&apos;après <b>60 minutes</b> en ligne.</>,
+    <>Ton prêtre a deux modes, <code>/mode fs</code> et <code>/mode dps</code>, avec un délai entre deux bascules : choisis <i>avant</i> d&apos;entrer.</>,
+    <>Deux gestes détruisent sans retour : enchanter sans parchemin de protection, et retirer un perçage — c&apos;est la dernière carte posée qui part. <a href="/builder/mecaniques" className="gd-lien">Les mécaniques</a> <Verrou quoi="compte" /></>,
+    <>Un seul marchand hors ligne à la fois. On le retire d&apos;un clic droit sur son icône de buff, et les objets non vendus reviennent par la poste.</>,
+    <>Le VIP donne toutes stats +25, une entrée journalière de plus et −20 % d&apos;attente sur les instances.</>,
+  ];
 
-          <div className="gd-card">
-            {PALIERS.map((p) => (
-              <Prestige key={p.id} badge={p.badge} icon={p.icon} title={p.titre} subtitle={p.sous} {...P(p.id)}>
-                {p.corps}
-              </Prestige>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      clef: "apres", titre: "Après les instances", sous: "Crafts, runes, éveil, cartes", icon: "hammer", compte: 4,
-      contenu: (
-        <div className="gd-panneau">
-          {/* ── Ce que la trame de Sugot ne couvrait pas ──
-              Le guide s'arrête au P8 et ne parle que des instances. Tout ce qui
-              vient après — runes, éveil, cartes, crafts — n'était écrit nulle part.
-              Ces sections s'appuient sur les drops relevés dans la fenêtre du jeu et
-              sur la base d'objets de la guilde.
-              La phrase d'origine disait « rien n'y est estimé », et ce n'était pas
-              tout à fait vrai : deux nombres ne viennent PAS des données — les
-              3 000 marteaux de la rune Yggdrasil et les quatre raretés de carte.
-              Le premier est désormais attribué à son auteur, le second retiré. Une
-              promesse d'exactitude qu'on ne tient pas coûte plus cher que le
-              détail qu'elle couvrait. */}
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="hammer" size={18} />Les crafts de la guilde</h2>
-            <p className="gd-intro" style={{ marginBottom: 12 }}>Trois recettes, telles qu&apos;elles sont enregistrées dans la base d&apos;objets de Vanguard. Les composants se farment en instance : le badge sort de la <Instance nom="Ruine Prestigieuse" />, les morceaux d&apos;œuf de plusieurs donjons de fin de jeu.</p>
-            <div className="gd-recettes">
-              <div className="gd-recette">
-                <h4><Objet nom="Badge Jardin Prestigieux" texte="Badge Jardin Prestigieux" /></h4>
-                <ul><li>40 × Liane Ruine Prestigieuse</li><li>1 × Terreau Ruine Prestigieuse</li></ul>
-                <p className="gd-src">Les lianes tombent sur les trash mobs, le terreau sur le boss. C&apos;est le craft le plus rentable du début : il en faut <b>{TOTAUX["Badge Jardin Prestigieux"]}</b> en tout jusqu&apos;au P10, plus que tout autre badge.</p>
-              </div>
-              <div className="gd-recette">
-                <h4><Objet nom="Morceau d'oeuf doré Britannia" texte="Œuf doré" /></h4>
-                <ul>
-                  <li>10 × morceau d&apos;œuf doré, de chacune des six sources : Britannia, Sentier Rhisis, Dédale Rhisis, Kalgas, Protection, Protection Supérieure</li>
-                  <li>20 × Œuf</li><li>1 000 × Périn</li>
-                </ul>
-              </div>
-              <div className="gd-recette">
-                <h4><Objet nom="Morceau d'oeuf doré Britannia" texte="Œuf doré Tank" /></h4>
-                <ul>
-                  <li>15 × morceau d&apos;œuf doré, des six mêmes sources</li>
-                  <li>15 × Catalyseur d&apos;énergie de Bubble</li>
-                  <li>30 × Œuf</li><li>1 500 × Périn</li>
-                </ul>
-                <p className="gd-src">Plus cher que la version classique, et il demande en plus les catalyseurs. À ne lancer que si le tank est votre personnage principal.</p>
-              </div>
-            </div>
-            <div className="gd-note" style={{ marginTop: 12 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              Les recettes complètes du serveur — composants, quantités et ce qui en sort — sont sur{" "}
-              <a href="/crafts" className="gd-lien">Crafts et collections</a> <Reserve />.
-            </div>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />Les runes d&apos;arme</h2>
-            <p className="gd-intro" style={{ marginBottom: 12 }}>Une rune vierge se pose sur une arme pour la faire monter d&apos;un cran. Chaque famille a la sienne, et chacune tombe dans une instance précise.</p>
-            <div className="gd-liste">
-              <Ou quoi={<Objet nom="Rune Yggdrasil Vierge" />} ou={[<Instance key="a" nom="Jardin de Jade" />]} />
-              <Ou quoi={<Objet nom="Marteau Runique Yggdrasil" />} ou={[<Instance key="a" nom="Jardin de Jade" />]} />
-              <Ou quoi={<Objet nom="Rune Vampirique Vierge" />} ou={[<Instance key="a" nom="Crypte des sans repos" />]} />
-              <Ou quoi={<Objet nom="Rune Épée Luzaka oubliée (TANK)" texte="Runes Luzaka (TANK)" />} ou={[<Instance key="a" nom="Grotte d'Herneos" />]} />
-            </div>
-            {/* Deux affirmations, deux statuts, et il faut que ça se voie.
-                · Le compte des runes est VÉRIFIÉ, et il n'était pas de neuf : le
-                  catalogue porte DIX « Rune <arme> Luzaka oubliée », une par type
-                  d'arme — arc, baguette, bâton, doloire, épée, glaive, hache,
-                  poing, sceptre, YO-YO. Le yo-yo manquait à la liste, et le sceptre
-                  y était compté deux fois : neuf runes portent la mention (TANK),
-                  la dixième est « Rune Sceptre Luzaka oubliée (SUPPORT) ». Le
-                  sceptre n'est donc pas un onzième cas, c'est le dixième type.
-                · « 3 000 marteaux » n'est NULLE PART dans nos données : aucune
-                  recette de crafts.json ne cite un marteau ni ne produit une rune
-                  vierge. C'est le témoignage de l'auteur du guide, et il est cité
-                  comme tel — pas maquillé en relevé. */}
-            <Note><Icon name="alert" size={14} style={{ display: "inline-block", marginRight: 6 }} />Les runes Luzaka existent pour les <b>dix</b> types d&apos;arme, yo-yo compris : neuf portent la mention TANK, celle du sceptre porte SUPPORT. Et d&apos;après Sugot, le <Instance nom="Jardin de Jade" /> demande <b>3 000 marteaux</b> pour une rune Yggdrasil : c&apos;est le farm le plus long du jeu, à commencer tôt. Ce nombre vient de son expérience, pas des fichiers du jeu — la recette n&apos;y figure pas.</Note>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="scroll" size={18} />L&apos;éveil</h2>
-            <p className="gd-intro" style={{ marginBottom: 12 }}>Les parchemins d&apos;éveil ajoutent une statistique à une pièce. Ils vont par rang : le <b>rang 1</b> d&apos;abord, le <b>rang 2</b> ensuite, plus rare. Trois familles, trois provenances.</p>
-            <div className="gd-liste">
-              <Ou quoi={<Objet nom="Parchemin d'éveil fixe FOR (Rang 1)" texte="Éveil fixe — 11 statistiques" />} ou={[<Instance key="a" nom="Behemoth" />]} />
-              <Ou quoi={<Objet nom="Parchemin d'éveil à bijou rang 1" texte="Éveil à bijou" />} ou={[<Instance key="a" nom="Temple aérien" />]} />
-              <Ou quoi={<Objet nom="Parchemin d'éveil à Fashion rang 1" texte="Éveil à Fashion" />} ou={[<Instance key="a" nom="Paradis Arcanique" />]} />
-              <Ou quoi={<Objet nom="Pierre d'amélioration parure Tank" texte="Pierres de parure Tank / DPS" />} ou={[<Instance key="a" nom="Temple aérien" />]} />
-            </div>
-            <p className="gd-src" style={{ marginTop: 10 }}>Les onze statistiques de l&apos;éveil fixe : INCANT, DEPLA, SOINS, HP, MP, ATTAQUE, FOR, END, DEX, INT, DCC — chacune en rang 1 et en rang 2, plus un coffret qui en donne un au hasard.</p>
-            {/* L'éveil à Fashion était la seule mention du fashion sur la page, et
-                elle ne disait pas ce que le fashion porte. On y mène. */}
-            <div className="gd-note" style={{ marginTop: 12 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              L&apos;éveil à Fashion se pose sur une pièce qui porte déjà, ou non, ses propres bonus.
-              Ce que chaque emplacement de fashion peut porter est dans l&apos;onglet{" "}
-              <b>Fashion et gemmes</b> de cette page.
-            </div>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="book" size={18} />Le Carnet d&apos;Arcanes</h2>
-            <p className="gd-intro" style={{ marginBottom: 12 }}>Un album à collectionner. Les cartes se rangent dans des étuis, et les deux se gagnent en fin de jeu.</p>
-            {/* Cette ligne annonçait « Quatre raretés de carte : Commune, Rare,
-                Épique, Légendaire », sans source. Corrigée une première fois en
-                « les seuls coffrets nommés sont Rare et Epic » — et c'était FAUX
-                aussi : le catalogue porte bien « Coffret à packet de cartes
-                Légendaire » (id 60030) et sa boîte (60061). L'erreur vient de la
-                recherche elle-même, faite sur « legend » alors que le client écrit
-                « Légendaire » : l'accent a mangé le résultat. Trois raretés sont
-                donc nommées, et la quatrième — Commune — reste introuvable, d'où
-                le refus de donner un compte de raretés.
-                (La table de raretés du builder en compte SIX : Commun, Rare,
-                Épique, Légendaire, Pré-mythique, Mythique — mais pour les OBJETS,
-                pas pour les cartes.) */}
-            <p className="gd-src" style={{ marginBottom: 12 }}>
-              Les cartes se classent par rareté. Nos relevés nomment trois coffrets — <b>Rare</b>,{" "}
-              <b>Épique</b> et <b>Légendaire</b> — et aucun coffret « commune » ; la liste complète
-              des raretés de carte n&apos;est pas dans les fichiers du client, donc on ne
-              l&apos;invente pas.
-            </p>
-            <div className="gd-liste">
-              <Ou quoi={<Objet nom="Étui à carte 1" texte="Étuis à carte 1 · 2 · 3" />} ou={[<Instance key="a" nom="Paradis Arcanique" />]} />
-              <Ou quoi={<Objet nom="Coffret à packet de cartes Epic" texte="Coffret Epic / Rare" />} ou={[<Instance key="a" nom="Mausolée des Divinités" />, <Instance key="b" nom="Sanctuaire Shogun" />]} />
-              <Ou quoi={<Objet nom="Coffre à packet de cartes aléatoire" texte="Coffre aléatoire" />} ou={[<Instance key="a" nom="Clairière de la fée" />, <Instance key="b" nom="Temple aérien" />]} />
-            </div>
-            {/* Le coffret Légendaire existe mais ne tombe dans AUCUNE des instances
-                du relevé : ses deux seules sources sont sa propre boîte et le
-                coffre des Chambres secrètes. Le mettre sur la ligne du Mausolée
-                aurait envoyé farmer là où il ne tombe pas. */}
-            <p className="gd-src" style={{ marginTop: 10 }}>
-              Le <b>coffret Légendaire</b>, lui, ne tombe dans aucune instance de nos relevés : il
-              vient du <b>coffre des Chambres secrètes</b> et de sa propre boîte. Nulle part ailleurs
-              dans les fichiers.
-            </p>
-            <div className="gd-note" style={{ marginTop: 12 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              Chacun de ces objets a sa fiche — statistiques réelles, provenance, prix — dans{" "}
-              <a href="/objets" className="gd-lien">Les objets</a> <Reserve />.
-            </div>
-          </div>
-        </div>
-      ),
-    },
-
-    {
-      clef: "piece", titre: "Ce qui se pose sur une pièce", sous: "Perçage, élément, fashion, gemmes", icon: "gem", compte: 6,
-      contenu: (
-        <div className="gd-panneau">
-          {/* Cette carte disait « Grade A → 7 %, Grade S → 10 % » et melait Feu,
-              Eau, Foudre, Terre avec Fulgur et Volcano. C'etaient DEUX familles
-              confondues en une : A et S sont des cartes d'ATTAQUE, 7 % et 10 % des
-              cartes de DEFENSE, et le meme element change de nom de l'une a
-              l'autre. La confusion venait de la, pas du lecteur. */}
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="target" size={18} />Les cartes de perçage</h2>
-            <p className="gd-intro" style={{ marginBottom: 14 }}>
-              Deux familles, et c&apos;est tout le piège : le même élément porte deux noms selon ce qu&apos;on perce.
-              Le feu attaque sous le nom <b>Feu</b> et défend sous le nom <b>Volcano</b>.
-            </p>
-
-            <div className="gd-perc">
-              <div>
-                <div className="gd-perctitre">Arme &amp; bouclier — attaque</div>
-                <div className="gd-perclist">
-                  {PERCAGE_ATTAQUE.map((c) => (
-                    <div key={c.nom} className="gd-percel">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/airbuilder/icons/percage/${c.nom.toLowerCase()}-s.png`} alt="" />
-                      <span><b>{c.nom}</b><i>{c.quoi}</i></span>
-                      {/* La plaque du jeu, à droite : c'est le carré qu'on a sous les
-                          yeux dans sa fenêtre de personnage. Absente pour l'Air, qui
-                          ne pousse aucune des quatre statistiques. */}
-                      {c.de && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img className="gd-de" src={`/jeu/interface/statdice_${c.de}.webp`} alt="" title={c.quoi} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="gd-percgr"><span>A</span> puis <span>S</span> — la seconde vaut presque le double.</div>
-              </div>
-
-              <div>
-                <div className="gd-perctitre">Tenue — défense</div>
-                <div className="gd-perclist">
-                  {PERCAGE_DEFENSE.map(([nom, quoi, f]) => (
-                    <div key={nom} className="gd-percel">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/airbuilder/icons/percage/${f}-10.png`} alt="" />
-                      <span><b>{nom}</b><i>{quoi}</i></span>
-                    </div>
-                  ))}
-                </div>
-                <div className="gd-percgr"><span>7 %</span> puis <span>10 %</span> — sur le même emplacement.</div>
-              </div>
-            </div>
-
-            {/* Le manuel du jeu dit encore « jusqu'à 4 piercings dans votre armure »
-                partout : c'est l'ancien texte. Le client en a une version corrigee
-                (TID_PIERCING_POSSIBLE_NEW) qui distingue une main et deux mains, et
-                c'est celle-la qui est vraie. Un joueur qui compte 4 emplacements sur
-                son epee a une main achete deux cartes pour rien. */}
-            <div className="gd-note" style={{ marginTop: 14 }}>
-              <b>Combien d&apos;emplacements ?</b> Deux sur les armes à une main et les boucliers,
-              quatre sur les armes à deux mains et les armures. Le manuel du jeu annonce encore
-              « jusqu&apos;à 4 » partout : ne compte pas dessus avant d&apos;acheter tes cartes.
-            </div>
-
-            {/* La fusion est annoncee « gratuite » dans la fenetre du PNJ, et elle
-                l'est — en penyas. Ce qu'elle ne dit pas au meme endroit, c'est ce
-                qu'un echec coute : neuf cartes. C'est LA phrase a retenir. */}
-            <div className="gd-note" style={{ marginTop: 10 }}>
-              <b>Monter une carte d&apos;un cran</b> se fait chez le PNJ d&apos;échange : dix cartes du
-              même palier contre une du palier au-dessus, sans frais. Mais en cas d&apos;échec
-              <b> une seule carte t&apos;est rendue</b> — tu en perds neuf. Ne fusionne que ce que
-              tu es prêt à voir disparaître, et garde tes cartes hautes pour la fin.
-            </div>
-
-            {/* La phrase qui suivait annonçait les paliers « de Baruna » — R et SR à
-                l'attaque, 12 % et 15 % en défense — comme du contenu que l'AirBuilder
-                ne proposait « pas encore ». Retirée : Baruna n'est pas intégré sur
-                AirFlyff, donc ce n'est pas un manque du builder mais du contenu qui
-                n'existe pas ici. L'annoncer envoie un joueur chercher des cartes
-                qu'aucun monstre ne lâche. */}
-            <p className="gd-src" style={{ marginTop: 12 }}>
-              Chaque niveau de perçage ouvre un emplacement, et chaque emplacement prend une carte.
-              Le détail des plafonds et le comportement exact du sertissage sont dans{" "}
-              <a href="/builder/mecaniques" className="gd-lien">Les mécaniques</a> <Compte />.
-            </p>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="sparkles" size={18} />L&apos;élément de la pièce</h2>
-            <p className="gd-intro">
-              À ne pas confondre avec le perçage : c&apos;est l&apos;élément de l&apos;arme ou de la tenue elle-même,
-              monté de +1 à +20. Cinq éléments — Feu, Eau, Vent, Terre, Électricité — et une seule règle :
-              on choisit celui auquel les monstres visés résistent le moins.
-            </p>
-
-            {/* Cette carte disait « celui auquel les monstres resistent le moins »
-                sans jamais dire COMMENT le savoir. La roue est ecrite noir sur
-                blanc dans le manuel du jeu, et elle vaut pour l'equipement autant
-                que pour les sorts : « une fois enchante par le feu, votre objet
-                deviendra puissant contre le vent, mais faible contre l'eau ». */}
-            <div className="gd-roue">
-              {ROUE.map((e) => (
-                <div key={e.nom} className="gd-roue-el">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/jeu/mecaniques/element-${e.fichier}.webp`} alt="" />
-                  <div className="gd-roue-txt">
-                    <b>{e.nom}</b>
-                    <i><span className="bat">bat {e.bat}</span><span className="craint">craint {e.craint}</span></i>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="gd-src" style={{ marginTop: 10 }}>
-              Ta pièce prend l&apos;élément et ses deux faces : forte contre celui qu&apos;elle bat,
-              faible contre celui qu&apos;elle craint. Et un objet ne porte qu&apos;un élément à la fois —
-              en changer demande un Parchemin de Changement d&apos;Élément, qui garde la valeur (Eau +10 devient Feu +10).
-            </p>
-            {/* La roue dit le principe ; l'élément du monstre visé se lit sur sa
-                fiche. Sans ce lien, « celui auquel les monstres résistent le
-                moins » restait un conseil qu'on ne pouvait pas appliquer. */}
-            <div className="gd-note" style={{ marginTop: 12 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              Pour savoir à quoi résiste ce que tu vises : l&apos;élément de chaque instance est sur sa
-              fiche dans <a href="/donjons" className="gd-lien">les donjons</a>, celui de chaque espèce
-              dans <a href="/monstres" className="gd-lien">les monstres</a>.
-            </div>
-          </div>
-
-          {/* Les bonus du fashion et les gemmes de costume : quatre cartes, toutes
-              calculées sur les données. Voir ./Fashion.tsx. */}
-          <SectionFashion />
-        </div>
-      ),
-    },
-
-    {
-      clef: "regles", titre: "Ce que le jeu ne dit qu'une fois", sous: "Phrases de boss, taux, pièges", icon: "help", compte: 3,
-      contenu: (
-        <div className="gd-panneau">
-          {/* ── Les astuces au sens strict ──
-              Ce qui suit ne se range pas sous un prestige : ce sont les regles que
-              le jeu enonce UNE fois, dans une fenetre qu'on ferme sans lire ou dans
-              le chat au milieu d'un pull. Rien qui se compte ou se trie ici — pour
-              ca il y a le wiki. Uniquement ce qui change ce qu'on fait maintenant. */}
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="skull" size={18} />Le boss t&apos;explique comment le tuer</h2>
-            <p className="gd-intro" style={{ marginBottom: 14 }}>
-              Un boss d&apos;AirFlyff ne parle pas pour le décor : chacune de ses phrases est une
-              règle de combat. Elle passe une fois dans le chat, souvent pendant que tu tapes.
-              Voilà les {BOSS.length} qui changent quelque chose.
-            </p>
-            <div className="gd-liste">
-              {BOSS.map((b) => (
-                <div key={b.phrase} className="gd-boss">
-                  <span className="gd-boss-ic">
-                    {b.orbe
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={`/jeu/interface/${b.orbe}.webp`} alt="" />
-                      : b.icone && <Icon name={b.icone} size={17} style={{ color: "var(--gold)" }} />}
-                  </span>
-                  <span className="gd-boss-txt"><b>{b.phrase}</b><i>{b.quoi}</i></span>
-                </div>
-              ))}
-            </div>
-            <p className="gd-src" style={{ marginTop: 12 }}>
-              Deux autres phrases imposent l&apos;arme : « vos lames ne servent à rien ici » (magie
-              obligatoire) et « vos arcanes sont vaines » (l&apos;inverse). Le principe est toujours le
-              même — on lit avant de relancer le combo.
-            </p>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="gauge" size={18} />Les taux du serveur, et ce qu&apos;ils changent</h2>
-            <div className="gd-taux">
-              <div><span className="tv">×600</span><span className="tl">Expérience des monstres</span></div>
-              <div><span className="tv">×500</span><span className="tl">Penyas ramassés</span></div>
-              <div><span className="tv">×1</span><span className="tl">Chute d&apos;objets</span></div>
-            </div>
-            <p className="gd-intro" style={{ marginTop: 14 }}>
-              C&apos;est toute l&apos;économie du serveur en trois chiffres : ton niveau et ton
-              porte-monnaie montent à une vitesse folle, <b>ton stuff tombe au taux d&apos;origine</b>.
-              D&apos;où le réflexe à prendre — le temps se met dans le farm d&apos;objets, jamais dans
-              le farm de penyas, et acheter à un membre coûte presque toujours moins cher
-              que courir après la pièce soi-même.
-            </p>
-            {/* Le butin ordinaire n'est PAS dans le client : il est calcule par le
-                serveur. Cette note existe pour qu'une fiche vide ne se lise jamais
-                comme « ca ne tombe pas » — c'est l'erreur que le wiki ferait faire. */}
-            <div className="gd-note" style={{ marginTop: 12 }}>
-              <Icon name="info" size={14} style={{ display: "inline-block", marginRight: 6 }} />
-              Quand une fiche du site ne montre aucune source pour un objet, ça ne veut pas dire
-              qu&apos;il ne tombe pas : le butin ordinaire des monstres est calculé par le serveur et
-              n&apos;est écrit nulle part dans les fichiers du jeu. On n&apos;affiche que ce qu&apos;on peut prouver.
-            </div>
-          </div>
-
-          <div className="gd-card">
-            <h2 className="gd-cardtitle"><Icon name="clock" size={18} />Les {REGLES.length} règles qui font perdre du temps</h2>
-            <p className="gd-intro" style={{ marginBottom: 12 }}>
-              Chacune est écrite dans une fenêtre du jeu qu&apos;on ferme sans la lire, et chacune
-              coûte une soirée quand on l&apos;apprend trop tard.
-            </p>
-            <ul className="gd-regles">
-              {REGLES.map((r, i) => <li key={i}>{r}</li>)}
-            </ul>
-          </div>
-        </div>
-      ),
-    },
+  /** Un sujet, une page : d'ici on ne fait que mener. */
+  const SUITE: { href: string; icon: IconName; titre: string; quoi: string; verrou?: "membres" | "compte" }[] = [
+    { href: "/donjons", icon: "castle", titre: "Les donjons", quoi: "Points de vie, élément, boss de chaque instance." },
+    { href: "/monstres", icon: "paw", titre: "Les monstres", quoi: "Points de vie, résistances, boss." },
+    { href: "/prestige", icon: "star", titre: "Le prestige", quoi: "Ce que demande chaque palier, et ce qu'il te reste." },
+    { href: "/builder/mecaniques", icon: "gem", titre: "Les mécaniques", quoi: "Perçage, gemmes, éveil, runes, costume.", verrou: "compte" },
+    { href: "/crafts", icon: "hammer", titre: "Crafts et collections", quoi: "Recettes et carnets.", verrou: "membres" },
+    { href: "/objets", icon: "package", titre: "Les objets", quoi: "Où trouver une pièce, nom par nom.", verrou: "membres" },
   ];
 
   return (
     <div style={{ padding: "24px 32px 56px", maxWidth: 1300, margin: "0 auto" }}>
-      {/* Le sous-titre annoncait « calculateur de prestige et infos de jeu » : le
-          calculateur est une autre page (l'onglet Prestige juste en dessous), et
-          les « infos de jeu » ne menaient nulle part. Il dit maintenant ce que
-          CETTE page contient.
-          `art` : la place de village du jeu, prise dans ses propres écrans de
-          générique (public/jeu/credits/). Ces onze images-là sont les seules du
-          client qui n'ont ni logo ni barre de chargement incrustés — contrairement
-          aux écrans de /jeu/chargement/, qu'il faut recadrer. */}
-      <PageHeader art="/jeu/credits/shotcredit03.webp" banner="/assets/site/banners/banner-guides.webp" title="Guide de progression" subtitle="Le guide de Sugot, prestige par prestige : quoi faire en priorité, et quoi anticiper." />
+      {/* `art` : la place de village du jeu, prise dans ses propres écrans de générique
+          (public/jeu/credits/). Les dix-sept images de ce dossier sont les seules du
+          client qui n'ont ni logo d'éditeur ni barre de chargement incrustés —
+          contrairement aux écrans de /jeu/chargement/, qu'il faut recadrer. */}
+      <PageHeader art="/jeu/credits/shotcredit03.webp" banner="/assets/site/banners/banner-guides.webp" title="Guide de progression" subtitle="Dans quel ordre s'y prendre, ce que le palier suivant ouvre, et ce qu'il coûte." />
       <SectionTabs section="guides" />
 
       <div className="gd">
-        {/* La playlist vivait ici, dans un lecteur unique : on ne savait pas
-            quelle vidéo allait avec quel donjon. Chaque instance porte
-            maintenant la sienne sur sa propre fiche, dans le wiki. */}
-
-        {/* Quatre sections dans un rail, au lieu de quatorze cartes empilées sur
-            605 lignes. Ce qu'on cherche se choisit maintenant SANS dérouler la
-            page : chaque entrée du rail porte son compte. */}
-        <VoletSections
-          sections={sections}
-          entete={
-            <EnteteVolet
-              icon="graduation"
-              titre="Guide de progression — par Sugot"
-              sous="Vous voilà 200 et prestige 3. Pour ne pas vous disperser et avoir des objectifs clairs, voici une trame à suivre, ou du moins quelques conseils pour vous y retrouver sans passer des heures à errer inutilement."
-              marque={{ texte: "Formateur volontaire", couleur: "var(--orange)" }}
-            />
-          }
+        <EnteteVolet
+          icon="graduation"
+          titre="La trame de Sugot"
+          sous="Niveau 200, prestige 3 : voilà l'ordre dans lequel s'y prendre pour ne pas se disperser."
+          marque={{ texte: "Formateur volontaire", couleur: "var(--orange)" }}
         />
 
-        {/* Ce renvoi menait a /astuces-guilde, qui n'existe plus : ses faits ont
-            rejoint /builder/mecaniques. Le lien est donc refait vers la vraie
-            destination — une redirection existe, mais elle est la pour les URL qui
-            ont circule, pas pour la navigation interne du site.
-            Le cadenas NE tombe PAS avec la page, contrairement a ce qui etait
-            ecrit ici : /builder/mecaniques vit dans src/app/(verified)/, dont le
-            layout appelle requireVerified(). La marche a simplement baisse — un
-            compte suffit la ou il fallait etre de la guilde — et c'est ce que dit
-            la pastille <Compte />. */}
-        <div className="gd-renvoi">
-          <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0 }} />
-          <span>
-            Ce guide dit par où commencer. Ce que les fichiers du jeu disent d&apos;une pièce —
-            les gemmes dont le nom ne correspond pas à l&apos;effet, les plafonds de sertissage,
-            l&apos;échelle d&apos;amélioration, et pourquoi un build calculé en donjon ne vaut rien
-            en arène — est sur <a href="/builder/mecaniques">Les mécaniques →</a> <Compte />
-          </span>
+        {/* ── LA FRISE ──
+            Le schéma qui remplace l'accordéon de six paliers ET le tableau replié du
+            calculateur. Voir src/components/guides/FrisePaliers.tsx : tout y est
+            calculé sur dungeons.json et PRESTIGE_COSTS. */}
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle">
+            <Icon name="path" size={18} />
+            <Invisible enJeu="l'écran de personnage affiche ton prestige, jamais ce que le suivant ouvre ni ce qu'il demande">
+              Ce que chaque palier ouvre
+            </Invisible>
+          </h2>
+          <FrisePaliers avecInstances />
+          <p className="gd-legende">
+            <span className="gd-lg"><span className="gd-lgb" /> points de vie demandés</span>
+            <span className="gd-lg"><Icon name="chevron-right" size={12} /> ce que coûte le palier suivant</span>
+            {/* Le guide écrivait cette armure à la main dans une phrase de conseil. Elle
+                est la même pour les douze instances à palier, et c'est le relevé qui le
+                dit — sinon la frise ne l'affirmerait pas (cf. ARMURE_COMMUNE). */}
+            {ARMURE_COMMUNE && <span className="gd-lg"><Icon name="shirt-armor" size={13} /> partout : {ARMURE_COMMUNE}</span>}
+          </p>
         </div>
 
-        <div className="gd-foot">N&apos;hésitez pas pour la suite à aller en vocal, sinon sur le Wiki du serveur !<br />Votre dévoué Sugot.</div>
+        {/* ── LES PRIORITÉS ── */}
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="target" size={18} />À faire en priorité</h2>
+          <div className="gd-prio">
+            {PRIORITES.map((p, i) => (
+              <div key={i} className="gd-p">
+                <span className="gd-pic">{p.ic}</span>
+                <span className="gd-pt">
+                  <span className="gd-ph">{p.titre}{p.palier ? <span className="gd-pp">P{p.palier}</span> : null}</span>
+                  <span className="gd-pq">{p.quoi}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── LES RÈGLES ── */}
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="clock" size={18} />Les {REGLES.length} règles qui coûtent une soirée</h2>
+          <ul className="gd-regles">
+            {REGLES.map((r, i) => <li key={i}>{r}</li>)}
+          </ul>
+        </div>
+
+        {/* ── UN SUJET, UNE PAGE ── */}
+        <div className="gd-card fx-card">
+          <h2 className="gd-cardtitle"><Icon name="compass" size={18} />Pour la suite</h2>
+          <div className="gd-suite">
+            {SUITE.map((s) => (
+              <a key={s.href} href={s.href} className="gd-s">
+                <Icon name={s.icon} size={17} />
+                <span>
+                  <b>{s.titre} {s.verrou && <Verrou quoi={s.verrou} />}</b>
+                  <i>{s.quoi}</i>
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="gd-foot">Votre dévoué Sugot.</div>
       </div>
 
       <style>{`
         .gd { line-height:1.6; color:var(--text); }
-        .gd h2, .gd h3, .gd h4 { font-family:'Rubik',sans-serif; margin:0; font-weight:700; }
+        .gd h2 { font-family:'Rubik',sans-serif; margin:0; font-weight:700; }
         .gd p { margin:0; }
         .gd b { color:var(--text); }
-        .gd-card { background:var(--bg-2); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px; }
-        /* Dans un panneau de volet, les cartes perdent leur cadre : le panneau EST
-           déjà une carte, et deux cadres imbriqués font une boîte dans une boîte.
-           Elles gardent leur titre et se séparent par un filet. */
-        .gd-panneau .gd-card { background:transparent; border:0; border-radius:0; padding:0; margin:0 0 26px; }
-        .gd-panneau .gd-card:last-child { margin-bottom:0; }
-        .gd-panneau .gd-card + .gd-card { border-top:1px solid var(--border); padding-top:24px; }
-        .gd-cardtitle { font-size:20px; text-transform:uppercase; letter-spacing:1px; color:var(--orange); margin-bottom:14px; display:flex; align-items:center; gap:10px; }
-        .gd-panneau .gd-cardtitle { font-size:17px; }
-        .gd-intro { font-size:14px; color:var(--text); }
-        .gd-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
-        .gd-qitem { display:flex; justify-content:space-between; align-items:center; background:var(--bg-3); border:1px solid var(--border); border-radius:8px; padding:10px 14px; }
-        .gd-qitem .ql { font-size:13px; color:var(--text-muted); }
-        .gd-qitem .qv { font-family:'Rubik',sans-serif; font-weight:700; color:var(--gold); font-size:16px; font-variant-numeric:tabular-nums; }
-        .gd-prestige { background:var(--bg-2); border:1px solid var(--border); border-radius:14px; margin-bottom:16px; overflow:hidden; }
-        .gd-prestige:last-child { margin-bottom:0; }
-        .gd-head { padding:16px 20px; display:flex; align-items:center; gap:14px; cursor:pointer; background:linear-gradient(90deg, rgba(255,140,26,.08), transparent); border-left:3px solid var(--orange); transition:background .15s; }
-        .gd-head:hover { background:linear-gradient(90deg, rgba(255,140,26,.14), transparent); }
-        .gd-badge { width:44px; height:44px; border-radius:10px; background:var(--bg-4); display:flex; align-items:center; justify-content:center; font-family:'Rubik',sans-serif; font-weight:700; color:var(--gold); font-size:18px; flex-shrink:0; border:1px solid var(--gold); }
-        .gd-pt { flex:1; }
-        .gd-head h3 { font-size:18px; }
-        .gd-ps { font-size:12px; color:var(--text-muted); margin-top:2px; }
-        .gd-arrow { color:var(--text-muted); transition:transform .25s; font-size:13px; }
-        .gd-prestige.open .gd-arrow { transform:rotate(90deg); }
-        .gd-body { padding:0 20px; max-height:0; overflow:hidden; transition:max-height .35s ease, padding .35s ease; }
-        .gd-prestige.open .gd-body { padding:16px 20px 20px; max-height:4000px; }
-        .gd-tip { background:var(--bg-3); border-radius:10px; padding:14px 16px; margin-bottom:10px; border-left:2px solid var(--orange-dark); }
-        .gd-tip h4 { font-size:15px; color:var(--orange); margin-bottom:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-        .gd-tip p { font-size:13.5px; color:var(--text); }
-        .gd-prio { display:inline-block; font-size:11px; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:4px; background:rgba(248,113,113,.18); color:var(--red); font-weight:600; }
-        .gd-note { background:rgba(255,140,26,.06); border:1px solid var(--orange-dark); border-radius:8px; padding:12px 14px; font-size:13.5px; margin-top:10px; }
-        .gd-note a, .gd-src a { color:var(--orange); text-decoration:none; font-weight:600; border-bottom:1px dotted currentColor; }
-        .gd-note a:hover, .gd-src a:hover { color:var(--text); }
-        .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:20px; font-style:italic; }
-        /* Un donjon cité mène a sa fiche ; un objet montre son icône. */
-        .gd-lien { display:inline-flex; align-items:center; gap:5px; color:var(--orange); text-decoration:none; border-bottom:1px dotted currentColor; font-weight:600; }
+        .gd-card { background:var(--bg-2); border:1px solid var(--border); border-radius:14px; padding:22px; margin-bottom:16px; }
+        .gd-cardtitle { font-size:18px; text-transform:uppercase; letter-spacing:1px; color:var(--orange);
+          margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        /* Un donjon cite mene a sa fiche. */
+        .gd-lien { display:inline-flex; align-items:center; gap:5px; color:var(--orange); text-decoration:none;
+          border-bottom:1px dotted currentColor; font-weight:600; }
         .gd-lien:hover { color:var(--text); }
-        /* Le cadenas du jeu : une precision, jamais un avertissement. Il se lit
-           apres le lien, en petit, sans couleur d'alerte. */
-        .gd-verrou { display:inline-flex; align-items:center; gap:3px; font-size:10.5px; text-transform:uppercase;
-          letter-spacing:.6px; color:var(--text-muted); vertical-align:1px; }
-        .gd-verrou img { width:11px; height:13px; object-fit:contain; image-rendering:pixelated; opacity:.85; }
-        .gd-objet { display:inline-flex; align-items:center; gap:6px; min-width:0; }
-        .gd-objet img { width:16px; height:16px; object-fit:contain; flex-shrink:0; }
-        .gd-recettes { display:grid; gap:10px; }
-        .gd-recette { background:var(--bg-3); border-radius:10px; padding:13px 15px; border-left:2px solid var(--orange-dark); }
-        .gd-recette h4 { font-size:14.5px; color:var(--orange); margin-bottom:7px; }
-        .gd-recette ul { margin:0; padding-left:18px; font-size:13px; line-height:1.7; }
-        .gd-src { font-size:12px; color:var(--text-muted); margin-top:7px; line-height:1.55; }
-        /* « Cet objet · ou le trouver » : une seule colonne, l'objet a gauche,
-           le ou les lieux a droite, et tout se replie proprement sur telephone. */
-        .gd-liste { display:grid; gap:8px; }
-        .gd-ou { display:flex; align-items:center; gap:12px; flex-wrap:wrap; background:var(--bg-3);
-                 border-radius:9px; padding:10px 14px; border-left:2px solid var(--orange-dark); min-width:0; }
-        .gd-ou .quoi { display:inline-flex; align-items:center; gap:7px; font-size:13.5px; font-weight:600;
-                       flex:1 1 200px; min-width:0; }
-        .gd-ou .ou { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0;
-                     font-size:12.5px; color:var(--text-muted); }
-        .gd-ou .ou > svg { flex-shrink:0; opacity:.55; }
-        .gd-ou .lieu { display:inline-flex; }
-        /* Les deux familles de cartes, cote a cote : c'est leur mise en regard
-           qui fait comprendre qu'il y en a deux, mieux qu'une phrase. */
-        .gd-perc { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr)); gap:16px; }
-        .gd-perctitre { font-size:11px; text-transform:uppercase; letter-spacing:1.2px; color:var(--orange);
-          font-family:'Rubik',sans-serif; font-weight:700; margin-bottom:9px; }
-        .gd-perclist { display:grid; gap:6px; }
-        .gd-percel { display:flex; align-items:center; gap:9px; padding:6px 9px; border-radius:9px;
-          background:var(--bg-3); border:1px solid var(--border); }
-        .gd-percel img { width:26px; height:26px; object-fit:contain; flex-shrink:0; }
-        .gd-percel span { display:flex; flex-direction:column; min-width:0; }
-        .gd-percel b { font-size:12.5px; }
-        .gd-percel i { font-style:normal; font-size:11.5px; color:var(--text-muted); }
-        /* La plaque de statistique du jeu : poussee a droite, plus petite que
-           l'icone de carte pour rester une precision et non un second sujet. */
-        .gd-de { margin-left:auto; width:20px !important; height:20px !important; image-rendering:pixelated; opacity:.9; }
-        .gd-percgr { margin-top:9px; font-size:11.5px; color:var(--text-muted); }
-        .gd-percgr span { display:inline-block; font-weight:700; color:var(--gold); border:1px solid var(--gold);
-          border-radius:6px; padding:0 7px; margin:0 2px; }
-        /* La roue des elements : cinq lignes qui se mettent en colonnes quand la
-           place le permet. Le « bat » en vert et le « craint » en rouge portent
-           l'information a eux seuls — on peut lire la roue sans lire les mots. */
-        .gd-roue { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr)); gap:8px; margin-top:14px; }
-        .gd-roue-el { display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:9px;
-          background:var(--bg-3); border:1px solid var(--border); }
-        .gd-roue-el img { width:28px; height:28px; object-fit:contain; flex-shrink:0; image-rendering:pixelated; }
-        .gd-roue-txt { display:flex; flex-direction:column; min-width:0; }
-        .gd-roue-txt b { font-size:13px; }
-        .gd-roue-txt i { font-style:normal; font-size:11.5px; display:flex; gap:9px; flex-wrap:wrap; }
-        .gd-roue-txt .bat { color:var(--green); }
-        .gd-roue-txt .craint { color:var(--red); }
-        /* Les phrases de boss : l'orbe du jeu a gauche, la traduction a droite.
-           C'est volontairement la meme forme que .gd-ou — un lecteur qui a
-           compris l'une comprend l'autre sans effort. */
-        .gd-boss { display:flex; align-items:flex-start; gap:11px; background:var(--bg-3);
-          border-radius:9px; padding:10px 14px; border-left:2px solid var(--orange-dark); }
-        .gd-boss-ic { width:22px; display:flex; align-items:center; justify-content:center; flex-shrink:0; padding-top:1px; }
-        .gd-boss-ic img { width:20px; height:20px; object-fit:contain; }
-        .gd-boss-txt { display:flex; flex-direction:column; gap:2px; min-width:0; }
-        .gd-boss-txt b { font-size:13.5px; color:var(--gold); }
-        .gd-boss-txt i { font-style:normal; font-size:13px; color:var(--text); line-height:1.5; }
-        /* Trois chiffres, et c'est tout le sujet : ils doivent se lire d'un coup
-           d'oeil, donc gros et alignes (tabular-nums, sinon le ×1 flotte). */
-        .gd-taux { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr)); gap:10px; }
-        .gd-taux > div { background:var(--bg-3); border:1px solid var(--border); border-radius:10px;
-          padding:13px 14px; display:flex; flex-direction:column; gap:3px; }
-        .gd-taux .tv { font-family:'Rubik',sans-serif; font-weight:700; font-size:26px; color:var(--gold);
-          font-variant-numeric:tabular-nums; line-height:1; }
-        .gd-taux .tl { font-size:12px; color:var(--text-muted); }
+
+        /* La legende de la frise : trois reperes, dont un echantillon de barre. Elle
+           remplace la phrase qui disait la meme chose en vingt mots. */
+        .gd-legende { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:11.5px; color:var(--text-muted); }
+        .gd-lg { display:inline-flex; align-items:center; gap:6px; }
+        .gd-lgb { display:inline-block; width:26px; height:5px; border-radius:3px; background:var(--orange); }
+
+        /* Les priorites : une grille de pastilles, l'icone de l'objet a gauche. */
+        .gd-prio { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:9px; }
+        .gd-p { display:flex; gap:11px; align-items:flex-start; background:var(--bg-3);
+          border:1px solid var(--border); border-radius:11px; padding:11px 13px; }
+        .gd-pic { width:24px; display:flex; align-items:center; justify-content:center; flex-shrink:0; padding-top:1px; }
+        .gd-pt { display:flex; flex-direction:column; gap:2px; min-width:0; }
+        .gd-ph { display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:13.5px; font-weight:600; }
+        .gd-pp { font-size:10px; font-weight:700; letter-spacing:.6px; color:var(--gold);
+          border:1px solid var(--gold); border-radius:20px; padding:0 6px; }
+        .gd-pq { font-size:12.5px; color:var(--text-muted); line-height:1.55; }
+        .gd-pq b { color:var(--gold); font-family:'Rubik',sans-serif; }
+
         .gd-regles { margin:0; padding-left:19px; display:grid; gap:9px; font-size:13.5px; }
         .gd-regles li { line-height:1.6; }
         .gd-regles code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
           background:var(--bg-4); border:1px solid var(--border); border-radius:5px; padding:1px 5px; color:var(--orange); }
-        /* Le renvoi vers les mecaniques : visible sans etre une reclame. */
-        .gd-renvoi { display:flex; align-items:flex-start; gap:10px; background:var(--bg-2);
-          border:1px dashed var(--orange-dark); border-radius:12px; padding:14px 16px;
-          font-size:13px; color:var(--text-muted); margin:20px 0; }
-        .gd-renvoi a { color:var(--orange); text-decoration:none; font-weight:600; white-space:nowrap; }
-        .gd-renvoi a:hover { color:var(--text); }
-        /* Les liens d'instance faisaient 21 px de haut : on les rate au doigt.
-           On ne grossit pas le texte — la ligne deviendrait un pave — on ouvre
-           la zone sensible autour, sans decaler la mise en page. */
+
+        /* Pour la suite : six portes, une par sujet. C'est l'inverse de ce que la page
+           faisait — elle developpait ces sujets au lieu d'y mener. */
+        .gd-suite { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr)); gap:9px; }
+        .gd-s { display:flex; gap:10px; align-items:flex-start; text-decoration:none; color:var(--text);
+          background:var(--bg-3); border:1px solid var(--border); border-radius:11px; padding:11px 13px;
+          transition:border-color .15s, transform .15s; }
+        .gd-s:hover { border-color:var(--orange); transform:translateY(-2px); }
+        .gd-s > svg { color:var(--orange); flex-shrink:0; margin-top:2px; }
+        .gd-s span { display:flex; flex-direction:column; gap:2px; min-width:0; }
+        .gd-s b { font-size:13px; }
+        .gd-s i { font-style:normal; font-size:11.5px; color:var(--text-muted); }
+
+        .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:14px; font-style:italic; }
+
+        /* Les liens d'instance font 21 px de haut : on les rate au doigt. On ne grossit
+           pas le texte, on ouvre la zone sensible autour. */
         @media (pointer:coarse){
-          .gd-ou .lieu a, .gd-ou .lieu { position:relative; }
-          .gd-ou .lieu a::before { content:""; position:absolute; left:0; right:0; top:50%;
-            transform:translateY(-50%); height:44px; }
+          .gd-pq .gd-lien { position:relative; }
+          .gd-pq .gd-lien::before { content:""; position:absolute; left:0; right:0; top:50%;
+            transform:translateY(-50%); height:40px; }
         }
       `}</style>
     </div>

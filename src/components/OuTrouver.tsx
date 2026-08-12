@@ -5,15 +5,26 @@ import { Icon, type IconName } from "@/components/Icon";
 /**
  * « D'où vient cet objet ? » — la question qu'un joueur se pose devant un nom.
  *
- * Les données viennent du client du jeu (recettes de craft, butin de quête chiffré,
- * contenu des coffres, tables de clés, paliers de la Tour), servies par
- * /api/ou-trouver. Le butin ORDINAIRE des monstres n'y est pas : il est calculé par
- * le serveur. L'absence de réponse ne veut donc pas dire « ça ne tombe pas », et le
- * composant le dit plutôt que de laisser croire à un vide.
+ * Les données viennent du client du jeu : recettes de craft, butin de quête, contenu
+ * des coffres, tables de clés, paliers de la Tour.
+ *
+ * ┌──────────── CE QUI A ÉTÉ RETIRÉ, ET POURQUOI ────────────┐
+ * │ Ce composant portait une colonne de POURCENTAGES, et un   │
+ * │ encadré expliquant que le butin ordinaire est calculé     │
+ * │ côté serveur. Les deux sont partis ensemble : les taux    │
+ * │ de drop ne se montrent plus, donc l'encadré qui excusait  │
+ * │ leur absence n'avait plus rien à excuser. Ce qui sert     │
+ * │ ici, c'est la SOURCE et le NOM — « craft chez Bobochan », │
+ * │ « coffre ouvert avec la Clé d'Or ». Pas la chance.        │
+ * │                                                           │
+ * │ Et quand le client ne sait rien : on n'affiche RIEN. Un   │
+ * │ cadre qui dit « on ne sait pas » est un renseignement     │
+ * │ incomplet, donc il part avec le reste.                    │
+ * └───────────────────────────────────────────────────────────┘
  */
 
-type Source = { quoi: string; ou: string | null; chance: number | null };
-type Reponse = { nom: string; trouve: boolean; sources?: Source[]; total?: number; avertissement?: string };
+type Source = { quoi: string; ou: string | null };
+type Reponse = { nom: string; trouve: boolean; sources?: Source[]; total?: number };
 
 /** Une icône par nature de source, pour que ça se lise sans lire. */
 function icone(quoi: string): IconName {
@@ -27,30 +38,18 @@ function icone(quoi: string): IconName {
 
 export function OuTrouver({ nom, compact = false }: { nom: string | null | undefined; compact?: boolean }) {
   const [r, setR] = useState<Reponse | null>(null);
-  const [charge, setCharge] = useState(false);
 
   useEffect(() => {
     if (!nom) { setR(null); return; }
     let annule = false;
-    setCharge(false);
     fetch(`/api/ou-trouver?nom=${encodeURIComponent(nom)}`)
       .then((x) => (x.ok ? x.json() : null))
-      .then((d) => { if (!annule) { setR(d); setCharge(true); } })
-      .catch(() => { if (!annule) setCharge(true); });
+      .then((d) => { if (!annule) setR(d); })
+      .catch(() => {});
     return () => { annule = true; };
   }, [nom]);
 
-  if (!nom || !charge) return null;
-
-  // Rien de connu : on le dit, et on dit pourquoi. Un composant qui disparaît
-  // laisserait croire que l'objet ne s'obtient nulle part.
-  if (!r?.trouve || !r.sources?.length) {
-    return (
-      <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "8px 11px", border: "1px dashed var(--border)", borderRadius: 9 }}>
-        Le client du jeu ne dit pas d’où vient cet objet. Le butin ordinaire des monstres est calculé côté serveur : ça ne veut pas dire qu’il ne tombe pas.
-      </div>
-    );
-  }
+  if (!nom || !r?.trouve || !r.sources?.length) return null;
 
   return (
     <div style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-3)", overflow: "hidden" }}>
@@ -70,11 +69,6 @@ export function OuTrouver({ nom, compact = false }: { nom: string | null | undef
               <b style={{ fontWeight: 600 }}>{s.quoi}</b>
               {s.ou && <span style={{ color: "var(--text-muted)" }}> — {s.ou}</span>}
             </span>
-            {s.chance != null && (
-              <span style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums", fontWeight: 700, color: s.chance >= 10 ? "var(--green)" : s.chance >= 2 ? "var(--gold)" : "var(--text-muted)" }}>
-                {s.chance}&nbsp;%
-              </span>
-            )}
           </div>
         ))}
       </div>

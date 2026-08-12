@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RechercheObjets } from "@/components/objets/Recherche";
-import { dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
+import { comptesGlobaux, dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
 
 /**
  * LES OBJETS — la page qui manquait.
@@ -19,15 +19,16 @@ export const metadata = { title: "Objets · Vanguard" };
 export default async function ObjetsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const total = nombreDObjets();
+  // Le chiffre qui dit ce que ce catalogue a d'unique : compté, jamais écrit.
+  const { maison } = comptesGlobaux();
 
   return (
     <>
       <PageHeader icon="package" title="Les objets"
-        subtitle={`${total.toLocaleString("fr-FR")} objets lus dans le client du jeu — leurs vraies statistiques, et d’où ils viennent.`}
+        subtitle={`${total.toLocaleString("fr-FR")} objets du client, dont ${maison.toLocaleString("fr-FR")} ajoutés par AirFlyff.`}
         right={
           <span style={{ fontSize: 11.5, color: "var(--text-muted)", textAlign: "right", lineHeight: 1.5 }}>
-            relevé du {dateDuCatalogue()}<br />
-            <span style={{ opacity: 0.75 }}>Spec_Item.txt + propitem</span>
+            relevé du {dateDuCatalogue()}
           </span>
         } />
       <RechercheObjets depart={q ?? ""} />

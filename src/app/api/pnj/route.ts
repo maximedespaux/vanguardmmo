@@ -57,6 +57,44 @@ function charger(): Fiche[] {
   return TOUT;
 }
 
+/** Accents ignorés : le client écrit « Ame de démon », le joueur tape « Âme ».
+ *  Même normalisation que /api/objets et /api/ou-trouver. */
+const clef = (s: string) =>
+  (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * « QUI VEND ÇA ? » — la question que l'annuaire ne savait pas traiter.
+ *
+ * On pouvait chercher un PNJ par son nom, son métier ou sa ville, mais pas par ce
+ * qu'il propose : pour trouver où s'achète une potion, il fallait ouvrir les fiches
+ * une par une. La recherche vit ici et pas dans le navigateur parce que les
+ * inventaires sont l'essentiel des 205 Ko du fichier — les envoyer pour les filtrer
+ * ensuite reviendrait à télécharger tout ce qu'on voulait éviter.
+ *
+ * Trois natures de résultat, dans l'ordre où elles servent : ce qu'il fabrique, ce
+ * qu'il échange contre un jeton, ce qu'il vend. Chacune renvoie les libellés qui ont
+ * répondu, pour qu'on voie POURQUOI ce PNJ est dans la liste.
+ */
+type Trouve = { cle: string; nom: string; img: string | null; metier: string | null; ville: string | null; comment: string; articles: { n: string; i: string | null }[] };
+
+function chercherObjet(tout: Fiche[], terme: string): Trouve[] {
+  const k = clef(terme);
+  if (k.length < 3) return [];
+  const out: Trouve[] = [];
+  for (const p of tout) {
+    const groupes: [string, { n: string; i: string | null }[]][] = [
+      ["fabrique", p.craft.filter((r) => clef(r.s ?? r.l).includes(k)).map((r) => ({ n: r.s ?? r.l, i: r.i }))],
+      ["contre un jeton", p.troc.filter((t) => clef(t.n).includes(k)).map((t) => ({ n: t.n, i: t.i }))],
+      ["vend", p.vend.filter((o) => clef(o.n).includes(k)).map((o) => ({ n: o.n, i: o.i }))],
+    ];
+    for (const [comment, articles] of groupes) {
+      if (!articles.length) continue;
+      out.push({ cle: p.cle, nom: p.nom, img: p.img, metier: p.metier, ville: p.ville, comment, articles: articles.slice(0, 6) });
+    }
+  }
+  return out.slice(0, 40);
+}
+
 export async function GET(req: Request) {
   let tout: Fiche[];
   try {
@@ -65,7 +103,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Annuaire indisponible" }, { status: 503 });
   }
 
-  const cle = new URL(req.url).searchParams.get("cle");
+  const p = new URL(req.url).searchParams;
+
+  const objet = p.get("objet");
+  if (objet) return NextResponse.json({ objet, resultats: chercherObjet(tout, objet) });
+
+  const cle = p.get("cle");
   if (cle) {
     const f = tout.find((x) => x.cle === cle);
     if (!f) return NextResponse.json({ error: "PNJ inconnu" }, { status: 404 });

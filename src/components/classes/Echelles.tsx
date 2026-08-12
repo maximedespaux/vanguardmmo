@@ -1,27 +1,26 @@
 "use client";
 import { Icon } from "@/components/Icon";
 import { ClassLogo } from "@/components/ClassLogo";
+import { Invisible } from "@/components/Bulle";
 import { Pastille, SousTitre } from "@/components/competences/ui";
 import { PM_MUR } from "@/components/competences/donnees";
 import { LIGNEES, LIMITES } from "@/app/(public)/classes/donnees";
-import { NB_NOMS_DE_CLASSE, NOMS_PAR_PALIER, ORDRE_PALIERS, PALIERS, PLAFOND_PALIER } from "./vue";
-import { Note } from "./Lignee";
+import { NB_NOMS_DE_CLASSE, NOMS_PAR_PALIER, PALIERS, PLAFOND_PALIER } from "./vue";
+import { Arbre } from "./Arbre";
 
 /**
- * LES ÉCHELLES — le système de paliers lu d'un coup d'œil, pas en paragraphes.
+ * LES ÉCHELLES — trois systèmes qui se superposent, montrés au lieu d'être racontés.
  *
- * Trois échelles se superposent dans ce jeu et on les confondait :
- *   · celle des NOMS : vingt-et-un noms de classe, pas trente-sept. Maître et
- *     Héros ne sont pas des classes mais des promotions du Métier 2 — le client
- *     l'écrit noir sur blanc, « Chevalier Maître » a pour promuDe « Chevalier » ;
- *   · celle des NIVEAUX DE PERSO : la promotion Héros s'ouvre à 120, les
- *     légendaires à 130, le personnage plafonne à 200 ;
- *   · celle des NIVEAUX DE COMPÉTENCE : 10 au départ, 20 en Métier 1, 10 en
- *     Métier 2, et 5 seulement sur les trois derniers paliers.
+ *   · celle des NOMS : vingt-et-un noms de classe, pas trente-sept. Maître et Héros
+ *     ne sont pas des classes mais des promotions du Métier 2 — le client l'écrit,
+ *     « Chevalier Maître » a pour promuDe « Chevalier ». C'est l'arbre qui le dit
+ *     maintenant, en posant les deux emblèmes DANS la case du Métier 2 ;
+ *   · celle des NIVEAUX DE PERSO : Héros s'ouvre à 120, les légendaires à 130, le
+ *     personnage plafonne à 200 ;
+ *   · celle des NIVEAUX DE COMPÉTENCE : 10 au départ, 20 en Métier 1, puis 10 et 5.
  *
- * D'où un arbre et deux bandeaux au lieu de trois paragraphes : les huit lignées
- * tiennent dans une grille de cinq colonnes, et on y lit le branchement — quatre
- * Métier 1 pour huit Métier 2 — sans avoir à le déduire.
+ * Le paragraphe qui expliquait le premier point est parti avec le dessin : l'arbre
+ * porte l'information, et sa légende tient en une ligne.
  */
 
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
@@ -32,31 +31,18 @@ export type CompteClasse = (nomClasse: string) => number | null;
 export function Echelles({ choisi, onChoix, nbDe }: {
   choisi: string; onChoix: (cle: string) => void; nbDe: CompteClasse;
 }) {
-  const vagabond = LIGNEES[0].etapes[0];
-  // Les lignees regroupees par Metier 1 : c'est le branchement du jeu, quatre
-  // troncs pour huit fins. Calcule et pas ecrit — si une lignee s'ajoutait,
-  // l'arbre suivrait.
-  const troncs: { nom: string; embleme: string; lignees: typeof LIGNEES }[] = [];
-  for (const l of LIGNEES) {
-    const m1 = l.etapes[1];
-    const t = troncs.find((x) => x.nom === m1.nom);
-    if (t) t.lignees.push(l);
-    else troncs.push({ nom: m1.nom, embleme: m1.embleme, lignees: [l] });
-  }
-  const colonnes = ORDRE_PALIERS.slice(1);
-
   return (
     <>
-      {/* Echelle 1 : les paliers, et combien de noms chacun porte. */}
-      <SousTitre icon="layers" apres={`${NB_NOMS_DE_CLASSE} noms de classe`}>Les six paliers</SousTitre>
-      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "stretch", marginBottom: 14 }}>
+      {/* Échelle 1 : les paliers, et combien de noms chacun porte. */}
+      <SousTitre icon="layers" apres={`${NB_NOMS_DE_CLASSE} noms de classe`}>Les paliers</SousTitre>
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "stretch", marginBottom: 16 }}>
         {NOMS_PAR_PALIER.map((x, i) => {
           const p = PALIERS[x.palier];
           const caps = PLAFOND_PALIER.get(x.palier) ?? [];
           return (
             <span key={x.palier} style={{ display: "inline-flex", alignItems: "stretch", gap: 7 }}>
-              {/* Le chevron SUIT sa tuile : place avant la suivante, il pendait
-                  dans le vide en tete de ligne des que la bande se repliait. */}
+              {/* Le chevron SUIT sa tuile : placé avant la suivante, il pendait dans le
+                  vide en tête de ligne dès que la bande se repliait. */}
               <span style={{ display: "inline-flex", flexDirection: "column", gap: 2, padding: "7px 11px", borderRadius: 10, background: "var(--bg-2)",
                 border: `1px solid color-mix(in srgb, ${p.couleur} 38%, var(--border))` }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -72,49 +58,15 @@ export function Echelles({ choisi, onChoix, nbDe }: {
         })}
       </div>
 
-      {/* Echelle 2 : l'arbre. Il defile dans son cadre plutot que de se replier :
-          replie en une colonne, un arbre ne montre plus le branchement, qui est
-          la seule chose qu'on vient y chercher. */}
-      <SousTitre icon="path" apres={`${troncs.length} troncs · ${LIGNEES.length} fins`}>L&apos;arbre des promotions</SousTitre>
-      <div style={{ overflowX: "auto", border: "1px solid var(--border)", borderRadius: 11, background: "var(--bg-2)", padding: 9, marginBottom: 6 }}>
-        <div style={{ minWidth: 640 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 9px", marginBottom: 8, borderRadius: 9,
-            background: "var(--bg-3)", border: "1px solid var(--border)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={vagabond.embleme} alt="" width={30} height={30} style={{ objectFit: "contain", flexShrink: 0 }} />
-            <span style={{ minWidth: 0 }}>
-              <b style={{ fontSize: 12.5 }}>{vagabond.nom}</b>
-              <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}> — le départ commun aux {LIGNEES.length} lignées, {nbDe(vagabond.nom) ?? vagabond.nbCompetences} compétences</span>
-            </span>
-          </div>
+      {/* Échelle 2 : l'arbre lui-même. */}
+      <SousTitre icon="path" apres={`1 départ · 4 troncs · ${LIGNEES.length} fins`}>L&apos;arbre des promotions</SousTitre>
+      <Arbre choisi={choisi} onChoix={onChoix} nbDe={nbDe} />
 
-          <div className="cl-arbre">
-            {colonnes.map((p) => (
-              <div key={p} style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: ".6px", fontWeight: 700, color: PALIERS[p].couleur, padding: "0 2px 2px" }}>
-                {PALIERS[p].nom}
-              </div>
-            ))}
-            {troncs.map((t) => (
-              <Tronc key={t.nom} tronc={t} choisi={choisi} onChoix={onChoix} nbDe={nbDe} />
-            ))}
-          </div>
-        </div>
-      </div>
-      <Note>
-        {/* Le compte de « trente-sept classes » etait faux, et il trahissait le
-            systeme : Maitre et Heros sont des paliers de la meme classe de
-            Metier 2. Seul le troisieme metier donne huit noms neufs. */}
-        <b style={{ color: "var(--text)" }}>{NB_NOMS_DE_CLASSE} noms de classe</b> seulement, et cinq paliers pour les porter :
-        Maître et Héros ne sont pas de nouvelles classes mais des <b>promotions</b> de ton Métier 2 — un Chevalier devient
-        Chevalier Maître, puis Chevalier Héros. Seul le troisième métier change de nom. Clique une ligne pour ouvrir sa lignée
-        dans les sections voisines.
-      </Note>
-
-      {/* Echelle 3 : les niveaux de perso qui ouvrent les paliers. */}
-      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 14 }}>
-        <Borne valeur={LIMITES.niveauMaxGeneral} quoi="le palier Héros s'ouvre" couleur="var(--orange)" />
+      {/* Échelle 3 : les niveaux de perso qui ouvrent les paliers. */}
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 16 }}>
+        <Borne valeur={LIMITES.niveauMaxGeneral} quoi="Héros s'ouvre" couleur="var(--orange)" />
         <Borne valeur={LIMITES.niveauMaxLegendaire} quoi="les légendaires s'ouvrent" couleur="var(--purple)" />
-        <Borne valeur={LIMITES.niveauMaxPersonnage} quoi="niveau maximum d'un perso" couleur="var(--text-muted)" />
+        <Borne valeur={LIMITES.niveauMaxPersonnage} quoi="plafond d'un perso" couleur="var(--text-muted)" />
       </div>
     </>
   );
@@ -129,66 +81,17 @@ function Borne({ valeur, quoi, couleur }: { valeur: number; quoi: string; couleu
   );
 }
 
-/** Un tronc de Métier 1 et les lignées qui en sortent. La cellule de gauche
- *  s'étend sur ses deux lignes : c'est ce qui fait voir le branchement. */
-function Tronc({ tronc, choisi, onChoix, nbDe }: {
-  tronc: { nom: string; embleme: string; lignees: typeof LIGNEES };
-  choisi: string; onChoix: (cle: string) => void; nbDe: CompteClasse;
-}) {
-  return (
-    <>
-      <Case nom={tronc.nom} embleme={tronc.embleme} nb={nbDe(tronc.nom)} couleur={PALIERS.metier1.couleur}
-        style={{ gridRow: `span ${tronc.lignees.length}` }} />
-      {tronc.lignees.map((l) => (
-        <ButtonLignee key={l.cle} lignee={l} actif={l.cle === choisi} onChoix={onChoix} nbDe={nbDe} />
-      ))}
-    </>
-  );
-}
-
-function ButtonLignee({ lignee, actif, onChoix, nbDe }: {
-  lignee: (typeof LIGNEES)[number]; actif: boolean; onChoix: (cle: string) => void; nbDe: CompteClasse;
-}) {
-  return (
-    <>
-      {lignee.etapes.slice(2).map((e) => (
-        <button key={e.nom} onClick={() => onChoix(lignee.cle)} className="cl-case-btn" aria-pressed={actif}
-          style={{ borderColor: actif ? "var(--orange)" : "var(--border)", background: actif ? "rgba(255,140,26,.09)" : "var(--bg-3)" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={e.embleme} alt="" width={26} height={26} style={{ objectFit: "contain", flexShrink: 0 }} />
-          <span style={{ minWidth: 0 }}>
-            <b style={{ display: "block", fontSize: 11.5, lineHeight: 1.2, color: actif ? "var(--orange)" : "var(--text)" }}>{e.nom}</b>
-            <span style={{ fontSize: 10, color: "var(--text-muted)", ...NUM }}>{nbDe(e.nom) ?? e.nbCompetences} comp.</span>
-          </span>
-        </button>
-      ))}
-    </>
-  );
-}
-
-function Case({ nom, embleme, nb, couleur, style }: {
-  nom: string; embleme: string; nb: number | null; couleur: string; style?: React.CSSProperties;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 9px", borderRadius: 9, background: "var(--bg-3)",
-      border: `1px solid color-mix(in srgb, ${couleur} 34%, var(--border))`, ...style }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={embleme} alt="" width={26} height={26} style={{ objectFit: "contain", flexShrink: 0 }} />
-      <span style={{ minWidth: 0 }}>
-        <b style={{ display: "block", fontSize: 11.5, lineHeight: 1.2 }}>{nom}</b>
-        {nb != null && <span style={{ fontSize: 10, color: "var(--text-muted)", ...NUM }}>{nb} comp.</span>}
-      </span>
-    </div>
-  );
-}
-
 // ══════════════════════════════════════════════════════════════════════════
 //  HUIT NOMS, DEUX EFFETS
 // ══════════════════════════════════════════════════════════════════════════
 
 /**
- * La trouvaille transversale : elle ne se voit qu'en mettant les huit classes
- * côte à côte, donc elle ne peut pas vivre dans le volet d'une seule.
+ * La trouvaille transversale : elle ne se voit qu'en mettant les huit classes côte à
+ * côte, donc elle ne peut pas vivre dans le volet d'une seule.
+ *
+ * Les deux paragraphes qui l'entouraient sont passés dans des repères « hors jeu » :
+ * huit noms différents, huit icônes différentes, deux effets réels — et un mur de PM
+ * sur sept d'entre elles. Ni l'un ni l'autre ne se lit dans la fenêtre de compétences.
  */
 export function HuitNomsDeuxEffets({ onChoix }: { onChoix: (cle: string) => void }) {
   const heros = LIGNEES.map((l) => ({ classe: l.nom, cle: l.cle, source: l.etapes[4].nom, c: l.heros }));
@@ -199,23 +102,26 @@ export function HuitNomsDeuxEffets({ onChoix }: { onChoix: (cle: string) => void
   }
   return (
     <>
-      <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6, margin: "0 0 13px" }}>
-        Chaque palier Héros a sa compétence, son nom et son icône. Au niveau 5, elles se rangent pourtant dans{" "}
-        <b style={{ color: "var(--text)" }}>{parEffet.size} cases</b> seulement : marquer la cible pour le physique, ou pour la magie.
-        Si ta composition en aligne trois du même bord, la troisième ne rapporte rien.
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 13, fontSize: 12.5 }}>
+        <Invisible enJeu={`Les ${heros.length} compétences de Héros ont ${heros.length} noms et ${heros.length} icônes, mais au niveau 5 elles se rangent dans ${parEffet.size} cases : marquer la cible pour le physique, ou pour la magie. Trois du même bord dans une composition, et la troisième ne rapporte rien.`}>
+          <b style={{ color: "var(--text)", ...NUM }}>{heros.length} noms → {parEffet.size} effets</b>
+        </Invisible>
+        <Invisible enJeu="Sept de ces huit compétences coûtent 9 999 999 PM avant le niveau 5 — personne n'a ça. Et le niveau ne se choisit pas : il se tire au hasard en dépensant un joyau de chaque type, plafonné à 5. Seule la Marque de vulnérabilité du Meneur Héros est utilisable dès le niveau 1.">
+          <b style={{ color: "var(--red)" }}>7 sur 8 inutilisables avant le 5</b>
+        </Invisible>
+      </div>
       <div className="cl-deux">
         {[...parEffet.entries()].map(([effet, membres]) => (
           <div key={effet} style={{ padding: "12px 14px", borderRadius: 12, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "var(--green)", marginBottom: 2, ...NUM }}>{effet}</div>
-            <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9 }}>
-              {membres.length} compétence{membres.length > 1 ? "s" : ""} sur {heros.length} · 60 s, recharge 120 s
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, ...NUM }}>
+              {membres.length} sur {heros.length} · 60 s, recharge 120 s
             </div>
             <div style={{ display: "grid", gap: 5 }}>
               {membres.map((m) => (
                 <button key={m.cle} onClick={() => onChoix(m.cle)} className="cl-lien">
-                  {/* L'embleme officiel, pas le logo maison : sur cette carte on
-                      parle des paliers du jeu, autant montrer ses dessins. */}
+                  {/* L'emblème officiel, pas le logo maison : sur cette carte on parle
+                      des paliers du jeu, autant montrer ses dessins. */}
                   <ClassLogo name={m.cle} size={20} officiel />
                   <b style={{ fontSize: 12.5 }}>{m.c.nom}</b>
                   <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{m.source} → {m.classe}</span>
@@ -228,11 +134,6 @@ export function HuitNomsDeuxEffets({ onChoix }: { onChoix: (cle: string) => void
           </div>
         ))}
       </div>
-      <Note>
-        Sept de ces huit compétences coûtent 9 999 999 PM avant le niveau 5, et le niveau s&apos;obtient au tirage — un joyau de
-        chaque type, résultat aléatoire plafonné à 5. Seule la « Marque de vulnérabilité » du Meneur Héros est utilisable dès
-        le niveau 1.
-      </Note>
     </>
   );
 }

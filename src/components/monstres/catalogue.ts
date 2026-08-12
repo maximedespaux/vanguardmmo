@@ -57,6 +57,28 @@ function charger() {
 export const metaCatalogue = () => charger().META;
 export const monstreParId = (id: string) => charger().PAR_ID.get(id) ?? null;
 
+/**
+ * LES FAITS D'ENSEMBLE QUI SE COMPTENT, jamais ceux qui s'écrivent.
+ *
+ * « Sur AirFlyff, il n'existe plus de monstre passif » était une phrase de fiche
+ * avec ses deux nombres tapés au clavier. Ils sont comptés ici, une fois, et la
+ * phrase les reçoit : le jour où la fouille du client en rend d'autres, l'écran
+ * suit tout seul.
+ */
+export function faits() {
+  const { TOUT: tout, META: meta } = charger();
+  const agressifs = tout.filter((e) => /^agressif/.test(e.m.agro ?? "")).length;
+  return {
+    total: meta.total,
+    agressifs,
+    /** Ceux du jeu d'origine : le complément des 235 marqués `NEWSERV`. */
+    base: meta.total - meta.compteurs.maison,
+    maison: meta.compteurs.maison,
+    /** Le plus gros écart entre la barre de vie et le combat réel. */
+    plusDeVies: tout.reduce((max, e) => Math.max(max, e.m.vies ?? 1), 1),
+  };
+}
+
 export type Critere = {
   q?: string;
   rang?: string;
@@ -64,11 +86,21 @@ export type Critere = {
   /** Niveau plancher : « à partir de quel niveau ça me concerne ». */
   niveauMin?: number | null;
   niveauMax?: number | null;
-  /** Ne garder que le contenu ajouté par AirFlyff. */
-  maison?: boolean;
+  /**
+   * D'OÙ VIENT LE MONSTRE — le tri qui a le plus de valeur sur ce serveur.
+   *
+   * AirFlyff est un serveur privé : ce qui mérite la place, c'est ce qu'il a
+   * ajouté. 235 monstres portent la marque `NEWSERV` du serveur, 889 viennent du
+   * jeu d'origine. C'était une pastille perdue au milieu de treize autres ; c'est
+   * maintenant un choix à trois branches en tête de la recherche.
+   */
+  provenance?: "maison" | "base";
   /** Ne garder que ceux qui se relèvent (plusieurs vies). */
   plusieursVies?: boolean;
-  tri?: "pertinence" | "pvEff" | "niveau" | "degats" | "exp";
+  /* Le tri « Expérience » a disparu d'ici : l'expérience ne s'affiche plus (elle
+     ne quitte pas le relevé, elle quitte l'écran), et un tri sur une colonne
+     qu'on ne montre pas classe des lignes sans dire pourquoi. */
+  tri?: "pertinence" | "pvEff" | "niveau" | "degats";
 };
 
 /**
@@ -109,7 +141,8 @@ export function chercher(c: Critere, limite = 48) {
     const m = e.m;
     if (c.rang && m.rang !== c.rang) continue;
     if (c.element && m.elem !== c.element) continue;
-    if (c.maison && !m.maison) continue;
+    if (c.provenance === "maison" && !m.maison) continue;
+    if (c.provenance === "base" && m.maison) continue;
     if (c.plusieursVies && !(m.vies && m.vies > 1)) continue;
     if (c.niveauMin != null && nombre(m.niv) < c.niveauMin) continue;
     if (c.niveauMax != null && nombre(m.niv) > c.niveauMax) continue;
@@ -128,7 +161,6 @@ export function chercher(c: Critere, limite = 48) {
     // dans le client, et ce tri rangeait donc les plus violents du catalogue tout
     // en bas d'un classement « Dégâts par coup ».
     if (tri === "degats" && coupMax(b.m) !== coupMax(a.m)) return coupMax(b.m) - coupMax(a.m);
-    if (tri === "exp" && nombre(b.m.exp) !== nombre(a.m.exp)) return nombre(b.m.exp) - nombre(a.m.exp);
     if (b.s !== a.s) return b.s - a.s;
     // Sans mot-clé ni tri, on montre le haut du panier : c'est la réponse utile
     // à « montre-moi les boss » posée sans autre précision.
@@ -139,21 +171,29 @@ export function chercher(c: Critere, limite = 48) {
   return { total: gardes.length, monstres: gardes.slice(0, limite).map((x) => x.m) };
 }
 
-/** Les comptes par rang et par élément, pour le jeu de critères courant : chaque
- *  pastille porte son compte, donc on sait ce qu'il y a derrière sans cliquer. */
+/** Les comptes par rang, par élément et par provenance, pour le jeu de critères
+ *  courant : chaque pastille porte son compte, donc on sait ce qu'il y a derrière
+ *  sans cliquer. Les comptes de provenance ignorent le filtre de provenance —
+ *  sinon « Jeu d'origine » afficherait 0 dès qu'on a choisi « AirFlyff ». */
 export function comptes(c: Critere) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
   const qc = compacter(q);
   const rangs: Record<string, number> = {};
   const elements: Record<string, number> = {};
+  const provenances = { maison: 0, base: 0, tout: 0 };
   for (const e of tout) {
     const m = e.m;
-    if (c.maison && !m.maison) continue;
     if (c.plusieursVies && !(m.vies && m.vies > 1)) continue;
     if (c.niveauMin != null && nombre(m.niv) < c.niveauMin) continue;
     if (c.niveauMax != null && nombre(m.niv) > c.niveauMax) continue;
     if (note(e, q, qc) < 0) continue;
+    if ((!c.element || m.elem === c.element) && (!c.rang || m.rang === c.rang)) {
+      provenances.tout++;
+      provenances[m.maison ? "maison" : "base"]++;
+    }
+    if (c.provenance === "maison" && !m.maison) continue;
+    if (c.provenance === "base" && m.maison) continue;
     if (!c.element || m.elem === c.element) {
       if (m.rang) rangs[m.rang] = (rangs[m.rang] ?? 0) + 1;
     }
@@ -161,7 +201,7 @@ export function comptes(c: Critere) {
       if (m.elem) elements[m.elem] = (elements[m.elem] ?? 0) + 1;
     }
   }
-  return { rangs, elements };
+  return { rangs, elements, provenances };
 }
 
 /**
@@ -184,18 +224,23 @@ export function classementBoss(combien?: number) {
   const rangs = tout
     .map((e) => e.m)
     .filter((m) => (m.vies ?? 0) > 1)
-    .sort((a, b) => b.pvEff - a.pvEff || nombre(b.atkMax) - nombre(a.atkMax));
+    .sort((a, b) => b.pvEff - a.pvEff || coupMax(b) - coupMax(a));
   return combien ? rangs.slice(0, combien) : rangs;
 }
 
 /** Les frappeurs : dégâts par coup les plus élevés. Le tank n'a pas le même
- *  problème selon l'instance, et cette colonne-là ne se devine pas des PV. */
+ *  problème selon l'instance, et cette colonne-là ne se devine pas des PV.
+ *
+ *  `coupMax` et non `atkMax`, comme le tri « Dégâts par coup » de la recherche :
+ *  cinq monstres portent leurs bornes à l'envers dans le client, et ce classement
+ *  rangeait donc la Divinité du Chaos sur 36 001 au lieu de 360 000 — hors du
+ *  tableau, alors qu'elle en est le sommet. */
 export function classementFrappeurs(combien = 20) {
   const { TOUT: tout } = charger();
   return tout
     .map((e) => e.m)
-    .filter((m) => nombre(m.atkMax) > 0)
-    .sort((a, b) => nombre(b.atkMax) - nombre(a.atkMax))
+    .filter((m) => coupMax(m) > 0)
+    .sort((a, b) => coupMax(b) - coupMax(a))
     .slice(0, combien);
 }
 

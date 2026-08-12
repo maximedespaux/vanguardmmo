@@ -35,6 +35,28 @@ function charger() {
 
 export const dateDuCatalogue = () => { charger(); return GENERE; };
 export const nombreDObjets = () => charger().TOUT.length;
+
+/**
+ * Les quatre comptes que les pastilles de filtre portent. COMPTÉS sur le
+ * catalogue, jamais écrits : un chiffre en dur dans une étiquette survit au
+ * relevé qui le rend faux, et c'est déjà arrivé sur ce site.
+ *
+ * Ils sont GLOBAUX et pas relatifs au filtre courant, exprès : une pastille dit
+ * « voilà ce qu'il y a derrière », donc son compte ne doit pas bouger au fil de
+ * la frappe. Les comptes par famille, eux, suivent les critères — ce sont des
+ * onglets, pas des interrupteurs.
+ */
+export function comptesGlobaux() {
+  const { TOUT: tout } = charger();
+  let maison = 0, bonus = 0, unique = 0, ultime = 0;
+  for (const { o } of tout) {
+    if (o.af === 1) maison++;
+    if (o.b?.length) bonus++;
+    if (o.g === "Unique") unique++;
+    else if (o.g === "Ultime") ultime++;
+  }
+  return { maison, bonus, unique, ultime };
+}
 export const objetParId = (id: number) => charger().PAR_ID.get(id) ?? null;
 
 export type Critere = {
@@ -46,6 +68,10 @@ export type Critere = {
   grade?: "Unique" | "Ultime" | "" ;
   /** Seuls les objets qui portent au moins un bonus. */
   avecBonus?: boolean;
+  /** Seuls les objets AJOUTÉS par AirFlyff — le champ `af`, qui vient des deux
+   *  espaces de noms propres au serveur. C'est le tri qui sépare le serveur du
+   *  jeu de base, et c'est celui qui a le plus de valeur ici. */
+  maison?: boolean;
 };
 
 /**
@@ -75,6 +101,7 @@ export function chercher(c: Critere, limite = 50) {
     if (c.famille && o.f !== c.famille) continue;
     if (c.grade && o.g !== c.grade) continue;
     if (c.avecBonus && !o.b?.length) continue;
+    if (c.maison && o.af !== 1) continue;
     // Un objet sans niveau requis se porte à tout niveau : on ne l'écarte pas.
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
     const s = note(e.k, q);
@@ -106,6 +133,7 @@ export function comptesParFamille(c: Critere): Record<string, number> {
     const o = e.o;
     if (c.grade && o.g !== c.grade) continue;
     if (c.avecBonus && !o.b?.length) continue;
+    if (c.maison && o.af !== 1) continue;
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
     if (note(e.k, q) < 0) continue;
     n[o.f] = (n[o.f] ?? 0) + 1;

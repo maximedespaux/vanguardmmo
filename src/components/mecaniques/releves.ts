@@ -132,16 +132,45 @@ export function iconePercage(famille: string, palier: string): string | null {
 
 /* ── Les joyaux de sertissage ─────────────────────────────────────────────── */
 
-/** Les cinq familles de joyau, et l'image que cette page emploie déjà pour
- *  chacune. La plage de niveaux n'est pas écrite ici : elle est lue dans la
- *  description du client (voir `famillesDeJoyau`). */
-const JOYAUX: { cle: string; img: string }[] = [
-  { cle: "II_GEN_MAT_TOPAZ", img: "/jeu/mecaniques/gemme-topaze.webp" },
-  { cle: "II_GEN_MAT_RUBY", img: "/jeu/mecaniques/gemme-rubis.webp" },
-  { cle: "II_GEN_MAT_SAPPHIRE", img: "/jeu/mecaniques/gemme-saphir.webp" },
-  { cle: "II_GEN_MAT_EMERALD", img: "/jeu/mecaniques/gemme-emeraude.webp" },
-  { cle: "II_GEN_MAT_DIAMOND", img: "/jeu/mecaniques/gemme-diamant.webp" },
+/**
+ * Les cinq familles de joyau, et les images que cette page emploie pour chacune.
+ * La plage de niveaux n'est pas écrite ici : elle est lue dans la description du
+ * client (voir `famillesDeJoyau`).
+ *
+ * `morceau` est le FRAGMENT — un second dessin du client, jamais branché
+ * jusqu'ici. Vérifié image par image avant d'être posé : le morceau est un éclat
+ * effilé là où le joyau est une pierre taillée, et sa teinte est celle de sa
+ * famille. Le Diamant n'en a pas dans le relevé d'assets, d'où le `null` : on ne
+ * lui prête pas le dessin d'une autre famille.
+ */
+const JOYAUX: { cle: string; img: string; morceau: string | null }[] = [
+  { cle: "II_GEN_MAT_TOPAZ", img: "/jeu/mecaniques/gemme-topaze.webp", morceau: "/jeu/mecaniques/gemme-morceau-topaze.webp" },
+  { cle: "II_GEN_MAT_RUBY", img: "/jeu/mecaniques/gemme-rubis.webp", morceau: "/jeu/mecaniques/gemme-morceau-rubis.webp" },
+  { cle: "II_GEN_MAT_SAPPHIRE", img: "/jeu/mecaniques/gemme-saphir.webp", morceau: "/jeu/mecaniques/gemme-morceau-saphir.webp" },
+  { cle: "II_GEN_MAT_EMERALD", img: "/jeu/mecaniques/gemme-emeraude.webp", morceau: "/jeu/mecaniques/gemme-morceau-emeraude.webp" },
+  { cle: "II_GEN_MAT_DIAMOND", img: "/jeu/mecaniques/gemme-diamant.webp", morceau: null },
 ];
+
+/**
+ * LES HUIT RUNES DE RAMASSEUR, et la pierre TANK.
+ *
+ * `ICONE_RUNE_STAT` de `lib/assetsJeu` ne tient que les quatre runes de TENUE.
+ * Le client en dessine huit autres pour le ramasseur, et elles portent une
+ * distinction qu'aucun écran du site ne montrait : la même statistique existe en
+ * version JcE et en version JcJ. Les noms de fichiers le disent (`-jce`, `-jcj`)
+ * et les dessins le confirment — même silhouette d'orbe, deux teintes.
+ */
+export const RAMASSEUR: { f: string; nom: string }[] = [
+  { f: "rune-ramasseur-force-jce", nom: "Force · JcE" },
+  { f: "rune-ramasseur-force-jcj", nom: "Force · JcJ" },
+  { f: "rune-ramasseur-intelligence-jce", nom: "Intelligence · JcE" },
+  { f: "rune-ramasseur-intelligence-jcj", nom: "Intelligence · JcJ" },
+  { f: "rune-ramasseur-dexterite", nom: "Dextérité" },
+  { f: "rune-ramasseur-endurance", nom: "Endurance" },
+  { f: "rune-ramasseur-asaleur", nom: "Assaleur" },
+];
+/** La pierre de la gamme TANK, telle que le client la dessine. */
+export const RUNE_TANK = "/jeu/mecaniques/rune-tank.webp";
 
 /**
  * Les cinq familles avec leur plage de niveaux et le nombre de gemmes NOMMÉES
@@ -153,7 +182,7 @@ const JOYAUX: { cle: string; img: string }[] = [
  */
 export function famillesDeJoyau() {
   const { TOUT: tout } = charger();
-  return JOYAUX.map(({ cle, img }) => {
+  return JOYAUX.map(({ cle, img, morceau }) => {
     const o = objet(cle);
     const m = (o?.d ?? "").match(/niveau\s*(\d+)\s*-?\s*(\d+)?/);
     const nommee = new RegExp(`^${cle}0[1-9]$`);
@@ -162,6 +191,8 @@ export function famillesDeJoyau() {
       nom: o?.n ?? cle,
       plage: m ? (m[2] ? `${m[1]}–${m[2]}` : m[1]) : "",
       img,
+      /** Le fragment, ou `null` quand le client n'en dessine pas pour la famille. */
+      imgMorceau: morceau,
       nommees,
       /** Le sertisseur, nommé par le client lui-même. */
       sertisseur: /par ([A-ZÉÈ][\wéèêà]+)/.exec(o?.d ?? "")?.[1] ?? "",
@@ -549,7 +580,6 @@ type PieceFashion = {
 type MecaArme = {
   rarete_pool?: { stat: string; min: number; max: number }[];
   rarete_lignes?: { amount: number; chance: number }[];
-  eveil?: Record<string, number>;
 };
 
 let TABLE: TableBuilder | null = null;
@@ -695,12 +725,13 @@ export function rareteChiffree() {
   };
 }
 
-/** Les valeurs d'éveil que porte la table du builder, statistique par
- *  statistique. Elles ne concordent pas avec les parchemins d'éveil FIXE du
- *  client — d'où la réserve à l'écran plutôt qu'un choix arbitraire entre les
- *  deux. */
-export const eveilDuBuilder = () =>
-  Object.entries(builder().MECH?.arme?.eveil ?? {}).map(([stat, v]) => ({ stat, v }));
+/* LES VALEURS D'ÉVEIL DE LA TABLE DU BUILDER NE SONT PLUS LUES.
+ *
+ * `MECH.arme.eveil` existait ici et ne concordait pas avec les parchemins d'éveil
+ * FIXE du client. La page portait donc les deux séries avec une réserve « on ne
+ * sait pas laquelle croire » — exactement le demi-fait qu'on ne publie plus. Les
+ * parchemins du client, eux, sont complets et disent leur rang : ils suffisent.
+ * Le champ reste dans le fichier de données, il ne remonte plus à l'écran. */
 
 /* ── LES COSTUMES ─────────────────────────────────────────────────────────
  *
@@ -1265,31 +1296,15 @@ export function recetteDeJoyau(nom: string) {
   };
 }
 
-/* ── L'arène : la seconde table d'équilibrage ─────────────────────────────── */
-
-/**
- * RELEVÉ DE LECTURE — ces coefficients ne sont dans aucun de nos fichiers de
- * données ; ils ont été lus dans les tables d'équilibrage du client. La section
- * porte donc une réserve, et ces lignes ne doivent pas être présentées comme
- * mesurées en jeu.
- */
-export const ARENE_ARMES: [string, string][] = [
-  ["Arbalétrier", "vitesse ÷ 3,3 · arc ÷ 4"],
-  ["Sylphide", "vitesse ÷ 1,6 · yoyo ÷ 4"],
-  ["Templier, Spadassin", "arme ÷ 3,6 environ"],
-  ["Chanoine", "poing ÷ 2,3"],
-  ["Arcaniste, Envoûteur", "rien : identique"],
-  ["Primat", "il y gagne un peu"],
-];
-
-/* ── La GvG ───────────────────────────────────────────────────────────────── */
-
-/** Le barème, tel que le panneau du jeu l'affiche. */
-export const GVG_BAREME: [string, string][] = [
-  ["Vaincre un ennemi", "+2"],
-  ["… que ce joueur n'avait jamais battu", "+1"],
-  ["… en étant maître de guilde", "+1"],
-  ["… quand c'est un défenseur", "+1"],
-  ["… qui n'a plus de résurrection", "+1"],
-  ["Chaque résurrection qu'il te reste à la fin", "+1"],
-];
+/* ── CE QUI EST PARTI D'ICI, ET OÙ ────────────────────────────────────────────
+ *
+ * `ARENE_ARMES` (les coefficients de la seconde table d'équilibrage) et
+ * `GVG_BAREME` (le barème aux points) vivaient dans ce fichier et s'affichaient
+ * sur la planche des mécaniques. Ni l'un ni l'autre ne parle d'une pièce
+ * d'équipement : l'arène est un sujet de /classes, la GvG un sujet de
+ * /compositions. Un sujet, une page — la planche renvoie maintenant vers elles au
+ * lieu de développer chez le voisin.
+ *
+ * Les deux relevés ne sont pas perdus : ils sont dans l'historique de ce fichier,
+ * et le déménagement est signalé au fil principal pour que la page propriétaire
+ * les accueille. Ne pas les rétablir ici. */

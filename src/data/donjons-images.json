@@ -1,0 +1,147 @@
+{
+ "genere": "correspondance verifiee fichier par fichier",
+ "donjons": {
+  "1": {
+   "dossier": "DuDesert",
+   "aerien": null,
+   "plan": null
+  },
+  "2": {
+   "dossier": "DuRustia_1",
+   "aerien": null,
+   "plan": "/jeu/cartes-monde/dungeon_rustia_1.webp"
+  },
+  "3": {
+   "dossier": "DuUpresia",
+   "aerien": "/jeu/aerien/duupresia.webp",
+   "plan": "/jeu/cartes-monde/dungeon_upresia.webp"
+  },
+  "4": {
+   "dossier": "DuHerneos_1",
+   "aerien": null,
+   "plan": "/jeu/cartes-monde/dungeon_herneos_1.webp"
+  },
+  "5": {
+   "dossier": "DuFrozen",
+   "aerien": "/jeu/aerien/dufrozen.webp",
+   "plan": null
+  },
+  "6": {
+   "dossier": "DuSanpres",
+   "aerien": "/jeu/aerien/dusanpres.webp",
+   "plan": "/jeu/cartes-monde/dungeon_sanpres.webp"
+  },
+  "7": {
+   "dossier": "DuFidge",
+   "aerien": "/jeu/aerien/dufidge.webp",
+   "plan": null
+  },
+  "8": {
+   "dossier": "Skymap",
+   "aerien": "/jeu/aerien/skymap.webp",
+   "plan": null
+  },
+  "9": {
+   "dossier": "DuOphidian",
+   "aerien": "/jeu/aerien/duophidian.webp",
+   "plan": null
+  },
+  "10": {
+   "dossier": "DuOminous",
+   "aerien": "/jeu/aerien/duominous.webp",
+   "plan": "/jeu/cartes-monde/dungeon_ominous.webp"
+  },
+  "11": {
+   "dossier": "DuCatacombes",
+   "aerien": "/jeu/aerien/ducatacombes.webp",
+   "plan": null
+  },
+  "12": {
+   "dossier": "DuCastula",
+   "aerien": null,
+   "plan": null
+  },
+  "13": {
+   "dossier": "DuDreadfulCave",
+   "aerien": "/jeu/aerien/dudreadfulcave.webp",
+   "plan": "/jeu/cartes-monde/dungeon_dreadfulcave.webp"
+  },
+  "14": {
+   "dossier": "DuBehamah",
+   "aerien": "/jeu/aerien/dubehamah.webp",
+   "plan": "/jeu/cartes-monde/dungeon_behamah.webp"
+  },
+  "15": {
+   "dossier": "DuForteress",
+   "aerien": "/jeu/aerien/duforteress.webp",
+   "plan": null
+  },
+  "16": {
+   "dossier": "DuContaminatedTrails",
+   "aerien": "/jeu/aerien/ducontaminatedtrails.webp",
+   "plan": "/jeu/cartes-monde/dungeon_contaminatedtrails.webp"
+  },
+  "17": {
+   "dossier": "DuRhisisruins01",
+   "aerien": "/jeu/aerien/durhisisruins01.webp",
+   "plan": null
+  },
+  "18": {
+   "dossier": "DuKalgas",
+   "aerien": "/jeu/aerien/dukalgas.webp",
+   "plan": "/jeu/cartes-monde/dungeon_kalgas.webp"
+  },
+  "19": {
+   "dossier": "DuRuneyg",
+   "aerien": "/jeu/aerien/duruneyg.webp",
+   "plan": null
+  },
+  "20": {
+   "dossier": "DuElysianIsland",
+   "aerien": "/jeu/aerien/duelysianisland.webp",
+   "plan": null
+  },
+  "21": {
+   "dossier": "DuS525",
+   "aerien": "/jeu/aerien/dus525.webp",
+   "plan": null
+  },
+  "22": {
+   "dossier": "WdJapanese",
+   "aerien": "/jeu/aerien/wdjapanese.webp",
+   "plan": null
+  },
+  "23": {
+   "dossier": "DuKingdomGarden",
+   "aerien": "/jeu/aerien/dukingdomgarden.webp",
+   "plan": null
+  }
+ },
+ "tourOubliee": {
+  "1": {
+   "carte": "WdHeaven01",
+   "aerien": "/jeu/aerien/wdheaven01.webp",
+   "plan": "/jeu/cartes-monde/dungeon_wdheaven01.webp"
+  },
+  "2": {
+   "carte": "WdHeaven02",
+   "aerien": "/jeu/aerien/wdheaven02.webp",
+   "plan": "/jeu/cartes-monde/dungeon_wdheaven02.webp"
+  },
+  "3": {
+   "carte": "WdHeaven03",
+   "aerien": "/jeu/aerien/wdheaven03.webp",
+   "plan": "/jeu/cartes-monde/dungeon_wdheaven03.webp"
+  },
+  "4": {
+   "carte": "WdHeaven04",
+   "aerien": "/jeu/aerien/wdheaven04.webp",
+   "plan": "/jeu/cartes-monde/dungeon_wdheaven04.webp"
+  },
+  "5": {
+   "carte": "WdHeaven05",
+   "aerien": "/jeu/aerien/wdheaven05.webp",
+   "plan": "/jeu/cartes-monde/dungeon_wdheaven05.webp"
+  }
+ }
+}

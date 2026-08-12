@@ -77,12 +77,22 @@ export const donjonClient = (id: number): DonjonClient | undefined => TABLE.donj
 export const TOUR_OUBLIEE = TABLE.tourOubliee;
 
 /**
- * LES PLANS DE DONJON : deux, pas vingt-trois.
+ * LES PLANS DE DONJON : vingt-deux sur vingt-trois.
  *
- * Le client contient 26 plans (`dungeon_*.dds`), mais seuls deux ont été
- * convertis et versés dans le dépôt. On les branche par le dossier de carte du
- * client — `DuCastula`, `DuOphidian` — parce que c'est la seule clé stable : les
- * noms de fichiers viennent du client, pas du site.
+ * Les 26 plans du client (`dungeon_*.dds`) sont désormais convertis et versés,
+ * ainsi que 71 vues aériennes — une par monde. On les branche par le dossier de
+ * carte du client (`DuCastula`, `DuOphidian`) parce que c'est la seule clé
+ * stable : les noms de fichiers viennent du client, pas du site.
+ *
+ * `genre` distingue les deux, et ce n'est pas cosmétique : un PLAN est le fond de
+ * carte du jeu, lisible comme une carte ; une VUE AÉRIENNE est une photo du
+ * terrain vue de dessus, jolie mais sans repère. La fiche ne les annonce donc pas
+ * de la même façon. Deux donjons n'ont ni l'un ni l'autre (Faille du débutant,
+ * Château de Draken côté vue) — la table les omet plutôt que de pointer un
+ * fichier absent, et le composant ne rend rien quand la clé manque.
+ *
+ * Table VÉRIFIÉE fichier par fichier à la génération : chaque `src` existe dans
+ * public/. Regénérable depuis src/data/donjons-images.json.
  *
  * Les deux réglages optionnels servent le même plan, celui du Château de Draken,
  * et aucun n'est décoratif :
@@ -97,13 +107,33 @@ export const TOUR_OUBLIEE = TABLE.tourOubliee;
  *   fait ici plutôt qu'en retouchant le fichier, parce que le fichier vient du
  *   client et sera reversé tel quel à la prochaine fouille.
  */
-export const PLANS: Record<string, { src: string; filtre?: string; cadre?: [number, number, number, number] }> = {
+export const PLANS: Record<string, { src: string; genre?: "plan" | "aerien"; filtre?: string; cadre?: [number, number, number, number] }> = {
   DuCastula: {
     src: "/jeu/plans/ducastula_bigpicture.webp",
     filtre: "grayscale(0.6) contrast(2.5) brightness(1.1)",
     cadre: [0.05, 0.37, 0.5, 0.5],
   },
-  DuOphidian: { src: "/jeu/plans/duophidian_bigmap.webp" },
+  DuOphidian: { src: "/jeu/plans/duophidian_bigmap.webp", genre: "plan" },
+  DuRustia_1: { src: "/jeu/cartes-monde/dungeon_rustia_1.webp", genre: "plan" },
+  DuUpresia: { src: "/jeu/cartes-monde/dungeon_upresia.webp", genre: "plan" },
+  DuHerneos_1: { src: "/jeu/cartes-monde/dungeon_herneos_1.webp", genre: "plan" },
+  DuFrozen: { src: "/jeu/aerien/dufrozen.webp", genre: "aerien" },
+  DuSanpres: { src: "/jeu/cartes-monde/dungeon_sanpres.webp", genre: "plan" },
+  DuFidge: { src: "/jeu/aerien/dufidge.webp", genre: "aerien" },
+  Skymap: { src: "/jeu/aerien/skymap.webp", genre: "aerien" },
+  DuOminous: { src: "/jeu/cartes-monde/dungeon_ominous.webp", genre: "plan" },
+  DuCatacombes: { src: "/jeu/aerien/ducatacombes.webp", genre: "aerien" },
+  DuDreadfulCave: { src: "/jeu/cartes-monde/dungeon_dreadfulcave.webp", genre: "plan" },
+  DuBehamah: { src: "/jeu/cartes-monde/dungeon_behamah.webp", genre: "plan" },
+  DuForteress: { src: "/jeu/aerien/duforteress.webp", genre: "aerien" },
+  DuContaminatedTrails: { src: "/jeu/cartes-monde/dungeon_contaminatedtrails.webp", genre: "plan" },
+  DuRhisisruins01: { src: "/jeu/aerien/durhisisruins01.webp", genre: "aerien" },
+  DuKalgas: { src: "/jeu/cartes-monde/dungeon_kalgas.webp", genre: "plan" },
+  DuRuneyg: { src: "/jeu/aerien/duruneyg.webp", genre: "aerien" },
+  DuElysianIsland: { src: "/jeu/aerien/duelysianisland.webp", genre: "aerien" },
+  DuS525: { src: "/jeu/aerien/dus525.webp", genre: "aerien" },
+  WdJapanese: { src: "/jeu/aerien/wdjapanese.webp", genre: "aerien" },
+  DuKingdomGarden: { src: "/jeu/aerien/dukingdomgarden.webp", genre: "aerien" },
 };
 
 /** Les grands nombres de PV se lisent mieux abrégés : 570 350 000 → 570,4 M. */

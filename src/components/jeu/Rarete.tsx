@@ -41,7 +41,23 @@
  */
 import React from "react";
 
-/** Les quatre raretés, dans l'ordre où le jeu les classe. */
+/**
+ * Les quatre raretés QUI ONT DES IMAGES, dans l'ordre où le jeu les classe.
+ *
+ * ┌──── QUATRE ICI, SIX DANS LE CALCUL — ET CE N'EST PAS UN OUBLI ────┐
+ * │ `src/lib/statistiques/moteur.ts` déclare SIX niveaux : NONE, RARE, │
+ * │ EPIC, LEGENDARY, PREMYTHIC, MYTHIC. Ils viennent d'`AddRarityStat` │
+ * │ dans les scripts du client et servent au calcul de la maîtrise     │
+ * │ d'arme, où chaque niveau porte sa propre valeur.                    │
+ * │                                                                     │
+ * │ CE FICHIER-CI PARLE D'IMAGES, et le client n'en a extrait que pour  │
+ * │ quatre. Vérifié en HTTP, pas supposé :                              │
+ * │   bordure_premythic.webp → 404   bordure_mythic.webp → 404          │
+ * │ Ajouter ces deux noms ici fabriquerait des images cassées. Les deux │
+ * │ échelles sont donc distinctes exprès : le MOTEUR compte sur six     │
+ * │ niveaux, l'ÉCRAN n'en encadre que quatre.                            │
+ * └─────────────────────────────────────────────────────────────────────┘
+ */
 export const RARETES = ["common", "rare", "epic", "legendary"] as const;
 export type Rarete = (typeof RARETES)[number];
 
@@ -81,9 +97,28 @@ export const bordure = (r: Rarete, sansCarte = false) =>
   `/jeu/rarete/bordure_${r}${sansCarte ? "_nocard" : ""}.webp`;
 export const cadenas = (r: Rarete) => `/jeu/rarete/cadenas_${r}.webp`;
 export const cadreGrade = (g: Grade) => `/jeu/rarete/item_edge${g}.webp`;
-/** `null` = emplacement vide ; le jeu a une image dédiée pour ce cas. */
-export const emplacement = (r: Rarete | null) =>
-  `/jeu/rarete/emplacement_${r ?? "empty"}.webp`;
+
+/**
+ * LES LOSANGES D'EMPLACEMENT N'EXISTENT QUE POUR TROIS RARETÉS SUR QUATRE.
+ *
+ * Le dossier porte `emplacement_empty`, `_rare`, `_epic`, `_legendary` — et PAS
+ * `_common`. Vérifié en HTTP : `emplacement_common.webp` rend 404.
+ *
+ * Le type autorisait pourtant `"common"`, donc la fonction fabriquait sereinement une
+ * adresse morte. Les deux appelants en service l'évitent à la main (un commentaire de
+ * `mecaniques/SectionsObjets.tsx` le dit même), mais un troisième appelant tomberait
+ * dedans sans rien pour l'avertir : ni tsc ni aucun test ne voit une image manquante.
+ *
+ * `null` répond `empty`, qui existe. Une rareté SANS image répond `null` : c'est à
+ * l'affichage de dessiner autre chose, et `Emplacements` s'en charge en CSS. Rendre
+ * `emplacement_empty` pour une gemme commune aurait été pire qu'une image cassée —
+ * ça dessinerait un logement VIDE là où il y a une gemme.
+ */
+const AVEC_LOSANGE: readonly Rarete[] = ["rare", "epic", "legendary"];
+export const emplacement = (r: Rarete | null): string | null => {
+  if (r === null) return "/jeu/rarete/emplacement_empty.webp";
+  return AVEC_LOSANGE.includes(r) ? `/jeu/rarete/emplacement_${r}.webp` : null;
+};
 
 /**
  * LA CARTE D'OBJET, dans le cadre du jeu. C'est l'usage pour lequel les `bordure_*`
@@ -179,11 +214,34 @@ export function Emplacements({ gemmes, total, hauteur = 22 }: {
   const cases = Math.max(total, gemmes.length);
   return (
     <span style={{ display: "inline-flex", gap: 3, alignItems: "center" }}>
-      {Array.from({ length: cases }, (_, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={i} src={emplacement(gemmes[i] ?? null)} alt="" aria-hidden="true"
-          style={{ height: hauteur, aspectRatio: `${RATIO_EMPLACEMENT}`, objectFit: "contain" }} />
-      ))}
+      {Array.from({ length: cases }, (_, i) => {
+        const r = gemmes[i] ?? null;
+        const img = emplacement(r);
+        /* PAS D'IMAGE POUR CETTE RARETÉ (le commun n'en a pas) : on dessine le losange
+           en CSS, dans le ton relevé sur les images des autres. Un carré tourné de 45°
+           et non un caractère « ◆ » : la taille d'un glyphe dépend de la police du
+           navigateur, et il fallait qu'il s'aligne au pixel avec les losanges voisins,
+           qui sont des images de 14 × 24. */
+        if (!img) {
+          return (
+            <span key={i} aria-hidden="true" style={{
+              height: hauteur, aspectRatio: `${RATIO_EMPLACEMENT}`, flexShrink: 0,
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{
+                width: hauteur * 0.52, height: hauteur * 0.52, transform: "rotate(45deg)",
+                background: `color-mix(in srgb, ${RARETE_TON[r as Rarete]} 62%, transparent)`,
+                border: `1px solid ${RARETE_TON[r as Rarete]}`, borderRadius: 2,
+              }} />
+            </span>
+          );
+        }
+        return (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={i} src={img} alt="" aria-hidden="true"
+            style={{ height: hauteur, aspectRatio: `${RATIO_EMPLACEMENT}`, objectFit: "contain" }} />
+        );
+      })}
       {/* Le compte en texte accompagne les losanges : ils se comptent d'un coup d'œil
           jusqu'à cinq ou six, plus difficilement à huit — et un lecteur d'écran ne voit
           que ce texte, les images étant décoratives. */}

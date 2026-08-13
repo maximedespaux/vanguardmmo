@@ -70,9 +70,13 @@ export function CommentOnEntre({ portes }: { portes: Porte[] }) {
           </a>
         ))}
       </div>
-      {/* Les accents grave sont interdits dans un commentaire CSS posé dans un
-          litteral de gabarit : ils ferment le litteral et la page tombe en 500.
-          Ce bloc n'en contient donc aucun, ni ici ni ailleurs. */}
+      {/* LA NOTE DE CSS SE LIT ICI, HORS DU GABARIT. Un commentaire écrit dans le
+          littéral du `<style>` est SERVI au visiteur mot pour mot ; hors du littéral
+          il ne coûte rien, il garde ses accents, et le piège de l'accent grave qui
+          referme le gabarit (page en 500, invisible pour tsc) ne peut plus se poser.
+
+          Le repli sous 420 px : sept mots de porte plus un compte ne tiennent plus
+          sur une ligne, alors le compte passe dessous plutôt que d'être coupé. */}
       <style>{`
         .ce-cadre{margin:0 0 14px;background:var(--bg-2);border:1px solid var(--border);
           border-radius:14px;padding:13px 15px}
@@ -88,8 +92,6 @@ export function CommentOnEntre({ portes }: { portes: Porte[] }) {
         .ce-par{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .ce-quoi{color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
         .ce-fleche{color:var(--text-muted);flex-shrink:0}
-        /* Sous 420px, sept mots de porte plus un compte ne tiennent plus sur une
-           ligne : le compte passe dessous plutot que d'etre coupe. */
         @media(max-width:420px){
           .ce-porte{grid-template-columns:18px minmax(0,1fr) 13px}
           .ce-par{white-space:normal}

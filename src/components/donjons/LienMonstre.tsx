@@ -21,10 +21,13 @@ import { createContext, useContext } from "react";
  * └──────────────────────────────────────────────────────────────┘
  *
  * SANS IDENTIFIANT, PAS DE LIEN. La table ne contient que les clés qui désignent
- * UNE seule fiche : trois créatures de cette page sont de vrais jumeaux (mêmes
- * niveau, mêmes PV, deux identifiants dans le client), et un lien qui se trompe
- * une fois sur deux vaut moins qu'un nom qui reste du texte. Elles s'affichent
- * donc telles quelles, sans que rien ne le signale — il n'y a rien à en dire.
+ * UNE seule fiche : DEUX créatures de cette page sont de vrais jumeaux — le Lézard
+ * Prestigieux (niveau 180, 2 M PV, deux caméléons dans le client) et Elin (niveau
+ * 129, deux mobs d'Ishtar) —, mêmes niveau, mêmes PV, deux identifiants. Comme
+ * l'une des deux est nommée deux fois sur la page, ce sont TROIS mentions sur 86
+ * qui restent du texte, pour 83 liées. Un lien qui se trompe une fois sur deux vaut
+ * moins qu'un nom qui reste du texte : elles s'affichent donc telles quelles, sans
+ * que rien ne le signale — il n'y a rien à en dire.
  */
 const Ctx = createContext<Record<string, string>>({});
 

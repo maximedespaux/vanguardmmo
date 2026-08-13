@@ -78,11 +78,14 @@ export function vagues(): Vague[] {
  * │ en désigne quatre. Un lien par nom seul aurait    │
  * │ mené une fois sur deux à la mauvaise fiche.       │
  * │ La clé est donc nom + niveau + PV, et elle tranche│
- * │ 83 des 86 cas. Les trois restants sont de VRAIS   │
- * │ jumeaux — mêmes niveau, mêmes PV, deux            │
- * │ identifiants : aucun critère ne les sépare, donc  │
- * │ ils ne reçoivent PAS de lien. Un lien qui se      │
- * │ trompe est pire qu'un nom qui reste du texte.     │
+ * │ 83 des 86 MENTIONS — 85 clés distinctes, dont 83  │
+ * │ résolues. Les DEUX clés qui restent (Lézard       │
+ * │ Prestigieux, Elin) sont de VRAIS jumeaux : mêmes  │
+ * │ niveau, mêmes PV, deux identifiants, et l'une est │
+ * │ nommée deux fois d'où trois mentions sans lien.   │
+ * │ Aucun critère ne les sépare, donc pas de lien —   │
+ * │ un lien qui se trompe est pire qu'un nom qui      │
+ * │ reste du texte.                                   │
  * └──────────────────────────────────────────────────┘
  *
  * Le catalogue fait 612 Ko et il est lu ICI, côté serveur. Et on n'en garde QUE

@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { IconeObjet } from "./IconeObjet";
-import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, emblemeClasse, FAMILLES, libelleEtPourcent, MARQUEUR_AIRFLYFF, type Famille, type ObjetFiche } from "./vocabulaire";
+import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, elementPorte, emblemeClasse, FAMILLES, libelleEtPourcent, MARQUEUR_AIRFLYFF, RESISTANCES, type Famille, type ObjetFiche } from "./vocabulaire";
 
 /**
  * CHERCHER UN OBJET — le catalogue du client du jeu, 12 134 lignes.
@@ -289,6 +289,89 @@ function Verrou({ o }: { o: ObjetFiche }) {
 }
 
 /**
+ * L'ÉLÉMENT DE LA PIÈCE, EN IMAGE ET SANS UN MOT — et il manquait sur la liste.
+ *
+ * 223 objets portent un élément (`el` : 146 feu, 24 électricité, 19 eau, 18 terre,
+ * 16 vent) et 126 en résistent à un ou plusieurs (`re`). Aucun des deux n'apparaissait
+ * sur les cartes : il fallait ouvrir la fiche pour savoir qu'une arme frappe au feu,
+ * alors que c'est justement ce qui la départage d'une autre du même niveau.
+ *
+ * LES DESSINS SONT CEUX DU JEU, et ils sont DÉJÀ dans le projet : `RESISTANCES` et
+ * `elementPorte` portent les cinq images que /monstres et le World Boss servent
+ * ailleurs. Le même élément a donc le même dessin d'un écran à l'autre, ce qui est
+ * tout l'intérêt — et rien de neuf n'a été dessiné.
+ *
+ * ZÉRO MOT AJOUTÉ : le nom de l'élément passe par `alt` et `title`, que le lecteur
+ * d'écran lit et que la mesure de prose ne compte pas. Une pastille « Feu » écrite en
+ * lettres aurait coûté 223 mots pour dire ce qu'un losange rouge dit d'un coup d'œil.
+ *
+ * L'ATTAQUE ÉLÉMENTAIRE PASSE, LE POURCENTAGE DE RÉSISTANCE NON. `ae` est un chiffre
+ * d'attaque, il s'écrit ; `re` porte des fractions (0,07 · 0,14) qui demanderaient
+ * trois nombres par pastille sur une carte de liste — le dessin dit CONTRE QUOI la
+ * pièce protège, la fiche dit de combien.
+ */
+function Elements({ o }: { o: ObjetFiche }) {
+  const porte = elementPorte(o.el);
+  const resiste = RESISTANCES.filter((r) => (o.re?.[r.clef] ?? 0) > 0);
+  if (!porte && !resiste.length) return null;
+  return (
+    <>
+      {porte && (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 3, flexShrink: 0, ...NUM }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={porte.image} alt={porte.label} title={porte.label} width={13} height={13}
+            style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+          {o.ae ? <b style={{ color: "var(--text)", fontWeight: 600 }}>+{o.ae.toLocaleString("fr-FR")}</b> : null}
+        </span>
+      )}
+      {resiste.length > 0 && (
+        <span title={`Résiste : ${resiste.map((r) => r.label.toLowerCase()).join(", ")}`}
+          style={{ display: "inline-flex", alignItems: "center", gap: 2, flexShrink: 0, opacity: .75 }}>
+          <Icon name="shield" size={10} style={{ color: "var(--text-muted)" }} />
+          {resiste.map((r) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={r.clef} src={r.image} alt={r.label} width={11} height={11}
+              style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+          ))}
+        </span>
+      )}
+    </>
+  );
+}
+
+/**
+ * ┌──────── « +120, C'EST BEAUCOUP ? » — LA BARRE QUI RÉPOND, SANS UN MOT.
+ * │
+ * │ La pastille disait « Dégâts critiques +120 » et s'arrêtait là. Le catalogue, lui,
+ * │ sait que 249 objets portent ce bonus, qu'ils vont de +4 à +240, et que la moitié
+ * │ d'entre eux ne dépasse pas +23 : cette pièce est donc dans le haut du panier, et
+ * │ rien à l'écran ne le disait. Le chiffre seul ne se compare qu'entre deux cartes
+ * │ posées côte à côte, et la grille en montre cinquante.
+ * │
+ * │ `bq[i]` est le RANG de cette valeur parmi toutes celles du même bonus (voir
+ * │ `rangDuBonus` dans catalogue.ts) : la barre en dessine la longueur. Elle ne coûte
+ * │ pas un mot servi — le rang arrive par la réponse JSON de /api/objets, pas dans le
+ * │ HTML de la page — et elle porte son intitulé pour les lecteurs d'écran.
+ * │
+ * │ UNE SEULE TEINTE, celle que le chiffre juste au-dessus emploie déjà : c'est la
+ * │ LONGUEUR qui porte la grandeur. La couleur ne dit que le SIGNE, et elle ne le dit
+ * │ pas seule — le « + » ou le « − » est écrit à côté, parce que le vert et le rouge
+ * │ ne se distinguent pas pour tout le monde. Plancher à 1,5 % : sans lui, le bonus le
+ * │ plus faible du catalogue perd sa barre et l'absence se lit comme une donnée
+ * │ manquante.
+ * └────────────────────────────────────────────────────────────────────────────────────
+ */
+function BarreRang({ rang, ton, quoi }: { rang: number; ton: string; quoi: string }) {
+  return (
+    <span role="img" aria-label={`${quoi} : plus fort que ${rang} % des objets qui portent ce bonus`}
+      style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 2, borderRadius: 7, overflow: "hidden" }}>
+      <span style={{ display: "block", height: "100%", background: ton, opacity: .85,
+        width: `${Math.max(1.5, rang).toFixed(1)}%` }} />
+    </span>
+  );
+}
+
+/**
  * Une carte de résultat : de quoi reconnaître la pièce sans ouvrir la fiche.
  *
  * Les DEUX premiers bonus s'affichent, pas leur nombre. « 5 bonus » ne permet de
@@ -321,6 +404,7 @@ function Carte({ o }: { o: ObjetFiche }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={emb} alt={classeFr(o.cl) ?? ""} title={classeFr(o.cl) ?? ""} width={15} height={15} style={{ objectFit: "contain" }} />
           )}
+          <Elements o={o} />
           <Verrou o={o} />
         </span>
         {combat ? (
@@ -338,13 +422,24 @@ function Carte({ o }: { o: ObjetFiche }) {
               // Le « % » du client vit dans le libellé : la même fonction que la
               // fiche le déplace sur le chiffre, sinon « Attaque % +15 % ».
               const { mot, pct } = libelleEtPourcent(libelle);
+              const ton = valeur < 0 ? "var(--red)" : "var(--green)";
+              /* Le rang vient de la réponse de /api/objets, aligné sur `b`. Absent —
+                 une réponse d'avant cette passe, gardée en cache par le navigateur —
+                 la pastille s'affiche comme avant, sans barre. */
+              const rang = o.bq?.[i];
               return (
-                <span key={i} style={{ fontSize: 10.5, padding: "2px 7px", borderRadius: 7, background: "var(--bg-3)",
-                  border: "1px solid var(--border)", color: "var(--text-muted)", ...NUM }}>
+                <span key={i} style={{ position: "relative", fontSize: 10.5, padding: "2px 7px 3px", borderRadius: 7,
+                  background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text-muted)", ...NUM }}>
                   {mot}{" "}
-                  <b style={{ color: valeur < 0 ? "var(--red)" : "var(--green)" }}>
+                  <b style={{ color: ton }}>
                     {valeur > 0 ? "+" : ""}{valeur.toLocaleString("fr-FR")}{pct ? " %" : ""}
                   </b>
+                  {/* LE LIBELLÉ ENTIER DANS L'ANNONCE, PAS `mot` : le rang est calculé
+                      sur la population du libellé du client, et « PV max » (270 objets)
+                      et « PV max % » (202 objets) sont DEUX bonus différents que `mot`
+                      écrit pareil. Un lecteur d'écran entendait donc « PV max : plus
+                      fort que 73 % » pour deux classements distincts. */}
+                  {rang != null && <BarreRang rang={rang} ton={ton} quoi={libelle} />}
                 </span>
               );
             })}

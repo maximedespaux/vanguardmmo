@@ -150,6 +150,16 @@ export function Resultat({ e, compact = false }: { e: Entree; compact?: boolean 
 
         <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginTop: 3, fontSize: 11.5, color: "var(--text-muted)" }}>
           <span style={{ ...NUM }}>{e.sous}</span>
+          {/* L'ÉLÉMENT, EN DESSIN. Il occupait une pastille de texte sur les trois que
+              la ligne montre — « terre » sur 499 monstres, « feu » sur 112 — pour un
+              fait que le client dessine, et dont l'image sert déjà sur /monstres et sur
+              les fiches d'armure. Le nom passe par `alt` et `title` : zéro mot servi,
+              et le mot-clé reste tapable (il est indexé en clé, cf. src/lib/wiki.ts). */}
+          {e.el && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={e.el.image} alt={e.el.label} title={e.el.label} width={13} height={13}
+              style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0 }} />
+          )}
           {mots.map((m) => (
             <span key={m} style={{
               fontSize: 10.5, padding: "1px 6px", borderRadius: 7, maxWidth: 190,

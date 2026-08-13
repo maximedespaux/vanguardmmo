@@ -57,6 +57,24 @@ export type ObjetFiche = {
    * où aller.
    */
   pv?: { titre: string; lignes: string[]; total: number };
+  /**
+   * LE RANG DE CHAQUE BONUS, ajouté PAR LA RECHERCHE comme `pv` — un entier par
+   * ligne de `b`, dans le même ordre.
+   *
+   * « Dégâts critiques +120 » ne dit pas si c'est beaucoup. Le catalogue le sait :
+   * 249 objets portent ce bonus, de +4 à +240, et la moitié d'entre eux ne dépassent
+   * pas +23. `bq[i]` est le pourcentage d'objets portant LE MÊME bonus que cette
+   * pièce dépasse — 0 pour la plus faible, 100 pour la plus forte. C'est ce chiffre
+   * que la barre sous la pastille dessine, et il ne coûte pas un mot à l'écran :
+   * il arrive par la même réponse JSON que la carte, pas dans le HTML servi.
+   *
+   * ON NE PASSE PAS PAR LE MAXIMUM. Les valeurs sont trop étalées pour ça : « PV
+   * rendus » va jusqu'à 999 999 999 et « PV max » jusqu'à 9 999, si bien qu'une
+   * barre en fraction du maximum serait invisible pour 99 % des pièces. Un RANG,
+   * lui, se répartit toujours sur toute la longueur — et il répond à la question
+   * qu'on se pose vraiment : est-ce que celle-là est bien fournie, ou pas.
+   */
+  bq?: number[];
 };
 
 export type Famille = "arme" | "armure" | "bijou" | "mode" | "consommable" | "materiau" | "familier" | "divers";
@@ -326,17 +344,64 @@ export const RESISTANCES: { clef: string; label: string; couleur: string; image:
  * `null` dès qu'un code inconnu se présente : la ligne garde alors son texte brut
  * plutôt que d'hériter du dessin d'un autre élément. Sur un élément d'arme, on le
  * croirait.
+ *
+ * LE CHEMIN DE L'IMAGE N'EST PLUS RECOPIÉ ICI. Cette table portait les cinq mêmes
+ * `/jeu/mecaniques/element-*.webp` que `RESISTANCES` juste au-dessus : deux listes de
+ * chemins à tenir d'accord dans le MÊME fichier, ce qui est le défaut qu'on venait de
+ * corriger ailleurs. Seul le CODE du client et le LIBELLÉ restent ici, parce qu'eux
+ * seuls sont propres à cette table — l'image se demande à `elementParNom`.
+ *
+ * ET LES DEUX MOTS DE LA FOUDRE SONT GARDÉS EXPRÈS : le catalogue écrit sa résistance
+ * « foudre », le builder écrit « Électricité », et `SectionsObjets.tsx` explique la
+ * différence au joueur (« celui qu'on cherche en jeu est foudre »). Unifier ici
+ * effacerait une distinction que le site documente. Ce qui devait cesser, c'est que le
+ * mot choisi décide de ce que la RECHERCHE trouve : les deux sont indexés.
  */
-const ELEMENT_PORTE: Record<string, { label: string; image: string }> = {
-  FIRE: { label: "Feu", image: "/jeu/mecaniques/element-feu.webp" },
-  WATER: { label: "Eau", image: "/jeu/mecaniques/element-eau.webp" },
-  WIND: { label: "Vent", image: "/jeu/mecaniques/element-vent.webp" },
-  EARTH: { label: "Terre", image: "/jeu/mecaniques/element-terre.webp" },
-  ELECTRICITY: { label: "Électricité", image: "/jeu/mecaniques/element-electricite.webp" },
+const CODE_ELEMENT: Record<string, { clef: string; label: string }> = {
+  FIRE: { clef: "feu", label: "Feu" },
+  WATER: { clef: "eau", label: "Eau" },
+  WIND: { clef: "vent", label: "Vent" },
+  EARTH: { clef: "terre", label: "Terre" },
+  ELECTRICITY: { clef: "foudre", label: "Électricité" },
 };
 
-export const elementPorte = (el: string | undefined) =>
-  (el ? ELEMENT_PORTE[el.trim().toUpperCase()] : undefined) ?? null;
+export const elementPorte = (el: string | undefined) => {
+  const c = el ? CODE_ELEMENT[el.trim().toUpperCase()] : undefined;
+  const img = c ? elementParNom(c.clef) : null;
+  return c && img ? { label: c.label, image: img.image } : null;
+};
+
+/**
+ * LE MÊME ÉLÉMENT SOUS SES QUATRE NOMS — une seule table pour tout le site.
+ *
+ * Trois relevés nomment la foudre de trois façons différentes, et c'est mesuré :
+ *   · `objets-fiches.json`  écrit la résistance « foudre » ;
+ *   · `monstres.json`       écrit l'élément « electricite » ;
+ *   · `competences.json`    écrit la famille « Foudre », avec sa majuscule ;
+ *   · le fichier du client s'appelle `element-electricite.webp`.
+ *
+ * Chaque écran qui voulait montrer un élément se refaisait donc sa petite table, et
+ * `src/lib/wiki.ts` en portait une quatrième — cinq entrées recopiées à la main, dont
+ * une avec le commentaire « ATTENTION AU NOM » parce que la confusion avait déjà
+ * affiché une image absente. Une seule fonction, tolérante aux accents et à la casse,
+ * et le piège se ferme pour de bon.
+ *
+ * `null` sur un nom inconnu, et sur « aucun » : 170 monstres n'ont pas d'élément, et
+ * leur en prêter un serait pire que de n'en montrer aucun.
+ */
+const PAR_NOM = new Map<string, { label: string; image: string }>();
+for (const r of RESISTANCES) {
+  const e = { label: r.label, image: r.image };
+  PAR_NOM.set(r.clef, e);
+  // Le nom de fichier sert de second alias : c'est lui que la table des monstres emploie.
+  PAR_NOM.set(r.image.replace(/^.*element-|\.webp$/g, ""), e);
+}
+
+export function elementParNom(nom: string | undefined | null): { label: string; image: string } | null {
+  if (!nom) return null;
+  const k = nom.normalize("NFD").replace(/\p{Mn}/gu, "").toLowerCase().trim();
+  return PAR_NOM.get(k) ?? null;
+}
 
 /**
  * Comparaison tolérante aux accents : le jeu écrit « Ame de démon » sans

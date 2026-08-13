@@ -5,10 +5,10 @@ import { Icon } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { RechercheMonstres } from "./Recherche";
-import { Faiblesses, ProvenanceMonstres, SchemaVies } from "./Graphiques";
+import { ContenusBoss, Faiblesses, ProvenanceMonstres, SchemaVies } from "./Graphiques";
 import {
   cadence, cadenceCourte, coupMax, court, ELEMENT_FR, entier, iconeElement, tonRang,
-  type Compteurs, type Monstre,
+  type Compteurs, type LigneClassement,
 } from "./vocabulaire";
 
 /**
@@ -42,9 +42,12 @@ import {
 
 type Onglet = "chercher" | "boss" | "frappeurs";
 
-export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs, viesMaison, objetsLaches }: {
-  boss: Monstre[]; frappeurs: Monstre[]; compteurs: Compteurs; total: number;
-  groupes: { nom: string; n: number }[];
+export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, viesMaison, objetsLaches }: {
+  boss: LigneClassement[]; frappeurs: LigneClassement[]; compteurs: Compteurs; total: number;
+  /* `groupes` n'est plus reçu : les contenus se comptent sur les lignes affichées
+     (`ContenusBoss`), et les comptes du catalogue entier posés sous un tableau de 94
+     lignes se lisaient comme les comptes de ce tableau. Un tableau de quinze couples
+     nom/nombre en moins dans le payload de la page, aussi. */
   /** Compté sur le catalogue, jamais écrit : cf. `catalogue.faits()`. */
   agressifs: number;
   /** Combien de ceux qui se relèvent portent la marque du serveur. Le schéma d'en-tête
@@ -133,20 +136,15 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agre
 
           <TableauBoss lignes={boss} colonne="pvEff" />
 
-          {/* Les regroupements par donjon : de quel contenu on parle quand on voit
-              un boss remonter dans le classement. */}
+          {/* De quel contenu viennent CES lignes-là — le même comptage que le
+              tableau, par construction. Les pastilles qui étaient ici portaient les
+              comptes du catalogue entier sous un tableau qui n'en montre que 94 :
+              « Chambres Secrètes 16 » sous sept lignes de Chambres Secrètes. */}
           <div>
             <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 9px" }}>
               Les contenus reconstitués
             </div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-              {groupes.map((g) => (
-                <span key={g.nom} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 11px", fontSize: 12.5, display: "inline-flex", gap: 6, alignItems: "center" }}>
-                  {g.nom}
-                  <b style={{ color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>{g.n}</b>
-                </span>
-              ))}
-            </div>
+            <ContenusBoss lignes={boss} />
           </div>
         </div>
       )}
@@ -199,7 +197,7 @@ function Chiffre({ icon, valeur, quoi, ton = "var(--text)" }: {
  * conteneur — sinon c'est la page entière qui gagne une barre horizontale sur un
  * téléphone.
  */
-function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" | "degats" }) {
+function TableauBoss({ lignes, colonne }: { lignes: LigneClassement[]; colonne: "pvEff" | "degats" }) {
   const th: React.CSSProperties = {
     textAlign: "right", padding: "8px 10px", fontSize: 11, textTransform: "uppercase",
     letterSpacing: ".6px", color: "var(--text-muted)", fontWeight: 700, whiteSpace: "nowrap",
@@ -215,9 +213,9 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
      Une seule teinte, celle que la colonne emploie déjà pour son chiffre : c'est
      la LONGUEUR qui porte la grandeur, jamais la couleur. Et `aria-hidden`, parce
      que le nombre exact est juste au-dessus. */
-  const valeurTriee = (m: Monstre) => (colonne === "pvEff" ? m.pvEff : coupMax(m));
+  const valeurTriee = (m: LigneClassement) => (colonne === "pvEff" ? m.pvEff : coupMax(m));
   const maxTrie = Math.max(1, ...lignes.map(valeurTriee));
-  const Barre = ({ m, teinte }: { m: Monstre; teinte: string }) => (
+  const Barre = ({ m, teinte }: { m: LigneClassement; teinte: string }) => (
     <span aria-hidden="true" style={{ display: "block", height: 3, marginTop: 5, borderRadius: 2, background: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
       {/* Plancher à 1,5 % : sans lui, une ligne 6 000 fois plus faible que la
           première n'a plus de barre du tout, et l'absence se lit comme un trou

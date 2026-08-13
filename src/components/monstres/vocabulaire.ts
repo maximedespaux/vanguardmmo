@@ -71,6 +71,29 @@ export type Monstre = {
 };
 
 /**
+ * UNE LIGNE DE CLASSEMENT — treize champs sur trente-quatre.
+ *
+ * ┌──── CE QUE ÇA CHANGE, ET C'EST MESURÉ ────┐
+ * │ Les deux classements de /monstres — 94 boss │
+ * │ et 20 frappeurs — descendaient au navigateur│
+ * │ en monstres COMPLETS : leur butin, leurs    │
+ * │ points d'apparition, leurs invocations,     │
+ * │ leurs quatre dés, tout. Soit 70 Ko de       │
+ * │ charge utile pour un tableau qui montre     │
+ * │ treize colonnes. La projection les ramène à │
+ * │ 36 Ko — et le texte qui voyage avec eux     │
+ * │ compte dans les mots servis de la page.     │
+ * └───────────────────────────────────────────┘
+ *
+ * `Pick` et non un type à part : les champs gardent le nom, le type et la
+ * documentation qu'ils ont dans `Monstre`, et une colonne qu'on ajouterait au
+ * tableau sans l'ajouter ici ne compile pas.
+ */
+export type LigneClassement = Pick<Monstre,
+  "id" | "nom" | "niv" | "rang" | "pv" | "pvEff" | "vies" |
+  "atkMin" | "atkMax" | "delai" | "elem" | "res" | "groupe">;
+
+/**
  * UN MONSTRE RÉDUIT À « EST-CE QUE J'Y VAIS ? ».
  *
  * C'est ce que la fiche d'un OBJET reçoit pour répondre à « qui le lâche ». Le type
@@ -272,3 +295,44 @@ const PORTRAITS: Record<string, number> = {
 
 export const portraitDe = (id: string) =>
   PORTRAITS[id] ? `/jeu/cartes/couleur_ii_sys_sys_monsterdeck_${PORTRAITS[id]}.webp` : null;
+
+/**
+ * LES SIX ICÔNES DE BUTIN QUE LE PONT NE TROUVE PAS — ET QU'ON A OUVERTES.
+ *
+ * `monstres-butin.json` tire l'icône d'un objet de `objets-fiches.json`, et huit des
+ * 106 objets de butin n'y portent aucun champ d'icône : leur pastille s'affiche donc
+ * sans image. Les huit fichiers, eux, EXISTENT sous `public/jeu/icones/` — c'est le
+ * relevé qui ne fait pas le lien, et une autre table du site (`objets-jeu.json`) le
+ * fait par NOM.
+ *
+ * ┌────── POURQUOI SIX ET NON HUIT : LES NOMS MENTENT ──────┐
+ * │ Les huit candidates ont été CONVERTIES ET REGARDÉES une  │
+ * │ par une. Six montrent l'objet : un cœur ébréché, un croc,│
+ * │ un maillon de chaîne brisé, une lame, une patte d'insecte│
+ * │ verte, un parchemin scellé à la cire. DEUX SONT ÉCARTÉES:│
+ * │  · « Fragment de Cœur » → un BOUQUET DE FLEURS. La table │
+ * │    par nom se trompe (c'est un objet d'event homonyme),  │
+ * │    et cet objet-là est lâché par 265 monstres : l'erreur │
+ * │    aurait été la plus visible du site ;                  │
+ * │  · « Boîte vide » → un paquet cadeau fermé, ruban        │
+ * │    compris. Rien ne prouve que c'est le bon objet, et    │
+ * │    une boîte VIDE dessinée fermée et enrubannée ne dit   │
+ * │    pas la vérité. Faute de certitude : rien.             │
+ * └───────────────────────────────────────────────────────┘
+ *
+ * Une table écrite à la main, comme `PORTRAITS` juste au-dessus, et pour la même
+ * raison : ce n'est pas un calcul, c'est une VÉRIFICATION à l'œil. Elle ne fabrique
+ * aucun chiffre — elle ne fait que rattacher un fichier vu à un nom.
+ */
+const ICONES_BUTIN: Record<string, string> = {
+  "Morceau de coeur de Shade": "itm_syssyseveheartpi.webp",
+  "Dent de Jeune Lawolf": "itm_syssysquelawtoo.webp",
+  "Chaîne de Bang": "itm_syssysquebangch.webp",
+  "Couteaux Pukepuke": "itm_syssysquepukekl.webp",
+  "Jambe de Fefern": "itm_syssysquefefele.webp",
+  "Sceau de Nevil": "itm_syssysquenpcld.webp",
+};
+
+/** L'icône du pont si elle existe, sinon celle qu'on a vérifiée à l'œil, sinon
+ *  RIEN — jamais un fichier deviné. */
+export const iconeButin = (nom: string, ic?: string | null) => ic ?? ICONES_BUTIN[nom] ?? null;

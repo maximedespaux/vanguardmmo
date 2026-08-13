@@ -146,8 +146,15 @@ function FilDuTour({ vagues }: { vagues: number }) {
           );
         })}
       </div>
-      {/* Aucun accent grave dans ce commentaire : dans un litteral de gabarit, il
-          fermerait la chaine et mettrait la page en 500 sans que tsc le voie. */}
+      {/* LA NOTE DE CSS SE LIT ICI, HORS DU GABARIT — un commentaire posé dans le
+          littéral du `<style>` est servi au visiteur mot pour mot, et il faut alors
+          l'écrire sans accent grave sous peine de refermer la chaîne et de mettre la
+          page en 500 sans que tsc le voie. Dehors, les deux problèmes disparaissent.
+
+          .fil-dans / .fil-ouvre / .fil-ferme — le cadre de la phase répétée : trois
+          bords sur les jalons du milieu, fermé en haut sur le premier et en bas sur le
+          dernier. Une seule teinte, celle du bloc — c'est la POSITION du cadre qui dit
+          ce qu'il englobe, jamais sa couleur. */}
       <style>{`
         .fil-rail{display:grid;gap:0;margin:0;padding:0 0 0 4px}
         .fil-pas{display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;
@@ -161,9 +168,6 @@ function FilDuTour({ vagues }: { vagues: number }) {
           color:var(--text-muted);background:var(--bg-3);border:1px solid var(--border)}
         .fil-nom{min-width:0;font-size:12.5px}
         .fil-dans .fil-puce{border-color:var(--orange);color:var(--orange)}
-        /* Le cadre de la phase repetee : trois bords sur les jalons du milieu, ferme
-           en haut sur le premier et en bas sur le dernier. Une seule teinte, celle du
-           bloc — c'est la POSITION du cadre qui dit ce qu'il englobe. */
         .fil-dans{background:color-mix(in srgb, var(--orange) 5%, transparent);
           border-left:2px solid var(--orange);border-right:1px solid transparent;
           padding-left:0;margin-left:-2px}

@@ -58,6 +58,75 @@ function charger() {
 export const dateDuCatalogue = () => { charger(); return GENERE; };
 export const nombreDObjets = () => charger().TOUT.length;
 
+/* ─────────────────── « +120, c'est beaucoup ? » — le rang d'un bonus ─────────────── */
+
+/**
+ * ╔══════════════════════════════════════════════════════════════════════════════╗
+ * ║  LE CHIFFRE D'UN BONUS NE SE LIT PAS SEUL.                                    ║
+ * ╚══════════════════════════════════════════════════════════════════════════════╝
+ *
+ * La carte annonce « Dégâts critiques +120 ». Un joueur qui compare deux pièces ne
+ * peut rien en faire : il ne sait pas si 120 est le haut du panier ou la moyenne.
+ * Le catalogue, lui, le sait — relevé sur les 12 134 lignes :
+ *
+ *     Dégâts critiques   249 objets   de +4 à +240   la moitié sous +23
+ *     Précision          285 objets   de +3 à +100   la moitié sous +10
+ *     PV max             270 objets   de +5 à +9 999 la moitié sous +100
+ *
+ * On garde donc, par LIBELLÉ de bonus, toutes ses valeurs triées — 74 libellés en
+ * tout, quelques milliers de nombres, rien. `rangDuBonus` en tire le pourcentage
+ * d'objets que cette valeur dépasse, et la carte le dessine en barre.
+ *
+ * PAR LIBELLÉ ET PAS PAR CODE `DST_*`, exprès : c'est le champ `b` que la carte
+ * AFFICHE, donc c'est sur lui que le rang doit porter. Comparer un chiffre montré à
+ * une population relevée ailleurs (`objets-stats.json`, qui écarte 12 objets et en
+ * retient un de plus sur la Baguette de Luzaka oubliée) donnerait un rang juste sur
+ * une autre liste que celle de l'écran.
+ *
+ * LE MAXIMUM NE FERAIT PAS L'AFFAIRE. « PV rendus » monte à 999 999 999 et « PV
+ * max » à 9 999 : une barre en fraction du maximum serait un trait invisible sur
+ * presque toutes les pièces, et deux pièces très différentes se ressembleraient.
+ * Un rang occupe toujours toute la longueur disponible.
+ */
+let RANGS: Map<string, number[]> | null = null;
+
+function rangs() {
+  if (RANGS) return RANGS;
+  const m = new Map<string, number[]>();
+  for (const e of charger().TOUT) {
+    for (const [libelle, v] of e.o.b ?? []) {
+      const l = m.get(libelle);
+      if (l) l.push(v); else m.set(libelle, [v]);
+    }
+  }
+  for (const l of m.values()) l.sort((a, b) => a - b);
+  RANGS = m;
+  return m;
+}
+
+/**
+ * Le pourcentage d'objets portant CE bonus que cette valeur dépasse, 0 à 100.
+ *
+ * Les ex æquo comptent pour moitié — c'est le rang moyen, celui qui évite qu'une
+ * valeur portée par cent pièces identiques se retrouve arbitrairement en haut ou en
+ * bas du classement. Une seule valeur relevée rend 100 : elle est à la fois la plus
+ * faible et la plus forte, et une barre vide se lirait comme « le pire du catalogue ».
+ */
+export function rangDuBonus(libelle: string, v: number): number {
+  const l = rangs().get(libelle);
+  if (!l || l.length < 2) return 100;
+  /* Recherche dichotomique des deux bornes : `sous` = combien sont strictement
+     inférieurs, `egaux` = combien valent exactement pareil. Un balayage linéaire
+     coûterait 285 comparaisons par pastille, soit vingt mille par écran. */
+  let a = 0, b = l.length;
+  while (a < b) { const c = (a + b) >> 1; if (l[c] < v) a = c + 1; else b = c; }
+  const sous = a;
+  b = l.length;
+  while (a < b) { const c = (a + b) >> 1; if (l[c] <= v) a = c + 1; else b = c; }
+  const egaux = a - sous;
+  return Math.round(((sous + egaux / 2) / l.length) * 100);
+}
+
 /**
  * Les quatre comptes que les pastilles de filtre portent. COMPTÉS sur le
  * catalogue, jamais écrits : un chiffre en dur dans une étiquette survit au
@@ -212,7 +281,12 @@ export function chercher(c: Critere, limite = 50) {
     total: gardes.length,
     objets: gardes.slice(0, limite).map(({ e }) => {
       const pv = provenanceDe(e.o.n);
-      return pv ? { ...e.o, pv } : e.o;
+      /* LE RANG DES BONUS S'AGRAFE ICI, pour la même raison que `pv` : sur les
+         cinquante lignes rendues, et par COPIE DE SURFACE. Le poser sur `e.o`
+         laisserait un champ calculé pour cet écran dans l'objet du cache, que
+         `objetParId`, `voisins` et la fiche partagent. */
+      const bq = e.o.b?.length ? e.o.b.map(([libelle, v]) => rangDuBonus(libelle, v)) : undefined;
+      return pv || bq ? { ...e.o, ...(pv ? { pv } : {}), ...(bq ? { bq } : {}) } : e.o;
     }),
   };
 }

@@ -25,6 +25,15 @@ export function TourOubliee() {
      disparaît et la valeur remonte dans les tuiles. */
   const tailles = new Set(TOUR_OUBLIEE.map((e) => `${e.unites[0]} × ${e.unites[1]}`));
   const memeTaille = tailles.size === 1 ? [...tailles][0] : null;
+  /* MÊME GARDE POUR LA SORTIE, et elle manquait. « Toute sortie renvoie à Flarine »
+     était écrit sur chaque tuile SOUS CONDITION (`e.sortie && …`) ; remontée en puce
+     de tête, la phrase a perdu sa condition et s'est mise à parler des cinq étages
+     sans les avoir regardés. Elle est vraie aujourd'hui — les cinq portent le même
+     portail — mais un étage ajouté sans sortie relevée l'aurait rendue fausse en
+     silence, et c'est la puce la plus visible du bloc. Le mot « Flarine » ne se
+     déduit pas du relevé (qui ne porte qu'un portail) ; l'universalité, elle, se
+     vérifie, et c'est elle que « toute » affirme. */
+  const touteSortie = TOUR_OUBLIEE.every((e) => e.sortie);
   return (
     /* `scrollMarginTop` : le schéma d'entrée en tête de page renvoie ici, et la barre
        de navigation est fixe. Même valeur que les autres cibles. */
@@ -58,7 +67,11 @@ export function TourOubliee() {
             même chose sur le même écran. */}
         {(
           [
-            { ic: "path", texte: <>Aucun escalier · toute sortie renvoie à Flarine</> },
+            /* « Aucun escalier » tient tout seul : c'est un fait de structure, pas un
+               relevé de sortie. La destination ne s'y ajoute que si les cinq étages en
+               portent une — cf. `touteSortie`. Commentaire SANS accolades : on est dans
+               un tableau JS, pas dans des enfants JSX. */
+            { ic: "path", texte: <>Aucun escalier{touteSortie ? <> · toute sortie renvoie à Flarine</> : null}</> },
             { ic: "skull", texte: <>Une seule espèce par étage</> },
             ...(memeTaille ? [{ ic: "map", texte: <>{TOUR_OUBLIEE.length} cartes de {memeTaille}</> }] : []),
           ] as { ic: IconName; texte: React.ReactNode }[]

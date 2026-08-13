@@ -40,7 +40,10 @@ export default function MonstresPage() {
         frappeurs={classementFrappeurs(20)}
         compteurs={meta.compteurs}
         total={meta.total}
-        groupes={meta.groupes}
+        // `groupes` ne descend plus : les contenus se comptent sur les 94 lignes
+        // affichées, pas sur les 1 124 du catalogue. Les deux comptages voisinaient
+        // à trois centimètres sans que rien ne dise qu'ils ne comptaient pas la
+        // même chose — et quinze couples nom/nombre voyageaient pour ça.
         agressifs={f.agressifs}
         // Combien de ceux qui se relèvent portent la marque du serveur : c'est ce qui
         // autorise le schéma d'en-tête à les dessiner l'un DANS l'autre. Compté, pas

@@ -42,6 +42,19 @@ export type Entree = {
   maison: boolean;
   /** La ligne sous le nom : ce que c'est, en trois mots. */
   sous: string;
+  /**
+   * L'ÉLÉMENT, EN IMAGE — et pas en pastille de texte.
+   *
+   * 1 124 monstres et 223 objets de l'index portent un élément, et il était écrit :
+   * « vent », « feu », « eau » en toutes lettres dans la liste des mots-clés. Le client
+   * dessine ses cinq éléments, ces dessins servent déjà sur /monstres, sur le World
+   * Boss et sur les fiches d'armure — le mot ne disait rien que le losange ne dise
+   * mieux, et il occupait une pastille entière sur une ligne qui n'en montre que trois.
+   *
+   * Le mot reste CHERCHABLE : `entree()` l'indexe en clé, donc taper « feu » sort
+   * toujours ce qui frappe au feu. C'est l'ÉCRAN qu'il quitte, pas l'index.
+   */
+  el?: { image: string; label: string };
   /** LES MOTS-CLÉS — ceux qu'on cherche ET ceux qu'on montre. C'est le point de la
    *  demande : « mettre les mots clés de la base d'objet ». */
   mots: string[];

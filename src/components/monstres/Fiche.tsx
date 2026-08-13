@@ -8,10 +8,10 @@ import { DeStat, STATS } from "@/components/jeu/Interface";
 import { NomObjet } from "@/components/objets/NomObjet";
 import BUTIN from "@/data/monstres-butin.json";
 import { CarteMonstre } from "./Recherche";
-import { Resistances, SchemaVies } from "./Graphiques";
+import { Resistances, SchemaSeuils, SchemaVies, type EvenementSeuil } from "./Graphiques";
 import {
-  bornesInversees, cadence, coupMax, coupMin, court, ELEMENT_FR, entier, iconeElement,
-  parSeconde, portraitDe, TON_ELEMENT, tonRang, type Monstre,
+  bornesInversees, cadence, coupMax, coupMin, court, ELEMENT_FR, entier, iconeButin,
+  iconeElement, parSeconde, portraitDe, TON_ELEMENT, tonRang, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -105,15 +105,17 @@ function Titre({ icon, ton, children, apres }: {
   );
 }
 
-/** Un seuil de PV et son effet, en une ligne de trois colonnes plutôt qu'en phrase. */
-function Seuil({ pv, fleche, ton }: { pv: number; fleche: React.ReactNode; ton: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 9, fontSize: 12.5, fontVariantNumeric: "tabular-nums", padding: "3px 0" }}>
-      <span style={{ minWidth: 74, color: "var(--text-muted)" }}>sous {pv} % PV</span>
-      <span style={{ color: ton, fontWeight: 700 }}>{fleche}</span>
-    </div>
-  );
-}
+/**
+ * LES RENFORTS QU'ON A LE DROIT D'AFFICHER.
+ *
+ * Un monstre du catalogue — Hadeseor — porte un bloc de renfort ENTIÈREMENT VIDE :
+ * le client y écrit le nom « 0 », la quantité 0 et le seuil 0. La fiche en faisait
+ * « sous 0 % PV · 0 », une ligne qui annonce un renfort qui n'existe pas. Règle du
+ * renseignement incomplet : elle disparaît. Les 29 autres blocs sont pleins et
+ * portent tous 100, c'est-à-dire « dès l'engagement ».
+ */
+const renfortUtile = (m: Monstre) =>
+  m.renfort && m.renfort.n > 0 && m.renfort.m && m.renfort.m !== "0" ? m.renfort : null;
 
 export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] }) {
   useCardFx();
@@ -121,9 +123,61 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
   const vies = m.vies ?? 1;
   const ic = iconeElement(m.elem);
   const portrait = portraitDe(m.id);
-  const nbMecaniques =
-    (m.rage?.length ?? 0) + (m.soigne?.length ?? 0) + (m.invoque?.length ?? 0) +
-    (m.renfort ? 1 : 0) + (m.fuit != null ? 1 : 0) + (m.distance ? 1 : 0);
+  const renfort = renfortUtile(m);
+
+  /**
+   * TOUT CE QUI SE DÉCLENCHE À UN SEUIL DE PV, EN UNE SEULE LISTE.
+   *
+   * La rage, le soin, les renforts et la fuite étaient quatre blocs séparés, chacun
+   * avec son titre et ses lignes « sous N % PV ». Or ce sont quatre événements de la
+   * MÊME horloge — celle de la barre de vie — et c'est leur ordre qui décide du
+   * combat. Une seule liste, dessinée par `SchemaSeuils`, le montre.
+   *
+   * Les deux conseils de jeu qui ne se devinent pas restent, portés par CHAQUE ligne
+   * de leur mécanique — c'est `SchemaSeuils` qui n'en garde qu'un, sur la première
+   * ligne AFFICHÉE. Les poser ici sur la ligne d'indice 0 les accrochait à la
+   * première ligne DU FICHIER, que le schéma déplace ensuite : sur le Junglosaure, le
+   * client écrit ses rages en 20, 10, 30, 30, 2, 30, 20, et le conseil du tank
+   * tombait sur la cinquième ligne dessinée au lieu de la première. Répété à chaque
+   * seuil il serait du bruit ; accroché au hasard il est invisible.
+   */
+  const seuils: EvenementSeuil[] = [];
+  (m.rage ?? []).forEach((r) => seuils.push({
+    pv: r.pv, icon: "flame", ton: "var(--red)",
+    astuce: "C'est la fin du combat qui tue, pas le début : le tank doit avoir ses soins prêts au passage du seuil.",
+    quoi: (
+      <>
+        <b style={{ color: "var(--red)", fontVariantNumeric: "tabular-nums" }}>dégâts ×{r.x.toLocaleString("fr-FR")}</b>
+        {coupMax(m) ? <span style={{ color: "var(--text-muted)" }}> · jusqu&apos;à {court(Math.round(coupMax(m) * r.x))} par coup</span> : null}
+      </>
+    ),
+  }));
+  (m.soigne ?? []).forEach((s) => seuils.push({
+    pv: s.pv, icon: "sparkles", ton: "var(--green)",
+    astuce: "Le soin ne part qu'une fois. Un groupe qui passe le seuil d'un seul coup ne le déclenche pas — c'est ce qui décide de garder les gros dégâts pour la fin.",
+    quoi: <>il rend <b style={{ color: "var(--green)", fontVariantNumeric: "tabular-nums" }}>{s.rend} %</b> de sa vie</>,
+  }));
+  if (renfort) seuils.push({
+    pv: renfort.pv >= 100 ? 100 : renfort.pv, icon: "megaphone", ton: "var(--gold)",
+    quoi: <>renforts · <b style={{ color: "var(--gold)" }}>{renfort.m}</b>{renfort.n > 1 ? ` ×${renfort.n}` : ""}</>,
+  });
+  if (m.fuit != null) seuils.push({
+    pv: m.fuit, icon: "arrow-right", ton: "var(--blue)",
+    quoi: <b style={{ color: "var(--blue)" }}>il fuit</b>,
+  });
+
+  /**
+   * LE COMPTE DE LA SECTION EST CELUI DE CE QU'ELLE MONTRE.
+   *
+   * Il comptait `distance` — l'attaque à distance — qui s'affiche dans la section
+   * PRÉCÉDENTE, « ce qu'il te fait ». Conséquences recomptées sur le relevé : le rail
+   * de Junglosaure annonçait 26 pour 25 lignes, et 14 monstres n'avaient QUE ce champ
+   * pour toute mécanique comptée — 13 ouvraient donc une section « ce qu'il fait en
+   * combat » ENTIÈREMENT VIDE, la quatorzième (MI_GIANTTREEK1) n'y montrant que sa
+   * ligne de tâche. C'est cette section vide que la fiche a cessé de construire ;
+   * elle rentrait par le compteur.
+   */
+  const nbMecaniques = seuils.length + (m.invoque?.length ?? 0);
 
   /* Le butin, réduit à ce qui sert : des NOMS, avec l'icône du client. Les taux
      sont partis (« on s'en fiche »), et avec eux l'avertissement qui expliquait
@@ -258,38 +312,30 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
     },
   ];
 
-  if (nbMecaniques > 0) {
+  /* `|| m.tache` : 18 des 22 monstres qui comptent pour la tâche « tuer un boss »
+     n'ont aucune mécanique à seuil ni invocation, et 17 d'entre eux ne construisaient
+     donc pas la section qui porte ce fait — un renseignement qui change un geste
+     (lequel aller tuer) était perdu pour dix-sept fiches. Le dix-huitième
+     (MI_GIANTTREEK1) l'affichait par accident : sa portée d'attaque, comptée à tort,
+     ouvrait la section pour lui seul. Le compte, lui, reste celui des lignes de
+     mécanique : une pastille « 1 » pour un drapeau n'annoncerait rien. */
+  if (nbMecaniques > 0 || m.tache) {
     sections.push({
-      clef: "mecaniques", titre: "Ce qu'il fait en combat", sous: "rage, soins, invocations, fuite", icon: "flame",
-      compte: nbMecaniques,
+      clef: "mecaniques", titre: "Ce qu'il fait en combat", icon: "flame",
+      // Le sous-titre ne promet que ce qu'il y a dedans : sur les 18 fiches où la
+      // seule ligne est la tâche, annoncer « rage, soins, invocations, fuite »
+      // ferait ouvrir la section pour rien.
+      sous: nbMecaniques > 0 ? "rage, soins, invocations, fuite" : "ce que sa mise à mort valide",
+      compte: nbMecaniques || null,
       contenu: (
         <div style={{ display: "grid", gap: 13 }}>
-          {m.rage?.length ? (
-            <div>
-              <Titre icon="flame" ton="var(--red)">
-                <Bulle quoi="C'est la fin du combat qui tue, pas le début : le tank doit avoir ses soins prêts au passage du seuil.">
-                  <span>Rage</span>
-                </Bulle>
-              </Titre>
-              {m.rage.map((r, i) => (
-                <Seuil key={i} pv={r.pv} ton="var(--red)"
-                  fleche={<>dégâts ×{r.x.toLocaleString("fr-FR")}{coupMax(m) ? ` · jusqu'à ${court(Math.round(coupMax(m) * r.x))} par coup` : ""}</>} />
-              ))}
-            </div>
-          ) : null}
-
-          {m.soigne?.length ? (
-            <div>
-              <Titre icon="sparkles" ton="var(--green)">
-                <Bulle quoi="Le soin ne part qu'une fois. Un groupe qui passe le seuil d'un seul coup ne le déclenche pas — c'est ce qui décide de garder les gros dégâts pour la fin.">
-                  <span>Il se soigne</span>
-                </Bulle>
-              </Titre>
-              {m.soigne.map((s, i) => (
-                <Seuil key={i} pv={s.pv} ton="var(--green)" fleche={<>rend {s.rend} % de sa vie</>} />
-              ))}
-            </div>
-          ) : null}
+          {/* LES QUATRE MÉCANIQUES À SEUIL EN UN SEUL DESSIN. Elles avaient chacune
+              leur titre et leurs lignes « sous N % PV » : quatre blocs pour quatre
+              événements de la même horloge, et rien qui dise dans quel ORDRE ils
+              arrivent. Les titres « Rage », « Il se soigne » et « Il appelle des
+              renforts » sont partis avec eux — l'icône de la ligne les porte, et
+              l'effet est écrit à côté. */}
+          <SchemaSeuils seuils={seuils} />
 
           {m.invoque?.length ? (
             <div>
@@ -299,7 +345,12 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
               <div style={{ display: "grid", gap: 4 }}>
                 {m.invoque.map((i, k) => (
                   <div key={k} style={{ display: "flex", alignItems: "baseline", gap: 8, fontSize: 12.5, fontVariantNumeric: "tabular-nums" }}>
-                    <span style={{ color: "var(--gold)", fontWeight: 700, minWidth: 42 }}>{i.c} %</span>
+                    {/* CE POURCENTAGE-LÀ N'EST PAS UN SEUIL DE PV, c'est une CHANCE
+                        d'apparition — et il est écrit nu, dans la même section que la
+                        colonne « seuil » du schéma juste au-dessus, depuis que les
+                        mots « sous N % PV » en sont partis. Un `title` le dit sans
+                        ajouter un mot à l'écran. */}
+                    <span title="Sa chance d'apparaître, pas un seuil de vie" style={{ color: "var(--gold)", fontWeight: 700, minWidth: 42 }}>{i.c} %</span>
                     <span style={{ flex: 1, minWidth: 0 }}>{i.m}{i.n > 1 ? ` ×${i.n}` : ""}</span>
                   </div>
                 ))}
@@ -307,17 +358,8 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
             </div>
           ) : null}
 
-          {m.renfort ? (
-            <div>
-              <Titre icon="megaphone" ton="var(--gold)">Il appelle des renforts</Titre>
-              <div style={{ fontSize: 12.5 }}>
-                {m.renfort.pv >= 100 ? "dès l'engagement" : `sous ${m.renfort.pv} % PV`} ·{" "}
-                <b>{m.renfort.m}</b>{m.renfort.n > 1 ? ` ×${m.renfort.n}` : ""}
-              </div>
-            </div>
-          ) : null}
-
-          {m.fuit != null ? <Ligne quoi="Il fuit" valeur={`sous ${m.fuit} % de PV`} ton="var(--blue)" /> : null}
+          {/* Les renforts et la fuite sont passés dans le schéma des seuils : ce sont
+              des événements de la barre de vie comme la rage et le soin. */}
           {m.tache ? <Ligne quoi="Compte pour la tâche « tuer un boss »" valeur="Oui" ton="var(--green)" /> : null}
         </div>
       ),
@@ -343,9 +385,12 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {objets.map((o) => (
                 <span key={o.n} style={{ display: "inline-flex", alignItems: "center", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "6px 11px", fontSize: 12, lineHeight: 1.3 }}>
-                  {/* Huit des objets du pont n'ont pas de fichier d'icône sur le disque :
-                      `NomObjet` n'en met alors aucune plutôt qu'une image cassée. */}
-                  <NomObjet nom={o.n} icone={o.ic ?? null} taille={26} />
+                  {/* Huit objets du pont arrivaient SANS icône alors que six de leurs
+                      fichiers sont là, vérifiés à l'œil : `iconeButin` les rattache
+                      (dont le cœur ébréché de Shade, présent sur 265 fiches). Les deux
+                      derniers restent sans image — une fleur pour un fragment de cœur
+                      est pire que rien. `NomObjet` ne met alors aucune image. */}
+                  <NomObjet nom={o.n} icone={iconeButin(o.n, o.ic)} taille={26} />
                 </span>
               ))}
             </div>

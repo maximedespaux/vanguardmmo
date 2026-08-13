@@ -763,8 +763,10 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
     // ── 6 · les trous ─────────────────────────────────────────────────────────
     {
       clef: "manques", ...META.manques,
-      // Huit réserves écrites en dur ci-dessous : ce sont des CONSTATS de fouille,
-      // pas des lignes de relevé. Le compte suit donc la liste elle-même.
+      // Les réserves sont écrites en dur ci-dessous : ce sont des CONSTATS de fouille,
+      // pas des lignes de relevé. Le compte suit donc la liste elle-même — elles étaient
+      // huit, le tri de la règle 2 en a gardé trois (voir MANQUES), et ce commentaire
+      // n'a pas à porter un nombre que `MANQUES.length` donne déjà juste.
       compte: MANQUES.length,
       contenu: (
         <div style={{ display: "grid", gap: 12 }}>

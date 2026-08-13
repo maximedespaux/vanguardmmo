@@ -561,27 +561,35 @@ export default function CompositionsPage() {
         </div>
       )}
 
+      {/* ┌──── LES NOTES DE CSS SE LISENT ICI, PAS DANS LE `<style>` ────┐
+          Un commentaire écrit DANS le gabarit du `<style>` part chez le visiteur :
+          il est servi mot pour mot dans le HTML de la page, pesé par la mesure des
+          mots servis, et téléchargé par tout le monde. Ces deux notes-là faisaient
+          164 mots à elles seules sur une page qui en sert 784 — un cinquième de la
+          page, pour un texte qu'aucun lecteur ne lira jamais. Hors du gabarit elles
+          ne coûtent rien, elles gardent leurs accents, et le piège du caractère qui
+          referme le littéral (payé sur ce site, invisible pour tsc jusqu'à la 500)
+          ne peut plus se poser. C'est la forme déjà en service sur /astuces et
+          /prestige, dont les feuilles servies ne portent aucun commentaire.
+          └───────────────────────────────────────────────────────────────┘
+
+          .cs-legende — une liste de DÉFINITIONS et non deux colonnes de div : le
+          couple signe/sens EST une définition, et un lecteur d'écran annonce alors le
+          terme avant sa description au lieu de lire six morceaux de phrase à la suite.
+          La grille tient les signes alignés sur une colonne étroite, la description
+          prend le reste. Le centrage vertical est explicite : une icône de 14 px et un
+          texte de 12,5 px ne partagent pas leur ligne de base, et l'icône flottait
+          au-dessus du mot.
+
+          .cs-lg-btn — le faux bouton reprend la forme du vrai « + ton perso » des
+          postes : même rayon, même graisse, même taille de texte. Il ne se clique pas,
+          c'est une légende — donc pas de curseur ni de survol. */}
       <style>{`
-        /* LA LEGENDE DES CONTROLES. Une liste de definitions et non deux colonnes
-           de div : le couple signe/sens EST une definition, et un lecteur d'ecran
-           annonce alors le terme avant sa description au lieu de lire six morceaux
-           de phrase a la suite.
-           La grille tient les signes alignes sur une colonne etroite ; la
-           description prend le reste. Le centrage vertical est explicite : une
-           icone de 14 px et un texte de 12,5 px ne partagent pas leur ligne de
-           base, et l'icone flottait au-dessus du mot.
-           AUCUN ACCENT GRAVE NI GUILLEMET OBLIQUE DANS CE COMMENTAIRE : on est
-           dans un litteral de gabarit, et le caractere qui sert de delimiteur le
-           refermerait ici. Piege deja paye sur ce site, invisible pour tsc jusqu'a
-           ce que la page tombe en 500. */
         .cs-legende{display:grid;grid-template-columns:auto minmax(0,1fr);
           gap:7px 11px;align-items:center;margin:0;font-size:12.5px;
           color:var(--text-muted)}
         .cs-legende dt{display:flex;align-items:center;justify-content:center;min-width:0}
         .cs-legende dd{margin:0;min-width:0}
-        /* Le faux bouton reprend la forme du vrai « + ton perso » des postes :
-           meme rayon, meme graisse, meme taille de texte. Il ne se clique pas —
-           c'est une legende — donc pas de curseur ni de survol. */
         .cs-lg-btn{white-space:nowrap;font-size:11.5px;font-weight:600;padding:4px 9px;
           border-radius:6px;border:1px solid var(--orange);color:var(--orange)}
       `}</style>

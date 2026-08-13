@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { classeFr, FAMILLES, type ObjetFiche } from "@/components/objets/vocabulaire";
+import { classeFr, elementParNom, elementPorte, FAMILLES, type ObjetFiche } from "@/components/objets/vocabulaire";
 /* LA PROVENANCE EST LUE AILLEURS, ET C'EST UNE DÉDUPLICATION.
    `ou-trouver.json` était lu et traduit ici ET dans /api/ou-trouver, chacun avec sa
    version de la même fonction — et /objets, qui promet dans son sous-titre de chercher
@@ -117,18 +117,13 @@ const lire = <T,>(...bouts: string[]): T =>
 /** Les libellés de famille, tels que les pastilles de /objets les écrivent. */
 const LABEL_FAMILLE = new Map<string, string>(FAMILLES.map((f) => [f.clef, f.label]));
 
-/**
- * Les cinq éléments dessinés par le client, pour les compétences élémentaires.
- * ATTENTION AU NOM : le fichier de la foudre s'appelle `element-electricite.webp` —
- * confondre le libellé et le nom de fichier affichait une image absente.
- */
-const IMAGE_ELEMENT: Record<string, string> = {
-  Feu: "/jeu/mecaniques/element-feu.webp",
-  Eau: "/jeu/mecaniques/element-eau.webp",
-  Vent: "/jeu/mecaniques/element-vent.webp",
-  Terre: "/jeu/mecaniques/element-terre.webp",
-  Foudre: "/jeu/mecaniques/element-electricite.webp",
-};
+/* Les cinq éléments dessinés par le client ne sont plus une table LOCALE : ils
+   vivaient ici sous leurs libellés français (« Foudre »), dans `objets/vocabulaire.ts`
+   sous les codes du client (`ELECTRICITY`) et sous les clés du catalogue (« foudre »),
+   et la table des monstres les nomme encore autrement (« electricite »). Quatre
+   recopies du même fait, dont une portait le commentaire « ATTENTION AU NOM » parce
+   qu'une confusion entre le libellé et le nom de fichier avait déjà affiché une image
+   absente. `elementParNom` les accepte tous les quatre. */
 
 /**
  * LA LISTE ENTIÈRE EST GARDÉE, l'écran n'en montre que trois.
@@ -190,9 +185,15 @@ function charger() {
         if (l && !mots.includes(l)) mots.push(l);
       }
       const dou = provObjet.get(clef(o.n)) ?? [];
+      /* L'ÉLÉMENT DEVIENT UN DESSIN. 223 objets en portent un, et le champ `el` du
+         catalogue est un CODE du client (`FIRE`, `ELECTRICITY`) : la ligne du wiki ne
+         l'affichait donc pas du tout, faute de savoir le traduire. Le losange du jeu
+         le dit sans un mot — et le mot-clé reste indexé plus bas. */
+      const el = elementPorte(o.el) ?? undefined;
       tout.push(entree({
         t: "objet", id: String(o.i), nom: reparer(o.n),
         img: o.ic ? `/jeu/icones/${o.ic}` : null,
+        el,
         grade: o.g === "Unique" ? "unique" : o.g === "Ultime" ? "ultimate" : undefined,
         href: `/objets/${o.i}`,
         maison: o.af === 1,
@@ -202,7 +203,16 @@ function charger() {
         mots,
         prov: provenance("Où le trouver", dou),
       // `dou` n'est PAS répété ici : `entree` indexe déjà les lignes de provenance.
-      }, [famille ?? ""]));
+      /* L'élément part en CLÉ et pas en pastille : « feu » doit rester tapable alors
+         que l'écran, lui, montre le losange.
+         LES DEUX NOMS DE LA FOUDRE, comme sur les monstres — et c'est un trou mesuré.
+         `elementPorte` traduit le code du client `ELECTRICITY` par « Électricité », si
+         bien que taper « foudre » ne trouvait que les 7 objets dont le NOM porte le mot
+         et manquait les 17 autres (Baguette Horizon, Bâton Sege, Carte Fulgur…). Or
+         `src/components/mecaniques/SectionsObjets.tsx` l'écrit noir sur blanc : « celui
+         qu'on cherche en jeu est foudre ». `elementParNom` rend l'autre nom du même
+         élément, donc les deux mots sortent les mêmes 24 pièces. */
+      }, [famille ?? "", el?.label ?? "", elementParNom(el?.label)?.label ?? ""]));
     }
     genere = cat.genere ?? "";
   } catch { /* sans catalogue d'objets la recherche reste utile sur le reste */ }
@@ -218,7 +228,12 @@ function charger() {
       // jeu. La barre de vie d'un boss annonce ses PV et pas les trente fois qu'il faut
       // les sortir.
       if ((m.vies ?? 0) > 1) mots.push(`${m.vies} vies`);
-      if (m.elem && m.elem !== "aucun") mots.push(m.elem);
+      /* L'ÉLÉMENT QUITTE LA PASTILLE POUR LE DESSIN. 953 des 1 124 monstres portent un
+         élément, et il s'écrivait « terre », « vent », « feu » — un mot sur les trois
+         pastilles que la ligne montre, pour un fait que le client dessine. La table des
+         monstres l'appelle « electricite » là où le catalogue d'objets dit « foudre » :
+         `elementParNom` accepte les deux (voir objets/vocabulaire.ts). */
+      const el = m.elem === "aucun" ? null : elementParNom(m.elem);
       if (m.zone) mots.push(m.zone);
       if (m.groupe) mots.push(reparer(m.groupe));
       for (const l of m.lieux ?? []) if (!mots.includes(l.z)) mots.push(l.z);
@@ -229,12 +244,16 @@ function charger() {
         // n'ont pas de table de correspondance — 1 sur 1 124. On ne montre donc
         // rien plutôt que l'image d'un autre.
         img: null,
+        el: el ?? undefined,
         href: `/monstres/${encodeURIComponent(m.id)}`,
         maison: m.maison,
         sous: [m.niv ? `niv. ${m.niv}` : null, m.rang].filter(Boolean).join(" · ") || "Monstre",
         mots,
         prov: provenance("Ce qu'il lâche", butinMonstre.get(clef(m.nom)) ?? []),
-      }, [m.rang ?? ""]));
+      // Le nom de l'élément reste en clé : « feu » doit sortir les monstres de feu même
+      // si l'écran n'en montre plus que le losange. Les DEUX noms du relevé sont posés,
+      // pour que « electricite » et « foudre » trouvent la même chose.
+      }, [m.rang ?? "", m.elem ?? "", el?.label ?? ""]));
     }
   } catch { /* idem */ }
 
@@ -249,6 +268,9 @@ function charger() {
       // cherche pas et ne s'affiche pas : un renseignement incomplet disparaît.
       if (!sortie?.n) continue;
       const nom = reparer(sortie.n);
+      // Les cinq recettes Baruna — orphelines, donc des échanges que le serveur ne
+      // propose pas. Même règle que les objets ci-dessus, et /crafts les filtre déjà.
+      if (HORS_SUJET.test(nom)) continue;
       const mots: string[] = [r.g];
       /* UNE RECETTE ÉTEINTE RESTE À L'ÉCRAN, et c'est la seule exception qu'on se
          donne : elle protège d'une erreur coûteuse. On rassemble les matériaux d'un
@@ -314,7 +336,7 @@ function charger() {
         t: "competence", id: c.id, nom: reparer(c.nom),
         // Le client ne donne pas d'icône par compétence. Quand la famille EST un
         // élément, il en dessine un : c'est la seule image honnête ici.
-        img: IMAGE_ELEMENT[c.famille] ?? null,
+        img: elementParNom(c.famille)?.image ?? null,
         href: `/classes?comp=${encodeURIComponent(c.id)}`,
         maison: false,
         sous: [c.classe, c.nivPerso ? `niv. ${c.nivPerso}` : null].filter(Boolean).join(" · "),
@@ -376,11 +398,27 @@ const MAISON_CRAFT = new Set(["masques", "mantras", "buffs", "couturier", "mater
  *
  * Ils restent dans `objets-fiches.json` et sur /objets, qui est le catalogue : un
  * catalogue montre tout ce qu'il y a. Un wiki, lui, répond à une question.
+ *
+ * ┌──────── ET LA QUATRIÈME FAMILLE : BARUNA. Règle de la maison, sans exception —
+ * │ rien qui porte ce nom ne se compte ni ne s'affiche. L'index en servait 25 :
+ * │ 20 objets (« Carte Feu de Baruna (SR) », « Bénédiction Baruna », « Absolution
+ * │ Baruna »…) et 5 recettes, toutes ORPHELINES, c'est-à-dire des échanges que le
+ * │ serveur ne propose pas.
+ * │
+ * │ Le retrait se fait ICI et pas au rendu, pour la raison que
+ * │ `src/components/crafts/Atelier.tsx` a déjà payée : `META` est calculé sur l'index
+ * │ bâti, donc un filtre à l'affichage aurait laissé l'en-tête annoncer plus de noms
+ * │ que le champ n'en trouve. Et /crafts filtre déjà ces cinq recettes de son côté :
+ * │ sans ce gabarit, le wiki rouvrait la porte que l'atelier venait de fermer.
+ * └────────────────────────────────────────────────────────────────────────────────────
  */
+const HORS_SUJET = /baruna/i;
+
 function nomDObjet(o: ObjetFiche): boolean {
   if (!lisible(o.n)) return false;
   if (o.cle?.startsWith("II_WEA_MOB")) return false;
   if (o.n.startsWith("(Deck")) return false;
+  if (HORS_SUJET.test(o.n)) return false;
   return true;
 }
 

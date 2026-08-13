@@ -8,7 +8,7 @@ import { NomObjet } from "@/components/objets/NomObjet";
 import RELEVE from "@/data/worldboss-releve.json";
 import { Faiblesses, SchemaVies } from "@/components/monstres/Graphiques";
 import {
-  bornesInversees, clefRecherche, coupMax, court, ELEMENT_FR, entier,
+  bornesInversees, clefRecherche, coupMax, court, ELEMENT_FR, ELEMENTS, entier,
   iconeElement, parSeconde, tonRang,
 } from "@/components/monstres/vocabulaire";
 
@@ -77,13 +77,37 @@ const R = RELEVE as unknown as Paquet;
 const FAMILLES = R.familles;
 const CONFUSIONS = R.confusions;
 
-/** Les douze bêtes des deux relevés, à plat, chacune avec la marque qui l'a fait
- *  entrer : c'est UN tableau au lieu de trois, et la marque devient une colonne. */
+/** Les bêtes des deux relevés, à plat, chacune avec la marque qui l'a fait entrer :
+ *  c'est UN tableau au lieu de trois, et la marque devient une colonne. Le nombre
+ *  n'est pas écrit ici — il se compte, et il se comptait faux (cf. `compteMarque`). */
 const MARQUE: Record<string, string> = { wb: "WB", bigboss: "(Big Boss)" };
 const TOUTES: { m: Bete; marque: string; variante: boolean }[] = FAMILLES.flatMap((f) => [
   ...f.monstres.map((m) => ({ m, marque: MARQUE[f.clef] ?? f.clef, variante: false })),
   ...(f.variantes ?? []).map((m) => ({ m, marque: MARQUE[f.clef] ?? f.clef, variante: true })),
 ]);
+
+/**
+ * COMBIEN DE LIGNES PORTENT CETTE MARQUE — compté sur `TOUTES`, c'est-à-dire sur les
+ * lignes que le tableau dessine.
+ *
+ * ┌──── LE DÉFAUT, ET IL SE VOYAIT À L'ADDITION ────┐
+ * │ Les deux compteurs lisaient `f.monstres.length`  │
+ * │ et ignoraient donc les `variantes` — les bêtes   │
+ * │ que le filtre au caractère près laisse tomber et │
+ * │ que le tableau montre quand même, à part. On     │
+ * │ lisait « 6 » et « 6 » au-dessus d'un tableau de  │
+ * │ SEPT lignes « (Big Boss) », sous une pastille de │
+ * │ rail qui annonçait 13. Trois nombres pour deux   │
+ * │ vérités. Compter sur `TOUTES` les rend           │
+ * │ inséparables : leur somme EST le nombre de       │
+ * │ lignes, par construction.                        │
+ * └────────────────────────────────────────────────┘
+ */
+const compteMarque = (clef: string) => TOUTES.filter((t) => t.marque === MARQUE[clef]).length;
+
+/** Les bêtes que le filtre exact laisse tomber, toutes familles confondues : le
+ *  chiffre qui autorise la phrase « dont N l'écrit sans l'espace ». */
+const VARIANTES = TOUTES.filter((t) => t.variante).length;
 
 /* `coupMax`, `bornesInversees` et `parSeconde` viennent de
  * `components/monstres/vocabulaire.ts` et non d'ici : /monstres, la recherche et
@@ -123,6 +147,56 @@ function Barre({ part, teinte }: { part: number; teinte: string }) {
     <span aria-hidden="true" style={{ display: "block", height: 3, marginTop: 4, borderRadius: 2, background: "color-mix(in srgb, var(--border) 70%, transparent)" }}>
       <span style={{ display: "block", height: "100%", borderRadius: 2, background: teinte, width: `${Math.max(1.5, Math.min(100, part * 100))}%` }} />
     </span>
+  );
+}
+
+/**
+ * QUEL ÉLÉMENT EMPORTER — la seule question de préparation à laquelle le tableau
+ * répond ligne par ligne sans jamais la résumer.
+ *
+ * ┌──────── POURQUOI CE BLOC EXISTE, ET CE QU'IL A REMPLACÉ ────────┐
+ * │ Le tableau montre les faiblesses de chaque bête en icônes, et    │
+ * │ une phrase disait « 6 sont faibles à leur PROPRE élément ». Ce   │
+ * │ qui manquait était le geste : COMBIEN prennent plus de quoi.     │
+ * │ Trois icônes et trois nombres le disent, et ils tiennent sur une │
+ * │ ligne là où la lecture des treize lignes du tableau demandait de │
+ * │ compter à la main. La phrase n'est pas perdue : son fait — un    │
+ * │ élément qui a l'avantage sur lui-même, ce que la roue élémentaire│
+ * │ ne produit jamais — est passé en bulle sur son propre chiffre.   │
+ * └───────────────────────────────────────────────────────────────┘
+ *
+ * TOUT EST LU DANS LES CINQ COLONNES DE RÉSISTANCE, jamais déduit de la roue : ces
+ * bêtes-là sont précisément celles qui sortent du moule. Rien n'est écrit à la main,
+ * pas même le nombre d'éléments cités — le jour où la fouille en rend un quatrième,
+ * il apparaît.
+ */
+function OuFrapper({ betes }: { betes: Bete[] }) {
+  const par = new Map<string, number>();
+  for (const b of betes) {
+    for (const e of ELEMENTS) if ((b.res?.[e] ?? 0) < 0) par.set(e, (par.get(e) ?? 0) + 1);
+  }
+  const rangs = [...par].sort((a, b) => b[1] - a[1]);
+  /** Faibles à leur PROPRE élément : le cas que la roue élémentaire ne produit pas. */
+  const propre = betes.filter((b) => (b.res?.[b.elem] ?? 0) < 0).length;
+  if (rangs.length === 0) return null;
+  return (
+    <div style={{ display: "flex", gap: 11, alignItems: "center", flexWrap: "wrap", fontSize: 12.5 }}>
+      <span style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)" }}>
+        faibles à
+      </span>
+      {rangs.map(([e, n]) => (
+        <span key={e} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "4px 9px" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={iconeElement(e)!} alt={ELEMENT_FR[e]} title={ELEMENT_FR[e]} width={17} height={17} style={{ objectFit: "contain" }} />
+          <b style={{ fontVariantNumeric: "tabular-nums" }}>{n}</b>
+        </span>
+      ))}
+      {propre > 0 && (
+        <Invisible enJeu={`Un élément n'a jamais l'avantage sur lui-même : la roue élémentaire ne produit pas ça. C'est lu dans les cinq colonnes du client, bête par bête — ${propre} de ces ${betes.length} sont dans ce cas.`}>
+          <span style={{ color: "var(--text-muted)" }}>dont {propre} à leur propre élément</span>
+        </Invisible>
+      )}
+    </div>
   );
 }
 
@@ -280,9 +354,10 @@ export function BestiaireWorldBoss() {
   const plusGros = [...betes].sort((a, b) => b.pvEff - a.pvEff)[0];
   const plusViolent = [...betes].sort((a, b) => parSeconde(b) - parSeconde(a))[0];
   const sansCarte = betes.filter((m) => m.apparitions === 0);
-  /** Faibles à leur PROPRE élément — ce que la roue élémentaire ne produit jamais,
-   *  et la raison pour laquelle ce site LIT les cinq colonnes du client. */
-  const faiblesALui = betes.filter((m) => (m.res?.[m.elem] ?? 0) < 0);
+  /* Les faiblesses — dont celles qui portent sur le PROPRE élément de la bête, ce que
+     la roue élémentaire ne produit jamais — se comptent dans `OuFrapper`, à côté des
+     icônes qu'elles font apparaître : le chiffre et son dessin ne peuvent plus
+     diverger. */
   /* `poses` a disparu d'ici : la zone d'un boss de siège est maintenant écrite SUR sa
      pastille, avec l'épingle du jeu. Une liste calculée pour fabriquer une phrase
      « seul X est posé… » n'avait plus de raison d'exister. */
@@ -299,26 +374,30 @@ export function BestiaireWorldBoss() {
   const sections: SectionVolet[] = [
 
     {
-      clef: "betes", titre: "Les bêtes du relevé", sous: "ce qu'il y a en face, et ce que ça coûte", icon: "skull",
+      clef: "betes", titre: "Les bêtes du relevé", sous: "qui c'est, et ce qu'il faut lui sortir", icon: "skull",
       compte: TOUTES.length,
       contenu: (
         <div style={{ display: "grid", gap: 13 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(132px,1fr))", gap: 8 }}>
-            <Chiffre valeur={String(wb.monstres.length)} quoi={<Bulle quoi={wb.critere}><span>marqués « WB »</span></Bulle>} ton="var(--orange)" />
-            <Chiffre valeur={String(bb.monstres.length)} quoi={<Bulle quoi={bb.critere}><span>nommés « (Big Boss) »</span></Bulle>} ton="var(--purple)" />
+            <Chiffre valeur={String(compteMarque("wb"))} quoi={<Bulle quoi={wb.critere}><span>marqués « WB »</span></Bulle>} ton="var(--orange)" />
+            {/* Le compte inclut les variantes, et la bulle dit combien : sans ça, deux
+                compteurs à 6 coiffaient un tableau de treize lignes. */}
+            <Chiffre valeur={String(compteMarque("bigboss"))} ton="var(--purple)"
+              quoi={
+                <Bulle quoi={`${bb.critere}${VARIANTES > 0 ? ` ${VARIANTES} d'entre eux l'écrit sans l'espace : il est compté ici, et marqué comme tel dans le tableau.` : ""}`}>
+                  <span>nommés « (Big Boss) »</span>
+                </Bulle>
+              } />
             <Chiffre valeur={court(plusGros.pvEff)} quoi="le plus gros, PV à sortir" ton="var(--red)" />
             <Chiffre valeur={`${court(parSeconde(plusViolent))}/s`} quoi="le plus violent, par seconde" ton="var(--red)" />
           </div>
 
           <Tableau lignes={TOUTES} />
 
-          {faiblesALui.length > 0 && (
-            <div style={{ fontSize: 12.5 }}>
-              <Invisible enJeu={`Un élément n'a jamais l'avantage sur lui-même : la roue élémentaire ne produit pas ça. C'est lu dans les cinq colonnes du client, monstre par monstre — ${faiblesALui.length} de ces bêtes sont dans ce cas.`}>
-                <span>{faiblesALui.length} sont faibles à leur PROPRE élément</span>
-              </Invisible>
-            </div>
-          )}
+          {/* Le résumé des faiblesses a pris la place de la phrase « N sont faibles à
+              leur PROPRE élément » : même fait, et en plus le geste — quel élément
+              emporter, et contre combien d'entre elles. */}
+          <OuFrapper betes={betes} />
 
           {/* TRENTE MOTS DEVENUS HUIT. La phrase reste utile — elle empêche de partir
               chercher un point d'apparition qui n'existe pas — mais elle n'a pas besoin

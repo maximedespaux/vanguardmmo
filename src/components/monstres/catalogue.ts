@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { clefRecherche, coupMax, type Compteurs, type Lacheur, type Monstre } from "./vocabulaire";
+import {
+  clefRecherche, coupMax,
+  type Compteurs, type Lacheur, type LigneClassement, type Monstre,
+} from "./vocabulaire";
 // 12 Ko de pont nom/clé → identifiant d'objet (scripts/extraire-monstres-butin.mjs).
 // Le catalogue d'objets pèse 3 Mo et vit derrière /api/objets : on ne le charge pas
 // ici pour traduire cent six noms.
@@ -345,8 +348,23 @@ export function classementBoss(combien?: number) {
     .map((e) => e.m)
     .filter((m) => (m.vies ?? 0) > 1)
     .sort((a, b) => b.pvEff - a.pvEff || coupMax(b) - coupMax(a));
-  return combien ? rangs.slice(0, combien) : rangs;
+  return (combien ? rangs.slice(0, combien) : rangs).map(ligne);
 }
+
+/**
+ * CE QUI DESCEND AU NAVIGATEUR POUR UNE LIGNE DE TABLEAU — et rien de plus.
+ *
+ * Les deux classements traversaient le pont en monstres complets : butin, points
+ * d'apparition, invocations, dés de statistiques, tout ce que la fiche montre et que
+ * le tableau ne montre pas. Mesuré sur les 114 lignes des deux classements : 70 Ko
+ * de charge utile, ramenés à 36. Ces octets-là sont du TEXTE dans la charge utile de
+ * la page — ils comptent dans les mots servis, et ils ne servent à personne.
+ */
+const ligne = (m: Monstre): LigneClassement => ({
+  id: m.id, nom: m.nom, niv: m.niv, rang: m.rang, pv: m.pv, pvEff: m.pvEff,
+  vies: m.vies, atkMin: m.atkMin, atkMax: m.atkMax, delai: m.delai,
+  elem: m.elem, res: m.res, groupe: m.groupe,
+});
 
 /** Les frappeurs : dégâts par coup les plus élevés. Le tank n'a pas le même
  *  problème selon l'instance, et cette colonne-là ne se devine pas des PV.
@@ -361,7 +379,8 @@ export function classementFrappeurs(combien = 20) {
     .map((e) => e.m)
     .filter((m) => coupMax(m) > 0)
     .sort((a, b) => coupMax(b) - coupMax(a))
-    .slice(0, combien);
+    .slice(0, combien)
+    .map(ligne);
 }
 
 /**

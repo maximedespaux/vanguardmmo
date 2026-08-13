@@ -1,5 +1,5 @@
 "use client";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import {
   colonnesRes, court, ELEMENT_FR, ELEMENTS, entier, faiblesses, iconeElement, RES_ECHELLE,
@@ -16,6 +16,10 @@ import {
  *   `Resistances`          ← « il prend plus de dégâts au feu et résiste à l'eau… »
  *   `Faiblesses`           ← la colonne « Faible à » écrite en français
  *   `ProvenanceMonstres`   ← une rangée de six pastilles où deux étaient des filtres
+ *   `ContenusBoss`         ← une rangée de quinze pastilles qui comptaient autre chose
+ *                            que le tableau au-dessus d'elles
+ *   `SchemaSeuils`         ← « sous 30 % PV : dégâts ×2 », ligne par ligne et sans
+ *                            jamais dire que tout se déclenche à la fin du combat
  *
  * Aucune dépendance : des `div` et des variables CSS. C'est la LONGUEUR qui porte
  * la grandeur, jamais la couleur (le vert et le doré ne se distinguent pas pour un
@@ -125,6 +129,53 @@ function Bande({ part, valeur, libelle, teinte, action, decale, suite, detail }:
 }
 
 /**
+ * DE QUEL CONTENU VIENNENT LES LIGNES DU TABLEAU — compté SUR CES LIGNES.
+ *
+ * ┌──────── LE DÉFAUT QU'IL CORRIGE, ET IL ÉTAIT CHIFFRÉ ────────┐
+ * │ La rangée de pastilles qui vivait ici portait les comptes du  │
+ * │ CATALOGUE ENTIER (`meta.groupes`, calculés sur les 1 124      │
+ * │ monstres) et elle était posée sous un tableau qui n'en montre │
+ * │ que 94 : on lisait « Chambres Secrètes 16 » sous sept lignes  │
+ * │ de Chambres Secrètes, « Halloween 21 » sous dix. Deux         │
+ * │ comptages voisins de trois centimètres, et rien ne disait     │
+ * │ qu'ils ne comptaient pas la même chose. Le compte est         │
+ * │ maintenant fait sur les lignes MONTRÉES : la somme des barres │
+ * │ est le nombre de lignes du tableau, par construction.         │
+ * └──────────────────────────────────────────────────────────────┘
+ *
+ * Une seule teinte, celle que le tableau emploie déjà pour sa colonne de tri :
+ * c'est la LONGUEUR qui porte la grandeur. Le nom et le nombre sont écrits, la
+ * barre ne fait que rendre le rapport lisible d'un coup d'œil.
+ */
+export function ContenusBoss({ lignes }: { lignes: { groupe?: string }[] }) {
+  /* « hors contenu reconstitué » et non « inconnu » : la fouille n'a pas échoué,
+     ces monstres n'appartiennent à aucun des donjons et events qu'elle sait
+     reconstituer. C'est un renseignement, pas un trou. */
+  const HORS = "hors contenu reconstitué";
+  const par = new Map<string, number>();
+  for (const l of lignes) {
+    const k = l.groupe || HORS;
+    par.set(k, (par.get(k) ?? 0) + 1);
+  }
+  const rangs = [...par].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"));
+  const max = Math.max(1, ...rangs.map(([, n]) => n));
+  return (
+    <div style={{ display: "grid", gap: 5 }}>
+      {rangs.map(([nom, n]) => (
+        <div key={nom} style={{ display: "grid", gridTemplateColumns: "minmax(96px,1.1fr) minmax(0,2fr) 30px", gap: 9, alignItems: "center" }}>
+          <span style={{ fontSize: 12, color: nom === HORS ? "var(--text-muted)" : "var(--text)", minWidth: 0 }}>{nom}</span>
+          {/* `aria-hidden` : le nombre est écrit dans la colonne suivante. */}
+          <span aria-hidden="true" style={{ display: "block", height: 8, borderRadius: 2, background: "color-mix(in srgb, var(--border) 55%, transparent)" }}>
+            <span style={{ display: "block", height: "100%", borderRadius: 2, background: "var(--orange)", width: `${Math.max(1.5, (n / max) * 100)}%` }} />
+          </span>
+          <b className="font-heading" style={{ fontSize: 12.5, textAlign: "right", color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>{n}</b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
  * LE SCHÉMA DES VIES — le champion de « on ne le devine pas en jouant ».
  *
  * La barre de vie du jeu annonce les PV d'UNE vie. Azharyon affiche 2 milliards et
@@ -176,6 +227,118 @@ export function SchemaVies({ pv, vies, pvEff, taille = "normale" }: {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * QUAND ÇA SE DÉCLENCHE — les seuils de PV, dessinés sur la durée du combat.
+ *
+ * ┌──────── CE QU'IL REMPLACE, ET CE QU'IL AJOUTE ────────┐
+ * │ « sous 30 % PV → dégâts ×2 », « sous 10 % PV → il rend │
+ * │ 20 % de sa vie », « il fuit sous 10 % de PV » : trois   │
+ * │ lignes sous trois titres, chacune répétant les mots     │
+ * │ « sous » et « PV ». Le fait qu'AUCUNE ne se lisait      │
+ * │ nulle part est celui qui décide du combat : presque      │
+ * │ tout se déclenche à la FIN. Recompté sur les données —   │
+ * │ les seuils du client ne prennent que huit valeurs, de 2  │
+ * │ à 50 %, et 353 des 426 lignes à seuil (cinq sur six)     │
+ * │ sont à 20 % de vie restante ou moins. Le dernier quart   │
+ * │ n'est pas un absolu : 70 lignes sont à 30 % et une à     │
+ * │ 50 %, et le dessin les met où elles sont.                │
+ * │ Une barre par événement, remplie de ce qu'on a déjà     │
+ * │ enlevé quand il part : les barres les plus longues sont │
+ * │ les surprises de la fin, et elles se voient sans lire.  │
+ * └──────────────────────────────────────────────────────┘
+ *
+ * La teinte est celle que la fiche donne DÉJÀ à la mécanique (rouge la rage, vert
+ * le soin, doré les renforts, bleu la fuite) : elle nomme, elle ne mesure pas —
+ * c'est la longueur qui mesure. Chaque ligne porte son pourcentage en clair.
+ */
+export type EvenementSeuil = {
+  /** Le seuil, en pourcentage de PV restants. 100 = dès l'engagement. */
+  pv: number;
+  icon: IconName;
+  ton: string;
+  /** L'effet, en trois mots. Du JSX : un nombre en valeur, une icône. */
+  quoi: React.ReactNode;
+  /** Le conseil de jeu qu'on ne devine pas — posé sur l'effet, en bulle. À mettre sur
+   *  CHAQUE ligne de la mécanique : c'est ce schéma qui ne le garde que sur la
+   *  première ligne DESSINÉE, une fois le tri fait. L'appelant ne peut pas savoir
+   *  laquelle ce sera — il lit un fichier dont l'ordre n'est pas celui du combat. */
+  astuce?: string;
+};
+
+export function SchemaSeuils({ seuils }: { seuils: EvenementSeuil[] }) {
+  if (seuils.length === 0) return null;
+  /* Dans l'ORDRE DU COMBAT, pas dans celui du fichier : le client écrit les lignes
+     de rage d'un Junglosaure en 20, 10, 30, 30, 2, 30, 20 — illisible tel quel,
+     alors que la fiche doit répondre à « qu'est-ce qui m'attend, et dans quel
+     ordre ».
+     ET LE CONSEIL SUIT LE TRI. Une astuce accrochée par l'appelant à sa première
+     ligne de fichier se retrouvait au milieu du dessin : le conseil du tank tombait
+     sur la cinquième ligne du Junglosaure, sous les yeux de personne. On le garde
+     donc sur la première ligne DESSINÉE qui le porte, et on l'enlève des suivantes —
+     répété à chaque seuil, il devient du bruit. */
+  const dejaDit = new Set<string>();
+  const rangs = [...seuils]
+    .sort((a, b) => b.pv - a.pv)
+    .map((s) => {
+      if (!s.astuce) return s;
+      if (dejaDit.has(s.astuce)) return { ...s, astuce: undefined };
+      dejaDit.add(s.astuce);
+      return s;
+    });
+  /* Les quatre colonnes sont reprises à l'identique par la ligne d'axe : c'est ce
+     qui garantit que les deux bouts de l'échelle tombent bien aux deux bouts des
+     barres, et non quelque part au-dessus des icônes. */
+  const rail: React.CSSProperties = { flex: "1 1 90px", minWidth: 56 };
+  const nombre: React.CSSProperties = { width: 42, textAlign: "right", flexShrink: 0 };
+  const effet: React.CSSProperties = { flex: "1 1 160px", minWidth: 0 };
+  return (
+    <div style={{ display: "grid", gap: 5 }}>
+      {/* LES DEUX BOUTS DE L'AXE SONT DES NOMBRES, PAS DES MOTS — et c'est un défaut
+          payé à l'écran : « engagement » et « mort » se touchaient sur un téléphone
+          (le rail ne fait plus que 90 px à 375 px de large) et se lisaient
+          « ENGAGEMENTMORT ». « 100 % » et « 0 » tiennent toujours, disent la même
+          chose — c'est la barre de vie, pleine à gauche, vide à droite — et emploient
+          la même unité que la colonne des seuils juste à côté. La phrase complète est
+          dans l'infobulle. */}
+      <div title="La barre de vie, de l'engagement (100 % de ses PV) à sa mort (0)"
+        style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 10, letterSpacing: ".4px", color: "var(--text-muted)" }}>
+        <span style={{ width: 13, flexShrink: 0 }} />
+        <span style={{ ...rail, display: "flex", justifyContent: "space-between", fontVariantNumeric: "tabular-nums" }}>
+          <span>100 %</span><span>0</span>
+        </span>
+        <span style={{ ...nombre, textTransform: "uppercase" }}>seuil</span>
+        <span style={effet} />
+      </div>
+      {/* SOUS 560 PX, L'EFFET PASSE À LA LIGNE ENTIÈRE. Sinon il lui reste 128 px et
+          « dégâts ×2 · jusqu'à 3 708 par coup » se casse en quatre lignes à côté
+          d'une barre de 72 px. Mesuré sur un téléphone de 375 px, où la carte du
+          volet n'offre que 279 px utiles.
+          La feuille de style est en ASCII pur : un accent dans un commentaire CSS à
+          l'intérieur d'un littéral de gabarit ferme le littéral et met la page en
+          500 — piège de la maison, et tsc ne le voit pas. */}
+      <style>{`@media(max-width:560px){.vg-seuil{flex-wrap:wrap}.vg-seuil-effet{flex:1 1 100% !important;padding-left:21px}}`}</style>
+      {rangs.map((s, i) => (
+        <div key={i} className="vg-seuil" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name={s.icon} size={13} style={{ color: s.ton, flexShrink: 0 }} />
+          {/* La barre porte ce qui est DÉJÀ ENLEVÉ quand l'événement part : un seuil
+              à 30 % de PV restants, c'est 70 % du combat derrière soi. Plancher à
+              1,5 % pour que « dès l'engagement » garde un trait au lieu de
+              ressembler à une donnée manquante. */}
+          <span aria-hidden="true" style={{ ...rail, display: "block", height: 8, borderRadius: 2, background: "color-mix(in srgb, var(--border) 55%, transparent)" }}>
+            <span style={{ display: "block", height: "100%", borderRadius: 2, background: s.ton, width: `${Math.max(1.5, 100 - s.pv)}%` }} />
+          </span>
+          <b className="font-heading" style={{ ...nombre, fontSize: 12, color: s.ton, fontVariantNumeric: "tabular-nums" }}>
+            {s.pv >= 100 ? "100 %" : `${s.pv} %`}
+          </b>
+          <span className="vg-seuil-effet" style={{ ...effet, fontSize: 12.5 }}>
+            {s.astuce ? <Bulle quoi={s.astuce}>{s.quoi}</Bulle> : s.quoi}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }

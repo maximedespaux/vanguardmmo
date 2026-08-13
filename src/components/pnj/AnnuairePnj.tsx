@@ -468,6 +468,23 @@ export function AnnuairePnj({ depart = "" }: {
     [annuaire]
   );
 
+  /**
+   * CEUX QUI ONT UN VISAGE, et rangés par ce qu'ils APPORTENT.
+   *
+   * C'est la liste montrée à l'arrivée, quand aucune recherche n'est en cours. Le tri
+   * n'est pas alphabétique à dessein : un annuaire ouvert sur « Aibatt » n'apprend rien.
+   * On met devant ceux chez qui on va vraiment — les artisans d'abord (une recette est
+   * ce qu'on cherche le plus souvent ici), puis les étals, puis le reste.
+   */
+  const avecPortrait = useMemo(
+    () => (annuaire ?? [])
+      .filter((p) => p.img)
+      .sort((a, b) =>
+        (b.nbCraft - a.nbCraft) || (b.nbTroc - a.nbTroc) || (b.nbVend - a.nbVend) ||
+        a.nom.localeCompare(b.nom, "fr")),
+    [annuaire]
+  );
+
   const ouvrir = (ou: string) => (v: Vignette) => setChoix({ v, ou });
   const fermer = () => setChoix(null);
 
@@ -512,11 +529,33 @@ export function AnnuairePnj({ depart = "" }: {
               </>
             )}
 
-            {clef(q).length >= 2 && (
+            {clef(q).length >= 2 ? (
               <>
                 {trouvesObjet.length > 0 && <SousTitre icon="users" texte="Ces PNJ" compte={trouves.length} />}
                 <Grille liste={trouves} onOuvrir={ouvrir("chercher")}
                   vide={trouvesObjet.length ? "Aucun PNJ ne porte ce nom." : `Rien sous « ${q} ».`} />
+              </>
+            ) : (
+              /* LES VISAGES À L'ARRIVÉE, et c'était un vrai défaut : la grille était
+                 conditionnée à deux caractères tapés. On atterrissait donc sur un champ
+                 vide, sur une page dont l'en-tête se vante de « 94 visages qui n'avaient
+                 jamais servi » — et on n'en voyait AUCUN. Mesuré : trois images dans la
+                 page, dont zéro portrait, alors que l'API en renvoie 258.
+
+                 On montre ceux qui ONT un portrait : c'est le sujet de la phrase, et une
+                 vignette sans visage n'illustre rien. Le rail garde les comptes par
+                 famille juste à côté pour qui cherche un métier plutôt qu'une tête. */
+              <>
+                <SousTitre icon="users" texte="Les visages du client" compte={avecPortrait.length} />
+                <Grille liste={avecPortrait.slice(0, 24)} onOuvrir={ouvrir("chercher")}
+                  vide="Aucun portrait apparié dans ce relevé." />
+                {avecPortrait.length > 24 && (
+                  <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 9 }}>
+                    {/* Le plafond se DIT : une grille tronquée en silence se lit comme
+                        l'inventaire complet. Même règle que les classements du site. */}
+                    Les 24 premiers sur {avecPortrait.length} portraits appariés — tape un nom, un métier ou un objet pour chercher dans les {annuaire?.length ?? 0}.
+                  </div>
+                )}
               </>
             )}
           </>

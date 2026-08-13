@@ -43,9 +43,13 @@ export function Panoplies() {
   // La ligne la plus répandue sert de titre : c'est celle qui touche le plus de
   // monde, et elle se recalcule si le client change.
   const pire = p.lignes[0];
-  const complet = Math.max(...p.lignes.map((l) => l.pieces));
-  const aLaFin = p.lignes.filter((l) => l.pieces === complet).reduce((n, l) => n + l.n, 0);
-  const desLeDebut = p.lignes.filter((l) => l.pieces < complet).reduce((n, l) => n + l.n, 0);
+  /* LE PARTAGE EST EN ENSEMBLES ET LES DEUX NOMBRES SE SOMMENT A `touchees`. Compte
+     en LIGNES, il donnait « 106 + 16 » sous un titre qui annonce 112 : dix ensembles
+     portent deux paliers negatifs et se comptaient deux fois. Le calcul est dans
+     `sources.ts`, pour que la page n'ait pas a le refaire. */
+  const complet = p.cran;
+  const aLaFin = p.auDernierCran;
+  const desLeDebut = p.avantLeCran;
   /* LE CONTROLE CROISE NE VA PAS A L'ECRAN. `p.concordance` dit que les seize
      panoplies comparables entre le releve du site et la table du client tombent
      d'accord valeur par valeur. C'est ce qui AUTORISE cette section a publier ses
@@ -75,7 +79,11 @@ export function Panoplies() {
             texte: `${l.n}`,
           }))}
         />
+        {/* SANS CETTE PRECISION, LES BARRES NE SE SOMMENT PAS A 112 : dix ensembles
+            portent deux paliers negatifs et comptent dans deux barres. Un total qu'on
+            ne peut pas reconcilier avec le titre se lit comme un bogue. */}
         <p className="mc-src">
+          Le nombre d&apos;ensembles porteurs, ligne par ligne — un ensemble peut en porter deux.
           Presque toutes visent le <b>JcJ</b> : compléter un set de haut niveau, c&apos;est gagner
           en PV et <b>perdre en dégâts contre les joueurs</b>.
         </p>
@@ -83,10 +91,11 @@ export function Panoplies() {
 
       <Point titre="Le palier décide si l'on peut y échapper" marque="profit">
         <p>
-          <b>{aLaFin}</b> n&apos;arrivent qu&apos;à la {complet}<sup>e</sup> pièce : s&apos;arrêter à
-          {" "}{complet - 1} les évite, au prix du dernier palier de bonus.
-          {desLeDebut > 0 && <> Les <b>{desLeDebut}</b> autres tombent <b>dès la première pièce</b> :
-            rien à arbitrer.</>}
+          <b>{aLaFin} ensembles</b> sur {p.touchees} ne prennent le leur qu&apos;à la
+          {" "}{complet}<sup>e</sup> pièce : s&apos;arrêter à {complet - 1} l&apos;évite, au prix du
+          dernier palier de bonus.
+          {desLeDebut > 0 && <> Les <b>{desLeDebut}</b> autres le portent <b>dès la première
+            pièce</b> : rien à arbitrer.</>}
         </p>
       </Point>
 

@@ -388,7 +388,12 @@ export function Escalier({ marches, titre }: {
         return (
           <g key={m.nom}>
             <rect x={x + 1.5} y={bas - h} width={Math.max(3, w - 3)} height={h} rx="3" className="mc-marche" />
-            <text x={x + w / 2} y={bas - h - 5} className="mc-svg-v">{m.v}</text>
+            {/* L'UNITE RESTE SUR LA MARCHE. Sans elle, l'escalier des artefacts
+                affiche « 100 90 80 … » : dix nombres nus au-dessus de barres, que
+                rien a l'ecran ne dit etre des pourcentages — le `<title>` le dit,
+                mais il ne se lit qu'au lecteur d'ecran. Les deux escaliers de cette
+                page portent des taux, et un taux se lit avec son signe. */}
+            <text x={x + w / 2} y={bas - h - 5} className="mc-svg-v">{m.v} %</text>
             <text x={x + w / 2} y={bas + 13} className="mc-svg-x">
               {m.de === m.a ? `+${m.de}` : `+${m.de}→+${m.a}`}
             </text>

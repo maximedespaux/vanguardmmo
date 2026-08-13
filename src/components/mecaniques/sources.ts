@@ -302,10 +302,33 @@ export function panopliesNegatives() {
   }
   const lignes = [...bareme.values()].sort((a, b) => b.n - a.n || a.valeur - b.valeur);
   const conc = source().concordance?.panoplies;
+
+  /**
+   * LE PARTAGE SE COMPTE EN ENSEMBLES, PAS EN LIGNES.
+   *
+   * Un ensemble peut porter DEUX paliers négatifs : les dix lignes du barème
+   * totalisent 122 mentions pour 112 ensembles. Additionner les lignes donnait
+   * « 106 + 16 » sous un titre qui annonce 112 — un compte que le lecteur ne peut
+   * pas réconcilier, et le défaut exact qu'on nous demande de ne plus reproduire.
+   * On partage donc les ENSEMBLES : ceux dont tous les paliers négatifs tombent au
+   * dernier cran (s'arrêter avant les évite) et ceux qui en ont un plus tôt (rien à
+   * arbitrer). Les deux se somment à `touchees`.
+   */
+  const cran = lignes.length ? Math.max(...lignes.map((l) => l.pieces)) : 0;
+  const negatifsDe = (p: Panoplie) => (p.paliers ?? []).filter((x) =>
+    typeof x.valeur === "number" && x.valeur < 0 && !estRecompense(x.code));
+  const tot = negatives.filter((p) => !negatifsDe(p).some((x) => x.pieces < cran)).length;
+
   return {
     total: toutes.length,
     /** Combien d'ensembles portent au moins une ligne négative. */
     touchees: negatives.length,
+    /** Le cran de la panoplie complète, tel que le barème le porte. */
+    cran,
+    /** Ensembles dont le malus n'arrive qu'au dernier cran — évitable. */
+    auDernierCran: tot,
+    /** Ensembles qui en portent un plus tôt — inévitable. */
+    avantLeCran: negatives.length - tot,
     /** Les familles concernées, par nom — un nom pouvant couvrir plusieurs ids. */
     familles: [...familles.entries()]
       .map(([nom, codes]) => ({ nom, codes: [...codes] }))

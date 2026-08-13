@@ -149,12 +149,16 @@ export function Gemmes() {
   const ordres = ordresDeSertissage();
   const familles = famillesDeJoyau();
   const neufs = table.map((g) => g.neuf).filter((o): o is NonNullable<typeof o> => !!o);
+  /** Le sertisseur, nommé par la description du client (« … par Bobochan »). C'est
+   *  la seule chose de ce volet qui dise OÙ le geste se fait, et rien d'autre sur
+   *  le site ne le dit : elle vaut ses trois mots. */
+  const sertisseur = familles.find((f) => f.sertisseur)?.sertisseur ?? "";
 
   return (
     <>
       <Point
         titre={
-          <Invisible enJeu={`L'infobulle affiche l'ancien nom. Le serveur applique l'ordre de sa table de valeurs, plus celui des textes d'objets : ${menteuses} noms sur ${table.length} désignent l'effet d'une autre gemme.`}>
+          <Invisible enJeu={`L'infobulle affiche l'ancien nom. Le serveur applique l'ordre de sa table de valeurs, qui n'est plus celui des textes d'objets : ${menteuses} noms sur ${table.length} désignent l'effet d'une autre gemme.`}>
             {menteuses} des {table.length} gemmes ultimes donnent l&apos;effet d&apos;une autre
           </Invisible>
         }
@@ -192,8 +196,15 @@ export function Gemmes() {
           cle: o.cle, src: iconeDe(o), cherche: o.n,
           nom: o.n.replace(/^.*sertissage en\s*/i, ""),
         }))} />
+        {/* LE JOYAU BRUT TIRE AU HASARD, la gemme nommee force : c'est ce fait-la qui
+            fait acheter la gemme nommee plutot que le joyau brut, et il avait disparu
+            en meme temps que le paragraphe qui le portait. Trois lignes de moins, le
+            fait garde. */}
         <p className="mc-src">
-          Arme <b>+6 au minimum</b>, réussite <b>90 %</b>, et l&apos;échec ne coûte que le joyau.
+          Arme <b>+6 au minimum</b>, réussite <b>90 %</b>, et l&apos;échec ne coûte que le joyau. Le
+          joyau <b>brut</b> tire sa statistique <b>au hasard</b> parmi {STATS_DIAMANT.length} ; une
+          gemme nommée la force
+          {sertisseur ? <>, et ça se passe chez <b>{sertisseur}</b></> : null}.
         </p>
       </Point>
 
@@ -675,8 +686,13 @@ export function Eveil() {
 
       {fixes.lignes.length > 0 && (
         <Point titre={`${fixes.total} parchemins posent la ligne d'éveil qu'on veut`} marque="profit">
+          {/* LES PIECES SONT DANS LE LIBELLE, et pas seulement annoncees par la phrase
+              qui suit. Elles DIFFERENT d'un parchemin a l'autre — la Force va sur
+              casque/torse/bouclier/arme, les Coups critiques sur torse/bottes, les PM
+              exigent le set complet — et aucune fenetre du jeu ne les recapitule : la
+              phrase seule promettait un renseignement que l'ecran ne donnait plus. */}
           <Bareme lignes={fixes.lignes.map((l) => [
-            l.label || l.code,
+            `${l.label || l.code}${l.pieces.length ? ` — ${l.pieces.join(", ")}` : ""}`,
             `R1 +${l.r1}${l.pourcent ? " %" : ""} · R2 +${l.r2}${l.pourcent ? " %" : ""}`,
           ] as [string, string])} />
           <p className="mc-src">

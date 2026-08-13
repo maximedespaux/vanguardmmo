@@ -219,6 +219,31 @@ export function cadence(delaiMs: number | null): string | null {
 }
 
 /**
+ * LA MÊME CADENCE EN DEUX SIGNES, pour une carte ou une colonne.
+ *
+ * « 1 coup toutes les 3,5 s » fait six mots. Il y en a quarante-huit à l'écran dans
+ * la recherche et quatre-vingt-quatorze dans le classement des boss : la même phrase
+ * répétée cent quarante fois, c'est six cents mots pour une donnée qui tient en deux
+ * signes. La phrase complète n'est pas perdue — elle passe dans l'infobulle du
+ * navigateur, et la fiche du monstre, qui n'en montre qu'une, la garde en clair.
+ *
+ * L'UNITÉ CHANGE AVEC LE MONSTRE, ET C'EST VOULU. 1 039 des 1 124 frappent moins
+ * d'une fois par seconde : pour eux le chiffre qui parle est l'INTERVALLE (« 3,5 s »).
+ * Les 85 autres — les boss des Chambres à 250 ms, certains du Chaos à 101 — se lisent
+ * en COUPS PAR SECONDE (« 9,9/s »). Le suffixe « /s » distingue les deux sans un mot :
+ * « 3,5 s » est une durée, « 9,9/s » une fréquence. Tout ramener à une seule unité
+ * afficherait « 0,29/s » pour le cas ordinaire, et « 0/s » pour le monstre dont le
+ * client écrit 250 000 000 ms — un zéro qui se lirait comme une donnée manquante.
+ */
+export function cadenceCourte(delaiMs: number | null): string | null {
+  if (!delaiMs || delaiMs <= 0) return null;
+  const parSec = 1000 / delaiMs;
+  return parSec >= 1
+    ? `${parSec.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}/s`
+    : `${(delaiMs / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} s`;
+}
+
+/**
  * LES HUIT PORTRAITS QU'ON A LE DROIT DE MONTRER.
  *
  * Le client porte 118 illustrations de cartes de monstre (110 × 250,

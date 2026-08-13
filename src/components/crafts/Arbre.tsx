@@ -44,6 +44,68 @@ function Vignette({ ic, taille = 30 }: { ic: string | null; taille?: number }) {
     style={{ width: taille, height: taille, flexShrink: 0, objectFit: "contain", imageRendering: "pixelated" }} />;
 }
 
+/**
+ * LA PILE DES INGRÉDIENTS — et la correction d'une image qui mentait.
+ *
+ * ┌──────────────────── CE QU'ELLE REMPLACE ────────────────────┐
+ * │ La liste des 39 fabrications, et l'en-tête de celle qu'on    │
+ * │ regarde, affichaient `actif.ing[0].ic` : l'icône du PREMIER  │
+ * │ INGRÉDIENT, posée à gauche du nom du PRODUIT. On lisait donc │
+ * │ « Masque PvE Rang 2 » à côté d'un cœur de géant, « Potion    │
+ * │ Anti-vampire » à côté d'un œuf de Poisifurm, « Statuette de  │
+ * │ Kailun » à côté d'une tête de statue. Vérifié sur les 39 :   │
+ * │ aucune n'était l'image du produit.                          │
+ * │                                                             │
+ * │ ET ON NE PEUT PAS LA CORRIGER PAR LA BONNE IMAGE : ces 39    │
+ * │ noms ne viennent pas du catalogue d'objets, ils viennent de  │
+ * │ phrases de description (« nécessaire à la création de X »).  │
+ * │ Croisés avec les 8 507 noms d'objets du dépôt, ils donnent   │
+ * │ ZÉRO correspondance — « masque PvE Rang 1 » n'existe sous ce │
+ * │ nom dans aucune table d'objets. Il n'y a pas d'icône de      │
+ * │ produit à brancher, et il n'y en aura pas.                   │
+ * └─────────────────────────────────────────────────────────────┘
+ *
+ * Alors on montre ce qu'on a VRAIMENT : les icônes des ingrédients, empilées et
+ * décalées. Trois images qui se chevauchent se lisent « un tas de matériaux »,
+ * jamais « cet objet-là » — la forme dit d'elle-même qu'il y en a plusieurs, et
+ * c'est exactement ce qu'une ligne de craft contient. Les icônes, elles, sont
+ * justes : ce sont celles du relevé, et le tas se compte sur `ing`.
+ */
+function PileIngredients({ ing, taille = 22, combien = 3 }: {
+  ing: Ingredient[]; taille?: number; combien?: number;
+}) {
+  const avecIcone = ing.filter((g) => g.ic).slice(0, combien);
+  if (!avecIcone.length) {
+    return <Vignette ic={null} taille={taille} />;
+  }
+  // Le chevauchement d'un tiers : assez pour que la pile se voie comme une pile,
+  // assez peu pour qu'on distingue encore chaque icône.
+  const pas = Math.round(taille * 0.66);
+  return (
+    <span
+      // Le titre ET l'étiquette : le survol pour la souris, l'étiquette pour un
+      // lecteur d'écran, qui ne dirait sinon rien du tout de ces images décoratives.
+      title={`${ing.length} ingrédient${ing.length > 1 ? "s" : ""}`}
+      aria-label={`${ing.length} ingrédient${ing.length > 1 ? "s" : ""}`}
+      role="img"
+      style={{ position: "relative", flexShrink: 0, display: "block", height: taille, width: pas * (avecIcone.length - 1) + taille }}
+    >
+      {avecIcone.map((g, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={g.n} src={`/jeu/icones/${g.ic}`} alt="" width={taille} height={taille}
+          style={{
+            position: "absolute", left: i * pas, top: 0, width: taille, height: taille,
+            objectFit: "contain", imageRendering: "pixelated",
+            // La dernière posée passe DEVANT : sans ça la pile se lit à l'envers et
+            // la première icône, celle qu'on distingue le mieux, finit dessous.
+            zIndex: avecIcone.length - i,
+            filter: i ? "drop-shadow(-1px 0 0 var(--bg-2))" : undefined,
+          }} />
+      ))}
+    </span>
+  );
+}
+
 export function ArbreDuFarm({ arbres, carteRecette }: {
   arbres: ArbreCraft[];
   /** Rend la recette chiffrée correspondante. Dépliée SUR PLACE, pas dans une
@@ -100,7 +162,7 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
                 background: on ? "rgba(255,140,26,.1)" : "var(--bg-2)",
                 border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
               }} onClickCapture={() => setChiffree(false)}>
-                <Vignette ic={a.ing[0]?.ic ?? null} taille={22} />
+                <PileIngredients ing={a.ing} taille={22} />
                 <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: on ? 700 : 500, color: on ? "var(--orange)" : "var(--text)" }}>
                   {titre(a.nom)}
                 </span>
@@ -133,7 +195,11 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
         )}
 
         <div style={{ display: "flex", alignItems: "center", gap: 11, paddingBottom: 11, borderBottom: "1px solid var(--border)", marginBottom: 12 }}>
-          <Vignette ic={actif.ing[0]?.ic ?? null} taille={38} />
+          {/* Quatre icônes ici et trois dans la liste : l'en-tête a la place, et la
+              pile y sert de rappel de ce que le tas contient avant que l'œil descende
+              dans l'arbre. Voir la note de `PileIngredients` : ce n'est PAS l'image du
+              produit, elle n'existe pas. */}
+          <PileIngredients ing={actif.ing} taille={30} combien={4} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="font-heading" style={{ fontSize: 16, fontWeight: 700 }}>{titre(actif.nom)}</div>
             <div style={{ fontSize: 12, color: "var(--text-muted)" }}>

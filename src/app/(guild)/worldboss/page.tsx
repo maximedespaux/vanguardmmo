@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { Icon } from "@/components/Icon";
+import { Bulle } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { BestiaireWorldBoss, BeteEnBref, BeteInconnue, monstreDeLEvenement } from "@/components/worldboss/Bestiaire";
 
@@ -54,19 +55,22 @@ export default function WorldBossPage() {
         art="/jeu/chargement/maploading_behemothboss.webp"
         icon="behemoth"
         title="World Boss"
-        subtitle="Les prochains passages, et la bête qui va en face. Confirme ta venue pour qu'on compose les groupes."
+        // « Confirme ta venue pour qu'on compose les groupes » est parti du sous-titre :
+        // les deux boutons Présent / Absent le disent mieux, et sur chaque passage.
+        subtitle="Les prochains passages, et la bête qui va en face."
       />
       <SectionTabs section="pve" />
 
       {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
         : events.length === 0 ? (
           <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center" }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>Aucun passage programmé pour l&apos;instant.</div>
-            {/* Un « aucun événement » sec laissait la page vide et muette. Le relevé du
-                client, lui, est toujours là : autant dire ou aller le lire. */}
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Aucun passage programmé.</div>
+            {/* Un « aucun événement » sec laissait la page vide et muette : on renvoie
+                donc au relevé, qui est toujours là. Vingt-quatre mots devenus dix — le
+                « le staff annonce les passages depuis la gestion » disait à un membre
+                comment le staff travaille, ce qui ne change aucun de ses gestes. */}
             <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}>
-              Le staff annonce les passages depuis la gestion. En attendant, le relevé ci-dessous dit
-              déjà tout ce que les fichiers du jeu savent de ces monstres.
+              Le relevé ci-dessous dit ce que le client sait de ces bêtes.
             </div>
           </div>
         ) : (
@@ -77,7 +81,20 @@ export default function WorldBossPage() {
             <div key={e.id} className="glass-card fx-card" style={{ padding: 18 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <span className="font-heading" style={{ fontSize: 18, fontWeight: 700 }}>{e.boss.name}</span>
-                {e.boss.recommendedLevel && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>niv. {e.boss.recommendedLevel}+</span>}
+                {/* DEUX NIVEAUX POUR UN MÊME BOSS, ET C'ÉTAIT LE PIÈGE.
+                    Ce nombre-ci est saisi à la main par le staff à l'annonce ; celui du
+                    relevé, deux lignes plus bas, est le niveau que le client donne au
+                    monstre. Écrit « niv. 200+ » juste au-dessus d'un « niveau 190 », il se
+                    lisait comme une contradiction dans les données alors que les deux
+                    disent deux choses différentes. Le mot « conseillé » suffit à les
+                    séparer, et la bulle dit lequel est lequel. */}
+                {e.boss.recommendedLevel ? (
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    <Bulle quoi="Le niveau conseillé par le staff pour venir. Le niveau du monstre lui-même est dans le relevé, juste en dessous.">
+                      <span>conseillé niv. {e.boss.recommendedLevel}+</span>
+                    </Bulle>
+                  </span>
+                ) : null}
                 {e.status === "ONGOING" && <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--green)", color: "var(--green)" }}>en cours</span>}
                 <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--orange)" }}>{fmt(e.startAt)}</span>
               </div>

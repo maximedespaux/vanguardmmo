@@ -1,6 +1,6 @@
 "use client";
 import { Icon, type IconName } from "@/components/Icon";
-import { PRESTIGE_COSTS } from "@/data/prestige";
+import { PRESTIGE_COSTS, prestigeNeed } from "@/data/prestige";
 import { Barre, IconeRessource, DONJONS, court, fr, type Donjon } from "./Briques";
 
 /**
@@ -69,6 +69,31 @@ export const ARMURE_COMMUNE = ARMURES.size === 1 ? [...ARMURES][0] : null;
 /** Le dernier palier du jeu : celui après lequel PRESTIGE_COSTS ne demande plus rien. */
 const DERNIER = Math.max(...Object.keys(PRESTIGE_COSTS).map(Number)) + 1;
 
+/**
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  CE QUE LA MONTÉE ENTIÈRE RÉCLAME — la référence qui transforme les coûts en BARRES.
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Les pastilles de coût étaient des nombres nus, et un nombre nu ne répond pas à la
+ * seule question qui se pose devant elles : EST-CE BEAUCOUP ? « 25 badges » au P9→P10
+ * ressemble à « 15 badges » au P6→P7 ; ce sont en réalité un tiers de tous les badges du
+ * jeu contre un cinquième. C'est exactement le point que le jeu ne montre nulle part —
+ * l'écran de personnage donne le palier atteint, jamais le poids de celui d'après.
+ *
+ * Chaque pastille est donc REMPLIE à la part que ce saut représente dans le total de sa
+ * propre ressource, du P1 au dernier palier. La pastille EST la barre : pas de nouvelle
+ * série de barres à côté des points de vie, donc aucune ambiguïté de teinte — la règle
+ * de la maison veut qu'une seule teinte porte une série, et que ce soit la LONGUEUR qui
+ * porte la grandeur.
+ *
+ * La référence est FIXE (la montée entière) et non l'intervalle choisi : sur /prestige,
+ * où le sélecteur bouge, des barres qui se rejaugeraient à chaque changement ne se
+ * compareraient plus d'un écran à l'autre.
+ *
+ * Rien n'est écrit à la main : `prestigeNeed` additionne PRESTIGE_COSTS.
+ */
+const TOUT = prestigeNeed(1, DERNIER);
+
 export function FrisePaliers({ avecInstances = false, de, a }: {
   /** Ajoute ce que chaque palier OUVRE. Le calculateur, lui, ne montre que les coûts. */
   avecInstances?: boolean;
@@ -111,12 +136,28 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
               {cout ? (
                 <div className="fr-cout">
                   <span className="fr-fl">P{p + 1}</span>
-                  {Object.entries(cout).map(([k, v]) => (
-                    <span key={k} className="fr-chip">
-                      <IconeRessource nom={k} taille={18} />
-                      <b>{fr(v)}</b>
-                    </span>
-                  ))}
+                  {Object.entries(cout).map(([k, v]) => {
+                    /* Le plancher à 1,5 % et le plafond à 100 sont ceux de la brique
+                       `Barre` : sans plancher, un saut minuscule perd son remplissage, et
+                       une pastille vide se lit comme une donnée manquante et non comme un
+                       petit nombre. Le `title` porte le calcul en clair — c'est aussi le
+                       seul texte de remplacement possible pour un remplissage qui n'est
+                       qu'un fond. */
+                    const part = TOUT[k] ? Math.max(1.5, Math.min(100, (v / TOUT[k]) * 100)) : 0;
+                    return (
+                      <span
+                        key={k}
+                        className="fr-chip"
+                        style={{ ["--part" as string]: `${part}%` }}
+                        title={TOUT[k]
+                          ? `${k} : ${fr(v)} sur les ${fr(TOUT[k])} de toute la montée, soit ${Math.round((v / TOUT[k]) * 100)} %`
+                          : `${k} : ${fr(v)}`}
+                      >
+                        <IconeRessource nom={k} taille={18} />
+                        <b>{fr(v)}</b>
+                      </span>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="fr-cout"><span className="fr-fl fin">Arrivée</span></div>
@@ -140,7 +181,17 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
           dessous.
 
           .fr-cout — le coût du palier suivant est fait de pastilles icône + nombre,
-          pas d'une phrase. */}
+          pas d'une phrase.
+
+          .fr-chip — LA PASTILLE EST LA BARRE. Son fond est un dégradé à arrêt net dont
+          la coupure est `--part`, la part de ce saut dans le total de sa ressource (voir
+          TOUT plus haut). Un dégradé de fond plutôt qu'un élément de plus : il n'ajoute
+          aucun nœud à l'arbre, et surtout il ne fabrique pas une DEUXIÈME série de barres
+          à côté de celles des points de vie — deux séries de barres orange dans la même
+          ligne, l'une pour des PV et l'autre pour un coût, ne se distinguent plus.
+          Les deux arrêts sont écrits en double (`0`, `--part`, `--part`, `100%`) : c'est
+          la forme qui coupe franc dans tous les moteurs, un `0 var(--part)` sur une seule
+          ligne n'étant pas lu partout. */}
       <style>{`
         .fr{display:grid;gap:7px}
         .fr-l{display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px;align-items:start;
@@ -167,8 +218,12 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         .fr-fl::before{content:"→ ";}
         .fr-fl.fin{color:var(--text-muted)}
         .fr-fl.fin::before{content:"";}
-        .fr-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg-2);
-          border:1px solid var(--border);border-radius:20px;padding:2px 9px 2px 6px}
+        .fr-chip{display:inline-flex;align-items:center;gap:5px;
+          border:1px solid var(--border);border-radius:20px;padding:2px 9px 2px 6px;
+          background:linear-gradient(90deg,
+            color-mix(in srgb, var(--orange) 26%, transparent) 0,
+            color-mix(in srgb, var(--orange) 26%, transparent) var(--part,0%),
+            var(--bg-2) var(--part,0%), var(--bg-2) 100%)}
         .fr-chip b{font-size:11.5px;font-variant-numeric:tabular-nums;font-family:'Rubik',sans-serif;color:var(--text)}
         @media(max-width:560px){
           .fr-i{grid-template-columns:16px minmax(0,1fr) 52px;row-gap:2px}

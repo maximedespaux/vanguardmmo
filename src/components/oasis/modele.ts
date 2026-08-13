@@ -108,23 +108,29 @@ export type Bilan = ReturnType<typeof bilan>;
  * Deux des seize chaînes (les nº 10 et 13) n'ont pas de texte dans notre relevé :
  * on ne sait pas ce qu'elles disent, et on ne le devine pas.
  */
-export const DEROULE: { id: string; texte: string; ceQueCaDit: string }[] = [
-  /* LES GLOSES SONT PASSÉES DE PHRASES À DES GROUPES DE MOTS. Chacune disait la
-     même chose deux fois : une fois le fait, une fois sa portée (« donc rien ne
-     commence sans que tu le saches »). La portée s'invente à la lecture ; le fait,
-     non. Deux gloses ont disparu pour de bon — « le lancement est explicite » et
-     « la fin de vague est confirmée » ne faisaient que traduire en français le
-     message affiché juste à côté d'elles. */
-  { id: "08", texte: "Préparez-vous !", ceQueCaDit: "Un temps mort avant la première vague." },
-  { id: "12", texte: "[Protection de l'Oasis] Les monstres vont apparaître dans %u secondes !", ceQueCaDit: "Compte à rebours d'apparition : de quoi se placer et se buffer." },
-  { id: "11", texte: "[Protection de l'Oasis] C'est parti !", ceQueCaDit: "" },
-  { id: "01", texte: "Vague nº %u", ceQueCaDit: "Les vagues sont numérotées à l'écran." },
-  { id: "07", texte: "La vague se termine dans %02dmn:%02ds", ceQueCaDit: "Chaque vague a un MINUTEUR : il y a un temps imparti." },
-  { id: "16", texte: "Monstres restant: %u", ceQueCaDit: "Compteur de ce qui reste debout — utile sur une arène où l'on vole." },
-  { id: "06", texte: "[Protection de l'Oasis] La vague nº %u est terminée. Félicitations !", ceQueCaDit: "" },
-  { id: "09", texte: "[Protection de l'Oasis] Vous avez obtenu %dx (%s) en guise de récompense. Bravo!", ceQueCaDit: "La prime tombe À CHAQUE VAGUE, pas à la fin du tour." },
-  { id: "02", texte: "Classement", ceQueCaDit: "Un classement entre joueurs : le mode compare, il ne fait pas que survivre." },
-  { id: "14", texte: "[Protection de l'Oasis] Vous venez de terminer la dernière vague.", ceQueCaDit: "Il y a une dernière vague. Notre relevé la situe à la 52e." },
+export const DEROULE: { id: string; etape: string; texte: string; ceQueCaDit: string }[] = [
+  /* ┌──── `etape` EST NEUF, ET C'EST LUI QU'ON LIT MAINTENANT À L'ÉCRAN ────┐
+     Ce tableau servait un mur : dix chaînes brutes du client, chacune suivie de sa
+     glose, soit deux cents mots pour raconter une séquence de dix pas. Une séquence
+     se DESSINE — un fil, dix jalons — et un jalon n'a pas besoin d'une phrase, il a
+     besoin d'un nom.
+     `etape` est ce nom : deux à quatre mots, ce qui se passe. La chaîne brute et sa
+     glose ne disparaissent pas — elles passent dans la bulle du jalon, à portée de
+     curseur, parce que c'est la PREUVE : le lecteur doit pouvoir vérifier que la
+     déduction tient, et reconnaître la phrase à l'écran quand il y sera.
+     Les gloses vides restent vides : deux chaînes se traduisent d'elles-mêmes, et
+     leur inventer un commentaire n'aurait servi qu'à remplir une colonne.
+     └────────────────────────────────────────────────────────────────────┘ */
+  { id: "08", etape: "Temps mort", texte: "Préparez-vous !", ceQueCaDit: "Un temps mort avant la première vague." },
+  { id: "12", etape: "Compte à rebours", texte: "[Protection de l'Oasis] Les monstres vont apparaître dans %u secondes !", ceQueCaDit: "De quoi se placer et se buffer." },
+  { id: "11", etape: "Départ", texte: "[Protection de l'Oasis] C'est parti !", ceQueCaDit: "" },
+  { id: "01", etape: "Vagues numérotées", texte: "Vague nº %u", ceQueCaDit: "Le numéro est affiché à l'écran." },
+  { id: "07", etape: "Minuteur par vague", texte: "La vague se termine dans %02dmn:%02ds", ceQueCaDit: "Il y a un temps imparti, vague par vague." },
+  { id: "16", etape: "Compteur de restants", texte: "Monstres restant: %u", ceQueCaDit: "Ce qui reste debout — utile sur une arène où l'on vole." },
+  { id: "06", etape: "Vague terminée", texte: "[Protection de l'Oasis] La vague nº %u est terminée. Félicitations !", ceQueCaDit: "" },
+  { id: "09", etape: "Prime, à chaque vague", texte: "[Protection de l'Oasis] Vous avez obtenu %dx (%s) en guise de récompense. Bravo!", ceQueCaDit: "La prime tombe à chaque vague, pas à la fin du tour." },
+  { id: "02", etape: "Classement entre joueurs", texte: "Classement", ceQueCaDit: "Le mode compare les joueurs, il ne fait pas que les faire survivre." },
+  { id: "14", etape: "Dernière vague", texte: "[Protection de l'Oasis] Vous venez de terminer la dernière vague.", ceQueCaDit: "Il y a une fin. Notre relevé la situe à la 52e." },
 ];
 
 /**
@@ -135,8 +141,12 @@ export const DEROULE: { id: string; texte: string; ceQueCaDit: string }[] = [
  * que les 52 vagues sont pilotées par le SERVEUR. Inutile de chercher la table
  * des vagues dans les fichiers du client : elle n'y est pas, et n'y sera jamais.
  */
-export const CARTE = [
-  { quoi: "Son nom dans le client", valeur: "Tour Infernale", precision: "monde nº 8, dossier WdTowermap" },
+export const CARTE: { quoi: string; valeur: string; precision: string; enBulle?: boolean }[] = [
+  /* `enBulle` aussi, et pour une raison de fond : « monde nº 8 » est DÉJÀ écrit à
+     côté du titre de cette section, et « dossier WdTowermap » est un nom de fichier
+     du client — un joueur n'en voit jamais. C'est la preuve de la fouille, pas un
+     renseignement de jeu : elle reste consultable, elle ne s'affiche plus. */
+  { quoi: "Son nom dans le client", valeur: "Tour Infernale", enBulle: true, precision: "monde nº 8, dossier WdTowermap" },
   /* DEUX MOTS REMIS, ET CHACUN PORTAIT UNE VÉRITÉ.
      « à égalité pour » : la version d'avant disait « à égalité pour la plus petite des
      93 cartes ». En le coupant, on transforme une ÉGALITÉ en une UNICITÉ — l'arène
@@ -147,7 +157,11 @@ export const CARTE = [
      donc bien ×400 — mais les dix autres vont de 384 × 384 (×9) à 5 120 × 5 120
      (×1 600). Le qualificatif n'était pas du remplissage, c'est lui qui rendait la
      phrase vraie. */
-  { quoi: "La taille de l'arène", valeur: "128 × 128 unités", precision: "à égalité pour la plus petite des 93 cartes ; un donjon standard en fait 400 fois la surface" },
+  /* `enBulle` : cette précision fait vingt mots, c'est la plus longue des cinq, et
+     elle sert à COMPARER — ce n'est pas ce qu'on lit en premier. Elle passe donc
+     derrière la valeur, à portée de curseur, au lieu d'occuper une ligne de la
+     page. Les quatre autres tiennent en cinq mots : elles restent à l'écran. */
+  { quoi: "La taille de l'arène", valeur: "128 × 128 unités", enBulle: true, precision: "à égalité pour la plus petite des 93 cartes ; un donjon standard en fait 400 fois la surface" },
   { quoi: "En extérieur, et on y vole", valeur: "vol autorisé", precision: "" },
   { quoi: "Si tu meurs", valeur: "retour à Flaris", precision: "pas au pied de l'arène" },
   { quoi: "Ce que la carte contient", valeur: "rien", precision: "0 monstre posé, 0 sortie — tout vient du serveur" },

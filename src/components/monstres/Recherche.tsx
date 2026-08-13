@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 import { Faiblesses } from "./Graphiques";
 import {
-  cadence, coupMax, court, ELEMENT_FR, ELEMENTS, entier, iconeElement,
+  cadence, cadenceCourte, coupMax, court, ELEMENT_FR, ELEMENTS, entier, iconeElement,
   portraitDe, TON_ELEMENT, tonRang, type Compteurs, type Monstre,
 } from "./vocabulaire";
 
@@ -24,9 +24,11 @@ import {
  * ┌──────── CE QUI A CHANGÉ DE PLACE, ET POURQUOI ────────┐
  * │ « Contenu AirFlyff » était une pastille parmi treize.  │
  * │ C'est le tri qui a le plus de valeur sur un serveur    │
- * │ privé — 235 monstres contre 889 du jeu d'origine — et  │
- * │ il ouvre donc la recherche, en trois branches qui      │
- * │ portent leurs comptes.                                │
+ * │ privé, et il ouvre donc la recherche, en trois         │
+ * │ branches qui portent leurs comptes — comptes RENVOYÉS  │
+ * │ par la route, jamais écrits ici : un nombre tapé dans  │
+ * │ un commentaire devient faux à la fouille suivante,     │
+ * │ celui-ci l'était (235 quand le relevé en marque 256).  │
  * │ Le tri « Expérience » est parti : l'expérience ne      │
  * │ s'affiche nulle part, et ranger sur une colonne        │
  * │ invisible classe sans dire pourquoi.                   │
@@ -284,7 +286,14 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
               par le serveur : rien ne dit que cet objet ne tombe pas.
             </p>
           ) : (
-            <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>Ce catalogue ne porte que ce qui se combat : ni PNJ, ni familiers, ni œufs.</p>
+            /* LE HORS-SUJET MÈNE À SON PROPRIÉTAIRE. « ni PNJ » était un cul-de-sac :
+               un joueur qui tape « Boboko » ici lit qu'il s'est trompé de catalogue et
+               doit retrouver le bon dans le menu. /pnj est la page qui répond — un mot,
+               un lien, la règle « un sujet, une page » tenue jusqu'au bout. */
+            <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+              Ce catalogue ne porte que ce qui se combat : ni{" "}
+              <Link href="/pnj" style={{ color: "var(--orange)" }}>PNJ</Link>, ni familiers, ni œufs.
+            </p>
           )}
         </div>
       )}
@@ -331,9 +340,16 @@ export function CarteMonstre({ m }: { m: Monstre }) {
       </span>
 
       <span style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 11.5, fontVariantNumeric: "tabular-nums", alignItems: "center" }}>
+        {/* « · 15 vies » écrit en clair, c'est un mot de plus sur chacune des
+            quarante-huit cartes. « ×15 » dit la même chose et dit en plus l'opération
+            qui donne le chiffre d'à côté : les PV affichés SONT les PV d'une vie
+            multipliés par ce nombre. L'infobulle porte le mot. */}
         <span style={{ background: "var(--bg-3)", border: `1px solid ${seReleve ? "color-mix(in srgb, var(--red) 45%, var(--border))" : "var(--border)"}`, borderRadius: 6, padding: "2px 8px" }}>
           <Icon name="heart" size={11} style={{ marginRight: 4 }} />
-          {court(m.pvEff)} PV{seReleve ? ` · ${m.vies} vies` : ""}
+          {court(m.pvEff)} PV
+          {seReleve ? (
+            <span title={`${m.vies} vies à vider`} style={{ color: "var(--red)", fontWeight: 700, marginLeft: 5 }}>×{m.vies}</span>
+          ) : null}
         </span>
         {/* `coupMax` : la même valeur que la fiche du monstre et que le relevé des
             world boss, pour que la vignette et la fiche ne se contredisent pas au clic. */}
@@ -352,11 +368,36 @@ export function CarteMonstre({ m }: { m: Monstre }) {
         <span style={{ marginLeft: "auto" }}><Faiblesses res={m.res} bulle={false} /></span>
       </span>
 
+      {/* LES MÉCANIQUES EN ICÔNES, PLUS EN MOTS.
+          « rage 30 % · invoque · se soigne » écrit en clair, c'est jusqu'à quatre mots
+          par carte et quarante-huit cartes à l'écran — deux cents mots pour trois faits
+          binaires que l'icône dit déjà. Le mot passe dans `title` et dans
+          `aria-label` : rien n'est perdu, ni au survol ni pour un lecteur d'écran.
+          Le SEUIL de rage reste écrit, lui : c'est un nombre, et aucune icône ne le
+          porte. « AirFlyff » reste écrit aussi — la spécificité du serveur passe
+          devant, et une pastille muette n'annonce rien. */}
       <span style={{ display: "flex", gap: 9, flexWrap: "wrap", fontSize: 11, color: "var(--text-muted)", alignItems: "center" }}>
-        {m.delai ? <span style={{ fontVariantNumeric: "tabular-nums" }}><Icon name="clock" size={10} style={{ marginRight: 4 }} />{cadence(m.delai)}</span> : null}
-        {m.rage?.length ? <span><Icon name="flame" size={10} /> rage {m.rage[0].pv} %</span> : null}
-        {m.invoque?.length ? <span><Icon name="users" size={10} /> invoque</span> : null}
-        {m.soigne?.length ? <span><Icon name="sparkles" size={10} /> se soigne</span> : null}
+        {m.delai ? (
+          <span title={cadence(m.delai) ?? undefined} style={{ fontVariantNumeric: "tabular-nums" }}>
+            <Icon name="clock" size={10} style={{ marginRight: 4 }} />{cadenceCourte(m.delai)}
+          </span>
+        ) : null}
+        {m.rage?.length ? (
+          <span role="img" aria-label={`Entre en rage sous ${m.rage[0].pv} % de ses PV`} title={`Entre en rage sous ${m.rage[0].pv} % de ses PV`}
+            style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "var(--red)", fontVariantNumeric: "tabular-nums" }}>
+            <Icon name="flame" size={11} />{m.rage[0].pv} %
+          </span>
+        ) : null}
+        {m.invoque?.length ? (
+          <span role="img" aria-label="Il invoque des monstres" title="Il invoque des monstres" style={{ display: "inline-flex", color: "var(--purple)" }}>
+            <Icon name="users" size={11} />
+          </span>
+        ) : null}
+        {m.soigne?.length ? (
+          <span role="img" aria-label="Il se soigne en combat" title="Il se soigne en combat" style={{ display: "inline-flex", color: "var(--green)" }}>
+            <Icon name="sparkles" size={11} />
+          </span>
+        ) : null}
         {m.maison && <span style={{ color: "var(--purple)", marginLeft: "auto" }}>AirFlyff</span>}
       </span>
     </Link>

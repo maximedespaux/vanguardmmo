@@ -45,6 +45,11 @@ function marches(table: { niveau: number; xp: number }[]) {
 
 const COMPTE_MOT = ["aucune", "une", "deux", "trois", "quatre", "cinq"];
 
+/** Les clefs de lignée du relevé sont accentuées de façon inégale : on désaccentue
+ *  avant de comparer, comme le fait `norm()` du côté de /classes. */
+const estArcaniste = (cle: string) =>
+  cle.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes("arcaniste");
+
 export function Budget({ table, lignees }: { table: { niveau: number; xp: number }[]; lignees: Lignee[] }) {
   const [vise, setVise] = useState(10);
   const paliers = useMemo(() => table.filter((x) => x.niveau >= 1), [table]);
@@ -53,6 +58,17 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
   // Combien de compétences on aurait pu monter à 10 pour le même prix : c'est la
   // seule façon de rendre le coût comparable à autre chose que lui-même.
   const equivalent = Math.floor(cumul / coutCumule(table, 10));
+  /* LES DEUX EXTRÊMES DU TABLEAU, comptés et non écrits. La phrase sous le tableau
+     nommait « 45 » et « 32 » à la main : deux chiffres qui vivaient à côté de la
+     colonne qui les contient déjà, et qui la contrediraient au premier relevé neuf.
+     On prend le plus fourni et le plus maigre en nombre de COMPÉTENCES — c'est le
+     nombre dont la phrase parle, pas le coût en points par lequel le tableau trie. */
+  const parNombre = useMemo(
+    () => [...lignees].sort((a, b) => b.nbCompetences - a.nbCompetences),
+    [lignees],
+  );
+  const plusFournie = parNombre[0];
+  const plusMaigre = parNombre[parNombre.length - 1];
 
   return (
     <>
@@ -138,12 +154,32 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
               ))}
             </tbody>
           </Cadre>
-          <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 9 }}>
-            L&apos;écart n&apos;est pas un réglage d&apos;équilibrage : il vient du <b>nombre</b> de compétences
-            héritées. L&apos;Arcaniste en a 45 à cause des cinq écoles élémentaires, le Spadassin 32.
-            Ces totaux sont recalculés depuis la liste dédoublonnée, pas recopiés du fichier —
-            voir « Ce qu&apos;on ne sait pas ».
-          </p>
+          {/* ┌──── DEUX DÉFAUTS CORRIGÉS DANS UNE SEULE PHRASE ────┐
+                 1. RENVOI MORT. Elle finissait par « — voir "Ce qu'on ne sait pas" »,
+                    et ce volet a été retiré de la page (règle 2). Le lecteur cliquait
+                    dans le rail pour chercher une entrée qui n'existe plus.
+                 2. DEUX CHIFFRES EN DUR. « L'Arcaniste en a 45… le Spadassin 32 » :
+                    exactement le défaut reproché au paragraphe de « Maître et Héros »,
+                    vingt lignes plus bas, et laissé ici. Les deux extrêmes se lisent
+                    sur `lignees`, la même liste que le tableau juste au-dessus — donc
+                    le texte et le tableau ne peuvent plus se contredire, et une lignée
+                    ajoutée les déplace tous les deux.
+                 La mention « recalculés depuis la liste dédoublonnée » part avec le
+                 renvoi : c'est de la méthode, pas du jeu, et c'est ce que le volet
+                 retiré disait déjà — le garder sans lui laissait une allusion sans
+                 antécédent. */}
+          {plusFournie && plusMaigre && plusFournie.cle !== plusMaigre.cle && (
+            <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 9 }}>
+              L&apos;écart n&apos;est pas un réglage d&apos;équilibrage : il vient du <b>nombre</b> de compétences
+              héritées. {findClass(plusFournie.cle)?.label ?? plusFournie.cle} en a{" "}
+              <b>{plusFournie.nbCompetences}</b>
+              {/* La RAISON n'est vraie que de l'Arcaniste : ses cinq écoles élémentaires.
+                  Elle ne s'affiche donc que si c'est bien lui qui mène le tableau — un
+                  relevé qui changerait de tête ne lui emprunterait pas son explication. */}
+              {estArcaniste(plusFournie.cle) ? " à cause des cinq écoles élémentaires" : ""},{" "}
+              {findClass(plusMaigre.cle)?.label ?? plusMaigre.cle} <b>{plusMaigre.nbCompetences}</b>.
+            </p>
+          )}
         </div>
       </div>
     </>
@@ -160,12 +196,22 @@ export function Paliers({ entrees }: { entrees: Entree[] }) {
 
   return (
     <>
-      <p style={{ fontSize: 13, lineHeight: 1.65, margin: "0 0 14px" }}>
-        Seize compétences se comportent autrement que les deux cents autres : une de Maître et une
-        de Héros par classe, cinq niveaux chacune. Sur ces seize, <b>le seul niveau qui compte est
-        le cinquième</b> — et pour deux raisons différentes selon le palier.
-      </p>
-
+      {/* ┌──── LE PARAGRAPHE D'INTRODUCTION EST PARTI ────┐
+             Il disait, en trente-cinq mots : « Seize compétences se comportent
+             autrement que les deux cents autres… sur ces seize, le seul niveau qui
+             compte est le cinquième — et pour deux raisons différentes selon le
+             palier. » Trois problèmes, dans l'ordre de gravité :
+              1. « SEIZE » ET « DEUX CENTS » ÉTAIENT ÉCRITS EN DUR, dans une phrase,
+                 sur une page dont tous les autres chiffres se calculent. Le relevé
+                 fait foi partout ailleurs ; ici il était contredit d'avance.
+              2. LE RAIL DIT DÉJÀ « Les 16 compétences où seul le niveau 5 compte »,
+                 et l'en-tête du volet le répète juste au-dessus. Troisième copie.
+              3. « pour deux raisons différentes selon le palier » annonçait les deux
+                 encarts qui suivent, et qui portent leur titre.
+             Ce qui reste est donc les deux encarts eux-mêmes : ils passent le test de
+             la règle 2 — ils changent le geste (ne pas monter jusqu'à 4, ne pas
+             compter sur les joyaux) — et le compte des deux listes est désormais lu
+             sur le relevé. */}
       <Encart icon="medal" ton="gold" titre="Maître : le niveau 5 remplace l'effet, il ne l'augmente pas">
         Aux niveaux 1 à 4, la compétence donne son effet d&apos;origine (de l&apos;attaque, de la vitesse,
         des dégâts contre joueurs). Au niveau 5, cet effet <b>disparaît</b> et laisse place à
@@ -191,15 +237,18 @@ export function Paliers({ entrees }: { entrees: Entree[] }) {
         paliers. Ça vaut cher en début de vie de personnage.
       </Encart>
 
+      {/* Les deux comptes sont LUS sur le relevé, comme partout ailleurs sur la page :
+          « Les 8 compétences de Maître » était écrit en dur pour une liste dont la
+          longueur est juste à côté, dans `items`. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14, marginTop: 4 }}>
-        <ListePalier titre="Les 8 compétences de Maître" icon="medal" items={maitres} />
-        <ListePalier titre="Les 8 compétences de Héros" icon="trophy" items={heros} />
+        <ListePalier titre={`Les ${maitres.length} compétences de Maître`} icon="medal" items={maitres} />
+        <ListePalier titre={`Les ${heros.length} compétences de Héros`} icon="trophy" items={heros} />
       </div>
 
-      <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 12 }}>
-        La chaîne de promotion complète — quel palier vient après lequel, et où ces deux-là se
-        placent — est dans « Les échelles », au-dessus dans le rail.
-      </p>
+      {/* LE RENVOI VERS « Les échelles » EST PARTI : cette entrée du rail est à
+          l'écran, à deux cents pixels à gauche, avec son icône et son compte. Une
+          phrase de vingt-cinq mots pour désigner un bouton visible se lit comme si le
+          bouton n'existait pas. */}
     </>
   );
 }
@@ -325,74 +374,33 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
   );
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  CE QUE LES DONNÉES NE DISENT PAS
-// ══════════════════════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════════════════
+     LE VOLET « CE QU'ON NE SAIT PAS » A ÉTÉ RETIRÉ — RÈGLE 2 DE LA MAISON.
+   ══════════════════════════════════════════════════════════════════════════
 
-export function Reserves({ entrees, doublons }: { entrees: Entree[]; doublons: { nom: string }[] }) {
-  const sansTexte = entrees.filter((e) => !e.resume).length;
-  return (
-    <>
-      <p style={{ fontSize: 13, lineHeight: 1.65, margin: "0 0 14px" }}>
-        Cette page vient des fichiers du client, pas d&apos;une mesure en jeu. Cinq choses qu&apos;elle
-        ne peut pas dire, et qu&apos;il vaut mieux savoir avant de bâtir un build dessus.
-      </p>
+   « Si les renseignements ne sont pas complets, dans ce cas tu oublies. » Ce volet
+   était l'inverse exact : cinq encarts de trois cents mots dont le SUJET était
+   l'incomplétude du relevé. Le test appliqué à chacun — est-ce que ça change le
+   geste du joueur ?
 
-      {doublons.length > 0 && (
-        <Encart icon="alert" ton="red" titre={`Le client liste ${doublons.length} compétences deux fois`}>
-          Le fichier de compétences contient 202 lignes de joueur, mais{" "}
-          {doublons.map((x) => `« ${x.nom} »`).join(", ")} y figurent <b>en double</b>, avec des
-          valeurs identiques au champ près. Il y a donc <b>{fmt(entrees.length)} compétences</b>,
-          pas 202 — et le catalogue n&apos;en montre qu&apos;une copie.
-          <br />
-          Ce n&apos;est pas qu&apos;une histoire de comptage : les cinq doublons sont des compétences
-          d&apos;arc de l&apos;Acrobate, donc ils gonflaient le budget des deux lignées qui en héritent.
-          Le fichier annonce 38 compétences et 1 284 748 points pour la Sylphide et
-          l&apos;Arbalétrier ; ce sont en réalité <b>33 compétences et 988 398 points</b>. Les huit
-          budgets affichés ici sont recalculés depuis la liste dédoublonnée — la méthode retrouve
-          à l&apos;unité les six lignées que le fichier annonce juste.
-        </Encart>
-      )}
+     · « Le client liste 5 compétences deux fois » ................ NON. C'était la
+       méthode : pourquoi nos budgets diffèrent de ceux qu'annonce le fichier brut.
+       Le lecteur n'a rien à en faire, et les huit budgets affichés sont déjà les
+       bons (voir vue.ts, qui recalcule sur la liste dédoublonnée).
+     · « Rien de fiable en JcJ » .................................. NON. Le constat
+       porte sur quatre colonnes vides d'un fichier. Aucun geste au bout.
+     · « Les prérequis oui, le dessin de l'arbre non » ............ NON. La fiche de
+       chaque compétence donne déjà ses prérequis ; l'absence de coordonnées de
+       placement est notre problème, pas celui du joueur.
+     · « Une compétence muette, et un palier absent » ............. NON. Un constat
+       d'ignorance, mot pour mot.
+     · « Aucun chiffre de dégâts final » .......................... OUI, et c'est la
+       seule exception prévue par la règle : sans elle, on bâtit un build sur les
+       « 164–211 dégâts » du tableau, qui ne sont pas ce qu'on tape. Elle ne
+       disparaît donc pas — elle DÉMÉNAGE là où l'erreur se commet, sur l'en-tête
+       de la colonne Dégâts du catalogue (Catalogue.tsx), en une phrase dans une
+       bulle au lieu d'un encart dans un volet qu'il faut penser à ouvrir.
 
-      <Encart icon="ban" ton="red" titre="Aucun chiffre de dégâts final">
-        Les fichiers donnent la statistique de référence (Force, Dextérité, Intelligence,
-        Endurance) et son coefficient — de 5 à 338 — mais <b>pas l&apos;équation</b> qui combine
-        coefficient, arme et statistique. Les « 164–211 dégâts » du tableau sont la valeur de
-        base de la compétence, pas ce que tu vas taper à l&apos;écran.
-      </Encart>
-
-      <Encart icon="swords" ton="orange" titre="Rien de fiable en JcJ">
-        Le fichier de progression a quatre colonnes prévues pour le JcJ
-        (dégâts min, dégâts max, probabilité, taux). Elles sont <b>vides sur les 2 500 lignes</b>.
-        Les dégâts entre joueurs se calculent ailleurs, sans doute par le multiplicateur « Dégâts
-        JcJ » qu&apos;on voit sur onze lignes de buff.
-      </Encart>
-
-      <Encart icon="path" ton="blue" titre="Les prérequis, oui ; le dessin de l'arbre, non">
-        {fmt(entrees.filter((e) => e.aPrerequis).length)} compétences ont un ou deux prérequis, avec
-        le niveau exigé : de quoi reconstruire le graphe, et c&apos;est ce que fait la fiche de chaque
-        compétence. Mais aucune coordonnée de placement n&apos;existe dans les fichiers —{" "}
-        <b>l&apos;arbre tel que le jeu le dessine</b> n&apos;est pas reproductible ici.
-      </Encart>
-
-      <Encart icon="info" ton="gold" titre="Une compétence muette, et un palier absent">
-        « Crucifix » (Meneur) est la seule à n&apos;avoir aucun texte français dans le client.
-        {sansTexte > 0 && ` ${sansTexte} compétences n'ont par ailleurs aucun chiffre d'effet exploitable : leur ligne de résumé reste vide.`}
-        {" "}Et le palier <b>Ultime</b> — les huit classes au-delà des légendaires — n&apos;a aucune
-        compétence dans ces fichiers : s&apos;il vit sur le serveur, ses compétences ne sont pas dans
-        le client d&apos;octobre 2025.
-      </Encart>
-
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 9, fontSize: 12, color: "var(--text-muted)", lineHeight: 1.6, marginTop: 4 }}>
-        <Icon name="info" size={14} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
-        <span>
-          Source : les fichiers de compétences du client AirFlyff d&apos;octobre 2025.{" "}
-          {fmt(entrees.length)} compétences de joueur distinctes,{" "}
-          {fmt(entrees.reduce((s, e) => s + e.nivMax, 0))} niveaux de progression relevés. Les 44
-          autres entrées du fichier ne sont pas des compétences de joueur — ce sont les états
-          infligés par les monstres — et ne figurent pas dans le catalogue.
-        </span>
-      </div>
-    </>
-  );
-}
+   La provenance du relevé, elle, n'est pas une réserve : elle est passée dans le
+   sous-titre de la page (« relevées dans le client d'octobre 2025 »), qui se lit
+   sans ouvrir quoi que ce soit. */

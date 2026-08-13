@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { pvCourt, PLANS, SECOND_NOM, TON_RANG, type DonjonClient } from "./donneesClient";
 import { IconeElementDonjon } from "./elements";
+import { LienMonstre } from "./LienMonstre";
 
 /** L'étiquette de section de la fiche. Reprise telle quelle du bloc « Drops »
  *  qui existait déjà : une fiche où chaque titre a sa propre graisse se lit comme
@@ -185,10 +186,22 @@ export function Peuplement({ d }: { d: DonjonClient }) {
         Ce que tu croises
       </SousTitre>
       <div style={{ display: "grid", gap: 7 }}>
-        {d.monstres.map((m) => (
-          <div key={m.nom + m.pv} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 11px" }}>
+        {/* LA CLÉ PORTE LE RANG DANS LA LISTE, et ce n'est pas de la coquetterie :
+            `m.nom + m.pv` produisait DEUX FOIS la même clé sur la Ruine Prestigieuse,
+            qui pose deux « Lézard Prestigieux » de 2 000 000 PV — deux entrées
+            distinctes du fichier de carte, avec des emplacements différents. React
+            criait « two children with the same key » dans la console à chaque
+            ouverture de la fiche, et se réservait le droit d'en omettre une. Relevé
+            dans le navigateur, pas supposé. */}
+        {d.monstres.map((m, i) => (
+          <div key={`${m.nom}|${m.pv}|${i}`} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 11px" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
-              <span className="font-heading" style={{ fontSize: 13.5, fontWeight: 600 }}>{m.nom}</span>
+              {/* LE NOM MÈNE À SA FICHE : les monstres appartiennent à /monstres, cette
+                  page ne garde d'eux que ce qui fait décider d'entrer. Sans lien, il
+                  fallait retenir le nom et le retaper dans l'autre wiki. */}
+              <span className="font-heading" style={{ fontSize: 13.5, fontWeight: 600 }}>
+                <LienMonstre nom={m.nom} niv={m.niv} pv={m.pv} />
+              </span>
               <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, color: TON_RANG[m.rang] ?? "var(--text-muted)" }}>{m.rang}</span>
               <span style={{ flex: 1 }} />
               <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
@@ -262,7 +275,7 @@ export function KalgasEnPlus({ d }: { d: DonjonClient }) {
             {d.horsCarte.map((m, i) => (
               <div key={m.nom} style={{ ...ligne, borderBottom: i === d.horsCarte!.length - 1 ? "none" : "1px solid var(--border)", alignItems: "baseline" }}>
                 <span style={{ minWidth: 0 }}>
-                  <b>{m.nom}</b>
+                  <b><LienMonstre nom={m.nom} niv={m.niv} pv={m.pv} /></b>
                   <span style={{ display: "block", color: "var(--text-muted)", fontSize: 11.5 }}>{m.role}</span>
                 </span>
                 <span style={{ ...val, color: "var(--orange)", whiteSpace: "nowrap" }}>{pvCourt(m.pv)} PV</span>

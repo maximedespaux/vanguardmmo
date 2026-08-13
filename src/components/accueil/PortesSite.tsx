@@ -46,11 +46,15 @@ export type Porte = {
 /**
  * LES PORTES DE L'ACCUEIL PUBLIC — ce que le site FAIT, en un écran.
  *
- * Elles étaient quatre et toutes ouvertes. Elles sont dix, dont trois sous
+ * Elles étaient quatre et toutes ouvertes. Il y en a maintenant treize, dont quatre sous
  * cadenas, et c'est un changement de propos : la page ne dit plus seulement « par
  * où commencer », elle répond à « qu'est-ce que ce site sait faire, et qu'est-ce
  * qui s'ouvre si je me connecte ». Demande de fond de Maxime sur la vitrine —
  * « en public voir les fonctionnalités mises en place ».
+ *
+ * CES DEUX NOMBRES NE SONT PAS AFFICHÉS D'APRÈS CE COMMENTAIRE : la phrase de l'accueil
+ * les COMPTE sur la liste (voir NB_PORTES et NB_VERROU dans PageAccueil). Une porte
+ * ajoutée ici met la phrase à jour toute seule ; seule cette note en prose peut vieillir.
  *
  * CE BLOC A ÉTÉ RAPATRIÉ DE /histoire, il n'a pas été inventé ici. Là-bas, huit
  * cartes « Les fonctionnalités du site » racontaient la même chose, et quatre de
@@ -63,14 +67,17 @@ export type Porte = {
  * par groupe de routes, et pas déduit du menu — la nav annonce /objets comme
  * publique alors que le fichier vit dans (guild) et passe donc par requireGuild :
  *
- *   ouvertes    (public)  /donjons /astuces /prestige /builder /monstres
+ *   ouvertes    (public)  /donjons /astuces /prestige /builder /monstres /pnj /wiki
  *   vitrine     (vitrine) /boutique /crafts — visibles sans compte, inertes ou
  *                         amputées de ce qui se garde
- *   cadenas     (guild)   /compositions /worldboss /dashboard
+ *   cadenas     (guild)   /objets /compositions /worldboss /dashboard
  *
- * ET LE CADENAS NE VEUT PAS DIRE « connecte-toi ». Ces trois adresses sont dans
- * GUILD_PREFIXES du middleware, dont la liste de rôles EXCLUT RECRUE : un joueur qui
- * se connecte avec Discord sans être de la guilde est renvoyé sur `/?error=guild`.
+ * ET LE CADENAS NE VEUT PAS DIRE « connecte-toi ». Trois de ces adresses — /dashboard,
+ * /compositions, /worldboss — sont dans GUILD_PREFIXES du middleware, dont la liste de
+ * rôles EXCLUT RECRUE : un joueur qui se connecte avec Discord sans être de la guilde est
+ * renvoyé sur `/?error=guild`. La quatrième, /objets, n'y est PAS : elle est gardée un
+ * cran plus bas, par le requireGuild() du layout de son groupe (voir ci-dessous). Deux
+ * mécanismes, une même conséquence pour le visiteur.
  * Le mot du cadenas est donc « membres », et la phrase qui présente ces portes ne
  * doit promettre que ça.
  *
@@ -123,6 +130,30 @@ export const PORTES_PUBLIQUES: Porte[] = [
   {
     href: "/pnj", icon: "users", titre: "Marchands et artisans",
     texte: "Qui vend quoi, et qui fabrique quoi.",
+  },
+  {
+    /* ══════════════════════════════════════════════════════════════════════════
+       LA PORTE DU WIKI MANQUAIT, et c'était la plus grosse absence de cet écran.
+       ══════════════════════════════════════════════════════════════════════════
+       Cette liste répond à « qu'est-ce que ce site sait faire ». Or ce que le site fait
+       de plus utile — UN SEUL CHAMP pour tout AirFlyff, qui aiguille vers la page
+       propriétaire de ce qu'on a tapé — n'y figurait pas. Un visiteur voyait onze portes
+       thématiques et devait deviner laquelle contient « Âme de démon ». C'est exactement
+       le défaut que /wiki existe pour corriger, et le site venait de le refaire sur sa
+       propre page d'accueil.
+
+       PUBLIQUE, vérifié dans l'arborescence et non déduit du menu : le fichier vit dans
+       src/app/(public)/wiki/, aucun garde ne s'y applique, et la recherche se fait côté
+       serveur par /api/wiki.
+
+       PAS DE COMPTE SUR CETTE PORTE, et c'est un choix mesuré et non un oubli. Le total
+       du wiki (14 000 noms) ne se lit que sur son index — six mégaoctets de relevés que
+       `faitsWiki()` assemble à la demande. Le charger pour orner une porte ferait payer
+       à CHAQUE visiteur de la page d'accueil le coût de la page suivante. La ligne dit
+       donc ce qui se vérifie sans rien lire : qu'on entre sans compte. */
+    href: "/wiki", icon: "search", titre: "Le wiki",
+    texte: "Un seul champ : objets, monstres, recettes, PNJ, compétences.",
+    chiffre: "sans connexion",
   },
   {
     href: "/prestige", icon: "star", titre: "Prestige",

@@ -1,7 +1,8 @@
 import React from "react";
-import { Icon } from "@/components/Icon";
+import { Icon, type IconName } from "@/components/Icon";
 import { pvCourt, TOUR_OUBLIEE, PLANS } from "./donneesClient";
 import { IconeElementDonjon } from "./elements";
+import { LienMonstre } from "./LienMonstre";
 
 /**
  * LA TOUR OUBLIÉE — cinq étages que le wiki ne connaissait pas.
@@ -17,8 +18,17 @@ import { IconeElementDonjon } from "./elements";
  * « Protection de l'Oasis » : deux contenus différents, deux cartes différentes.
  */
 export function TourOubliee() {
+  /* LA TAILLE DE CARTE ÉTAIT ÉCRITE CINQ FOIS, ET C'ÉTAIT CINQ FOIS LA MÊME. Les cinq
+     étages font 512 × 512 : un renseignement identique sur toutes les fiches n'en est
+     pas un, et il coûtait dix mots par tuile. On le dit UNE fois, en tête, et
+     seulement s'il est vrai — si un étage sortait un jour à une autre taille, la puce
+     disparaît et la valeur remonte dans les tuiles. */
+  const tailles = new Set(TOUR_OUBLIEE.map((e) => `${e.unites[0]} × ${e.unites[1]}`));
+  const memeTaille = tailles.size === 1 ? [...tailles][0] : null;
   return (
-    <div style={{ marginTop: 26 }}>
+    /* `scrollMarginTop` : le schéma d'entrée en tête de page renvoie ici, et la barre
+       de navigation est fixe. Même valeur que les autres cibles. */
+    <div id="tour-oubliee" style={{ marginTop: 26, scrollMarginTop: 88 }}>
       {/* Un h2, comme le bloc Protection de l'Oasis juste en dessous : les deux
           sont les grandes parties de la page, sous le h1 du wiki. `fontWeight: 400`
           est explicite parce qu'un h2 arrive gras par defaut. */}
@@ -41,20 +51,18 @@ export function TourOubliee() {
           du bloc voisin, qui s'appelle « Protection de l'Oasis » et pas « Tour » :
           la répéter ici, c'était dire deux fois la même chose sur le même écran. */}
       <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 10 }}>
-        {([
-          /* LE NOM COMPLET DU PNJ, RESTITUÉ — et le commentaire est SANS ACCOLADES,
-             parce qu'on est dans un tableau JS et pas dans des enfants JSX : `{/* … *​/}`
-             y vaudrait un objet vide de plus dans le tuple.
-             En raccourcissant en « Gardien », la passe d'allègement a fait disparaître
-             « Gardien de la Tour Oubliée » de TOUT le site — c'était sa seule occurrence
-             à l'écran, et pnj.json ne le porte pas. Or les données du jeu comptent
-             trente-quatre libellés distincts où figure « Gardien » ou « Gardienne » :
-             « le Gardien, à Flarine » ne désigne plus personne qu'on puisse chercher.
-             C'est le nom qu'on tape dans une recherche, donc il reste écrit en entier. */
-          ["user", <>Entrée par le <b style={{ color: "var(--text)" }}>Gardien de la Tour Oubliée</b>, à Flarine</>],
-          ["path", <>Aucun escalier · toute sortie renvoie à Flarine</>],
-          ["skull", <>Une seule espèce par étage</>],
-        ] as const).map(([ic, texte], k) => (
+        {/* LA PUCE D'ENTRÉE A DÉMÉNAGÉ DANS LE SCHÉMA DE TÊTE DE PAGE, et le nom complet
+            du PNJ est parti avec elle — « Gardien de la Tour Oubliée », en entier, parce
+            que c'est le mot qu'on tape dans une recherche et que trente-quatre libellés
+            du jeu portent « Gardien ». Le garder ici EN PLUS aurait écrit deux fois la
+            même chose sur le même écran. */}
+        {(
+          [
+            { ic: "path", texte: <>Aucun escalier · toute sortie renvoie à Flarine</> },
+            { ic: "skull", texte: <>Une seule espèce par étage</> },
+            ...(memeTaille ? [{ ic: "map", texte: <>{TOUR_OUBLIEE.length} cartes de {memeTaille}</> }] : []),
+          ] as { ic: IconName; texte: React.ReactNode }[]
+        ).map(({ ic, texte }, k) => (
           <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--text-muted)", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 10px" }}>
             <Icon name={ic} size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />{texte}
           </span>
@@ -87,9 +95,13 @@ export function TourOubliee() {
                 <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{e.nom}</div>
               </div>
             </div>
-            <div style={{ fontSize: 12.5, marginBottom: 8 }}>
-              <div style={{ color: "var(--text-muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.8 }}>Le boss de l&apos;étage</div>
-              <div className="font-heading" style={{ fontWeight: 600 }}>{e.boss}</div>
+            {/* QUATRE MOTS D'ÉTIQUETTE SONT DEVENUS UN CRÂNE. « Le boss de l'étage »
+                était écrit sur les cinq tuiles au-dessus d'un seul nom ; le
+                pictogramme le dit, et le `title` garde la phrase. Le nom, lui, mène
+                désormais à sa fiche : les monstres appartiennent à /monstres. */}
+            <div title="Le boss de l'étage" className="font-heading" style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <Icon name="skull" size={13} style={{ color: "var(--red)", flexShrink: 0 }} />
+              <LienMonstre nom={e.boss} niv={e.niv} pv={e.pv} />
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
               <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}>niv. {e.niv}</span>
@@ -115,14 +127,20 @@ export function TourOubliee() {
                 </span>
               )}
             </div>
-            <div style={{ marginTop: 9, fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
-              {e.points} emplacements sur une carte de {e.unites[0]} × {e.unites[1]}
-              {/* La coordonnée du portail de sortie était affichée ici — « (6 980,
-                  3 309) ». Un joueur ne peut rien en faire : le jeu n'a pas de
-                  boussole à coordonnées, et on ne se rend pas à un couple de
-                  nombres. Ce qui sert, c'est la DESTINATION, et elle est la même
-                  pour les cinq étages. */}
-              {e.sortie && <> · la sortie te renvoie à Flarine</>}
+            {/* ┌──── SEIZE MOTS PAR TUILE, DONT ONZE ÉCRITS CINQ FOIS ────┐
+                La ligne disait « 19 emplacements sur une carte de 512 × 512 · la
+                sortie te renvoie à Flarine ». Or les cinq cartes font toutes
+                512 × 512 et les cinq sorties renvoient toutes à Flarine : les deux
+                sont donc annoncés UNE fois, en puce de tête de bloc, où ils ne
+                mentent pas plus et ne se répètent plus. Reste le seul nombre qui
+                varie d'un étage à l'autre.
+                La coordonnée du portail était ici avant : `coord()` a été supprimée
+                exprès — le jeu n'affiche pas sa position, et on ne se rend pas à un
+                couple de nombres. Ce qui sert, c'est la destination.
+                └─────────────────────────────────────────────────────────┘ */}
+            <div title="Les points de réapparition posés sur la carte de l'étage"
+              style={{ marginTop: 9, fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+              <Icon name="grid" size={11} style={{ marginRight: 4 }} />{e.points} emplacements
             </div>
           </div>
         ))}

@@ -7,7 +7,7 @@ import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
 import { CLASSES, findClass } from "@/data/classes";
 import { Catalogue } from "@/components/competences/Catalogue";
-import { Budget, HorsClasseSection, Paliers, Reserves } from "@/components/competences/Sections";
+import { Budget, HorsClasseSection, Paliers } from "@/components/competences/Sections";
 import { SousTitre } from "@/components/competences/ui";
 import { classeAffichee, fmt, nbHorsClasse, type Catalogue as Cat } from "@/components/competences/donnees";
 import { BarresBudget, Chaine, Legendaires, PaliersDeLaClasse, TableLignee } from "@/components/classes/Lignee";
@@ -137,11 +137,11 @@ export default function ClassesPage() {
       sous: "Groupe, Souverain, couple",
       contenu: cat ? <HorsClasseSection h={cat.horsClasse} /> : attente,
     },
-    {
-      clef: "reserves", titre: "Ce qu'on ne sait pas", icon: "help", compte: null,
-      sous: "Les limites de ce relevé, dites clairement",
-      contenu: cat ? <Reserves entrees={cat.entrees} doublons={cat.doublons} /> : attente,
-    },
+    /* IL Y AVAIT UN NEUVIÈME VOLET, « Ce qu'on ne sait pas ». Il est parti par la
+       règle 2 : cinq encarts dont le sujet était l'incomplétude du relevé. Le seul
+       qui changeait le geste — les dégâts du tableau ne sont pas ceux qu'on tape —
+       a déménagé sur l'en-tête de la colonne Dégâts du catalogue, là où l'erreur se
+       commet. Le détail du tri est dans Sections.tsx, à la place de la fonction. */
   ];
 
   return (
@@ -151,8 +151,12 @@ export default function ClassesPage() {
       {/* Le sous-titre annonçait en trente-cinq mots ce que le rail annonce déjà, volet
           par volet, avec ses comptes. Il ne garde que ce que le rail ne peut pas
           dire : combien de lignées, et d'où vient le relevé. */}
+      {/* « du client d'octobre 2025 » et non « du client du jeu » : c'est la seule
+          chose que le volet des réserves disait et que le rail ne dit pas — la DATE
+          du relevé. Deux mots ici valent les quarante d'une ligne de source en bas
+          d'un volet qu'il faut penser à ouvrir. */}
       <PageHeader art="/jeu/chargement/maploading_arena.webp" icon="graduation" title="Classes et compétences"
-        subtitle={`Les ${LIGNEES.length} lignées d'AirFlyff, relevées dans le client du jeu.`} />
+        subtitle={`Les ${LIGNEES.length} lignées d'AirFlyff, relevées dans le client d'octobre 2025.`} />
 
       <VoletSections
         defaut="catalogue"

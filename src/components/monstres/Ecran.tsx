@@ -2,12 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { Invisible } from "@/components/Bulle";
+import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { RechercheMonstres } from "./Recherche";
-import { Faiblesses, SchemaVies } from "./Graphiques";
+import { Faiblesses, ProvenanceMonstres, SchemaVies } from "./Graphiques";
 import {
-  cadence, coupMax, court, ELEMENT_FR, entier, iconeElement, tonRang,
+  cadence, cadenceCourte, coupMax, court, ELEMENT_FR, entier, iconeElement, tonRang,
   type Compteurs, type Monstre,
 } from "./vocabulaire";
 
@@ -30,16 +30,26 @@ import {
  * │ Le paragraphe de six lignes sur les vies est devenu   │
  * │ un schéma (`SchemaVies`) — même fait, deux blocs      │
  * │ dessinés, zéro phrase.                                │
+ * │ La rangée de six tuiles est devenue un schéma         │
+ * │ d'emboîtement (`ProvenanceMonstres`) plus quatre      │
+ * │ constats : les deux tuiles qui étaient des FILTRES ne │
+ * │ se distinguaient pas des quatre qui n'étaient que des │
+ * │ chiffres, et le fait qui les relie — tout monstre à   │
+ * │ plusieurs vies est du contenu AirFlyff — ne se lisait │
+ * │ nulle part.                                           │
  * └──────────────────────────────────────────────────────┘
  */
 
 type Onglet = "chercher" | "boss" | "frappeurs";
 
-export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs, objetsLaches }: {
+export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs, viesMaison, objetsLaches }: {
   boss: Monstre[]; frappeurs: Monstre[]; compteurs: Compteurs; total: number;
   groupes: { nom: string; n: number }[];
   /** Compté sur le catalogue, jamais écrit : cf. `catalogue.faits()`. */
   agressifs: number;
+  /** Combien de ceux qui se relèvent portent la marque du serveur. Le schéma d'en-tête
+   *  s'en sert pour choisir sa phrase — cf. `ProvenanceMonstres`. */
+  viesMaison: number;
   /** Combien d'objets distincts le relevé rattache à un monstre — la mesure du pont
    *  vers le catalogue d'objets, comptée elle aussi. */
   objetsLaches: number;
@@ -65,31 +75,31 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agre
   return (
     <div style={{ display: "grid", gap: 16 }}>
 
-      {/* Ce que le catalogue contient, en chiffres. C'est ce qui donne l'échelle :
-          « 142 monstres au-dessus du milliard de PV » dit plus sur le haut niveau
-          d'AirFlyff qu'un paragraphe.
+      {/* D'OÙ VIENT CE CATALOGUE — un schéma, et les deux seuls filtres qui comptent.
+          Les six tuiles d'avant se ressemblaient trait pour trait, alors que deux
+          d'entre elles étaient des BOUTONS et les quatre autres des constats. Pire :
+          le fait qui relie les deux boutons — les 94 monstres qui se relèvent sont
+          TOUS du contenu AirFlyff — ne se lisait nulle part, et une rangée de
+          pastilles ne sait pas dire « celui-là est dedans ». Trois barres à la même
+          échelle le disent d'un regard, et les deux dernières restent des filtres. */}
+      <ProvenanceMonstres
+        total={total} maison={compteurs.maison} vies={compteurs.vies} viesMaison={viesMaison}
+        surMaison={() => filtrer({ provenance: "maison" })}
+        surVies={() => filtrer({ vies: true })} />
 
-          DEUX D'ENTRE EUX SONT MAINTENANT DES BOUTONS. « Ajoutés par AirFlyff » est la
-          spécificité du serveur et « se relèvent » son piège le plus coûteux : on
-          lisait les deux nombres et il fallait redescendre chercher le filtre qui va
-          avec. La tuile EST le filtre. Les trois autres restent des constats — aucun
-          filtre du catalogue ne leur correspond, et un bouton qui ne fait rien est
-          pire qu'un chiffre. */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(146px,1fr))", gap: 9 }}>
-        <Chiffre icon="paw" valeur={entier(total)} quoi="monstres" />
-        <Chiffre icon="sparkles" valeur={entier(compteurs.maison)} quoi="ajoutés par AirFlyff" ton="var(--purple)"
-          onClick={() => filtrer({ provenance: "maison" })} />
-        <Chiffre icon="skull" valeur={entier(compteurs.vies)} quoi="se relèvent" ton="var(--red)"
-          onClick={() => filtrer({ vies: true })} />
+      {/* Ce qui reste en tuiles est ce à quoi AUCUN filtre du catalogue ne correspond
+          — un bouton qui ne fait rien est pire qu'un chiffre. « Attaquent à vue » a
+          rejoint la rangée : c'était une phrase flottante sous les tuiles alors que
+          c'est le même genre de fait, un compte sur le catalogue. */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 9 }}>
+        <Chiffre icon="paw" valeur={entier(agressifs)} ton="var(--gold)" quoi={
+          <Invisible enJeu={`Dans le Flyff d'origine, une bonne partie des monstres attend d'être frappée. Ici ils sont ${entier(agressifs)} sur ${entier(total)} : l'agressivité a cessé d'être une information de fiche, c'est la règle.`}>
+            <span>attaquent à vue</span>
+          </Invisible>
+        } />
         <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--orange)" />
-        <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--gold)" />
+        <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--red)" />
         <Chiffre icon="package" valeur={entier(objetsLaches)} quoi="objets nommés dans leur butin" ton="var(--green)" />
-      </div>
-
-      <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
-        <Invisible enJeu={`Dans le Flyff d'origine, une bonne partie des monstres attend d'être frappée. Ici ils sont ${entier(agressifs)} sur ${entier(total)} à attaquer à vue : l'agressivité a cessé d'être une information de fiche, c'est la règle.`}>
-          <span>Plus aucun monstre passif</span>
-        </Invisible>
       </div>
 
       <div className="vg-subtabs" style={{ margin: 0 }}>
@@ -155,33 +165,31 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agre
   );
 }
 
-/** Une tuile de compteur — et un BOUTON quand un filtre du catalogue lui correspond.
- *  Le pointillé sous le libellé est le seul signal qu'on peut cliquer : sans lui, une
- *  tuile cliquable et une tuile morte se ressemblent trait pour trait. */
-function Chiffre({ icon, valeur, quoi, ton = "var(--text)", onClick }: {
-  icon: Parameters<typeof Icon>[0]["name"]; valeur: string; quoi: string; ton?: string;
-  onClick?: () => void;
+/**
+ * Une tuile de compteur — un CONSTAT, et rien d'autre.
+ *
+ * Elle savait aussi être un bouton, du temps où « ajoutés par AirFlyff » et « se
+ * relèvent » vivaient dans cette rangée. Ces deux-là sont passés dans le schéma
+ * d'emboîtement, qui dit en plus comment ils se contiennent : la tuile n'a plus
+ * besoin de faire deux métiers, et une tuile qui ne peut pas être cliquable ne
+ * risque plus de ressembler à une tuile qui l'est.
+ */
+function Chiffre({ icon, valeur, quoi, ton = "var(--text)" }: {
+  icon: Parameters<typeof Icon>[0]["name"]; valeur: string;
+  /** Du JSX accepté : c'est ce qui permet d'y poser une bulle « hors jeu ». */
+  quoi: React.ReactNode;
+  ton?: string;
 }) {
-  const cadre: React.CSSProperties = {
-    background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12,
-    padding: "12px 13px", minWidth: 0, textAlign: "left",
-  };
-  const dedans = (
-    <>
+  return (
+    <div className="fx-card" style={{
+      background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12,
+      padding: "12px 13px", minWidth: 0, textAlign: "left",
+    }}>
       <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 20, fontWeight: 700, color: ton, fontVariantNumeric: "tabular-nums" }}>
         <Icon name={icon} size={15} style={{ color: ton, opacity: 0.85 }} />{valeur}
       </div>
-      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, borderBottom: onClick ? "1px dotted var(--orange)" : undefined, display: "inline-block" }}>
-        {quoi}
-      </div>
-    </>
-  );
-  if (!onClick) return <div className="fx-card" style={cadre}>{dedans}</div>;
-  return (
-    <button className="fx-card" onClick={onClick} aria-label={`Chercher : ${quoi}`}
-      style={{ ...cadre, cursor: "pointer", fontFamily: "inherit", color: "inherit", width: "100%", display: "block" }}>
-      {dedans}
-    </button>
+      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>{quoi}</div>
+    </div>
   );
 }
 
@@ -237,7 +245,15 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
             </th>
             <th style={th}>Vies</th>
             <th style={th}>Dégâts / coup</th>
-            <th style={th}>Cadence</th>
+            <th style={th}>
+              {/* L'UNITÉ EST EXPLIQUÉE UNE FOIS, EN TÊTE DE COLONNE, et non répétée
+                  quatre-vingt-quatorze fois en toutes lettres. « 1 coup toutes les
+                  3,5 s » sur chaque ligne, c'était près de cinq cents mots pour une
+                  donnée qui tient en deux signes. */}
+              <Bulle quoi="« 3,5 s » est l'intervalle entre deux coups ; « 9,9/s » un nombre de coups par seconde, pour les quelques boss qui frappent plus d'une fois dans la seconde. Le détail en clair est dans l'infobulle de chaque ligne.">
+                <span>Cadence</span>
+              </Bulle>
+            </th>
             <th style={{ ...th, textAlign: "left" }}>Élément</th>
           </tr>
         </thead>
@@ -269,7 +285,7 @@ function TableauBoss({ lignes, colonne }: { lignes: Monstre[]; colonne: "pvEff" 
                   {coupMax(m) ? court(coupMax(m)) : "—"}
                   {colonne === "degats" && <Barre m={m} teinte="var(--red)" />}
                 </td>
-                <td style={{ ...td, color: "var(--text-muted)" }}>{cadence(m.delai) ?? "—"}</td>
+                <td style={{ ...td, color: "var(--text-muted)" }} title={cadence(m.delai) ?? undefined}>{cadenceCourte(m.delai) ?? "—"}</td>
                 <td style={{ ...td, textAlign: "left" }}><Faiblesses res={m.res} /></td>
               </tr>
             );

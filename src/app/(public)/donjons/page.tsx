@@ -1,5 +1,5 @@
 import { PageDonjons } from "@/components/donjons/PageDonjons";
-import { vagues } from "./donnees";
+import { idsMonstres, vagues } from "./donnees";
 
 /**
  * « CE DANS QUOI ON ENTRE » — une seule page pour trois façons d'entrer.
@@ -20,5 +20,9 @@ import { vagues } from "./donnees";
  * exporter `metadata`, et celles de /oasis y ont été fondues avec celles d'ici.
  */
 export default function DonjonsPage() {
-  return <PageDonjons vagues={vagues()} />;
+  /* Deux lectures serveur, pas une. La seconde est le pont vers /monstres : les
+     quatre-vingt-cinq créatures citées ici n'ont pas leur identifiant de fiche dans
+     les relevés de donjon, et le catalogue qui le porte fait 612 Ko — il se lit ici,
+     et seule une table de 86 lignes descend au navigateur. Cf. donnees.ts. */
+  return <PageDonjons vagues={vagues()} idsMonstres={idsMonstres()} />;
 }

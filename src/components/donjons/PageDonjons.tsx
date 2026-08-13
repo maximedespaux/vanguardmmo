@@ -11,7 +11,9 @@ import { donjonClient, pvCourt, PLANS, TOUR_OUBLIEE } from "@/components/donjons
 import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
 import { TourOubliee } from "@/components/donjons/TourOubliee";
 import { BlocOasis } from "@/components/donjons/BlocOasis";
-import { HorsTeleporteur, LIEUX_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
+import { CommentOnEntre, type Porte } from "@/components/donjons/CommentOnEntre";
+import { IdsMonstres } from "@/components/donjons/LienMonstre";
+import { HorsTeleporteur, GROUPES_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
 import { aDesFaiblesses, FaiblessesDonjon } from "@/components/donjons/elements";
 import { useReglages } from "@/components/reglages/PanneauReglages";
 import type { SchemaPage } from "@/lib/reglages";
@@ -138,7 +140,11 @@ const REGLAGES_DONJONS = {
   ],
 } as const satisfies SchemaPage;
 
-export function PageDonjons({ vagues }: { vagues: Vague[] }) {
+export function PageDonjons({ vagues, idsMonstres = {} }: {
+  vagues: Vague[];
+  /** nom|niveau|PV → identifiant de fiche /monstres. Lu côté serveur, cf. donnees.ts. */
+  idsMonstres?: Record<string, string>;
+}) {
   const { valeurs, bouton, panneau } = useReglages(REGLAGES_DONJONS);
   const voirCartes = Boolean(valeurs.cartes);
   const nbButins = Number(valeurs.butins) || 3;
@@ -197,19 +203,69 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
     !qMin || MOTS_HORS_TELEPORTEUR.includes(qMin.normalize("NFD").replace(/[̀-ͯ]/g, ""));
 
   /**
-   * Le sous-titre se compte, il ne s'écrit pas : trois nombres qui viennent de
-   * trois sources différentes (le wiki, le client, le relevé). Le jour où une
-   * ligne s'ajoute quelque part, la phrase se corrige seule. Sans relevé, la
-   * troisième moitié de phrase disparaît plutôt que d'annoncer « 0 vagues ».
+   * LE SOUS-TITRE NE RÉPÈTE PLUS LES COMPTEURS, et c'est une règle déjà posée sur
+   * /monstres pour la même raison. Il alignait « 23 donjons du téléporteur · 8 lieux
+   * hors téléporteur · 5 étages de Tour Oubliée · 52 vagues à l'Oasis » — soit
+   * EXACTEMENT les quatre nombres que le schéma d'entrée, à trois centimètres en
+   * dessous, porte déjà, chacun à côté de la porte qui y mène. Le même chiffre écrit
+   * deux fois sur le même écran ne renseigne pas deux fois.
+   *
+   * Ce qui reste est ce que le schéma ne dit pas : la promesse de la page. Les
+   * comptes n'ont pas disparu du HTML pour un moteur de recherche — ils sont dans le
+   * schéma, et la description de layout.tsx les porte aussi.
    */
-  const sousTitre = [
-    `${dungeons.length} donjons du téléporteur`,
-    `${LIEUX_HORS_TELEPORTEUR} lieux hors téléporteur`,
-    `${TOUR_OUBLIEE.length} étages de Tour Oubliée`,
-    ...(vagues.length ? [`${vagues.length} vagues à l'Oasis`] : []),
-  ].join(" · ");
+  const sousTitre = "Par où on entre, ce qu'on y trouve, et ce qui en tombe.";
+
+  /**
+   * LES PORTES DU SCHÉMA D'ENTRÉE, montées ici parce que c'est ici que vivent les
+   * comptes ET les réglages. Une porte qui mènerait à un bloc éteint par un Vanguard
+   * serait un lien mort ; une porte dont le compte serait écrit à la main serait
+   * fausse au prochain relevé.
+   *
+   * Elles sont dans l'ORDRE DE LA PAGE, et cet ordre est le renseignement : du plus
+   * proche du téléporteur au plus à part. Le schéma se cache pendant une recherche —
+   * les blocs, eux, se cachent selon ce que la frappe désigne, et un plan de page qui
+   * renvoie vers ce qui n'est plus affiché ment.
+   */
+  /**
+   * L'ARMURE CONSEILLÉE ÉTAIT ÉCRITE DIX-NEUF FOIS, ET DIX-NEUF FOIS LA MÊME.
+   *
+   * « Armure vent +20 » apparaît sur 19 des 23 tuiles ; les 4 autres n'exigent rien.
+   * C'est le défaut que la page a déjà corrigé une fois : la pastille « élément »
+   * valait « Terre » partout, et une pastille identique partout ne fait choisir
+   * personne. Ici la valeur ne distingue rien non plus — ce qui distingue, c'est
+   * qu'il y en ait une OU PAS.
+   *
+   * Alors on la dit UNE fois, sous les filtres, et la tuile ne garde que le
+   * pictogramme de bouclier. Et c'est CALCULÉ : la phrase ne s'écrit que si toutes
+   * les armures relevées sont réellement identiques. Le jour où une instance
+   * demandera autre chose, la phrase disparaît et chaque tuile reprend sa valeur —
+   * sans quoi le pictogramme mentirait par omission.
+   */
+  const armures = [...new Set(dungeons.map((d) => d.armor).filter(Boolean))] as string[];
+  const memeArmure = armures.length === 1 ? armures[0] : null;
+
+  const portes: Porte[] = [
+    { icon: "spiral", par: "Le téléporteur", quoi: `${dungeons.length} donjons`, ancre: "teleporteur" },
+    ...(Boolean(valeurs.horsTeleporteur)
+      ? GROUPES_HORS_TELEPORTEUR.map((g) => ({ icon: g.icon, par: g.par, quoi: g.quoi, ancre: g.ancre }))
+      : []),
+    /* LE NOM COMPLET DU PNJ, ET C'EST SA SEULE OCCURRENCE À L'ÉCRAN. Une passe
+       d'allègement l'avait raccourci en « Gardien » et fait disparaître « Gardien de
+       la Tour Oubliée » de tout le site — or trente-quatre libellés du jeu portent le
+       mot « Gardien », donc le raccourci ne désigne plus personne qu'on puisse
+       chercher. Il a été rapatrié depuis la puce de la Tour Oubliée, où il faisait
+       doublon avec ce schéma. */
+    ...(Boolean(valeurs.tour)
+      ? [{ icon: "user" as const, par: <>Le <b style={{ fontWeight: 600 }}>Gardien de la Tour Oubliée</b>, à Flarine</>, quoi: `${TOUR_OUBLIEE.length} étages`, ancre: "tour-oubliee" }]
+      : []),
+    ...(Boolean(valeurs.oasis) && vagues.length
+      ? [{ icon: "shield" as const, par: "Un événement, sur son arène", quoi: `${vagues.length} vagues`, ancre: "oasis" }]
+      : []),
+  ];
 
   return (
+    <IdsMonstres ids={idsMonstres}>
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-pve.webp" icon="map" title="Wiki des Donjons" subtitle={sousTitre} />
       <SectionTabs section="pve" />
@@ -221,6 +277,11 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           donc il ne proposait aucun choix — la page EST le wiki. Le suivi quotidien
           et le rapport d'instances qui l'accompagnaient sont partis avec lui ; leur
           code restait la sans qu'aucun clic ne puisse plus l'atteindre. */}
+
+      {/* LE PLAN DE LA PAGE, EN SCHÉMA ET AVANT TOUT LE RESTE : la question que
+          /donjons résout n'est pas « lequel » mais « par où ». Cf. CommentOnEntre.tsx
+          pour les quatre phrases qu'il remplace. */}
+      {!qMin && <CommentOnEntre portes={portes} />}
 
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher un donjon..." style={{ flex: 1, minWidth: 180, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)" }} />
@@ -235,9 +296,24 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           ))}
         </div>
       </div>
+      {/* La phrase qui remplace dix-neuf pastilles bavardes. Elle compte les tuiles
+          concernées au lieu de les annoncer : « 19 » vient des données. */}
+      {memeArmure && (
+        <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "-4px 0 12px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <Icon name="shield" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          Le bouclier sur une tuile veut dire <b style={{ color: "var(--text)" }}>{memeArmure}</b> :
+          c&apos;est la même sur les {dungeons.filter((d) => d.armor).length} instances qui en demandent une.
+        </div>
+      )}
       {/* « Aucun donjon » ne veut plus dire « rien sur cette page » : la recherche
           peut ne rien trouver dans la grille et désigner un des deux blocs du bas. */}
       {wikiList.length === 0 && !chercheTour && !chercheOasis && !chercheLieux && <div style={{ color: "var(--text-muted)", padding: "18px 2px", fontSize: 13 }}>Aucun donjon ne correspond.</div>}
+      {/* LA CIBLE DE LA PREMIÈRE PORTE. `scrollMarginTop` vaut la hauteur de la barre
+          de navigation plus un souffle : sans lui, l'ancre pose le titre du bloc
+          exactement SOUS la barre, qui est fixe — le lecteur croit avoir atterri au
+          milieu de nulle part. Même valeur que la marge du voile des fiches (88 px),
+          pour la même raison et la même barre. */}
+      <div id="teleporteur" style={{ scrollMarginTop: 88 }}>
       {groupes.map((g) => (
       <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 20 : 0 }}>
       {g.titre && (
@@ -299,8 +375,12 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
                     <span aria-hidden="true" style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", opacity: .55 }}>
                       <Icon name={d.icon as IconName} size={30} />
                     </span>
-                    <span style={{ position: "absolute", left: 8, bottom: 6, fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", background: "rgba(13,13,17,.6)", borderRadius: 4, padding: "1px 6px" }}>
-                      pas de carte dans le client
+                    {/* SIX MOTS DEVENUS DEUX, et l'aveu tient toujours : la bande n'est
+                        pas une carte. Le `title` garde la phrase entière pour qui
+                        s'interroge. */}
+                    <span title="Le client ne porte aucune carte montrable de cette instance"
+                      style={{ position: "absolute", left: 8, bottom: 6, fontSize: 9.5, textTransform: "uppercase", letterSpacing: .7, color: "var(--text-muted)", background: "rgba(13,13,17,.6)", borderRadius: 4, padding: "1px 6px" }}>
+                      sans plan
                     </span>
                   </div>
                 );
@@ -329,31 +409,82 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
                 l'autre. Voir components/donjons/elements.tsx. Quand le client ne
                 connaît pas l'instance, la pastille n'apparaît pas plutôt que
                 d'afficher un mot vide de sens. */}
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12, alignItems: "center" }}><span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span>{cl && aDesFaiblesses(cl) && <span title="Ce à quoi les créatures posées sont faibles" style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name="target" size={11} style={{ color: "var(--green)" }} /><FaiblessesDonjon d={cl} bulle={false} /></span>}{d.armor && <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="shield" size={11} style={{ marginRight: 3 }} />{d.armor}</span>}</div>
-            {/* La liste passe par `butinsMontrables` : « Penya » ouvrait les butins de
-                la Faille du débutant, et une penya de récompense ne se montre pas. Le
-                compte des points de suspension suit la liste FILTRÉE, sinon la tuile
-                promettait un objet de plus que la fiche n'en montre. */}
+            {/* ┌──── LA LIGNE DE PASTILLES A AVALÉ DEUX PHRASES ────┐
+                Elle portait les PV conseillés, la faiblesse et l'armure. Sous elle
+                venaient deux lignes de texte : « 6 espèces · le plus coriace à
+                3,3 M PV » et « Vidéo disponible ». Onze mots plus trois, sur
+                vingt-trois tuiles, pour trois renseignements qui tiennent chacun dans
+                une pastille — le compte d'espèces, le plus gros sac de PV, et un
+                pictogramme de caméra. Le `title` porte la phrase entière pour qui la
+                veut, et la tuile ne la sert plus à tout le monde.
+                └───────────────────────────────────────────────────┘ */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12, alignItems: "center" }}>
+              <span title="Les PV conseillés pour y entrer" style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}><Icon name="heart" size={11} style={{ marginRight: 3 }} />{hpLabel(d.hp)}</span>
+              {grosPV > 0 && (
+                <span title={`${cl!.monstres.length} espèce${cl!.monstres.length > 1 ? "s" : ""} posée${cl!.monstres.length > 1 ? "s" : ""} sur la carte, la plus coriace à ${pvCourt(grosPV)} PV`}
+                  style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", fontVariantNumeric: "tabular-nums" }}>
+                  <Icon name="skull" size={11} style={{ marginRight: 3 }} />{cl!.monstres.length} · {pvCourt(grosPV)}
+                </span>
+              )}
+              {cl && aDesFaiblesses(cl) && <span title="Ce à quoi les créatures posées sont faibles" style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name="target" size={11} style={{ color: "var(--green)" }} /><FaiblessesDonjon d={cl} bulle={false} /></span>}
+              {d.armor && (
+                <span title={`Armure conseillée : ${d.armor}`} style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 3, color: "var(--orange)" }}>
+                  <Icon name="shield" size={11} />{memeArmure ? null : d.armor}
+                </span>
+              )}
+              {/* Le pictogramme SEUL, et il est orange quand la vidéo existe. Les deux
+                  états restent distingués — c'est ce qui évite d'ouvrir les fiches une
+                  par une — mais sans les trois mots qui les nommaient. Le champ
+                  n'existe que sur les instances Solo : les autres tuiles ne montrent
+                  rien du tout, ce qui est le troisième état. */}
+              {d.video !== undefined && (
+                <span title={d.video ? "Une vidéo de l'instance est disponible dans la fiche" : "Pas encore de vidéo pour cette instance"}
+                  style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", color: d.video ? "var(--orange)" : "var(--text-muted)", opacity: d.video ? 1 : .5 }}>
+                  <Icon name="video" size={11} />
+                </span>
+              )}
+            </div>
+            {/* ┌──── LES BUTINS SONT DEVENUS LEURS ICÔNES DU JEU ────┐
+                La tuile alignait trois noms complets — « Armes Luzaka oubliée (DPS) —
+                toutes classes, Boucliers Luzaka (DCC/INT/END), Armes Luzaka oubliée
+                (TANK) … », quinze mots — et c'est exactement ce que Maxime demande de
+                remplacer : « les images parlent beaucoup plus ». Les 51 butins que les
+                tuiles montrent ont TOUS leur icône dans icones-objets.json, vérifié
+                avant d'écrire cette ligne : aucune tuile ne retombe sur du vide.
+                Le nom reste dans l'`alt` et dans le `title` — donc lisible au survol et
+                par un lecteur d'écran — et la fiche, elle, garde la liste écrite avec
+                <NomObjet>, qui mène au catalogue, à la provenance et à la requête.
+                Le compte des restants passe en « +5 » : la tuile promettait « … », qui
+                ne dit pas combien.
+                └────────────────────────────────────────────────────┘ */}
             {(() => {
               const montrables = butinsMontrables(d.drops);
-              return montrables.length > 0 && <div style={{ marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}><Icon name="gift" size={11} style={{ marginRight: 3 }} />{montrables.slice(0, nbButins).join(", ")}{montrables.length > nbButins ? "…" : ""}</div>;
+              if (montrables.length === 0) return null;
+              const vus = montrables.slice(0, nbButins);
+              const reste = montrables.length - vus.length;
+              return (
+                <div style={{ marginTop: 9, display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                  <Icon name="gift" size={11} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
+                  {vus.map((n) => {
+                    const ic = iconeButin(n);
+                    return ic ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={n} src={ic} alt={n} title={n} width={22} height={22}
+                        style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0 }} />
+                    ) : (
+                      /* Sans icône, le nom reprend sa place : mieux vaut un mot qu'un
+                         trou. Aucun cas à ce jour, mais un butin ajouté demain n'a pas
+                         à disparaître de la tuile en attendant son image. */
+                      <span key={n} style={{ fontSize: 11, color: "var(--text-muted)" }}>{n}</span>
+                    );
+                  })}
+                  {reste > 0 && (
+                    <span title={`${reste} autre${reste > 1 ? "s" : ""} butin${reste > 1 ? "s" : ""} dans la fiche`}
+                      style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>+{reste}</span>
+                  )}
+                </div>
+              );
             })()}
-            {/* Signalé sur la carte, dans un sens comme dans l'autre : sans ça,
-                personne ne devine qu'il y a une vidéo derrière, et celui qui
-                en cherche une ouvre les fiches une par une pour rien. Le champ
-                n'existe que sur les instances Solo — la série ne couvre
-                qu'elles, donc les autres cartes ne disent rien. */}
-            {grosPV > 0 && (
-              <div style={{ marginTop: 7, fontSize: 11.5, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
-                <Icon name="skull" size={11} style={{ marginRight: 3 }} />
-                {cl!.monstres.length} espèce{cl!.monstres.length > 1 ? "s" : ""} · le plus coriace à {pvCourt(grosPV)} PV
-              </div>
-            )}
-            {d.video !== undefined && (
-              <div style={{ marginTop: 7, fontSize: 11.5, display: "inline-flex", alignItems: "center", gap: 5, color: d.video ? "var(--orange)" : "var(--text-muted)" }}>
-                <Icon name="video" size={11} />{d.video ? "Vidéo disponible" : "Pas encore de vidéo"}
-              </div>
-            )}
             </div>
           </div>
           );
@@ -361,6 +492,7 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
       </div>
       </div>
       ))}
+      </div>
 
       {/* Après la grille, pas dedans : la Tour Oubliée n'est pas une destination
           du téléporteur, et la mêler aux vingt-trois ferait croire qu'on y entre
@@ -496,5 +628,6 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
           modale s'était retrouvée coincée dans sa carte. */}
       {panneau}
     </div>
+    </IdsMonstres>
   );
 }

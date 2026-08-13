@@ -8,7 +8,7 @@ import { NomObjet } from "@/components/objets/NomObjet";
 import RELEVE from "@/data/worldboss-releve.json";
 import { Faiblesses, SchemaVies } from "@/components/monstres/Graphiques";
 import {
-  bornesInversees, cadence, clefRecherche, coupMax, court, ELEMENT_FR, entier,
+  bornesInversees, clefRecherche, coupMax, court, ELEMENT_FR, entier,
   iconeElement, parSeconde, tonRang,
 } from "@/components/monstres/vocabulaire";
 
@@ -162,7 +162,15 @@ export function BeteEnBref({ m }: { m: Bete }) {
       {/* Le schéma remplace les trois lignes qui expliquaient les vies. */}
       {seReleve && <SchemaVies pv={m.pv} vies={m.vies} pvEff={m.pvEff} taille="petite" />}
 
-      <Link href={`/monstres/${m.id}`} style={{ fontSize: 11.5, color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+      {/* LE NOM DU MONSTRE RAPPROCHÉ EST DANS L'INFOBULLE DU LIEN, et c'est un garde-fou.
+          Le staff tape le nom à la main, et `monstreDeLEvenement` accepte l'inclusion
+          dans un sens ou dans l'autre — « Elun » retrouve « Elun, Premier Regard
+          d'Ipuli ». Si le rapprochement se trompe un jour, le survol du lien le montre
+          avant qu'on ait préparé un run sur les chiffres d'un autre monstre. Une
+          infobulle et non une ligne de plus : le rapprochement est juste dans le cas
+          normal, et l'écrire à l'écran répéterait le nom déjà affiché au-dessus. */}
+      <Link href={`/monstres/${m.id}`} title={`${m.nom} — sa fiche complète`}
+        style={{ fontSize: 11.5, color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
         <Icon name="arrow-right" size={12} /> Sa fiche complète
       </Link>
     </div>
@@ -275,8 +283,9 @@ export function BestiaireWorldBoss() {
   /** Faibles à leur PROPRE élément — ce que la roue élémentaire ne produit jamais,
    *  et la raison pour laquelle ce site LIT les cinq colonnes du client. */
   const faiblesALui = betes.filter((m) => (m.res?.[m.elem] ?? 0) < 0);
-  /** Ceux des boss de siège que les fichiers de carte placent quelque part. */
-  const poses = guilde.monstres.filter((m) => m.zones.length > 0);
+  /* `poses` a disparu d'ici : la zone d'un boss de siège est maintenant écrite SUR sa
+     pastille, avec l'épingle du jeu. Une liste calculée pour fabriquer une phrase
+     « seul X est posé… » n'avait plus de raison d'exister. */
 
   // Le badge de prestige : les paliers et le total se lisent dans PRESTIGE_COSTS,
   // la même source que la page Prestige. Deux pages, un seul chiffre.
@@ -352,17 +361,34 @@ export function BestiaireWorldBoss() {
             ))}
           </div>
 
+          {/* LE BADGE EXIGÉ PAR LE PRESTIGE, EN PALIERS DESSINÉS.
+              La phrase disait « Le prestige en réclame 4. 1 au palier 7, 1 au palier 8
+              et 2 au palier 9. C'est la raison concrète de cliquer présent plus haut —
+              les coûts sont sur la page Prestige » : trente mots pour trois couples de
+              nombres et un lien. Une rangée de plaquettes les montre, et la motivation
+              (« la raison de cliquer présent ») était de la prose — le titre de la
+              section la dit déjà.
+              Les paliers et les quantités se lisent dans PRESTIGE_COSTS, la même source
+              que la page Prestige : deux pages, un seul chiffre. */}
           {paliers.length > 0 && (
-            <div style={{ border: "1px solid color-mix(in srgb, var(--gold) 38%, transparent)", background: "color-mix(in srgb, var(--gold) 7%, transparent)", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6 }}>
-              <b style={{ color: "var(--gold)" }}>Le prestige en réclame {totalBadges}.</b>{" "}
-              {paliers.map((p, i) => (
-                <span key={p.palier}>
-                  {i > 0 ? (i === paliers.length - 1 ? " et " : ", ") : ""}
-                  <b>{p.n}</b> au palier {p.palier}
-                </span>
-              ))}
-              . C&apos;est la raison concrète de cliquer « présent » plus haut —{" "}
-              <Link href="/prestige" style={{ color: "var(--orange)" }}>les coûts sont sur la page Prestige</Link>.
+            <div style={{ border: "1px solid color-mix(in srgb, var(--gold) 38%, transparent)", background: "color-mix(in srgb, var(--gold) 7%, transparent)", borderRadius: 10, padding: "11px 13px", display: "flex", gap: 11, flexWrap: "wrap", alignItems: "center" }}>
+              <span className="font-heading" style={{ fontSize: 15, fontWeight: 700, color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>
+                {totalBadges}
+              </span>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>badges exigés par le prestige</span>
+              <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
+                {paliers.map((p) => (
+                  <span key={p.palier} title={`${p.n} au palier ${p.palier}`}
+                    style={{ display: "inline-flex", alignItems: "baseline", gap: 4, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 7, padding: "3px 9px", fontSize: 11.5, fontVariantNumeric: "tabular-nums" }}>
+                    <span style={{ color: "var(--text-muted)" }}>palier</span>
+                    <b>{p.palier}</b>
+                    <b style={{ color: "var(--gold)" }}>×{p.n}</b>
+                  </span>
+                ))}
+              </span>
+              <Link href="/prestige" style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <Icon name="arrow-right" size={12} /> Les coûts
+              </Link>
             </div>
           )}
         </div>
@@ -374,25 +400,33 @@ export function BestiaireWorldBoss() {
       compte: guilde.monstres.length,
       contenu: (
         <div style={{ display: "grid", gap: 11 }}>
+          {/* DIX-SEPT MOTS DEVENUS NEUF. « appartiennent au siège de guilde, pas à un
+              passage de world boss » disait deux fois la même chose : le titre de la
+              section est déjà « Ne pas confondre », et son sous-titre « les boss de
+              siège de guilde ». Ce qui reste est le seul mot qui manque à ces deux-là. */}
           <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.6 }}>
             <Bulle quoi={guilde.critere}><span>{guilde.monstres.length} monstres</span></Bulle>{" "}
-            appartiennent au <b>siège de guilde</b>, pas à un passage de world boss.
+            du <b>siège de guilde</b> — aucun passage annoncé ne les concerne.
           </p>
+          {/* LA ZONE EST SUR LA PASTILLE, plus dans une phrase à part. « Seul X (zone)
+              est posé dans une carte du client » : douze mots pour situer UN monstre,
+              alors que l'épingle sur sa pastille le dit, et que son absence sur les
+              trois autres dit l'autre moitié — le client ne les pose nulle part. La
+              DESTINATION, jamais un couple de coordonnées : un nombre ne se situe pas
+              quand on est dans le jeu. */}
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
             {guilde.monstres.map((m) => (
               <Link key={m.id} href={`/monstres/${m.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 20, padding: "5px 12px", fontSize: 12.5, color: "var(--text)", textDecoration: "none" }}>
                 {m.nom}
                 <b style={{ color: "var(--orange)", fontVariantNumeric: "tabular-nums" }}>{court(m.pvEff)}</b>
+                {m.zones.length > 0 && (
+                  <span title={`Posé dans : ${m.zones.join(", ")}`} style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "var(--text-muted)", fontSize: 11 }}>
+                    <Icon name="map-pin" size={11} />{m.zones.join(", ")}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
-          {poses.length > 0 && (
-            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: 0 }}>
-              {/* La destination, jamais un couple de coordonnées : un nombre ne se
-                  situe pas quand on est dans le jeu. */}
-              Seul {poses.map((m) => `${m.nom} (${m.zones.join(", ")})`).join(", ")} est posé dans une carte du client.
-            </p>
-          )}
         </div>
       ),
     },

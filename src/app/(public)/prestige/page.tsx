@@ -8,7 +8,7 @@ import { Icon } from "@/components/Icon";
 import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { FrisePaliers } from "@/components/guides/FrisePaliers";
-import { Barre, IconeRessource, NUCLEUS_ELEMENTS, RECHERCHE_OBJET, Verrou, fr } from "@/components/guides/Briques";
+import { Barre, IconeRessource, NUCLEUS_ELEMENTS, RECHERCHE_OBJET, Verrou, Vignette, fr } from "@/components/guides/Briques";
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -103,6 +103,34 @@ export default function PrestigePage() {
   const done = keys.filter((k) => (have[k] ?? 0) >= need[k]).length;
   const globalPct = keys.length ? Math.round((keys.reduce((s, k) => s + Math.min(1, (have[k] ?? 0) / need[k]), 0) / keys.length) * 100) : 0;
 
+  /**
+   * ════════════════════════════════════════════════════════════════════════════
+   *  CE DONT ON EST LE PLUS LOIN — la seule chose comparable entre neuf unités.
+   * ════════════════════════════════════════════════════════════════════════════
+   *
+   * La page répond à « combien il m'en faut », ressource par ressource. Elle ne répondait
+   * pas à la question suivante, qui est celle qu'on se pose vraiment le soir : PAR LEQUEL
+   * COMMENCER. Neuf cartes affichent « reste 12 », « reste 34 995 », « reste 500 » — trois
+   * unités qui ne s'additionnent ni ne se comparent. Aucun joueur ne fait le rapport de
+   * tête, et l'ordre de farm en dépend.
+   *
+   * Ce qui SE compare, c'est la PART qui reste : un rapport, sans unité. La carte la plus
+   * en retard reçoit une pastille, et rien d'autre ne bouge — remonter la carte en tête de
+   * grille la ferait sauter d'une place à chaque frappe au clavier.
+   *
+   * ELLE NE S'AFFICHE QUE QUAND ELLE VEUT DIRE QUELQUE CHOSE, et c'est le point délicat :
+   * tant qu'aucun stock n'est saisi, les neuf ressources sont à zéro, donc les neuf parts
+   * valent 1 et « le plus loin » désignerait la première de la liste par pur hasard. Deux
+   * conditions, donc : au moins un stock saisi, et un maximum STRICT — deux ressources à
+   * égalité ne se départagent pas, on n'invente pas un vainqueur.
+   */
+  const saisi = keys.some((k) => (have[k] ?? 0) > 0);
+  const restant = keys.map((k) => Math.max(0, need[k] - (have[k] ?? 0)) / need[k]);
+  const pire = restant.length ? Math.max(...restant) : 0;
+  const loin = saisi && pire > 0 && restant.filter((p) => p === pire).length === 1
+    ? keys[restant.indexOf(pire)]
+    : null;
+
   return (
     <div style={{ padding: "24px 18px 60px", maxWidth: 1040, margin: "0 auto" }}>
       {/* La porte du désert du jeu, en fond d'en-tête : passer un prestige, c'est
@@ -151,7 +179,30 @@ export default function PrestigePage() {
                     {/* L'icône du client, à côté du nom écrit : elle ne porte donc pas
                         l'information une seconde fois, d'où alt vide. */}
                     <IconeRessource nom={k} taille={24} alt="" />
-                    <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>{k}</span>
+                    {/* ══════════════════════════════════════════════════════════════
+                        LE NOM EST LE LIEN, et les neuf lignes « Sa fiche » ont disparu.
+                        ══════════════════════════════════════════════════════════════
+                        Elles coûtaient VINGT-SEPT MOTS pour une seule idée, répétée neuf
+                        fois au bas de neuf cartes, alors que le nom de la ressource était
+                        écrit juste au-dessus et ne menait nulle part. C'est le motif déjà
+                        en service partout ailleurs sur le site — un nom d'objet ou
+                        d'instance mène à sa fiche (cf. `Instance`, `NomObjet`) — et il ne
+                        coûte pas un mot : le texte était déjà là.
+                        La cible passe par RECHERCHE_OBJET et non par le nom affiché : le
+                        client écrit « Badge du Jardin Préstigieux », et un lien bâti sur
+                        notre orthographe tombe sur zéro résultat (la table le documente).
+                        Une ressource sans mot-clé garde son nom en texte simple, jamais un
+                        lien mort. */}
+                    {RECHERCHE_OBJET[k] ? (
+                      <a className="pr-nom" href={`/objets?q=${encodeURIComponent(RECHERCHE_OBJET[k])}`}>{k}</a>
+                    ) : (
+                      <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1, minWidth: 0 }}>{k}</span>
+                    )}
+                    {loin === k && (
+                      <span className="pr-loin" title="C'est de cette ressource que tu es proportionnellement le plus loin : la part qui te reste y est la plus grande des neuf.">
+                        le plus loin
+                      </span>
+                    )}
                     {ok && <Icon name="check" size={16} style={{ color: "var(--green)" }} />}
                   </div>
                   {k.toLowerCase().includes("parfait") && (
@@ -176,18 +227,19 @@ export default function PrestigePage() {
                       ressource est complète, orange sinon — et jamais deux teintes dans
                       la même série. */}
                   <ParPalier cle={k} de={cur} a={tgt} teinte={ok ? "var(--green)" : "var(--orange)"} />
-
-                  {RECHERCHE_OBJET[k] && (
-                    /* « Voir la fiche » écrit neuf fois faisait vingt-sept mots pour
-                       une seule idée. « Sa fiche » suffit sous le nom de l'objet. */
-                    <a className="pr-fiche" href={`/objets?q=${encodeURIComponent(RECHERCHE_OBJET[k])}`}>
-                      Sa fiche <Verrou quoi="membres" />
-                    </a>
-                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* LE CADENAS EST DIT UNE FOIS POUR LES NEUF CARTES. Le catalogue vit dans le
+              groupe (guild) et cette page est publique : la maison veut qu'une porte fermée
+              se dise AVANT le clic. Répété neuf fois il n'était plus lu ; posé une fois
+              sous la grille, il couvre les neuf noms. Même geste que la légende des
+              priorités du guide, pour que les deux pages voisines se lisent pareil. */}
+          <p className="pr-legende">
+            Un nom de ressource ouvre sa fiche <Verrou quoi="membres" />
+          </p>
 
           {/* ── LA FRISE ──
               Elle remplace le tableau replié : dix lignes sur neuf colonnes de chiffres
@@ -196,6 +248,12 @@ export default function PrestigePage() {
               La même brique sert au guide, où elle montre en plus ce qui s'ouvre. */}
           <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 16 }}>
             <h2 className="pr-h2">
+              {/* La vue : une chaussée éclairée de brasiers qui s'enfonce dans la nuit —
+                  le chemin, palier par palier. Elle vient du générique du client
+                  (public/jeu/credits/), le seul dossier du jeu dont les captures ne
+                  portent ni logo d'éditeur ni barre de chargement, et elle est en
+                  1024x768 comme le veut la vignette (cf. `Vignette`). */}
+              <Vignette vue="shotcredit05" />
               <Icon name="path" size={17} />
               {/* Le titre disait « Ce que demande chaque palier », mot pour mot le
                   sous-titre de l'en-tête, deux écrans plus haut. */}
@@ -239,9 +297,26 @@ export default function PrestigePage() {
           ce qui le précède. Elle n'apparaît que quand la comparaison est vraie (voir
           ParPalier), donc son absence est aussi une réponse.
 
+          .pr-loin — la pastille « le plus loin ». BLEUE, comme la cadence des priorités
+          du guide, et pour la même raison : elle ne dit pas une quantité — le rouge du
+          mur et le doré des coûts sont pris par des quantités — elle dit par où
+          commencer. Elle est en flex-shrink:0 parce qu'elle partage sa ligne avec un nom
+          de ressource qui peut faire trente caractères : sans ça, c'est la pastille qui
+          se comprimait en accordéon plutôt que le nom qui se tronquait.
+
           Les barres de progression restent en dégradé : ce sont des jauges de
           remplissage, pas des grandeurs à comparer entre elles — la règle d'une seule
-          teinte vise les séries de barres, et celles-là sont dans la brique Barre. */}
+          teinte vise les séries de barres, et celles-là sont dans la brique Barre.
+
+          .pr-nom — le nom de la ressource est devenu le lien, et il garde EXACTEMENT
+          l'aspect du texte qu'il remplace (13,5 px, semi-gras, couleur du texte) : seul un
+          pointillé orange s'ajoute dessous, le même signal que la maison emploie pour tout
+          lien au fil du texte. Une couleur de lien franche aurait fait neuf titres orange
+          dans une grille dont l'orange sert déjà aux jauges.
+
+          .pr-legende — marge du haut NÉGATIVE : la grille des ressources porte déjà 16 px
+          de marge basse, et la légende doit se lire comme la note de bas de cette grille,
+          pas comme un bloc à part. */}
       <style>{`
         .pr-lb{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
         .pr-h2{font-family:'Rubik',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;
@@ -260,13 +335,19 @@ export default function PrestigePage() {
         .pr-palier-t b{color:var(--gold);font-family:'Rubik',sans-serif}
         .pr-mur{color:var(--red);border:1px solid color-mix(in srgb, var(--red) 55%, transparent);
           border-radius:20px;padding:0 7px;letter-spacing:.5px;font-weight:700}
+        .pr-loin{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+          color:var(--blue);border:1px solid color-mix(in srgb, var(--blue) 60%, transparent);
+          border-radius:20px;padding:0 7px;white-space:nowrap;flex-shrink:0}
         .pr-palier-l{display:grid;grid-template-columns:52px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:4px}
         .pr-palier-p{font-size:10.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
         .pr-palier-b{min-width:0}
         .pr-palier-v{font-size:11px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
-        .pr-fiche{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px;
-          color:var(--text-muted);text-decoration:none;transition:color .15s}
-        .pr-fiche:hover{color:var(--orange)}
+        .pr-nom{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--text);
+          text-decoration:none;border-bottom:1px dotted color-mix(in srgb, var(--orange) 55%, transparent);
+          transition:color .15s,border-color .15s}
+        .pr-nom:hover{color:var(--orange);border-bottom-color:var(--orange)}
+        .pr-legende{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 16px;
+          font-size:11.5px;color:var(--text-muted)}
         .pr-lien{color:var(--orange);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
         .pr-lien:hover{color:var(--text)}
         @keyframes prIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}

@@ -4,6 +4,8 @@ import { Icon, type IconName } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { EnteteVolet, VoletSections, type SectionVolet } from "@/components/VoletSections";
 import { useCardFx } from "@/components/VgFx";
+import { DeStat, STATS } from "@/components/jeu/Interface";
+import { NomObjet } from "@/components/objets/NomObjet";
 import BUTIN from "@/data/monstres-butin.json";
 import { CarteMonstre } from "./Recherche";
 import { Resistances, SchemaVies } from "./Graphiques";
@@ -37,17 +39,24 @@ import {
  * de butin. Les objets, eux, sont RESTÉS — c'est leur NOM qui sert, et il est
  * maintenant montré avec l'icône du client.
  *
- * ┌────── CE QUE CETTE PASSE A CHANGÉ : LE BUTIN MÈNE QUELQUE PART ──────┐
- * │ « Ce qu'il lâche » affichait une grille d'icônes et de noms MORTS :   │
- * │ on lisait « Âme de démon » et il fallait aller la retaper dans la     │
- * │ recherche d'objets pour savoir ce que c'est. Chaque vignette est      │
- * │ maintenant un lien vers la fiche de l'objet, où vivent ses bonus, sa  │
- * │ provenance complète et les autres monstres qui le lâchent. C'est      │
- * │ exactement le « retrouver les monstres, les objets, drops » demandé.  │
- * │ Le pont porte l'identifiant depuis cette passe : le relevé ne nommait  │
- * │ que le nom, et un nom ne fait pas une adresse (deux objets peuvent le  │
- * │ partager — versions garçon et fille).                                 │
+ * ┌────── CE QUE CETTE PASSE A CHANGÉ : LE BUTIN MÈNE TROIS FOIS ────────┐
+ * │ « Ce qu'il lâche » affichait une grille d'icônes et de noms MORTS,    │
+ * │ puis des liens vers la fiche de l'objet. Il manquait encore les deux  │
+ * │ questions suivantes, qui sont celles qu'on se pose vraiment devant un │
+ * │ butin : d'OÙ ÇA VIENT D'AUTRE, et COMMENT JE L'OBTIENS. C'est ce que  │
+ * │ `NomObjet` sait faire — la fiche, la provenance (chargée seulement à  │
+ * │ l'ouverture de la bulle) et « le demander à la guilde », qui dépose   │
+ * │ le nom dans la boutique. Les trois briques existaient, elles          │
+ * │ n'étaient pas branchées ici.                                          │
  * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * ┌──── LES QUATRE DÉS DU JEU À LA PLACE DE QUATRE MOTS ────┐
+ * │ « Force · Endurance · Dextérité · Intelligence » puis    │
+ * │ quatre nombres : huit mots pour une ligne que le jeu     │
+ * │ dessine lui-même. Les dés de `jeu/Interface` portent     │
+ * │ FOR, END, DEX et INT GRAVÉS dans la pierre — on ne       │
+ * │ réécrit donc pas ces mots à côté.                        │
+ * └─────────────────────────────────────────────────────────┘
  */
 
 /** Ce que le pont sait d'un objet lâché : son nom, son identifiant de fiche, et son
@@ -187,8 +196,16 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
               <Ligne quoi="Points de magie" valeur={entier(m.pm)} />
               <Ligne quoi="Esquive" valeur={entier(m.esq)} />
               <Ligne quoi="Précision" valeur={entier(m.prec)} />
-              <Ligne quoi="Force · Endurance · Dextérité · Intelligence"
-                valeur={m.sta.map((x) => (x == null ? "—" : x.toLocaleString("fr-FR"))).join(" · ")} />
+              {/* Les quatre dés du jeu, dans l'ordre où le relevé range `sta` : force,
+                  endurance, dextérité, intelligence — le même ordre que `STATS`. Le mot
+                  est DANS la pierre, et le texte de remplacement du dé le porte pour
+                  qui ne voit pas l'image : rien à réécrire à côté. */}
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", paddingTop: 10, borderTop: "1px solid color-mix(in srgb, var(--border) 55%, transparent)" }}>
+                {STATS.map((s, i) => (
+                  <DeStat key={s} stat={s} taille={30}
+                    valeur={m.sta[i] == null ? "—" : m.sta[i]!} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -220,11 +237,22 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
             {m.distance ? <Tuile icon="target" titre="Attaque à distance" ton="var(--blue)" valeur={`${m.distance} m`} /> : null}
           </div>
 
-          <div>
-            <Ligne quoi="Agressivité" valeur={m.agro ?? "—"} />
-            {m.aggro ? <Ligne quoi="Portée d'aggro" valeur={`${m.aggro} m`} /> : null}
-            <Ligne quoi="Vole" valeur={m.vole ? "Oui" : "Non"} />
-          </div>
+          {/* CE QUI A QUITTÉ CE BLOC, et pourquoi.
+              · « Agressivité » : le relevé n'écrit que trois valeurs, toutes trois
+                commençant par « agressif », sur 1 122 monstres des 1 124. Une ligne
+                qui dit la même chose sur toutes les fiches n'informe personne, et la
+                page d'accueil des monstres porte déjà le fait une fois. Sa précision
+                entre parenthèses est soit une redite de la ligne « Attaque à
+                distance » juste au-dessus, soit un « 2x » dont rien dans le client ne
+                dit ce qu'il compte — règle du renseignement incomplet.
+              · « Vole : Non » : vrai sur 18 monstres du catalogue, donc écrit « Non »
+                sur les 1 106 autres. Il ne s'affiche plus que quand il est vrai. */}
+          {(m.aggro || m.vole) && (
+            <div>
+              {m.aggro ? <Ligne quoi="Portée d'aggro" valeur={`${m.aggro} m`} /> : null}
+              {m.vole ? <Ligne quoi="Il vole" valeur="Oui" ton="var(--blue)" /> : null}
+            </div>
+          )}
         </div>
       ),
     },
@@ -303,23 +331,22 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
       contenu: (
         <div style={{ display: "grid", gap: 14 }}>
           {objets.length > 0 && (
-            <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+            /* UNE PASTILLE EN RANGÉE, plus une vignette de 92 px. `NomObjet` pose
+               l'icône à côté du nom, et un nom de quatre mots dans une colonne de
+               92 px se cassait sur trois lignes sous une image centrée. C'est la même
+               forme que l'étal d'un PNJ et que les récompenses de /worldboss : un nom
+               d'objet se lit pareil partout sur le site.
+               `NomObjet` ne reçoit que le NOM et l'icône — c'est tout ce qu'il sait
+               prendre. L'identifiant du pont (`o.i`) n'a donc plus d'emploi ici ; il
+               reste dans le relevé, prêt pour le jour où la brique acceptera une
+               adresse directe. */
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {objets.map((o) => (
-                <Link key={o.n} href={`/objets/${o.i}`} title={`${o.n} — sa fiche et sa provenance`}
-                  className="fx-card vg-butin"
-                  style={{ width: 92, display: "grid", justifyItems: "center", gap: 4, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 6px", textDecoration: "none" }}>
-                  {/* Les icônes du client font 32 px : agrandies elles bavent, donc
-                      `pixelated` — c'est ce que le joueur a sous les yeux en jeu.
-                      Huit des 106 objets n'ont pas de fichier sur le disque : on ne
-                      met alors rien, une image cassée est pire que pas d'image. */}
-                  {o.ic ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/jeu/icones/${o.ic}`} alt="" width={32} height={32} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
-                  ) : (
-                    <Icon name="package" size={26} style={{ color: "var(--text-muted)" }} />
-                  )}
-                  <span style={{ fontSize: 10.5, textAlign: "center", lineHeight: 1.25, color: "var(--text-muted)" }}>{o.n}</span>
-                </Link>
+                <span key={o.n} style={{ display: "inline-flex", alignItems: "center", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "6px 11px", fontSize: 12, lineHeight: 1.3 }}>
+                  {/* Huit des objets du pont n'ont pas de fichier d'icône sur le disque :
+                      `NomObjet` n'en met alors aucune plutôt qu'une image cassée. */}
+                  <NomObjet nom={o.n} icone={o.ic ?? null} taille={26} />
+                </span>
               ))}
             </div>
           )}
@@ -402,11 +429,10 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
         }
         sections={sections}
       />
-
-      {/* Le survol dit que la vignette de butin est cliquable : sans lui, une grille
-          d'icônes se lit comme une illustration et personne ne clique. */}
-      <style>{`.vg-butin{transition:border-color .15s,background .15s}
-.vg-butin:hover{border-color:var(--orange);background:color-mix(in srgb, var(--orange) 8%, var(--bg-3))}`}</style>
+      {/* La règle de survol `.vg-butin` est partie avec la grille de vignettes :
+          `NomObjet` porte son propre signal — le pointillé orange sous le nom, celui
+          de toutes les bulles du site. Deux affordances pour une même chose valaient
+          moins qu'une seule, partout la même. */}
     </div>
   );
 }

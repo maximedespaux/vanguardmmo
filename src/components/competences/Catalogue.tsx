@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bulle } from "@/components/Bulle";
 import { Icon } from "@/components/Icon";
 import { VgSelect } from "@/components/VgSelect";
 // `findClass` et pas `CLASSES[cle]` : les clefs de CLASSES sont désaccentuées
@@ -17,8 +18,10 @@ import {
  * LE CATALOGUE — les 197 compétences, cherchées comme on les cherche.
  *
  * 197 et non 202 : le fichier du client écrit DEUX FOIS cinq compétences d'arc de
- * l'Acrobate. C'est `Sections.tsx` qui l'explique au lecteur ; ici on note juste
- * que le nombre affiché vient de `entrees.length`, jamais d'une constante.
+ * l'Acrobate. Le lecteur n'en est plus informé, et c'est voulu — l'encart qui le
+ * disait était de la méthode, pas du jeu (règle 2, voir Sections.tsx). Ce qui compte
+ * ici : le nombre affiché vient de `entrees.length`, jamais d'une constante, et la
+ * liste reçue est déjà dédoublonnée par la route.
  *
  * Trois façons d'arriver sur une compétence, et elles ne se remplacent pas :
  *  · par le nom, quand on sait déjà lequel on veut ;
@@ -325,7 +328,25 @@ function FicheDetail({ f, suivre }: { f: Fiche; suivre: (id: string) => void }) 
             <thead>
               <tr>
                 <th style={TH}>Niv.</th>
-                {colonnes.map((k) => <th key={k} style={TH}>{COLONNES[k].titre}</th>)}
+                {/* LA SEULE RÉSERVE QUI RESTE À L'ÉCRAN, ET ELLE EST ICI.
+                    Le volet « Ce qu'on ne sait pas » portait cinq encarts ; quatre
+                    étaient des constats d'ignorance et sont partis (règle 2). Celui-ci
+                    protège d'une erreur coûteuse — bâtir un build sur les
+                    « 164–211 dégâts » de cette colonne, qui sont la valeur de base de
+                    la compétence et pas ce qu'on tape à l'écran. Il est donc posé SUR
+                    la colonne fautive, dans une bulle : au moment où on lit le chiffre,
+                    pas dans un volet qu'il faut penser à ouvrir. */}
+                {colonnes.map((k) => (
+                  <th key={k} style={TH}>
+                    {k === "degats"
+                      ? <Bulle cote="bas" largeur={280} quoi={
+                          <>La <b>valeur de base</b> de la compétence, pas ce que tu vas taper :
+                          le client donne la statistique de référence et son coefficient,
+                          jamais l&apos;équation qui les combine à ton arme.</>
+                        }>{COLONNES[k].titre}</Bulle>
+                      : COLONNES[k].titre}
+                  </th>
+                ))}
                 {aEffets && <th style={TH}>Effets</th>}
               </tr>
             </thead>

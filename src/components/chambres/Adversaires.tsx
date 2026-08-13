@@ -59,6 +59,60 @@ const parSeconde = (m: Adversaire) => (m.delai > 0 ? (m.atkMax / (m.delai / 1000
  * feu/eau/electricite/vent/terre : c'est déjà la forme du relevé.
  */
 
+/**
+ * LA MISE EN GARDE, SORTIE DE SON ONGLET.
+ *
+ * ┌──────────── LE DÉFAUT QU'ELLE CORRIGE ────────────┐
+ * │ « Une barre à zéro ne veut pas dire mort » vivait   │
+ * │ dans le bloc des adversaires, donc dans l'onglet    │
+ * │ « Stratégie ». Or la page OUVRE sur « Chambre       │
+ * │ Secrète » : celui qui vient s'inscrire pour ce soir │
+ * │ ne la voyait jamais. Une mise en garde qu'il faut   │
+ * │ aller chercher n'en est plus une.                   │
+ * └────────────────────────────────────────────────────┘
+ *
+ * Elle tient sur une ligne, sous les onglets, quel que soit l'onglet ouvert. Les
+ * deux nombres sont COMPTÉS sur le relevé, comme partout ailleurs dans ce fichier.
+ * Le bouton mène au tableau qui donne la colonne « PV à sortir » — le geste au bout
+ * de l'avertissement, sinon c'est une phrase de plus.
+ *
+ * @param onVoir — bascule vers l'onglet qui porte le tableau. Absent, la ligne
+ *   reste informative et ne promet pas un clic qui ne fait rien.
+ */
+export function AlerteVies({ onVoir }: { onVoir?: () => void }) {
+  const aVies = ADV.filter((m) => m.vies > 1);
+  if (!aVies.length) return null;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap", marginBottom: 18,
+      padding: "9px 13px", borderRadius: 10, fontSize: 12.5, lineHeight: 1.5,
+      background: "color-mix(in srgb, var(--red) 7%, transparent)",
+      border: "1px solid color-mix(in srgb, var(--red) 30%, transparent)",
+    }}>
+      <Icon name="alert" size={15} style={{ color: "var(--red)", flexShrink: 0 }} />
+      <span>
+        <b style={{ color: "var(--red)" }}>Une barre à zéro ne veut pas dire mort.</b>{" "}
+        {/* « des Chambres » ET NON « de la salle ». Le relevé nomme des lieux
+            DISTINCTS dans les noms mêmes de ses adversaires — Gardien du Mausolée,
+            Gardien du Tombeau, Gardienne de l'antichambre — et la légende du plan,
+            dix centimètres plus bas, annonce « deux ailes et une salle ronde ». Écrire
+            « la salle » au singulier dans la phrase la plus visible de la page la
+            faisait contredire sa propre carte. */}
+        {aVies.length} des {ADV.length} adversaires des Chambres se relèvent.
+      </span>
+      {onVoir && (
+        <button type="button" onClick={onVoir} style={{
+          marginLeft: "auto", flexShrink: 0, cursor: "pointer", fontFamily: "inherit",
+          fontSize: 11.5, fontWeight: 600, padding: "5px 11px", borderRadius: 8,
+          background: "transparent", border: "1px solid var(--red)", color: "var(--red)",
+        }}>
+          Les PV à sortir
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function AdversairesChambres() {
   const parMenace = [...ADV].sort((a, b) => parSeconde(b) - parSeconde(a));
   const parVie = [...ADV].sort((a, b) => b.pvEff - a.pvEff);
@@ -66,7 +120,6 @@ export function AdversairesChambres() {
   const plusGros = parVie[0];
   const mutants = ADV.filter((m) => /Mutant Secret$/.test(m.nom));
   const aVies = ADV.filter((m) => m.vies > 1);
-  const sansExp = ADV.filter((m) => m.exp === 0);
   const maxSeconde = Math.max(1, ...ADV.map(parSeconde));
   const maxVie = Math.max(1, ...ADV.map((m) => m.pvEff));
 
@@ -94,8 +147,14 @@ export function AdversairesChambres() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/jeu/cartes-monde/dungeon_secretroom.webp" alt="Le plan des Chambres Secrètes, tel qu'il sort du client"
             style={{ width: "100%", display: "block", borderRadius: 12, border: "1px solid var(--border)" }} />
+          {/* « l'antichambre » EST PARTI, remplacé par ce qu'on VOIT. Le plan montre
+              deux grandes structures et une salle ronde ; rien, ni dans l'image ni
+              dans le relevé, ne dit que la ronde est une antichambre — elle pourrait
+              tout aussi bien être la salle du dernier boss. On décrit la carte, on
+              ne la commente pas : c'est la même règle que pour les icônes, une
+              légende qui affirme plus que sa source finit par tromper. */}
           <figcaption style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
-            Le plan, tel qu&apos;il sort du client — les deux ailes et l&apos;antichambre.
+            Le plan, tel qu&apos;il sort du client : deux ailes et une salle ronde.
           </figcaption>
         </figure>
 
@@ -115,15 +174,21 @@ export function AdversairesChambres() {
               en jeu » sur le chiffre.
 
               Le schéma est celui du PIRE cas relevé, pas d'un exemple choisi : le
-              plus gros sac de points de vie effectifs de la salle. */}
+              plus gros sac de points de vie effectifs de la salle.
+
+              LA PHRASE D'ALERTE N'EST PLUS EN TÊTE DE CE BLOC : `AlerteVies` la porte
+              au-dessus des onglets, donc elle est déjà à l'écran quand on arrive ici.
+              La répéter à dix centimètres faisait douter qu'il s'agisse du même fait.
+              Ce qui reste est ce que l'alerte ne peut pas tenir sur une ligne : le
+              schéma à l'échelle, et quel chiffre sert à préparer un run. */}
           <div style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px", fontSize: 12.5, lineHeight: 1.6 }}>
-            <b style={{ color: "var(--red)" }}>Une barre à zéro ne veut pas dire mort.</b>{" "}
-            {aVies.length} de ces {ADV.length} adversaires se relèvent.
             {plusGros.vies > 1 && (
-              <div style={{ margin: "10px 0 6px" }}>
+              <div style={{ margin: "0 0 8px" }}>
                 <SchemaVies pv={plusGros.pv} vies={plusGros.vies} pvEff={plusGros.pvEff} taille="petite" />
                 <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 5 }}>
-                  {plusGros.nom}, le plus gros de la salle.
+                  {/* Même correction que dans l'alerte : le donjon a plusieurs
+                      salles, le relevé les nomme, la carte les montre. */}
+                  {plusGros.nom}, le plus gros du donjon.
                 </div>
               </div>
             )}
@@ -150,13 +215,11 @@ export function AdversairesChambres() {
               leurs points de vie qui montent, de {court(Math.min(...mutants.map((m) => m.pv)))} à{" "}
               {court(Math.max(...mutants.map((m) => m.pv)))}, et ils frappent tous toutes les{" "}
               {fr(mutants[0].delai)} ms.
-              {sansExp.length > 0 && (
-                <>
-                  {" "}À savoir aussi : {sansExp.length} de ces adversaires donnent{" "}
-                  <b style={{ color: "var(--gold)" }}>zéro expérience</b> — uniquement de la penya.
-                  On ne vient pas ici pour monter.
-                </>
-              )}
+              {/* LA PHRASE SUR L'EXPÉRIENCE ET LA PENYA EST PARTIE — règle 1 de la
+                  maison, et Maxime nomme ces deux-là avec les taux de chute : elles
+                  restent dans les DONNÉES (le relevé porte toujours `exp` et `penya`
+                  pour chaque adversaire) et quittent l'ÉCRAN. Rien d'autre n'est
+                  perdu : le tableau n'a jamais eu de colonne de récompense. */}
             </div>
           )}
         </div>

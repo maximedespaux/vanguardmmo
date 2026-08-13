@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
@@ -52,6 +52,14 @@ type Trouve = {
 };
 
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
+
+/**
+ * COMBIEN DE VISAGES À L'ARRIVÉE. 24 tient sur deux à quatre rangées selon l'écran, sans
+ * pousser le rail hors de vue ; les 70 autres sont à un clic. Le chiffre est ici et pas
+ * dans le corps du composant parce qu'il est écrit à trois endroits — la tranche, le
+ * test, et le compte du bouton — et qu'un plafond écrit trois fois finit par diverger.
+ */
+const VISAGES_DEPART = 24;
 
 /** Les familles, dans l'ordre où elles servent : on fabrique, on achète, puis le reste. */
 const FAMILLES: { clef: string; titre: string; sous: string; icon: IconName }[] = [
@@ -388,10 +396,15 @@ function LigneTrouve({ t, onOuvrir }: { t: Trouve; onOuvrir: () => void }) {
   );
 }
 
-export function AnnuairePnj({ depart = "" }: {
+export function AnnuairePnj({ depart = "", cleDepart = "" }: {
   /** Un nom d'objet arrivé par l'URL (`/pnj?objet=…`), posé par la fiche de cet
    *  objet. La recherche démarre dessus, et le rail s'ouvre sur « Chercher ». */
   depart?: string;
+  /** La clé d'un PNJ arrivée par l'URL (`/pnj?pnj=MaFl_Boboko`), posée par le wiki :
+   *  sa fiche s'ouvre directement. Voir le cadre de `app/(public)/pnj/page.tsx` —
+   *  ce paramètre était jeté, et les 293 lignes de PNJ du wiki tombaient toutes sur
+   *  l'annuaire générique. */
+  cleDepart?: string;
 }) {
   useCardFx();
   const [annuaire, setAnnuaire] = useState<Vignette[] | null>(null);
@@ -403,6 +416,8 @@ export function AnnuairePnj({ depart = "" }: {
    *  métier dans le rail laisserait la fiche d'un autre métier affichée. */
   const [choix, setChoix] = useState<{ v: Vignette; ou: string } | null>(null);
   const [fiches, setFiches] = useState<Record<string, Fiche>>({});
+  /** La grille d'arrivée montre 24 visages ; le bouton donne les 70 autres. */
+  const [tousLesVisages, setTousLesVisages] = useState(false);
 
   useEffect(() => {
     let vivant = true;
@@ -416,6 +431,25 @@ export function AnnuairePnj({ depart = "" }: {
       .catch(() => vivant && setErreur(true));
     return () => { vivant = false; };
   }, []);
+
+  /**
+   * LE LIEN DU WIKI OUVRE LA FICHE, dès que l'annuaire est là.
+   *
+   * On ne peut pas le faire au montage : la vignette n'existe qu'après `/api/pnj`, et
+   * `FichePnj` a besoin d'elle (le nom, le portrait, la ville s'affichent avant que la
+   * fiche détaillée arrive). L'effet attend donc l'annuaire, ouvre une fois, et se
+   * retire — `ouvert` empêche la fiche de se rouvrir si l'utilisateur la ferme.
+   *
+   * Une clé inconnue ne fait RIEN plutôt que d'afficher une erreur : un lien périmé
+   * doit laisser l'annuaire utilisable, pas planter la page dessus.
+   */
+  const ouvertParUrl = useRef(false);
+  useEffect(() => {
+    if (ouvertParUrl.current || !cleDepart || !annuaire) return;
+    const v = annuaire.find((x) => x.cle === cleDepart);
+    ouvertParUrl.current = true;
+    if (v) setChoix({ v, ou: "chercher" });
+  }, [cleDepart, annuaire]);
 
   // La fiche complète n'est demandée qu'à l'ouverture, et une seule fois par PNJ :
   // les inventaires de vente pèsent l'essentiel du fichier.
@@ -546,15 +580,46 @@ export function AnnuairePnj({ depart = "" }: {
                  vignette sans visage n'illustre rien. Le rail garde les comptes par
                  famille juste à côté pour qui cherche un métier plutôt qu'une tête. */
               <>
-                <SousTitre icon="users" texte="Les visages du client" compte={avecPortrait.length} />
-                <Grille liste={avecPortrait.slice(0, 24)} onOuvrir={ouvrir("chercher")}
+                {/**
+                 * DEUX CHIFFRES QUI SE LISAIENT COMME UNE CONTRADICTION.
+                 *
+                 * L'en-tête annonce « 94 visages » — le nombre de FICHIERS distincts que
+                 * le client attache à quelqu'un (`new Set(p.img).size` dans /api/pnj).
+                 * Cette section-ci en comptait 258 sous le titre « Les visages du
+                 * client », et les deux nombres se touchaient à l'écran : 94 juste
+                 * au-dessus de 258, pour le même mot. Les deux sont justes, ils ne
+                 * comptent pas la même chose — un visage sert à plusieurs marchands.
+                 *
+                 * Le titre dit donc ce qu'il compte : des PNJ, pas des fichiers. Un mot
+                 * de plus, et plus de nombre qui a l'air faux.
+                 */}
+                <SousTitre icon="users" texte="Les PNJ qui ont un visage" compte={avecPortrait.length} />
+                <Grille liste={tousLesVisages ? avecPortrait : avecPortrait.slice(0, VISAGES_DEPART)}
+                  onOuvrir={ouvrir("chercher")}
                   vide="Aucun portrait apparié dans ce relevé." />
-                {avecPortrait.length > 24 && (
-                  <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 9 }}>
-                    {/* Le plafond se DIT : une grille tronquée en silence se lit comme
-                        l'inventaire complet. Même règle que les classements du site. */}
-                    Les 24 premiers sur {avecPortrait.length} portraits appariés — tape un nom, un métier ou un objet pour chercher dans les {annuaire?.length ?? 0}.
-                  </div>
+                {avecPortrait.length > VISAGES_DEPART && (
+                  /**
+                   * LES 70 AUTRES VISAGES SONT MAINTENANT ATTEIGNABLES.
+                   *
+                   * La phrase précédente disait « les 24 premiers sur 94 — tape un nom pour
+                   * chercher dans les 293 » : elle ANNONÇAIT le plafond (c'est la règle) mais
+                   * elle renvoyait à la seule porte qui ne s'ouvre pas ici — pour voir le
+                   * 25ᵉ visage il fallait déjà savoir de qui c'était le visage. Sur une page
+                   * dont l'en-tête se vante de « 94 visages qui n'avaient jamais servi »,
+                   * soixante-dix restaient invisibles.
+                   *
+                   * Un bouton, la même forme que celui de l'étal (`Vente`), et le plafond
+                   * reste annoncé — dans le bouton lui-même. AU REPOS ON N'AJOUTE AUCUN MOT :
+                   * la phrase de dix-neuf mots est remplacée par « + 70 visages », et le clic
+                   * donne soixante-dix images de plus. C'est le sens de la consigne — moins
+                   * de texte, plus d'images.
+                   */
+                  <button onClick={() => setTousLesVisages(!tousLesVisages)}
+                    style={{ marginTop: 10, fontFamily: "inherit", cursor: "pointer", fontSize: 12,
+                      padding: "6px 12px", borderRadius: 9, background: "var(--bg-3)",
+                      border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700, ...NUM }}>
+                    {tousLesVisages ? "Replier" : `+ ${avecPortrait.length - VISAGES_DEPART} PNJ`}
+                  </button>
                 )}
               </>
             )}

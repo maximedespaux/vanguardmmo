@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
+import { MARQUEUR_AIRFLYFF } from "@/components/objets/vocabulaire";
 import { Resultat } from "./Resultat";
 import { useWiki, type ReponseWiki } from "./useWiki";
 import { TYPES, type TypeEntree } from "./vocabulaire";
@@ -124,26 +125,53 @@ function Composition({ parType, total }: { parType: Record<string, number>; tota
  * de farmer pour rien, ou paie l'objet en boutique. Le test de la règle 2 est passé :
  * ça change le geste, donc ça reste — même incomplet.
  *
- * EN BULLE ET PAS EN PARAGRAPHE : une icône de 13 px accrochée au compte, quatre mots
- * d'ancre. Les chiffres sont comptés sur l'index, jamais écrits.
+ * ┌──────── LA PHRASE EST DEVENUE DEUX BARRES, et c'est un gain double.
+ * │
+ * │ Elle disait « 305 monstres sur 1 124 portent une liste, et 5 261 objets sur 11 782
+ * │ disent d'où ils viennent » : quatre nombres dans une subordonnée, que personne ne
+ * │ rapproche en lisant. Deux barres les rapprochent SANS LES LIRE — on voit d'un coup
+ * │ d'œil que le premier tiers est presque vide et que le second est à moitié plein,
+ * │ c'est-à-dire exactement ce que la mise en garde veut faire comprendre. 39 mots
+ * │ servis en moins, et le fait passe mieux.
+ * │
+ * │ UNE SEULE TEINTE, celle que la bulle emploie déjà (l'or de la mise en garde) : c'est
+ * │ la LONGUEUR qui porte la grandeur. Deux teintes différentes se liraient comme deux
+ * │ natures de choses, et le vert contre l'or ne se distingue pas pour un daltonien
+ * │ protan. Plancher à 1,5 % pour qu'une part faible reste une barre et pas une absence.
+ * └────────────────────────────────────────────────────────────────────────────────────
  */
+function Part({ quoi, n, sur }: { quoi: string; n: number; sur: number }) {
+  const pct = sur > 0 ? (n / sur) * 100 : 0;
+  return (
+    <span style={{ display: "grid", gap: 3 }}>
+      <span style={{ display: "flex", gap: 6, alignItems: "baseline", fontSize: 11.5 }}>
+        <b style={{ ...NUM, color: "var(--gold)" }}>{fr(n)}</b>
+        <span style={{ ...NUM, color: "var(--text-muted)" }}>sur {fr(sur)}</span>
+        <span style={{ marginLeft: "auto", color: "var(--text-muted)" }}>{quoi}</span>
+      </span>
+      {/* `role="img"` + `aria-label` : la barre est un dessin, et le chiffre exact est
+          déjà écrit au-dessus — le lecteur d'écran n'a pas besoin de la relire. */}
+      <span role="img" aria-label={`${quoi} : ${fr(n)} sur ${fr(sur)}`}
+        style={{ display: "block", height: 5, borderRadius: 3, background: "var(--bg-3)", overflow: "hidden" }}>
+        <span style={{ display: "block", height: "100%", borderRadius: 3, background: "var(--gold)",
+          width: `${Math.max(1.5, pct).toFixed(1)}%` }} />
+      </span>
+    </span>
+  );
+}
+
 function ButinPartiel({ butins, monstres, situes, objets }: {
   butins: number; monstres: number; situes: number; objets: number;
 }) {
   if (!monstres || !objets) return null;
   return (
-    <Bulle largeur={300} quoi={
-      <span style={{ display: "grid", gap: 5 }}>
+    <Bulle largeur={280} quoi={
+      <span style={{ display: "grid", gap: 8 }}>
         <b style={{ color: "var(--gold)" }}>Une provenance vide ne veut pas dire « rien ».</b>
-        <span>
-          Le <b>butin ordinaire</b> des monstres n’est pas dans le client du jeu : le serveur
-          le calcule. Le wiki ne montre donc que ce que le client déclare —{" "}
-          <b style={{ ...NUM }}>{fr(butins)}</b> monstres sur <b style={{ ...NUM }}>{fr(monstres)}</b>{" "}
-          portent une liste, et <b style={{ ...NUM }}>{fr(situes)}</b> objets sur{" "}
-          <b style={{ ...NUM }}>{fr(objets)}</b> disent d’où ils viennent.
-        </span>
+        <Part quoi="monstres qui listent un butin" n={butins} sur={monstres} />
+        <Part quoi="objets qui disent d’où ils viennent" n={situes} sur={objets} />
         <span style={{ color: "var(--text-muted)" }}>
-          Un monstre sans liste peut très bien lâcher ce que tu cherches.
+          Le reste, c’est le serveur qui le calcule : le client ne l’écrit pas.
         </span>
       </span>
     }>
@@ -228,7 +256,9 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
             Ajouts AirFlyff
             {nMaison > 0 && <span style={{ ...NUM, opacity: maison ? .7 : .55 }}>{fr(nMaison)}</span>}
           </Pastille>
-          <Invisible enJeu="Trois marqueurs du client séparent ce serveur du jeu d'origine : les objets nommés dans IDS_AIRFLYFF_TXT_ ou IDS_PROPITEM_NEWSERV_ au lieu d'IDS_PROPITEM_TXT_, et les monstres marqués NEWSERV. Aucun écran du jeu ne fait la différence.">
+          {/* Le même texte que sur /objets, et il n'est plus écrit deux fois : voir
+              `MARQUEUR_AIRFLYFF` dans components/objets/vocabulaire.ts. */}
+          <Invisible enJeu={MARQUEUR_AIRFLYFF}>
             <></>
           </Invisible>
           {filtre && (
@@ -250,9 +280,13 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
             {/* « les plus proches » n'a de sens qu'avec un mot-clé : sans lui il n'y a
                 pas de proximité, il y a un ordre — les ajouts d'AirFlyff d'abord. */}
             {r.total > r.montres && (
-              q.trim()
+              q.trim() || type
                 ? <span>· les {r.montres} plus proches sont affichées</span>
-                : <span>· les {r.montres} premières, ajouts d&apos;AirFlyff d&apos;abord</span>
+                /* La porte ne montre plus « les 40 premières » : elle montre huit lignes
+                   de chaque nature (voir `aTourDeRole` dans src/lib/wiki.ts). Dire
+                   « les 40 premières » serait faux, et c'est cette phrase qui laissait
+                   croire à une liste ordonnée dont on voyait le début. */
+                : <span>· {r.montres} pour l&apos;exemple, de chaque nature</span>
             )}
             {/* La composition reste À GAUCHE, collée au compte. Poussée au bord droit,
                 sa bulle s'ouvrait au-delà de la fenêtre et la page gagnait une barre de

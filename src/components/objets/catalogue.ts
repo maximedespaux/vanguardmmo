@@ -2,6 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { clefRecherche, type Famille, type ObjetFiche } from "./vocabulaire";
 import { idsAvecStat } from "./stats";
+// « D'où vient cet objet » — le même relevé que /wiki lit, à la même source, avec la
+// même formulation. Voir le cadre en tête de `provenance.ts`.
+import { provenanceDe } from "./provenance";
 // Les deux catalogues se parlent, et c'est tout l'objet de cette passe : « quels
 // objets tombent sur un monstre » n'a de réponse que du côté des monstres. Les deux
 // modules lisent le disque côté serveur, aucun des deux fichiers ne descend au
@@ -118,19 +121,52 @@ export type Critere = {
  * exact, puis début du nom, puis début d'un mot, puis n'importe où — et on ne
  * range par niveau qu'à égalité.
  */
-function note(k: string, q: string): number {
+function note(k: string, q: string, jetons: string[] = []): number {
   if (!q) return 0;
   const p = k.indexOf(q);
-  if (p < 0) return -1;
-  if (k === q) return 100;
-  if (p === 0) return 70;
-  if (k[p - 1] === " ") return 50;
-  return 20;
+  if (p >= 0) {
+    if (k === q) return 100;
+    if (p === 0) return 70;
+    if (k[p - 1] === " ") return 50;
+    return 20;
+  }
+  /**
+   * ┌──────── LES MOTS DANS N'IMPORTE QUEL ORDRE — le même défaut que sur /wiki, et il
+   * │ se mesurait ici aussi en trois essais :
+   * │
+   * │   « epee luzaka »      → 1 réponse
+   * │   « luzaka epee »      → 0
+   * │   « ancestrale hache » → 0     alors que « hache ancestrale » → 1
+   * │   « yggdrasil epee »   → 0     alors que 7 objets portent les deux mots
+   * │
+   * │ Tout ce qui précède cherche une SUITE de caractères. Le champ promet dans son
+   * │ propre texte que « les accents n'ont pas d'importance » — le joueur en déduit que
+   * │ la saisie est tolérante, et l'ordre des mots, lui, était impitoyable. Il obtient
+   * │ « Rien sous ce nom. Essaie un mot plus court », et il conclut que le catalogue ne
+   * │ connaît pas la pièce.
+   * │
+   * │ La règle : TOUS les mots tapés doivent être là, l'ordre est libre — et cela ne vaut
+   * │ qu'en DERNIER RECOURS, sous les vingt points de la plus faible correspondance
+   * │ contiguë, pour qu'une suite exacte reste toujours devant.
+   * │
+   * │ Pas de clé compacte ici, contrairement à /wiki : le catalogue n'en a pas. Les noms
+   * │ d'objet du client ne cachent pas de mot derrière une apostrophe comme les noms de
+   * │ monstre (Bàäl'tru) — c'est justement pourquoi seule /wiki en porte une.
+   * └────────────────────────────────────────────────────────────────────────────────────
+   */
+  if (jetons.length < 2) return -1;
+  return jetons.every((t) => k.includes(t)) ? 10 : -1;
 }
+
+/** Les mots tapés, découpés une fois pour toute la recherche : `clefRecherche` a déjà
+ *  réduit la ponctuation à des espaces. Les lettres seules sortent — « d », « l », « a »
+ *  sont dans presque tous les noms et ne filtrent rien. */
+const decouper = (q: string) => q.split(" ").filter((m) => m.length > 1);
 
 export function chercher(c: Critere, limite = 50) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
+  const jetons = decouper(q);
   const ids = c.stat ? idsAvecStat(c.stat) : null;
   const laches = c.lache ? objetsLaches() : null;
 
@@ -146,7 +182,7 @@ export function chercher(c: Critere, limite = 50) {
     if (laches && !laches.has(e.k)) continue;
     // Un objet sans niveau requis se porte à tout niveau : on ne l'écarte pas.
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
-    const s = note(e.k, q);
+    const s = note(e.k, q, jetons);
     if (s < 0) continue;
     gardes.push({ e, s });
   }
@@ -162,7 +198,23 @@ export function chercher(c: Critere, limite = 50) {
     return a.e.o.n.localeCompare(b.e.o.n, "fr");
   });
 
-  return { total: gardes.length, objets: gardes.slice(0, limite).map((x) => x.e.o) };
+  /**
+   * LA PROVENANCE EST AGRAFÉE ICI, sur les cinquante lignes rendues.
+   *
+   * Deux raisons de ne pas la mettre dans l'index chargé : elle vit dans un autre
+   * relevé (8 459 sources), et surtout — ON NE MUTE PAS `x.e.o`. Ces objets sont les
+   * OBJETS DU CACHE, partagés par `objetParId`, `voisins` et la fiche : leur poser un
+   * champ au passage d'une recherche le laisserait là pour toutes les suivantes, et la
+   * fiche afficherait une provenance calculée pour l'écran d'à côté. D'où la copie de
+   * surface — cinquante copies d'objets plats, le prix est nul.
+   */
+  return {
+    total: gardes.length,
+    objets: gardes.slice(0, limite).map(({ e }) => {
+      const pv = provenanceDe(e.o.n);
+      return pv ? { ...e.o, pv } : e.o;
+    }),
+  };
 }
 
 /** Combien d'objets par famille, pour le jeu de critères courant : les onglets
@@ -170,6 +222,10 @@ export function chercher(c: Critere, limite = 50) {
 export function comptesParFamille(c: Critere): Record<string, number> {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
+  /* LE MÊME DÉCOUPAGE QUE `chercher`, et ce n'est pas cosmétique : les comptes des
+     onglets de famille doivent porter sur le MÊME ensemble que la liste. Sans les
+     jetons ici, « luzaka epee » afficherait six cartes sous des onglets tous à zéro. */
+  const jetons = decouper(q);
   const ids = c.stat ? idsAvecStat(c.stat) : null;
   const laches = c.lache ? objetsLaches() : null;
   const n: Record<string, number> = {};
@@ -182,7 +238,7 @@ export function comptesParFamille(c: Critere): Record<string, number> {
     // `e.k` est la clé du nom, déjà calculée au chargement (cf. `comptesGlobaux`).
     if (laches && !laches.has(e.k)) continue;
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
-    if (note(e.k, q) < 0) continue;
+    if (note(e.k, q, jetons) < 0) continue;
     n[o.f] = (n[o.f] ?? 0) + 1;
   }
   return n;

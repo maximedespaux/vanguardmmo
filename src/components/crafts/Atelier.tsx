@@ -52,7 +52,11 @@ const META: Record<string, { titre: string; sous: string; icon: IconName }> = {
   comptoirs: { titre: "Les comptoirs à jetons", sous: "GvG, Colisée, FLY SHOP, fragments", icon: "coins" },
   recherche: { titre: "Qui échange quoi", sous: "qui vend ça, et que vend celui-là", icon: "search" },
   ateliers: { titre: "Les ateliers du jeu", sous: "les panneaux d’aide, avec leurs vrais chiffres", icon: "wrench" },
-  manques: { titre: "Ce que le client ne dit pas", sous: "pour ne pas chercher ce qui n’y est pas", icon: "help" },
+  /* « Où chercher ailleurs » et non « Ce que le client ne dit pas » : le volet ne
+     porte plus des trous, il porte des RENVOIS — le wiki pour les menus récents, et
+     deux certitudes qui font arrêter de chercher. Le titre annonçait un inventaire
+     de nos manques, ce qui n'est le sujet de personne. */
+  manques: { titre: "Où chercher ailleurs", sous: "ce qui n’est pas dans ce relevé, et où c’est", icon: "help" },
 };
 /** L'ordre du rail. Il suit la lecture : ce qu'on fabrique, où le farmer, ce
  *  qu'on achète, puis les outils de recherche et les réserves. */
@@ -226,10 +230,36 @@ function Bloc({ icon, titre, compte, note, children }: {
 }
 
 /**
- * CE QUE LE CLIENT NE DIT PAS — huit trous, pour ne pas chercher ce qui n'y est
- * pas. Hors du corps du crochet : ce sont des constats de fouille, ils ne
- * dépendent d'aucune donnée chargée, et le rail a besoin de leur nombre pour
- * afficher sa pastille avant que le relevé arrive.
+ * OÙ CHERCHER CE QUI N'EST PAS ICI — trois renvois, et pas huit constats.
+ *
+ * ┌──────────── ILS ÉTAIENT HUIT, RÈGLE 2 DE LA MAISON ────────────┐
+ * │ « Si les renseignements ne sont pas complets, tu oublies » —    │
+ * │ sauf la mise en garde qui protège d'une erreur coûteuse. Le     │
+ * │ test appliqué aux huit : est-ce que ça change le GESTE ?        │
+ * │                                                                │
+ * │  · les chances de raffinage +1→+20 « absentes, personne ne les  │
+ * │    a » ................................. NON, constat pur      │
+ * │  · les chances de désintégration, « le jeu renvoie à son site » │
+ * │    ...................................... NON, constat pur     │
+ * │  · la table d'objets de la récolte, « aucun objet »             │
+ * │    ...................................... NON, et hors sujet   │
+ * │  · les neuf statistiques du sertissage ultime ... DOUBLON : le  │
+ * │    volet « ateliers » porte déjà ce renvoi vers les mécaniques  │
+ * │  · où les PNJ sont posés .... FONDU dans `Reserve()`, qui pose  │
+ * │    déjà la même réserve à l'endroit où elle sert                │
+ * │  · les vingt-quatre menus récents ....... OUI : ça dit d'aller  │
+ * │    chercher au wiki, donc ça déplace le lecteur                │
+ * │  · les recettes de métier ou de cuisine ... OUI : « il n'y en a │
+ * │    pas » est une certitude, pas une ignorance — on arrête de    │
+ * │    chercher                                                    │
+ * │  · le butin ordinaire des monstres ...... OUI : la provenance   │
+ * │    est le cœur du wiki, et croire qu'un objet ne tombe pas      │
+ * │    parce qu'on ne l'a pas trouvé coûte des semaines de farm     │
+ * └────────────────────────────────────────────────────────────────┘
+ *
+ * Hors du corps du crochet : ce sont des constats de fouille, ils ne dépendent
+ * d'aucune donnée chargée, et le rail a besoin de leur nombre pour afficher sa
+ * pastille avant que le relevé arrive.
  */
 const MANQUES: [string, React.ReactNode][] = [
   /* LE « sur 856 » EST PARTI. L'en-tête de la page affiche « 834 échanges de PNJ »,
@@ -239,30 +269,26 @@ const MANQUES: [string, React.ReactNode][] = [
      contredire. Le relevé source n'est pas dans le dépôt : 856 ne se recalcule pas,
      donc il ne peut pas rester écrit à la main. Le fait utile est le RECOUVREMENT
      minuscule, pas son dénominateur — c'est lui qui est gardé. */
-  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, échanges de nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : ces menus sont <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu n’est nulle part dans le client. Ceux-là vivent côté serveur. C’est de là que le wiki tire ses recettes — et les deux relevés ne se recouvrent qu’à <b>22 recettes</b>.</>],
-  ["Les chances de raffinage +1 → +20", <>Absentes. Le petit fichier qu’on prend pour elles donne autre chose : le <b>coefficient appliqué au bonus</b> selon le palier. Personne n’a les vraies probabilités.</>],
-  ["Les chances de désintégrer une arme en joyaux", <>Le panneau du jeu renvoie explicitement au site officiel plutôt que de donner les nombres.</>],
-  /* CE TROU EST BOUCHÉ DEPUIS, et le laisser sous forme de « probablement » était
-     faux dans les deux sens : le panneau du jeu ne les nomme toujours pas, mais le
-     site les nomme, avec leur plafond, et la démonstration est faite sur deux
-     fichiers indépendants (GEMU du builder et les neuf Diamants du client tombent
-     rang pour rang). Un sujet, une page : /builder/mecaniques en est propriétaire,
-     donc une phrase et un lien, pas un développement. */
-  ["Les neuf statistiques du sertissage ultime", <>Le panneau du jeu dit « les 9 statistiques » sans les nommer. Elles sont nommées, avec leur plafond, sur <a href="/builder/mecaniques" style={{ color: "var(--orange)" }}>les mécaniques</a> — deux fichiers du client les donnent dans le même ordre.</>],
-  ["La table d’objets de la récolte", <>Le fichier du collecteur ne donne que les <b>délais</b> par niveau (105, 90, 75, 60, 45, 30) et la batterie maximale (1 800). Aucun objet.</>],
-  ["Les recettes de métier ou de cuisine", <>Il n’y en a pas. Les seules occurrences de « recette » sont trois quêtes coréennes de 2009.</>],
-  ["Où les PNJ sont posés", <>Aucun fichier de placement dans le relevé. C’est la seule réserve sérieuse sur les statuts de cette page.</>],
-  ["Le butin ordinaire des monstres", <>Il n’est pas dans le client : le serveur le calcule. Quand une page du site ne trouve pas d’où vient un objet, ça ne veut <b>jamais</b> dire qu’il ne tombe pas.</>],
+  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu vit côté serveur. Ces recettes-là sont dans <a href="/wiki" style={{ color: "var(--orange)" }}>le wiki</a> — les deux relevés ne se recouvrent qu’à <b>22 recettes</b>.</>],
+  ["Les recettes de métier ou de cuisine", <>Il n’y en a pas dans ce jeu. Rien à chercher.</>],
+  ["Le butin ordinaire des monstres", <>Le serveur le calcule, le client ne le porte pas. Quand une page du site ne trouve pas d’où vient un objet, ça ne veut <b>jamais</b> dire qu’il ne tombe pas.</>],
 ];
 
-/** L'avertissement qu'on répète parce qu'il change ce qu'on fait de la page. */
+/**
+ * L'avertissement qu'on répète parce qu'il change ce qu'on fait de la page.
+ *
+ * Il a absorbé le trou « où les PNJ sont posés », qui disait la même chose une
+ * ligne plus bas : c'est le MÊME fichier manquant, et il n'a d'importance que
+ * parce qu'il fragilise le mot « jouable ». Le dire deux fois faisait douter
+ * qu'il s'agisse de la même réserve.
+ */
 function Reserve() {
   return (
     <div style={{ display: "flex", gap: 9, padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px dashed var(--border)", fontSize: 12, lineHeight: 1.6, color: "var(--text-muted)" }}>
       <Icon name="info" size={14} style={{ flexShrink: 0, marginTop: 2, color: "var(--gold)" }} />
       <span>
         « <b>Jouable</b> » veut dire <b>branchée sur la fiche du PNJ</b>, pas « je l’ai vue en
-        jeu » : les fichiers qui posent les PNJ sur les cartes ne sont pas dans le relevé.
+        jeu » : aucun fichier du relevé ne dit où les PNJ sont posés.
         Une recette <b style={{ color: "var(--red)" }}>éteinte</b>, en revanche, est une
         certitude — sa ligne est commentée, donc personne ne peut la faire.
       </span>

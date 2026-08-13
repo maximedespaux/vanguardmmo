@@ -42,6 +42,11 @@ export default function MonstresPage() {
         total={meta.total}
         groupes={meta.groupes}
         agressifs={f.agressifs}
+        // Combien de ceux qui se relèvent portent la marque du serveur : c'est ce qui
+        // autorise le schéma d'en-tête à les dessiner l'un DANS l'autre. Compté, pas
+        // écrit — le jour où la fouille en sort un qui n'est pas marqué, la phrase
+        // change toute seule.
+        viesMaison={f.viesMaison}
         // Le pont vers le catalogue d'objets, compté : chaque nom de butin de ces
         // fiches mène désormais à la fiche de l'objet.
         objetsLaches={f.objetsLaches}
@@ -50,8 +55,14 @@ export default function MonstresPage() {
   );
 }
 
+/* LE COMPTEUR DE LA DESCRIPTION EST LU, PLUS TAPÉ. Il annonçait « les 1 124
+   monstres » au clavier, à côté d'un écran qui compte les siens : deux sources pour
+   un seul nombre, et la description devient fausse à la fouille suivante sans que
+   personne ne la relise. `metaCatalogue()` est déjà en mémoire — c'est le même appel
+   que la page. */
+const socle = metaCatalogue();
 export const metadata = {
   title: "Les monstres et les boss · Vanguard",
   description:
-    "Les 1 124 monstres d'AirFlyff : PV à sortir vies comprises, dégâts par coup, cadence, élément et résistances, rage et invocations.",
+    `Les ${socle.total.toLocaleString("fr-FR")} monstres d'AirFlyff, dont ${socle.compteurs.maison.toLocaleString("fr-FR")} ajoutés par le serveur : PV à sortir vies comprises, dégâts par coup, cadence, élément et résistances, rage et invocations.`,
 };

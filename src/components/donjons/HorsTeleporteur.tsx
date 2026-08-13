@@ -4,6 +4,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { NomObjet } from "@/components/objets/NomObjet";
 import { pvCourt, TON_RANG } from "./donneesClient";
 import { SousTitre } from "./FicheClient";
+import { LienMonstre } from "./LienMonstre";
 import TABLE from "@/data/lieux-hors-teleporteur.json";
 
 /**
@@ -48,11 +49,34 @@ const LIEUX = (TABLE as { lieux: Lieu[] }).lieux;
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 const fr = (n: number) => n.toLocaleString("fr-FR");
 
-/** Les deux groupes, et ce qui les distingue — la façon d'y entrer. */
-const GROUPES: { clef: string; titre: string; sous: string; icon: IconName }[] = [
-  { clef: "ticket", titre: "Les zones à ticket", sous: "On paie un accès pour un nombre de jours, puis on farme librement", icon: "clock" },
-  { clef: "client", titre: "Les cartes que le téléporteur ne propose pas", sous: "Le client les dessine et y pose des monstres", icon: "map" },
+/**
+ * LES DEUX GROUPES, ET CE QUI LES DISTINGUE — la façon d'y entrer.
+ *
+ * Les deux sous-titres qui vivaient ici (« On paie un accès pour un nombre de jours,
+ * puis on farme librement » et « Le client les dessine et y pose des monstres ») ont
+ * REJOINT LE SCHÉMA D'ENTRÉE en tête de page, où ils se comparent aux trois autres
+ * façons d'entrer au lieu d'être découverts à mi-descente. D'où `par`, `quoi` et
+ * `ancre` : le schéma les lit, cette table reste leur source unique.
+ *
+ * `quoi` se compte à la construction — le jour où un lieu s'ajoute au relevé, le
+ * schéma d'entrée l'annonce sans qu'on y touche.
+ */
+const GROUPES: { clef: string; titre: string; par: string; icon: IconName; ancre: string }[] = [
+  { clef: "ticket", titre: "Les zones à ticket", par: "Un ticket, au FLY SHOP", icon: "clock", ancre: "zones-ticket" },
+  /* « Entrée non documentée » et pas « on ne sait pas » : c'est un fait vérifiable —
+     aucun fichier du dépôt ne dit comment on entre sur ces quatre cartes — et il
+     change le geste, parce qu'on les cherche sinon au téléporteur, qui ne les propose
+     pas. La carte et le peuplement, eux, sont complets. */
+  { clef: "client", titre: "Les cartes que le téléporteur ne propose pas", par: "Entrée non documentée", icon: "map", ancre: "cartes-client" },
 ];
+
+/** Ce que le schéma d'entrée de la page affiche pour ces deux groupes, compté ici. */
+export const GROUPES_HORS_TELEPORTEUR = GROUPES
+  .map((g) => {
+    const n = LIEUX.filter((l) => l.groupe === g.clef).length;
+    return { icon: g.icon, par: g.par, quoi: `${n} ${g.clef === "ticket" ? "zones" : "cartes"}`, ancre: g.ancre, n };
+  })
+  .filter((g) => g.n > 0);
 
 export function HorsTeleporteur() {
   const parGroupe = useMemo(
@@ -77,6 +101,12 @@ export function HorsTeleporteur() {
      la phrase disparaît au lieu de mentir dans l'autre sens. */
   const etals = [...new Set(tickets.map((l) => l.ticket!.pnj).filter(Boolean))];
   const memeEtal = tickets.length > 1 && etals.length === 1 ? etals[0]! : null;
+  /* « au FLY SHOP » ÉTAIT ÉCRIT CINQ FOIS SUR LE MÊME ÉCRAN : une fois par ligne de
+     ticket, puis une fois dans la phrase du bas. On ne le retire des lignes QUE si la
+     phrase du bas s'affiche ET nomme l'étal — sinon le seul endroit où on apprenait
+     chez qui acheter disparaîtrait. Les deux conditions se calculent, donc le jour où
+     les étals se dispersent, chaque ligne reprend le sien. */
+  const etalDitEnBas = Boolean(prixNeSuitPas && memeEtal);
 
   if (!LIEUX.length) return null;
 
@@ -117,8 +147,13 @@ export function HorsTeleporteur() {
       <EchelleNiveaux />
 
       {parGroupe.map((g) => (
-        <div key={g.clef} style={{ marginTop: 20 }}>
-          <SousTitre icon={g.icon} apres={g.sous}>{g.titre}</SousTitre>
+        /* `scrollMarginTop` : la barre de navigation est fixe et haute de 68 px, une
+           ancre sans marge pose le titre du groupe dessous. Même valeur que les
+           autres cibles de la page. */
+        <div key={g.clef} id={g.ancre} style={{ marginTop: 20, scrollMarginTop: 88 }}>
+          {/* Le `apres` portait la façon d'y entrer ; elle est montée dans le schéma
+              d'entrée, en tête de page. Reste le compte, qui n'y était pas. */}
+          <SousTitre icon={g.icon} apres={`${g.lieux.length}`}>{g.titre}</SousTitre>
           {/* `min(270px,100%)` ET PAS `270px` : la page pose 32 px de marge de chaque
               côté et ce bloc 22 de plus, soit 108 px perdus. Sur un écran de 375 px
               il reste 267 px, sur un 360 il en reste 252 — moins que le minimum de
@@ -127,7 +162,7 @@ export function HorsTeleporteur() {
               droite. Le `min()` laisse la piste se réduire sous son minimum quand la
               place manque, et ne change RIEN au-delà de 270 px. */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(270px,100%),1fr))", gap: 12 }}>
-            {g.lieux.map((l) => <CarteLieu key={l.clef} l={l} />)}
+            {g.lieux.map((l) => <CarteLieu key={l.clef} l={l} etalDitEnBas={etalDitEnBas} />)}
           </div>
         </div>
       ))}
@@ -174,6 +209,15 @@ export function HorsTeleporteur() {
  * distinguent pas pour un daltonien protan. Plancher à 1,5 % de largeur pour
  * qu'un lieu à niveau unique (Mine de Dekanes, tout entière au niveau 30) garde
  * un repère visible au lieu de disparaître.
+ *
+ * ┌──── UN SEGMENT PAR PALIER, ET C'EST LÀ QUE LE SCHÉMA REMPLACE LA PROSE ────┐
+ * │ Azria n'est pas « du niveau 73 au 210 » : elle a deux paliers DISJOINTS —   │
+ * │ huit espèces de 73 à 115, puis trois de 190 à 210, et rien entre les deux.  │
+ * │ Une barre pleine de 73 à 210 promettait donc du contenu au niveau 150 qui   │
+ * │ n'existe pas. La tuile le rattrapait en dix-huit mots de texte ; ici c'est  │
+ * │ le TROU entre les deux segments qui le dit, et les dix-huit mots partent.   │
+ * │ Le détail chiffré reste dans l'étiquette lue par un lecteur d'écran.        │
+ * └───────────────────────────────────────────────────────────────────────────┘
  */
 function EchelleNiveaux() {
   const max = Math.ceil(Math.max(...LIEUX.map((l) => l.nivMax)) / 10) * 10;
@@ -186,17 +230,29 @@ function EchelleNiveaux() {
       </figcaption>
       <div style={{ display: "grid", gap: 5 }}>
         {ordonnes.map((l) => {
-          const gauche = ((l.nivMin - 1) / max) * 100;
-          const large = Math.max(1.5, ((l.nivMax - l.nivMin) / max) * 100);
+          /* Les paliers quand la table en donne, sinon l'intervalle entier comme un
+             palier unique : un seul chemin de dessin, donc un seul comportement. */
+          const bandes = l.paliers?.length
+            ? l.paliers.map((p) => ({ min: p.nivMin, max: p.nivMax, quoi: `${p.especes} espèce${p.especes > 1 ? "s" : ""} de ${p.nivMin} à ${p.nivMax}` }))
+            : [{ min: l.nivMin, max: l.nivMax, quoi: `du niveau ${l.nivMin} au niveau ${l.nivMax}` }];
           return (
             <div key={l.clef} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 11.5 }}>
               <span className="ht-nom" style={{ width: 116, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nom}</span>
               <span style={{ flex: 1, minWidth: 0, height: 9, borderRadius: 3, background: "color-mix(in srgb, var(--border) 70%, transparent)", position: "relative" }}
-                role="img" aria-label={`${l.nom} : du niveau ${l.nivMin} au niveau ${l.nivMax}`}>
-                <span style={{ position: "absolute", top: 0, bottom: 0, left: `${gauche}%`, width: `${large}%`, borderRadius: 3, background: "var(--orange)" }} />
+                role="img" aria-label={`${l.nom} : ${bandes.map((b) => b.quoi).join(", puis ")}`}>
+                {bandes.map((b) => (
+                  <span key={b.min} style={{ position: "absolute", top: 0, bottom: 0,
+                    left: `${((b.min - 1) / max) * 100}%`,
+                    width: `${Math.max(1.5, ((b.max - b.min) / max) * 100)}%`,
+                    borderRadius: 3, background: "var(--orange)" }} />
+                ))}
               </span>
+              {/* Le nombre de paliers se lit au bout de la ligne quand il y en a
+                  plusieurs : sur un écran étroit les jalons s'effacent, et deux
+                  segments proches redeviendraient indiscernables. */}
               <span className="ht-valeur" style={{ width: 62, textAlign: "right", flexShrink: 0, color: "var(--text-muted)", ...NUM }}>
                 {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}
+                {bandes.length > 1 && <span title={`${bandes.length} paliers séparés`} style={{ color: "var(--orange)" }}> ×{bandes.length}</span>}
               </span>
             </div>
           );
@@ -213,7 +269,7 @@ function EchelleNiveaux() {
 }
 
 /** La tuile d'un lieu : sa carte d'abord — c'est elle qui le fait reconnaître. */
-function CarteLieu({ l }: { l: Lieu }) {
+function CarteLieu({ l, etalDitEnBas }: { l: Lieu; etalDitEnBas: boolean }) {
   return (
     <div className="fx-card" style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
       {/* La carte est montrée ENTIÈRE, pas recadrée : son cartouche est en bas à
@@ -229,43 +285,46 @@ function CarteLieu({ l }: { l: Lieu }) {
       <div style={{ padding: "12px 13px 13px" }}>
         <div className="font-heading" style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 6 }}>{l.nom}</div>
 
-        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", fontSize: 11.5, marginBottom: 8 }}>
-          <Puce ic="skull">{l.especes} espèce{l.especes > 1 ? "s" : ""}</Puce>
-          <Puce ic="grid">{fr(l.poses)} emplacement{l.poses > 1 ? "s" : ""}</Puce>
-          <Puce ic="star">niv. {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}</Puce>
+        {/* ┌──── QUATORZE MOTS DE PHRASE SONT DEVENUS UNE PASTILLE ────┐
+            La tuile écrivait « Le plus coriace : Tortue Tyran (super) — niv. 121,
+            10,9 M PV — un seul emplacement sur la carte », en dessous d'une rangée
+            de pastilles qui disait déjà les espèces, les emplacements et les niveaux.
+            Les trois mots d'étiquette (« Le plus coriace : ») deviennent un
+            pictogramme de crâne, le reste rentre dans la rangée, et le nom mène
+            maintenant à la fiche du monstre — c'est /monstres qui les possède.
+            La phrase entière reste dans le `title`, pour qui la survole.
+            └──────────────────────────────────────────────────────────┘ */}
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", fontSize: 11.5, marginBottom: l.ticket || l.objets.length ? 9 : 0 }}>
+          <Puce ic="skull" titre={`Le plus coriace de la zone : ${l.gros.nom} (${l.gros.rang}), niveau ${l.gros.niv}, ${pvCourt(l.gros.pv)} PV${l.gros.poses === 1 ? " — un seul emplacement sur la carte" : ""}`}>
+            <LienMonstre nom={l.gros.nom} niv={l.gros.niv} pv={l.gros.pv} couleur={TON_RANG[l.gros.rang] ?? "var(--text)"} />
+            {" "}<span style={{ color: "var(--orange)" }}>{pvCourt(l.gros.pv)}</span>
+            {l.gros.poses === 1 && <> · seul</>}
+          </Puce>
+          {/* Le mot « espèces » reste écrit, le mot « emplacements » non : le premier
+              se compte en dizaines et se lit comme un nombre d'ennemis différents, le
+              second se compte en milliers et n'a de sens qu'à côté. Un pictogramme de
+              grille suffit à le dire, le `title` fait le reste. */}
+          <Puce ic="paw" titre="Espèces différentes posées sur la carte">{l.especes} espèces</Puce>
+          <Puce ic="grid" titre={`${fr(l.poses)} emplacements de réapparition sur la carte`}>{fr(l.poses)}</Puce>
+          <Puce ic="star" titre="Les niveaux rencontrés ici">niv. {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}</Puce>
         </div>
 
-        {/* Le plus gros sac de points de vie, et le nombre de points où il apparaît.
-            Un « super » posé à UN seul emplacement, c'est un boss unique et un
-            trajet direct ; la même bête à cent emplacements, c'est du farm. La
-            différence change ce qu'on va faire, donc elle est dite. */}
-        <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5, marginBottom: l.paliers?.length || l.ticket || l.objets.length ? 9 : 0, ...NUM }}>
-          Le plus coriace : <b style={{ color: "var(--text)" }}>{l.gros.nom}</b>{" "}
-          <span style={{ color: TON_RANG[l.gros.rang] ?? "var(--text-muted)" }}>({l.gros.rang})</span>
-          {" "}— niv. {l.gros.niv}, <b style={{ color: "var(--orange)" }}>{pvCourt(l.gros.pv)} PV</b>
-          {l.gros.poses === 1 && <> — un seul emplacement sur la carte</>}
-        </div>
+        {/* LA LIGNE DES PALIERS EST PARTIE DANS LE SCHÉMA. Elle disait « 2 paliers
+            séparés : 8 espèces de 73 à 115, puis 3 espèces de 190 à 210 » — dix-huit
+            mots pour un TROU, que l'échelle des niveaux dessine maintenant en laissant
+            un blanc entre deux segments. Voir EchelleNiveaux. */}
 
-        {l.paliers?.length ? (
-          <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginBottom: 9, ...NUM }}>
-            {/* « Deux paliers séparés » était écrit en toutes lettres au-dessus d'une
-                liste qui se déplie depuis la table : le jour où une zone en compte
-                trois, la phrase annonce deux et personne ne le voit. Le nombre se
-                compte, comme tous les autres de ce bloc. */}
-            {l.paliers.length} paliers séparés :{" "}
-            {l.paliers
-              .map((p) => `${p.especes} espèce${p.especes > 1 ? "s" : ""} de ${p.nivMin} à ${p.nivMax}`)
-              .join(", puis ")}
-            .
-          </div>
-        ) : null}
-
-        {l.ticket && <LigneTicket t={l.ticket} />}
+        {l.ticket && <LigneTicket t={l.ticket} sansEtal={etalDitEnBas} />}
 
         {l.objets.length > 0 && (
           <div style={{ marginTop: 9 }}>
-            <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 6 }}>
-              Ce que le client envoie y chercher · {l.objets.length}
+            {/* Huit mots devenus trois : les objets dessous sont des `NomObjet`, donc
+                chacun dit déjà où il mène. Ce que l'étiquette apporte, c'est POURQUOI
+                cette liste est là — les quêtes du client y envoient — et ça tient dans
+                le `title`. */}
+            <div title="Les objets que les quêtes du client envoient chercher dans cette zone"
+              style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 6 }}>
+              À chercher ici · {l.objets.length}
             </div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
               {l.objets.map((o) => (
@@ -289,7 +348,11 @@ function CarteLieu({ l }: { l: Lieu }) {
  * (« Ticket Azria (7 jours) ») : celles qui n'existent pas ne s'affichent pas —
  * Sombrésia n'a qu'un ticket d'un jour dans le relevé.
  */
-function LigneTicket({ t }: { t: Ticket }) {
+function LigneTicket({ t, sansEtal }: {
+  t: Ticket;
+  /** Vrai quand la phrase du bas du bloc nomme déjà l'étal commun : on ne le répète pas. */
+  sansEtal?: boolean;
+}) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", fontSize: 11.5 }}>
       {t.icone ? (
@@ -311,7 +374,7 @@ function LigneTicket({ t }: { t: Ticket }) {
         {t.flycoin != null && (
           <span style={{ display: "block", ...NUM }}>
             <b style={{ color: "var(--gold)" }}>{fr(t.flycoin)} FlyCoins</b>
-            <span style={{ color: "var(--text-muted)" }}> la journée{t.pnj ? `, au ${t.pnj}` : ""}</span>
+            <span style={{ color: "var(--text-muted)" }}> la journée{t.pnj && !sansEtal ? `, au ${t.pnj}` : ""}</span>
           </span>
         )}
       </span>
@@ -319,9 +382,9 @@ function LigneTicket({ t }: { t: Ticket }) {
   );
 }
 
-function Puce({ ic, children }: { ic: IconName; children: React.ReactNode }) {
+function Puce({ ic, titre, children }: { ic: IconName; titre?: string; children: React.ReactNode }) {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 5, padding: "2px 7px", color: "var(--text-muted)", ...NUM }}>
+    <span title={titre} style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 5, padding: "2px 7px", color: "var(--text-muted)", ...NUM }}>
       <Icon name={ic} size={11} />{children}
     </span>
   );
@@ -336,6 +399,8 @@ export const MOTS_HORS_TELEPORTEUR = ["ticket", "flycoin", ...LIEUX.map((l) => l
   .replace(/[̀-ͯ]/g, "")
   .toLowerCase();
 
-/** Le compte, pour le sous-titre de la page : il se lit dans la table, il ne
- *  s'écrit pas — c'est la règle de la maison sur les chiffres. */
-export const LIEUX_HORS_TELEPORTEUR = LIEUX.length;
+/* `LIEUX_HORS_TELEPORTEUR` a été retiré avec le sous-titre à compteurs de la page :
+   il n'avait qu'un appelant, et le compte de ces lieux se lit maintenant à deux
+   endroits qui le calculent chacun sur la table — le titre du bloc (« 8 lieux ») et
+   le schéma d'entrée, via `GROUPES_HORS_TELEPORTEUR`. Une troisième constante pour
+   le même nombre n'aurait fait qu'un endroit de plus à oublier. */

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { HeroFlyff } from "@/components/HeroFlyff";
 import { Icon, type IconName } from "@/components/Icon";
 import { useReveal, useCardFx } from "@/components/VgFx";
+import { Verrou } from "@/components/guides/Briques";
 
 /** Pastille d'icône à la charte (carré arrondi, dégradé orange, icône orange). */
 function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: number; icon?: number }) {
@@ -44,31 +45,65 @@ function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: numb
  * du jeu choisie pour ce qu'elle raconte : l'image donne l'ambiance, le texte n'a
  * plus qu'à donner le fait. Dix-huit mots pour dire « on joue en vocal » étaient
  * dix-sept de trop.
+ *
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  ET TROIS DES QUATRE MÈNENT MAINTENANT QUELQUE PART.
+ * ══════════════════════════════════════════════════════════════════════════════
+ *
+ * Règle de la maison : sur une page qui n'est PAS propriétaire d'un sujet, une phrase et
+ * un LIEN. Or ces quatre promesses parlaient de trois sujets qui ont chacun leur page
+ * propriétaire — les Chambres Secrètes (/compositions), la progression palier par palier
+ * (/astuces) et le stock commun (/boutique) — et AUCUNE ne menait ailleurs. Un visiteur à
+ * qui on promet « des compositions préparées » devait retourner au menu pour vérifier
+ * qu'elles existent. C'était le dernier cul-de-sac de cette page.
+ *
+ * La compensation est prise sur place : deux slogans sont partis pour laisser la place aux
+ * liens — « On y va pour réussir » et « Tu demandes, on répond » ne disaient rien qu'un
+ * clic ne montre mieux.
+ *
+ * LE CADENAS EST DIT AVANT LE CLIC, et les trois marches ne sont pas les mêmes :
+ * /compositions vit dans le groupe (guild), donc « membres » ; /astuces est publique,
+ * donc rien ; /boutique est en mode VITRINE — un visiteur y voit le vrai stock et les
+ * vrais prix, et seule la commande se refuse — donc pas de cadenas non plus, ce serait un
+ * mur imaginaire devant une porte ouverte.
  */
-const objectifs: { icon: IconName; titre: string; desc: string; vue: string }[] = [
+const objectifs: { icon: IconName; titre: string; desc: string; vue: string;
+  lien?: { href: string; mot: string; verrou?: "membres" | "compte" | "en partie" } }[] = [
   {
     icon: "message", titre: "Vocal avant tout",
-    desc: "Discord obligatoire, vocal pendant les runs : c'est là que les Chambres Secrètes se jouent.",
+    /* « Discord obligatoire » A SAUTÉ D'ICI, et c'était sa TROISIÈME apparition sur ce
+       seul écran : le hero l'annonce en haut (« Discord et vocal obligatoires ») et l'appel
+       à candidature la repose comme la seule condition ferme, juste avant le bouton. Cette
+       carte n'était pas la bonne des trois — on ne lit pas une règle d'engagement au
+       milieu d'une grille d'ambiance. Ce qui reste est ce qu'elle est SEULE à dire :
+       quand le vocal sert, et à quoi. */
+    desc: "Vocal pendant les runs : c'est là que les Chambres Secrètes se jouent.",
     // Une ville la nuit, fenêtres allumées : des gens rassemblés au même endroit.
     vue: "shotcredit16",
+    // Pas de lien : celui des Chambres Secrètes est sur la carte qui leur est consacrée,
+    // deux cases plus loin. Deux liens vers /compositions sur le même écran, ce serait le
+    // défaut qu'on vient de corriger sur l'accueil — dix chemins vers /classes.
   },
   {
     icon: "trending-up", titre: "Personne ne reste bloqué",
     desc: "Du prestige 3 au 10 : un guide par palier, et quelqu'un pour répondre.",
     // Un escalier interminable vers une citadelle : la montée, exactement.
     vue: "shotcredit12",
+    lien: { href: "/astuces", mot: "Le guide" },
   },
   {
     icon: "key", titre: "Chambres Secrètes sérieuses",
-    desc: "Compositions préparées, présences annoncées. On y va pour réussir.",
+    desc: "Compositions préparées, présences annoncées.",
     // Des ruines à colonnes, et une meute qui attend au milieu : une salle.
     vue: "shotcredit11",
+    lien: { href: "/compositions", mot: "Les compositions", verrou: "membres" },
   },
   {
     icon: "vault", titre: "Un coffre qui sert",
-    desc: "Le stock commun sert à équiper les membres. Tu demandes, on répond.",
+    desc: "Le stock commun sert à équiper les membres.",
     // Un champ de récolte : d'où vient ce qu'il y a dans le coffre.
     vue: "shotcredit13",
+    lien: { href: "/boutique", mot: "Le stock, à regarder sans compte" },
   },
 ];
 
@@ -110,10 +145,18 @@ export default function HistoirePage() {
               promesse de l'objectif « Personne ne reste bloqué » qui suit à un écran
               d'ici, image comprise. Reste ce que ce paragraphe est seul à dire : la
               comparaison avec une liste de pseudos. */}
+          {/* L'OUVERTURE DU PARAGRAPHE A SAUTÉ — « On ne cherche pas à être nombreux, mais
+              présents ». C'était la paraphrase de la première phrase du hero, un écran plus
+              haut : « Peu de membres, mais présents ». Même idée, même mot pivot, à deux
+              centimètres de distance.
+              Ce que ce paragraphe est SEUL à apporter, c'est la DÉFINITION du mot que le
+              hero lance sans l'expliquer : trois gestes concrets, vérifiables, et la
+              comparaison avec une liste de pseudos. Il ne répète donc plus le hero, il le
+              complète — et c'est neuf mots de moins. */}
           <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>
-            On ne cherche pas à être nombreux, mais <b style={{ color: "var(--orange)" }}>présents</b> :
-            qui viennent en vocal, qui préviennent quand ils ne peuvent pas, et sur qui on peut compter
-            en Chambre Secrète. C&apos;est ce qui sépare une guilde d&apos;une liste de pseudos.
+            <b style={{ color: "var(--orange)" }}>Présents</b>, ça veut dire : venir en vocal,
+            prévenir quand on ne peut pas, et être là en Chambre Secrète.
+            C&apos;est ce qui sépare une guilde d&apos;une liste de pseudos.
           </p>
         </div>
 
@@ -143,6 +186,17 @@ export default function HistoirePage() {
               <div className="hi-obj-txt">
                 <div className="font-heading" style={{ fontWeight: 700, fontSize: 17, marginBottom: 6 }}>{o.titre}</div>
                 <div style={{ color: "var(--text-muted)", fontSize: 13.5, lineHeight: 1.6 }}>{o.desc}</div>
+                {/* Le lien est la DERNIÈRE ligne de la carte, et il pousse le texte vers
+                    le haut (voir .hi-obj-txt) : les quatre cartes n'ont pas la même
+                    longueur de description, et sans ça les liens se retrouvaient à trois
+                    hauteurs différentes sur une même rangée. */}
+                {o.lien && (
+                  <a href={o.lien.href} className="hi-obj-lien">
+                    {o.lien.mot}
+                    {o.lien.verrou && <Verrou quoi={o.lien.verrou} />}
+                    <Icon name="chevron-right" size={13} />
+                  </a>
+                )}
               </div>
             </div>
           ))}
@@ -193,6 +247,12 @@ export default function HistoirePage() {
           le texte seul, sinon l'image ne toucherait pas les bords. Et 30 px de
           padding en haut du texte : la pastille descend de 22 px sous l'image, le
           titre doit passer SOUS elle et non derrière.
+          La carte est devenue une COLONNE FLEX, et son bloc de texte prend la hauteur qui
+          reste : c'est la seule façon de coller les liens des quatre cartes sur la même
+          ligne (margin-top:auto sur .hi-obj-lien). Les descriptions ne font pas la même
+          longueur, et sans ça les quatre liens se posaient à quatre hauteurs — on ne
+          voyait plus une rangée, mais un escalier. .hi-obj-vue garde son 2:1 grâce à
+          flex-shrink:0, sinon la colonne l'écrasait pour faire tenir le texte.
 
           .hi-obj-vue — aspect-ratio 2/1 et non une hauteur fixe : les quatre vues
           employées ici (shotcredit11, 12, 13 et 16) font 512x256, donc exactement
@@ -212,13 +272,19 @@ export default function HistoirePage() {
         .hi-siege{float:left;margin:0 18px 10px 0;border-radius:12px;border:1px solid var(--border);
           object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.4)}
         @media(max-width:560px){.hi-siege{float:none;display:block;margin:0 auto 16px}}
-        .hi-obj{padding:0;overflow:hidden}
-        .hi-obj-vue{position:relative;aspect-ratio:2/1;overflow:hidden}
+        .hi-obj{padding:0;overflow:hidden;display:flex;flex-direction:column}
+        .hi-obj-vue{position:relative;aspect-ratio:2/1;overflow:hidden;flex-shrink:0}
         .hi-obj-vue img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85) brightness(.78)}
         .hi-obj-vue::after{content:"";position:absolute;inset:0;pointer-events:none;
           background:linear-gradient(180deg,rgba(10,10,12,.10) 0%,rgba(10,10,12,.30) 55%,rgba(10,10,12,.88) 100%)}
         .hi-obj-badge{position:absolute;left:16px;bottom:-22px;z-index:1;display:block}
-        .hi-obj-txt{padding:30px 20px 20px}
+        .hi-obj-txt{padding:30px 20px 20px;flex:1;display:flex;flex-direction:column}
+        .hi-obj-lien{margin-top:auto;padding-top:12px;display:inline-flex;align-items:center;gap:6px;
+          align-self:flex-start;text-decoration:none;color:var(--orange);font-family:'Rubik',sans-serif;
+          font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.7px}
+        .hi-obj-lien:hover{color:var(--text)}
+        .hi-obj-lien svg{transition:transform .15s}
+        .hi-obj-lien:hover svg{transform:translateX(3px)}
         .hi-cta{position:relative;overflow:hidden;text-align:center;margin-top:30px;border-radius:16px;
           border:1px solid var(--orange-dark);background:#0b0b0f}
         .hi-cta img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 62%;

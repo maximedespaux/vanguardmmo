@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Vague } from "@/components/oasis/modele";
+import CLIENT_BRUT from "@/data/donjons-client.json";
+import LIEUX_BRUT from "@/data/lieux-hors-teleporteur.json";
+import type { DonjonClient, EtageTour } from "@/components/donjons/donneesClient";
+
+const CLIENT = CLIENT_BRUT as { donjons: Record<string, DonjonClient>; tourOubliee: EtageTour[] };
+const LIEUX = LIEUX_BRUT as { lieux: { gros: { nom: string; niv: number; pv: number } }[] };
 
 /**
  * LES 52 VAGUES DE LA PROTECTION DE L'OASIS, LUES ICI ET NULLE PART AILLEURS.
@@ -55,4 +61,76 @@ export function vagues(): Vague[] {
     CACHE = [];
   }
   return CACHE;
+}
+
+/**
+ * LE PONT VERS /monstres — un identifiant de fiche par créature nommée ici.
+ *
+ * RÈGLE DE LA MAISON : les monstres appartiennent à /monstres. Cette page dit ce
+ * qu'il faut pour DÉCIDER d'entrer (combien de PV, faible à quoi, une rage), et
+ * elle doit pouvoir renvoyer à la fiche complète. Elle ne pouvait pas : ni
+ * `donjons-client.json` ni `lieux-hors-teleporteur.json` ne portent l'identifiant
+ * `MI_…` que /monstres/[id] attend.
+ *
+ * ┌──── POURQUOI PAS UN APPARIEMENT PAR NOM SEUL ────┐
+ * │ Dix des 85 noms cités sur cette page désignent    │
+ * │ DEUX créatures du catalogue : « Araignée mutante »│
+ * │ en désigne quatre. Un lien par nom seul aurait    │
+ * │ mené une fois sur deux à la mauvaise fiche.       │
+ * │ La clé est donc nom + niveau + PV, et elle tranche│
+ * │ 83 des 86 cas. Les trois restants sont de VRAIS   │
+ * │ jumeaux — mêmes niveau, mêmes PV, deux            │
+ * │ identifiants : aucun critère ne les sépare, donc  │
+ * │ ils ne reçoivent PAS de lien. Un lien qui se      │
+ * │ trompe est pire qu'un nom qui reste du texte.     │
+ * └──────────────────────────────────────────────────┘
+ *
+ * Le catalogue fait 612 Ko et il est lu ICI, côté serveur. Et on n'en garde QUE
+ * les créatures que cette page nomme : la table complète ferait 1 124 lignes dans
+ * la charge de la page pour 86 utiles. Les clés attendues sont donc récoltées
+ * d'abord dans les deux relevés de la page, puis cherchées dans le catalogue.
+ */
+let IDS: Record<string, string> | null = null;
+
+/** Les créatures que /donjons nomme : les trois relevés, dans l'ordre où ils servent. */
+function clefsAttendues(): Set<string> {
+  const s = new Set<string>();
+  for (const d of Object.values(CLIENT.donjons)) {
+    for (const m of d.monstres) s.add(clefMonstre(m.nom, m.niv, m.pv));
+    for (const m of d.horsCarte ?? []) s.add(clefMonstre(m.nom, m.niv, m.pv));
+  }
+  for (const e of CLIENT.tourOubliee) s.add(clefMonstre(e.boss, e.niv, e.pv));
+  for (const l of LIEUX.lieux) s.add(clefMonstre(l.gros.nom, l.gros.niv, l.gros.pv));
+  return s;
+}
+
+/** La clé d'appariement, la même des deux côtés : le nom, le niveau, les PV. */
+export const clefMonstre = (nom: string, niv: number, pv: number) => `${nom}|${niv}|${pv}`;
+
+export function idsMonstres(): Record<string, string> {
+  if (IDS) return IDS;
+  const table: Record<string, string> = {};
+  const attendues = clefsAttendues();
+  try {
+    const brut = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), "public", "wiki", "monstres.json"), "utf8")
+    ) as unknown;
+    const liste = (Array.isArray(brut) ? brut : (brut as { monstres?: unknown[] }).monstres ?? []) as {
+      id: string; nom: string; niv?: number; pv?: number;
+    }[];
+    /* On compte les candidats AVANT d'écrire : une clé qui rassemble deux
+       identifiants est effacée plutôt qu'attribuée au premier venu. */
+    const vus = new Map<string, Set<string>>();
+    for (const m of liste) {
+      const k = clefMonstre((m.nom ?? "").trim(), m.niv ?? -1, m.pv ?? -1);
+      if (!attendues.has(k)) continue;
+      if (!vus.has(k)) vus.set(k, new Set());
+      vus.get(k)!.add(m.id);
+    }
+    for (const [k, ids] of vus) if (ids.size === 1) table[k] = [...ids][0];
+  } catch {
+    // Catalogue illisible : les noms restent du texte, la page ne tombe pas pour ça.
+  }
+  IDS = table;
+  return IDS;
 }

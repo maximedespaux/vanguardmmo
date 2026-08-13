@@ -43,6 +43,20 @@ export type ObjetFiche = {
   hw?: 1;                       // absent du wiki du serveur
   re?: Record<string, number>;  // résistances élémentaires
   b?: [string, number][];       // bonus : libellé + valeur
+  /**
+   * D'OÙ IL VIENT — ajouté PAR LA RECHERCHE, absent du relevé.
+   *
+   * `objets-fiches.json` ne porte pas la provenance : elle vit dans `ou-trouver.json`,
+   * lu par `provenance.ts`. `chercher()` l'agrafe aux cinquante lignes qu'il rend, et à
+   * elles seules — l'attacher aux 12 134 du catalogue en mémoire serait 8 459 sources
+   * gardées pour en montrer cinquante.
+   *
+   * C'était le trou de cette page : son sous-titre promet de chercher « par ce qui le
+   * lâche », le filtre « Que lâche un monstre » existe, et une fois filtré AUCUNE des
+   * cinquante cartes ne disait QUEL monstre. Jamais de taux : le nom suffit à savoir
+   * où aller.
+   */
+  pv?: { titre: string; lignes: string[]; total: number };
 };
 
 export type Famille = "arme" | "armure" | "bijou" | "mode" | "consommable" | "materiau" | "familier" | "divers";
@@ -224,6 +238,22 @@ export const BADGE_ULTIME = "/jeu/interface/icon_ultimate.webp";
 
 /** Le cadenas du client, pour ce qui est lié ou non échangeable. */
 export const CADENAS = "/jeu/interface/lock.webp";
+
+/**
+ * CE QU'ON NE DEVINE PAS EN JOUANT : COMMENT ON SAIT QU'UN OBJET EST D'AIRFLYFF.
+ *
+ * La phrase existait DEUX FOIS, en deux versions qui ne disaient pas la même chose —
+ * 37 mots dans la bulle du filtre de /wiki, 44 dans celle de /objets, et l'une des deux
+ * oubliait les monstres. Un même fait écrit deux fois finit par diverger : il est écrit
+ * ici, une fois, et les deux filtres l'affichent. 81 mots servis deviennent 34.
+ *
+ * Le fait, lui, est de ceux que la brique `Invisible` existe pour porter : aucun écran
+ * du jeu ne montre cette différence, elle ne se lit que dans les fichiers du client.
+ */
+export const MARQUEUR_AIRFLYFF =
+  "Aucun écran du jeu ne dit ce qu’AirFlyff a ajouté. Le client, lui, le dit par " +
+  "l’espace de noms : IDS_AIRFLYFF_TXT_ et IDS_PROPITEM_NEWSERV_ pour ce que le serveur " +
+  "a ajouté, IDS_PROPITEM_TXT_ pour le Flyff d’origine — et NEWSERV sur les monstres.";
 
 /**
  * L'EMPLACEMENT DU CORPS — et le « (mode) » qui était collé aux mauvais codes.

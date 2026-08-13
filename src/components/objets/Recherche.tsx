@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { IconeObjet } from "./IconeObjet";
-import { BADGE_ULTIME, COULEUR_GRADE, chiffreDeCombat, classeFr, emblemeClasse, FAMILLES, libelleEtPourcent, type Famille, type ObjetFiche } from "./vocabulaire";
+import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, emblemeClasse, FAMILLES, libelleEtPourcent, MARQUEUR_AIRFLYFF, type Famille, type ObjetFiche } from "./vocabulaire";
 
 /**
  * CHERCHER UN OBJET — le catalogue du client du jeu, 12 134 lignes.
@@ -192,7 +192,9 @@ export function RechercheObjets({ depart = "", departStat = "", stats = [] }: {
             <Icon name="sparkles" size={13} /> Ajouts AirFlyff
             <Compte n={c?.maison} on={maison} />
           </Pastille>
-          <Invisible enJeu="Le client range les noms d'objets dans trois espaces : IDS_PROPITEM_TXT_ pour le Flyff d'origine, IDS_AIRFLYFF_TXT_ et IDS_PROPITEM_NEWSERV_ pour ce que le serveur a ajouté. Aucun écran du jeu ne fait la différence.">
+          {/* Le texte est celui de `MARQUEUR_AIRFLYFF` — le même que sur /wiki. Il était
+              écrit à la main dans les deux fichiers, en deux versions différentes. */}
+          <Invisible enJeu={MARQUEUR_AIRFLYFF}>
             <></>
           </Invisible>
           <Pastille on={grade === "Unique"} couleur={COULEUR_GRADE.Unique} onClick={() => setGrade(grade === "Unique" ? "" : "Unique")}>
@@ -251,6 +253,42 @@ export function RechercheObjets({ depart = "", departStat = "", stats = [] }: {
 }
 
 /**
+ * LE VERROU D'ÉCHANGE, EN IMAGE ET SANS UN MOT.
+ *
+ * 4 602 objets du catalogue sont NON ÉCHANGEABLES et 2 170 sont LIÉS. C'est le seul
+ * champ de la carte qui change un geste avant même de regarder les bonus : sur un site
+ * de guilde qui tient une boutique, un coffre et un salon de troc, une pièce liée ne
+ * peut ni se vendre, ni se prêter, ni se demander. Le savoir dans la liste évite d'ouvrir
+ * la fiche pour rien — et évite de promettre à quelqu'un un objet qu'on ne peut pas lui
+ * donner.
+ *
+ * LE CADENAS EST CELUI DU JEU (`/jeu/interface/lock.webp`, déjà servi par la fiche), pas
+ * un pictogramme maison : c'est l'image que le joueur voit sur l'objet dans son sac. Zéro
+ * mot ajouté à l'écran — l'intitulé passe par `alt`, que le lecteur d'écran lit et que la
+ * mesure des mots ne compte pas comme de la prose.
+ *
+ * Les trois cas du client sont distingués par la COULEUR, parce qu'ils n'ont pas le même
+ * poids : rouge pour ce qui ne bougera plus (non échangeable, lié au personnage), or pour
+ * « lié à l'équipement », qui reste dans le jeu du joueur.
+ */
+function Verrou({ o }: { o: ObjetFiche }) {
+  const cas = o.ne === 1 ? { titre: "Non échangeable", ton: "var(--red)" }
+    : o.li === 1 ? { titre: "Lié au personnage", ton: "var(--red)" }
+    : o.li === 2 ? { titre: "Lié à l’équipement", ton: "var(--gold)" }
+    : null;
+  if (!cas) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={CADENAS} alt={cas.titre} title={cas.titre} width={11} height={11}
+      style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0,
+        // Le cadenas du client est gris : la teinte vient d'un `drop-shadow` posé
+        // dessous, qui garde le dessin lisible là où un `filter: hue-rotate` le
+        // déformerait.
+        filter: `drop-shadow(0 0 2px color-mix(in srgb, ${cas.ton} 80%, transparent))` }} />
+  );
+}
+
+/**
  * Une carte de résultat : de quoi reconnaître la pièce sans ouvrir la fiche.
  *
  * Les DEUX premiers bonus s'affichent, pas leur nombre. « 5 bonus » ne permet de
@@ -283,6 +321,7 @@ function Carte({ o }: { o: ObjetFiche }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={emb} alt={classeFr(o.cl) ?? ""} title={classeFr(o.cl) ?? ""} width={15} height={15} style={{ objectFit: "contain" }} />
           )}
+          <Verrou o={o} />
         </span>
         {combat ? (
           <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: 4, ...NUM }}>
@@ -311,6 +350,29 @@ function Carte({ o }: { o: ObjetFiche }) {
             })}
             {o.b && o.b.length > 2 && (
               <span style={{ fontSize: 10.5, padding: "2px 5px", color: "var(--text-muted)", ...NUM }}>+{o.b.length - 2}</span>
+            )}
+          </span>
+        )}
+
+        {/* D'OÙ IL VIENT, DANS LA CARTE. C'était le trou de la page : le sous-titre
+            promet de chercher « par ce qui le lâche », le filtre existe, et une fois
+            filtré aucune des cinquante cartes ne nommait le monstre. La ligne dit UN
+            nom — celui qui répond, le butin passant devant par construction — et le
+            compte des autres. Jamais de taux.
+
+            PAS DE <Bulle> ICI : la carte entière est un <Link>, et `Bulle` rend un
+            bouton. Un bouton dans un lien n'est pas du HTML valide, et le clic de la
+            carte se perdrait. C'est l'icône qui porte le sens, nommée pour les
+            lecteurs d'écran. */}
+        {o.pv && (
+          <span style={{ display: "flex", gap: 5, alignItems: "baseline", marginTop: 5, fontSize: 10.5, color: "var(--text-muted)", minWidth: 0 }}>
+            <Icon name="map-pin" size={10} aria-hidden={false} aria-label={o.pv.titre} role="img"
+              style={{ flexShrink: 0, opacity: .7, transform: "translateY(1px)" }} />
+            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {o.pv.lignes[0]}
+            </span>
+            {o.pv.total > o.pv.lignes.length && (
+              <span style={{ flexShrink: 0, ...NUM }}>+{o.pv.total - o.pv.lignes.length}</span>
             )}
           </span>
         )}

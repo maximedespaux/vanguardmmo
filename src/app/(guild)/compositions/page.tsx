@@ -7,7 +7,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
 import { StrategieCS } from "@/components/StrategieCS";
-import { AdversairesChambres } from "@/components/chambres/Adversaires";
+import { AdversairesChambres, AlerteVies } from "@/components/chambres/Adversaires";
 import { classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, presencesSeance, prochaineSeance, type CompoState, type Creneau, type Presence, type Seance } from "@/lib/compositions";
 
 import type { Signup } from "@/lib/compositions";
@@ -247,6 +247,15 @@ export default function CompositionsPage() {
         <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="sword" size={15} /> Guild Siege</button>
       </div>
 
+      {/* LA MISE EN GARDE EST HORS DES ONGLETS, ET C'EST LE POINT.
+          « Une barre à zéro ne veut pas dire mort » vivait dans le bloc des
+          adversaires, donc dans l'onglet Stratégie ; la page ouvre sur Chambre
+          Secrète, et celui qui vient s'inscrire pour ce soir ne la voyait jamais.
+          Elle est ici : une ligne, les deux nombres comptés sur le relevé, et un
+          bouton qui mène au tableau des PV à sortir. Posée après les onglets pour
+          qu'elle ne s'insère pas entre le titre et la navigation de la page. */}
+      <AlerteVies onVoir={() => setTab("strat")} />
+
       <div key={tab} className="vg-swap">
       {tab === "cs" ? (<>
         {/* Bandeau de progression */}
@@ -418,7 +427,22 @@ export default function CompositionsPage() {
         ); })}
 
         <div style={card}>
-          <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Clique <b style={{ color: "var(--orange)" }}>« + ton perso »</b> sur un poste de ta classe pour te porter candidat·e — <b>plusieurs personnes peuvent candidater au même poste</b>. Un responsable sélectionne ensuite le titulaire (<Icon name="star" size={13} style={{ display: "inline-block", color: "var(--orange)" }} />). Le <Icon name="eye" size={14} style={{ display: "inline-block" }} /> donne le build conseillé + le build de référence.</div>
+          {/* ┌──── LE MODE D'EMPLOI EST DEVENU UNE LÉGENDE ────┐
+                 C'était un paragraphe de quarante mots qui décrivait en phrases
+                 trois boutons présents à l'écran, deux centimètres plus haut :
+                 « clique + ton perso… un responsable sélectionne ensuite… le œil
+                 donne… ». Une légende met le VRAI contrôle en regard de ce qu'il
+                 fait — on reconnaît le signe au lieu de lire sa description, et la
+                 seule chose qui ne se voit pas (plusieurs candidats par poste)
+                 tient en quatre mots. */}
+          <dl className="cs-legende">
+            <dt><span className="cs-lg-btn">+ ton perso</span></dt>
+            <dd>se porter candidat·e — plusieurs par poste</dd>
+            <dt><Icon name="star" size={14} style={{ color: "var(--orange)" }} /></dt>
+            <dd>le titulaire, choisi par un responsable</dd>
+            <dt><Icon name="eye" size={14} /></dt>
+            <dd>le build conseillé, et celui de référence</dd>
+          </dl>
           {signups.length > 0 && (<>
             <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
@@ -536,6 +560,31 @@ export default function CompositionsPage() {
           </div>
         </div>
       )}
+
+      <style>{`
+        /* LA LEGENDE DES CONTROLES. Une liste de definitions et non deux colonnes
+           de div : le couple signe/sens EST une definition, et un lecteur d'ecran
+           annonce alors le terme avant sa description au lieu de lire six morceaux
+           de phrase a la suite.
+           La grille tient les signes alignes sur une colonne etroite ; la
+           description prend le reste. Le centrage vertical est explicite : une
+           icone de 14 px et un texte de 12,5 px ne partagent pas leur ligne de
+           base, et l'icone flottait au-dessus du mot.
+           AUCUN ACCENT GRAVE NI GUILLEMET OBLIQUE DANS CE COMMENTAIRE : on est
+           dans un litteral de gabarit, et le caractere qui sert de delimiteur le
+           refermerait ici. Piege deja paye sur ce site, invisible pour tsc jusqu'a
+           ce que la page tombe en 500. */
+        .cs-legende{display:grid;grid-template-columns:auto minmax(0,1fr);
+          gap:7px 11px;align-items:center;margin:0;font-size:12.5px;
+          color:var(--text-muted)}
+        .cs-legende dt{display:flex;align-items:center;justify-content:center;min-width:0}
+        .cs-legende dd{margin:0;min-width:0}
+        /* Le faux bouton reprend la forme du vrai « + ton perso » des postes :
+           meme rayon, meme graisse, meme taille de texte. Il ne se clique pas —
+           c'est une legende — donc pas de curseur ni de survol. */
+        .cs-lg-btn{white-space:nowrap;font-size:11.5px;font-weight:600;padding:4px 9px;
+          border-radius:6px;border:1px solid var(--orange);color:var(--orange)}
+      `}</style>
     </div>
   );
 }

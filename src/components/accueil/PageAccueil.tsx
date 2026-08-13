@@ -105,9 +105,16 @@ export function PageAccueil({ chiffres, comptes = {} }: {
                 cadenas. Ce qui reste est ce qu'un visiteur doit savoir en trois
                 secondes : d'où viennent les données, et qu'il n'a pas besoin de
                 compte pour les lire. */}
+            {/* L'ÉNUMÉRATION D'OUVERTURE EST PARTIE — « Instances, monstres, objets,
+                paliers de prestige ». Ces quatre mots étaient un sommaire du bloc « Ce que
+                le site fait », qui est sur la même page et qui les DÉTAILLE un par un, avec
+                leur compte et leur cadenas : treize portes, dont quatre nommées exactement
+                comme ces quatre mots. Annoncer une liste juste avant de la montrer est du
+                remplissage — ce qui reste est le seul fait que ce paragraphe est seul à
+                porter : d'où viennent les données, et qu'on entre sans compte. */}
             <p style={{ margin: 0, maxWidth: 620, fontSize: 15, lineHeight: 1.75, color: "#d9d9e2" }}>
-              Instances, monstres, objets, paliers de prestige : tout est lu dans les fichiers du client
-              d&apos;AirFlyff. Et <b style={{ color: "var(--orange)" }}>ça se consulte sans compte</b> — Discord
+              Tout est lu dans les fichiers du client d&apos;AirFlyff, et{" "}
+              <b style={{ color: "var(--orange)" }}>ça se consulte sans compte</b> — Discord
               ne garde que ce qui t&apos;appartient.
             </p>
             {/* LA « LIMITE HONNÊTE » A ÉTÉ RETIRÉE, et c'est une mise en cohérence,
@@ -178,8 +185,8 @@ export function PageAccueil({ chiffres, comptes = {} }: {
         {/* Les deux nombres restent COMPTÉS, la phrase autour a maigri : le cadenas
             est dessiné sur chacune des portes concernées et dit déjà « membres ».
             « s'ouvrent en te connectant avec Discord » ÉTAIT FAUX et la promesse
-            était sérieuse : les trois adresses sous cadenas sont dans
-            GUILD_PREFIXES, dont la liste de rôles exclut RECRUE. Un joueur qui se
+            était sérieuse : les adresses sous cadenas sont gardées par la
+            liste de rôles de la guilde, qui exclut RECRUE. Un joueur qui se
             connecte sans être de la guilde est renvoyé sur `/?error=guild` — donc
             par la porte qu'on venait de lui promettre. Ce qui les ouvre, c'est
             d'être MEMBRE, et c'est ce que la phrase dit maintenant. */}

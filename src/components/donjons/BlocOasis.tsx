@@ -169,7 +169,7 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
    */
   if (!vagues.length) {
     return (
-      <div id="oasis" style={{ marginTop: 26 }}>
+      <div id="oasis" style={{ marginTop: 26, scrollMarginTop: 88 }}>
         {titre}
         <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
           {/* Pas de « 52 » dans cette phrase : sur cette branche, on n'a rien lu — l'annoncer
@@ -189,7 +189,10 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
   const derniere = vagues[vagues.length - 1];
 
   return (
-    <div id="oasis" style={{ marginTop: 26 }}>
+    /* `scrollMarginTop` : deux chemins arrivent sur cette ancre — la redirection de
+       /oasis et le schéma d'entrée en tête de page — et la barre de navigation est
+       fixe. Sans la marge, le titre du bloc atterrit dessous. */
+    <div id="oasis" style={{ marginTop: 26, scrollMarginTop: 88 }}>
       {titre}
 
       <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 12, display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -205,8 +208,11 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
             alt=""
             style={{ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)", display: "block" }}
           />
+          {/* La légende nommait la carte, que la ligne juste à droite nomme déjà.
+              Reste ce que l'image ne montre pas d'elle-même : qu'il n'y a RIEN
+              autour, et que c'est le fait — la carte est vide, tout vient du serveur. */}
           <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6, lineHeight: 1.4 }}>
-            La Tour Infernale vue de dessus : une arène, et rien autour.
+            Une arène, et rien autour.
           </div>
         </div>
 

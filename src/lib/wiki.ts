@@ -1,6 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { classeFr, clefRecherche, FAMILLES, type ObjetFiche } from "@/components/objets/vocabulaire";
+import { classeFr, FAMILLES, type ObjetFiche } from "@/components/objets/vocabulaire";
+/* LA PROVENANCE EST LUE AILLEURS, ET C'EST UNE DÉDUPLICATION.
+   `ou-trouver.json` était lu et traduit ici ET dans /api/ou-trouver, chacun avec sa
+   version de la même fonction — et /objets, qui promet dans son sous-titre de chercher
+   « par ce qui le lâche », n'en avait aucune. Le relevé est désormais lu UNE fois par
+   `components/objets/provenance.ts`, qui rend les DEUX sens de la table : d'où vient un
+   objet, et ce qu'un monstre lâche. `clef`, `reparer` et `lisible` viennent de là aussi :
+   trois copies d'une même normalisation finissent par divertir. */
+import { clefNom as clef, indexProvenance, lisible, reparer } from "@/components/objets/provenance";
 import { compacter, TYPES, type Entree, type Provenance, type Reponse, type TypeEntree } from "@/components/wiki/vocabulaire";
 
 /**
@@ -36,9 +44,6 @@ import { compacter, TYPES, type Entree, type Provenance, type Reponse, type Type
  */
 
 /* ─────────────────────────── les relevés, tels qu'ils sont ─────────────────────── */
-
-type SourceBrute = Record<string, unknown> & { type: string };
-type ObjetProvenance = { nom: string; sources: SourceBrute[] };
 
 /* Les champs déclarés sont CEUX QU'ON LIT, pas tout le relevé : `monstres.json` en
    porte trente par ligne (PV, cadence, résistances…) et ils appartiennent à
@@ -109,50 +114,6 @@ let META: {
 const lire = <T,>(...bouts: string[]): T =>
   JSON.parse(fs.readFileSync(path.join(process.cwd(), ...bouts), "utf8")) as T;
 
-/**
- * LE « C½UR » DES RELEVÉS — un défaut d'encodage du client, réparé à la lecture.
- *
- * 407 occurrences dans les cinq relevés portent « ½ » là où le jeu écrit « œ » :
- * « Fragment de C½ur », « Boîte C½ur d'ange », « ½uf », « B½uf », « N½un½uf ». La
- * substitution est sans ambiguïté — aucun de ces textes ne parle de demi — et sans elle
- * le wiki affiche un nom cassé, ce qui est pire que pas de nom.
- */
-const reparer = (s: string) => s.replace(/½/g, "œ");
-
-/**
- * LA CLÉ DE RECHERCHE, avec la ligature dépliée.
- *
- * `clefRecherche` normalise en NFD, qui ne casse PAS « œ » (il faudrait NFKD) : la
- * ligature tombait donc dans le filtre de ponctuation et « Cœur de shade » devenait
- * « c ur de shade ». Un joueur qui tape « coeur » ne trouvait rien. On déplie donc les
- * deux ligatures du français avant de normaliser.
- */
-const clef = (s: string) => clefRecherche(reparer(s).replace(/œ/g, "oe").replace(/æ/g, "ae"));
-
-/**
- * UN NOM, OU RIEN. Des sources de `ou-trouver.json` et des champs de `pnj.json`
- * portent encore un code du client que le relevé n'a pas su résoudre — les trois formes
- * rencontrées sont `IDS_CHARACTER_INC_001185` (une table de textes),
- * `II_SYS_SYS_SCR_BXCAPEG` (une clé d'objet) et `WI_INSTANCE_OMINOUS` (un libellé de
- * bonus que le relevé n'a pas traduit, porté par la Clef Vampirique). Un code interne
- * n'est pas un renseignement : il disparaît, et la ligne prend une formulation
- * générique plutôt qu'un faux nom.
- *
- * LE SECOND MOTIF EST GÉNÉRAL EXPRÈS, et c'est une leçon payée ici : une liste de
- * préfixes (`IDS_`, `II_`) laisse passer le préfixe suivant. `WI_INSTANCE_OMINOUS`
- * s'affichait en pastille sur la Clef Vampirique parce qu'aucun préfixe connu ne le
- * couvrait. Toute chaîne qui n'est QUE des majuscules, des chiffres et des soulignés
- * est un code du client : le français n'écrit pas comme ça. Vérifié sur les six
- * relevés — un seul champ affiché correspond, celui-là.
- */
-const CODE_CLIENT = /^(IDS_|II_[A-Z]|[A-Z][A-Z0-9]*_[A-Z0-9_]+$)/;
-
-const lisible = (v: unknown): string | null => {
-  if (typeof v !== "string") return null;
-  const s = reparer(v).trim();
-  return s && !CODE_CLIENT.test(s) ? s : null;
-};
-
 /** Les libellés de famille, tels que les pastilles de /objets les écrivent. */
 const LABEL_FAMILLE = new Map<string, string>(FAMILLES.map((f) => [f.clef, f.label]));
 
@@ -168,51 +129,6 @@ const IMAGE_ELEMENT: Record<string, string> = {
   Terre: "/jeu/mecaniques/element-terre.webp",
   Foudre: "/jeu/mecaniques/element-electricite.webp",
 };
-
-/* ─────────────────────────── la provenance, sans les taux ──────────────────────── */
-
-/**
- * Une source du client, en français et sans chiffre de chance.
- *
- * Le `rang` sert à trier : le BUTIN d'abord, parce que c'est la question posée
- * (« qui lâche ça ? »), puis le craft, puis les coffres. Un objet présent dans
- * quinze coffres afficherait sinon quinze lignes presque identiques avant la seule
- * qui répond.
- */
-function libelleSource(s: SourceBrute): { rang: number; texte: string } | null {
-  switch (s.type) {
-    case "butin": {
-      const m = lisible(s.monstre);
-      if (!m) return null; // « lâché par un monstre » ne dit rien : la ligne part.
-      const zone = lisible((s.zones as string[] | undefined)?.[0]);
-      return { rang: 0, texte: `Lâché par ${m}${zone ? ` — ${zone}` : ""}` };
-    }
-    case "craft": {
-      const pnj = lisible(s.pnj);
-      return { rang: 1, texte: pnj ? `Fabriqué chez ${pnj}` : "Fabriqué par échange" };
-    }
-    case "craft-maison": {
-      const ing = lisible(s.ingredient);
-      return ing ? { rang: 1, texte: `Fabriqué avec ${ing}` } : null;
-    }
-    case "cle": {
-      const c = lisible(s.cle);
-      return c ? { rang: 2, texte: `Coffre ouvert avec « ${c} »` } : null;
-    }
-    case "coffre": {
-      const c = lisible(s.coffre);
-      return c ? { rang: 3, texte: `Dans « ${c} »` } : null;
-    }
-    case "tour":
-      return { rang: 4, texte: `Protection de l'Oasis, palier ${s.palier ?? "?"}` };
-    case "farm": {
-      const sert = lisible(s.sert);
-      return sert ? { rang: 5, texte: `Sert à fabriquer ${sert}` } : null;
-    }
-    default:
-      return null;
-  }
-}
 
 /**
  * LA LISTE ENTIÈRE EST GARDÉE, l'écran n'en montre que trois.
@@ -239,38 +155,13 @@ function charger() {
 
   /* 1. LA PROVENANCE D'ABORD : les objets et les monstres s'en servent tous les deux.
         Le même relevé se lit dans les DEUX SENS — d'où vient un objet, et ce qu'un
-        monstre lâche. C'est la même table, et personne ne la lisait à l'envers. */
-  const provObjet = new Map<string, { rang: number; texte: string }[]>();
-  const butinMonstre = new Map<string, string[]>();
-  let provenances = 0;
-  try {
-    const ot = lire<{ objets: ObjetProvenance[] }>("public", "wiki", "ou-trouver.json");
-    for (const o of ot.objets) {
-      const vues = new Set<string>();
-      const lignes: { rang: number; texte: string }[] = [];
-      for (const s of o.sources) {
-        const l = libelleSource(s);
-        if (!l || vues.has(l.texte)) continue;
-        vues.add(l.texte);
-        lignes.push(l);
-        if (s.type === "butin" && lisible(s.monstre)) {
-          const k = clef(s.monstre as string);
-          const liste = butinMonstre.get(k) ?? [];
-          const nom = reparer(o.nom);
-          if (!liste.includes(nom)) liste.push(nom);
-          butinMonstre.set(k, liste);
-        }
-      }
-      if (!lignes.length) continue;
-      lignes.sort((a, b) => a.rang - b.rang);
-      const k = clef(o.nom);
-      const deja = provObjet.get(k);
-      // Deux objets portent parfois le même nom (versions garçon/fille) : on fusionne
-      // leurs sources plutôt que d'en laisser une masquer l'autre.
-      if (deja) for (const l of lignes) { if (!deja.some((x) => x.texte === l.texte)) deja.push(l); }
-      else { provObjet.set(k, lignes); provenances++; }
-    }
-  } catch { /* pas de relevé de provenance : les entrées existent sans ce bloc */ }
+        monstre lâche. C'est la même table, et personne ne la lisait à l'envers.
+
+        ELLE N'EST PLUS LUE ICI. `components/objets/provenance.ts` la lit une seule fois
+        pour tout le site, et rend les deux sens tout faits : ce fichier en était la
+        troisième copie, et /objets — qui promet de chercher « par ce qui le lâche » —
+        n'en avait aucune. */
+  const { parObjet: provObjet, butinParMonstre: butinMonstre, noms: provenances } = indexProvenance();
 
   /* 2. LES OBJETS — 12 134 lignes, et les mots-clés que la demande vise : famille,
         type, classe requise, grade, et LES LIBELLÉS DES BONUS. `objets-fiches.json`
@@ -298,7 +189,7 @@ function charger() {
         const l = lisible(libelle);
         if (l && !mots.includes(l)) mots.push(l);
       }
-      const dou = (provObjet.get(clef(o.n)) ?? []).map((x) => x.texte);
+      const dou = provObjet.get(clef(o.n)) ?? [];
       tout.push(entree({
         t: "objet", id: String(o.i), nom: reparer(o.n),
         img: o.ic ? `/jeu/icones/${o.ic}` : null,
@@ -521,7 +412,51 @@ function noteMot(k: string, q: string): number {
   return p === 0 || k[p - 1] === " " ? 14 : 7;
 }
 
-function note(e: Interne, q: string, qc: string): number {
+/**
+ * ┌──────── LES MOTS DANS N'IMPORTE QUEL ORDRE — le défaut le plus grave d'une porte
+ * │ d'entrée, et il était mesurable en trois essais.
+ * │
+ * │ Tout ce qui précède cherche une SUITE de caractères. « epee luzaka » trouvait donc
+ * │ une ligne ; « luzaka epee » ZÉRO, « demon ame » ZÉRO, « cristal foudre » ZÉRO —
+ * │ alors que « Épée de Luzaka oubliée » et « Ame de démon » sont bien dans l'index.
+ * │ Un joueur n'a aucun moyen de deviner que l'ordre compte : il tape deux mots dont il
+ * │ se souvient, il obtient « Rien sous ce mot », et il conclut que le wiki ne connaît
+ * │ pas l'objet. C'est le pire aveu possible pour la page qui prétend tout trouver.
+ * │
+ * │ La règle ajoutée : TOUS les mots tapés doivent être là, l'ordre est libre. Elle ne
+ * │ sert qu'en DERNIER RECOURS — une suite exacte reste toujours mieux classée, sinon
+ * │ « ame de demon » verrait ses deux vraies réponses noyées sous les 26 lignes qui
+ * │ portent « ame » et « de » quelque part.
+ * │
+ * │ Le barème place le nom éparpillé (16) au-dessus du mot-clé contigu (14) : deux mots
+ * │ retrouvés dans le nom valent mieux qu'un bonus qui contient la phrase. Et le
+ * │ mélange nom + mot-clé tombe à 4, sous tout le reste : c'est la réponse de dernier
+ * │ ressort, celle qu'on montre parce que la liste serait vide autrement.
+ * └────────────────────────────────────────────────────────────────────────────────────
+ *
+ * ┌──────── LA CLÉ COMPACTE N'EST PAS OFFERTE À TOUS LES JETONS, et c'est un défaut
+ * │ constaté sur le premier essai : « ame de demon » est passé de 2 réponses à 30.
+ * │
+ * │ La clé compacte colle les mots (« Ame de monstre de Dekanes » → « amedemonstre… ») :
+ * │ le jeton « demon » y apparaît donc à cheval sur « ame » et « monstre », dans un nom
+ * │ qui ne parle pas de démon. Sur une suite entière la faute est rare et déjà notée un
+ * │ cran plus bas ; sur un jeton court elle est SYSTÉMATIQUE.
+ * │
+ * │ Seuil mesuré à 6 lettres : il garde le cas pour lequel la clé compacte existe —
+ * │ « baaltru » (7) pour Bàäl'tru, dont l'apostrophe a été réduite à un espace — et
+ * │ ferme la porte à « demon » (5), « ame » (3), « epee » (4).
+ * └────────────────────────────────────────────────────────────────────────────────────
+ */
+const COMPACT_MIN = 6;
+
+function noteJetons(e: Interne, jetons: string[]): number {
+  const dansNom = (t: string) => e.kn.includes(t) || (t.length >= COMPACT_MIN && e.knc.includes(t));
+  if (jetons.every(dansNom)) return 16;
+  return jetons.every((t) =>
+    dansNom(t) || e.kb.includes(t) || (t.length >= COMPACT_MIN && e.kbc.includes(t))) ? 4 : -1;
+}
+
+function note(e: Interne, q: string, qc: string, jetons: string[]): number {
   if (!q) return 0;
   const b = noteSur(e.knc, qc);
   // La version compacte est notée un cran plus bas : une correspondance « avec les
@@ -529,7 +464,9 @@ function note(e: Interne, q: string, qc: string): number {
   const nom = Math.max(noteSur(e.kn, q), b > 0 ? b - 5 : b);
   if (nom > 0) return nom;
   const mc = noteMot(e.kbc, qc);
-  return Math.max(noteMot(e.kb, q), mc > 0 ? mc - 2 : mc);
+  const cle = Math.max(noteMot(e.kb, q), mc > 0 ? mc - 2 : mc);
+  if (cle > 0) return cle;
+  return jetons.length > 1 ? noteJetons(e, jetons) : -1;
 }
 
 const RANG_TYPE = new Map(TYPES.map((t, i) => [t.clef as string, i]));
@@ -550,9 +487,14 @@ export function faitsWiki() {
  * contiennent ce qu'on a tapé — sur les quarante lignes montrées seulement, pas sur les
  * quatorze mille examinées.
  */
-function motsEnAvant(mots: string[], q: string): string[] {
+function motsEnAvant(mots: string[], q: string, jetons: string[] = []): string[] {
   if (!q || mots.length < 2) return mots;
-  const dedans = mots.filter((m) => clef(m).includes(q));
+  /* Les JETONS comptent autant que la suite entière, et pour la même raison qu'ils
+     comptent dans la note : « luzaka epee » ne correspond à aucun mot-clé en entier,
+     donc sans eux la ligne remonterait ses trois premières pastilles au hasard et ne
+     dirait toujours pas pourquoi elle est là. */
+  const touche = (m: string) => { const k = clef(m); return k.includes(q) || jetons.some((j) => k.includes(j)); };
+  const dedans = mots.filter(touche);
   if (!dedans.length || dedans.length === mots.length) return mots;
   return [...dedans, ...mots.filter((m) => !dedans.includes(m))];
 }
@@ -562,9 +504,9 @@ function motsEnAvant(mots: string[], q: string): string[] {
  *  quinzième donne une ligne qui ne parle pas de ce qu'on cherche. */
 const MONTRE_PROV = 3;
 
-function provEnAvant(p: Provenance | undefined, q: string): Provenance | undefined {
+function provEnAvant(p: Provenance | undefined, q: string, jetons: string[]): Provenance | undefined {
   if (!p) return undefined;
-  const lignes = motsEnAvant(p.lignes, q).slice(0, MONTRE_PROV);
+  const lignes = motsEnAvant(p.lignes, q, jetons).slice(0, MONTRE_PROV);
   return { titre: p.titre, lignes, total: p.total };
 }
 
@@ -572,13 +514,17 @@ export function chercher(c: Critere, limite = 40): Reponse {
   const { TOUT: tout } = charger();
   const q = clef(c.q ?? "");
   const qc = compacter(q);
+  /* Les jetons sont découpés UNE FOIS, pas 14 219 : `clef` a déjà réduit la ponctuation
+     à des espaces, donc un découpage sur l'espace suffit. Les mots d'une seule lettre
+     sortent — « d », « l », « a » sont dans presque tout et ne filtrent rien. */
+  const jetons = q.split(" ").filter((m) => m.length > 1);
 
   const parType: Record<string, number> = {};
   let maison = 0;
   const gardes: { e: Interne; s: number }[] = [];
 
   for (const e of tout) {
-    const s = note(e, q, qc);
+    const s = note(e, q, qc, jetons);
     if (s < 0) continue;
     // Les comptes des pastilles IGNORENT le filtre qu'elles portent — sinon
     // « Monstres » afficherait 0 dès qu'on a choisi « Objets », et « Ajouts
@@ -605,13 +551,70 @@ export function chercher(c: Critere, limite = 40): Reponse {
     return a.e.kn.localeCompare(b.e.kn, "fr");
   });
 
-  const resultats = gardes.slice(0, limite).map(({ e }) => {
+  /**
+   * ┌──────── L'ÉCRAN D'ARRIVÉE MONTRE LES CINQ NATURES, PAS QUARANTE OBJETS.
+   * │
+   * │ Ce qu'il montrait, relevé sur le HTML servi : « 1e Fragment de pierre Précieuse
+   * │ Koori · Objet · Divers / boîte », puis « 2e Fragment de pierre précieuse Koori ·
+   * │ Objet · Divers / boîte », puis trente-huit lignes du même tonneau. Le tri sans
+   * │ mot-clé met les ajouts AirFlyff devant, puis les objets (première nature du rang),
+   * │ puis l'ordre alphabétique : les quarante lignes de la porte du site étaient donc
+   * │ QUARANTE MATÉRIAUX DE CRAFT rangés par ordre alphabétique, et « Objet · Divers /
+   * │ boîte » y était écrit trente fois. Six cents mots pour ne rien apprendre, et
+   * │ surtout : rien ne laissait deviner que ce champ trouve aussi les monstres, les
+   * │ recettes, les marchands et les compétences.
+   * │
+   * │ On distribue donc la tranche À TOUR DE RÔLE entre les cinq natures. Le budget de
+   * │ mots ne bouge pas d'une ligne — huit objets, huit monstres, huit recettes, huit
+   * │ PNJ, huit compétences — et il achète cinq fois plus : des portraits de marchands,
+   * │ des monstres avec leurs vies et leur élément, des recettes avec leur artisan.
+   * │ La porte MONTRE ce qu'elle sait ouvrir.
+   * │
+   * │ SEULEMENT SUR LA PORTE. Dès qu'un mot est tapé ou une nature choisie, l'ordre est
+   * │ celui de la PERTINENCE et il ne se mélange pas : équilibrer les natures d'une
+   * │ recherche sur « luzaka » ferait descendre la bonne réponse pour faire de la place
+   * │ à un PNJ qui n'a rien à voir.
+   * └────────────────────────────────────────────────────────────────────────────────────
+   */
+  const tranche = !q && !c.type ? aTourDeRole(gardes, limite) : gardes.slice(0, limite);
+
+  const resultats = tranche.map(({ e }) => {
     // Les clés de recherche ne descendent pas au navigateur : elles ne servent qu'ici,
     // et elles doubleraient le poids de la réponse.
     const { kn: _a, knc: _b, kb: _c, kbc: _d, ...visible } = e;
     void _a; void _b; void _c; void _d;
-    return { ...visible, mots: motsEnAvant(visible.mots, q), prov: provEnAvant(visible.prov, q) } as Entree;
+    return { ...visible, mots: motsEnAvant(visible.mots, q, jetons), prov: provEnAvant(visible.prov, q, jetons) } as Entree;
   });
 
   return { resultats, total: gardes.length, montres: resultats.length, parType, maison };
+}
+
+/**
+ * Une tranche répartie entre les natures, chacune gardant SON ordre.
+ *
+ * Un tour de rôle et pas un quota fixe de huit : si une nature s'épuise (les compétences
+ * n'existent pas sous le filtre « Ajouts AirFlyff »), les autres se partagent la place au
+ * lieu de laisser des lignes vides. L'ordre de sortie suit le rang des natures, pour que
+ * la liste reste rangée et pas alternée ligne à ligne.
+ */
+function aTourDeRole<T extends { e: Interne }>(gardes: T[], limite: number): T[] {
+  const files = new Map<string, T[]>();
+  for (const g of gardes) {
+    const f = files.get(g.e.t);
+    if (f) f.push(g); else files.set(g.e.t, [g]);
+  }
+  const pris: T[] = [];
+  const ordre = TYPES.map((t) => t.clef as string).filter((t) => files.has(t));
+  for (let tour = 0; pris.length < limite; tour++) {
+    let ajoute = false;
+    for (const t of ordre) {
+      const f = files.get(t)!;
+      if (tour >= f.length || pris.length >= limite) continue;
+      pris.push(f[tour]);
+      ajoute = true;
+    }
+    if (!ajoute) break; // toutes les files sont vides : rien de plus à distribuer
+  }
+  return pris.sort((a, b) =>
+    (RANG_TYPE.get(a.e.t) ?? 9) - (RANG_TYPE.get(b.e.t) ?? 9) || a.e.kn.localeCompare(b.e.kn, "fr"));
 }

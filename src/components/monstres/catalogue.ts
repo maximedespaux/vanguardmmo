@@ -163,9 +163,21 @@ export function faits() {
   return {
     total: meta.total,
     agressifs,
-    /** Ceux du jeu d'origine : le complément des 235 marqués `NEWSERV`. */
+    /** Ceux du jeu d'origine : le complément de ceux marqués `NEWSERV`. */
     base: meta.total - meta.compteurs.maison,
     maison: meta.compteurs.maison,
+    /**
+     * COMBIEN DE CEUX QUI SE RELÈVENT SONT DU CONTENU AIRFLYFF.
+     *
+     * La règle de Maxime — « si un monstre a plusieurs barres, c'est du contenu
+     * AirFlyff » — est vérifiable ligne à ligne, et le relevé la vérifie : les 94
+     * concernés portent tous la marque `NEWSERV`. Le chiffre est COMPTÉ et non
+     * écrit, parce que l'écran s'en sert pour choisir sa phrase : tant qu'il vaut
+     * exactement `compteurs.vies`, le schéma peut dessiner l'un DANS l'autre ; le
+     * jour où une fouille en sort un qui n'est pas marqué, il les dessinera côte à
+     * côte au lieu de mentir.
+     */
+    viesMaison: tout.filter((e) => (e.m.vies ?? 0) > 1 && e.m.maison).length,
     /** Le plus gros écart entre la barre de vie et le combat réel. */
     plusDeVies: tout.reduce((max, e) => Math.max(max, e.m.vies ?? 1), 1),
     /** Combien d'objets distincts on sait rattacher à un monstre : c'est la mesure

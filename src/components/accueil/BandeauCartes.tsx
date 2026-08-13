@@ -55,27 +55,32 @@ export function BandeauCartes({ children }: { children: React.ReactNode }) {
       <div className="acc-band-voile" aria-hidden="true" />
       <div className="acc-band-txt">{children}</div>
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ── (sorti du littéral : dans le
+          gabarit, ces lignes partaient dans le `<style>` servi au navigateur — et
+          il fallait s'y interdire l'accent grave, qui refermait le gabarit)
+
+          .acc-band-frise — align-items:stretch et hauteur 100 % plutôt que les
+          250 px d'origine : le bandeau fait plus de 250 px de haut, et des cartes
+          centrées à leur taille native laissaient deux bandes noires au-dessus et
+          en dessous.
+
+          .acc-band-voile — deux voiles superposés : un aplat pour le contraste, un
+          halo orange pour rattacher le bandeau à la charte. Le dégradé horizontal
+          est volontairement asymétrique — le texte occupe la gauche, donc c'est à
+          gauche qu'il faut du noir, et à droite qu'on peut laisser voir la peinture.
+          En étroit le texte prend toute la largeur et la fenêtre claire de droite
+          passerait dessous : le voile redevient uniforme. */}
       <style>{`
         .acc-band{position:relative;overflow:hidden;border-radius:18px;border:1px solid var(--border);
           background:#08080b;margin-top:26px}
-        /* align-items:stretch + hauteur 100 % plutôt que les 250 px d'origine :
-           le bandeau fait plus de 250 px de haut, et des cartes centrées à leur
-           taille native laissaient deux bandes noires au-dessus et en dessous.
-           (Pas d'accent grave dans ce commentaire : il fermerait le gabarit.) */
         .acc-band-frise{position:absolute;inset:0;display:flex;gap:6px;align-items:stretch;
           filter:saturate(.7) brightness(.62);pointer-events:none}
         .acc-band-frise img{flex:0 0 auto;width:110px;height:100%;object-fit:cover;border-radius:6px}
-        /* Deux voiles superposés : un aplat pour le contraste général, un halo
-           orange pour rattacher le bandeau à la charte. Le dégradé horizontal est
-           volontairement asymétrique — le texte occupe la gauche, donc c'est à
-           gauche qu'il faut du noir, et à droite qu'on peut laisser voir la peinture. */
         .acc-band-voile{position:absolute;inset:0;pointer-events:none;background:
           radial-gradient(ellipse 60% 100% at 22% 50%, rgba(255,140,26,.14), transparent 72%),
           linear-gradient(90deg, rgba(8,8,11,.96) 0%, rgba(8,8,11,.93) 42%, rgba(8,8,11,.66) 76%, rgba(8,8,11,.90) 100%),
           linear-gradient(180deg, rgba(8,8,11,.42), rgba(8,8,11,.60))}
         .acc-band-txt{position:relative;z-index:2;padding:34px 30px}
-        /* En étroit le texte prend toute la largeur : la fenêtre claire de droite
-           passerait dessous. On rend le voile uniforme. */
         @media(max-width:760px){
           .acc-band-txt{padding:26px 20px}
           .acc-band-voile{background:

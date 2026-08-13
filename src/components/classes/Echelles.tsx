@@ -1,11 +1,13 @@
 "use client";
 import { Icon } from "@/components/Icon";
 import { ClassLogo } from "@/components/ClassLogo";
-import { Invisible } from "@/components/Bulle";
+import { Bulle, Invisible } from "@/components/Bulle";
 import { Pastille, SousTitre } from "@/components/competences/ui";
 import { PM_MUR } from "@/components/competences/donnees";
 import { LIGNEES, LIMITES } from "@/app/(public)/classes/donnees";
-import { NB_NOMS_DE_CLASSE, NOMS_PAR_PALIER, PALIERS, PLAFOND_PALIER } from "./vue";
+// NB_NOMS_DE_CLASSE n'est plus importé ici : le total de la bande est recompté sur la
+// bande, pour qu'un titre et la somme de ses tuiles ne puissent plus divergent.
+import { NOMS_PAR_PALIER, PALIERS, palierNomme, PLAFOND_PALIER } from "./vue";
 import { Arbre } from "./Arbre";
 
 /**
@@ -33,12 +35,21 @@ export function Echelles({ choisi, onChoix, nbDe }: {
 }) {
   return (
     <>
-      {/* Échelle 1 : les paliers, et combien de noms chacun porte. */}
-      <SousTitre icon="layers" apres={`${NB_NOMS_DE_CLASSE} noms de classe`}>Les paliers</SousTitre>
+      {/* Échelle 1 : les paliers. Le ×N ne s'affiche que sur ceux qui introduisent des
+          NOMS neufs — sinon la bande sommait 37 sous un titre annonçant 21. Voir la
+          note de `palierNomme` dans vue.ts : le détail de la contradiction y est.
+          Le total est RECALCULÉ ici sur la bande elle-même, et pas repris de
+          NB_NOMS_DE_CLASSE : c'est la seule façon que le titre et la somme des tuiles
+          ne puissent plus se contredire, quelle que soit l'évolution des données. */}
+      {(() => {
+        const somme = NOMS_PAR_PALIER.filter((x) => palierNomme(x.palier)).reduce((s, x) => s + x.noms.length, 0);
+        return <SousTitre icon="layers" apres={`${somme} noms de classe · ${NOMS_PAR_PALIER.length} marches`}>Les paliers</SousTitre>;
+      })()}
       <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "stretch", marginBottom: 16 }}>
         {NOMS_PAR_PALIER.map((x, i) => {
           const p = PALIERS[x.palier];
           const caps = PLAFOND_PALIER.get(x.palier) ?? [];
+          const nomme = palierNomme(x.palier);
           return (
             <span key={x.palier} style={{ display: "inline-flex", alignItems: "stretch", gap: 7 }}>
               {/* Le chevron SUIT sa tuile : placé avant la suivante, il pendait dans le
@@ -48,7 +59,23 @@ export function Echelles({ choisi, onChoix, nbDe }: {
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                   <Icon name={p.icon} size={13} style={{ color: p.couleur }} />
                   <b style={{ fontSize: 12.5 }}>{p.nom}</b>
-                  <b style={{ fontSize: 12, color: "var(--text-muted)", ...NUM }}>×{x.noms.length}</b>
+                  {/* LA PASTILLE PASSE DE `title` À <Bulle>, et ce n'est pas une
+                      préférence de style. La pastille « PROMOTION » remplace un ×N :
+                      seule, elle n'explique pas POURQUOI ce palier ne compte pas dans
+                      les 21, et c'est justement la contradiction qu'on vient de fermer.
+                      Or l'explication tenait dans un `title=""` — que le doigt n'ouvre
+                      JAMAIS. Sur téléphone, la bande affichait donc deux pastilles
+                      inexpliquées sous un total qui ne les additionne pas : le lecteur
+                      se retrouvait devant la même énigme qu'avant le correctif.
+                      La brique de la maison ouvre au survol ET au clic — voir le cadre
+                      « POURQUOI PAS title="" » en tête de src/components/Bulle.tsx. */}
+                  {nomme
+                    ? <b style={{ fontSize: 12, color: "var(--text-muted)", ...NUM }}>×{x.noms.length}</b>
+                    : <Bulle cote="bas" largeur={230}
+                        quoi={<>« {x.noms[0]} » n&apos;est pas une classe de plus : c&apos;est
+                          le Métier 2 promu. Le client le dit dans son champ <code>promuDe</code>.</>}>
+                        <span style={{ fontSize: 10, color: "var(--gold)", textTransform: "uppercase", letterSpacing: ".5px" }}>promotion</span>
+                      </Bulle>}
                 </span>
                 <span style={{ fontSize: 10.5, color: "var(--text-muted)", ...NUM }}>compétences niv. {caps.join(" ou ")} max</span>
               </span>

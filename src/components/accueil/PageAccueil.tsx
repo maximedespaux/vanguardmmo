@@ -7,7 +7,7 @@ import { useReveal, useCardFx } from "@/components/VgFx";
 import { AvisAcces } from "@/components/accueil/AvisAcces";
 import { BandeauCartes } from "@/components/accueil/BandeauCartes";
 import { ClassesHeros } from "@/components/accueil/ClassesHeros";
-import { PORTES_PUBLIQUES, PortesSite } from "@/components/accueil/PortesSite";
+import { avecComptes, PORTES_PUBLIQUES, PortesSite } from "@/components/accueil/PortesSite";
 // `import type` et rien d'autre : `chiffres.ts` lit le disque avec `fs`, et ce
 // fichier-ci est un composant client. Un import de type est effacé à la
 // compilation — le module serveur ne suit donc jamais jusqu'au navigateur.
@@ -64,7 +64,15 @@ const CAPES = Array.from({ length: 20 }, (_, i) => `cape-logo-${String(i + 1).pa
 const NB_PORTES = PORTES_PUBLIQUES.length;
 const NB_VERROU = PORTES_PUBLIQUES.filter((p) => p.verrou).length;
 
-export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
+export function PageAccueil({ chiffres, comptes = {} }: {
+  chiffres: ChiffreAccueil[];
+  /**
+   * Ce que pèse chaque porte, compté côté serveur et posé sur la ligne vide de la
+   * porte (voir `comptesPortes` et `avecComptes`). Facultatif : sans lui, les
+   * portes s'affichent sans mesure, comme avant.
+   */
+  comptes?: Record<string, string>;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   // Révélation au défilement, avec le repli de useReveal : sans lui, un élément
   // raté par l'observateur reste invisible pour de bon.
@@ -90,19 +98,26 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
             <h2 className="font-heading" style={{ fontSize: "clamp(22px,3.4vw,30px)", margin: "8px 0 12px", letterSpacing: .5 }}>
               On a ouvert le jeu, et on a tout mis ici
             </h2>
+            {/* CE PARAGRAPHE EST PASSÉ DE 55 MOTS À 24, et il dit la même chose.
+                Ce qui est parti : « pas d'un forum recopié » (une pique, pas un
+                fait) et l'énumération « tes persos, tes builds, tes commandes »,
+                que les douze portes juste dessous montrent une par une — avec leur
+                cadenas. Ce qui reste est ce qu'un visiteur doit savoir en trois
+                secondes : d'où viennent les données, et qu'il n'a pas besoin de
+                compte pour les lire. */}
             <p style={{ margin: 0, maxWidth: 620, fontSize: 15, lineHeight: 1.75, color: "#d9d9e2" }}>
-              Les instances, leurs butins, la provenance de chaque objet, le coût des paliers de prestige :
-              tout vient des fichiers du client d&apos;AirFlyff, pas d&apos;un forum recopié.
-              Tu peux <b style={{ color: "var(--orange)" }}>tout consulter sans compte</b> — la connexion Discord
-              ne sert qu&apos;à ce qui t&apos;appartient : tes persos, tes builds, tes commandes.
+              Instances, monstres, objets, paliers de prestige : tout est lu dans les fichiers du client
+              d&apos;AirFlyff. Et <b style={{ color: "var(--orange)" }}>ça se consulte sans compte</b> — Discord
+              ne garde que ce qui t&apos;appartient.
             </p>
-            {/* Une réserve qu'on ne cache pas : le butin ordinaire des monstres est
-                calculé par le serveur, il n'est pas dans le client. Ne pas le dire
-                laisserait croire qu'une absence de source veut dire « ça ne tombe pas ». */}
-            <p style={{ margin: "12px 0 0", maxWidth: 620, fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", fontFamily: "'Alef',sans-serif" }}>
-              Une limite honnête : le butin ordinaire des monstres est calculé par le serveur et n&apos;est pas
-              dans le client. Quand une source manque, ça ne veut pas dire que l&apos;objet ne tombe pas.
-            </p>
+            {/* LA « LIMITE HONNÊTE » A ÉTÉ RETIRÉE, et c'est une mise en cohérence,
+                pas un oubli : ce même avertissement — le butin ordinaire des
+                monstres est calculé par le serveur, donc absent du client — avait
+                déjà été retiré de /astuces et de OuTrouver.tsx (voir la note de
+                guides/aDeplacer.ts). Il n'existait que pour excuser l'absence d'un
+                TAUX, et les taux ne se montrent plus : il n'a plus rien à excuser.
+                Il ne changeait par ailleurs aucun geste — c'était un constat
+                d'ignorance, exactement ce que la règle écarte. */}
           </div>
         </BandeauCartes>
 
@@ -147,8 +162,7 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
             cartes MONTRENT l'emblème et ÉCRIVENT l'arme, juste dessous. Décrire ce
             qui est déjà sous les yeux est le pire des remplissages. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px 0 18px", letterSpacing: ".2px", maxWidth: 720 }}>
-          Ce qu&apos;elles apprennent, ce que ça coûte et par quels paliers on y arrive :
-          sur <Link href="/classes" className="acc-lien-t">la page des classes</Link>.
+          Compétences, paliers et coûts : sur <Link href="/classes" className="acc-lien-t">la page des classes</Link>.
         </p>
         <ClassesHeros />
 
@@ -170,9 +184,9 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
             par la porte qu'on venait de lui promettre. Ce qui les ouvre, c'est
             d'être MEMBRE, et c'est ce que la phrase dit maintenant. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px 0 18px", letterSpacing: ".2px", maxWidth: 720 }}>
-          {NB_PORTES - NB_VERROU} ouvertes sans compte. Les {NB_VERROU} autres sont réservées aux membres de la guilde.
+          {NB_PORTES - NB_VERROU} ouvertes sans compte, {NB_VERROU} réservées aux membres.
         </p>
-        <PortesSite />
+        <PortesSite portes={avecComptes(PORTES_PUBLIQUES, comptes)} />
 
         {/* ── Rejoindre ── */}
         <div className="vg-reveal acc-join">
@@ -225,9 +239,13 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
               de postuler, donc lue comme un engagement — et seul Maxime peut le
               prendre. Reste ce que le site tient vraiment : la condition ferme, et
               l'invitation à lire les règles avant de postuler. */}
+          {/* LA CONDITION FERME A ÉTÉ RETIRÉE D'ICI, et c'était sa TROISIÈME
+              apparition sur ce seul écran : le hero l'annonce en haut de page
+              (« Discord et vocal obligatoires »), et /histoire — propriétaire des
+              règles de la guilde — la repose juste avant le bouton Postuler. Le
+              lien « La guilde et ses règles » est à deux centimètres. */}
           <p style={{ color: "var(--text-muted)", fontSize: 14, margin: "0 auto 22px", maxWidth: 560, lineHeight: 1.7 }}>
-            Une seule condition ferme : être joignable en vocal.
-            Lis d&apos;abord ce qu&apos;on attend, puis présente-nous tes personnages.
+            Lis ce qu&apos;on attend, puis présente-nous tes personnages.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/candidature" className="vg-btn"><Icon name="clipboard" size={17} /> Postuler</Link>
@@ -237,53 +255,61 @@ export function PageAccueil({ chiffres }: { chiffres: ChiffreAccueil[] }) {
         </div>
       </div>
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ──
+          Ces notes étaient DANS le littéral ci-dessous, donc dans le `<style>`
+          envoyé au navigateur : 880 mots de raisonnement téléchargés par chaque
+          visiteur de la page d'accueil, sur les 2 010 que la page servait. Sorties
+          d'ici elles sont effacées à la compilation, et le piège de l'accent grave
+          qui referme le gabarit part avec elles.
+
+          .acc-join — overflow:hidden sur le bloc : l'illustration fait 1 400 px de
+          large et déborderait des coins arrondis ; c'est la PAGE qui gagnerait une
+          barre horizontale, donc tout le site se décalerait sur mobile (déjà payé
+          sur la frise de cartes du bandeau).
+
+          .acc-join-art — LE CADRAGE EST CALCULÉ, pas choisi à l'œil, parce qu'il
+          décide si le nom du serveur est dans l'image ou coupé. L'illustration fait
+          1 400x785 ; à la largeur du bloc (976 px) elle ferait 547 px de haut, la
+          moitié d'un écran. On en garde 300, donc 247 px de jeu vertical.
+          object-position à 72 % donnait un décalage de 178 px, soit la bande source
+          32-87 % : le mot AIRFLYFF (vers 78-91 % de la hauteur) était coupé en deux
+          et le ruban de la devise passait dessous — alors que c'est exactement ce
+          que le texte de remplacement annonce. Calé EN BAS, le décalage vaut 247 px
+          et la bande visible court de 45 % à 100 % : le nom tombe au tiers bas du
+          cadre, les quatre aventuriers dans le haut, et il reste 50 px de prairie
+          sous le ruban pour le raccord.
+
+          .acc-join::after — le dégradé de raccord est un calque à part, posé SUR
+          l'image : en background du conteneur il serait passé DERRIÈRE elle. 60 px
+          et non 130, et il n'atteint l'opacité pleine qu'au dernier pixel :
+          l'ancien couvrait le tiers bas à 82 %, c'est-à-dire pile la bande où le nom
+          du serveur se trouve. Il n'éteint plus que la prairie. En étroit l'image
+          est déjà presque entière dans le cadre (224 px de haut à 400 px de large),
+          donc le raccord se contente de 45 px — le même calcul, à l'échelle.
+
+          .acc-lien-t — un lien AU FIL DU TEXTE, pas un bouton : dans un paragraphe,
+          .acc-lien-2 se serait posé comme un pavé au milieu de la phrase.
+
+          Le repli à 640 px rend sa marge à la page : les 32 px du conteneur ne
+          laissaient que 296 px de contenu sur un écran de 360, et les cartes de
+          classe en demandent 215 minimum — la grille tentait deux colonnes et
+          débordait. */}
       <style>{`
         .acc-wrap{max-width:1040px;margin:0 auto;padding:0 32px}
-        /* LE BLOC « REJOINDRE » ET SON ILLUSTRATION.
-           overflow:hidden sur le bloc : l'image fait 1400 px de large et deborderait
-           des coins arrondis — et c'est la PAGE qui gagnerait une barre horizontale,
-           donc tout le site se decalerait sur mobile (deja paye sur la frise de
-           cartes du bandeau). */
         .acc-join{position:relative;overflow:hidden;margin-top:46px;border-radius:16px;text-align:center;
           border:1px solid var(--orange-dark);background:#08080b}
-        /* LE CADRAGE, CALCULE — pas choisi a l'oeil, parce qu'il decide si le nom du
-           serveur est dans l'image ou coupe.
-           L'illustration fait 1400x785. A la largeur du bloc (976 px) elle ferait
-           547 px de haut : la moitie d'un ecran pour une image. On en garde 300, donc
-           247 px de jeu vertical.
-           object-position a 72 % donnait un decalage de 178 px, soit la bande source
-           32-87 % : le mot AIRFLYFF (vers 78-91 % de la hauteur) etait coupe en deux
-           et le ruban de la devise passait entierement dessous — alors que c'est
-           exactement ce que le texte de remplacement de l'image annonce.
-           Cale EN BAS, le decalage vaut 247 px et la bande visible court de 45 % a
-           100 % : le nom tombe au tiers bas du cadre (y 180-251 sur 300), les quatre
-           aventuriers dans le haut, et il reste 50 px de prairie sous le ruban pour
-           le raccord. */
         .acc-join-art{display:block;width:100%;height:300px;object-fit:cover;object-position:center bottom}
-        /* Le degrade de raccord est un calque a part, pose SUR l'image : en
-           background du conteneur il serait passe DERRIERE elle.
-           60 px et non 130, et il n'atteint l'opacite pleine qu'au dernier pixel :
-           l'ancien couvrait le tiers bas de l'image a 82 %, c'est-a-dire pile la
-           bande ou le nom du serveur se trouve. Il n'eteint plus que la prairie. */
         .acc-join::after{content:"";position:absolute;left:0;right:0;top:240px;height:60px;pointer-events:none;
           background:linear-gradient(180deg,transparent,#08080b)}
         .acc-join-in{position:relative;z-index:1;padding:30px 28px 34px;
           background:radial-gradient(circle at 50% 0%, rgba(255,140,26,.13), transparent 68%)}
-        /* En etroit l'image est deja presque entiere dans le cadre (a 400 px de large
-           elle ne fait plus que 224 px de haut), donc le raccord se contente de
-           45 px — le meme calcul, a l'echelle. */
         @media(max-width:640px){.acc-join-art{height:190px}.acc-join::after{top:145px;height:45px}}
         .acc-lien-2{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;
           font-family:'Rubik',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px;font-size:13px;
           text-decoration:none;color:var(--text);background:var(--bg-3);border:1px solid var(--border)}
         .acc-lien-2:hover{border-color:rgba(255,140,26,.45);color:var(--orange)}
-        /* Un lien AU FIL DU TEXTE, pas un bouton : dans un paragraphe, .acc-lien-2
-           se serait posé comme un pavé au milieu de la phrase. */
         .acc-lien-t{color:var(--orange);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
         .acc-lien-t:hover{color:var(--text)}
-        /* Les 32px de marge du conteneur ne laissaient que 296px de contenu sur un
-           écran de 360 : les cartes de classe en demandent 215 minimum, la grille
-           tentait deux colonnes et débordait. On rend la marge à la page. */
         @media(max-width:640px){.acc-wrap{padding:0 16px}}
       `}</style>
     </div>

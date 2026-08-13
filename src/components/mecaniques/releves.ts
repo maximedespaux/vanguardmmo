@@ -375,6 +375,39 @@ export function runes() {
   return { total: toutes.length, familles, tankMenteuses, intruses, doublons, manquants };
 }
 
+/**
+ * LES MANTRAS — la ligne de bonus que le site ne montrait nulle part.
+ *
+ * Le client les range en « consommable divers », ce qui les faisait passer pour
+ * des potions : ce sont en réalité des pièces d'équipement, posées sur
+ * l'emplacement de MUNITION (`PARTS_BULLET`), et elles portent un pourcentage
+ * chiffré. Trois familles s'y distinguent par leur effet, et chaque famille a ses
+ * paliers.
+ *
+ * Rien n'est nommé à la main : la famille EST le jeu de bonus de la pierre, le
+ * palier son rang dans la clé. Le jour où AirFlyff en ajoute une quatrième, elle
+ * apparaît d'elle-même — et si l'un d'eux perd ses bonus, il quitte la liste au
+ * lieu d'y rester vide.
+ */
+export function mantras() {
+  const { TOUT: tout } = charger();
+  const l = tout.filter((o) => (o.cle ?? "").startsWith("II_WEA_SEC_RUNE_") && (o.b ?? []).length > 0);
+  /** L'effet, tel que le client le chiffre : c'est lui qui définit la famille. */
+  const effet = (o: Fiche) => (o.b ?? []).map(([s]) => s).join(" + ");
+  const rang = (o: Fiche) => Number(/(\d)$/.exec(o.cle ?? "")?.[1] ?? 0);
+  const paliers = l
+    .slice()
+    .sort((a, b) => effet(a).localeCompare(effet(b), "fr") || rang(a) - rang(b));
+  return {
+    total: paliers.length,
+    familles: [...new Set(paliers.map(effet))],
+    /** L'emplacement du client, lu et non supposé — c'est lui qui dit que le
+     *  mantra prend la place des munitions. */
+    emplacement: paliers[0]?.em ?? "",
+    paliers,
+  };
+}
+
 /* ── Le perçage ───────────────────────────────────────────────────────────── */
 
 /** Les paliers dans l'ordre du jeu, pour que la planche ne les range pas par

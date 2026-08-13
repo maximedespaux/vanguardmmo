@@ -1,0 +1,156 @@
+/*
+ * LA PLANCHE DES MÉCANIQUES — styles propres à /builder/mecaniques.
+ *
+ * Ce fichier ne sert qu'à cette page ; il est importé par `Blocs.tsx` plutôt que
+ * versé dans `globals.css`, qui n'a pas à grossir d'un préfixe par page.
+ *
+ * CE QU'IL FAUT SAVOIR DE CES RÈGLES :
+ *
+ *  · .mc-case — `--t` est la taille de l'image (32 par défaut), `--ton` la couleur
+ *    de la famille. Les deux sont des variables pour qu'une case ordinaire ne
+ *    porte AUCUN attribut de style : c'est ce qui allège le paquet RSC.
+ *    `a.mc-case` ne souligne pas — la case entière est la cible, pas le mot.
+ *  · .mc-marque — la pastille dit d'un coup d'œil si la ligne est un avantage à
+ *    prendre ou un piège à éviter. Il n'y a plus de troisième état : ce qu'on n'a
+ *    pas vérifié ne s'affiche plus du tout.
+ *  · .mc-deux — « ce que tu lis » / « ce que c'est », et la coche verte sur les
+ *    seules lignes qui ne mentent pas. `minmax(0,1fr)` et non `1fr` : un `1fr` nu
+ *    garde min-content pour minimum, donc un libellé long pousse la ligne hors du
+ *    panneau au lieu de se replier — piège qui ne se voit que sur téléphone.
+ *  · .mc-barres — une seule teinte, la longueur porte la grandeur. Le libellé est
+ *    DANS la piste : à côté, la piste tombait à un tiers de la largeur du panneau
+ *    sur téléphone et les barres cessaient de se comparer.
+ *  · .mc-cellules — une cellule pleine = un palier que le client renseigne, une
+ *    cellule vide = une colonne laissée à zéro. C'est ce qui montre, sans une
+ *    phrase, que seule une famille de joyau va au bout des huit.
+ *  · .mc-svg — le SVG suit la largeur du panneau ; les libellés restent lisibles
+ *    parce que le viewBox est fixe et le texte dimensionné dans ses unités.
+ *  · .mc-etage / .mc-carte-l — le libellé garde une colonne fixe pour que les
+ *    paliers de plusieurs familles s'alignent verticalement et se comparent ; sous
+ *    620 px il passe au-dessus, sinon les cases tombent à deux par ligne.
+ *  · .mc-cite — la phrase du JEU, citée mot pour mot. Elle est mise en avant parce
+ *    que sur une page tirée de fichiers, il faut voir d'un coup d'œil ce que le
+ *    jeu dit lui-même et ce qu'on en déduit.
+ */
+
+.mc-note { font-size:12.5px; color:var(--text-muted); line-height:1.5; margin:0; }
+.mc-grille { display:flex; flex-wrap:wrap; gap:8px; }
+.mc-case { display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 8px;
+  border-radius:10px; background:var(--bg-2); border:1px solid var(--border); min-width:82px; text-align:center; }
+.mc-case > img { width:var(--t,32px); height:var(--t,32px); object-fit:contain; image-rendering:pixelated; }
+.mc-case > span { font-size:11.5px; color:var(--text-muted); line-height:1.25; }
+.mc-case.ton { border-color:color-mix(in srgb, var(--ton) 34%, var(--border)); }
+.mc-case.ton > span { color:var(--ton); font-weight:700; }
+a.mc-case { text-decoration:none; color:inherit; }
+a.mc-case:hover, a.mc-chip:hover { border-color:var(--orange); }
+.mc-chip { display:inline-flex; align-items:center; padding:5px 10px; border-radius:8px;
+  background:var(--bg-2); border:1px dashed var(--border); color:var(--text-muted);
+  font-size:11.5px; white-space:nowrap; text-decoration:none; }
+.mc-groupe { display:grid; gap:8px; }
+.mc-groupe-t { font-size:11.5px; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); }
+.mc-point { background:var(--bg-3); border-radius:10px; padding:14px 16px; margin-bottom:11px;
+  border-left:2px solid var(--orange-dark); }
+.mc-point h4 { font-family:'Rubik',sans-serif; font-weight:700; font-size:14.5px; color:var(--orange);
+  margin:0 0 8px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; line-height:1.4; }
+.mc-corps { display:grid; gap:9px; font-size:13.5px; line-height:1.62; color:var(--text); }
+.mc-corps p { margin:0; }
+.mc-corps b { color:var(--text); }
+.mc-src { font-size:12px; color:var(--text-muted); line-height:1.55; }
+.mc-src b { color:var(--text-muted); }
+.mc-marque { font-size:10.5px; text-transform:uppercase; letter-spacing:1px; font-weight:700;
+  padding:2px 8px; border-radius:4px; border:1px solid currentColor; white-space:nowrap; }
+.mc-deux { display:grid; gap:3px; font-variant-numeric:tabular-nums; }
+.mc-deux-tete, .mc-deux-l { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; padding:7px 11px; }
+.mc-deux-tete { font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);
+  font-family:'Rubik',sans-serif; font-weight:700; padding-bottom:2px; }
+.mc-deux-l { background:var(--bg-2); border:1px solid var(--border); border-radius:8px; font-size:12.5px; }
+.mc-deux-l > span:first-child { color:var(--text-muted); text-decoration:line-through;
+  text-decoration-color:var(--red); text-decoration-thickness:1px; }
+.mc-deux-l > span:last-child { color:var(--gold); font-weight:600; display:flex; align-items:center; }
+.mc-deux-l.ok > span:first-child { text-decoration:none; color:var(--text); }
+.mc-deux-l.ok > span:last-child { color:var(--green); }
+.mc-deux-ok { margin-left:6px; color:var(--green); }
+.mc-bareme { display:grid; gap:5px; font-variant-numeric:tabular-nums; }
+.mc-bareme > div { display:flex; align-items:center; justify-content:space-between; gap:12px;
+  background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:12.5px; }
+.mc-bareme > div > span { color:var(--text-muted); min-width:0; }
+.mc-bareme > div > b { color:var(--gold); font-family:'Rubik',sans-serif; white-space:nowrap; }
+.mc-barres { display:grid; gap:5px; font-variant-numeric:tabular-nums; }
+.mc-barre { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; }
+.mc-piste { position:relative; display:block; height:24px; border-radius:7px; overflow:hidden;
+  background:var(--bg-2); border:1px solid var(--border); }
+.mc-plein { position:absolute; left:0; top:0; bottom:0;
+  background:color-mix(in srgb, var(--gold) 26%, transparent);
+  border-right:2px solid var(--gold); }
+.mc-piste-t { position:relative; display:block; padding:0 9px; line-height:24px;
+  font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mc-barre > b { font-size:12.5px; color:var(--gold); font-family:'Rubik',sans-serif; white-space:nowrap; }
+.mc-paliers { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center;
+  gap:10px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:7px 11px; }
+.mc-paliers-n { font-size:12.5px; min-width:0; display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; }
+.mc-paliers-n > i { font-style:normal; font-size:11px; color:var(--text-muted); }
+.mc-cellules { display:inline-flex; gap:3px; }
+.mc-cellules > span { width:11px; height:16px; border-radius:3px; background:var(--bg-3);
+  border:1px solid var(--border); }
+.mc-cellules > span.on { background:color-mix(in srgb, var(--gold) 40%, transparent); border-color:var(--gold); }
+.mc-paliers > b { font-size:11.5px; color:var(--gold); font-variant-numeric:tabular-nums; }
+.mc-svg { display:block; width:100%; max-width:420px; height:auto; }
+.mc-axe { stroke:var(--border); stroke-width:1; }
+.mc-marche { fill:color-mix(in srgb, var(--gold) 26%, transparent); stroke:var(--gold); stroke-width:1.5; }
+.mc-svg-v { fill:var(--gold); font-size:10px; font-weight:700; text-anchor:middle; font-family:'Rubik',sans-serif; }
+.mc-svg-x { fill:var(--text-muted); font-size:9px; text-anchor:middle; }
+.mc-vignettes { display:flex; flex-wrap:wrap; gap:8px; }
+.mc-vignette { display:inline-flex; align-items:center; gap:7px; background:var(--bg-3);
+  border:1px solid var(--border); border-radius:8px; padding:6px 10px; flex-shrink:0; }
+.mc-vignette img { width:26px; height:26px; object-fit:contain; image-rendering:pixelated; }
+.mc-vignette i { font-style:normal; font-size:11.5px; color:var(--text-muted); white-space:nowrap; }
+.mc-objs { display:grid; gap:6px; }
+.mc-obj { display:flex; align-items:flex-start; gap:10px; padding:8px 11px; border-radius:9px;
+  background:var(--bg-2); border:1px solid var(--border); }
+.mc-obj > img { width:26px; height:26px; object-fit:contain; image-rendering:pixelated; flex-shrink:0; }
+.mc-obj-def { color:var(--text-muted); flex-shrink:0; }
+.mc-obj-txt { min-width:0; display:grid; gap:2px; font-size:12.5px; line-height:1.45; }
+.mc-obj-txt > b { color:var(--text); }
+.mc-obj-txt > i { font-style:normal; font-size:11.5px; color:var(--text-muted); line-height:1.5; }
+.mc-bonus { display:flex; flex-wrap:wrap; gap:6px; margin-top:3px; }
+.mc-bonus > span { font-size:11px; padding:1px 7px; border-radius:20px; background:var(--bg-3);
+  border:1px solid var(--border); color:var(--text-muted); white-space:nowrap; }
+.mc-bonus > span > b { color:var(--gold); }
+.mc-etage { display:grid; grid-template-columns:132px minmax(0,1fr); gap:12px; align-items:start;
+  padding:11px 0; border-top:1px solid var(--border); }
+.mc-etage:first-child { border-top:none; padding-top:2px; }
+.mc-etage-t { display:grid; gap:2px; }
+.mc-etage-t > b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--gold); }
+.mc-etage-t > span { font-size:11.5px; color:var(--text-muted); line-height:1.35; }
+.mc-etage-l { display:grid; gap:6px; }
+@media(max-width:620px){ .mc-etage { grid-template-columns:1fr; } }
+.mc-carte-l { display:grid; grid-template-columns:96px minmax(0,1fr); gap:10px; align-items:center;
+  padding:8px 0; border-top:1px solid var(--border); }
+.mc-carte-l:first-of-type { border-top:none; }
+.mc-carte-n { font-size:12.5px; font-weight:700; }
+.mc-carte-c { display:grid; gap:6px; min-width:0; }
+@media(max-width:620px){ .mc-carte-l { grid-template-columns:1fr; } }
+.mc-cite { margin:0; padding:9px 13px; border-left:2px solid var(--gold);
+  background:var(--bg-2); border-radius:0 8px 8px 0; font-size:12.5px;
+  line-height:1.6; color:var(--text-muted); font-style:italic; }
+.mc-sets { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:9px; }
+.mc-set { display:grid; gap:5px; align-content:start; padding:11px 13px; border-radius:10px;
+  background:var(--bg-2); border:1px solid var(--border); min-width:0; }
+.mc-set > b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--gold); }
+.mc-set-role { font-size:10.5px; text-transform:uppercase; letter-spacing:1px;
+  color:var(--text-muted); font-weight:700; }
+.mc-slots { display:grid; gap:7px; }
+.mc-slot { display:flex; align-items:center; gap:11px; flex-wrap:wrap;
+  background:var(--bg-2); border:1px solid var(--border); border-radius:9px; padding:7px 11px; }
+.mc-slot > span:first-child { font-size:12.5px; font-weight:700; min-width:132px; }
+.mc-slot > i { font-style:normal; font-size:11.5px; color:var(--text-muted); }
+.mc-ailleurs { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:9px; margin-top:18px; }
+.mc-porte { display:flex; align-items:flex-start; gap:10px; padding:11px 13px; border-radius:11px;
+  background:var(--bg-2); border:1px solid var(--border); text-decoration:none; color:var(--text); }
+.mc-porte:hover { border-color:var(--orange); }
+.mc-porte > span { display:grid; gap:2px; min-width:0; }
+.mc-porte b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--orange); }
+.mc-porte i { font-style:normal; font-size:11.5px; color:var(--text-muted); line-height:1.45; }
+.mc-noms { display:flex; flex-wrap:wrap; gap:7px 15px; align-items:center; margin:0;
+  font-size:12.5px; line-height:1.5; }

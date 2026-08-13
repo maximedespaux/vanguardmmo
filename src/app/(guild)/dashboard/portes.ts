@@ -80,7 +80,7 @@ export const GROUPES: GroupePortes[] = [
     defs: [
       {
         href: "/profil", icon: "user-check",
-        titre: "Mon profil", texte: "Ton identité Discord, tes commandes et tes mouvements de périns.",
+        titre: "Mon profil", texte: "Ton Discord, tes commandes, tes périns.",
         // Volontairement absent de la nav : le panneau du haut-droite y mène déjà.
         compte: (_d, p) => {
           const depuis = moisAn(p?.identite.membreDepuis);
@@ -195,7 +195,9 @@ export const GROUPES: GroupePortes[] = [
  */
 export const PORTE_SOMMAIRE: Porte = {
   href: "/sommaire", icon: "grid", titre: "Tout le site",
-  texte: "Chaque page, avec ce qu'on y fait. Quand tu ne sais pas où chercher, c'est là.",
+  // « Quand tu ne sais pas où chercher, c'est là » disait à quoi sert un index. La
+  // première moitié suffit, et l'icône de grille fait le reste.
+  texte: "Chaque page, avec ce qu'on y fait.",
 };
 
 /**

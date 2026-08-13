@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { CLASS_NAMES } from "@/data/classes";
 import dungeons from "@/data/dungeons.json";
+import { nombreDObjets } from "@/components/objets/catalogue";
 
 /**
  * LES QUATRE CHIFFRES DE L'ACCUEIL — comptés, jamais écrits.
@@ -55,6 +56,53 @@ export function chiffresAccueil(): ChiffreAccueil[] {
     // prestige et prêtait à confusion à deux lignes d'écart.
     ...(vagues ? [{ n: vagues, libelle: "vagues de la Protection de l'Oasis" }] : []),
   ];
+}
+
+/**
+ * CE QUE CHAQUE PORTE PÈSE — la mesure qui remplace une phrase de vantardise.
+ *
+ * Les portes de l'accueil portent une ligne facultative sous leur description
+ * (`Porte.chiffre`). Trois d'entre elles mènent au WIKI — les monstres, le
+ * catalogue d'objets, les marchands — et c'est justement la demande de fond :
+ * qu'un visiteur voie que le site sait retrouver un monstre, un objet, sa
+ * provenance. Un adjectif ne le prouve pas ; un compte oui.
+ *
+ * Les quatre relevés sont lus ICI, côté serveur, et il ne descend que des
+ * chaînes déjà mises en forme : `PortesSite` est un composant CLIENT, et
+ * monstres.json (612 Ko), pnj.json (296 Ko) et objets-fiches.json (2,8 Mo) ne
+ * doivent jamais entrer dans le paquet du navigateur. Le catalogue passe par
+ * `nombreDObjets()`, l'index que /objets garde déjà en mémoire : deux lecteurs
+ * pour un même fichier finiraient par ne plus dire le même nombre.
+ *
+ * La clé est le `href` de la porte. Un relevé illisible n'ajoute simplement pas
+ * sa ligne — la porte s'affiche sans mesure, ce qui est prévu.
+ *
+ * ET CES MESURES NE CHASSENT JAMAIS UNE LIGNE DÉJÀ ÉCRITE : /boutique et /crafts
+ * emploient la leur pour dire ce qu'on peut en faire sans compte, et pour un
+ * visiteur ce renseignement vaut plus qu'un total. Le remplissage est donc fait
+ * « seulement si c'est vide », côté accueil.
+ */
+export function comptesPortes(): Record<string, string> {
+  const fr = (n: number) => n.toLocaleString("fr-FR");
+  const out: Record<string, string> = {};
+
+  const monstres = compteur("monstres.json", (d) => (d as { total?: number }).total ?? null);
+  if (monstres) out["/monstres"] = `${fr(monstres)} monstres`;
+
+  const pnj = compteur("pnj.json", (d) => (Array.isArray(d) ? d.length : null));
+  // « PNJ » et non « marchands et artisans » : c'est le titre de la porte, et une
+  // mesure qui recopie son propre titre ne mesure rien. PNJ est aussi le mot du jeu.
+  if (pnj) out["/pnj"] = `${fr(pnj)} PNJ`;
+
+  try {
+    const objets = nombreDObjets();
+    if (objets > 0) out["/objets"] = `${fr(objets)} objets`;
+  } catch {
+    // Même règle que `compteur` : pas de relevé, pas de ligne. L'accueil ne tombe
+    // pas parce qu'un fichier du wiki manque.
+  }
+
+  return out;
 }
 
 /** La même chose en une phrase, pour la description que voit un moteur de recherche. */

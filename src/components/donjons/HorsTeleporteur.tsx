@@ -101,10 +101,14 @@ export function HorsTeleporteur() {
           gemme dont le nom ne correspond pas à son effet. L'y user pour une note de
           méthode la dévalue partout ailleurs. La note reste où elle sert : dans le
           commentaire de tête de ce fichier et dans scripts/extraire-lieux.mjs. */}
-      <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6, margin: "0 0 16px" }}>
-        Chaque carte porte son nom imprimé en cartouche : c&apos;est celui-là qui compte.
-        Et chacun de ces lieux est peuplé dans la table des monstres, sinon il ne serait pas là.
-      </p>
+      {/* CE PARAGRAPHE EST PARTI, et ce n'est pas une perte : il énonçait la MÉTHODE
+          de ce bloc — le cartouche fait foi, un lieu vide n'entre pas dans la liste.
+          C'est vrai, c'est écrit dans le commentaire de tête et dans le script
+          d'extraction, et ça ne change aucun geste de joueur. Le fait, lui, est déjà
+          servi : l'`alt` de chaque carte nomme son cartouche, et chaque tuile affiche
+          son peuplement compté. Le paragraphe ne faisait que promettre ce que les
+          tuiles montrent juste en dessous. */}
+      <div style={{ height: 12 }} />
 
       {/* LE SCHÉMA DES NIVEAUX. Il remplace huit intervalles écrits en chiffres :
           « niv 43–69 » et « niv 129–165 » se lisent comme équivalents dans une
@@ -129,14 +133,16 @@ export function HorsTeleporteur() {
       ))}
 
       {prixNeSuitPas && (
+        /* LES SOIXANTE MOTS SONT DEVENUS DOUZE. Le paragraphe reprenait, en phrases,
+           quatre nombres que les tuiles de ticket affichent déjà chacune : prix et
+           niveau minimum. Ce qui n'est nulle part ailleurs, et qui seul change le
+           geste, c'est le CONSTAT — le prix ne suit pas le niveau, donc on ne choisit
+           pas son ticket au flair. Les deux noms suffisent à le prouver. */
         <p style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.6, margin: "16px 0 0" }}>
           <Icon name="info" size={13} style={{ marginRight: 6, color: "var(--gold)" }} />
-          Le ticket le moins cher n&apos;est pas celui du niveau le plus bas :{" "}
-          <b style={{ color: "var(--text)" }}>{moinsCher!.nom}</b> demande {fr(moinsCher!.ticket!.flycoin!)} FlyCoins
-          pour la journée et commence au niveau {moinsCher!.nivMin}, quand{" "}
-          <b style={{ color: "var(--text)" }}>{plusBas!.nom}</b> en demande {fr(plusBas!.ticket!.flycoin!)} et
-          commence au niveau {plusBas!.nivMin}.
-          {memeEtal ? <> Les {tickets.length} se prennent au même étal, {memeEtal}.</> : null}
+          Le prix ne suit pas le niveau : <b style={{ color: "var(--text)" }}>{moinsCher!.nom}</b> est
+          le moins cher, <b style={{ color: "var(--text)" }}>{plusBas!.nom}</b> le plus bas.
+          {memeEtal ? <> Tous au {memeEtal}.</> : null}
         </p>
       )}
 

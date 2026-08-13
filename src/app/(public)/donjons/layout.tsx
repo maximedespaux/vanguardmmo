@@ -14,7 +14,14 @@ import type { Metadata } from "next";
  */
 export const metadata: Metadata = {
   title: "Donjons, Tour Oubliée et Protection de l'Oasis — Flyff AirFlyff",
-  description: "Tout ce dans quoi on entre sur AirFlyff : les donjons du téléporteur (niveau requis, difficulté, butin), les 5 étages de la Tour Oubliée, et les 52 vagues de la Protection de l'Oasis sur la Tour Infernale — monstres, points de vie, dégâts et emblèmes de protection. Guide tenu à jour par la guilde Vanguard.",
+  /* RAMENÉE DE 315 À 158 CARACTÈRES, et ce n'est pas pour faire baisser un compteur :
+     un moteur coupe la description vers 160 signes, donc la moitié de l'ancienne
+     n'était lue par personne — ni par un robot, ni dans un aperçu de lien Discord.
+     TOUS LES MOTS QUE LA NOTE DU DESSUS PROTÈGE SONT LÀ, vérifié un par un : « 52
+     vagues », « Protection de l'Oasis », « Tour Infernale », « emblèmes de
+     protection », « Tour Oubliée ». Ce qui part, c'est la parenthèse qui répète le
+     contenu du site et la signature de guilde, déjà dans le titre. */
+  description: "Donjons du téléporteur, 5 étages de Tour Oubliée et 52 vagues de Protection de l'Oasis sur la Tour Infernale : monstres, PV, butin et emblèmes de protection.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

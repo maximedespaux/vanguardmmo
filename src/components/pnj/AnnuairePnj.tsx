@@ -64,6 +64,48 @@ const FAMILLES: { clef: string; titre: string; sous: string; icon: IconName }[] 
   { clef: "quete", titre: "À qui tu rends", sous: "Les PNJ de fin de quête", icon: "scroll" },
 ];
 
+/**
+ * LES TROIS VISAGES QUI ILLUSTRENT LES SERVICES — et les 34 qu'on ne montre pas.
+ *
+ * 37 des 131 portraits du client ne sont rattachés à aucun PNJ par la chaîne
+ * `SetImage → IDS_CHARACTER_INC_* → char_*.tga`. Ils ont été OUVERTS pour voir ce
+ * qu'ils dessinent, et la conclusion est tranchée : les noms de fichiers mentent
+ * autant que d'habitude.
+ *
+ *   char_hair      → un personnage qui tient des CISEAUX et un peigne. Lisible.
+ *   char_makeup    → un personnage qui tient un ROUGE À LÈVRES et des pinceaux.
+ *   char_pettamer  → un personnage avec un FAMILIER rose dans les bras.
+ *
+ * ÉCARTÉS après ouverture, exemples : `char_marche_jap` (« marché ») dessine une femme
+ * en robe bleue, rien d'un étal ; `char_guildwar04` (« guerre de guilde ») dessine une
+ * employée à lunettes ; `char_npcgivemoney` (« donne de l'argent ») dessine un félin
+ * bleu. `char_missflyff` porte une écharpe où le mot MISS FLYFF est INCRUSTÉ dans
+ * l'image — même famille que les écrans de chargement à logo, on ne l'affiche pas à nu.
+ *
+ * CE SONT DES ILLUSTRATIONS, PAS DES ATTRIBUTIONS. Aucune n'est donnée à un PNJ nommé :
+ * elles coiffent la section dont le sous-titre nomme justement ces trois services
+ * (« Coiffeur, familiers, bazar, mairie »). Un portrait collé au mauvais PNJ serait
+ * pire que pas de portrait — c'est la règle de `Portrait.tsx`, et elle tient.
+ */
+const VISAGES_SERVICE: { img: string; quoi: string }[] = [
+  { img: "char_hair.webp", quoi: "Coiffeur" },
+  { img: "char_makeup.webp", quoi: "Maquillage" },
+  { img: "char_pettamer.webp", quoi: "Familiers" },
+];
+
+function VisagesService() {
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+      {VISAGES_SERVICE.map((v) => (
+        <span key={v.img} style={{ display: "grid", justifyItems: "center", gap: 4 }}>
+          <Portrait img={v.img} nom={v.quoi} taille={54} />
+          <span style={{ fontSize: 10.5, color: "var(--text-muted)" }}>{v.quoi}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 const clef = (s: string) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 
@@ -346,12 +388,16 @@ function LigneTrouve({ t, onOuvrir }: { t: Trouve; onOuvrir: () => void }) {
   );
 }
 
-export function AnnuairePnj() {
+export function AnnuairePnj({ depart = "" }: {
+  /** Un nom d'objet arrivé par l'URL (`/pnj?objet=…`), posé par la fiche de cet
+   *  objet. La recherche démarre dessus, et le rail s'ouvre sur « Chercher ». */
+  depart?: string;
+}) {
   useCardFx();
   const [annuaire, setAnnuaire] = useState<Vignette[] | null>(null);
   const [erreur, setErreur] = useState(false);
   const [portraits, setPortraits] = useState(0);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(depart);
   const [trouvesObjet, setTrouvesObjet] = useState<Trouve[]>([]);
   /** `ou` retient DEPUIS QUELLE section la fiche a été ouverte : sans ça, changer de
    *  métier dans le rail laisserait la fiche d'un autre métier affichée. */
@@ -425,11 +471,19 @@ export function AnnuairePnj() {
   const ouvrir = (ou: string) => (v: Vignette) => setChoix({ v, ou });
   const fermer = () => setChoix(null);
 
-  /** Un métier = une entrée du rail ; la fiche remplace la grille dans le même panneau. */
+  /** Un métier = une entrée du rail ; la fiche remplace la grille dans le même panneau.
+   *  Les trois visages de service coiffent leur grille et disparaissent quand une fiche
+   *  s'ouvre : la fiche a déjà son propre portrait, deux séries de visages se
+   *  contrediraient. */
   const panneau = (ou: string, liste: Vignette[], vide: string) =>
     choix && choix.ou === ou
       ? <FichePnj v={choix.v} fiche={fiches[choix.v.cle] ?? null} onFermer={fermer} />
-      : <Grille liste={liste} onOuvrir={ouvrir(ou)} vide={vide} />;
+      : (
+        <>
+          {ou === "service" && <VisagesService />}
+          <Grille liste={liste} onOuvrir={ouvrir(ou)} vide={vide} />
+        </>
+      );
 
   const sections: SectionVolet[] = [
     {
@@ -511,11 +565,20 @@ export function AnnuairePnj() {
             titre={portraits ? `${portraits} visages qui n'avaient jamais servi` : "Les visages qui n'avaient jamais servi"}
             marque={annuaire ? { texte: `${annuaire.length} PNJ utiles`, couleur: "var(--orange)" } : undefined}
             sous={
-              <>
-                Aucun visage n&apos;est attribué à la ressemblance : c&apos;est le jeu qui dit, PNJ par PNJ,
-                quel fichier lui appartient. Sa fiche montre aussi la carte de sa région, quand le
-                client en dessine une — <b style={NUM}>{REGIONS_CARTOGRAPHIEES}</b> régions le sont.
-              </>
+              /* QUARANTE MOTS DE MÉTHODE SONT PASSÉS DANS DEUX BULLES. Le paragraphe
+                 expliquait comment les visages sont appariés et que la fiche montre
+                 une carte : deux faits qui se vérifient une fois et qu'on ne relit
+                 jamais. Ils ne quittent pas la page, ils quittent la ligne — c'est
+                 exactement ce à quoi sert `Bulle` (« j'aime beaucoup le rendu en bulle
+                 interactive »). */
+              <span style={{ display: "inline-flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <Bulle quoi="Aucun visage n'est donné à la ressemblance : le client dit, PNJ par PNJ, quel fichier lui appartient — SetImage( IDS_CHARACTER_INC_… ) se résout dans character.txt en un nom de fichier.">
+                  <span>appariés par le client</span>
+                </Bulle>
+                <Bulle quoi="Un plan de VILLE porte les pictogrammes des marchands : on y repère l'étal. Une carte de RÉGION montre un continent : on y repère le quartier. Les deux sortent du client, cartouche vérifié.">
+                  <span><b style={NUM}>{REGIONS_CARTOGRAPHIEES}</b> régions cartographiées</span>
+                </Bulle>
+              </span>
             }
           />
         }

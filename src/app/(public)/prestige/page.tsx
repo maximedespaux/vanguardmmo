@@ -53,14 +53,32 @@ function ParPalier({ cle, de, a, teinte }: { cle: string; de: number; a: number;
   const haut = Math.max(...lignes.map(([, v]) => v));
   const total = lignes.reduce((s, [, v]) => s + v, 0);
   const gros = lignes.find(([, v]) => v === haut)!;
+  /**
+   * LE MUR : ce seul saut demande-t-il plus que TOUS les paliers précédents réunis ?
+   *
+   * C'est la question à laquelle personne ne répond de tête, et c'est celle qui décide
+   * d'un plan de farm. La comparaison est EXACTE — même ressource, addition des sauts
+   * antérieurs de l'intervalle choisi — donc rien n'est normalisé ni estimé. Sur
+   * l'intervalle P1→P10, trois ressources sur neuf sont dans ce cas : le nucléus neutre
+   * (35 000 au P4→P5 contre 15 000 avant), l'emblème de protection et le nucléus
+   * parfait. Le badge du Jardin, lui, ne l'est PAS malgré ses 25 du dernier saut — la
+   * pastille ne s'affiche donc pas, et c'est le renseignement.
+   */
+  const avant = lignes.filter(([p]) => p < gros[0]).reduce((s, [, v]) => s + v, 0);
+  const mur = avant > 0 && haut > avant;
   return (
     <div className="pr-palier">
       {/* Le titre portait « Réparti sur N paliers », qui ne disait rien de plus que le
-          nombre de lignes juste dessous. Il porte maintenant le seul chiffre qu'on ne
-          peut pas lire dans les barres : la part du plus gros saut. */}
+          nombre de lignes juste dessous. Il porte maintenant les deux seules choses
+          qu'on ne peut pas lire dans les barres : la part du plus gros saut, et s'il
+          pèse à lui seul plus que tout ce qui le précède. */}
       <div className="pr-palier-t">
-        {lignes.length} paliers · le plus gros, <b>P{gros[0]}→{gros[0] + 1}</b>, en vaut{" "}
-        <b>{Math.round((haut / total) * 100)} %</b>
+        <b>P{gros[0]}→{gros[0] + 1}</b> : <b>{Math.round((haut / total) * 100)} %</b> du total
+        {mur && (
+          <span className="pr-mur" title={`Ce seul saut demande plus que les paliers précédents additionnés (${fr(haut)} contre ${fr(avant)})`}>
+            &gt; tous les précédents
+          </span>
+        )}
       </div>
       {lignes.map(([p, v]) => (
         <div key={p} className="pr-palier-l">
@@ -91,7 +109,7 @@ export default function PrestigePage() {
           franchir une porte. Elle vient des écrans de générique du client
           (public/jeu/credits/), les seules images du jeu sans logo ni barre de
           chargement incrustés — contrairement à celles de /jeu/chargement/. */}
-      <PageHeader art="/jeu/credits/shotcredit10.webp" banner="/assets/site/banners/banner-guides.webp" title="Calculateur de Prestige" subtitle="Ce que chaque palier demande, et ce qu'il te reste avant ta cible." />
+      <PageHeader art="/jeu/credits/shotcredit10.webp" banner="/assets/site/banners/banner-guides.webp" title="Calculateur de Prestige" subtitle="Ce que chaque palier demande, et ce qu'il te reste." />
       <SectionTabs section="guides" />
 
       {/* Sélecteur */}
@@ -160,8 +178,10 @@ export default function PrestigePage() {
                   <ParPalier cle={k} de={cur} a={tgt} teinte={ok ? "var(--green)" : "var(--orange)"} />
 
                   {RECHERCHE_OBJET[k] && (
+                    /* « Voir la fiche » écrit neuf fois faisait vingt-sept mots pour
+                       une seule idée. « Sa fiche » suffit sous le nom de l'objet. */
                     <a className="pr-fiche" href={`/objets?q=${encodeURIComponent(RECHERCHE_OBJET[k])}`}>
-                      Voir la fiche <Verrou quoi="membres" />
+                      Sa fiche <Verrou quoi="membres" />
                     </a>
                   )}
                 </div>
@@ -177,8 +197,10 @@ export default function PrestigePage() {
           <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 16 }}>
             <h2 className="pr-h2">
               <Icon name="path" size={17} />
+              {/* Le titre disait « Ce que demande chaque palier », mot pour mot le
+                  sous-titre de l'en-tête, deux écrans plus haut. */}
               <Invisible enJeu="le jeu affiche le palier suivant seulement quand tu y es ; le cumul jusqu'à ta cible n'existe nulle part">
-                Ce que demande chaque palier
+                Palier par palier
               </Invisible>
             </h2>
             <FrisePaliers de={cur} a={tgt} />
@@ -189,18 +211,37 @@ export default function PrestigePage() {
           <div className="glass-card fx-card" style={{ padding: 15, display: "flex", gap: 11, alignItems: "flex-start", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.65 }}>
             <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
             <span>
-              Les badges se craftent à partir de composants d&apos;instance :{" "}
               {/* « en partie » : la page s'ouvre depuis le mode vitrine, mais c'est
                   justement la moitié RECETTES — celle dont il est question ici — qui
                   reste aux membres. Le mot le dit avant le clic. */}
-              <a className="pr-lien" href="/crafts">Crafts et collections</a> <Verrou quoi="en partie" />.
-              L&apos;ordre dans lequel s&apos;y prendre est dans le{" "}
-              <a className="pr-lien" href="/astuces">guide de progression</a>.
+              Les badges se craftent : <a className="pr-lien" href="/crafts">Crafts et collections</a>{" "}
+              <Verrou quoi="en partie" />. L&apos;ordre :{" "}
+              <a className="pr-lien" href="/astuces">le guide de progression</a>.
             </span>
           </div>
         </>
       )}
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ──
+          Ces notes vivaient DANS le littéral ci-dessous, donc dans le `<style>` servi
+          au navigateur. Sorties d'ici elles sont effacées à la compilation, et le
+          piège de l'accent grave qui referme le gabarit part avec elles.
+
+          .pr-nu — les cinq nucléus élémentaires : cinq images et quatre mots, là où
+          une phrase expliquait l'échange.
+
+          .pr-palier — la répartition par palier : trois colonnes fixes pour que les
+          paliers et les valeurs s'alignent d'une carte à l'autre, la barre prend le
+          reste.
+
+          .pr-mur — la pastille du mur. Elle est ROUGE et non dorée, parce qu'elle ne
+          dit pas une quantité mais un avertissement : ce saut-là pèse plus que tout
+          ce qui le précède. Elle n'apparaît que quand la comparaison est vraie (voir
+          ParPalier), donc son absence est aussi une réponse.
+
+          Les barres de progression restent en dégradé : ce sont des jauges de
+          remplissage, pas des grandeurs à comparer entre elles — la règle d'une seule
+          teinte vise les séries de barres, et celles-là sont dans la brique Barre. */}
       <style>{`
         .pr-lb{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
         .pr-h2{font-family:'Rubik',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;
@@ -211,15 +252,14 @@ export default function PrestigePage() {
         .pr-card input{width:92px;padding:6px 9px;font-size:12.5px;background:var(--bg-3);
           border:1px solid var(--border);border-radius:7px;color:var(--text)}
         .pr-card input:focus{outline:none;border-color:var(--orange)}
-        /* Les cinq nucleus elementaires : cinq images et quatre mots, la ou une phrase
-           expliquait l'echange. */
         .pr-nu{display:flex;align-items:center;gap:5px;margin-bottom:9px;font-size:11.5px;
           color:var(--text-muted);flex-wrap:wrap}
-        /* La repartition par palier : trois colonnes fixes pour que les paliers et les
-           valeurs s'alignent d'une carte a l'autre, la barre prend le reste. */
         .pr-palier{margin-top:11px;padding-top:10px;border-top:1px solid color-mix(in srgb, var(--border) 60%, transparent)}
-        .pr-palier-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:6px}
+        .pr-palier-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);
+          margin-bottom:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
         .pr-palier-t b{color:var(--gold);font-family:'Rubik',sans-serif}
+        .pr-mur{color:var(--red);border:1px solid color-mix(in srgb, var(--red) 55%, transparent);
+          border-radius:20px;padding:0 7px;letter-spacing:.5px;font-weight:700}
         .pr-palier-l{display:grid;grid-template-columns:52px minmax(0,1fr) 58px;align-items:center;gap:8px;margin-bottom:4px}
         .pr-palier-p{font-size:10.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
         .pr-palier-b{min-width:0}

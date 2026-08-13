@@ -39,29 +39,34 @@ function IconBadge({ name, size = 56, icon = 26 }: { name: IconName; size?: numb
  *
  * Ce qui reste ici est ce que cette page est seule à porter : qui on est, ce qu'on
  * attend, et comment postuler.
+ *
+ * LES QUATRE DESCRIPTIONS ONT MAIGRI DE MOITIÉ. Chacune est posée sous une image
+ * du jeu choisie pour ce qu'elle raconte : l'image donne l'ambiance, le texte n'a
+ * plus qu'à donner le fait. Dix-huit mots pour dire « on joue en vocal » étaient
+ * dix-sept de trop.
  */
 const objectifs: { icon: IconName; titre: string; desc: string; vue: string }[] = [
   {
     icon: "message", titre: "Vocal avant tout",
-    desc: "Discord obligatoire, vocal pendant les runs. C'est là que les Chambres Secrètes se jouent — et que le groupe devient une équipe.",
+    desc: "Discord obligatoire, vocal pendant les runs : c'est là que les Chambres Secrètes se jouent.",
     // Une ville la nuit, fenêtres allumées : des gens rassemblés au même endroit.
     vue: "shotcredit16",
   },
   {
     icon: "trending-up", titre: "Personne ne reste bloqué",
-    desc: "Du prestige 3 au 10, on avance ensemble : guide par palier, conseils de stuff, et quelqu'un pour répondre.",
+    desc: "Du prestige 3 au 10 : un guide par palier, et quelqu'un pour répondre.",
     // Un escalier interminable vers une citadelle : la montée, exactement.
     vue: "shotcredit12",
   },
   {
     icon: "key", titre: "Chambres Secrètes sérieuses",
-    desc: "Des compositions préparées à l'avance, des présences annoncées. On y va pour réussir, pas pour tenter.",
+    desc: "Compositions préparées, présences annoncées. On y va pour réussir.",
     // Des ruines à colonnes, et une meute qui attend au milieu : une salle.
     vue: "shotcredit11",
   },
   {
     icon: "vault", titre: "Un coffre qui sert",
-    desc: "Le stock de la guilde est là pour équiper les membres, pas pour dormir. Tu demandes, on répond.",
+    desc: "Le stock commun sert à équiper les membres. Tu demandes, on répond.",
     // Un champ de récolte : d'où vient ce qu'il y a dans le coffre.
     vue: "shotcredit13",
   },
@@ -99,11 +104,16 @@ export default function HistoirePage() {
               est la seule qui compte — c'est la phrase qu'on lit avant de cliquer.
               Ce qui reste ici, c'est ce que ce paragraphe est seul à dire : la
               comparaison avec une liste de pseudos. */}
+          {/* LA SECONDE MOITIÉ DU PARAGRAPHE EST PARTIE — « Que tu arrives au
+              prestige 3 ou que tu sois déjà P10, tu trouveras ici un cadre clair et
+              de quoi progresser sans t'éparpiller ». C'était mot pour mot la
+              promesse de l'objectif « Personne ne reste bloqué » qui suit à un écran
+              d'ici, image comprise. Reste ce que ce paragraphe est seul à dire : la
+              comparaison avec une liste de pseudos. */}
           <p style={{ fontSize: 15, lineHeight: 1.8, color: "var(--text)", margin: 0 }}>
-            On ne cherche pas à être nombreux. On cherche des joueurs <b style={{ color: "var(--orange)" }}>présents</b> :
-            qui viennent en vocal, qui préviennent quand ils ne peuvent pas, et sur qui on peut compter en Chambre Secrète —
-            c&apos;est ce qui sépare une guilde d&apos;une simple liste de pseudos. Que tu arrives au prestige 3 ou que tu sois
-            déjà P10, tu trouveras ici un cadre clair et de quoi progresser <b style={{ color: "var(--orange)" }}>sans t&apos;éparpiller</b>.
+            On ne cherche pas à être nombreux, mais <b style={{ color: "var(--orange)" }}>présents</b> :
+            qui viennent en vocal, qui préviennent quand ils ne peuvent pas, et sur qui on peut compter
+            en Chambre Secrète. C&apos;est ce qui sépare une guilde d&apos;une liste de pseudos.
           </p>
         </div>
 
@@ -141,7 +151,7 @@ export default function HistoirePage() {
         {/* Ce que le site fait : UNE phrase et UN lien, jamais un développement.
             Les huit cartes qui étaient ici sont devenues les portes de l'accueil. */}
         <p className="vg-reveal" style={{ fontFamily: "'Alef',sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "30px 0 0", letterSpacing: ".2px", textAlign: "center" }}>
-          Le site et le bot Discord partagent la même base — ce qui se passe ici se retrouve sur Discord, et inversement.{" "}
+          Le site et le bot Discord partagent la même base.{" "}
           <Link href="/" className="hi-lien">Ce que le site sait faire, porte par porte</Link>.
         </p>
 
@@ -153,52 +163,66 @@ export default function HistoirePage() {
           <img src="/jeu/credits/shotcredit14.webp" alt="" aria-hidden="true" width={512} height={256} loading="lazy" decoding="async" />
           <div className="hi-cta-in">
             <div className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Prêt à nous rejoindre ?</div>
+            {/* LA CONDITION FERME RESTE ICI, et seulement ici : c'est la dernière
+                phrase avant le bouton, donc celle qu'on lit vraiment. L'accueil, qui
+                la répétait une troisième fois sous ses capes de guilde, ne la porte
+                plus — cette page est propriétaire des règles de la guilde. */}
             <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 20, maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.65 }}>
-              Présente-nous tes personnages, ton stuff et ce que tu cherches. On lit tout, et on répond — même quand c&apos;est non.
-              Une seule condition ferme : être joignable en vocal sur Discord.
+              Présente-nous tes personnages et ce que tu cherches. On répond, même quand c&apos;est non.
+              Une seule condition ferme : être joignable en vocal.
             </p>
             <a href="/candidature" className="vg-btn"><Icon name="clipboard" size={17} /> Postuler maintenant</a>
           </div>
         </div>
       </div>
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ──
+          Ces notes vivaient DANS le littéral de gabarit ci-dessous, c'est-à-dire
+          dans le `<style>` servi au navigateur : 271 mots de raisonnement de
+          développeur téléchargés par chaque visiteur. Sorties d'ici elles sont
+          effacées à la compilation, et il n'y a plus à s'interdire l'accent grave
+          qui referme le gabarit.
+
+          .hi-siege — l'illustration flotte à gauche du paragraphe et le texte
+          l'épouse : en bloc au-dessus, elle aurait repoussé la phrase d'accroche
+          sous la ligne de flottaison. Sous 560 px elle passe au-dessus, centrée — un
+          texte à moins de 200 px de large ne se lit plus.
+
+          .hi-obj — une carte d'objectif : bande d'image en haut, pastille à cheval
+          sur son bord bas, texte dessous. Le padding quitte la carte pour aller sur
+          le texte seul, sinon l'image ne toucherait pas les bords. Et 30 px de
+          padding en haut du texte : la pastille descend de 22 px sous l'image, le
+          titre doit passer SOUS elle et non derrière.
+
+          .hi-obj-vue — aspect-ratio 2/1 et non une hauteur fixe : les quatre vues
+          employées ici (shotcredit11, 12, 13 et 16) font 512x256, donc exactement
+          2:1, et une hauteur en pixels les aurait étirées dans une colonne qui se
+          rétrécit. ATTENTION AVANT D'EN BRANCHER UNE AUTRE : le dossier n'est pas
+          homogène — shotcredit00 à 10 font 1024x768 (4:3), seuls 11 à 16 sont en
+          2:1. Une vue 4:3 posée ici serait recadrée d'un tiers par object-fit. Son voile ne décore pas :
+          ces vues sont des paysages très colorés et la pastille orange s'y perdait —
+          il éteint le bas de l'image, là où la pastille se pose.
+
+          .hi-cta — le vaisseau du générique en fond du bloc « Prêt à nous
+          rejoindre ». Deux voiles superposés, même raison qu'ailleurs sur le site :
+          un aplat pour le contraste du texte, un halo orange pour rattacher à la
+          charte. Sans l'aplat, aucun texte blanc ne tient sur un ciel orange. */}
       <style>{`
-        /* L'illustration flotte a gauche du paragraphe et le texte l'epouse : en
-           bloc au-dessus, elle aurait repousse la phrase d'accroche sous la ligne
-           de flottaison. Sous 560 px elle passe au-dessus, centree — un texte a
-           moins de 200 px de large ne se lit plus. */
         .hi-intro{overflow:hidden}
         .hi-siege{float:left;margin:0 18px 10px 0;border-radius:12px;border:1px solid var(--border);
           object-fit:cover;box-shadow:0 4px 16px rgba(0,0,0,.4)}
         @media(max-width:560px){.hi-siege{float:none;display:block;margin:0 auto 16px}}
-
-        /* UNE CARTE D'OBJECTIF : bande d'image en haut, pastille a cheval sur son
-           bord bas, texte dessous. Le padding quitte la carte pour aller sur le
-           texte seul, sinon l'image ne toucherait pas les bords. */
         .hi-obj{padding:0;overflow:hidden}
-        /* aspect-ratio 2/1 et non une hauteur fixe : les vues du generique font
-           512x256, donc exactement 2:1 — une hauteur en pixels les aurait etirees
-           dans une colonne qui se retrecit. */
         .hi-obj-vue{position:relative;aspect-ratio:2/1;overflow:hidden}
         .hi-obj-vue img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.85) brightness(.78)}
-        /* Le voile n'est pas la pour decorer : ces vues sont des paysages tres
-           colores, et la pastille orange s'y perdait. Il eteint le bas de l'image,
-           la ou la pastille se pose. */
         .hi-obj-vue::after{content:"";position:absolute;inset:0;pointer-events:none;
           background:linear-gradient(180deg,rgba(10,10,12,.10) 0%,rgba(10,10,12,.30) 55%,rgba(10,10,12,.88) 100%)}
         .hi-obj-badge{position:absolute;left:16px;bottom:-22px;z-index:1;display:block}
-        /* 30px de padding en haut : la pastille descend de 22px sous l'image et le
-           titre doit passer SOUS elle, pas derriere. */
         .hi-obj-txt{padding:30px 20px 20px}
-
-        /* Le vaisseau du generique en fond du bloc « Prete a nous rejoindre ». */
         .hi-cta{position:relative;overflow:hidden;text-align:center;margin-top:30px;border-radius:16px;
           border:1px solid var(--orange-dark);background:#0b0b0f}
         .hi-cta img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 62%;
           filter:saturate(.7) brightness(.5)}
-        /* Deux voiles superposes, meme raison qu'ailleurs sur le site : un aplat
-           pour le contraste du texte, un halo orange pour rattacher a la charte.
-           Sans l'aplat, aucun texte blanc ne tient sur un ciel orange. */
         .hi-cta::after{content:"";position:absolute;inset:0;pointer-events:none;background:
           radial-gradient(ellipse 70% 100% at 50% 50%, rgba(255,140,26,.14), transparent 72%),
           linear-gradient(180deg,rgba(11,11,15,.82),rgba(11,11,15,.90))}

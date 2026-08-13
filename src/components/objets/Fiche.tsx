@@ -4,10 +4,14 @@ import { Icon, type IconName } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { OuTrouver } from "@/components/OuTrouver";
+import { Etiquette } from "@/components/jeu/Rarete";
 import { IconeObjet } from "./IconeObjet";
+import { iconeElement, tonRang, court, type Lacheur } from "@/components/monstres/vocabulaire";
+import type { Marchand } from "@/components/pnj/types";
 import {
-  BADGE_ULTIME, CADENAS, COULEUR_GRADE, DE_STAT,
-  classeFr, elementPorte, emblemeClasse, emplacementFr, RESISTANCES, type ObjetFiche,
+  BADGE_ULTIME, CADENAS, COULEUR_GRADE, DE_STAT, chiffreDeCombat,
+  classeFr, elementPorte, emblemeClasse, emplacementFr, libelleEtPourcent,
+  RESISTANCES, type Bonus, type ObjetFiche,
 } from "./vocabulaire";
 // 9 Ko de comptes précalculés (scripts/extraire-fashion.mjs), pas les 3 Mo du
 // catalogue : ce fichier est un composant client.
@@ -32,6 +36,22 @@ import FASHION from "@/data/fashion-bonus.json";
  * │   « Endurance » : le jeu a ses propres tuiles FOR/DEX/    │
  * │   INT/END, elles disent la même chose en image.          │
  * └─────────────────────────────────────────────────────────┘
+ *
+ * ┌────────── CE QUE CETTE PASSE A AJOUTÉ ──────────┐
+ * │ · LES BONUS VIENNENT DES CODES DU CLIENT quand le │
+ * │   relevé par codes connaît l'objet, et chacun est │
+ * │   un LIEN vers tout ce qui porte la même          │
+ * │   statistique. Un bonus cesse d'être une ligne    │
+ * │   morte : c'est par là qu'on compare deux pièces. │
+ * │ · « LÂCHÉ PAR » — la question qu'aucune page ne   │
+ * │   savait traiter. Le nom du monstre, son niveau,  │
+ * │   ce qu'il faut lui sortir. Jamais la chance.     │
+ * │ · « CHEZ QUI » — les PNJ qui l'ont, lus dans      │
+ * │   leurs étals. Ça REMPLACE la ligne « Vendu par   │
+ * │   un PNJ », qui s'appuyait sur un champ ne        │
+ * │   voulant pas dire ça : 1 088 objets le portent,  │
+ * │   60 seulement sont dans un étal du client.       │
+ * └─────────────────────────────────────────────────┘
  *
  * Trois pièges du client du jeu sont traités plutôt que recopiés :
  *  - le niveau DE L'OBJET n'est pas le niveau REQUIS (le wiki confond les deux, d'où
@@ -79,23 +99,30 @@ function Marque({ texte, couleur, icon, image }: { texte: string; couleur: strin
 }
 
 /**
- * UN BONUS, avec le dé du jeu quand il en existe un.
+ * UNE LIGNE DE BONUS — avec le dé du jeu quand il en existe un, et un LIEN quand on
+ * connaît son code.
  *
  * Les quatre statistiques de base ont leur tuile dans le client (FOR, DEX, INT, END) :
  * pour celles-là, l'image REMPLACE le mot. Les soixante-dix autres libellés
  * (Précision, Taux critique, Dégâts sur monstres…) n'ont pas d'image et gardent leur
  * texte — inventer un pictogramme pour chacun ferait soixante-dix devinettes.
  *
- * Le client range le « % » dans le LIBELLÉ (« Attaque % ») : le laisser là et
- * l'ajouter à la valeur donnait « Attaque % +15 % ». Il part du libellé et reste sur
- * le chiffre, où on le lit.
+ * ┌──────── LE LIBELLÉ SEUL NE MÈNE NULLE PART, LE CODE SI ────────┐
+ * │ Tant qu'un bonus n'était qu'un couple « mot, nombre », la fiche │
+ * │ était un cul-de-sac : on lisait « Taux critique +70 » sans      │
+ * │ pouvoir demander ce qui en donne plus. Avec le code `DST_*` du  │
+ * │ client, la ligne devient un lien vers la recherche filtrée sur  │
+ * │ cette statistique. C'est le geste que fait un joueur qui        │
+ * │ compare, et il ne demandait qu'un identifiant.                  │
+ * │ Sans code (le repli sur le champ `b` du catalogue), la ligne     │
+ * │ reste du texte : mieux qu'un lien qui filtrerait à côté.         │
+ * └────────────────────────────────────────────────────────────────┘
  */
-function Bonus({ libelle, valeur }: { libelle: string; valeur: number }) {
-  const pct = libelle.endsWith("%");
-  const mot = pct ? libelle.replace(/\s*%$/, "") : libelle;
+function LigneBonus({ libelle, valeur, code }: { libelle: string; valeur: number; code?: string }) {
+  const { mot, pct } = libelleEtPourcent(libelle);
   const de = DE_STAT[mot];
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+  const corps = (
+    <>
       {de ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={de} alt={mot} title={mot} height={15}
@@ -107,6 +134,114 @@ function Bonus({ libelle, valeur }: { libelle: string; valeur: number }) {
       <b style={{ marginLeft: "auto", color: valeur < 0 ? "var(--red)" : "var(--green)", ...NUM }}>
         {valeur > 0 ? "+" : ""}{valeur.toLocaleString("fr-FR")}{pct ? " %" : ""}
       </b>
+    </>
+  );
+  const cadre: React.CSSProperties = { display: "flex", alignItems: "center", gap: 8, fontSize: 13 };
+  if (!code) return <div style={cadre}>{corps}</div>;
+  return (
+    <Link href={`/objets?stat=${encodeURIComponent(code)}`} title={`Tout ce qui donne ${mot}`}
+      style={{ ...cadre, textDecoration: "none", color: "var(--text)", padding: "1px 0" }}>
+      {corps}
+    </Link>
+  );
+}
+
+/**
+ * CHEZ QUI ON LE TROUVE — le nom du PNJ, son métier, sa ville.
+ *
+ * PAS DE COORDONNÉES et pas de prix : ce qui sert est le NOM du marchand et la ville
+ * où le jeu le place, parce que c'est ce qu'on tape dans le téléporteur. Chaque nom
+ * mène à l'annuaire ouvert sur cet objet — on y trouve son visage, sa carte de
+ * région, et le reste de son étal.
+ */
+function ChezQui({ marchands, total, objet }: { marchands: Marchand[]; total: number; objet: string }) {
+  if (!marchands.length) return null;
+  const ton: Record<string, string> = { fabrique: "var(--green)", "contre un jeton": "var(--gold)", vend: "var(--blue)" };
+  return (
+    <div className="glass-card fx-card" style={carte}>
+      <div style={titreBloc}>
+        <Icon name="basket" size={13} /> Chez qui
+        <span style={{ marginLeft: "auto", fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--text-muted)", ...NUM }}>
+          {total > marchands.length ? `${marchands.length} sur ${total}` : total}
+        </span>
+      </div>
+      <div style={{ display: "grid", gap: 6 }}>
+        {marchands.map((m) => (
+          <Link key={`${m.cle}-${m.comment}`} href={`/pnj?objet=${encodeURIComponent(objet)}`}
+            style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "6px 8px", borderRadius: 9,
+              border: "1px solid var(--border)", background: "var(--bg-3)", textDecoration: "none", fontSize: 12.5, color: "var(--text)" }}>
+            <span style={{ color: ton[m.comment], fontWeight: 700, flexShrink: 0, fontSize: 11 }}>{m.comment}</span>
+            <span style={{ minWidth: 0, flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {m.nom}
+            </span>
+            {m.monnaie && <span style={{ color: "var(--gold)", flexShrink: 0, fontSize: 11 }}>{m.monnaie}</span>}
+            {m.ville && <span style={{ color: "var(--text-muted)", flexShrink: 0, fontSize: 11 }}>{m.ville}</span>}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * QUI LÂCHE CET OBJET.
+ *
+ * Le relevé des monstres nomme ce qu'ils lâchent ; personne ne pouvait lire la
+ * relation dans l'autre sens. C'est pourtant le geste courant : on tient un nom
+ * d'objet — dans une recette, dans une requête, dans un étal — et la question est
+ * « où est-ce que ça tombe ».
+ *
+ * TROIS CHOSES PAR LIGNE, et pas une de plus : le nom, le niveau, ce qu'il faut lui
+ * sortir. Pas de chance de butin (elle n'existe même pas dans le type `Monstre`), pas
+ * de coordonnées. Rangés du plus bas niveau au plus haut : on veut le plus abordable.
+ *
+ * Rien ne s'affiche quand le relevé ne sait pas — pas d'encadré pour expliquer le
+ * trou. Le butin ordinaire d'AirFlyff est calculé côté serveur et n'est pas dans les
+ * fichiers ; le dire à chaque fiche serait répéter un constat d'ignorance 12 134 fois.
+ *
+ * PLAFONNÉ À HUIT, comme « Chez qui » juste dessous, et pour la même raison mesurée :
+ * cinq objets du relevé sont lâchés par plus de huit monstres, et deux d'entre eux par
+ * DEUX CENT SOIXANTE-CINQ. Sans plafond, la fiche du « Fragment de Cœur » sortait
+ * 1 662 mots — quatre fois une fiche normale — sur une passe dont la consigne est
+ * « compacter les informations ». Les huit montrés sont les huit PLUS BAS EN NIVEAU
+ * (le tri est fait avant le plafond) : c'est la réponse à « le plus facile où je peux
+ * l'avoir », et le compte complet reste écrit à droite du titre.
+ */
+function LachePar({ lacheurs, total }: { lacheurs: Lacheur[]; total: number }) {
+  if (!lacheurs.length) return null;
+  return (
+    <div className="glass-card fx-card" style={carte}>
+      <div style={titreBloc}>
+        <Icon name="sword-cross" size={13} /> Lâché par
+        <span style={{ marginLeft: "auto", fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--text-muted)", ...NUM }}>
+          {total > lacheurs.length ? `${lacheurs.length} sur ${total.toLocaleString("fr-FR")}` : total}
+        </span>
+      </div>
+      <div style={{ display: "grid", gap: 6 }}>
+        {lacheurs.map((m) => {
+          const ic = iconeElement(m.elem);
+          const seReleve = (m.vies ?? 0) > 1;
+          return (
+            <Link key={m.id} href={`/monstres/${m.id}`}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 9,
+                border: `1px solid ${seReleve ? "color-mix(in srgb, var(--red) 32%, var(--border))" : "var(--border)"}`,
+                background: "var(--bg-3)", textDecoration: "none", fontSize: 12.5, color: "var(--text)" }}>
+              {ic && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={ic} alt="" width={15} height={15} style={{ objectFit: "contain", flexShrink: 0 }} />
+              )}
+              <span style={{ minWidth: 0, flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {m.nom}
+              </span>
+              {m.maison && <span style={{ fontSize: 10, color: "var(--purple)", fontWeight: 700, flexShrink: 0 }}>AirFlyff</span>}
+              {m.niv != null && (
+                <span style={{ color: tonRang(m.rang), flexShrink: 0, ...NUM }}>niv. {m.niv}</span>
+              )}
+              <span style={{ color: "var(--orange)", fontWeight: 700, flexShrink: 0, ...NUM }}>{court(m.pvEff)}</span>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -140,12 +275,39 @@ function ModeSituee({ o }: { o: ObjetFiche }) {
   );
 }
 
-export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) {
+export function Fiche({ o, voisins, bonus, lacheurs = [], lacheursTotal = 0, marchands = [], marchandsTotal = 0 }: {
+  o: ObjetFiche;
+  voisins: ObjetFiche[];
+  /**
+   * Les bonus lus par code du client. `null` quand le relevé par codes ne connaît
+   * pas l'objet : on retombe alors sur le champ `b` du catalogue, qui couvre douze
+   * objets de plus. Les codes passent devant parce qu'ils ne se décalent pas, là où
+   * les libellés du relevé se sont décalés sur trois statistiques.
+   */
+  bonus?: Bonus[] | null;
+  /** Les monstres qui le lâchent, les plus bas en niveau d'abord — plafonnés à huit. */
+  lacheurs?: Lacheur[];
+  /** Combien il y en a en tout, pour que « 8 sur 265 » ne se lise pas « 8 ». */
+  lacheursTotal?: number;
+  /** Les PNJ qui ont l'objet, lus dans leurs étals — plafonnés à huit. */
+  marchands?: Marchand[];
+  /** Combien il y en a en tout, pour que « 8 sur 61 » ne se lise pas « 8 ». */
+  marchandsTotal?: number;
+}) {
   useCardFx();
+  /* Les lignes affichées : les codes d'abord, le relevé en repli. On n'affiche
+     JAMAIS les deux — deux listes de bonus sur la même fiche se liraient comme deux
+     jeux de bonus cumulés. */
+  const lignes: { libelle: string; valeur: number; code?: string }[] =
+    bonus?.length
+      ? bonus.map((b) => ({ libelle: b.fr, valeur: b.v, code: b.code }))
+      : (o.b ?? []).map(([libelle, valeur]) => ({ libelle, valeur }));
   const couleur = (o.g && COULEUR_GRADE[o.g]) || "var(--text)";
   const emb = emblemeClasse(o.cl);
   const classe = classeFr(o.cl);
-  const arme = o.f === "arme";
+  /* `null` pour tout ce qui n'est ni arme ni armure : la colonne du client y porte un
+     bouchon, un nombre de penyas ou un identifiant de monstre (cf. `chiffreDeCombat`). */
+  const combat = chiffreDeCombat(o);
   const emplacement = emplacementFr(o.em);
   // Le niveau de l'objet ne mérite un mot que s'il s'écarte du niveau requis :
   // sinon c'est un doublon qui embrouille.
@@ -181,12 +343,16 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
           </div>
           <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap", alignItems: "center" }}>
             {/* Le grade Ultime porte le badge que le client dessine lui-même ; le grade
-                Unique n'a pas d'image dans le dossier, il garde son mot. */}
+                Unique n'a pas d'image dans le dossier, il garde son mot — et c'est
+                `Etiquette` de `jeu/Rarete.tsx` qui l'écrit, avec la teinte relevée sur
+                le cadre `item_edgeunique`. La pastille maison faisait la même chose
+                avec sa propre couleur : c'était la deuxième table de teintes de grade
+                du site, et elles ont déjà divergé une fois. */}
             {o.g === "Ultime" && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={BADGE_ULTIME} alt="Ultime" title="Grade Ultime" height={14} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
             )}
-            {o.g === "Unique" && <Marque texte="Unique" couleur={couleur} icon="star" />}
+            {o.g === "Unique" && <Etiquette grade="unique" />}
             {o.af === 1 && <Marque texte="Ajout AirFlyff" couleur="var(--orange)" icon="sparkles" />}
             {o.ne === 1 && <Marque texte="Non échangeable" couleur="var(--red)" image={CADENAS} />}
             {o.li === 1 && <Marque texte="Lié au personnage" couleur="var(--red)" image={CADENAS} />}
@@ -218,15 +384,16 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
               perçage : 204 objets ne portent QUE leur élément — la Carte Flamma, la
               Carte Fulgur, toute la série — et le bloc étant fermé, leur fiche
               n'affichait rien du tout. Compté sur le catalogue, pas supposé. */}
-          {(o.dn || o.b?.length || o.va || o.bm || o.ae || o.el) && (
+          {(combat || lignes.length || o.va || o.bm || o.ae || o.el) && (
             <div className="glass-card fx-card" style={carte}>
               <div style={titreBloc}><Icon name="zap" size={13} /> Ce que ça apporte</div>
 
-              {o.dn ? (
+              {combat ? (
                 <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{arme ? "Dégâts" : "Défense"}</span>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{combat.label}</span>
                   <b className="font-heading" style={{ marginLeft: "auto", fontSize: 20, color: "var(--text)", ...NUM }}>
-                    {o.dn}{o.dx && o.dx !== o.dn ? ` – ${o.dx}` : ""}
+                    {combat.min.toLocaleString("fr-FR")}
+                    {combat.max && combat.max !== combat.min ? ` – ${combat.max.toLocaleString("fr-FR")}` : ""}
                   </b>
                 </div>
               ) : null}
@@ -254,9 +421,9 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
                 </Ligne>
               ) : null}
 
-              {o.b?.length ? (
+              {lignes.length ? (
                 <div style={{ marginTop: 12, paddingTop: 11, borderTop: "1px dashed var(--border)", display: "grid", gap: 5 }}>
-                  {o.b.map(([libelle, valeur], i) => <Bonus key={i} libelle={libelle} valeur={valeur} />)}
+                  {lignes.map((b, i) => <LigneBonus key={i} libelle={b.libelle} valeur={b.valeur} code={b.code} />)}
                 </div>
               ) : null}
 
@@ -290,13 +457,13 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
           <div className="glass-card fx-card" style={carte}>
             <div style={titreBloc}><Icon name="info" size={13} /> Bon à savoir</div>
             <div style={{ marginTop: -6 }}>
-              {o.pnj === 1 ? (
-                <Ligne quoi="Vendu par un PNJ">
-                  <Link href="/pnj" style={{ color: "var(--orange)", textDecoration: "none", borderBottom: "1px dotted currentColor" }}>
-                    l’annuaire
-                  </Link>
-                </Ligne>
-              ) : null}
+              {/* LA LIGNE « VENDU PAR UN PNJ » A ÉTÉ RETIRÉE D'ICI. Elle s'appuyait
+                  sur le champ `pnj` du catalogue, et le rapprochement avec les étals
+                  du client montre qu'il ne dit pas ça : 1 088 objets le portent, 60
+                  seulement sont posés dans un étal, et 530 des 571 objets réellement
+                  en vente ne le portent PAS. Le champ reste dans les données — on ne
+                  touche pas au relevé — mais il ne prétend plus rien à l'écran. Le
+                  bloc « Chez qui », lui, lit les étals eux-mêmes. */}
               {o.pi ? <Ligne quoi="Par pile">{o.pi.toLocaleString("fr-FR")}</Ligne> : null}
               {o.du ? <Ligne quoi="Durabilité">{o.du.toLocaleString("fr-FR")}</Ligne> : null}
               {o.sx ? <Ligne quoi="Réservé à">{o.sx === "male" ? "un garçon" : "une fille"}</Ligne> : null}
@@ -320,6 +487,11 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
             titres qui disaient la même chose. On le pose nu — et il ne rend RIEN
             quand le client ne sait pas d'où l'objet vient. */}
         <div style={{ display: "grid", gap: 14 }}>
+          {/* « Lâché par » AVANT « Où le trouver » : un monstre est la provenance la
+              plus concrète — on y va tout de suite — là où un coffre ou une clé
+              demandent d'abord de trouver le coffre ou la clé. */}
+          <LachePar lacheurs={lacheurs} total={lacheursTotal || lacheurs.length} />
+          <ChezQui marchands={marchands} total={marchandsTotal} objet={o.n} />
           <OuTrouver nom={o.n} />
 
           {voisins.length > 0 && (
@@ -328,13 +500,16 @@ export function Fiche({ o, voisins }: { o: ObjetFiche; voisins: ObjetFiche[] }) 
               <div style={{ display: "grid", gap: 6 }}>
                 {voisins.map((v) => {
                   const c = (v.g && COULEUR_GRADE[v.g]) || "var(--text)";
+                  // Même garde qu'en haut de fiche : sans elle, la colonne de droite
+                  // annonçait « 1 » sur six pièces de mode voisines.
+                  const cv = chiffreDeCombat(v);
                   return (
                     <Link key={v.i} href={`/objets/${v.i}`} style={{ display: "flex", alignItems: "center", gap: 9, padding: "6px 8px", borderRadius: 9,
                       border: "1px solid var(--border)", background: "var(--bg-3)", textDecoration: "none", fontSize: 12.5 }}>
                       <IconeObjet o={v} taille={26} />
                       <span style={{ minWidth: 0, flex: 1, color: c, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.n}</span>
                       {v.nr != null && <span style={{ color: "var(--text-muted)", ...NUM, flexShrink: 0 }}>niv. {v.nr}</span>}
-                      {v.dn ? <b style={{ color: "var(--text)", ...NUM, flexShrink: 0 }}>{v.dn}</b> : null}
+                      {cv ? <b style={{ color: "var(--text)", ...NUM, flexShrink: 0 }}>{cv.min.toLocaleString("fr-FR")}</b> : null}
                     </Link>
                   );
                 })}

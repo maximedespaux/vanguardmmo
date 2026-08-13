@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { NomObjet } from "@/components/objets/NomObjet";
 
 /**
  * L'ARBRE DU FARM — 39 fabrications, 115 ingrédients, et le chemin entre les deux.
@@ -162,32 +163,14 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
           </div>
         )}
 
-        <div style={{ display: "grid", gap: 7 }}>
-          {actif.ing.map((g) => (
-            <div key={g.n} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 11px", borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-              <Vignette ic={g.ic} />
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontSize: 13, fontWeight: 600 }}>{g.n}</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--text-muted)", marginTop: 1 }}>
-                  <Icon name={g.vers ? "hammer" : "pickaxe"} size={11} style={{ flexShrink: 0 }} />
-                  {g.ou}
-                </span>
-              </span>
-              {g.q != null && (
-                <b style={{ flexShrink: 0, fontSize: 13, fontVariantNumeric: "tabular-nums", color: "var(--gold)" }}>×{g.q.toLocaleString("fr-FR")}</b>
-              )}
-              {g.vers && parCle.has(g.vers) && (
-                <button onClick={() => aller(g.vers!)} style={{
-                  flexShrink: 0, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", fontFamily: "inherit",
-                  fontSize: 11.5, fontWeight: 700, padding: "5px 9px", borderRadius: 8,
-                  background: "rgba(255,140,26,.1)", border: "1px solid color-mix(in srgb, var(--orange) 45%, transparent)", color: "var(--orange)",
-                }}>
-                  ça se fabrique <Icon name="chevron-right" size={12} />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* L'ARBRE, DESSINÉ. Voir la note `Branche` plus bas : les traits sont en CSS,
+            les étages se déplient sur place, et chaque ingrédient passe par
+            <NomObjet> — sa fiche et sa provenance au survol. */}
+        <Branche noeud={actif} parCle={parCle} niveau={0} />
+        <p style={{ margin: "9px 0 0", fontSize: 11, color: "var(--text-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <span><Icon name="pickaxe" size={11} style={{ marginRight: 4 }} />se ramasse</span>
+          <span><Icon name="hammer" size={11} style={{ marginRight: 4, color: "var(--orange)" }} />se fabrique — clique pour ouvrir l&apos;étage</span>
+        </p>
 
         {actif.utilisePar.length > 0 && (
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" }}>
@@ -208,18 +191,141 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
           </div>
         )}
 
-        <p style={{ marginTop: 14, fontSize: 11.5, lineHeight: 1.55, color: "var(--text-muted)" }}>
-          Les descriptions du client donnent les ingrédients et où les farmer, <b>pas les
-          quantités ni le PNJ qui réalise l’échange</b> — sauf pour les masques PvE, dont la
-          recette chiffrée existe par ailleurs. Les quantités absentes ci-dessus sont donc
-          inconnues, pas égales à un.
+        {/* LA MISE EN GARDE RESTE : elle protège d'une erreur coûteuse — partir farmer
+            un exemplaire d'un ingrédient dont on aura besoin de mille. Ce qui part,
+            c'est la provenance de la lacune (« sauf les masques PvE, dont la recette
+            chiffrée existe par ailleurs ») : le bouton vert « recette chiffrée »
+            au-dessus le dit déjà, et seulement quand c'est vrai. */}
+        <p style={{ marginTop: 12, fontSize: 11.5, lineHeight: 1.55, color: "var(--text-muted)" }}>
+          Une quantité absente est <b>inconnue</b>, pas égale à un : les descriptions du client
+          ne les donnent pas.
         </p>
       </div>
 
       <style>{`
         .cr-arbre{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
         @media(max-width:880px){.cr-arbre{grid-template-columns:1fr}}
+
+        /* ── LES TRAITS DE L'ARBRE ──
+           TOUT EN CSS ET PAS EN SVG : une carte d'ingredient porte du texte qui se
+           replie, une icone et une bulle au survol — dans un SVG il aurait fallu
+           mesurer chaque hauteur a l'execution et redessiner a chaque repli. Le trait
+           en CSS se contente de suivre ce que la mise en page a decide.
+           CHAQUE NOEUD DESSINE SES DEUX TRAITS LUI-MEME : ::before est le morceau de
+           TRONC qui le traverse, ::after son COUDE vers la carte. Le tronc n'est donc
+           PAS une bordure de la liste — c'est le point qui compte.
+           Une premiere version posait le tronc sur la <ul> et masquait sa retombee
+           avec un rectangle de la couleur du fond. Ça ne pouvait pas tenir : le fond
+           reel depend du panneau qui contient l'arbre, et un jour ou l'autre le
+           masque se serait vu comme une barre pale. Ici le dernier noeud arrete son
+           propre tronc a la hauteur de son coude, et il n'y a rien a masquer.
+             · dernier noeud     : du haut jusqu'au coude, puis plus rien ;
+             · les autres        : de bord a bord, gouttiere comprise ;
+             · le premier        : demarre a son propre haut, pas 7 px au-dessus. */
+        .cr-tronc{list-style:none;margin:0;padding:0 0 0 20px}
+        .cr-noeud{position:relative;margin-top:7px}
+        .cr-noeud:first-child{margin-top:0}
+        .cr-noeud::before{content:"";position:absolute;left:-20px;top:-7px;height:29px;width:1px;
+          background:var(--border)}
+        .cr-noeud:first-child::before{top:0;height:22px}
+        .cr-noeud:not(:last-child)::before{height:calc(100% + 7px)}
+        .cr-noeud::after{content:"";position:absolute;left:-20px;top:22px;width:20px;height:1px;
+          background:var(--border)}
+        .cr-carte{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:10px;
+          background:var(--bg-2);border:1px solid var(--border)}
+        /* Un ingredient qui se fabrique est une porte : on le montre. */
+        .cr-porte{cursor:pointer;width:100%;text-align:left;font-family:inherit;color:var(--text);
+          border-color:color-mix(in srgb, var(--orange) 38%, var(--border));transition:border-color .15s}
+        .cr-porte:hover{border-color:var(--orange)}
       `}</style>
     </div>
+  );
+}
+
+/**
+ * UNE BRANCHE DE L'ARBRE — le produit, puis ses ingrédients, puis les leurs.
+ *
+ * ┌──────────── CE QUI A CHANGÉ, ET POURQUOI ÇA COMPTE ────────────┐
+ * │ C'ÉTAIT UNE LISTE À PLAT. Sept lignes empilées, avec un bouton  │
+ * │ « ça se fabrique » qui REMPLAÇAIT tout l'écran par la sous-      │
+ * │ recette. On perdait donc de vue ce qu'on fabriquait au moment    │
+ * │ précis où l'on descendait — et un arbre dont on ne voit qu'un    │
+ * │ étage à la fois n'est plus un arbre, c'est un couloir.           │
+ * │ Ici l'étage s'ouvre SOUS son ingrédient, décalé et relié par un  │
+ * │ trait : le chemin complet reste à l'écran. C'est la seule chose  │
+ * │ qu'on vient chercher dans un arbre de craft — combien de niveaux │
+ * │ me séparent d'un objet que je peux ramasser.                    │
+ * └────────────────────────────────────────────────────────────────┘
+ *
+ * CHAQUE INGRÉDIENT PASSE PAR <NomObjet> : sa fiche du catalogue et sa provenance,
+ * dans une bulle qui ne charge qu'au survol. Un arbre peut porter quinze
+ * ingrédients ; quinze `OuTrouver` montés au chargement auraient coûté plus que la
+ * page entière. La demande de Maxime — « mène à sa provenance » — est donc servie
+ * sans que rien ne parte avant qu'on le demande.
+ *
+ * `PROFONDEUR` ferme deux portes d'un coup. La première est un CYCLE : rien ne
+ * garantit que les descriptions du client ne se renvoient pas l'une à l'autre, et
+ * un arbre qui se replie sur lui-même fige l'onglet. La seconde est la LISIBILITÉ :
+ * au quatrième décalage, la carte n'a plus de largeur sur un téléphone.
+ */
+const PROFONDEUR = 3;
+
+function Branche({ noeud, parCle, niveau }: {
+  noeud: ArbreCraft; parCle: Map<string, ArbreCraft>; niveau: number;
+}) {
+  return (
+    <ul className="cr-tronc">
+      {noeud.ing.map((g) => (
+        <Feuille key={g.n} g={g} parCle={parCle} niveau={niveau} />
+      ))}
+    </ul>
+  );
+}
+
+/** Un ingrédient : sa carte, et l'étage qu'il ouvre quand il se fabrique. */
+function Feuille({ g, parCle, niveau }: {
+  g: Ingredient; parCle: Map<string, ArbreCraft>; niveau: number;
+}) {
+  const sous = g.vers ? parCle.get(g.vers) : undefined;
+  /* Ouvrable seulement si la sous-recette existe ET qu'on n'est pas au bout : au
+     dernier étage on garde la carte, sans la promesse d'une porte qui ne s'ouvre pas. */
+  const ouvrable = Boolean(sous) && niveau < PROFONDEUR - 1;
+  const [ouvert, setOuvert] = useState(false);
+
+  const corps = (
+    <>
+      <Vignette ic={g.ic} taille={26} />
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ display: "block", fontSize: 12.5, fontWeight: 600 }}>
+          <NomObjet nom={g.n} icone={null} />
+        </span>
+        <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
+          <Icon name={sous ? "hammer" : "pickaxe"} size={10} style={{ flexShrink: 0, color: sous ? "var(--orange)" : undefined }} />
+          {g.ou}
+        </span>
+      </span>
+      {g.q != null && (
+        <b style={{ flexShrink: 0, fontSize: 12.5, fontVariantNumeric: "tabular-nums", color: "var(--gold)" }}>×{g.q.toLocaleString("fr-FR")}</b>
+      )}
+      {ouvrable && (
+        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={13} style={{ flexShrink: 0, color: "var(--orange)" }} />
+      )}
+    </>
+  );
+
+  return (
+    <li className="cr-noeud">
+      {/* Un <div> quand la carte n'ouvre rien : <NomObjet> pose un déclencheur de
+          bulle, et l'imbriquer dans un <button> ferait un bouton dans un bouton —
+          HTML invalide, et le clic de la bulle remonterait au parent. */}
+      {ouvrable
+        ? <div className="cr-carte cr-porte" role="button" tabIndex={0} aria-expanded={ouvert}
+            onClick={() => setOuvert((v) => !v)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOuvert((v) => !v); } }}>
+            {corps}
+          </div>
+        : <div className="cr-carte">{corps}</div>}
+      {ouvert && sous && <Branche noeud={sous} parCle={parCle} niveau={niveau + 1} />}
+    </li>
   );
 }

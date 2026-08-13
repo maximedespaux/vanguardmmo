@@ -1,6 +1,11 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RechercheObjets } from "@/components/objets/Recherche";
-import { comptesGlobaux, dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
+/* `comptesGlobaux` n'est plus appelé ICI : les comptes qu'il rend (ajouts AirFlyff,
+   grades, bonus, butin) sont portés par les pastilles de filtre, qui les reçoivent de
+   /api/objets. Les lire deux fois pour écrire le même nombre dans un sous-titre était
+   la définition du doublon. */
+import { dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
+import { statsDisponibles } from "@/components/objets/stats";
 
 /**
  * LES OBJETS — la page qui manquait.
@@ -12,26 +17,36 @@ import { comptesGlobaux, dateDuCatalogue, nombreDObjets } from "@/components/obj
  * qui a perdu 108 objets ajoutés par AirFlyff.
  *
  * Le mot-clé arrive parfois d'ailleurs (`?q=`) : le plan de farm et les requêtes
- * d'objet peuvent renvoyer ici avec le nom déjà écrit.
+ * d'objet peuvent renvoyer ici avec le nom déjà écrit. `?stat=DST_…` vient des fiches
+ * d'objet — chaque ligne de bonus y est un lien vers tout ce qui porte la même
+ * statistique.
  */
 export const metadata = { title: "Objets · Vanguard" };
 
-export default async function ObjetsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+export default async function ObjetsPage({ searchParams }: { searchParams: Promise<{ q?: string; stat?: string }> }) {
+  const { q, stat: statDepart } = await searchParams;
   const total = nombreDObjets();
-  // Le chiffre qui dit ce que ce catalogue a d'unique : compté, jamais écrit.
-  const { maison } = comptesGlobaux();
+  /* Les statistiques demandables, calculées ICI et pas à chaque requête : la liste
+     ne bouge pas d'une frappe à l'autre. Elle est lue dans le client du jeu, jamais
+     écrite — le jour où une fouille en ajoute une, la liste suit. */
+  const stats = statsDisponibles();
 
   return (
     <>
       <PageHeader icon="package" title="Les objets"
-        subtitle={`${total.toLocaleString("fr-FR")} objets du client, dont ${maison.toLocaleString("fr-FR")} ajoutés par AirFlyff.`}
+        // « dont N ajoutés par AirFlyff » est parti du sous-titre : la pastille
+        // « Ajouts AirFlyff » porte déjà ce compte, à dix centimètres. Reste le total,
+        // qui ne figure nulle part ailleurs, et les trois façons de chercher.
+        subtitle={`${total.toLocaleString("fr-FR")} objets du client. Cherche par nom, par bonus, ou par ce qui le lâche.`}
         right={
           <span style={{ fontSize: 11.5, color: "var(--text-muted)", textAlign: "right", lineHeight: 1.5 }}>
             relevé du {dateDuCatalogue()}
           </span>
         } />
-      <RechercheObjets depart={q ?? ""} />
+      <RechercheObjets depart={q ?? ""} stats={stats}
+        // Un code d'URL qui ne figure pas dans la liste est ignoré : sinon un lien
+        // périmé afficherait zéro résultat sans rien expliquer.
+        departStat={stats.some((s) => s.code === statDepart) ? statDepart! : ""} />
     </>
   );
 }

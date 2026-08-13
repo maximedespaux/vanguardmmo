@@ -29,20 +29,39 @@ export function TourOubliee() {
         </span>
       </h2>
 
-      <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 12, fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
-        Elle n&apos;est pas dans la grille au-dessus parce qu&apos;elle n&apos;est pas dans le téléporteur :
-        tu entres par le <b style={{ color: "var(--text)" }}>Gardien de la Tour Oubliée</b>, à Flarine,
-        et tu choisis ton étage. Chaque étage est une carte à part — <b style={{ color: "var(--text)" }}>aucun
-        escalier ne les relie</b>, et toutes les sorties te renvoient à Flarine. Chaque étage ne contient
-        qu&apos;<b style={{ color: "var(--text)" }}>une seule espèce</b>, répétée.
-        {" "}Et les niveaux ne montent pas dans l&apos;ordre : le 5<sup>e</sup> est plus faible que le 3<sup>e</sup>,
-        donc ne prends pas le numéro d&apos;étage pour une difficulté.
-        <div style={{ marginTop: 8 }}>
-          Rien à voir avec la <b style={{ color: "var(--text)" }}>Tour Infernale</b>, qui est la carte
-          du mode <b style={{ color: "var(--text)" }}>Protection de l&apos;Oasis</b> : deux contenus
-          distincts, deux cartes distinctes.
-        </div>
+      {/* ┌────── CE PARAGRAPHE DE QUATRE-VINGT-QUINZE MOTS EST DEVENU TROIS PUCES
+                  ET UN SCHÉMA ──────┐
+          Il disait cinq choses. Trois sont des règles d'accès qui tiennent en un
+          groupe de mots chacune : on entre par un PNJ, rien ne relie les étages,
+          une seule espèce par étage. Elles deviennent des puces.
+          La quatrième — « ne prends pas le numéro d'étage pour une difficulté » —
+          était la plus utile et la plus mal servie par de la prose : deux barres à
+          la même échelle la démontrent sans qu'on l'affirme. D'où `EchelleEtages`.
+          La cinquième, la confusion avec la Tour Infernale, est portée par le titre
+          du bloc voisin, qui s'appelle « Protection de l'Oasis » et pas « Tour » :
+          la répéter ici, c'était dire deux fois la même chose sur le même écran. */}
+      <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 10 }}>
+        {([
+          /* LE NOM COMPLET DU PNJ, RESTITUÉ — et le commentaire est SANS ACCOLADES,
+             parce qu'on est dans un tableau JS et pas dans des enfants JSX : `{/* … *​/}`
+             y vaudrait un objet vide de plus dans le tuple.
+             En raccourcissant en « Gardien », la passe d'allègement a fait disparaître
+             « Gardien de la Tour Oubliée » de TOUT le site — c'était sa seule occurrence
+             à l'écran, et pnj.json ne le porte pas. Or les données du jeu comptent
+             trente-quatre libellés distincts où figure « Gardien » ou « Gardienne » :
+             « le Gardien, à Flarine » ne désigne plus personne qu'on puisse chercher.
+             C'est le nom qu'on tape dans une recherche, donc il reste écrit en entier. */
+          ["user", <>Entrée par le <b style={{ color: "var(--text)" }}>Gardien de la Tour Oubliée</b>, à Flarine</>],
+          ["path", <>Aucun escalier · toute sortie renvoie à Flarine</>],
+          ["skull", <>Une seule espèce par étage</>],
+        ] as const).map(([ic, texte], k) => (
+          <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--text-muted)", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 10px" }}>
+            <Icon name={ic} size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />{texte}
+          </span>
+        ))}
       </div>
+
+      <EchelleEtages />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(230px,1fr))", gap: 12 }}>
         {TOUR_OUBLIEE.map((e) => (
@@ -109,5 +128,78 @@ export function TourOubliee() {
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * L'ÉCHELLE DES ÉTAGES — la seule chose qu'il faut savoir avant de monter.
+ *
+ * Le numéro d'étage n'est PAS une difficulté, et c'est le genre d'erreur qui coûte
+ * une soirée : on prend le B5 en dernier en croyant finir par le plus dur. Deux
+ * barres à la même échelle le montrent sans qu'on l'écrive — les PV du boss d'un
+ * côté, son niveau de l'autre.
+ *
+ * TOUT SE CALCULE SUR LA TABLE, phrase comprise. L'ancien texte nommait « le 5ᵉ »
+ * et « le 3ᵉ » en dur ; ici le plus dur et le plus facile se cherchent dans les
+ * données, et la ligne ne s'affiche QUE si l'ordre est réellement rompu. Le jour
+ * où les cinq étages monteraient dans l'ordre, elle disparaît au lieu de mentir.
+ *
+ * Une seule teinte : c'est la LONGUEUR qui compare, jamais la couleur — deux tons
+ * ne se distinguent pas pour un daltonien protan.
+ */
+function EchelleEtages() {
+  const max = Math.max(...TOUR_OUBLIEE.map((e) => e.pv));
+  const dur = TOUR_OUBLIEE.reduce((a, e) => (e.pv > a.pv ? e : a));
+  const doux = TOUR_OUBLIEE.reduce((a, e) => (e.pv < a.pv ? e : a));
+  /** L'ordre est-il rompu ? Vrai dès que le dernier étage n'est pas le plus dur. */
+  const rompu = dur.etage !== TOUR_OUBLIEE.length;
+  return (
+    <figure style={{ margin: "0 0 12px", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: "13px 15px" }}>
+      <figcaption style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 9 }}>
+        Ce que pèse chaque étage
+      </figcaption>
+      <div style={{ display: "grid", gap: 5 }}>
+        {TOUR_OUBLIEE.map((e) => (
+          <div key={e.monde} className="to-ligne">
+            <span className="to-etage">B{e.etage}</span>
+            <span className="to-piste"
+              role="img" aria-label={`Étage ${e.etage} : ${pvCourt(e.pv)} points de vie, niveau ${e.niv}`}>
+              <span style={{ display: "block", height: "100%", width: `${Math.max(2, (e.pv / max) * 100)}%`, borderRadius: 3, background: "var(--orange)" }} />
+            </span>
+            <span className="to-valeur">{pvCourt(e.pv)} PV · niv. {e.niv}</span>
+          </div>
+        ))}
+      </div>
+      {/* LA MISE EN PAGE DES BARRES, ET LE REPLI QUI COMPTE.
+          118 px de colonne de valeur et non 96 : à 96, « 300 000 PV · niv. 121 » passait
+          sur deux lignes et les cinq barres perdaient leur alignement — vu à l'écran.
+          MAIS à 375 px de large, ces 118 px plus les 30 du numéro d'étage ne laissaient
+          que 85 px de piste — mesuré dans le navigateur. Sur 85 px, l'écart entre
+          300 000 et 2,5 M ne fait plus que dix pixels, et le schéma ne démontre plus
+          rien, ce qui est la seule chose qu'on lui demande. Sous 560 px la valeur passe
+          donc SOUS la barre, qui reprend toute la largeur. */}
+      <style>{`
+        .to-ligne{display:grid;grid-template-columns:30px minmax(0,1fr) 118px;align-items:center;
+          gap:9px;font-size:11.5px}
+        .to-etage{color:var(--text-muted)}
+        .to-piste{display:block;height:9px;border-radius:3px;
+          background:color-mix(in srgb, var(--border) 70%, transparent)}
+        .to-valeur{text-align:right;white-space:nowrap;color:var(--text-muted);
+          font-variant-numeric:tabular-nums}
+        @media(max-width:560px){
+          .to-ligne{grid-template-columns:30px minmax(0,1fr);gap:4px 9px;margin-bottom:4px}
+          .to-piste{grid-column:1 / -1;order:2}
+          .to-valeur{order:1;text-align:left}
+        }
+      `}</style>
+      {rompu && (
+        <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          <Icon name="info" size={12} style={{ marginRight: 5, color: "var(--gold)" }} />
+          Le numéro d&apos;étage n&apos;est pas une difficulté : le plus dur est le
+          {" "}<b style={{ color: "var(--text)" }}>B{dur.etage}</b>, le plus facile le
+          {" "}<b style={{ color: "var(--text)" }}>B{doux.etage}</b>.
+        </div>
+      )}
+    </figure>
   );
 }

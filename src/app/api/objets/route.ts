@@ -4,6 +4,10 @@ import { canAccessGuild } from "@/config/roles";
 import { chercher, comptesGlobaux, comptesParFamille, dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
 import type { Critere } from "@/components/objets/catalogue";
 import type { Famille } from "@/components/objets/vocabulaire";
+/* `statsDisponibles` N'EST PAS APPELÉE ICI, et c'est voulu : la liste des 73
+   statistiques demandables ne change pas d'une frappe à l'autre. Elle est calculée
+   une fois côté serveur dans la page et passée en propriété — la renvoyer à chaque
+   requête coûtait 4 Ko toutes les 220 ms pour un contenu identique. */
 
 /**
  * La recherche d'objets. On renvoie 50 lignes, jamais le catalogue.
@@ -37,6 +41,10 @@ export async function GET(req: Request) {
     // marqueur vient des espaces de noms du client — IDS_AIRFLYFF_TXT_ et
     // IDS_PROPITEM_NEWSERV_ contre IDS_PROPITEM_TXT_ pour l'original.
     maison: p.get("maison") === "1",
+    // Le code d'une statistique du client (DST_*). Un code inconnu est ignoré par
+    // `chercher` plutôt que de rendre une liste vide sans dire pourquoi.
+    stat: /^DST_[A-Z0-9_]+$/.test(p.get("stat") ?? "") ? p.get("stat")! : "",
+    lache: p.get("lache") === "1",
   };
 
   const { total, objets } = chercher(c, 50);

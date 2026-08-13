@@ -439,80 +439,68 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
         <>
           <div style={{ marginBottom: 18 }}><Reserve /></div>
 
+          {/* ┌─────── LES CINQ NOTES SONT PASSÉES DE 430 MOTS À 120 ───────┐
+              Le tri est le même partout : on garde ce qui CHANGE UN GESTE, on retire
+              ce qui raconte l'état du site ou reformule la liste posée juste dessous.
+              PARTI, et nommé pour qu'on ne le remette pas :
+               · « le site n'en connaissait que quatre runes », « le site avait les
+                 buffs, pas ce qu'ils coûtent » — la progression de notre propre
+                 relevé, invisible pour un joueur ;
+               · « ce n'est pas un objectif de soirée, c'est un objectif de guilde » —
+                 le nombre 1 400 le dit mieux, et sans nous ;
+               · « si un officier en a lancé un, dis-le, ça vaut correction » — un
+                 appel à contribution, pas un renseignement ;
+               · la correction du PNJ « Changori » du wiki communautaire — un rectificatif
+                 sur un site tiers, que personne ne vient chercher ici.
+              GARDÉ, parce que ça coûte cher de l'ignorer : les branches ÉTEINTES (on
+              ne farme pas pour une recette infaisable), les recettes SANS PNJ, le
+              doublon des coffrets du couturier, et le meilleur taux d'Angie. */}
           <Bloc icon="mask" titre="Les masques" compte={g("masques").length}
             note={<>
-              Trois branches — <b>PvE</b>, <b>PvP</b>, <b>PV</b> — de trois rangs chacune, chez
-              <b> [Masque] Bibi la Bicrave</b>. Le PvE et le PV sont branchés ; <b style={{ color: "var(--red)" }}>la
-              branche PvP est éteinte</b>, et ses quantités sont exactement le double.
-              Le rang 3 demande jusqu’à <b>1 400 Âmes de sentinelles géants dekanes</b> : ce
-              n’est pas un objectif de soirée, c’est un objectif de guilde. La seule façon
-              d’obtenir l’<b>Âme d’insectes géants Dekanes</b> du rang 3 est la sous-recette
-              en cinq pollens et baves, présente dans les trois menus.
+              Trois branches — <b>PvE</b>, <b>PvP</b>, <b>PV</b> — de trois rangs, chez
+              <b> [Masque] Bibi la Bicrave</b>. <b style={{ color: "var(--red)" }}>La branche PvP est
+              éteinte</b>, et ses quantités sont le double. Le rang 3 monte à <b>1 400 Âmes de
+              sentinelles géants dekanes</b>.
             </>}>
             <Recettes liste={g("masques")} surPnj={surPnj} />
           </Bloc>
 
           <Bloc icon="rune" titre="Les mantras" compte={g("mantras").length}
             note={<>
-              Le site n’en connaissait que <b>quatre runes</b>. Il y a en réalité
-              <b> trois branches × trois paliers</b>, soit neuf mantras, chez le
-              <b> Sage des Mantras</b>. Six sont écrits avec leurs quantités et s’affichent
-              ci-dessous ; <b>les trois paliers 3 sont entièrement commentés</b> dans le
-              fichier, donc jamais livrés. La branche PvP est éteinte. Les mantras de la
-              branche PV n’ont même pas de nom français dans le client — seulement des
-              icônes, ce qui explique les libellés bancals.
+              <b>Trois branches × trois paliers</b> chez le <b>Sage des Mantras</b>. La branche PvP
+              est éteinte, et <b>les trois paliers 3 sont commentés</b> dans le fichier : jamais
+              livrés, donc à ne pas viser — le <b>Mantra Bestial</b> compris, malgré sa recette
+              écrite. La branche PV n’a pas de nom français dans le client, d’où les libellés bancals.
             </>}>
             <Recettes liste={g("mantras")} surPnj={surPnj} />
-            <div style={{ marginTop: 11, padding: "10px 12px", borderRadius: 10, background: "var(--bg-3)", border: "1px dashed color-mix(in srgb, var(--red) 40%, var(--border))", fontSize: 12, lineHeight: 1.6 }}>
-              <b style={{ color: "var(--red)" }}>Jamais livré.</b> Le palier 3 de la branche PvE
-              (<b>Mantra Bestial</b>) est écrit mais commenté d’un bout à l’autre. Il demanderait
-              le mantra de palier 2, <span style={{ fontVariantNumeric: "tabular-nums" }}>1 000</span> Emblèmes
-              de protection, <span style={{ fontVariantNumeric: "tabular-nums" }}>200</span> Statuettes
-              de Kailun, trois statues de Kailun à <span style={{ fontVariantNumeric: "tabular-nums" }}>50</span> chacune,
-              <span style={{ fontVariantNumeric: "tabular-nums" }}> 1 000</span> Bribes de l’héroïsme
-              et <span style={{ fontVariantNumeric: "tabular-nums" }}>50</span> Souvenirs de l’héroïsme.
-              À ne pas viser : la recette n’existe pas côté joueur.
-            </div>
           </Bloc>
 
           <Bloc icon="shield" titre="Les buffs de guilde" compte={g("buffs").length}
             note={<>
-              Voilà leur recette — le site avait les buffs, pas ce qu’ils coûtent. Les
-              libellés réels du client sont <b>« PVE+7% pour toute la guilde »</b> et
-              <b> « HP+7% pour toute la guilde »</b>. <b style={{ color: "var(--gold)" }}>Aucun
-              PNJ ne les porte</b> dans ce relevé : elles sont écrites, rien ne prouve qu’on
-              puisse les faire. Si un officier en a déjà lancé un en jeu, alors c’est le PNJ
-              qui manque à notre relevé — dis-le, ça vaut correction.
+              Libellés réels : <b>« PVE+7% pour toute la guilde »</b> et <b>« HP+7% pour toute la
+              guilde »</b>. <b style={{ color: "var(--gold)" }}>Aucun PNJ ne les porte</b> dans ce
+              relevé — écrites, mais rien ne prouve qu’on puisse les faire.
             </>}>
             <Recettes liste={g("buffs")} surPnj={surPnj} />
           </Bloc>
 
           <Bloc icon="shirt" titre="Le couturier" compte={g("couturier").length}
             note={<>
-              <b>Karlagarfeld</b>, le seul couturier du serveur. Les coffrets se paient en
-              tissus de cape et en nucléus, les tenues du roi dragon en Emblèmes de protection
-              et en <span style={{ fontVariantNumeric: "tabular-nums" }}>8 000</span> nucléus neutres.
-              <br /><b style={{ color: "var(--gold)" }}>Anomalie à vérifier en jeu :</b> quatre des
-              cinq coffrets demandent des ingrédients <b>strictement identiques</b> et portent le
-              <b> même identifiant de libellé</b>. En jeu, seul le premier bloc rencontré est
-              donc probablement atteignable — le fulgurant, le farmeur et la raréfaction
-              pré-mythique sont vraisemblablement inaccessibles par ce menu. Ne promets pas un
-              coffret farmeur à quelqu’un avant de l’avoir vu sortir.
+              <b>Karlagarfeld</b>, le seul couturier du serveur.{" "}
+              <b style={{ color: "var(--gold)" }}>Quatre des cinq coffrets</b> demandent des
+              ingrédients identiques sous le <b>même identifiant de libellé</b> : seul le premier
+              est vraisemblablement atteignable. Ne promets pas un coffret farmeur avant de
+              l’avoir vu sortir.
             </>}>
             <Recettes liste={g("couturier")} surPnj={surPnj} />
           </Bloc>
 
           <Bloc icon="gem" titre="Matériaux, rareté, démontage" compte={g("materiaux").length}
             note={<>
-              <b>Angie</b> reprend tes matériaux contre des Perins —
-              <span style={{ fontVariantNumeric: "tabular-nums" }}> 9 999</span> Branches de Cormier
-              valent <span style={{ fontVariantNumeric: "tabular-nums" }}>500</span> Perins, c’est le
-              meilleur taux de la liste — et fabrique l’Orichalque Scintillant au ratio 5:5→1 que
-              la fenêtre du jeu annonce. <b>Correction à faire ailleurs sur le site :</b> le wiki
-              attribue ces lignes à un PNJ nommé « Changori » et lui colle des recettes en Coeur de
-              shade qui appartiennent en réalité à un menu d’évènement coréen. Le vrai PNJ
-              s’appelle <b>Angie</b>. Le démontage des dix armes vampiriques, lui, est
-              <b style={{ color: "var(--red)" }}> éteint</b> chez le Sage des Mantras.
+              <b>Angie</b> reprend tes matériaux contre des Perins — meilleur taux de la liste :{" "}
+              <span style={{ fontVariantNumeric: "tabular-nums" }}>9 999</span> Branches de Cormier
+              pour <span style={{ fontVariantNumeric: "tabular-nums" }}>500</span> Perins. Le démontage
+              des dix armes vampiriques est <b style={{ color: "var(--red)" }}>éteint</b>.
             </>}>
             <Recettes liste={g("materiaux")} surPnj={surPnj} />
           </Bloc>
@@ -526,13 +514,15 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
       compte: d.arbres.length,
       contenu: (
         <>
-          <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--text-muted)", margin: "0 0 14px" }}>
-            Ces fabrications ne sont <b>nulle part</b> dans les fichiers d’échange : elles
-            vivent dans les <b>descriptions françaises des ingrédients</b>. C’est la seule
-            source pour 38 des 39 — et c’est la seule qui dise <b>sur quel monstre et dans
-            quelle zone</b> ramasser chaque morceau. Quand la source d’un ingrédient dit
-            « Crafting … », l’ingrédient n’est pas un butin : c’est un autre craft, et le
-            bouton <b>« ça se fabrique »</b> descend d’un étage.
+          {/* CE PARAGRAPHE EXPLIQUAIT LE DESSIN QUI N'EXISTAIT PAS ENCORE. Sa dernière
+              phrase — « quand la source dit Crafting…, le bouton descend d'un étage » —
+              décrivait en mots ce que l'arbre montre maintenant par un trait et un
+              chevron ; sa légende, deux icônes, remplace la consigne. Reste la source,
+              parce qu'elle explique pourquoi ces 39 fabrications n'ont pas de quantités
+              là où les 834 échanges en ont. */}
+          <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", margin: "0 0 14px" }}>
+            Relevé dans les <b>descriptions françaises des ingrédients</b> — la seule source qui
+            dise <b>sur quel monstre et dans quelle zone</b> ramasser chaque morceau.
           </p>
           <ArbreDuFarm arbres={d.arbres}
             carteRecette={(id) => {
@@ -570,19 +560,16 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
             <>
               <Bloc icon="swords" titre="Guerre de Guilde" compte={c("gvg").length}
                 note={<>
-                  <b>Marchand de Guerre de Guilde</b>, monnaie <b>Pièce de Guerre de Guilde</b>.
-                  Le point à retenir : les <b>dix armes « éternelles » sont à 10 pièces chacune</b>,
-                  et la Cape de Mahtolle à 20. C’est le comptoir qui touche Vanguard de plus près.
+                  <b>Marchand de Guerre de Guilde</b>, en <b>Pièce de Guerre de Guilde</b> : les
+                  <b> dix armes « éternelles » à 10 pièces</b>, la Cape de Mahtolle à 20.
                 </>}>
                 <Recettes liste={c("gvg")} surPnj={surPnj} />
               </Bloc>
 
               <Bloc icon="medal" titre="Jetons Bleus et Jetons Secrets" compte={c("jetons-guilde").length}
                 note={<>
-                  Les boîtes surprises d’armure et d’arme sont à <b>100 Jetons Bleus</b>, par
-                  classe. Le reste se paie en <b>Jetons Secrets</b> — la monnaie des Chambres
-                  secrètes. Le nom du PNJ n’est pas résolu en français dans le relevé ; le menu,
-                  lui, est bien branché.
+                  Boîtes surprises d’armure et d’arme à <b>100 Jetons Bleus</b>, par classe. Le reste
+                  en <b>Jetons Secrets</b>, la monnaie des Chambres secrètes.
                 </>}>
                 <Recettes liste={c("jetons-guilde")} surPnj={surPnj} />
               </Bloc>
@@ -590,19 +577,18 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
               <Bloc icon="trophy" titre="Colisée" compte={c("colisee").length}
                 note={<>
                   <b>[Armes du colisée] Bademogeau</b>, trois monnaies : <b>Emblème bleu</b>,
-                  <b> rouge</b>, <b>de victoire</b>. Les joyaux montent en marche d’escalier —
-                  Topaze, Rubis, Saphir, Émeraude, Diamant — et plusieurs lignes tirent
-                  <b> une carte au hasard parmi cinq</b> : la pastille violette le dit.
+                  <b> rouge</b>, <b>de victoire</b>. Plusieurs lignes tirent
+                  <b> une carte au hasard parmi cinq</b> — la pastille violette le dit.
                 </>}>
                 <Recettes liste={c("colisee")} surPnj={surPnj} />
               </Bloc>
 
               <Bloc icon="card" titre="Fragments → cartes et gemmes" compte={c("fragments").length}
                 note={<>
-                  <b>Dix fragments font une pièce entière.</b> C’est exactement la distinction que
-                  fait le builder : chaque carte de perçage a <b>sa propre</b> matière première,
-                  les cartes en pourcentage et les cartes (S) ne se mélangent pas. Les cartes
-                  2 / 4 / 7 % sont écrites mais <b style={{ color: "var(--gold)" }}>sans PNJ</b>.
+                  <b>Dix fragments font une pièce entière.</b> Chaque carte de perçage a
+                  <b> sa propre</b> matière première : les cartes en pourcentage et les cartes (S) ne
+                  se mélangent pas. Les 2 / 4 / 7 % sont écrites
+                  mais <b style={{ color: "var(--gold)" }}>sans PNJ</b>.
                 </>}>
                 <Recettes liste={c("fragments")} surPnj={surPnj} />
               </Bloc>
@@ -623,9 +609,9 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
               </Bloc>
 
               <Bloc icon="tag" titre="Lettres FLY / FOR / FUN" compte={c("coupang").length}
-                note={<>Chez <b>Coupang</b> : trois lettres différentes contre un coupon. Les
-                  vingt-quatre lignes ne sont que les combinaisons « normale » et « évènement »
-                  de chaque lettre — trois échanges, écrits vingt-quatre fois.</>}>
+                note={<>Chez <b>Coupang</b> : trois lettres contre un coupon. Les vingt-quatre lignes
+                  sont les combinaisons « normale » et « évènement » — <b>trois échanges</b>, écrits
+                  vingt-quatre fois.</>}>
                 <Recettes liste={c("coupang")} surPnj={surPnj} />
               </Bloc>
             </>
@@ -668,8 +654,7 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
             </>
           ) : (
             <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "0 0 18px" }}>
-              Deux lettres suffisent. La recherche porte sur les objets <b>et</b> sur les noms de
-              PNJ : « qui vend ça » et « que vend celui-là » se répondent au même endroit.
+              Deux lettres suffisent — objets <b>et</b> noms de PNJ.
             </p>
           )}
 
@@ -677,11 +662,12 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
             <h3 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, fontWeight: 700, margin: "0 0 4px" }}>
               <Icon name="users" size={15} style={{ color: "var(--orange)" }} /> Les métiers, tels que le jeu les étiquette
             </h3>
+            {/* L'exemple qui suivait — « le PNJ étiqueté joaillerie est bien celui qui
+                échange les gemmes » — démontrait la validation croisée. La grille de
+                métiers juste en dessous la démontre mieux : on y voit les noms. */}
             <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", margin: "0 0 12px" }}>
               Le client range ses PNJ par type de bâtiment, dans une partie du fichier qui ne sait
-              rien des menus. C’est <b>la validation croisée</b> de tout ce qui précède : le PNJ
-              étiqueté « joaillerie » est bien celui qui échange les gemmes, celui étiqueté
-              « couturier » porte bien le menu commenté <i>Couturier</i>.
+              rien des menus : c’est <b>la validation croisée</b> de tout ce qui précède.
             </p>
             <div className="cr-metiers">
               {d.metiers.map((m) => (
@@ -710,11 +696,21 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
       compte: d.ateliers.length,
       contenu: (
         <>
-          <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--text-muted)", margin: "0 0 14px" }}>
-            Ce ne sont pas des recettes de PNJ mais les <b>fenêtres de transformation</b> du jeu —
-            sertissage, forge, désintégration, mélange de costumes. Le texte ci-dessous est celui
-            que le client affiche, mot pour mot : c’est la seule source qui donne les taux de
-            réussite et ce qu’on perd en cas d’échec.
+          <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", margin: "0 0 14px" }}>
+            Les <b>fenêtres de transformation</b> du jeu, mot pour mot : la seule source qui donne
+            les taux de réussite et ce qu’on perd en cas d’échec.
+          </p>
+          {/* UN SUJET, UNE PAGE — et le lien qui va avec.
+              La maîtrise d'arme, les anges et la poudre féerique ont quitté cette page
+              pour /builder/mecaniques : ce sont des mécaniques de build, pas des
+              collections. Elles n'y sont plus, vérifié — Collections.tsx ne rend que
+              quatre volets, et `chiffres()` de la page ne lit plus ni `anges` ni
+              `maitrise`. Ce qui manquait, c'est la PORTE : quelqu'un qui les cherchait
+              ici trouvait le silence. Une phrase et un lien, pas un développement. */}
+          <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 14px" }}>
+            <Icon name="arrow-right" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
+            Sertissage, perçage, runes, éveil, maîtrise d’arme, anges et poudre féerique :
+            sur <a href="/builder/mecaniques" style={{ color: "var(--orange)" }}>les mécaniques</a>.
           </p>
           <div className="cr-ateliers">
             {d.ateliers.map((a) => (

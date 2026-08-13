@@ -104,15 +104,30 @@ function Branche({ on, onClick, icon, label, compte, couleur }: {
   );
 }
 
-export function RechercheMonstres({ depart = "" }: { depart?: string }) {
+export function RechercheMonstres({ depart = "", departObjet = "", departProvenance = "", departVies = false }: {
+  depart?: string;
+  departObjet?: string;
+  /**
+   * DEUX FILTRES POSÉS DE L'EXTÉRIEUR — par les compteurs en tête de page.
+   *
+   * « 235 ajoutés par AirFlyff » et « 94 se relèvent » étaient de la décoration : on
+   * lisait le nombre, et il fallait ensuite retrouver le filtre correspondant plus
+   * bas. Les tuiles sont devenues l'entrée de la recherche, et ces deux propriétés
+   * portent leur choix. Le composant est remonté par sa `key` côté parent — c'est
+   * plus simple qu'un effet de synchronisation, et il n'y a rien à préserver.
+   */
+  departProvenance?: Provenance;
+  departVies?: boolean;
+}) {
   useCardFx();
   const [q, setQ] = useState(depart);
+  const [objet, setObjet] = useState(departObjet);
   const [rang, setRang] = useState("");
   const [element, setElement] = useState("");
   const [nivMin, setNivMin] = useState("");
   const [nivMax, setNivMax] = useState("");
-  const [provenance, setProvenance] = useState<Provenance>("");
-  const [vies, setVies] = useState(false);
+  const [provenance, setProvenance] = useState<Provenance>(departProvenance);
+  const [vies, setVies] = useState(departVies);
   const [tri, setTri] = useState<(typeof TRIS)[number]["clef"]>("pertinence");
   const [r, setR] = useState<Reponse | null>(null);
   const [charge, setCharge] = useState(false);
@@ -123,6 +138,9 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
     setCharge(false);
     const p = new URLSearchParams();
     if (q.trim()) p.set("q", q.trim());
+    // La route exige trois caractères : sous ce seuil, « an » ramènerait la moitié
+    // du catalogue et le filtre passerait pour cassé.
+    if (objet.trim().length >= 3) p.set("objet", objet.trim());
     if (rang) p.set("rang", rang);
     if (element) p.set("element", element);
     if (nivMin) p.set("nivMin", nivMin);
@@ -133,11 +151,12 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
     const d = await fetch(`/api/monstres?${p}`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
     if (mien !== jeton.current) return; // une réponse en retard n'écrase pas la bonne
     setR(d); setCharge(true);
-  }, [q, rang, element, nivMin, nivMax, provenance, vies, tri]);
+  }, [q, objet, rang, element, nivMin, nivMax, provenance, vies, tri]);
 
   useEffect(() => { const t = setTimeout(chercher, 220); return () => clearTimeout(t); }, [chercher]);
 
-  const filtre = Boolean(q.trim() || rang || element || nivMin || nivMax || provenance || vies || tri !== "pertinence");
+  const chercheObjet = objet.trim().length >= 3;
+  const filtre = Boolean(q.trim() || objet.trim() || rang || element || nivMin || nivMax || provenance || vies || tri !== "pertinence");
 
   return (
     <div style={{ display: "grid", gap: 14 }}>
@@ -161,6 +180,15 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
                 tape de toute façon sans accents. */}
             <input value={q} onChange={(e) => setQ(e.target.value)} autoFocus
               placeholder="Nom du monstre" style={{ ...champ, paddingLeft: 34 }} />
+          </span>
+          {/* CHERCHER PAR CE QU'IL LÂCHE — la question du farm, prise dans le bon
+              sens. On lisait le butin d'un monstre qu'on avait déjà trouvé ; on ne
+              pouvait pas partir de l'objet. Le champ copie la forme de son voisin,
+              icône comprise, pour qu'il se lise comme la même mécanique. */}
+          <span style={{ position: "relative", flex: "1 1 220px", minWidth: 0 }}>
+            <Icon name="package" size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }} />
+            <input value={objet} onChange={(e) => setObjet(e.target.value)} aria-label="Ce qu'il lâche"
+              placeholder="Ce qu'il lâche" style={{ ...champ, paddingLeft: 34 }} />
           </span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, color: "var(--text-muted)" }}>
             Niveau
@@ -222,7 +250,7 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
         </div>
 
         {filtre && (
-          <button onClick={() => { setQ(""); setRang(""); setElement(""); setNivMin(""); setNivMax(""); setProvenance(""); setVies(false); setTri("pertinence"); }}
+          <button onClick={() => { setQ(""); setObjet(""); setRang(""); setElement(""); setNivMin(""); setNivMax(""); setProvenance(""); setVies(false); setTri("pertinence"); }}
             style={{ justifySelf: "start", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5, padding: 0 }}>
             <Icon name="x" size={13} /> Tout remettre à zéro
           </button>
@@ -245,7 +273,19 @@ export function RechercheMonstres({ depart = "" }: { depart?: string }) {
         <div className="glass-card" style={{ padding: "26px 20px", textAlign: "center", color: "var(--text-muted)", fontSize: 13.5 }}>
           <Icon name="search" size={22} style={{ opacity: 0.5 }} />
           <p style={{ margin: "9px 0 0" }}>Rien sous ce nom.</p>
-          <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>Ce catalogue ne porte que ce qui se combat : ni PNJ, ni familiers, ni œufs.</p>
+          {/* LA SEULE RÉSERVE QUI RESTE, et elle n'apparaît QUE quand elle sert : à
+              zéro résultat sur un nom d'objet. Le butin ordinaire d'AirFlyff est
+              calculé côté serveur — un joueur qui lit « aucun monstre » et en conclut
+              que l'objet ne tombe pas irait farmer ailleurs pour rien. C'est une mise
+              en garde qui change un geste, pas un constat d'ignorance affiché partout. */}
+          {chercheObjet ? (
+            <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>
+              Seul le butin ÉCRIT dans les fichiers est cherchable ici. Le butin ordinaire est décidé
+              par le serveur : rien ne dit que cet objet ne tombe pas.
+            </p>
+          ) : (
+            <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>Ce catalogue ne porte que ce qui se combat : ni PNJ, ni familiers, ni œufs.</p>
+          )}
         </div>
       )}
 

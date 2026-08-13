@@ -70,6 +70,20 @@ export type Monstre = {
   lieux?: { z: string; n: number }[];
 };
 
+/**
+ * UN MONSTRE RÉDUIT À « EST-CE QUE J'Y VAIS ? ».
+ *
+ * C'est ce que la fiche d'un OBJET reçoit pour répondre à « qui le lâche ». Le type
+ * vit ici et non dans `catalogue.ts` parce que ce dernier lit le disque : une fiche
+ * est un composant client et ne peut rien lui importer, pas même un type.
+ * Aucun taux de butin n'y figure — c'est la provenance qui sert.
+ */
+export type Lacheur = {
+  id: string; nom: string; niv: number | null; rang: string | null;
+  vies: number | null; pvEff: number; maison: boolean;
+  elem: string | null; zone: string | null; groupe?: string;
+};
+
 export type Compteurs = {
   maison: number; vies: number; milliard: number;
   rage: number; invoque: number; localises: number; butin: number;

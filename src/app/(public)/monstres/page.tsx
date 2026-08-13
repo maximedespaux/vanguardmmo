@@ -26,7 +26,12 @@ export default function MonstresPage() {
         art="/jeu/chargement/maploading_clockwork.webp"
         icon="skull"
         title="Les monstres et les boss"
-        subtitle={`${meta.total.toLocaleString("fr-FR")} monstres lus dans le client, dont ${meta.compteurs.maison} ajoutés par AirFlyff. Ce qu'ils encaissent, ce qu'ils te font, et où ils sont.`}
+        // LE SOUS-TITRE NE RÉPÈTE PLUS LES COMPTEURS. Il annonçait « 1 124 monstres,
+        // dont 235 ajoutés par AirFlyff » alors que les deux tuiles juste dessous
+        // portent exactement ces deux nombres, calculés : le même chiffre écrit deux
+        // fois à trois centimètres d'écart. Reste la promesse de la page, et le
+        // « ce qu'ils lâchent » qui est neuf — chaque objet de butin mène à sa fiche.
+        subtitle="Ce qu'ils encaissent, ce qu'ils te font, ce qu'ils lâchent, et où ils sont."
       />
       <EcranMonstres
         // Sans argument : TOUS les boss à plusieurs vies, soit les 94 que le
@@ -37,6 +42,9 @@ export default function MonstresPage() {
         total={meta.total}
         groupes={meta.groupes}
         agressifs={f.agressifs}
+        // Le pont vers le catalogue d'objets, compté : chaque nom de butin de ces
+        // fiches mène désormais à la fiche de l'objet.
+        objetsLaches={f.objetsLaches}
       />
     </div>
   );

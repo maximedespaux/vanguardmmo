@@ -148,8 +148,11 @@ export default function ClassesPage() {
     <div style={{ padding: "24px 18px 60px", maxWidth: 1150, margin: "0 auto" }}>
       {/* Deux personnages en pleine attaque, trainees de coup comprises : une
           competence en train de partir, ce qui est exactement le sujet. */}
+      {/* Le sous-titre annonçait en trente-cinq mots ce que le rail annonce déjà, volet
+          par volet, avec ses comptes. Il ne garde que ce que le rail ne peut pas
+          dire : combien de lignées, et d'où vient le relevé. */}
       <PageHeader art="/jeu/chargement/maploading_arena.webp" icon="graduation" title="Classes et compétences"
-        subtitle="Les huit lignées d'AirFlyff et toutes leurs compétences, relevées dans le client : ce que chaque palier apprend, ce que ça coûte, et ce que ça fait niveau par niveau." />
+        subtitle={`Les ${LIGNEES.length} lignées d'AirFlyff, relevées dans le client du jeu.`} />
 
       <VoletSections
         defaut="catalogue"

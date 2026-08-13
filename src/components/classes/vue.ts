@@ -59,10 +59,32 @@ export const NOMS_PAR_PALIER = ORDRE_PALIERS.map((p) => {
 
 /** Les paliers qui portent un nom de classe neuf. Maître et Héros n'en portent
  *  pas : « Chevalier Maître » est le Chevalier promu, le client le dit. */
-const PALIERS_NOMMANTS: Palier[] = ["vagabond", "metier1", "metier2", "legendaire"];
+export const PALIERS_NOMMANTS: Palier[] = ["vagabond", "metier1", "metier2", "legendaire"];
 export const NB_NOMS_DE_CLASSE = new Set(
   NOMS_PAR_PALIER.filter((x) => PALIERS_NOMMANTS.includes(x.palier)).flatMap((x) => x.noms),
 ).size;
+
+/**
+ * Un palier introduit-il des noms de classe NEUFS ?
+ *
+ * ┌──── LA CONTRADICTION QUE CETTE FONCTION FERME ────┐
+ * │ La bande « Les paliers » affichait six tuiles avec │
+ * │ leur compte : ×1 ×4 ×8 ×8 ×8 ×8. Somme : 37. Et    │
+ * │ son propre titre annonçait « 21 noms de classe »,  │
+ * │ juste au-dessus. Deux chiffres du même écran qui   │
+ * │ ne s'additionnent pas au même total — le lecteur   │
+ * │ n'a aucun moyen de savoir lequel croire.           │
+ * │ Les deux étaient pourtant justes : 37 est le nombre│
+ * │ d'ÉTAPES rencontrées, 21 celui des NOMS. Ce qui    │
+ * │ manquait, c'est que les deux paliers de promotion  │
+ * │ ne comptent pas — « Chevalier Maître » n'est pas   │
+ * │ une classe de plus, c'est le Chevalier promu, et le│
+ * │ client l'écrit dans son champ `promuDe`.           │
+ * │ Désormais la bande n'affiche un ×N que sur les     │
+ * │ paliers nommants, et 1+4+8+8 fait bien 21.         │
+ * └──────────────────────────────────────────────────┘
+ */
+export const palierNomme = (p: Palier) => PALIERS_NOMMANTS.includes(p);
 
 /** Le plafond de compétence d'un palier, tel que les lignées l'annoncent. */
 export const PLAFOND_PALIER = new Map<Palier, number[]>(

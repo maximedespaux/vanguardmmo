@@ -101,17 +101,22 @@ export function ClassesHeros() {
         );
       })}
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ── (sorti du littéral : dans le
+          gabarit, ces lignes partaient dans le `<style>` servi au navigateur)
+
+          .acc-cl — text-decoration et color explicites : la carte est devenue un
+          lien, et sans ça les huit noms de classe passaient en bleu souligné.
+
+          .acc-cl-halo — le halo est un pseudo-calque à part et non un box-shadow :
+          l'emblème du jeu a déjà sa propre lueur, et deux lueurs superposées
+          bavaient. */}
       <style>{`
         .acc-classes{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
-        /* text-decoration et color explicites : la carte est devenue un lien, et
-           sans ça les huit noms de classe passaient en bleu souligné. */
         .acc-cl{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;padding:14px 16px;
           border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);
           background:linear-gradient(180deg,rgba(28,28,36,.92),rgba(14,14,19,.94));
           transition:border-color .22s,transform .22s,box-shadow .22s,opacity .7s cubic-bezier(.22,.61,.36,1)}
         .acc-cl:hover{border-color:rgba(255,140,26,.42);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.5)}
-        /* Le halo est un pseudo-calque à part et non un box-shadow : l'emblème du
-           jeu a déjà sa propre lueur, et deux lueurs superposées bavaient. */
         .acc-cl-halo{position:absolute;left:-10px;top:50%;width:120px;height:120px;transform:translateY(-50%);
           pointer-events:none;background:radial-gradient(circle,rgba(255,140,26,.16),transparent 68%);opacity:0;transition:opacity .25s}
         .acc-cl:hover .acc-cl-halo{opacity:1}

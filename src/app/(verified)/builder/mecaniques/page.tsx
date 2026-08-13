@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
 import { CarteFx } from "@/components/astuces/CarteFx";
-import { StyleMecaniques } from "@/components/mecaniques/Blocs";
 import { VoletAnges, VoletMaitrise } from "@/components/mecaniques/SectionsBuild";
 import { Fashion } from "@/components/mecaniques/SectionsFashion";
 import {
-  Ailleurs, Artefact, Eveil, FAMILLES, Gemmes, Percage, Plafonds, Rarete, Runes, Sertissage,
+  Ailleurs, Amelioration, Artefact, Eveil, FAMILLES, Gemmes, Percage, Rarete, Runes, Sertissage,
 } from "@/components/mecaniques/SectionsObjets";
+import { Panoplies } from "@/components/mecaniques/SectionsPanoplies";
 import {
-  cartesDePercage, chiffresAnges, chiffresMaitrise, joyauxDeCostume, nombreDeGemmes,
+  cartesDePercage, chiffresAnges, chiffresMaitrise, joyauxDeCostume, mantras, nombreDeGemmes,
   nombreDeGemmesMenteuses, runes, setsDeFashion,
 } from "@/components/mecaniques/releves";
+import { paliersDeGemme, panopliesNegatives } from "@/components/mecaniques/sources";
 import { ICONE_ELEMENT } from "@/lib/assetsJeu";
 import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
 
@@ -25,29 +26,34 @@ import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
  * justement en voyant l'objet. Toutes les images de cette page sortent du client :
  * ce sont exactement les pierres, parchemins et cartes de ton inventaire.
  *
- * ┌──────────── UN SUJET, UNE PAGE — ce qui a quitté cette planche ────────────┐
- * │ Elle portait treize volets ; quatre ne parlaient pas d'une pièce            │
- * │ d'équipement : l'arène, les recettes éteintes, le barème de la GvG, la taxe │
- * │ des Chambres Secrètes. Les recettes éteintes se relisaient MOT POUR MOT sur │
- * │ /crafts — c'est exactement le doublon qu'on nous demande de supprimer.      │
- * │ Les quatre sont devenus quatre portes (`<Ailleurs />`), et le développement  │
- * │ retiré est signalé au fil principal : c'est au propriétaire de la page      │
- * │ d'accueillir ce qui lui revient.                                           │
- * │                                                                            │
- * │ NEUF VOLETS RESTENT, et ils ont tous le même sujet : ce que les fichiers du │
- * │ jeu disent d'une pièce d'équipement.                                       │
- * └────────────────────────────────────────────────────────────────────────────┘
+ * ┌──────────── LA PASSE V3 : LE CONTENU RESTE, LA FORME CHANGE ────────────┐
+ * │ Cette page était la plus lourde du site — dix mille mots servis, vingt   │
+ * │ fois le catalogue d'objets — et jugée la meilleure. Les deux vont         │
+ * │ ensemble : ce qu'elle disait était juste, elle le disait en paragraphes.  │
+ * │                                                                          │
+ * │ Ce qui a changé, volet par volet : les taux d'amélioration sont devenus   │
+ * │ DEUX ESCALIERS (celui du client, celui des parchemins), les huit          │
+ * │ logements de gemme un SCHÉMA de losanges doublé d'une rangée de paliers,  │
+ * │ les 59 cartes de perçage une GRILLE D'ICÔNES qui dit enfin ce que chaque  │
+ * │ famille donne, et chaque case mène à la fiche de son objet.               │
+ * │                                                                          │
+ * │ DEUX VOLETS ONT BOUGÉ. « Sertissage » et « Les plafonds cachés »          │
+ * │ montraient la même rangée de losanges à deux endroits : le compte de      │
+ * │ logements est maintenant dans un seul, et l'autre est devenu              │
+ * │ « Amélioration » — les taux, les parchemins, l'échelle. Un volet est      │
+ * │ ARRIVÉ : les panoplies à ligne négative, le fait le plus invisible de la  │
+ * │ page.                                                                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * ┌──────────── POURQUOI LA PAGE PESAIT 900 Ko, ET CE QUI L'ALLÈGE ────────────┐
- * │ `VoletSections` est un composant CLIENT : le contenu des volets part en     │
- * │ entier dans le paquet RSC, ouvert ou pas. Le poids de la page est donc la   │
- * │ SOMME de ses volets, et chaque `style={{…}}` s'y sérialise propriété par    │
- * │ propriété. D'où les trois leviers, dans cet ordre d'efficacité :            │
- * │   1. quatre volets partis chez leur propriétaire ;                          │
- * │   2. les demi-faits et leurs réserves retirés ;                             │
- * │   3. `Case`, `Chip`, `Groupe` passés en classes CSS (49 Ko de styles        │
- * │      répétés à l'identique, et pas un fait perdu).                          │
- * └────────────────────────────────────────────────────────────────────────────┘
+ * ┌──────────── POURQUOI LE POIDS EST LA SOMME DES VOLETS ────────────┐
+ * │ `VoletSections` est un composant CLIENT : le contenu des volets part │
+ * │ en entier dans le paquet RSC, ouvert ou pas. Le poids de la page est │
+ * │ donc la SOMME de ses volets, et chaque `style={{…}}` s'y sérialise   │
+ * │ propriété par propriété. D'où le choix, partout où c'est possible,   │
+ * │ d'une classe CSS plutôt qu'un objet de style — et de `Paliers`, en   │
+ * │ CSS pur, là où `Emplacements` aurait posé quarante images pour un    │
+ * │ tableau secondaire.                                                 │
+ * └────────────────────────────────────────────────────────────────────┘
  *
  * IL N'Y A PLUS DE PASTILLE « À CONFIRMER EN JEU », et c'est voulu. Elle servait
  * à publier un demi-fait en s'en dédouanant. La consigne est l'inverse : un
@@ -56,26 +62,30 @@ import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
  * coûteuse, utile même incomplète (« on ne retire que la dernière gemme posée »).
  *
  * COMPOSANT SERVEUR, VOLONTAIREMENT : les comptes se lisent dans
- * `public/wiki/objets-fiches.json`, 3 Mo. Un `"use client"` ici enverrait le
- * relevé entier au navigateur, ou obligerait à recopier les chiffres à la main —
- * et un chiffre recopié devient faux au prochain versement du client. Le halo des
- * cartes passe donc par `CarteFx`, seule chose cliente de la page.
+ * `public/wiki/objets-fiches.json` (2,8 Mo) et `public/wiki/bonus-sources.json`
+ * (512 Ko). Un `"use client"` ici enverrait les relevés entiers au navigateur, ou
+ * obligerait à recopier les chiffres à la main — et un chiffre recopié devient
+ * faux au prochain versement du client. Le halo des cartes passe donc par
+ * `CarteFx`, seule chose cliente de la page.
  */
 export const metadata: Metadata = {
   title: "Les mécaniques d'AirFlyff — Vanguard",
   description:
-    "Rareté, artefact, perçage, éveil, sertissage, runes, costumes : ce que chaque mot veut dire, avec les images du jeu — et les plafonds que le jeu n'annonce pas.",
+    "Rareté, artefact, perçage, éveil, sertissage, runes, costumes, panoplies : ce que chaque mot veut dire, avec les images du jeu — et les plafonds que le jeu n'annonce pas.",
 };
 
 export default function MecaniquesPage() {
   const arme = reglagesDeSlot("weapon", { artefact: true });
   const cartes = cartesDePercage();
   const nRunes = runes().total;
+  const nMantras = mantras().total;
   const nGemmes = nombreDeGemmes();
   const menteuses = nombreDeGemmesMenteuses();
   const joyauxCostume = joyauxDeCostume();
   const setsCostume = setsDeFashion();
   const slots = (arme.sertissage?.diamants ?? 0) + (arme.sertissage?.holo ?? 0);
+  const paliers = paliersDeGemme();
+  const negatives = panopliesNegatives();
   // Les deux mécaniques arrivées de /crafts. Les comptes se lisent côté serveur
   // pour que le rail ne change pas de forme quand le relevé arrive au navigateur.
   const maitrise = chiffresMaitrise();
@@ -84,51 +94,68 @@ export default function MecaniquesPage() {
   const sections: SectionVolet[] = [
     {
       clef: "gemmes", titre: "Les gemmes mentent", icon: "alert", compte: nGemmes,
-      sous: `${menteuses} noms sur ${nGemmes} ne donnent pas ce qu'ils annoncent`,
+      sous: `${menteuses} noms sur ${nGemmes} donnent l'effet d'une autre`,
       contenu: <Gemmes />,
     },
     {
-      clef: "rarete", titre: "Rareté", sous: "les paliers d'une arme, et son tirage", icon: "stars", compte: RARETES.length,
-      contenu: <Rarete />,
+      clef: "sertissage", titre: "Sertissage", icon: "gem", compte: slots,
+      sous: `${slots} logements sur une arme Artefact, pas ${arme.sertissage?.diamants}`,
+      contenu: <Sertissage />,
     },
     {
-      clef: "artefact", titre: "Artefact & ascension", sous: "au-delà de +10, et les plans par arme", icon: "sparkles", compte: FAMILLES.length,
-      contenu: <Artefact />,
-    },
-    {
-      clef: "plafonds", titre: "Les plafonds cachés", icon: "upgrade", compte: null,
-      sous: `Le sertissage va à ${slots}, l'amélioration à +${reglagesDeSlot("jewel").upMax}`,
-      contenu: <Plafonds />,
-    },
-    {
-      clef: "percage", titre: "Perçage", sous: "cartes d'attaque et de défense", icon: "target", compte: cartes.total,
+      clef: "percage", titre: "Perçage", sous: "ce que chaque carte donne, palier par palier",
+      icon: "target", compte: cartes.total,
       contenu: <Percage />,
     },
     {
-      clef: "eveil", titre: "Éveil, scroll, élément", sous: "R1, R2 et les cinq éléments", icon: "awaken",
-      compte: 2 + Object.keys(ICONE_ELEMENT).length,
-      contenu: <Eveil />,
+      clef: "amelioration", titre: "Amélioration", icon: "upgrade", compte: null,
+      sous: `De +1 à +${reglagesDeSlot("jewel").upMax}, et le taux qui s'effondre`,
+      contenu: <Amelioration />,
     },
     {
-      clef: "sertissage", titre: "Sertissage d'une arme", sous: "diamants et holographiques", icon: "gem",
-      compte: slots,
-      contenu: <Sertissage />,
+      clef: "artefact", titre: "Artefact & ascension", sous: "au-delà de +10, et les plans par arme",
+      icon: "sparkles", compte: FAMILLES.length,
+      contenu: <Artefact />,
     },
-    // Le costume vient JUSTE APRÈS le sertissage d'arme, et pas en fin de rail :
-    // c'est le même geste — poser une pierre sur une pièce — avec d'autres
-    // règles, et on ne comprend le piège des gemmes de costume qu'en ayant les
-    // diamants d'arme encore en tête.
+    {
+      clef: "rarete", titre: "Rareté", sous: "les paliers d'une arme, et son tirage",
+      icon: "stars", compte: RARETES.length,
+      contenu: <Rarete />,
+    },
+    {
+      clef: "eveil", titre: "Éveil, scroll, élément", sous: "R1, R2 et les cinq éléments", icon: "awaken",
+      // TROIS et non deux : le volet ouvre sur R1, R2 ET le scroll de stat, plus
+      // un élément par ligne. Le compte du rail doit être celui des icônes qu'on
+      // trouve derrière — un badge à 7 sous une grille de 8 se lit comme un
+      // classement coupé.
+      compte: 3 + Object.keys(ICONE_ELEMENT).length,
+      contenu: <Eveil />,
+    },
+    // Le costume vient JUSTE APRÈS ce qui se pose sur une arme : c'est le même
+    // geste — poser une pierre sur une pièce — avec d'autres règles, et on ne
+    // comprend le piège des gemmes de costume qu'en ayant les diamants d'arme
+    // encore en tête.
     {
       clef: "fashion", titre: "Costumes & gemmes de costume", icon: "shirt",
       compte: joyauxCostume.length,
       // Pas « N apparences » ici : le compte de dessins vaut pour les deux
       // genres et se lirait comme N looks differents, alors que le fait est
       // l'inverse — les sets se ressemblent.
-      sous: `${setsCostume.sets.length} sets d'apparence identique, ${joyauxCostume.length} joyaux — un par pièce`,
+      sous: `${setsCostume.sets.length} sets d'apparence identique, ${joyauxCostume.length} joyaux`,
       contenu: <Fashion />,
     },
+    // LES PANOPLIES ARRIVENT ICI, et pas sur /objets : le catalogue est
+    // propriétaire d'une PIÈCE nommée, pas de la mécanique qui la fait payer.
+    // Une ligne négative de panoplie est une mécanique de build, au même titre
+    // qu'un plafond de sertissage.
     {
-      clef: "runes", titre: "Runes", sous: "celle de l'arme n'est pas celle de la tenue", icon: "rune", compte: nRunes,
+      clef: "panoplies", titre: "Panoplies", icon: "alert", compte: negatives.touchees,
+      sous: `${negatives.touchees} des ${negatives.total} retirent une statistique`,
+      contenu: <Panoplies />,
+    },
+    {
+      clef: "runes", titre: "Runes & mantras", sous: "celle de l'arme n'est pas celle de la tenue",
+      icon: "rune", compte: nRunes + nMantras,
       contenu: <Runes />,
     },
     /* ── Les deux mécaniques arrivées de /crafts ────────────────────────────
@@ -149,8 +176,7 @@ export default function MecaniquesPage() {
       compte: anges?.montables ?? null,
       // « du niveau X au Y » se lisait comme un gabarit qu'on aurait oublié de
       // remplir. Le rail dit ce que le volet CALCULE, avec le seul chiffre qu'il
-      // tient du relevé : le nombre de niveaux. La casse du nom vient du client
-      // et ne se retouche pas à la main (cf. collections/Anges.tsx).
+      // tient du relevé : le nombre de niveaux.
       sous: anges
         ? `Combien de ${anges.poudre}, sur ${anges.niveaux} niveaux`
         : "Combien de poudre féerique, niveau par niveau",
@@ -184,8 +210,10 @@ export default function MecaniquesPage() {
                 <>
                   Tu veux des <b>PV</b>, prends celle « de maîtrise » ; de la <b>Force</b>, celle
                   « de puissance » ; de l&apos;<b>Endurance</b>, celle « de force ». La cause est
-                  connue et le tableau complet est dans <b>Les gemmes mentent</b>, ouvert
-                  ci-dessous.
+                  établie : le client range ses neuf statistiques dans un ordre que les noms de
+                  gemmes ne suivent plus. Table complète ci-dessous.
+                  {paliers.total > 0 && <> Et il donne <b>{paliers.total} paliers</b> de sertissage
+                    là où son en-tête n&apos;en numérote que {paliers.nommes}.</>}
                 </>
               }
             />
@@ -196,8 +224,6 @@ export default function MecaniquesPage() {
       {/* Un sujet, une page : les quatre sujets qui vivaient ici et n'y
           appartenaient pas sont maintenant quatre portes. */}
       <Ailleurs />
-
-      <StyleMecaniques />
     </div>
   );
 }

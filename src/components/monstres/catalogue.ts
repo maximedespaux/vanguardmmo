@@ -1,6 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
-import { clefRecherche, coupMax, type Compteurs, type Monstre } from "./vocabulaire";
+import { clefRecherche, coupMax, type Compteurs, type Lacheur, type Monstre } from "./vocabulaire";
+// 12 Ko de pont nom/clé → identifiant d'objet (scripts/extraire-monstres-butin.mjs).
+// Le catalogue d'objets pèse 3 Mo et vit derrière /api/objets : on ne le charge pas
+// ici pour traduire cent six noms.
+import BUTIN from "@/data/monstres-butin.json";
 
 /**
  * LES 1 124 MONSTRES DU CLIENT — lus une fois, gardés en mémoire.
@@ -34,7 +38,19 @@ type Paquet = {
  * crochets (« [Âme de la mort] Obnis », « Gor'Thar », « Shen'long ») : une seule
  * clé rendait la moitié du haut niveau inatteignable.
  */
-type Entree = { m: Monstre; kc: string };
+type Entree = {
+  m: Monstre;
+  kc: string;
+  /**
+   * LES NOMS DE CE QU'IL LÂCHE, mis à plat en une seule chaîne cherchable.
+   *
+   * Deux fouilles ont rempli le relevé et elles ne nomment pas pareil : `butin`
+   * porte un nom français, `butinClient` une clé `II_*`. Un joueur qui tape
+   * « anneau » ne pouvait donc trouver que la moitié des monstres concernés — le
+   * pont traduit les clés avant l'indexation.
+   */
+  kb: string;
+};
 
 let TOUT: Entree[] | null = null;
 let PAR_ID: Map<string, Monstre> | null = null;
@@ -42,17 +58,93 @@ let META: Omit<Paquet, "monstres"> | null = null;
 
 const compacter = (k: string) => k.replace(/ /g, "");
 
+/** Le pont « ce que monstres.json écrit » → l'objet du catalogue. */
+const PONT = (BUTIN as { objets: Record<string, { n: string; i: number; ic?: string }> }).objets;
+
+/** Le nom affiché d'une ligne de butin, quelle que soit la façon dont le relevé la
+ *  nomme. `null` quand le pont ne la connaît pas : mieux vaut une ligne en moins
+ *  qu'une clé technique à l'écran. */
+const nomButin = (o: string) => PONT[o]?.n ?? null;
+
 function charger() {
   if (TOUT && PAR_ID && META) return { TOUT, PAR_ID, META };
   const f = path.join(process.cwd(), "public", "wiki", "monstres.json");
   const d = JSON.parse(fs.readFileSync(f, "utf8")) as Paquet;
-  TOUT = d.monstres.map((m) => ({ m, kc: compacter(m.k) }));
+  TOUT = d.monstres.map((m) => {
+    const noms: string[] = [];
+    for (const b of [...(m.butin ?? []), ...(m.butinClient ?? [])]) {
+      const n = nomButin(b.o);
+      if (n) noms.push(clefRecherche(n));
+    }
+    return { m, kc: compacter(m.k), kb: [...new Set(noms)].join(" · ") };
+  });
   PAR_ID = new Map(d.monstres.map((m) => [m.id, m]));
   const { monstres: _ignore, ...reste } = d;
   void _ignore;
   META = reste;
   return { TOUT, PAR_ID, META };
 }
+
+/* ── L'INDEX INVERSE : « qui lâche ça ? » ───────────────────────────────────────
+   C'est la moitié manquante du wiki. Le relevé sait dire, monstre par monstre, ce
+   qu'il lâche ; il ne savait pas répondre à la question qu'on se pose devant un
+   objet — « où est-ce que ça tombe ? ». L'index se construit une fois, au premier
+   appel, sur les 106 objets nommés du relevé.
+
+   AUCUN TAUX N'ENTRE ICI. `p`, la chance de butin, n'est même pas déclarée dans le
+   type `Monstre` : ce qui sert est la PROVENANCE, jamais la probabilité. */
+
+/* Le type `Lacheur` vit dans `vocabulaire.ts`, avec tout ce que l'écran partage. */
+
+let PAR_OBJET: Map<string, Monstre[]> | null = null;
+
+function indexButin() {
+  if (PAR_OBJET) return PAR_OBJET;
+  const { TOUT: tout } = charger();
+  const idx = new Map<string, Monstre[]>();
+  for (const { m } of tout) {
+    for (const b of [...(m.butin ?? []), ...(m.butinClient ?? [])]) {
+      const n = nomButin(b.o);
+      if (!n) continue;
+      const k = clefRecherche(n);
+      const liste = idx.get(k);
+      if (!liste) idx.set(k, [m]);
+      // Le même objet peut être écrit deux fois pour un monstre (une fois par
+      // fouille) : on ne le compte qu'une.
+      else if (!liste.some((x) => x.id === m.id)) liste.push(m);
+    }
+  }
+  PAR_OBJET = idx;
+  return idx;
+}
+
+const reduire = (m: Monstre): Lacheur => ({
+  id: m.id, nom: m.nom, niv: m.niv, rang: m.rang, vies: m.vies,
+  pvEff: m.pvEff, maison: m.maison, elem: m.elem, zone: m.zone, groupe: m.groupe,
+});
+
+/**
+ * LES MONSTRES QUI LÂCHENT CET OBJET, du plus abordable au plus dur.
+ *
+ * Rangés par niveau croissant exprès : la question devant un objet est « le plus
+ * facile où je peux l'avoir », pas « le plus prestigieux ».
+ */
+export function lacheursDe(nom: string | null | undefined): Lacheur[] {
+  if (!nom) return [];
+  const liste = indexButin().get(clefRecherche(nom));
+  if (!liste) return [];
+  return [...liste]
+    .sort((a, b) => (a.niv ?? 0) - (b.niv ?? 0) || a.pvEff - b.pvEff)
+    .map(reduire);
+}
+
+/** Combien d'objets distincts le relevé sait rattacher à un monstre. COMPTÉ : une
+ *  étiquette qui porte ce nombre en dur devient fausse à la fouille suivante. */
+export const nombreDObjetsLaches = () => indexButin().size;
+
+/** Les noms d'objets qui ont au moins un lâcheur — le filtre « ça tombe sur un
+ *  monstre » du catalogue d'objets s'y adosse. */
+export const objetsLaches = () => new Set(indexButin().keys());
 
 export const metaCatalogue = () => charger().META;
 export const monstreParId = (id: string) => charger().PAR_ID.get(id) ?? null;
@@ -76,11 +168,23 @@ export function faits() {
     maison: meta.compteurs.maison,
     /** Le plus gros écart entre la barre de vie et le combat réel. */
     plusDeVies: tout.reduce((max, e) => Math.max(max, e.m.vies ?? 1), 1),
+    /** Combien d'objets distincts on sait rattacher à un monstre : c'est la mesure
+     *  du pont entre les deux catalogues, et elle se compte. */
+    objetsLaches: nombreDObjetsLaches(),
   };
 }
 
 export type Critere = {
   q?: string;
+  /**
+   * CHERCHER PAR CE QU'IL LÂCHE — « qui donne des Âmes de démon ? ».
+   *
+   * C'est la question du farm, et le catalogue n'y répondait pas : on pouvait lire
+   * le butin d'un monstre qu'on avait déjà trouvé, jamais partir de l'objet. Le
+   * terme est cherché dans les NOMS de butin (clés du client traduites d'abord),
+   * pas dans les taux — il n'y en a pas dans le type.
+   */
+  objet?: string;
   rang?: string;
   element?: string;
   /** Niveau plancher : « à partir de quel niveau ça me concerne ». */
@@ -134,11 +238,13 @@ export function chercher(c: Critere, limite = 48) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
   const qc = compacter(q);
+  const objet = clefRecherche(c.objet ?? "");
   const tri = c.tri ?? "pertinence";
 
   const gardes: { m: Monstre; s: number }[] = [];
   for (const e of tout) {
     const m = e.m;
+    if (objet && !e.kb.includes(objet)) continue;
     if (c.rang && m.rang !== c.rang) continue;
     if (c.element && m.elem !== c.element) continue;
     if (c.provenance === "maison" && !m.maison) continue;
@@ -179,11 +285,13 @@ export function comptes(c: Critere) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
   const qc = compacter(q);
+  const objet = clefRecherche(c.objet ?? "");
   const rangs: Record<string, number> = {};
   const elements: Record<string, number> = {};
   const provenances = { maison: 0, base: 0, tout: 0 };
   for (const e of tout) {
     const m = e.m;
+    if (objet && !e.kb.includes(objet)) continue;
     if (c.plusieursVies && !(m.vies && m.vies > 1)) continue;
     if (c.niveauMin != null && nombre(m.niv) < c.niveauMin) continue;
     if (c.niveauMax != null && nombre(m.niv) > c.niveauMax) continue;

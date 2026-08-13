@@ -35,6 +35,98 @@ import { bilan, frappeVague, nb, pvCourt, pvVague, type Vague } from "@/componen
  * déjà vingt-huit cartes au-dessus. Un clic l'ouvre, et l'essentiel — combien de
  * vagues, ce que pèse la dernière — se lit sans ouvrir quoi que ce soit.
  */
+/**
+ * LA MONTÉE, EN DEUX BARRES — première vague contre dernière.
+ *
+ * Le texte disait « la montée est brutale » puis alignait quatre nombres. Une
+ * affirmation qu'il faut vérifier de tête n'est pas un renseignement : deux paires
+ * de barres à la MÊME échelle rendent le rapport visible, et le mot « brutale »
+ * devient inutile — c'est le dessin qui le dit.
+ *
+ * Deux échelles séparées, une par grandeur : les PV et les dégâts par coup ne se
+ * comparent pas entre eux, seulement chacun à son propre maximum. Les mettre sur
+ * la même règle aurait écrasé la ligne des dégâts contre zéro.
+ *
+ * Une seule teinte par ligne, et le rapport est écrit au bout : la longueur porte
+ * la comparaison, la couleur ne porte rien (elle ne se lit pas pour un daltonien).
+ *
+ * ┌──── LA TROISIÈME BARRE, ET POURQUOI ELLE N'EST PAS OPTIONNELLE ────┐
+ * │ Ce schéma s'appelait « Vague 1 contre vague 52 » et s'arrêtait là.  │
+ * │ Le problème n'est pas ce qu'il disait, c'est ce qu'un DESSIN dit en │
+ * │ plus des mots : une barre rouge qui remplit toute la piste se lit   │
+ * │ « voilà le maximum ». Or la plus forte frappe du tour n'est PAS sur │
+ * │ la dernière vague — `bilan()` la cherche depuis toujours, et son    │
+ * │ propre commentaire prévient que « la plus grosse frappe n'est pas   │
+ * │ forcément sur la dernière vague ». Relevé sur les données : la      │
+ * │ vague 47 frappe à 990 101, soit deux fois et demie la 52ᵉ.          │
+ * │ Quelqu'un qui prépare un run sur ce dessin se protège contre        │
+ * │ 390 001 et se fait sortir par 990 101 : c'est une erreur coûteuse,  │
+ * │ donc elle relève de la mise en garde qui reste.                     │
+ * │ La barre ne s'affiche QUE si le pire n'est pas la dernière vague —  │
+ * │ même parti pris que l'échelle des étages de la Tour Oubliée : le    │
+ * │ jour où le tour monterait dans l'ordre, elle disparaît au lieu de   │
+ * │ mentir. Et le titre parle de « la plus dure », pas de « la 52ᵉ ».   │
+ * └────────────────────────────────────────────────────────────────────┘
+ */
+function MonteeDesVagues({ premiere, derniere, pireVague, pireFrappe }: {
+  premiere: Vague; derniere: Vague;
+  /** La vague qui frappe le plus fort du tour, et sa frappe — venues de `bilan()`. */
+  pireVague: number; pireFrappe: number;
+}) {
+  /** Le pire n'est-il pas la dernière ? Alors le dessin doit le porter. */
+  const ailleurs = pireVague !== derniere.n && pireFrappe > frappeVague(derniere);
+  const lignes = [
+    { quoi: "PV à sortir", a: pvVague(premiere), b: pvVague(derniere), fmt: pvCourt, pire: null as number | null },
+    { quoi: "Dégâts par coup", a: frappeVague(premiere), b: frappeVague(derniere), fmt: nb, pire: ailleurs ? pireFrappe : null },
+  ];
+  return (
+    <figure style={{ margin: 0, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "11px 13px" }}>
+      <figcaption style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 8 }}>
+        Vague 1, vague {derniere.n}{ailleurs ? ", et la plus dure" : ""}
+      </figcaption>
+      <div style={{ display: "grid", gap: 9 }}>
+        {lignes.map((l) => {
+          /* Le maximum de l'échelle inclut la pire vague, sinon sa barre déborderait
+             de la piste — et surtout la 52ᵉ garderait sa pleine largeur trompeuse. */
+          const max = Math.max(l.a, l.b, l.pire ?? 0) || 1;
+          return (
+            <div key={l.quoi}>
+              <div style={{ fontSize: 10.5, color: "var(--text-muted)", marginBottom: 3 }}>{l.quoi}</div>
+              {([
+                ["1", l.a, "var(--text-muted)"],
+                [String(derniere.n), l.b, "var(--red)"],
+                ...(l.pire != null ? [[String(pireVague), l.pire, "var(--red)"] as const] : []),
+              ] as const).map(([n, v, ton]) => (
+                <div key={n} style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11 }}>
+                  <span style={{ width: 18, flexShrink: 0, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{n}</span>
+                  <span style={{ flex: 1, minWidth: 0, height: 8, borderRadius: 3, background: "color-mix(in srgb, var(--border) 70%, transparent)" }}
+                    /* Pas de `.toLowerCase()` : il transformait « PV à sortir » en
+                       « pv à sortir », et un lecteur d'écran épelle alors « p v ». */
+                    role="img" aria-label={`Vague ${n} : ${l.fmt(v)} — ${l.quoi}`}>
+                    <span style={{ display: "block", height: "100%", width: `${Math.max(1.5, (v / max) * 100)}%`, borderRadius: 3, background: ton }} />
+                  </span>
+                  <span style={{ width: 62, textAlign: "right", flexShrink: 0, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{l.fmt(v)}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      {/* LA PHRASE QUI CHANGE LE GESTE, et elle seule : contre quoi se protéger.
+          Elle se calcule, elle ne s'écrit pas — « vague 47 » et « 990 101 » viennent
+          de `bilan()`. Elle disparaît d'elle-même si le pire redevient la dernière. */}
+      {ailleurs && (
+        <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 9, lineHeight: 1.5 }}>
+          <Icon name="alert" size={12} style={{ marginRight: 5, color: "var(--red)" }} />
+          La dernière vague n&apos;est pas celle qui frappe le plus fort : c&apos;est la
+          {" "}<b style={{ color: "var(--text)" }}>{pireVague}<sup>e</sup></b>, à
+          {" "}<b style={{ color: "var(--red)" }}>{nb(pireFrappe)}</b> par coup.
+        </div>
+      )}
+    </figure>
+  );
+}
+
 export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
 
@@ -118,40 +210,51 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
           </div>
         </div>
 
-        <div style={{ flex: "1 1 280px", minWidth: 0, fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
-          Elle n&apos;est pas dans la grille au-dessus, et pour une raison plus forte encore que la Tour
-          Oubliée : ce n&apos;est pas un donjon, c&apos;est un <b style={{ color: "var(--text)" }}>événement</b>.
-          Le mode s&apos;appelle <b style={{ color: "var(--text)" }}>Protection de l&apos;Oasis</b>, la carte
-          où il se joue <b style={{ color: "var(--text)" }}>Tour Infernale</b>, et les vagues y sont
-          envoyées par le serveur — le fichier de carte, lui, est vide.
-          <div style={{ marginTop: 8 }}>
-            Un tour complet, c&apos;est <b style={{ color: "var(--text)" }}>{nb(b.vagues)} vagues</b>,
-            {" "}{nb(b.monstres)} monstres de {b.especes} espèces et <b style={{ color: "var(--text)" }}>{pvCourt(b.pv)} de
-            points de vie</b> à sortir, pour {nb(b.primeSimple + b.primeSup)} emblèmes. La montée est
-            brutale : la première vague demande {pvCourt(pvVague(premiere))} de PV et frappe à
-            {" "}{nb(frappeVague(premiere))} par coup, la <b style={{ color: "var(--gold)" }}>{derniere.n}<sup>e</sup> et
-            dernière</b> en demande {pvCourt(pvVague(derniere))} et frappe jusqu&apos;à
-            {" "}<b style={{ color: "var(--red)" }}>{nb(frappeVague(derniere))}</b>.
+        {/* ┌───── DEUX CENTS MOTS DE PROSE SONT DEVENUS QUATRE CHIFFRES ET DEUX BARRES ─────┐
+            L'ancien bloc écrivait en phrases ce qui se lit mieux posé : le bilan d'un tour
+            (vagues, monstres, espèces, PV, emblèmes) était une phrase de trente mots, il
+            devient quatre tuiles. « La montée est brutale » était une affirmation suivie de
+            quatre nombres qu'il fallait comparer de tête ; deux barres à la même échelle
+            font la comparaison à notre place, et le mot « brutale » n'a plus à être écrit.
+            CE QUI EST GARDÉ EN MOTS, et seulement ça : les DEUX NOMS (le mode s'appelle
+            « Protection de l'Oasis », la carte « Tour Infernale » — les confondre fait
+            chercher au mauvais endroit), et la PROVENANCE en une ligne, parce que la
+            structure du tour vient de captures et pas du client.
+            CE QUI EST PARTI : « ce n'est pas un donjon, c'est un événement » (le bloc est
+            séparé et titré, il le dit par sa place), la comparaison avec la Tour Oubliée
+            (déjà dite au-dessus), et « ce n'est pas une tour sans fin » — de la
+            comptabilité du site, qui corrigeait notre propre ancien libellé. */}
+        <div style={{ flex: "1 1 280px", minWidth: 0, display: "grid", gap: 10 }}>
+          <div style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            Le mode s&apos;appelle <b style={{ color: "var(--text)" }}>Protection de l&apos;Oasis</b>,
+            la carte <b style={{ color: "var(--text)" }}>Tour Infernale</b>.
           </div>
-          {/* LA RESERVE REVIENT AU GRAND JOUR. L'ancienne page /oasis l'annoncait
-              dans son sous-titre — « avec ce qui reste a verifier en jeu, dit sans
-              le cacher » —, donc au-dessus de tout le reste. En devenant un bloc
-              replie, le mode l'avait reléguée a deux clics : ouvrir le detail, puis
-              choisir « A prendre avec des pincettes ». Or c'est la provenance des
-              chiffres juste au-dessus : elle se lit avec eux, pas apres eux. */}
-          <div style={{ marginTop: 8 }}>
-            Deux sources, et l&apos;écart compte : le niveau, les PV et les dégâts de chaque monstre sont
-            lus dans les <b style={{ color: "var(--text)" }}>fichiers du jeu</b>, mais la structure du
-            tour — les {nb(b.vagues)} vagues, les quantités, les primes — vient d&apos;un
-            {" "}<b style={{ color: "var(--text)" }}>relevé maison fait sur captures d&apos;écran</b> : la
-            carte étant vide, rien dans le client ne la porte. Ce qu&apos;on n&apos;a pas pu vérifier est
-            listé tel quel dans « À prendre avec des pincettes », ci-dessous.
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(96px,1fr))", gap: 8 }}>
+            {([
+              [nb(b.vagues), "vagues", "var(--text)"],
+              [`${nb(b.monstres)}`, `monstres · ${b.especes} espèces`, "var(--text)"],
+              [pvCourt(b.pv), "PV à sortir", "var(--orange)"],
+              [nb(b.primeSimple + b.primeSup), "emblèmes", "var(--gold)"],
+            ] as const).map(([v, quoi, ton]) => (
+              <div key={quoi} style={{ minWidth: 0 }}>
+                <div className="font-heading" style={{ fontSize: 17, fontWeight: 700, color: ton, fontVariantNumeric: "tabular-nums" }}>{v}</div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.3 }}>{quoi}</div>
+              </div>
+            ))}
           </div>
-          <div style={{ marginTop: 8 }}>
-            Rien à voir avec la <b style={{ color: "var(--text)" }}>Tour Oubliée</b> juste au-dessus, ni
-            avec l&apos;objet du même nom : deux contenus distincts, deux cartes distinctes. Et ce
-            n&apos;est pas une « tour sans fin » — le client a une phrase pour dire que la dernière vague
-            est passée.
+
+          <MonteeDesVagues premiere={premiere} derniere={derniere}
+            pireVague={b.pireVague} pireFrappe={b.pireFrappe} />
+
+          {/* LA PROVENANCE RESTE AU GRAND JOUR, en une ligne. Elle n'est pas décorative :
+              les PV et les dégâts viennent des fichiers, la STRUCTURE du tour vient de
+              captures d'écran — la carte du mode est vide, rien dans le client ne la
+              porte. Qui prépare un run sur ces nombres doit savoir lesquels sont relevés
+              à la main. Le détail est dans « À prendre avec des pincettes », ci-dessous. */}
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
+            <Icon name="info" size={12} style={{ marginRight: 5, color: "var(--gold)" }} />
+            Monstres lus dans les fichiers ; la structure du tour vient de captures d&apos;écran.
           </div>
         </div>
       </div>

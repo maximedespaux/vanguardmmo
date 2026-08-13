@@ -4,6 +4,7 @@ import { Icon } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { VoletSections, type SectionVolet } from "@/components/VoletSections";
 import { PRESTIGE_COSTS } from "@/data/prestige";
+import { NomObjet } from "@/components/objets/NomObjet";
 import RELEVE from "@/data/worldboss-releve.json";
 import { Faiblesses, SchemaVies } from "@/components/monstres/Graphiques";
 import {
@@ -310,11 +311,17 @@ export function BestiaireWorldBoss() {
             </div>
           )}
 
+          {/* TRENTE MOTS DEVENUS HUIT. La phrase reste utile — elle empêche de partir
+              chercher un point d'apparition qui n'existe pas — mais elle n'a pas besoin
+              d'occuper deux lignes sous un tableau : c'est un fait qu'on lit une fois.
+              Une `Bulle` et non un `Invisible` : la section en porte déjà un, et si tout
+              est marqué « hors jeu » plus rien ne l'est. */}
           {sansCarte.length === betes.length && (
-            <p style={{ fontSize: 11.5, color: "var(--text-muted)", margin: 0, lineHeight: 1.6 }}>
-              Aucune n&apos;est posée sur une carte du client : c&apos;est le serveur qui les fait sortir.
-              L&apos;annonce du staff, en haut de page, est la seule information d&apos;endroit qui existe.
-            </p>
+            <div style={{ fontSize: 12 }}>
+              <Bulle quoi="Les fichiers de carte du client ne posent aucune de ces bêtes : c'est le serveur qui les fait sortir. Chercher leur point d'apparition en jeu ne donne rien — l'annonce du staff, en haut de cette page, est la seule indication d'endroit et d'heure qui existe.">
+                <span>Aucune n’a de point d’apparition dans le client</span>
+              </Bulle>
+            </div>
           )}
         </div>
       ),
@@ -325,12 +332,22 @@ export function BestiaireWorldBoss() {
       compte: R.recompenses.length,
       contenu: (
         <div style={{ display: "grid", gap: 13 }}>
+          {/* LES TROIS NOMS MÈNENT QUELQUE PART. C'étaient des étiquettes mortes : on
+              lisait « Coffre du Regard Scellé » sans pouvoir savoir ce qu'il y a
+              dedans. `NomObjet` ouvre sa fiche du catalogue et sa provenance, et il
+              ne charge la provenance qu'à l'ouverture de la bulle — trois requêtes au
+              survol, aucune au chargement. */}
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+            {/* Une pastille en RANGÉE et non une tuile verticale : `NomObjet` pose
+                l'icône à côté du nom, et un nom de quatre mots dans 116 px de large se
+                cassait sur trois lignes sous une image centrée.
+                (Le commentaire est ICI et pas dans le corps de la flèche : entre les
+                parenthèses d'un `return` implicite on est en contexte d'EXPRESSION, où
+                un commentaire entre accolades devient un objet vide et met la page en
+                500. Piège de la maison, payé une fois de plus.) */}
             {R.recompenses.map((o) => (
-              <span key={o.nom} style={{ width: 116, display: "grid", justifyItems: "center", gap: 5, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 7px" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={o.icone} alt="" width={34} height={34} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
-                <span style={{ fontSize: 10.5, textAlign: "center", lineHeight: 1.25, color: "var(--text-muted)" }}>{o.nom}</span>
+              <span key={o.nom} style={{ display: "inline-flex", alignItems: "center", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "7px 12px", fontSize: 12, lineHeight: 1.3 }}>
+                <NomObjet nom={o.nom} icone={o.icone} taille={26} />
               </span>
             ))}
           </div>

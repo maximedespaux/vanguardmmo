@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bulle, Invisible } from "@/components/Bulle";
+import { NomObjet } from "@/components/objets/NomObjet";
 import { Emplacements, type Rarete as RareteCadre } from "@/components/jeu/Rarete";
 import {
   CARTES_ATTAQUE, CARTES_DEFENSE, COULEUR_CARTE,
@@ -11,40 +12,61 @@ import {
 import {
   RARETES, STATS_DIAMANT, STATS_HOLO, STATS_EVEIL, STATS_SCROLL, reglagesDeSlot,
 } from "@/lib/specsFlyff";
-import { Bareme, Barres, Bonus, Case, Chip, Deux, Escalier, Groupe, LigneObjet, Point, Vignette } from "./Blocs";
+import {
+  Bareme, Barres, Bonus, Case, Chips, Codes, Deux, Escalier, Grille, Groupe, Objets, Paliers,
+  Point, Vignettes, ligneDe, type Vue,
+} from "./Blocs";
 import {
   ECHELLE, PARCHEMINS_ABSOLUS, RAMASSEUR, RUNE_TANK,
   cartesDElement, cartesDePercage, comptoirDeLuca, eveilFixe, famillesDeJoyau, iconeDe, iconePercage,
-  nombreDeGemmesMenteuses, nombreDeGemmesNommees, objet, objets, ordresDeSertissage,
+  mantras, nombreDeGemmesMenteuses, objet, objets, ordresDeSertissage,
   panneau, parcheminsClasses, plafondDeStat, plafondsDeSertissage, rareteChiffree, runes, tableauDesGemmes,
 } from "./releves";
+import { bonusDesCartes, courbeArtefact, libelleDe, ordreDuClient, paliersDeGemme } from "./sources";
 
 /**
- * LES MÉCANIQUES D'UNE PIÈCE — neuf facettes, une par question qu'on se pose en
- * regardant son arme.
+ * LES MÉCANIQUES D'UNE PIÈCE — une facette par question qu'on se pose devant son
+ * arme.
  *
- * Ce fichier lit le relevé du client (`./releves`), donc il touche au disque : il
- * ne doit JAMAIS être importé par un composant client. La page qui l'emploie est
- * un composant serveur, et c'est ce qui permet d'afficher des comptes exacts sans
- * envoyer 3 Mo de JSON au navigateur.
+ * Ce fichier lit les relevés du client sur le DISQUE (`./releves`, `./sources`) :
+ * il ne doit JAMAIS être importé par un composant client. La page qui l'emploie
+ * est un composant serveur, et c'est ce qui permet d'afficher des comptes exacts
+ * sans envoyer 3 Mo de JSON au navigateur.
  *
- * ┌───────────── LES DEUX RÈGLES QUI ONT REFAIT CE FICHIER ─────────────┐
- * │ 1. UN RENSEIGNEMENT INCOMPLET NE S'AFFICHE PLUS. La version          │
- * │    précédente listait honnêtement ce qu'elle ne savait pas — « le     │
- * │    taux de base n'est écrit nulle part », « ces valeurs sont des      │
- * │    plafonds, pas la marche ». Ces phrases sont parties avec les       │
- * │    demi-faits qu'elles accompagnaient. SEULE EXCEPTION : une mise en  │
- * │    garde qui protège d'une erreur coûteuse reste, parce qu'elle est   │
- * │    utile même incomplète — « on ne retire que la dernière gemme       │
- * │    posée » en est le type.                                           │
- * │ 2. LES TAUX DE BUTIN, L'EXPÉRIENCE ET LES PENYAS DE RÉCOMPENSE NE     │
- * │    S'AFFICHENT PLUS DU TOUT. Un PRIX d'opération, lui, reste : le     │
- * │    million qu'on paie pour retirer une carte de perçage change ce     │
- * │    qu'on fait, une récompense de monstre non.                         │
- * └─────────────────────────────────────────────────────────────────────┘
+ * ┌──────────── LA PASSE V3 : MOINS DE MOTS, PAS MOINS DE FAITS ────────────┐
+ * │ Cette planche était la page la plus lourde du site — dix mille mots     │
+ * │ servis, vingt fois le catalogue d'objets — et son contenu était bon. Le │
+ * │ problème était sa FORME : chaque mécanique chiffrée s'écrivait en        │
+ * │ paragraphes. Quatre échanges, appliqués partout ici :                   │
+ * │                                                                        │
+ * │  1. UN TAUX QUI S'EFFONDRE DEVIENT UN ESCALIER. La réussite d'une       │
+ * │     amélioration d'artefact est divisée par dix de +11 à +20 : en       │
+ * │     colonne on lit dix options, dessinée on voit la chute.             │
+ * │  2. UN COMPTE DEVIENT UN SCHÉMA. Cinq logements de gemme contre huit se │
+ * │     comptent d'un coup d'œil ; « 5 » et « 8 » dans une phrase se lisent │
+ * │     comme équivalents.                                                 │
+ * │  3. UNE ÉNUMÉRATION DEVIENT UNE GRILLE D'ICÔNES, et chaque case mène à  │
+ * │     la fiche de son objet. C'est la demande de wiki : on retrouve une   │
+ * │     pièce, sa rareté et sa provenance depuis la mécanique qui l'emploie.│
+ * │  4. UNE PRÉCISION SECONDAIRE PASSE DANS UNE BULLE, ou disparaît.        │
+ * └────────────────────────────────────────────────────────────────────────┘
  *
- * Là où le client ne fournit rien — la rareté Commune, la Mythique, l'image d'un
- * palier de carte —, on l'écrit au lieu d'emprunter l'image du palier voisin.
+ * ┌──────────── DEUX RÈGLES QUI RETIRENT DU CONTENU ────────────┐
+ * │ · UN RENSEIGNEMENT INCOMPLET NE S'AFFICHE PLUS, et sa         │
+ * │   réserve part avec lui. SEULE EXCEPTION : la mise en garde   │
+ * │   contre une erreur coûteuse, utile même incomplète — « on ne │
+ * │   retire que la dernière gemme posée » en est le type. C'est  │
+ * │   à ce titre que le volet Perçage garde la citation du        │
+ * │   panneau du jeu, et que trois blocs « la gamme a un trou     │
+ * │   qu'on n'explique pas » sont partis.                        │
+ * │ · LES TAUX DE BUTIN, L'EXPÉRIENCE ET LES PENYAS DE            │
+ * │   RÉCOMPENSE quittent l'écran (voir `estRecompense`). Un PRIX │
+ * │   d'opération, lui, reste : le million qu'on paie pour        │
+ * │   retirer une carte change ce qu'on fait.                    │
+ * └──────────────────────────────────────────────────────────────┘
+ *
+ * Là où le client ne fournit rien — la rareté Commune, la Mythique — on l'écrit
+ * au lieu d'emprunter l'image du palier voisin.
  */
 
 /** Les neuf familles d'ascension du client. Le glaive et la doloire n'en font
@@ -63,18 +85,19 @@ export const FAMILLES: { arme: string; label: string }[] = [
   { arme: "Yoyo", label: "Yoyo" },
 ];
 
-/** Les ressources d'artefact, telles que le client les nomme. */
-const RESSOURCES: { f: string; nom: string }[] = [
-  { f: "artefact-pierre", nom: "Pierre d'artefact" },
-  { f: "artefact-plan", nom: "Plan" },
-  { f: "artefact-morceau-parchemin", nom: "Morceau de parchemin" },
-  { f: "artefact-coffret-plans", nom: "Coffret de plans" },
-  { f: "artefact-boite-pierres", nom: "Boîte de pierres" },
-  { f: "artefact-protection", nom: "Protection" },
-  { f: "artefact-orichalque-pure", nom: "Orichalque pur" },
-  { f: "artefact-orichalque-scintillant", nom: "Orichalque scintillant" },
-  { f: "artefact-roche-lunaire", nom: "Roche lunaire" },
-  { f: "artefact-diamant-holographique", nom: "Diamant holographique" },
+/** Les ressources d'artefact, telles que le client les nomme. Le nom sert deux
+ *  fois : sous l'image, et comme requête vers la fiche de l'objet. */
+const RESSOURCES: [string, string][] = [
+  ["artefact-pierre", "Pierre d'artefact"],
+  ["artefact-plan", "Plan"],
+  ["artefact-morceau-parchemin", "Morceau de parchemin"],
+  ["artefact-coffret-plans", "Coffret de plans"],
+  ["artefact-boite-pierres", "Boîte de pierres"],
+  ["artefact-protection", "Protection"],
+  ["artefact-orichalque-pure", "Orichalque pur"],
+  ["artefact-orichalque-scintillant", "Orichalque scintillant"],
+  ["artefact-roche-lunaire", "Roche lunaire"],
+  ["artefact-diamant-holographique", "Diamant holographique"],
 ];
 
 /** La pièce de référence de toute la page : une arme passée en artefact. C'est
@@ -88,32 +111,32 @@ const BIJOU = reglagesDeSlot("jewel");
 /**
  * UNE RANGÉE DE LOSANGES, LÉGENDÉE — le schéma qui remplace un nombre.
  *
- * « Une arme accepte 5 emplacements, 8 en artefact » : les deux nombres se
- * lisent comme équivalents dans une phrase. Dessinés, ils se comptent. Ce sont
- * les losanges du jeu (`public/jeu/rarete/emplacement_*`), donc exactement ce
- * qu'on a sous les yeux dans la fenêtre de sertissage.
+ * Ce sont les losanges du jeu (`public/jeu/rarete/emplacement_*`), donc exactement
+ * ce qu'on a sous les yeux dans la fenêtre de sertissage. Il pose une image par
+ * case : on le réserve donc aux comparaisons qui portent la page, et `Paliers`
+ * sert pour les tableaux secondaires.
  *
  * ATTENTION : le client ne livre que trois losanges colorés — rare, epic,
- * legendary — plus le vide. Il n'y a PAS de `emplacement_common`, et le demander
- * afficherait une image cassée.
+ * legendary — plus le vide. Il n'y a PAS de `emplacement_common`.
  */
-export function Slots({ quoi, base, extra = 0, legende }: {
-  quoi: string;
-  /** Les logements du premier genre (les diamants) : losange doré. */
-  base: number;
-  /** Les logements du second genre (les holographiques) : losange rose. */
-  extra?: number;
-  legende?: React.ReactNode;
+export function Slots({ lignes }: {
+  lignes: { quoi: string; base: number; extra?: number; legende?: React.ReactNode }[];
 }) {
-  const gemmes: RareteCadre[] = [
-    ...Array.from({ length: base }, () => "legendary" as RareteCadre),
-    ...Array.from({ length: extra }, () => "epic" as RareteCadre),
-  ];
   return (
-    <div className="mc-slot">
-      <span>{quoi}</span>
-      <Emplacements gemmes={gemmes} total={base + extra} hauteur={20} />
-      {legende && <i>{legende}</i>}
+    <div className="mc-slots">
+      {lignes.map((l) => {
+        const gemmes: RareteCadre[] = [
+          ...Array.from({ length: l.base }, () => "legendary" as RareteCadre),
+          ...Array.from({ length: l.extra ?? 0 }, () => "epic" as RareteCadre),
+        ];
+        return (
+          <div key={l.quoi} className="mc-slot">
+            <span>{l.quoi}</span>
+            <Emplacements gemmes={gemmes} total={l.base + (l.extra ?? 0)} hauteur={20} />
+            {l.legende && <i>{l.legende}</i>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -125,25 +148,18 @@ export function Gemmes() {
   const menteuses = nombreDeGemmesMenteuses();
   const ordres = ordresDeSertissage();
   const familles = famillesDeJoyau();
-  const sertisseur = familles.find((f) => f.sertisseur)?.sertisseur ?? "";
   const neufs = table.map((g) => g.neuf).filter((o): o is NonNullable<typeof o> => !!o);
 
   return (
     <>
       <Point
         titre={
-          <Invisible enJeu={`L'infobulle affiche l'ancien nom. Le serveur applique l'ordre de sa table de valeurs, qui n'est plus celui des textes d'objets : ${menteuses} noms sur ${table.length} désignent l'effet d'une autre gemme.`}>
-            {menteuses} des {table.length} gemmes ultimes ne donnent pas ce qu&apos;elles annoncent
+          <Invisible enJeu={`L'infobulle affiche l'ancien nom. Le serveur applique l'ordre de sa table de valeurs, plus celui des textes d'objets : ${menteuses} noms sur ${table.length} désignent l'effet d'une autre gemme.`}>
+            {menteuses} des {table.length} gemmes ultimes donnent l&apos;effet d&apos;une autre
           </Invisible>
         }
         marque="piege"
       >
-        <p>
-          Sertir une arme ultime demande une arme <b>+6 au minimum</b>. Le joyau brut tire une
-          statistique <b>au hasard parmi {STATS_DIAMANT.length}</b> ; les {table.length} gemmes
-          {" "}<b>nommées</b> la forcent — c&apos;est la seule façon de choisir
-          {sertisseur ? <>, et ça se passe chez <b>{sertisseur}</b></> : null}.
-        </p>
         <Deux
           gauche="Ce que dit l'infobulle"
           droite="Ce que la gemme donne, et jusqu'où"
@@ -156,146 +172,337 @@ export function Gemmes() {
             ] as [React.ReactNode, React.ReactNode, boolean?];
           })}
         />
-        {/* LA CAUSE, EN UNE PHRASE. Elle n'est plus « a confirmer » : elle est
-            etablie sur deux fichiers du depot, et le compte se recalcule. */}
+        {/* LA CAUSE, ETABLIE. L'ordre ci-dessous est celui d'Ultimate_GemAbility.txt,
+            et les neuf Diamants d'AirFlyff y repondent rang pour rang. */}
+        <p className="mc-src">La cause — l&apos;ordre du client, celui auquel le jeu répond :</p>
+        <Codes codes={ordreDuClient()} libelle={libelleDe} />
         <p className="mc-src">
-          La cause est connue : la table de valeurs du builder porte les {ordres.fichier.length}
-          {" "}statistiques <b>deux fois, dans deux ordres différents</b> —{" "}
-          <b>DIASTATS</b> pour la liste déroulante, <b>GEMU</b> pour les valeurs. Le jeu suit
-          {" "}<b>GEMU</b>, les noms de gemmes ont gardé l&apos;autre ordre.
-          {ordres.concordent && <> Les {ordres.rangs.length} rangs de GEMU répondent un à un aux
-            {" "}{neufs.length} Diamants qu&apos;AirFlyff a ajoutés : deux fichiers indépendants, le
-            même ordre.</>}
+          {ordres.concordent && <>Les {neufs.length} Diamants y répondent <b>{ordres.justes} sur {ordres.rangs.length}</b>. </>}
+          Les noms, eux, ont gardé l&apos;ordre de <b>DIASTATS</b>, la liste déroulante du builder :
+          {" "}<b>elle ne nomme jamais l&apos;effet d&apos;une gemme.</b>
         </p>
       </Point>
 
-      <Point titre="Ce qu'on prend, concrètement" marque="profit">
+      <Point titre="Ce qu'on prend, sans se tromper" marque="profit">
         <p>
-          Tu veux des <b>PV</b> ? La gemme « de maîtrise ». De la <b>Force</b> ? Celle « de
-          puissance ». De l&apos;<b>Endurance</b> ? Celle « de force ». Mieux : prends
-          l&apos;un des {neufs.length} Diamants ci-dessous, dont le libellé ne peut pas tromper.
+          Des <b>PV</b> : « de maîtrise ». De la <b>Force</b> : « de puissance ». De
+          l&apos;<b>Endurance</b> : « de force ». Ou un Diamant, dont le libellé ne trompe pas :
         </p>
-        <div className="mc-grille">
-          {neufs.map((o) => <Case key={o.cle} src={iconeDe(o)} nom={o.n.replace(/^.*sertissage en\s*/i, "")} />)}
-        </div>
+        <Grille cases={neufs.map((o): Vue => ({
+          cle: o.cle, src: iconeDe(o), cherche: o.n,
+          nom: o.n.replace(/^.*sertissage en\s*/i, ""),
+        }))} />
         <p className="mc-src">
-          Le sertissage annonce <b>90 % de réussite</b> ; en cas d&apos;échec seul le joyau est
-          perdu, l&apos;arme ne risque rien. C&apos;est la seule opération de la forge dans ce cas.
+          Arme <b>+6 au minimum</b>, réussite <b>90 %</b>, et l&apos;échec ne coûte que le joyau.
         </p>
       </Point>
 
-      <Groupe titre={`Les ${familles.length} familles de joyau, et le morceau qui la fabrique`}>
-        <div className="mc-vignettes">
-          {familles.map((f) => (
-            <Vignette key={f.nom} src={f.img} legende={`${f.nom} ${f.plage}`} />
-          ))}
-        </div>
-        {/* LES QUATRE MORCEAUX, images du client jamais branchees jusqu'ici. Le
-            morceau est un dessin DIFFERENT du joyau (un eclat effile contre une
-            pierre taillee) : verifie image par image avant de le poser ici. */}
-        <div className="mc-grille">
-          {familles.map((f) => (
-            f.imgMorceau ? <Case key={f.nom} src={f.imgMorceau} nom={`Morceau de ${f.nom}`} taille={26} /> : null
-          ))}
-        </div>
-        <p className="mc-src">
-          Le joyau à employer dépend du niveau de l&apos;arme :{" "}
-          {familles.map((f) => `${f.nom} ${f.plage}`).join(", ")}. Chaque famille porte
-          {" "}<b>{nombreDeGemmesNommees()} gemmes nommées</b> en tout, décalées du même rang.
-        </p>
+      <Groupe titre={`Le joyau dépend du niveau de l'arme — ${familles.length} familles`}>
+        <Vignettes items={familles.map((f) => ({ src: f.img, legende: `${f.nom} ${f.plage}` }))} />
+        {/* LES QUATRE MORCEAUX, images du client jamais branchees jusqu'ici : un
+            eclat effile contre une pierre taillee, dans la teinte de sa famille. */}
+        <Grille taille={26} cases={familles.flatMap((f): Vue[] => (
+          f.imgMorceau ? [{ cle: f.nom, src: f.imgMorceau, nom: `Morceau de ${f.nom}` }] : []
+        ))} />
       </Groupe>
     </>
   );
 }
 
-/* ═══ 2. Rareté ══════════════════════════════════════════════════════════════ */
+/* ═══ 2. Sertissage : huit logements, pas cinq ═══════════════════════════════ */
 
-/** Les trois statistiques qu'un tank cherche. Elles servent à INTERROGER le
- *  vivier de rareté, pas à décrire son contenu : la phrase à l'écran se construit
- *  sur le résultat de la recherche, si bien qu'elle se corrige toute seule le jour
- *  où AirFlyff en ajoute une au tirage. */
-const STATS_DEFENSIVES = ["PV max", "Endurance", "Défense"];
-
-export function Rarete() {
-  const r = rareteChiffree();
-  const dansLeVivier = (nom: string) =>
-    r.vivier.some((v) => v.stat.localeCompare(nom, "fr", { sensitivity: "base" }) === 0);
-  const absentes = STATS_DEFENSIVES.filter((s) => !dansLeVivier(s));
-  const presentes = STATS_DEFENSIVES.filter(dansLeVivier);
-  // Les chances ne s'affichent QUE si la table est cohérente. Un total qui ne
-  // fait pas 100 est une table incomplète ou mal lue : on ne la publie pas, et
-  // on n'écrit pas de réserve à la place — la section se contente du reste.
-  const tirageSain = r.somme === 100 && r.lignes.length > 0;
+export function Sertissage() {
+  const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
+  const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
+  const holo = objet("II_SYS_SYS_DIAMOND_ARTEFACT");
+  const plafonds = plafondsDeSertissage();
+  const p = paliersDeGemme();
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
-      <div className="mc-grille">
-        {RARETES.map((r2) => <Case key={r2} src={ICONE_RARETE[r2]} nom={r2} couleur={COULEUR_RARETE[r2]} />)}
-      </div>
+    <div style={{ display: "grid", gap: 12 }}>
+      <Point
+        titre={
+          <Invisible enJeu={`La fenêtre de sertissage n'annonce que ${dia} logements. Les ${nHolo} holographiques n'apparaissent qu'une fois la pièce passée en artefact, et aucune interface ne récapitule le total.`}>
+            Une arme Artefact +{ARME_ARTEFACT.upMax} accepte {dia + nHolo} gemmes, pas {dia}
+          </Invisible>
+        }
+        marque="profit"
+      >
+        <Slots lignes={[
+          { quoi: `Arme +${ARME_SIMPLE.upMax}`, base: dia, legende: `${dia} diamants` },
+          {
+            quoi: `Arme Artefact +${ARME_ARTEFACT.upMax}`, base: dia, extra: nHolo,
+            legende: <>{dia} diamants <b>+ {nHolo} holographiques</b></>,
+          },
+        ]} />
+        <Grille cases={[
+          { cle: "d", src: ICONE_DIAMANT, nom: "Diamant" },
+          { cle: "h", src: ICONE_HOLO, nom: "Holographique", cherche: "Diamant holographique" },
+        ]} />
+        {/* LA PREUVE, PAR DEUX FICHIERS QUI NE SE PARLENT PAS : la phrase que le
+            client ecrit sur l'objet, et la FORME de sa table de valeurs. */}
+        {holo?.d && <p className="mc-cite">« {holo.d} »</p>}
+        {p.total > 0 && (
+          <>
+            <p>
+              Sa table le confirme : <b>{p.total} paliers</b> par gemme, l&apos;en-tête n&apos;en
+              numérote que <b>{p.nommes}</b>. Une seule famille les remplit.
+            </p>
+            <Paliers total={p.total} lignes={p.familles.map((f) => ({
+              cle: f.cle, nom: f.nom, sous: f.plage, servis: f.remplis,
+            }))} />
+            {p.complets.length > 0 && p.plafonnent.length > 0 && (
+              <p className="mc-src">
+                Les {p.total - p.nommes} paliers de plus du{" "}
+                <b>{p.complets.map((f) => f.nom).join(", ")}</b> rapportent autant que le
+                {" "}{p.nommes}<sup>e</sup> : comparer sur {p.nommes} gemmes
+                {" "}<b>sous-estime le haut du jeu</b>.
+              </p>
+            )}
+          </>
+        )}
+      </Point>
+
+      <Groupe titre={`Les ${plafonds.length || STATS_DIAMANT.length} statistiques, et leur plafond`}>
+        <Chips puces={plafonds.length > 0
+          ? plafonds.map((s) => ({ texte: `${s.stat} +${s.max}` }))
+          : STATS_DIAMANT.map((s) => ({ texte: s }))} />
+      </Groupe>
+
+      <Groupe titre={`Les ${nHolo} holographiques : ${STATS_HOLO.length} valeurs, on choisit`}>
+        <Chips puces={STATS_HOLO.map((s) => ({ texte: s }))} />
+      </Groupe>
+    </div>
+  );
+}
+
+/* ═══ 3. Perçage ═════════════════════════════════════════════════════════════ */
+
+export function Percage() {
+  const c = cartesDePercage();
+  const annuler = panneau(/annuler un effet de piercing/i);
+  const bonus = bonusDesCartes();
+  const familles = [...c.attaque, ...c.defense];
+  /** Combien de DESSINS distincts le client donne à une famille : c'est ce qui
+   *  montre qu'il ne distingue pas ses paliers bas les uns des autres. */
+  const confondus = familles.filter(
+    (f) => new Set(f.paliers.map((p) => p.fiche.ic).filter(Boolean)).size < f.paliers.length,
+  ).length;
+
+  /* UNE FAMILLE PAR RANGEE : ses paliers en images, et ce qu'elle donne.
+     L'ancienne planche ecrivait le palier en pointilles quand nos assets
+     n'avaient pas le dessin, et l'expliquait en trois lignes. C'etait inutile :
+     les cartes du client ont TOUTES leur icone sur le disque. On prefere celle de
+     l'AirBuilder, qui porte le palier imprime dessus et distingue donc un 7 %
+     d'un 12 %, puis celle du client quand elle manque. */
+  const rangee = (f: (typeof c.attaque)[number], suffixe = "") => (
+    <div key={f.famille} className="mc-carte-l">
+      <span className="mc-carte-n" style={{ color: COULEUR_CARTE[f.famille] ?? "var(--text)" }}>{f.famille}</span>
+      <span className="mc-carte-c">
+        <Grille cases={f.paliers.map((p): Vue => ({
+          cle: p.fiche.cle,
+          src: iconePercage(f.famille, p.palier) ?? iconeDe(p.fiche),
+          nom: `${p.palier}${suffixe}`,
+          couleur: COULEUR_CARTE[f.famille],
+          cherche: p.fiche.n,
+        }))} />
+        <Codes codes={bonus.get(f.famille) ?? []} libelle={libelleDe} />
+      </span>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <Slots lignes={[
+        { quoi: `Arme +${ARME_SIMPLE.upMax}`, base: ARME_SIMPLE.percage?.max ?? 0 },
+        { quoi: "Arme Artefact", base: ARME_ARTEFACT.percage?.max ?? 0, legende: <b>le maximum du jeu</b> },
+        { quoi: "Tenue", base: TENUE.percage?.max ?? 0 },
+      ]} />
       <p className="mc-note">
-        C&apos;est la rareté qui donne les lignes bonus, et sa couleur est celle de
-        l&apos;AirBuilder. <b>Commun</b> est l&apos;état de base et le client ne livre pas de
-        parchemin <b>Mythique</b> : ces deux-là n&apos;ont pas de dessin.
+        Emplacements et <b>palier</b> sont deux choses : c&apos;est le palier que le vendeur oublie
+        d&apos;écrire.{" "}
+        <Bulle quoi={<>Une arme et un bouclier prennent des cartes d&apos;<b>attaque</b>, une tenue des cartes de <b>défense</b>. Le feu attaque sous « Feu » et défend sous « Volcano » — d&apos;où deux séries de dessins pour cinq éléments.</>}>
+          {c.nAttaque} cartes d&apos;attaque, {c.nDefense} de défense
+        </Bulle>.
       </p>
 
-      {tirageSain && (
-        <Point titre="Le palier ne dit pas combien de lignes l'arme reçoit" marque="piege">
+      <Groupe titre={`Attaque — arme et bouclier (${CARTES_ATTAQUE.length} éléments)`}>
+        {c.attaque.map((f) => rangee(f))}
+      </Groupe>
+      <Groupe titre={`Défense — tenue (${CARTES_DEFENSE.length} éléments)`}>
+        {c.defense.map((f) => rangee(f, " %"))}
+      </Groupe>
+
+      <p className="mc-note">
+        {confondus > 0 && (
+          <>
+            <Invisible enJeu="Deux cartes de paliers différents portent la même icône dans l'inventaire : seul le nom, entre parenthèses, dit laquelle on tient.">
+              {confondus} familles sur {familles.length} dessinent leurs paliers bas à l&apos;identique
+            </Invisible>.{" "}
+          </>
+        )}
+        L&apos;<b>Air</b> est le seul élément sans rang R.
+      </p>
+
+      {annuler && (
+        <Point titre="Se tromper de carte se paie autant de fois qu'il y a de cartes posées après" marque="piege">
+          <p className="mc-cite">« {annuler.texte} »</p>
           <p>
-            C&apos;est un tirage, et il est très déséquilibré : <b>une seule ligne</b> est le cas
-            courant, et les <b>{r.lignes[r.lignes.length - 1]?.amount} lignes</b> sont
-            l&apos;exception qui fait le prix d&apos;une arme.
+            On ouvre donc <b>en dernier</b> les emplacements dont on est le moins sûr : sur une arme
+            à {ARME_ARTEFACT.percage?.max} emplacements, une erreur au 2<sup>e</sup> perçage se
+            défait en retirant tout ce qui suit.
           </p>
-          <Barres
-            max={100}
-            lignes={r.lignes.map((l) => ({
-              nom: `${l.amount} ligne${l.amount > 1 ? "s" : ""} bonus`,
-              v: l.chance,
-              texte: `${l.chance} %`,
-            }))}
-          />
-          {r.vivier.length > 0 && (
-            <>
-              <p className="mc-src">
-                Les lignes se tirent dans un vivier de <b>{r.vivier.length} statistiques</b>, chacune
-                entre <b>+{Math.min(...r.vivier.map((v) => v.min))}</b> et
-                {" "}<b>+{Math.max(...r.vivier.map((v) => v.max))}</b> :
-              </p>
-              <div className="mc-grille">
-                {r.vivier.map((v) => <Chip key={v.stat} texte={`${v.stat} +${v.min} → +${v.max}`} />)}
-              </div>
-              <p className="mc-src">
-                {absentes.length === STATS_DEFENSIVES.length
-                  ? <>
-                      Ce vivier est <b>orienté dégâts</b> : {absentes.map((s, i) => (
-                        <span key={s}>{i === 0 ? "ni " : ", ni "}{s}</span>
-                      ))} n&apos;y figurent. Un tank ne gagne donc <b>rien de garanti</b> à monter
-                      la rareté de son arme — à savoir avant de dépenser les parchemins.
-                    </>
-                  : <>
-                      Ce vivier porte {presentes.length === 1 ? "une statistique défensive" : `${presentes.length} statistiques défensives`}
-                      {" "}(<b>{presentes.join(", ")}</b>) : un tank y trouve son compte.
-                    </>}
-              </p>
-            </>
-          )}
         </Point>
       )}
     </div>
   );
 }
 
-/* ═══ 3. Artefact & ascension ════════════════════════════════════════════════ */
+/* ═══ 4. Amélioration : les taux, et les plafonds ════════════════════════════ */
+
+export function Amelioration() {
+  const luca = comptoirDeLuca();
+  const taux = parcheminsClasses();
+  const absolus = objets(PARCHEMINS_ABSOLUS);
+  const courbe = courbeArtefact();
+  const bas = courbe.length ? courbe[courbe.length - 1] : null;
+  /** Les marches de l'escalier des parchemins qui REMPLACENT le taux : la tranche
+   *  de paliers est relue sur le libellé déjà calculé, jamais écrite ici. */
+  const marches = taux.remplacent
+    .map((x) => {
+      const n = (x.plage.match(/\d+/g) ?? []).map(Number);
+      return n.length ? { de: n[0], a: n[n.length - 1], v: x.pct, nom: x.fiche.n } : null;
+    })
+    .filter((m): m is { de: number; a: number; v: number; nom: string } => !!m)
+    .sort((a, b) => a.de - b.de);
+
+  return (
+    <>
+      {courbe.length > 0 && bas && (
+        <Point
+          titre={
+            <Invisible enJeu="La fenêtre d'amélioration n'affiche aucun pourcentage. Le taux est dans propweaponleveling.inc, et rien à l'écran ne dit qu'il se divise par dix.">
+              Le taux d&apos;un artefact tombe de {courbe[0].pct} % à {bas.pct} %
+            </Invisible>
+          }
+          marque="piege"
+        >
+          <Escalier
+            titre={`Taux de réussite par palier, en pourcentage : ${courbe.map((x) => `+${x.niveau} ${x.pct}`).join(", ")}`}
+            marches={courbe.map((x) => ({ de: x.niveau, a: x.niveau, v: x.pct, nom: `+${x.niveau}` }))}
+          />
+          <p className="mc-src">
+            De +{courbe[0].niveau} à +{bas.niveau} : c&apos;est cette pente qui décide où poser sa
+            protection.
+          </p>
+        </Point>
+      )}
+
+      <Point titre={`${taux.remplacent.length} parchemins REMPLACENT ce taux, ils ne s'y ajoutent pas`} marque="piege">
+        <p>
+          Glisser deux parchemins ne fait pas 200 % : <b>{taux.ajoutent.length}</b> s&apos;ajoutent
+          ou garantissent, <b>{taux.remplacent.length}</b> remplacent — chacun sur sa tranche.
+        </p>
+        {marches.length > 0 && (
+          <>
+            <Escalier
+              marches={marches}
+              titre={`Taux garanti par tranche, en pourcentage : ${marches.map((m) => `${m.de === m.a ? `+${m.de}` : `+${m.de} à +${m.a}`} ${m.v}`).join(", ")}`}
+            />
+            <p className="mc-src">
+              {marches.map((m, i) => (
+                <span key={m.nom}>
+                  {i > 0 ? " · " : ""}<b>{m.nom}</b> {m.de === m.a ? `+${m.de}` : `+${m.de} → +${m.a}`}
+                </span>
+              ))}
+              {taux.remplacent.some((x) => x.pasArmure) && <> — l&apos;un ne vaut <b>que sur les armes</b>.</>}
+            </p>
+          </>
+        )}
+        {taux.ajoutent.length > 0 && (
+          <Bareme lignes={taux.ajoutent.map((x) => [
+            x.fiche.n,
+            `${x.genre === "garantit" ? "réussite" : "taux"} ${x.pct} %`,
+          ] as [string, string])} />
+        )}
+        {taux.unTir > 0 && (
+          <p className="mc-src">
+            <b>{taux.unTir}</b> l&apos;écrivent, aucune interface ne le rappelle : le parchemin ne
+            vaut que pour <b>une seule tentative</b>.
+          </p>
+        )}
+      </Point>
+
+      {absolus.length > 0 && (
+        <Point titre={`${absolus.length} Parchemins d'Enchantement Absolu : le palier à coup sûr`} marque="profit">
+          <Grille cases={absolus.map((o): Vue => ({
+            cle: o.cle, src: iconeDe(o), cherche: o.n,
+            nom: o.n.replace(/^Parchemin d.Enchantement Absolu\s*/i, ""),
+          }))} />
+          <p className="mc-src">
+            Un par palier, sans protection — mais <b>pas sur une arme Ultime</b>. On garde le sien
+            pour le palier qui casse.
+          </p>
+        </Point>
+      )}
+
+      <Point titre={`L'échelle monte jusqu'à +${BIJOU.upMax}, et pas sur toutes les pièces`}>
+        <Bareme lignes={[
+          ["Anneau, boucle, collier", `+${BIJOU.upMax}`],
+          ["Arme Artefact", `+${ARME_ARTEFACT.upMax}`],
+          ["Arme, tenue, casque, gants", `+${TENUE.upMax}`],
+        ]} />
+        <p className="mc-src">Un « +20 » ne dit rien tant qu&apos;on ignore de quelle pièce on parle.</p>
+        <div>
+          {ECHELLE.map((e) => {
+            const l = objets(e.cles);
+            if (!l.length) return null;
+            return (
+              <div key={e.de} className="mc-etage">
+                <span className="mc-etage-t"><b>{e.de}</b><span>{e.titre}</span></span>
+                <span className="mc-etage-l">
+                  {/* Une grille d'icones, pas une liste de phrases : a cet etage
+                      la question est « avec QUOI », et le nom y repond. */}
+                  <Grille taille={26} cases={l.map((o): Vue => ({
+                    cle: o.cle, src: iconeDe(o), nom: o.n, cherche: o.n,
+                  }))} />
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </Point>
+
+      {luca.objets.length > 0 && (
+        <Point titre={`Le PNJ Donjon Luca tient ${luca.objets.length} de ces objets`} marque="profit">
+          <p>Passage obligé du haut niveau, qu&apos;aucune interface ne récapitule.</p>
+          {/* `NomObjet` PLUTOT QU'UN LIEN NU, ET SEULEMENT ICI. Il est CLIENT et
+              coute une reference par emploi : sur les cent cinquante cases de la
+              planche, un lien nu suffit. Sur cet etal, la question est « ou ca se
+              trouve » — au survol il donne la fiche ET la provenance sans quitter
+              la page. */}
+          <p className="mc-noms">
+            {luca.objets.map((o) => <NomObjet key={o.cle} nom={o.n} icone={o.ic} taille={18} />)}
+          </p>
+          {luca.monnaies.length > 0 && (
+            <>
+              <p className="mc-src">Il ne prend que {luca.monnaies.length} monnaies :</p>
+              <Grille taille={26} cases={luca.monnaies.map((o): Vue => ({
+                cle: o.cle, src: iconeDe(o), nom: o.n, cherche: o.n,
+              }))} />
+            </>
+          )}
+        </Point>
+      )}
+    </>
+  );
+}
+
+/* ═══ 5. Artefact & ascension ════════════════════════════════════════════════ */
 
 export function Artefact() {
-  const source = objets(["II_SYS_SYS_PLAN_ARTEFACT", "II_SYS_SYS_STONE_ARTEFACT"]);
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <p className="mc-note">
-        Jusqu&apos;à +{ARME_SIMPLE.upMax}, tu améliores. À partir de +{ARME_SIMPLE.upMax + 1} la
-        pièce devient un <b>artefact</b> : ce bandeau, trois étoiles d&apos;ascension,
-        +{ARME_ARTEFACT.upMax} au bout et {ARME_ARTEFACT.sertissage?.holo} diamants
-        holographiques de plus.
-      </p>
       <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={ETIQUETTE_ARTEFACT} alt="Artefact" style={{ height: 24, width: "auto", imageRendering: "pixelated" }} />
@@ -310,8 +517,14 @@ export function Artefact() {
         </span>
         <Case src={ICONE_UPGRADE} nom="Amélioration" taille={26} />
       </div>
+      <Bareme lignes={[
+        ["Amélioration ordinaire", `+1 → +${ARME_SIMPLE.upMax}`],
+        ["La pièce devient un artefact", `+${ARME_SIMPLE.upMax + 1} → +${ARME_ARTEFACT.upMax}`],
+        ["Étoiles d'ascension", "3"],
+        ["Gemmes en plus", `+${ARME_ARTEFACT.sertissage?.holo} holographiques`],
+      ]} />
 
-      <Groupe titre={`Le plan d'ascension dépend de ton arme — ${FAMILLES.length} familles`}>
+      <Groupe titre={`Le plan d'ascension dépend de l'arme — ${FAMILLES.length} familles`}>
         <div style={{ display: "grid", gap: 6 }}>
           {FAMILLES.map((f) => (
             <div key={f.arme} className="fx-card mc-slot">
@@ -337,458 +550,181 @@ export function Artefact() {
             </div>
           ))}
         </div>
-        <p className="mc-src">
-          Le glaive et la doloire partagent le leur. Une arme absente de cette liste n&apos;a pas
-          de plan dans le client — on ne lui prête pas celui d&apos;une voisine.
-        </p>
+        <p className="mc-src">Le glaive et la doloire partagent le leur.</p>
       </Groupe>
 
       <Groupe titre="Ce qu'on ramasse pour ça">
-        <div className="mc-grille">
-          {RESSOURCES.map((r) => <Case key={r.f} src={`/jeu/mecaniques/${r.f}.webp`} nom={r.nom} />)}
-        </div>
-        {source.length > 0 && (
-          <div style={{ display: "grid", gap: 5 }}>
-            {source.map((o) => <LigneObjet key={o.cle} o={o} />)}
-          </div>
-        )}
+        <Grille cases={RESSOURCES.map(([f, nom]): Vue => ({
+          cle: f, src: `/jeu/mecaniques/${f}.webp`, nom, cherche: nom,
+        }))} />
       </Groupe>
     </div>
   );
 }
 
-/* ═══ 4. Les plafonds cachés ═════════════════════════════════════════════════ */
+/* ═══ 6. Rareté ══════════════════════════════════════════════════════════════ */
 
-export function Plafonds() {
-  const holo = objet("II_SYS_SYS_DIAMOND_ARTEFACT");
-  const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
-  const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
-  const luca = comptoirDeLuca();
-  const taux = parcheminsClasses();
-  const absolus = objets(PARCHEMINS_ABSOLUS);
-  const paliersAbsolus = absolus
-    .map((o) => Number(/\+(\d+)/.exec(o.n)?.[1] ?? 0))
-    .filter((n) => n > 0)
-    .sort((a, b) => a - b);
-  const plageAbsolue = paliersAbsolus.length
-    ? `+${paliersAbsolus[0]} à +${paliersAbsolus[paliersAbsolus.length - 1]}`
-    : "";
-  const familles = famillesDeJoyau();
-  const quiPlafonnent = familles.slice(0, -1).map((f) => f.nom).join(", ");
-  const quiDepasse = familles[familles.length - 1]?.nom ?? "Diamant";
-  /** Les marches de l'escalier des parchemins qui REMPLACENT le taux : la tranche
-   *  de paliers est relue sur le libellé déjà calculé, jamais écrite ici. */
-  const marches = taux.remplacent
-    .map((x) => {
-      const n = (x.plage.match(/\d+/g) ?? []).map(Number);
-      return n.length ? { de: n[0], a: n[n.length - 1], v: x.pct, nom: x.fiche.n } : null;
-    })
-    .filter((m): m is { de: number; a: number; v: number; nom: string } => !!m)
-    .sort((a, b) => a.de - b.de);
+/** Les trois statistiques qu'un tank cherche. Elles servent à INTERROGER le
+ *  vivier de rareté, pas à décrire son contenu : la phrase à l'écran se construit
+ *  sur le résultat de la recherche, si bien qu'elle se corrige toute seule le jour
+ *  où AirFlyff en ajoute une au tirage. */
+const STATS_DEFENSIVES = ["PV max", "Endurance", "Défense"];
+
+export function Rarete() {
+  const r = rareteChiffree();
+  /** LES PALIERS QUE LE CLIENT NE DESSINE PAS. Le rail annonce le nombre de
+   *  paliers, la grille n'en montre que ceux qui ont une image : sans cette
+   *  phrase, la page se lit comme un classement coupé sous son compteur — le
+   *  défaut exact qu'on nous a demandé de ne plus reproduire. Le compte et les
+   *  noms sortent de la table, jamais du clavier. */
+  const sansDessin = RARETES.filter((x) => !ICONE_RARETE[x]);
+  const presentes = STATS_DEFENSIVES.filter(
+    (nom) => r.vivier.some((v) => v.stat.localeCompare(nom, "fr", { sensitivity: "base" }) === 0),
+  );
+  // Les chances ne s'affichent QUE si la table est cohérente. Un total qui ne
+  // fait pas 100 est une table incomplète ou mal lue : on ne la publie pas, et
+  // on n'écrit pas de réserve à la place — la section se contente du reste.
+  const tirageSain = r.somme === 100 && r.lignes.length > 0;
 
   return (
-    <>
-      <Point
-        titre={
-          <Invisible enJeu={`La fenêtre de sertissage n'annonce que ${dia} logements. Les ${nHolo} holographiques n'apparaissent qu'une fois la pièce passée en artefact, et aucune interface ne récapitule le total.`}>
-            Une arme Artefact +{ARME_ARTEFACT.upMax} accepte {dia + nHolo} gemmes, pas {dia}
-          </Invisible>
-        }
-        marque="profit"
-      >
-        <div className="mc-slots">
-          <Slots quoi={`Arme +${ARME_SIMPLE.upMax}`} base={dia} legende={`${dia} diamants`} />
-          <Slots quoi={`Arme Artefact +${ARME_ARTEFACT.upMax}`} base={dia} extra={nHolo}
-            legende={<>{dia} diamants <b>+ {nHolo} holographiques</b></>} />
-        </div>
-        <p>
-          {quiPlafonnent} plafonnent bien à <b>{dia}</b>. Le <b>{quiDepasse}</b>, non : chacun de
-          ses <b>{nHolo} paliers de plus</b> rapporte autant que le {dia}<sup>e</sup>. Toute
-          comparaison de build faite sur {dia} gemmes <b>sous-estime le haut du jeu</b>.
-        </p>
-        {holo && <LigneObjet o={holo} />}
-      </Point>
+    <div style={{ display: "grid", gap: 10 }}>
+      <Grille cases={RARETES.map((x): Vue => ({
+        cle: x, src: ICONE_RARETE[x], nom: x, couleur: COULEUR_RARETE[x],
+      }))} />
+      <p className="mc-note">
+        La rareté donne les lignes bonus, et sa couleur est celle de l&apos;AirBuilder. Sur
+        {" "}<b>{RARETES.length} paliers</b>, {RARETES.length - sansDessin.length} ont un dessin :
+        {" "}<b>{sansDessin.join(" et ")}</b> {sansDessin.length > 1 ? "n'en ont" : "n'en a"} pas de
+        parchemin dans le client.
+      </p>
 
-      <Point titre={`L'échelle d'amélioration monte jusqu'à +${BIJOU.upMax}`}>
-        <div>
-          {ECHELLE.map((e) => {
-            const l = objets(e.cles);
-            if (!l.length) return null;
-            return (
-              <div key={e.de} className="mc-etage">
-                <span className="mc-etage-t"><b>{e.de}</b><span>{e.titre}</span></span>
-                <span className="mc-etage-l">
-                  {/* Une grille d'icones, pas une liste de phrases : a cet etage
-                      la question est « avec QUOI », et le nom de l'objet y
-                      repond. Les infobulles disaient toutes la meme chose en
-                      douze lignes. */}
-                  <span className="mc-grille">
-                    {l.map((o) => <Case key={o.cle} src={iconeDe(o)} nom={o.n} taille={26} />)}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-        <p className="mc-src">
-          Un anneau, une boucle ou un collier monte à <b>+{BIJOU.upMax}</b> sans passer par
-          l&apos;artefact ; une tenue, un casque, des gants s&apos;arrêtent à
-          {" "}<b>+{TENUE.upMax}</b>. Un « +20 » ne veut donc rien dire tant qu&apos;on ne sait pas
-          de quelle pièce on parle.
-        </p>
-      </Point>
-
-      {luca.objets.length > 0 && (
-        <Point titre={`Un seul PNJ tient ${luca.objets.length} de ces objets`} marque="profit">
-          <p>
-            Le PNJ <b>Donjon Luca</b> — passage obligé de tout le haut niveau, qu&apos;aucune
-            interface du jeu ne récapitule.
-          </p>
-          <div className="mc-grille">
-            {luca.objets.map((o) => <Chip key={o.cle} texte={o.n} />)}
-          </div>
-          {luca.monnaies.length > 0 && (
+      {tirageSain && (
+        <Point titre="Le palier ne dit pas combien de lignes l'arme reçoit" marque="piege">
+          <Barres max={100} lignes={r.lignes.map((l) => ({
+            nom: `${l.amount} ligne${l.amount > 1 ? "s" : ""} bonus`,
+            v: l.chance,
+            texte: `${l.chance} %`,
+          }))} />
+          {r.vivier.length > 0 && (
             <>
-              <p className="mc-src">Il prend {luca.monnaies.length} monnaies, et rien d&apos;autre :</p>
-              <div className="mc-grille">
-                {luca.monnaies.map((o) => <Case key={o.cle} src={iconeDe(o)} nom={o.n} taille={26} />)}
-              </div>
+              <p className="mc-src">Un tirage, et très déséquilibré. Le vivier :</p>
+              <Chips puces={r.vivier.map((v) => ({ texte: `${v.stat} +${v.min} → +${v.max}` }))} />
+              <p className="mc-src">
+                {presentes.length === 0
+                  ? <>Aucune n&apos;est défensive : un tank ne gagne <b>rien de garanti</b> à monter
+                      la rareté de son arme.</>
+                  : <>Dont <b>{presentes.join(", ")}</b> : un tank y trouve son compte.</>}
+              </p>
             </>
           )}
         </Point>
       )}
-
-      <Point titre={`${taux.remplacent.length} parchemins REMPLACENT le taux, ils ne s'y ajoutent pas`} marque="piege">
-        <p>
-          Glisser deux « Parchemin d&apos;amélioration » ne fait pas 200 % :{" "}
-          <b>{taux.ajoutent.length} parchemins s&apos;ajoutent au taux ou le garantissent</b>,
-          {" "}<b>{taux.remplacent.length} le remplacent</b>, chacun sur sa propre tranche. C&apos;est
-          la tranche qui compte — et le taux s&apos;effondre quand elle monte.
-        </p>
-        {marches.length > 0 && (
-          <>
-            <Escalier
-              marches={marches}
-              titre={`Taux garanti par tranche de paliers : ${marches.map((m) => `${m.de === m.a ? `+${m.de}` : `+${m.de} à +${m.a}`} ${m.v} %`).join(", ")}`}
-            />
-            <p className="mc-src">
-              {marches.map((m, i) => (
-                <span key={m.nom}>
-                  {i > 0 ? " · " : ""}<b>{m.nom}</b> {m.de === m.a ? `+${m.de}` : `+${m.de} → +${m.a}`}
-                </span>
-              ))}
-              {taux.remplacent.some((x) => x.pasArmure) && (
-                <> — et l&apos;un d&apos;eux ne marche <b>que sur les armes</b> : son infobulle
-                  exclut armures et boucliers.</>
-              )}
-            </p>
-          </>
-        )}
-        {taux.ajoutent.length > 0 && (
-          <>
-            <p className="mc-src">Ceux qui s&apos;<b>ajoutent</b>, ou garantissent le coup :</p>
-            <Bareme
-              lignes={taux.ajoutent.map((x) => [
-                x.fiche.n,
-                `${x.genre === "garantit" ? "réussite" : "taux"} ${x.pct} %`,
-              ] as [string, string])}
-            />
-          </>
-        )}
-        {taux.unTir > 0 && (
-          <p className="mc-src">
-            La limite qu&apos;aucune interface ne rappelle, écrite dans l&apos;infobulle de
-            {" "}<b>{taux.unTir}</b> d&apos;entre eux : le parchemin n&apos;est actif que pour
-            {" "}<b>une seule tentative</b>, il ne reste pas posé sur la pièce.
-          </p>
-        )}
-        {absolus.length > 0 && (
-          <>
-            <p>
-              À côté, {absolus.length} <b>Parchemins d&apos;Enchantement Absolu</b>, un par palier
-              de {plageAbsolue} : ils amènent la pièce au palier <b>à coup sûr</b>, sans objet de
-              protection. On garde le sien pour le palier qui casse.
-            </p>
-            <div className="mc-grille">
-              {absolus.map((o) => (
-                <Case key={o.cle} src={iconeDe(o)} nom={o.n.replace(/^Parchemin d.Enchantement Absolu\s*/i, "")} />
-              ))}
-            </div>
-            <p className="mc-src">
-              Leur infobulle pose une limite : ils <b>ne fonctionnent pas sur une arme Ultime</b>.
-            </p>
-          </>
-        )}
-      </Point>
-    </>
-  );
-}
-
-/* ═══ 5. Perçage ═════════════════════════════════════════════════════════════ */
-
-/** Un palier de carte : son image si nos assets l'ont, son nom sinon. Les deux
- *  disent la même chose ; ce qu'on refuse, c'est de montrer le dessin du palier
- *  voisin faute d'avoir le bon. */
-function Palier({ famille, palier, nom, couleur }: { famille: string; palier: string; nom: string; couleur?: string }) {
-  const src = iconePercage(famille, palier);
-  if (src) return <Case src={src} nom={nom} couleur={couleur} />;
-  return <Chip texte={nom} titre="Le client a ce palier, nos assets n'en ont pas l'image" />;
-}
-
-export function Percage() {
-  const c = cartesDePercage();
-  const annuler = panneau(/annuler un effet de piercing/i);
-
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div className="mc-slots">
-        <Slots quoi={`Arme percée +${ARME_SIMPLE.upMax}`} base={ARME_SIMPLE.percage?.max ?? 0} />
-        <Slots quoi="Arme Artefact" base={ARME_ARTEFACT.percage?.max ?? 0}
-          legende={<b>le maximum du jeu</b>} />
-        <Slots quoi="Tenue" base={TENUE.percage?.max ?? 0} />
-      </div>
-      <p className="mc-note">
-        Le nombre d&apos;emplacements et le <b>palier</b> de la carte sont deux choses
-        différentes — et c&apos;est le palier que le vendeur oublie d&apos;écrire. Le même élément
-        change de nom selon ce qu&apos;il fait :{" "}
-        <Bulle quoi={<>Une arme et un bouclier prennent des cartes d&apos;<b>attaque</b>, une tenue des cartes de <b>défense</b>. Le feu attaque sous « Feu » et défend sous « Volcano » — d&apos;où deux séries de dessins pour cinq éléments.</>}>
-          {c.nAttaque} cartes d&apos;attaque, {c.nDefense} de défense
-        </Bulle>.
-      </p>
-
-      <Groupe titre={`Attaque — arme et bouclier (${CARTES_ATTAQUE.length} éléments)`}>
-        <div style={{ display: "grid", gap: 7 }}>
-          {c.attaque.map((f) => (
-            <div key={f.famille} className="mc-slot">
-              <span style={{ color: COULEUR_CARTE[f.famille] ?? "var(--text)" }}>{f.famille}</span>
-              {f.paliers.map((p) => (
-                <Palier key={p.palier} famille={f.famille} palier={p.palier} nom={p.palier} couleur={COULEUR_CARTE[f.famille]} />
-              ))}
-            </div>
-          ))}
-        </div>
-      </Groupe>
-
-      <Groupe titre={`Défense — tenue (${CARTES_DEFENSE.length} éléments)`}>
-        <div style={{ display: "grid", gap: 7 }}>
-          {c.defense.map((f) => (
-            <div key={f.famille} className="mc-slot">
-              <span style={{ color: COULEUR_CARTE[f.famille] ?? "var(--text)" }}>{f.famille}</span>
-              {f.paliers.map((p) => (
-                <Palier key={p.palier} famille={f.famille} palier={p.palier} nom={`${p.palier} %`} couleur={COULEUR_CARTE[f.famille]} />
-              ))}
-            </div>
-          ))}
-        </div>
-      </Groupe>
-
-      <p className="mc-note">
-        Les paliers en pointillés sont ceux dont nos assets n&apos;ont pas le dessin : on écrit le
-        palier plutôt que de montrer celui d&apos;un autre. Et l&apos;<b>Air</b> n&apos;a pas de
-        rang R là où les quatre autres éléments en ont un — c&apos;est le client, pas un oubli.
-      </p>
-
-      {annuler && (
-        <Point titre="Se tromper de carte se paie autant de fois qu'il y a de cartes posées après" marque="piege">
-          <p>
-            Le panneau du jeu, seul endroit où c&apos;est écrit, pose deux règles d&apos;un coup :
-            on ne retire que <b>la dernière carte sertie</b>, et l&apos;opération a un tarif fixe.
-          </p>
-          <p className="mc-cite">« {annuler.texte} »</p>
-          <p>
-            Donc on ouvre <b>en dernier</b> les emplacements dont on est le moins sûr : sur une arme
-            à {ARME_ARTEFACT.percage?.max} emplacements, une erreur au 2<sup>e</sup> perçage se
-            défait en retirant tout ce qui suit.
-          </p>
-        </Point>
-      )}
     </div>
   );
 }
 
-/* ═══ 6. Éveil, scroll, élément ══════════════════════════════════════════════ */
+/* ═══ 7. Éveil, scroll, élément ══════════════════════════════════════════════ */
 
 export function Eveil() {
   const cartes = cartesDElement();
   const obsoletes = cartes.filter((x) => x.obsolete).length;
   const fixes = eveilFixe(/^II_SYS_SYS_SCR_FIX_AWAKE_/);
   const changer = panneau(/changement d.él[eé]ment/i);
-  const eveiller = panneau(/éveil d.objet/i);
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <div className="mc-grille">
-        <Case src={ICONE_EVEIL.R1} nom="Éveil R1" />
-        <Case src={ICONE_EVEIL.R2} nom="Éveil R2" />
-        <Case src={ICONE_SCROLL} nom="Scroll de stat" />
-      </div>
-      <p className="mc-note">
-        <b>R1</b> et <b>R2</b> posent une statistique en plus sur la pièce, R2 plus fort que R1,
-        prise parmi {STATS_EVEIL.length}. Le <b>scroll de stat</b> monte une des
-        {" "}{STATS_SCROLL.length} statistiques de base de +1 à +4. L&apos;<b>élément</b> de
-        l&apos;arme (jusqu&apos;à +{ARME_ARTEFACT.elementMax}) ne se confond pas avec les cartes de
-        perçage.
+      <Grille cases={[
+        { cle: "r1", src: ICONE_EVEIL.R1, nom: "Éveil R1" },
+        { cle: "r2", src: ICONE_EVEIL.R2, nom: "Éveil R2" },
+        { cle: "sc", src: ICONE_SCROLL, nom: "Scroll de stat" },
+        ...Object.entries(ICONE_ELEMENT).map(([nom, src]): Vue => ({ cle: nom, src, nom })),
+      ]} />
+      <Bareme lignes={[
+        ["Éveil R1 et R2 — une ligne en plus", `parmi ${STATS_EVEIL.length} statistiques`],
+        ["Scroll de stat", `+1 → +4 sur ${STATS_SCROLL.length} statistiques de base`],
+        ["Élément de l'arme", `jusqu'à +${ARME_ARTEFACT.elementMax}`],
+      ]} />
+      <p className="mc-src">
+        <Bulle quoi={<>Le client dit « <b>foudre</b> », le builder dit « <b>Électricité</b> ». Même élément, deux mots — celui qu&apos;on cherche en jeu est « foudre ».</>}>
+          Deux mots pour le même élément
+        </Bulle>
+        {" "}· l&apos;élément ne se confond pas avec les cartes de perçage.
       </p>
 
-      <Groupe titre="Élément de l'arme">
-        <div className="mc-grille">
-          {Object.entries(ICONE_ELEMENT).map(([nom, src]) => <Case key={nom} src={src} nom={nom} taille={24} />)}
-        </div>
-        <p className="mc-src">
-          <Bulle quoi={<>Le client dit « <b>foudre</b> », le builder dit « <b>Électricité</b> ». Même élément, deux mots — celui qu&apos;on cherche en jeu est « foudre ».</>}>
-            Deux mots pour le même élément
-          </Bulle>
-        </p>
-      </Groupe>
-
       <Groupe titre={`Ce qui monte l'élément : ${cartes.length} cartes, et un piège`}>
+        <Grille taille={26} cases={cartes.map(({ fiche, obsolete }): Vue => ({
+          cle: fiche.cle, src: iconeDe(fiche), cherche: fiche.n,
+          nom: `${fiche.n}${obsolete ? " — obsolète" : ""}`,
+          couleur: obsolete ? "var(--red)" : undefined,
+        }))} />
         <p className="mc-note">
-          Ces cartes-là s&apos;appellent aussi « Carte » et ne percent rien. Il y en a deux par
-          élément, et <b>{obsoletes} sont marquées obsolètes par le client lui-même</b> parce
-          qu&apos;elles plafonnent à +5 : acheter une Carte Flamma plutôt qu&apos;une Carte Brasero,
-          c&apos;est payer un plafond quatre fois plus bas.
+          Elles s&apos;appellent aussi « Carte » et ne percent rien. Deux par élément, dont
+          {" "}<b>{obsoletes} marquées obsolètes par le client</b> : elles plafonnent à +5, quatre
+          fois plus bas que leur voisine.
         </p>
-        <div className="mc-grille">
-          {cartes.map(({ fiche, obsolete }) => (
-            <Case key={fiche.cle} src={iconeDe(fiche)} nom={`${fiche.n}${obsolete ? " — obsolète" : ""}`}
-              couleur={obsolete ? "var(--red)" : undefined} taille={26} />
-          ))}
-        </div>
       </Groupe>
 
       {changer && (
         <Point titre="Changer d'élément ne recommence pas à zéro" marque="profit">
-          <p className="mc-cite">« {changer.texte} »</p>
           <p>
-            <b>La valeur suit l&apos;élément</b>, jusqu&apos;au plafond de
-            {" "}<b>+{ARME_ARTEFACT.elementMax}</b>. Une arme élémentarisée au mauvais élément
-            n&apos;est donc <b>pas perdue</b>, et elle se vend au prix d&apos;une arme
-            élémentarisée. Le jeu ne l&apos;annonce que dans sa fenêtre de transformation.
+            <b>La valeur suit l&apos;élément</b>, jusqu&apos;à +{ARME_ARTEFACT.elementMax} : une arme
+            élémentarisée au mauvais élément n&apos;est <b>pas perdue</b>, et se vend au même prix.
+            Le jeu ne le dit que dans sa fenêtre de transformation.
           </p>
         </Point>
       )}
 
       {fixes.lignes.length > 0 && (
-        <Point titre={`L'éveil ne se tire pas forcément : ${fixes.total} parchemins posent la ligne qu'on veut`} marque="profit">
-          <p>
-            La statistique est écrite sur le parchemin — <b>{fixes.lignes.length} statistiques</b>,
-            chacune en rang 1 et rang 2. Et chaque parchemin nomme <b>les pièces sur lesquelles il
-            se pose</b> : la Force ne va pas sur des bottes, les Soins ne vont pas sur un casque.
-            Aucune interface du jeu ne récapitule ça.
+        <Point titre={`${fixes.total} parchemins posent la ligne d'éveil qu'on veut`} marque="profit">
+          <Bareme lignes={fixes.lignes.map((l) => [
+            l.label || l.code,
+            `R1 +${l.r1}${l.pourcent ? " %" : ""} · R2 +${l.r2}${l.pourcent ? " %" : ""}`,
+          ] as [string, string])} />
+          <p className="mc-src">
+            Chacun nomme <b>les pièces où il se pose</b> : la Force ne va pas sur des bottes.
+            {fixes.pasDouble.length === 0 && <> Le <b>rang 2 vaut le double du rang 1</b> — pas sur
+              la série pour costumes.</>}
           </p>
-          <Bareme
-            lignes={fixes.lignes.map((l) => [
-              `${l.label || l.code}${l.pieces.length ? ` — ${l.pieces.join(", ")}` : ""}`,
-              `R1 +${l.r1}${l.pourcent ? " %" : ""} · R2 +${l.r2}${l.pourcent ? " %" : ""}`,
-            ] as [string, string])}
-          />
-          {fixes.pasDouble.length === 0 && (
-            <p className="mc-src">
-              Sur cette série, <b>le rang 2 vaut exactement le double du rang 1</b>. Ce n&apos;est
-              pas vrai de la série pour costumes : voir <b>Costumes &amp; gemmes de costume</b>.
-            </p>
-          )}
-          {eveiller && (
-            <p className="mc-src">
-              Et l&apos;opération a un tarif : « {eveiller.texte.replace(/^#[0-9a-fA-F]{3,6}/, "")} »
-            </p>
-          )}
         </Point>
       )}
     </div>
   );
 }
 
-/* ═══ 7. Sertissage & gemmes ═════════════════════════════════════════════════ */
-
-export function Sertissage() {
-  const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
-  const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
-  const plafonds = plafondsDeSertissage();
-  return (
-    <div style={{ display: "grid", gap: 12 }}>
-      <div className="mc-grille">
-        <Case src={ICONE_DIAMANT} nom="Diamant" />
-        <Case src={ICONE_HOLO} nom="Diamant holographique" />
-      </div>
-      <div className="mc-slots">
-        <Slots quoi="Arme Artefact" base={dia} extra={nHolo}
-          legende={<>{dia} diamants + {nHolo} holographiques</>} />
-      </div>
-      <p className="mc-note">
-        Ce qui se sertit sur un <b>costume</b> n&apos;est pas un diamant mais un joyau propre à la
-        pièce, et les règles n&apos;y sont pas les mêmes : voir <b>Costumes &amp; gemmes de
-        costume</b>, juste en dessous.
-      </p>
-
-      <Groupe titre={`Les ${plafonds.length || STATS_DIAMANT.length} statistiques, et jusqu'où elles montent`}>
-        <div className="mc-grille">
-          {plafonds.length > 0
-            ? plafonds.map((p, i) => (
-              <Chip key={p.stat} texte={`${String(i + 1).padStart(2, "0")} · ${p.stat} +${p.max}`} />
-            ))
-            : STATS_DIAMANT.map((s, i) => <Chip key={s} texte={`${String(i + 1).padStart(2, "0")} · ${s}`} />)}
-        </div>
-        {/* Le rang affiche est celui de la table de VALEURS (GEMU), pas celui de
-            la liste deroulante : c'est l'ordre auquel le jeu repond. Numeroter la
-            liste deroulante ferait de la page un troisieme temoin faux. */}
-        <p className="mc-src">
-          C&apos;est cet ordre-là — celui de <b>GEMU</b> — que les noms de gemmes ne suivent pas
-          (section <b>Les gemmes mentent</b>).
-        </p>
-      </Groupe>
-
-      <Groupe titre={`Les ${nHolo} holographiques, et ce qu'ils donnent`}>
-        <div className="mc-grille">
-          {STATS_HOLO.map((s) => <Chip key={s} texte={s} />)}
-        </div>
-        <p className="mc-src">
-          {STATS_HOLO.length} valeurs pour {nHolo} emplacements : on choisit, on ne cumule pas tout.
-        </p>
-      </Groupe>
-    </div>
-  );
-}
-
-/* ═══ 8. Runes ═══════════════════════════════════════════════════════════════ */
+/* ═══ 8. Runes & mantras ═════════════════════════════════════════════════════ */
 
 export function Runes() {
   const r = runes();
+  const m = mantras();
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <p className="mc-note">
-        Deux choses portent ce mot. La rune d&apos;<b>arme</b> dépend du palier de l&apos;arme, et
-        le <b>marteau</b> a sa propre série. La rune de <b>tenue</b> (aussi cape, familier,
-        ramasseur) porte la pierre de la statistique qu&apos;elle donne. Confondre les deux fait
-        acheter la mauvaise — et il y en a <b>{r.total}</b> dans le jeu, pas quatre.
+        La rune d&apos;<b>arme</b> dépend du palier de l&apos;arme, le <b>marteau</b> a sa série, et
+        celle de <b>tenue</b> (aussi cape, familier, ramasseur) porte la pierre de la statistique
+        qu&apos;elle donne. Il y en a <b>{r.total}</b>, pas quatre.
       </p>
 
       <Groupe titre="Rune d'arme">
-        <div className="mc-grille">
-          {Object.entries(ICONE_RUNE_ARME).map(([nom, src]) => <Case key={nom} src={src} nom={nom} />)}
-          <Case src={ICONE_RUNE_VIERGE} nom="Yggdrasil vierge" />
-        </div>
+        <Grille cases={[
+          ...Object.entries(ICONE_RUNE_ARME).map(([nom, src]): Vue => ({ cle: nom, src, nom })),
+          { cle: "vierge", src: ICONE_RUNE_VIERGE, nom: "Yggdrasil vierge" },
+        ]} />
       </Groupe>
       <Groupe titre="Rune de marteau">
-        <div className="mc-grille">
-          {Object.entries(ICONE_RUNE_MARTEAU).map(([nom, src]) => <Case key={nom} src={src} nom={nom} />)}
-        </div>
+        <Grille cases={Object.entries(ICONE_RUNE_MARTEAU).map(([nom, src]): Vue => ({ cle: nom, src, nom }))} />
       </Groupe>
       <Groupe titre="Rune de tenue, par statistique">
-        <div className="mc-grille">
-          {Object.entries(ICONE_RUNE_STAT).map(([nom, src]) => <Case key={nom} src={src} nom={nom} />)}
-        </div>
+        <Grille cases={Object.entries(ICONE_RUNE_STAT).map(([nom, src]): Vue => ({ cle: nom, src, nom }))} />
       </Groupe>
-      {/* LES HUIT RUNES DE RAMASSEUR, images du client jamais branchees. Elles
-          portent la distinction que le reste du site ne montre nulle part : la
-          MEME statistique existe en version JcE et en version JcJ. */}
-      <Groupe titre={`Rune de ramasseur — ${RAMASSEUR.length} pierres, et la même statistique en deux versions`}>
-        <div className="mc-grille">
-          {RAMASSEUR.map((x) => <Case key={x.f} src={`/jeu/mecaniques/${x.f}.webp`} nom={x.nom} taille={28} />)}
-        </div>
+      {/* LES RUNES DE RAMASSEUR, images du client jamais branchees. Elles portent
+          la distinction que le reste du site ne montre nulle part : la MEME
+          statistique existe en version JcE et en version JcJ. */}
+      <Groupe titre={`Rune de ramasseur — ${RAMASSEUR.length} pierres`}>
+        <Grille taille={28} cases={RAMASSEUR.map((x): Vue => ({
+          cle: x.f, src: `/jeu/mecaniques/${x.f}.webp`, nom: x.nom,
+        }))} />
         <p className="mc-src">
-          La <b>Force</b> et l&apos;<b>Intelligence</b> existent en <b>JcE</b> et en <b>JcJ</b> :
-          deux pierres différentes pour la même statistique, et ce n&apos;est pas la même qu&apos;on
-          grave selon qu&apos;on farme ou qu&apos;on va en arène.
+          <b>Force</b> et <b>Intelligence</b> existent en <b>JcE</b> et en <b>JcJ</b> : deux pierres
+          pour une même statistique, et pas la même selon qu&apos;on farme ou qu&apos;on va en arène.
         </p>
       </Groupe>
 
@@ -796,35 +732,32 @@ export function Runes() {
         <Barres lignes={r.familles.map((f) => ({ nom: `${f.nom} — ${f.sous}`, v: f.membres.length }))} />
       </Groupe>
 
+      {/* LES MANTRAS, jamais montres jusqu'ici. Le client les range en
+          « consommable », mais ils occupent l'emplacement de MUNITION : c'est une
+          ligne de bonus de plus sur le personnage, chiffree par le client. */}
+      {m.paliers.length > 0 && (
+        <Groupe titre={`Mantra — ${m.total} pierres, ${m.familles.length} effets`}>
+          <Objets liste={m.paliers.map((o) => ligneDe(o, { bonus: true }))} />
+          <p className="mc-src">
+            Sur l&apos;emplacement de <b>munition</b> : porter un mantra, c&apos;est renoncer à ses
+            flèches.
+          </p>
+        </Groupe>
+      )}
+
       <div style={{ display: "grid", gap: 8, paddingTop: 4 }}>
         {r.tankMenteuses.map((o) => (
-          <div key={o.cle} className="mc-cote">
-            <Vignette src={RUNE_TANK} legende="Rune TANK" />
-            <Point titre={`« ${o.n} » n'est pas une rune tank`} marque="piege">
-              <p>
-                Les autres runes TANK de la gamme Luzaka donnent PV max % et Endurance. Celle-là,
-                non — le fichier lui met les statistiques d&apos;une version support :
-              </p>
-              <Bonus b={o.b} />
-              <p>
-                Elle se vendra pourtant au prix des autres, parce que son nom est le même. Un
-                Templier au glaive qui la grave a payé une rune de prêtre.
-              </p>
-            </Point>
-          </div>
-        ))}
-
-        {r.manquants.map((m) => (
-          <Point key={`${m.gamme}-${m.modele}`} titre={`La ${m.modele} ${m.gamme.replace(/^Arme /, "")} : ni nom ni statistiques dans le relevé`} marque="piege">
+          <Point key={o.cle} titre={`« ${o.n} » n'est pas une rune tank`} marque="piege">
             <p>
-              C&apos;est le seul trou de la gamme, les autres modèles y sont tous. Elle ne vaut
-              <b> rien de prouvé</b> — et surtout pas le prix des autres.
+              Les autres TANK de la gamme Luzaka donnent PV max % et Endurance. Celle-là porte des
+              statistiques de support, et se vend au prix des autres :
             </p>
+            <Bonus b={o.b} />
           </Point>
         ))}
 
         {r.intruses.map((o) => (
-          <Point key={o.cle} titre={`« ${o.n} » donne du défensif là où toute sa gamme donne du dégât`} marque="piege">
+          <Point key={o.cle} titre={`« ${o.n} » donne du défensif là où sa gamme donne du dégât`} marque="piege">
             <Bonus b={o.b} />
             <p>Qui l&apos;achète pour taper se trompe : la doloire est l&apos;arme des tanks.</p>
           </Point>
@@ -833,14 +766,18 @@ export function Runes() {
         {r.doublons.map((l) => (
           <Point key={l[0].cle} titre={`« ${l[0].n} » existe ${l.length} fois, sous ${l.length} clés`} marque="piege">
             <p>
-              {l.map((o) => o.cle.replace("II_SYS_SYS_RUNE_", "")).join(" et ")} — dont une rangée
-              du côté des runes d&apos;arme avec les bonus de la rune de tenue. Deux objets
-              différents, un seul nom : de quoi se tromper à l&apos;achat comme à la vente.
+              Deux objets, un seul nom — dont un rangé côté runes d&apos;arme avec les bonus de la
+              rune de tenue. De quoi se tromper à l&apos;achat comme à la vente.
             </p>
             <Bonus b={l[0].b} />
           </Point>
         ))}
       </div>
+      {/* La vignette de la pierre TANK accompagne le premier piege ci-dessus sans
+          entrer dans son texte : elle montre le dessin qu'on croit acheter. */}
+      {r.tankMenteuses.length > 0 && (
+        <Vignettes items={[{ src: RUNE_TANK, legende: "Rune TANK" }]} />
+      )}
     </div>
   );
 }
@@ -853,29 +790,21 @@ export function Runes() {
  * Cette page portait l'arène, les recettes éteintes, le barème de la GvG et la
  * taxe des Chambres Secrètes. Aucun des quatre ne parle d'une pièce
  * d'équipement, et trois d'entre eux redisaient ce qu'une autre page développe
- * déjà — les recettes éteintes se lisaient mot pour mot sur /crafts. Un sujet,
- * une page : ici on montre la porte, on ne redéveloppe pas.
- *
- * Le développement retiré est SIGNALÉ au fil principal : c'est au propriétaire
- * de la page d'accueillir ce qui lui revient, pas à ce lot de le déposer chez un
- * voisin qu'il ne possède pas.
+ * déjà. Un sujet, une page : ici on montre la porte, on ne redéveloppe pas.
  */
-const PORTES: { href: string; titre: string; quoi: string }[] = [
-  { href: "/crafts", titre: "Recettes et crafts éteints", quoi: "Ce qu'aucun PNJ ne propose, les comptoirs à jetons, l'arbre du farm." },
-  { href: "/classes", titre: "L'arène et les compétences", quoi: "La seconde table d'équilibrage : un build juste en donjon est faux en JcJ." },
-  { href: "/compositions", titre: "GvG et Chambres Secrètes", quoi: "Le barème aux points, et la taxe d'une région qui ne se fixe qu'une fois." },
-  { href: "/objets", titre: "Le catalogue des objets", quoi: "Retrouver une pièce nommée, sa rareté et sa provenance." },
+const PORTES: [string, string, string][] = [
+  ["/objets", "Le catalogue d'objets", "Une pièce nommée, sa rareté, sa provenance."],
+  ["/crafts", "Recettes et crafts", "Les comptoirs à jetons, l'arbre du farm."],
+  ["/classes", "Arène et compétences", "Un build juste en donjon est faux en JcJ."],
+  ["/compositions", "GvG et Chambres Secrètes", "Le barème aux points, la taxe de région."],
 ];
 
 export function Ailleurs() {
   return (
     <div className="mc-ailleurs">
-      {PORTES.map((p) => (
-        <Link key={p.href} href={p.href} className="fx-card mc-porte">
-          <span>
-            <b>{p.titre}</b>
-            <i>{p.quoi}</i>
-          </span>
+      {PORTES.map(([href, titre, quoi]) => (
+        <Link key={href} href={href} className="fx-card mc-porte">
+          <span><b>{titre}</b><i>{quoi}</i></span>
         </Link>
       ))}
     </div>

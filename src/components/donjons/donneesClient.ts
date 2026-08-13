@@ -189,6 +189,61 @@ export const PLANS: Record<string, { src: string; genre?: "plan" | "aerien"; fil
   WdHeaven05: { src: "/jeu/cartes-monde/dungeon_wdheaven05.webp", genre: "plan" },
 };
 
+/**
+ * LE SECOND NOM IMPRIMÉ — cinq donjons portent DEUX cartes dans le client.
+ *
+ * Les dix-sept cartes parchemin encore libres ont été ouvertes une par une et
+ * lues agrandies. Cinq d'entre elles ne sont ni un étage 2 ni un lieu de plus :
+ * c'est LE MÊME DESSIN, au trait près, avec un AUTRE NOM dans le cartouche. Le
+ * constat a été fait en posant les deux fichiers côte à côte — même tracé, même
+ * rose des vents, mêmes salles, mêmes libellés « Entrée » et « Salle du Boss » —,
+ * et il ne s'appuie sur rien d'autre que ce qui est imprimé dessus.
+ *
+ *   dungeon_rustia_1            « Désiréa »                    (le nom du téléporteur)
+ *   dungeon_rustia_2            « Désiréa (Maitre) »
+ *   dungeon_upresia             « Forêt d'Euphrasia »          (le nom du téléporteur)
+ *   dungeon_upresia_1           « Forêt Enchantée d'Euphrasia »
+ *   dungeon_herneos_1           « Abysses d'Herneos »          (celle déjà branchée)
+ *   dungeon_herneos             « Herneos »
+ *   dungeon_ominous             « Fosse aux Esprits »          (le nom du téléporteur)
+ *   dungeon_ominous01           « Fosse aux Esprits Perdus »
+ *   dungeon_contaminatedtrails  « Chemin Contaminé de Rhisis » (le nom du téléporteur)
+ *   dungeon_contaminatedtrails1  cartouche CORÉEN, sous-titré « Contaminated Rhisis of Trails »
+ *
+ * CE QU'ON N'ÉCRIT PAS, ET C'EST LA RÈGLE : aucun fichier de ce dépôt ne dit à
+ * quoi sert le second nom. « (Maitre) » ressemble à un mode plus dur, « Perdus »
+ * et « Abysses » à des variantes de fin de jeu — ressembler n'est pas savoir. Le
+ * nom imprimé est la seule preuve, donc c'est la seule chose affichée : deux
+ * cartouches pour un tracé. Le lecteur qui croise l'un des deux noms en jeu sait
+ * au moins qu'il connaît déjà le plan.
+ *
+ * `dungeon_sanpres_1` est écarté exprès : son cartouche dit « USS Darkon » et son
+ * DESSIN DIFFÈRE de celui d'USS Celestia. Ce n'est donc pas un second nom, c'est
+ * une autre carte — et aucune donnée ne la rattache à quoi que ce soit.
+ */
+export const SECOND_NOM: Record<string, { cartouche: string; src: string }[]> = {
+  DuRustia_1: [
+    { cartouche: "Désiréa", src: "/jeu/cartes-monde/dungeon_rustia_1.webp" },
+    { cartouche: "Désiréa (Maitre)", src: "/jeu/cartes-monde/dungeon_rustia_2.webp" },
+  ],
+  DuUpresia: [
+    { cartouche: "Forêt d'Euphrasia", src: "/jeu/cartes-monde/dungeon_upresia.webp" },
+    { cartouche: "Forêt Enchantée d'Euphrasia", src: "/jeu/cartes-monde/dungeon_upresia_1.webp" },
+  ],
+  DuHerneos_1: [
+    { cartouche: "Abysses d'Herneos", src: "/jeu/cartes-monde/dungeon_herneos_1.webp" },
+    { cartouche: "Herneos", src: "/jeu/cartes-monde/dungeon_herneos.webp" },
+  ],
+  DuOminous: [
+    { cartouche: "Fosse aux Esprits", src: "/jeu/cartes-monde/dungeon_ominous.webp" },
+    { cartouche: "Fosse aux Esprits Perdus", src: "/jeu/cartes-monde/dungeon_ominous01.webp" },
+  ],
+  DuContaminatedTrails: [
+    { cartouche: "Chemin Contaminé de Rhisis", src: "/jeu/cartes-monde/dungeon_contaminatedtrails.webp" },
+    { cartouche: "Contaminated Rhisis of Trails", src: "/jeu/cartes-monde/dungeon_contaminatedtrails1.webp" },
+  ],
+};
+
 /** Les grands nombres de PV se lisent mieux abrégés : 570 350 000 → 570,4 M. */
 export function pvCourt(pv: number): string {
   if (pv >= 1_000_000_000) return `${(pv / 1_000_000_000).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} Md`;

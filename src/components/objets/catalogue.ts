@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { clefRecherche, type Famille, type ObjetFiche } from "./vocabulaire";
+import { idsAvecStat } from "./stats";
+// Les deux catalogues se parlent, et c'est tout l'objet de cette passe : « quels
+// objets tombent sur un monstre » n'a de réponse que du côté des monstres. Les deux
+// modules lisent le disque côté serveur, aucun des deux fichiers ne descend au
+// navigateur.
+import { objetsLaches } from "@/components/monstres/catalogue";
 
 /**
  * LE CATALOGUE DES 12 134 OBJETS — chargé une fois, gardé en mémoire.
@@ -26,6 +32,19 @@ function charger() {
   const f = path.join(process.cwd(), "public", "wiki", "objets-fiches.json");
   const d = JSON.parse(fs.readFileSync(f, "utf8")) as { genere?: string; objets: ObjetFiche[] };
   GENERE = d.genere ?? "";
+  /* LE « ½ » DU CLIENT REDEVIENT UN « œ », UNE FOIS, ICI.
+     Le relevé porte un accident d'encodage venu du client : 25 noms d'objet et 35
+     descriptions écrivent « C½ur », « B½uf », « S½ur ». On ne touche pas au relevé —
+     c'est une lecture brute du jeu — mais on ne montre pas non plus un mot cassé :
+     « Fragment de C½ur » s'affichait dans le titre de l'onglet, dans la fiche, dans
+     les résultats de recherche et sur 265 fiches de monstre. La clé de recherche ne
+     bouge pas d'un iota : `clefRecherche` réduit « ½ » et « œ » au même espace, donc
+     tous les rapprochements par nom (les lâcheurs, les étals, « où le trouver »)
+     continuent de tomber juste. */
+  for (const o of d.objets) {
+    if (o.n?.includes("½")) o.n = o.n.replace(/½/g, "œ");
+    if (o.d?.includes("½")) o.d = o.d.replace(/½/g, "œ");
+  }
   // La clé de recherche est calculée une fois pour toutes : la recalculer à
   // chaque frappe sur 12 134 lignes se sentirait dans le champ de saisie.
   TOUT = d.objets.map((o) => ({ o, k: clefRecherche(o.n) }));
@@ -48,14 +67,20 @@ export const nombreDObjets = () => charger().TOUT.length;
  */
 export function comptesGlobaux() {
   const { TOUT: tout } = charger();
-  let maison = 0, bonus = 0, unique = 0, ultime = 0;
-  for (const { o } of tout) {
+  const laches = objetsLaches();
+  let maison = 0, bonus = 0, unique = 0, ultime = 0, lache = 0;
+  /* `e.k` EST DÉJÀ la clé de recherche du nom : la recalculer ici refaisait une
+     normalisation Unicode et deux expressions régulières sur 12 134 lignes à chaque
+     appel de /api/objets, soit toutes les 220 ms pendant qu'on tape. */
+  for (const e of tout) {
+    const o = e.o;
     if (o.af === 1) maison++;
     if (o.b?.length) bonus++;
     if (o.g === "Unique") unique++;
     else if (o.g === "Ultime") ultime++;
+    if (laches.has(e.k)) lache++;
   }
-  return { maison, bonus, unique, ultime };
+  return { maison, bonus, unique, ultime, lache };
 }
 export const objetParId = (id: number) => charger().PAR_ID.get(id) ?? null;
 
@@ -72,6 +97,18 @@ export type Critere = {
    *  espaces de noms propres au serveur. C'est le tri qui sépare le serveur du
    *  jeu de base, et c'est celui qui a le plus de valeur ici. */
   maison?: boolean;
+  /**
+   * UNE STATISTIQUE PRÉCISE, par son code `DST_*`.
+   *
+   * « Qu'est-ce qui donne du taux critique ? » n'avait aucune réponse sur ce site :
+   * on pouvait filtrer « qui portent des bonus », pas dire lequel. Le code vient de
+   * `stats.ts`, qui le lit dans le client — un libellé français ne se filtre pas de
+   * façon sûre, les libellés du relevé se décalent.
+   */
+  stat?: string;
+  /** Seuls les objets qu'un monstre lâche. C'est « retrouver les drops » pris dans
+   *  l'autre sens que la fiche du monstre. */
+  lache?: boolean;
 };
 
 /**
@@ -94,6 +131,8 @@ function note(k: string, q: string): number {
 export function chercher(c: Critere, limite = 50) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
+  const ids = c.stat ? idsAvecStat(c.stat) : null;
+  const laches = c.lache ? objetsLaches() : null;
 
   const gardes: { e: Entree; s: number }[] = [];
   for (const e of tout) {
@@ -102,6 +141,9 @@ export function chercher(c: Critere, limite = 50) {
     if (c.grade && o.g !== c.grade) continue;
     if (c.avecBonus && !o.b?.length) continue;
     if (c.maison && o.af !== 1) continue;
+    if (ids && !ids.has(o.i)) continue;
+    // `e.k` est la clé du nom, déjà calculée au chargement (cf. `comptesGlobaux`).
+    if (laches && !laches.has(e.k)) continue;
     // Un objet sans niveau requis se porte à tout niveau : on ne l'écarte pas.
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
     const s = note(e.k, q);
@@ -128,12 +170,17 @@ export function chercher(c: Critere, limite = 50) {
 export function comptesParFamille(c: Critere): Record<string, number> {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");
+  const ids = c.stat ? idsAvecStat(c.stat) : null;
+  const laches = c.lache ? objetsLaches() : null;
   const n: Record<string, number> = {};
   for (const e of tout) {
     const o = e.o;
     if (c.grade && o.g !== c.grade) continue;
     if (c.avecBonus && !o.b?.length) continue;
     if (c.maison && o.af !== 1) continue;
+    if (ids && !ids.has(o.i)) continue;
+    // `e.k` est la clé du nom, déjà calculée au chargement (cf. `comptesGlobaux`).
+    if (laches && !laches.has(e.k)) continue;
     if (c.niveau != null && (o.nr ?? 0) > c.niveau) continue;
     if (note(e.k, q) < 0) continue;
     n[o.f] = (n[o.f] ?? 0) + 1;

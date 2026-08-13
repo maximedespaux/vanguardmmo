@@ -18,17 +18,19 @@ import { CARTE, DEROULE, type Bilan } from "./modele";
 export function Deroule({ b }: { b: Bilan }) {
   return (
     <div>
-      <p style={{ fontSize: 13, lineHeight: 1.65, marginBottom: 16, color: "var(--text-muted)" }}>
-        Le jeu appelle ce mode <b style={{ color: "var(--text)" }}>Protection de l&apos;Oasis</b> et la carte
-        où il se joue <b style={{ color: "var(--text)" }}>Tour Infernale</b>. Notre relevé, lui, l&apos;appelait
-        « Tour sans fin » — un nom qui n&apos;existe nulle part dans le jeu, et qui se trompe sur le fond :
-        le client a une phrase pour dire <b style={{ color: "var(--gold)" }}>« vous venez de terminer la
-        dernière vague »</b>. Il y en a {b.vagues}, et après, plus rien. Ne le confonds pas non plus avec
-        la <b style={{ color: "var(--text)" }}>Tour Oubliée</b>, qui est un donjon à cinq étages, ni avec
-        l&apos;objet du même nom.
-      </p>
-
-      <SousTitre icon="clock" apres={`${DEROULE.length} des 16 chaînes du mode`}>Le tour, message par message</SousTitre>
+      {/* CE PARAGRAPHE D'OUVERTURE EST PARTI EN ENTIER, et rien de ce qu'il portait
+          n'est perdu :
+           · les deux noms (le mode, la carte) sont maintenant dans l'en-tête du bloc,
+             au-dessus, où on les lit AVANT d'ouvrir ce panneau ;
+           · « il y en a 52 » est le compte affiché à côté du titre de la section ;
+           · « ne le confonds pas avec la Tour Oubliée » était déjà dit deux fois sur
+             le même écran ;
+           · « notre relevé l'appelait Tour sans fin » est de la COMPTABILITÉ DU SITE :
+             ça corrige notre propre ancien libellé, que plus personne ne voit. Un
+             joueur ne peut rien en faire. Le fait de jeu — il y a une dernière vague —
+             est porté par la chaîne nº 14 de la liste juste en dessous, qui le dit
+             avec les mots du client. */}
+      <SousTitre icon="clock" apres={`${DEROULE.length} des 16 chaînes du mode · ${b.vagues} vagues`}>Le tour, message par message</SousTitre>
       <div style={{ display: "grid", gap: 8, marginBottom: 20 }}>
         {DEROULE.map((d, i) => (
           <div key={d.id} className="fx-card" style={{ display: "flex", gap: 12, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: "11px 13px" }}>
@@ -40,13 +42,17 @@ export function Deroule({ b }: { b: Bilan }) {
           </div>
         ))}
       </div>
+      {/* LE DÉCOMPTE DES SEIZE CHAÎNES EST PARTI. « Quatre sont des étiquettes de
+          fenêtre, deux n'ont pas de texte » est de la comptabilité de fouille : ça
+          décrit notre relevé, pas le jeu. Et « on ne sait pas ce qu'elles disent »
+          est un constat d'ignorance pur — la règle veut qu'un renseignement
+          incomplet disparaisse au lieu de s'excuser. Le rapport {DEROULE.length}/16
+          reste affiché à côté du titre, ce qui suffit à dire que la liste n'est pas
+          exhaustive. Seule la clef de lecture des %u / %d / %s reste : sans elle, on
+          croit que le jeu affiche vraiment « Vague nº %u ». */}
       <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 22, lineHeight: 1.6 }}>
-        Les <code>%u</code>, <code>%d</code> et <code>%s</code> sont des trous que le jeu remplit en
-        cours de partie : un numéro de vague, une quantité, un nom d&apos;objet. On les laisse tels
-        quels plutôt que d&apos;inventer les valeurs. Les seize chaînes du mode ne se valent pas :
-        {" "}{DEROULE.length} racontent le déroulé, quatre ne sont que des étiquettes de fenêtre
-        (« Vague », « Temps », « Infos. » et le nom du mode), et les deux dernières n&apos;ont pas de
-        texte dans notre relevé — on ne sait pas ce qu&apos;elles disent.
+        <code>%u</code>, <code>%d</code>, <code>%s</code> : des trous que le jeu remplit en cours de
+        partie — un numéro, une quantité, un nom d&apos;objet.
       </div>
 
       <SousTitre icon="map" apres="monde nº 8">L&apos;arène, telle que les fichiers de carte la décrivent</SousTitre>
@@ -59,12 +65,15 @@ export function Deroule({ b }: { b: Bilan }) {
           </div>
         ))}
       </div>
+      {/* La déduction reste — c'est elle qui explique pourquoi le tableau des vagues
+          n'a pas la même solidité que le reste du wiki. Ce qui part, c'est sa
+          reformulation : « aucune ligne de la carte ne dit quel monstre arrive » et
+          « il faut le lire avec les réserves » répétaient la ligne du dessus et le
+          titre de la section voisine. */}
       <div style={{ marginTop: 12, background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 10, padding: 13, fontSize: 12.5, lineHeight: 1.6 }}>
         <Icon name="info" size={13} style={{ marginRight: 6, color: "var(--orange)" }} />
-        Une arène vide, ça veut dire quelque chose : <b>les vagues sont pilotées par le serveur</b>.
-        Aucune ligne de la carte ne dit quel monstre arrive ni quand. C&apos;est pour ça que le tableau
-        des vagues vient d&apos;un relevé maison et pas des fichiers du jeu — et c&apos;est aussi pour
-        ça qu&apos;il faut le lire avec les réserves qui vont avec.
+        Une carte vide, ça veut dire quelque chose : <b>les vagues sont pilotées par le serveur</b>,
+        donc leur tableau vient d&apos;un relevé maison.
       </div>
     </div>
   );

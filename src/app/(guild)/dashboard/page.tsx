@@ -86,6 +86,34 @@ const SCHEMA: SchemaPage = {
        et son défaut est ce qu'on livre. */
     { clef: "descriptionsDesPortes", type: "interrupteur", defaut: true, label: "La description sous chaque porte", aide: "Décoché, une porte n'affiche que son nom et son compte — la page tient sur beaucoup moins de hauteur." },
     { clef: "persosMontres", type: "nombre", defaut: 4, min: 1, max: 12, label: "Personnages listés dans « Où j'en suis »", aide: "Au-delà, un lien mène à la page des personnages." },
+
+    /* ┌───────── QUELLES PORTES, ET DANS QUEL ORDRE ─────────┐
+       Demande du lot : « Le tableau de bord est un bon candidat : quelles portes on
+       montre, dans quel ordre. »
+
+       UN INTERRUPTEUR PAR GROUPE, et pas un par porte. Vingt-trois cases à cocher
+       font un panneau qu'on n'ouvre plus, et le grain utile n'est pas la porte :
+       c'est la FAMILLE. Un officier qui vit dans les outils du staff veut « Tenir la
+       guilde » en premier, pas déplacer /annonce d'un cran.
+
+       LES CLEFS SONT DÉRIVÉES DE `GROUPES` : ajouter une famille lui donne son
+       interrupteur sans qu'on y pense, et en retirer une fait disparaître le sien.
+       Le libellé du réglage est celui du groupe — impossible qu'ils divergent.
+
+       TOUS LES DÉFAUTS SONT L'ÉTAT ACTUEL, sans exception : chaque groupe est visible
+       (`defaut: true`) et l'ordre par défaut est celui du fichier. Tant que personne
+       n'ouvre le panneau, la page rend exactement ce qu'elle rendait avant. */
+    ...GROUPES.map((g) => ({
+      clef: `voir_${g.clef}` as const, type: "interrupteur" as const, defaut: true,
+      label: `Le groupe « ${g.titre} »`,
+      aide: g.admin ? "Réservé au staff de toute façon." : "Décoché, ses portes disparaissent de l'accueil.",
+    })),
+    {
+      clef: "premierGroupe", type: "choix", defaut: "",
+      label: "Le groupe à mettre en premier",
+      aide: "Les autres gardent leur ordre. « L'ordre du site » est ce qu'on livre.",
+      options: [{ valeur: "", label: "L'ordre du site" }, ...GROUPES.map((g) => ({ valeur: g.clef, label: g.titre }))],
+    },
   ],
 };
 
@@ -176,10 +204,14 @@ export default function AccueilGuildePage() {
    * une panne.
    */
   const avecTexte = voir("descriptionsDesPortes");
+  const premier = String(valeurs.premierGroupe ?? "");
   const groupes = useMemo(
-    () =>
-      GROUPES
+    () => {
+      const liste = GROUPES
         .filter((g) => !g.admin || staff)
+        // Le réglage de visibilité du groupe, avant tout le reste : un groupe éteint
+        // ne coûte même pas la résolution de ses portes.
+        .filter((g) => Boolean(valeurs[`voir_${g.clef}`] ?? true))
         .map((g) => ({
           ...g,
           portes: g.defs
@@ -188,8 +220,18 @@ export default function AccueilGuildePage() {
             // Mode compact : on vide le texte, PortesSite ne rend alors pas la ligne.
             .map((x) => (avecTexte ? x : { ...x, texte: "" })),
         }))
-        .filter((g) => g.portes.length > 0),
-    [d, p, staff, avecTexte],
+        .filter((g) => g.portes.length > 0);
+      /* REMONTER UN GROUPE, PAS RÉORDONNER LES QUATRE. Un tri complet demanderait
+         quatre champs de rang dans le panneau, et personne ne veut classer une liste
+         de quatre à la main. Ce qu'on veut vraiment, c'est « celui-là d'abord » — et
+         les autres gardent leur ordre relatif, ce qui laisse la page reconnaissable.
+         Un groupe éteint ou absent (le staff, pour un membre) ne fait rien : le
+         `findIndex` rend -1 et on ne touche à rien. */
+      const i = premier ? liste.findIndex((g) => g.clef === premier) : -1;
+      if (i > 0) liste.unshift(...liste.splice(i, 1));
+      return liste;
+    },
+    [d, p, staff, avecTexte, valeurs, premier],
   );
 
   // COMPTÉ, jamais écrit : le sous-titre annonce ce nombre, et le taper à la main

@@ -78,31 +78,61 @@ export type Porte = {
  * COMPTE — les autres sont des promesses, pas des mesures — et c'est justement
  * celui qui devient faux tout seul le jour où une instance rejoint le relevé. La
  * carte le lit désormais dans les mêmes données que la page où elle mène.
+ *
+ * DEUX PORTES ONT ÉTÉ AJOUTÉES, et elles répondent au reproche le plus net qu'on
+ * pouvait faire à cet écran : le site est un WIKI — retrouver un monstre, un
+ * objet, sa provenance, savoir qui le vend — et aucune porte ne le disait. Le
+ * catalogue d'objets (/objets) et les marchands (/pnj) sont les deux
+ * propriétaires de ce sujet. Leurs comptes arrivent en props, lus côté serveur
+ * (voir accueil/chiffres.ts) : 12 134 objets et 293 marchands prouvent en un
+ * chiffre ce qu'aucun adjectif ne prouve.
+ *
+ * /objets PORTE UN CADENAS, et c'est vérifié dans l'arborescence et non déduit du
+ * menu : le fichier vit dans src/app/(guild)/, dont le layout appelle
+ * requireGuild(). La nav l'annonce pourtant comme publique. C'est la seule des
+ * douze portes du wiki qui se refuse à un visiteur, et le dire avant le clic vaut
+ * mieux que de l'envoyer sur /login.
+ *
+ * LES DESCRIPTIONS ONT MAIGRI, toutes. Elles racontaient en douze mots ce qu'une
+ * énumération de quatre dit mieux : un visiteur ne lit pas douze paragraphes de
+ * porte, il balaie. Aucune destination n'a été perdue au passage.
  */
 export const PORTES_PUBLIQUES: Porte[] = [
   {
     href: "/builder", icon: "shirt", titre: "AirBuilder",
-    texte: "Monte ton stuff pièce par pièce : perçage, sertissage, runes, sets, fée et familier.",
+    texte: "Perçage, sertissage, runes, sets, fée et familier.",
     chiffre: "sans connexion",
   },
   {
     href: "/donjons", icon: "skull", titre: "Les donjons",
-    texte: "Le niveau, l'élément, le prestige exigé et le butin de chaque instance.",
+    texte: "Niveau, élément, prestige exigé et butin.",
     chiffre: `${(dungeons as unknown[]).length} instances`,
   },
   {
+    href: "/monstres", icon: "paw", titre: "Les monstres",
+    texte: "PV, élément, et les boss à plusieurs vies.",
+  },
+  {
+    /* Le catalogue et la PROVENANCE : « quel monstre lâche cet objet », « quelle
+       recette le sort », « quel coffre le contient ». C'est le cœur du wiki, et
+       c'était la seule pièce du site qui n'avait pas de porte ici. */
+    href: "/objets", icon: "package", titre: "Le catalogue d'objets",
+    texte: "Chaque objet, ses bonus, et d'où il vient.",
+    verrou: true,
+  },
+  {
+    href: "/pnj", icon: "users", titre: "Marchands et artisans",
+    texte: "Qui vend quoi, et qui fabrique quoi.",
+  },
+  {
     href: "/prestige", icon: "star", titre: "Prestige",
-    texte: "Ce que coûte un palier, ce qu'il rapporte, et où tu en es de ton farm.",
+    texte: "Ce que coûte chaque palier, et où tu en es.",
     chiffre: "P3 → P10",
   },
   {
     href: "/astuces", icon: "compass", titre: "Guide de progression",
-    texte: "Par où commencer et quoi viser ensuite — pour ne pas farmer au mauvais endroit.",
+    texte: "Par où commencer, et quoi viser ensuite.",
     chiffre: "palier par palier",
-  },
-  {
-    href: "/monstres", icon: "paw", titre: "Les monstres",
-    texte: "PV, dégâts, élément — et les boss qui rendent plusieurs vies avant de tomber.",
   },
   {
     /* La boutique est le seul écran du site en mode VITRINE : le middleware ne la
@@ -111,17 +141,17 @@ export const PORTES_PUBLIQUES: Porte[] = [
        son chiffre dit exactement ce qu'on peut en faire sans compte. Commander,
        lui, se heurte à /api/bank-request, gardée par apiGuild. */
     href: "/boutique", icon: "cart", titre: "La boutique",
-    texte: "Le stock commun de la guilde, avec ses prix. Commander demande d'être membre.",
+    texte: "Le stock commun de la guilde, et ses prix.",
     chiffre: "à regarder sans compte",
   },
   {
     href: "/compositions", icon: "castle", titre: "Chambres Secrètes",
-    texte: "Qui vient, à quel poste, et comment on joue chaque salle.",
+    texte: "Qui vient, à quel poste, salle par salle.",
     verrou: true,
   },
   {
     href: "/worldboss", icon: "dragon", titre: "World Boss",
-    texte: "Les prochains passages, et qui s'est annoncé pour y aller.",
+    texte: "Les prochains passages, et qui s'est annoncé.",
     verrou: true,
   },
   {
@@ -133,15 +163,25 @@ export const PORTES_PUBLIQUES: Porte[] = [
        imaginaire : il retient un visiteur devant une porte ouverte, ce qui est le
        symétrique exact du défaut que ce cadenas existe pour éviter. */
     href: "/crafts", icon: "hammer", titre: "Crafts & collections",
-    texte: "Les recettes, l'arbre du farm, les titres et les succès.",
+    texte: "Recettes, arbre du farm, titres et succès.",
     chiffre: "à regarder sans compte",
   },
   {
     href: "/dashboard", icon: "home", titre: "L'accueil de la guilde",
-    texte: "Ce qui t'attend, où tu en es, et toutes les fonctionnalités réservées.",
+    texte: "Ce qui t'attend, et tout ce qui est réservé.",
     verrou: true,
   },
 ];
+
+/**
+ * Poser les mesures du serveur sur les portes — SEULEMENT LÀ OÙ LA LIGNE EST VIDE.
+ *
+ * /boutique et /crafts emploient déjà la leur pour dire ce qu'on peut en faire
+ * sans compte, et pour un visiteur ce renseignement vaut plus qu'un total.
+ * Écraser leur ligne par un compte serait échanger une réponse contre un chiffre.
+ */
+export const avecComptes = (portes: Porte[], comptes: Record<string, string>): Porte[] =>
+  portes.map((p) => (!p.chiffre && comptes[p.href] ? { ...p, chiffre: comptes[p.href] } : p));
 
 export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: Porte[]; min?: number }) {
   return (
@@ -175,19 +215,39 @@ export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: 
         </Link>
       ))}
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ──
+          Ces notes vivaient DANS le littéral de gabarit ci-dessous, c'est-à-dire
+          dans le `<style>` servi au navigateur : chaque visiteur téléchargeait le
+          raisonnement du développeur avec la feuille de style. Sorties d'ici, elles
+          sont effacées à la compilation et ne pèsent plus rien — et le piège de
+          l'accent grave qui referme le gabarit disparaît avec elles.
+
+          `--porte-min` à 400 px et pas 300 : à 300 la grille tenait TROIS colonnes
+          dans les 976 px utiles de l'accueil, et la dernière porte se retrouvait
+          seule sur une ligne, deux fois plus large que ses voisines. Une liste plus
+          longue n'a pas ce problème et passe une valeur plus serrée.
+
+          auto-FILL et non auto-FIT, mesuré : auto-fit EFFACE les colonnes vides,
+          donc une grille d'UNE seule porte lui donnait toute la largeur — 1 036 px
+          contre 337 px pour ses voisines, sur l'accueil de guilde où la porte
+          « Tout le site » est seule dans sa grille. auto-fill garde les colonnes
+          vides à leur taille. Aucune différence dès qu'une grille remplit ses
+          colonnes, ce qui est le cas partout ailleurs.
+
+          Le titre et son cadenas partagent une ligne de base et se replient
+          ensemble : le cadenas colle au titre, pas au bord de la carte.
+
+          Le chiffre est en Rubik et non en Alef, et à chasse fixe : Alef rend ses
+          chiffres en bas de casse, et « P3 → P10 » se lisait en indices. Il ne doit
+          pas non plus danser d'une carte à l'autre.
+
+          Le cadenas du jeu fait 10x12, sa taille native dans le client :
+          l'agrandir le rendrait flou, et image-rendering:pixelated ne sauve pas une
+          icône de 10 px étirée.
+
+          La flèche ne bouge qu'au survol du lien ENTIER : posée sur la flèche
+          seule, elle fuyait le curseur qui la visait. */}
       <style>{`
-        /* 400px et pas 300 : a 300 la grille tenait TROIS colonnes dans les 976 px
-           utiles de l'accueil public, et sa quatrieme porte se retrouvait seule sur
-           une ligne, deux fois plus large que ses voisines. Quatre portes veulent
-           2x2 — d'ou le defaut. Une liste plus longue n'a pas ce probleme et passe
-           une valeur plus serree. */
-        /* auto-FILL et non auto-FIT, et c'est la meme maladie que ci-dessus, mesuree :
-           auto-fit EFFACE les colonnes vides, donc une grille d'UNE seule porte lui
-           donnait toute la largeur — 1036 px de large contre 337 px pour ses
-           voisines, sur l'accueil de guilde ou la porte « Tout le site » est seule
-           dans sa grille. auto-fill garde les colonnes vides a leur taille, la porte
-           reste large comme les autres. Aucune difference des qu'une grille remplit
-           ses colonnes, ce qui est le cas partout ailleurs. */
         .acc-portes{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(var(--porte-min,400px),1fr))}
         @media(max-width:520px){.acc-portes{grid-template-columns:1fr}}
         .acc-porte{display:flex;gap:14px;align-items:flex-start;text-decoration:none;color:var(--text);
@@ -198,26 +258,14 @@ export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: 
           border-radius:12px;color:var(--orange);border:1px solid rgba(255,140,26,.32);
           background:linear-gradient(180deg,rgba(255,140,26,.22),rgba(255,140,26,.05))}
         .acc-porte-txt{display:block;flex:1;min-width:0}
-        /* Le titre et son cadenas sur une meme ligne de base, et qui se replient
-           ensemble : le cadenas colle au titre, pas au bord de la carte. */
         .acc-porte-tl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
         .acc-porte-t{font-weight:600;font-size:15.5px}
         .acc-porte-d{display:block;color:var(--text-muted);font-size:13px;line-height:1.55;margin-top:3px}
-        /* Le chiffre est une promesse verifiable, pas une decoration : il est
-           chiffre, donc en chasse fixe pour ne pas danser d'une carte a l'autre. */
-        /* Rubik et pas Alef : Alef rend ses chiffres en bas de casse, et « P3 → P10 »
-           se lisait « P3 → P10 » en indices. Les chiffres d'un argument doivent etre
-           des capitales. */
         .acc-porte-c{display:block;margin-top:8px;font-family:'Rubik',sans-serif;font-variant-numeric:tabular-nums;
           font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);opacity:.85}
-        /* Le cadenas du jeu, en 10x12 : c'est sa taille native dans le client, et
-           l'agrandir le rendrait flou (image-rendering:pixelated ne sauve pas une
-           icone de 10 px etiree). */
         .acc-porte-v{display:inline-flex;align-items:center;gap:3px;font-size:10px;text-transform:uppercase;
           letter-spacing:.6px;color:var(--text-muted);font-family:'Alef',sans-serif;font-weight:400}
         .acc-porte-v img{width:10px;height:12px;object-fit:contain;image-rendering:pixelated;opacity:.85}
-        /* La fleche ne bouge qu'au survol du lien ENTIER : posee sur la fleche
-           seule, elle fuyait le curseur qui la visait. */
         .acc-porte-fl{flex-shrink:0;color:var(--text-muted);margin-top:12px;transition:transform .2s,color .2s}
         .acc-porte:hover .acc-porte-fl{transform:translateX(4px);color:var(--orange)}
       `}</style>

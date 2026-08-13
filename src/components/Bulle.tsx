@@ -66,7 +66,20 @@ export function Bulle({ children, quoi, cote = "haut", largeur = 260 }: {
         aria-describedby={visible ? id : undefined}
         aria-expanded={visible}
         onClick={(e) => { e.stopPropagation(); setVerrou((v) => !v); }}
-        onBlur={() => setVerrou(false)}
+        /* LE VERROU NE SAUTE PAS QUAND LE FOCUS ENTRE DANS LA BULLE.
+           `onBlur={() => setVerrou(false)}` fermait la bulle dès que l'ancre perdait
+           le focus — y compris quand il partait vers un LIEN posé À L'INTÉRIEUR du
+           contenu. Le contenu étant démonté sur ce même rendu, le lien disparaissait
+           avant que la tabulation ou le doigt ne l'atteigne : injoignable autrement
+           qu'à la souris. Il y a de tels liens en service (la bulle « pièces de
+           meuble » de /astuces mène à /crafts, et NomObjet mène à une fiche).
+           `relatedTarget` est l'élément qui REÇOIT le focus : s'il est dans l'ancre
+           ou dans la bulle, on garde ouvert. `null` (clic dans le vide, changement
+           d'onglet) ferme, comme avant. */
+        onBlur={(e) => {
+          if (ref.current?.contains(e.relatedTarget as Node | null)) return;
+          setVerrou(false);
+        }}
         style={{
           /* Le pointillé sous l'ancre est le SEUL signal qu'il y a quelque chose
              derrière. Sans lui, la bulle n'est découverte que par hasard, et le

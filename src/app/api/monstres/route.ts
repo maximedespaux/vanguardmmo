@@ -38,6 +38,9 @@ export async function GET(req: Request) {
 
   const c: Critere = {
     q: p.get("q") ?? "",
+    // « Qui lâche ça ? » — cherché dans les noms de butin, jamais dans les taux.
+    // Deux caractères suffiraient à ramener la moitié du catalogue : on exige trois.
+    objet: (p.get("objet") ?? "").trim().length >= 3 ? p.get("objet")!.trim() : "",
     rang: RANGS.includes(rang) ? rang : "",
     element: ELEMENTS.includes(element) ? element : "",
     niveauMin: niveau(p.get("nivMin")),

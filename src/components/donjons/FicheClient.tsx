@@ -1,6 +1,7 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
-import { pvCourt, PLANS, TON_RANG, type DonjonClient } from "./donneesClient";
+import { pvCourt, PLANS, SECOND_NOM, TON_RANG, type DonjonClient } from "./donneesClient";
 import { IconeElementDonjon } from "./elements";
 
 /** L'étiquette de section de la fiche. Reprise telle quelle du bloc « Drops »
@@ -99,14 +100,35 @@ export function Situation({ d, nomAffiche }: { d: DonjonClient; nomAffiche: stri
  */
 export function PlanDonjon({ d }: { d: DonjonClient }) {
   const plan = PLANS[d.dossier];
+  /* LES DEUX CARTOUCHES, quand le client en imprime deux sur le même tracé. Un
+     index d'onglet et pas un booléen : si un troisième nom sortait d'une fouille,
+     la liste suffirait. Cf. SECOND_NOM dans donneesClient.ts pour la preuve. */
+  const noms = SECOND_NOM[d.dossier];
+  const [i, setI] = useState(0);
   if (!plan) return null;
   const cadre = plan.cadre;
   const aerien = plan.genre === "aerien";
+  const src = noms ? noms[i].src : plan.src;
   return (
     <div style={{ marginBottom: 14 }}>
       <SousTitre icon="map" apres={aerien ? "le terrain vu de dessus, sans repère" : "tel qu'il sort du client"}>
         {aerien ? "La vue aérienne" : "Le plan"}
       </SousTitre>
+      {/* Le même tracé, deux noms imprimés : on montre les noms, on ne les
+          interprète pas — rien dans les fichiers ne dit à quoi sert le second. */}
+      {noms && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          {noms.map((n, k) => (
+            <button key={n.cartouche} onClick={() => setI(k)} aria-pressed={k === i}
+              style={{ cursor: "pointer", fontFamily: "inherit", fontSize: 11.5, padding: "3px 9px", borderRadius: 20,
+                background: k === i ? "rgba(255,140,26,.12)" : "var(--bg-3)",
+                border: `1px solid ${k === i ? "var(--orange)" : "var(--border)"}`,
+                color: k === i ? "var(--orange)" : "var(--text-muted)" }}>
+              {n.cartouche}
+            </button>
+          ))}
+        </div>
+      )}
       {/* Plafonné à 460 px et centré : à pleine largeur, un plan carré prenait
           autant de hauteur que tout le reste de la fiche réuni et repoussait le
           peuplement sous la ligne de flottaison. */}
@@ -120,7 +142,7 @@ export function PlanDonjon({ d }: { d: DonjonClient }) {
             pourcentage se calcule sur la hauteur du conteneur, donc un cadre non
             carré sur une source non carrée décalerait l'image verticalement. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={plan.src} alt={`${aerien ? "Vue aérienne" : "Plan"} de ${d.interne}`} loading="lazy"
+        <img src={src} alt={noms ? `Carte du client, cartouche « ${noms[i].cartouche} »` : `${aerien ? "Vue aérienne" : "Plan"} de ${d.interne}`} loading="lazy"
           style={cadre
             // `maxWidth: none` est indispensable : une règle globale plafonne toutes
             // les images à 100 % de leur parent, et elle annulait silencieusement

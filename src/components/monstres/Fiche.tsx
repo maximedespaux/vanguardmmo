@@ -36,9 +36,24 @@ import {
  * Ce qui est parti aussi : l'expérience, la penya, les points Madrigal et les taux
  * de butin. Les objets, eux, sont RESTÉS — c'est leur NOM qui sert, et il est
  * maintenant montré avec l'icône du client.
+ *
+ * ┌────── CE QUE CETTE PASSE A CHANGÉ : LE BUTIN MÈNE QUELQUE PART ──────┐
+ * │ « Ce qu'il lâche » affichait une grille d'icônes et de noms MORTS :   │
+ * │ on lisait « Âme de démon » et il fallait aller la retaper dans la     │
+ * │ recherche d'objets pour savoir ce que c'est. Chaque vignette est      │
+ * │ maintenant un lien vers la fiche de l'objet, où vivent ses bonus, sa  │
+ * │ provenance complète et les autres monstres qui le lâchent. C'est      │
+ * │ exactement le « retrouver les monstres, les objets, drops » demandé.  │
+ * │ Le pont porte l'identifiant depuis cette passe : le relevé ne nommait  │
+ * │ que le nom, et un nom ne fait pas une adresse (deux objets peuvent le  │
+ * │ partager — versions garçon et fille).                                 │
+ * └──────────────────────────────────────────────────────────────────────┘
  */
 
-type Trouve = { n: string; ic: string };
+/** Ce que le pont sait d'un objet lâché : son nom, son identifiant de fiche, et son
+ *  icône QUAND elle existe sur le disque — huit des 106 n'en ont pas, et on ne
+ *  pointe jamais un fichier absent. */
+type Trouve = { n: string; i: number; ic?: string };
 const OBJETS = (BUTIN as { objets: Record<string, Trouve> }).objets;
 
 /** Une ligne chiffrée. `tabular-nums` partout : sans ça, les colonnes de PV et de
@@ -290,14 +305,21 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
           {objets.length > 0 && (
             <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
               {objets.map((o) => (
-                <span key={o.n} title={o.n}
-                  style={{ width: 92, display: "grid", justifyItems: "center", gap: 4, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 6px" }}>
+                <Link key={o.n} href={`/objets/${o.i}`} title={`${o.n} — sa fiche et sa provenance`}
+                  className="fx-card vg-butin"
+                  style={{ width: 92, display: "grid", justifyItems: "center", gap: 4, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "9px 6px", textDecoration: "none" }}>
                   {/* Les icônes du client font 32 px : agrandies elles bavent, donc
-                      `pixelated` — c'est ce que le joueur a sous les yeux en jeu. */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/jeu/icones/${o.ic}`} alt="" width={32} height={32} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+                      `pixelated` — c'est ce que le joueur a sous les yeux en jeu.
+                      Huit des 106 objets n'ont pas de fichier sur le disque : on ne
+                      met alors rien, une image cassée est pire que pas d'image. */}
+                  {o.ic ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`/jeu/icones/${o.ic}`} alt="" width={32} height={32} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
+                  ) : (
+                    <Icon name="package" size={26} style={{ color: "var(--text-muted)" }} />
+                  )}
                   <span style={{ fontSize: 10.5, textAlign: "center", lineHeight: 1.25, color: "var(--text-muted)" }}>{o.n}</span>
-                </span>
+                </Link>
               ))}
             </div>
           )}
@@ -380,6 +402,11 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
         }
         sections={sections}
       />
+
+      {/* Le survol dit que la vignette de butin est cliquable : sans lui, une grille
+          d'icônes se lit comme une illustration et personne ne clique. */}
+      <style>{`.vg-butin{transition:border-color .15s,background .15s}
+.vg-butin:hover{border-color:var(--orange);background:color-mix(in srgb, var(--orange) 8%, var(--bg-3))}`}</style>
     </div>
   );
 }

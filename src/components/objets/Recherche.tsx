@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { IconeObjet } from "./IconeObjet";
-import { BADGE_ULTIME, COULEUR_GRADE, classeFr, emblemeClasse, FAMILLES, type Famille, type ObjetFiche } from "./vocabulaire";
+import { BADGE_ULTIME, COULEUR_GRADE, chiffreDeCombat, classeFr, emblemeClasse, FAMILLES, libelleEtPourcent, type Famille, type ObjetFiche } from "./vocabulaire";
 
 /**
  * CHERCHER UN OBJET — le catalogue du client du jeu, 12 134 lignes.
@@ -29,9 +29,23 @@ import { BADGE_ULTIME, COULEUR_GRADE, classeFr, emblemeClasse, FAMILLES, type Fa
  * │ · Les bonus se montrent sur la carte, pas seulement leur  │
  * │   nombre : c'est ce qui fait choisir entre deux pièces.   │
  * └─────────────────────────────────────────────────────────┘
+ *
+ * ┌──── LES DEUX ENTRÉES QUE CETTE PASSE AJOUTE ────┐
+ * │ · PAR STATISTIQUE. « Qu'est-ce qui donne du taux │
+ * │   critique ? » n'avait aucune réponse ici : on    │
+ * │   pouvait demander « qui portent des bonus »,     │
+ * │   jamais lequel. Le choix se fait sur les codes   │
+ * │   du client, et chaque libellé porte son compte.  │
+ * │ · CE QUI TOMBE SUR UN MONSTRE. C'est le pont vers │
+ * │   /monstres pris dans le sens de l'objet, et il   │
+ * │   n'existait pas non plus.                        │
+ * └─────────────────────────────────────────────────┘
  */
 
-type Comptes = { maison: number; bonus: number; unique: number; ultime: number };
+type Comptes = { maison: number; bonus: number; unique: number; ultime: number; lache: number };
+/** Une statistique demandable : son code du client, son libellé, son nombre
+ *  d'objets. Calculée côté serveur et passée en propriété — elle ne bouge pas. */
+export type StatDispo = { code: string; fr: string; objets: number };
 type Reponse = {
   objets: ObjetFiche[]; total: number; montres: number;
   familles: Record<string, number>;
@@ -66,7 +80,12 @@ function Compte({ n, on }: { n: number | undefined; on: boolean }) {
   return <span style={{ ...NUM, opacity: on ? 0.7 : 0.55 }}>{n.toLocaleString("fr-FR")}</span>;
 }
 
-export function RechercheObjets({ depart = "" }: { depart?: string }) {
+export function RechercheObjets({ depart = "", departStat = "", stats = [] }: {
+  depart?: string;
+  /** Un code `DST_*` arrivé par l'URL, posé par une ligne de bonus d'une fiche. */
+  departStat?: string;
+  stats?: StatDispo[];
+}) {
   useCardFx();
   const [q, setQ] = useState(depart);
   const [famille, setFamille] = useState<Famille | "">("");
@@ -74,6 +93,8 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
   const [niveau, setNiveau] = useState("");
   const [avecBonus, setAvecBonus] = useState(false);
   const [maison, setMaison] = useState(false);
+  const [stat, setStat] = useState(departStat);
+  const [lache, setLache] = useState(false);
   const [r, setR] = useState<Reponse | null>(null);
   const [charge, setCharge] = useState(false);
   const jeton = useRef(0);
@@ -88,15 +109,18 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
     if (niveau) p.set("niveau", niveau);
     if (avecBonus) p.set("bonus", "1");
     if (maison) p.set("maison", "1");
+    if (stat) p.set("stat", stat);
+    if (lache) p.set("lache", "1");
     const d = await fetch(`/api/objets?${p}`).then((x) => (x.ok ? x.json() : null)).catch(() => null);
     // Une réponse qui arrive après la suivante ne doit pas l'écraser.
     if (mien !== jeton.current) return;
     setR(d); setCharge(true);
-  }, [q, famille, grade, niveau, avecBonus, maison]);
+  }, [q, famille, grade, niveau, avecBonus, maison, stat, lache]);
 
   useEffect(() => { const t = setTimeout(chercher, 220); return () => clearTimeout(t); }, [chercher]);
 
-  const filtre = Boolean(q.trim() || famille || grade || niveau || avecBonus || maison);
+  const filtre = Boolean(q.trim() || famille || grade || niveau || avecBonus || maison || stat || lache);
+  const statChoisie = stats.find((s) => s.code === stat) ?? null;
   const familles = useMemo(() => r?.familles ?? {}, [r]);
   const c = r?.comptes;
 
@@ -118,6 +142,35 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
               style={{ ...champ, width: 66, textAlign: "center", padding: "9px 6px", ...NUM }} />
           </span>
         </div>
+
+        {/* CHERCHER PAR STATISTIQUE — le choix se fait sur le CODE du client et non
+            sur le libellé. Trois libellés du relevé se sont décalés d'une colonne ;
+            un code, lui, est écrit noir sur blanc dans defineattribute.h. Le compte
+            entre parenthèses vient du même relevé : on sait avant de cliquer s'il y
+            a deux objets derrière ou deux cents.
+            Le `<select>` copie la forme du champ voisin (même fond, même bordure,
+            même rayon) : un contrôle ajouté prend l'allure de son voisin le plus
+            proche, sinon il se voit comme une pièce rapportée. */}
+        {stats.length > 0 && (
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-muted)", flex: "1 1 300px", minWidth: 0 }}>
+              <Icon name="zap" size={14} style={{ color: "var(--orange)", flexShrink: 0 }} />
+              Qui donne
+              <select value={stat} onChange={(e) => setStat(e.target.value)} aria-label="Chercher par statistique"
+                style={{ ...champ, flex: 1, minWidth: 0, padding: "9px 10px", cursor: "pointer" }}>
+                <option value="">n’importe quoi</option>
+                {stats.map((s) => (
+                  <option key={s.code} value={s.code}>{s.fr} ({s.objets})</option>
+                ))}
+              </select>
+            </span>
+            {statChoisie && (
+              <span style={{ fontSize: 12, color: "var(--text-muted)", ...NUM }}>
+                {statChoisie.objets.toLocaleString("fr-FR")} objets portent {statChoisie.fr.toLowerCase()}
+              </span>
+            )}
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
           <Pastille on={!famille} onClick={() => setFamille("")}>Tout</Pastille>
@@ -154,8 +207,15 @@ export function RechercheObjets({ depart = "" }: { depart?: string }) {
             <Icon name="zap" size={13} /> Qui portent des bonus
             <Compte n={c?.bonus} on={avecBonus} />
           </Pastille>
+          {/* LE PONT VERS /monstres, dans le sens de l'objet. Le compte est celui des
+              objets que le relevé sait rattacher à un monstre nommé — compté, pas
+              écrit : la prochaine fouille le fera bouger tout seul. */}
+          <Pastille on={lache} couleur="var(--red)" onClick={() => setLache(!lache)}>
+            <Icon name="sword-cross" size={13} /> Que lâche un monstre
+            <Compte n={c?.lache} on={lache} />
+          </Pastille>
           {filtre && (
-            <button onClick={() => { setQ(""); setFamille(""); setGrade(""); setNiveau(""); setAvecBonus(false); setMaison(false); }}
+            <button onClick={() => { setQ(""); setFamille(""); setGrade(""); setNiveau(""); setAvecBonus(false); setMaison(false); setStat(""); setLache(false); }}
               style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}>
               <Icon name="x" size={13} /> Remettre à zéro
             </button>
@@ -202,6 +262,10 @@ function Carte({ o }: { o: ObjetFiche }) {
   const couleur = o.g ? COULEUR_GRADE[o.g] : null;
   const emb = emblemeClasse(o.cl);
   const bonus = o.b?.slice(0, 2) ?? [];
+  /* La carte écrivait « Déf. 1 » sur les 3 098 pièces de mode et « Déf. 350 » sur les
+     185 familiers : la colonne `dn` du client n'a de sens que pour une arme ou une
+     armure (cf. `chiffreDeCombat`). Ailleurs la ligne n'existe plus. */
+  const combat = chiffreDeCombat(o);
   return (
     <Link href={`/objets/${o.i}`} className="glass-card fx-card"
       style={{ padding: 11, display: "flex", gap: 11, alignItems: "flex-start", textDecoration: "none", color: "var(--text)",
@@ -220,19 +284,25 @@ function Carte({ o }: { o: ObjetFiche }) {
             <img src={emb} alt={classeFr(o.cl) ?? ""} title={classeFr(o.cl) ?? ""} width={15} height={15} style={{ objectFit: "contain" }} />
           )}
         </span>
-        {o.dn ? (
+        {combat ? (
           <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)", marginTop: 4, ...NUM }}>
-            {o.f === "arme" ? "Dégâts" : "Déf."} <b style={{ color: "var(--text)" }}>{o.dn}{o.dx && o.dx !== o.dn ? `–${o.dx}` : ""}</b>
+            {combat.court}{" "}
+            <b style={{ color: "var(--text)" }}>
+              {combat.min.toLocaleString("fr-FR")}
+              {combat.max && combat.max !== combat.min ? `–${combat.max.toLocaleString("fr-FR")}` : ""}
+            </b>
           </span>
         ) : null}
         {bonus.length > 0 && (
           <span style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
             {bonus.map(([libelle, valeur], i) => {
-              const pct = libelle.endsWith("%");
+              // Le « % » du client vit dans le libellé : la même fonction que la
+              // fiche le déplace sur le chiffre, sinon « Attaque % +15 % ».
+              const { mot, pct } = libelleEtPourcent(libelle);
               return (
                 <span key={i} style={{ fontSize: 10.5, padding: "2px 7px", borderRadius: 7, background: "var(--bg-3)",
                   border: "1px solid var(--border)", color: "var(--text-muted)", ...NUM }}>
-                  {pct ? libelle.replace(/\s*%$/, "") : libelle}{" "}
+                  {mot}{" "}
                   <b style={{ color: valeur < 0 ? "var(--red)" : "var(--green)" }}>
                     {valeur > 0 ? "+" : ""}{valeur.toLocaleString("fr-FR")}{pct ? " %" : ""}
                   </b>

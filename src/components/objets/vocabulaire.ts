@@ -47,6 +47,62 @@ export type ObjetFiche = {
 
 export type Famille = "arme" | "armure" | "bijou" | "mode" | "consommable" | "materiau" | "familier" | "divers";
 
+/**
+ * UN BONUS LU PAR SON CODE DU CLIENT.
+ *
+ * Le type vit ICI et non dans `stats.ts` parce que `stats.ts` lit le disque : la
+ * fiche est un composant client et ne peut pas l'importer, même pour un type.
+ * `code` accompagne le libellé pour que la fiche puisse renvoyer vers la recherche
+ * de cette statistique — c'est ce qui fait du wiki un wiki : un bonus devient un
+ * lien vers tout ce qui le porte.
+ */
+export type Bonus = { code: string; fr: string; v: number };
+
+/** Le pourcentage est PORTÉ PAR LE LIBELLÉ dans le client (« Attaque % ») : laissé
+ *  là et ajouté à la valeur, il donnait « Attaque % +15 % ». Il quitte le mot et
+ *  reste sur le chiffre, où on le lit. Deux écrans s'en servent, d'où la fonction. */
+export function libelleEtPourcent(libelle: string): { mot: string; pct: boolean } {
+  const pct = libelle.trimEnd().endsWith("%");
+  return { mot: pct ? libelle.replace(/\s*%$/, "") : libelle, pct };
+}
+
+/**
+ * LE CHIFFRE DE COMBAT — et les 3 869 objets qui n'en ont pas.
+ *
+ * `dn`/`dx` viennent de `dwAbilityMin`/`dwAbilityMax`, et le client s'en sert comme
+ * d'un fourre-tout : la même colonne porte des choses sans rapport selon la famille.
+ * Relevé sur les 12 134 lignes du catalogue :
+ *
+ *   arme        1 294 objets, 0 à 2 000+      → les DÉGÂTS. Vrai.
+ *   armure      1 858 objets, 344 valeurs     → la DÉFENSE. Vrai.
+ *   bijou           0 objet                   → la colonne est vide.
+ *   mode        3 098 objets, UNE valeur : 1  → un bouchon. « Défense 1 » sur chaque
+ *                                               pièce de mode, 3 098 fois.
+ *   familier      185 objets, UNE valeur : 350→ un bouchon.
+ *   consommable   382 objets, jusqu'à 1 080 000 → ni dégâts ni défense, et PAS non plus
+ *                                               ce que ça rend : la « Fiole de mana 25 »
+ *                                               y écrit 250 alors qu'elle rend 25 PM, et
+ *                                               le jus d'orange 50 000 pour 60 PV. Ce
+ *                                               qu'elle rend est dans les BONUS
+ *                                               (DST_MP, DST_HP), qui s'affichent, eux.
+ *   divers        204 objets, et l'une des    → la ligne « Récompense PK » y met une
+ *                 valeurs est `MI_VENDOR_HALLO_3` fourchette de penyas, et une autre
+ *                                               un IDENTIFIANT DE MONSTRE.
+ *
+ * La fiche annonçait « Défense » pour les six familles. C'était faux ou vide sur
+ * 3 869 objets — dont un « Défense 50 000 » sur un jus d'orange. La fonction ne rend
+ * donc quelque chose que pour les deux familles où la colonne a un sens ; ailleurs
+ * elle rend `null` et la ligne n'existe pas. On ne remplace pas par une réserve : un
+ * nombre dont on ignore le sens n'est pas un renseignement.
+ */
+export function chiffreDeCombat(o: { f: Famille; dn?: number; dx?: number }):
+  { label: "Dégâts" | "Défense"; court: "Dég." | "Déf."; min: number; max?: number } | null {
+  if (o.dn == null || typeof o.dn !== "number") return null;
+  if (o.f === "arme") return { label: "Dégâts", court: "Dég.", min: o.dn, max: o.dx };
+  if (o.f === "armure") return { label: "Défense", court: "Déf.", min: o.dn, max: o.dx };
+  return null;
+}
+
 /** Les familles, dans l'ordre où on cherche : ce qu'on porte d'abord. */
 export const FAMILLES: { clef: Famille; label: string; icon: IconName }[] = [
   { clef: "arme", label: "Armes", icon: "sword" },
@@ -169,12 +225,38 @@ export const BADGE_ULTIME = "/jeu/interface/icon_ultimate.webp";
 /** Le cadenas du client, pour ce qui est lié ou non échangeable. */
 export const CADENAS = "/jeu/interface/lock.webp";
 
+/**
+ * L'EMPLACEMENT DU CORPS — et le « (mode) » qui était collé aux mauvais codes.
+ *
+ * Trois paires de codes du client désignent le même endroit du corps sur deux couches
+ * différentes (l'équipement et le costume). La table portait un suffixe « (mode) » sur
+ * l'un des deux membres de chaque paire, et le rapprochement avec la famille de
+ * l'objet — qui, elle, vient d'un autre champ — montre que les trois paires étaient
+ * INVERSÉES. Compté sur les 12 134 lignes :
+ *
+ *   PARTS_BOOTS        645 objets, 100 % de MODE   ← était écrit « Pieds »
+ *   PARTS_FOOT         451 objets,  95 % d'ARMURE  ← était écrit « Pieds (mode) »
+ *   PARTS_GLOVE        569 objets, 100 % de MODE   ← était écrit « Mains »
+ *   PARTS_HAND         437 objets,  98 % d'ARMURE  ← était écrit « Mains (mode) »
+ *   PARTS_CLOTH        648 objets, 100 % de MODE   ← était écrit « Buste »
+ *   PARTS_UPPER_BODY   452 objets,  95 % d'ARMURE  ← était écrit « Buste (mode) »
+ *
+ * Soit 3 202 objets dont le marqueur de couche était à l'envers.
+ *
+ * LE SUFFIXE NE REVIENT PAS À L'ENVERS, IL PART. Deux raisons. D'abord aucun des deux
+ * codes n'est pur — PARTS_FOOT porte 23 pièces de mode — donc le code du slot ne peut
+ * pas porter ce marqueur de façon sûre. Ensuite le TYPE de l'objet, affiché juste à
+ * côté sur la fiche, le dit déjà et le dit juste : « Chaussures (mode) » contre
+ * « Bottes ». Écrire « Chaussures (mode) · Pieds (mode) » était un doublon, et un
+ * doublon dont une moitié se trompait 3 202 fois. Ce qui reste — l'endroit du corps —
+ * est vrai des deux couches.
+ */
 const EMPLACEMENT: Record<string, string> = {
   PARTS_RWEAPON: "Main droite", PARTS_SHIELD: "Main gauche",
-  PARTS_CAP: "Tête", PARTS_HAT: "Tête (mode)", PARTS_MASK: "Visage",
-  PARTS_CLOTH: "Buste", PARTS_UPPER_BODY: "Buste (mode)",
-  PARTS_GLOVE: "Mains", PARTS_HAND: "Mains (mode)",
-  PARTS_BOOTS: "Pieds", PARTS_FOOT: "Pieds (mode)",
+  PARTS_CAP: "Tête", PARTS_HAT: "Tête", PARTS_MASK: "Visage",
+  PARTS_CLOTH: "Buste", PARTS_UPPER_BODY: "Buste",
+  PARTS_GLOVE: "Mains", PARTS_HAND: "Mains",
+  PARTS_BOOTS: "Pieds", PARTS_FOOT: "Pieds",
   PARTS_CLOAK: "Dos", PARTS_RING1: "Doigt", PARTS_NECKLACE1: "Cou",
   PARTS_EARRING1: "Oreilles", PARTS_RIDE: "Monture", PARTS_BULLET: "Munitions",
 };

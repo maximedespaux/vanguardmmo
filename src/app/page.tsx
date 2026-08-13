@@ -1,6 +1,6 @@
 import { Shell } from "@/components/Shell";
 import { PageAccueil } from "@/components/accueil/PageAccueil";
-import { chiffresAccueil, phraseAccueil } from "@/components/accueil/chiffres";
+import { chiffresAccueil, comptesPortes, phraseAccueil } from "@/components/accueil/chiffres";
 
 /**
  * `/` — l'accueil public.
@@ -33,7 +33,11 @@ export const metadata = {
 export default function Home() {
   return (
     <Shell>
-      <PageAccueil chiffres={chiffresAccueil()} />
+      {/* Deux comptages, un seul aller : les quatre chiffres du bandeau, et ce que
+          pèse chaque porte du wiki (monstres, catalogue d'objets, marchands). Les
+          deux se lisent avec `fs` côté serveur et ne descendent que sous forme de
+          nombres — les relevés eux-mêmes pèsent des mégaoctets. */}
+      <PageAccueil chiffres={chiffresAccueil()} comptes={comptesPortes()} />
     </Shell>
   );
 }

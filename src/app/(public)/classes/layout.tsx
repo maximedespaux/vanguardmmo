@@ -13,8 +13,10 @@ import type { Metadata } from "next";
  */
 export const metadata: Metadata = {
   title: "Classes et compétences — Flyff AirFlyff",
+  // Ramenée sous les 160 signes qu'un moteur affiche : au-delà, la fin n'était lue
+  // par personne. Les mots qui font trouver la page sont tous restés.
   description:
-    "Les huit lignées d'AirFlyff et toutes leurs compétences : la chaîne de promotion du Vagabond aux légendaires, le coût en PM et PF, les dégâts et buffs niveau par niveau, les prérequis, et ce que coûte un niveau en points. Relevé dans le client par la guilde Vanguard.",
+    "Les 8 lignées d'AirFlyff et leurs compétences : la chaîne de promotion du Vagabond aux légendaires, le coût en PM et PF, les dégâts et buffs niveau par niveau.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

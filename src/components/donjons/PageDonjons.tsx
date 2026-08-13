@@ -202,10 +202,12 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
    * ligne s'ajoute quelque part, la phrase se corrige seule. Sans relevé, la
    * troisième moitié de phrase disparaît plutôt que d'annoncer « 0 vagues ».
    */
-  const sousTitre = `Les ${dungeons.length} donjons du téléporteur, les ${LIEUX_HORS_TELEPORTEUR} lieux qu'il ne propose pas, `
-    + `les ${TOUR_OUBLIEE.length} étages de la Tour Oubliée`
-    + (vagues.length ? ` et les ${vagues.length} vagues de la Protection de l'Oasis` : "")
-    + " : où on entre, ce qu'on y croise, ce qui tombe.";
+  const sousTitre = [
+    `${dungeons.length} donjons du téléporteur`,
+    `${LIEUX_HORS_TELEPORTEUR} lieux hors téléporteur`,
+    `${TOUR_OUBLIEE.length} étages de Tour Oubliée`,
+    ...(vagues.length ? [`${vagues.length} vagues à l'Oasis`] : []),
+  ].join(" · ");
 
   return (
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
@@ -472,10 +474,14 @@ export function PageDonjons({ vagues }: { vagues: Vague[] }) {
                     chargement auraient coûté plus que la page. */}
                 {liste.length > 0
                   ? <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>{liste.map(d => <span key={d} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 6, padding: "4px 10px 4px 6px", fontSize: 12, display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}><NomObjet nom={d} icone={iconeButin(d)} taille={18} /></span>)}</div>
+                  /* LA MISE EN GARDE RESTE, RÉDUITE AU FAIT QUI CHANGE LE GESTE.
+                     Elle faisait quarante mots pour dire deux choses : rien n'est
+                     relevé, et l'absence ne prouve rien. La seconde est celle qui
+                     empêche de conclure « ce donjon ne lâche rien » — elle vaut la
+                     place, la première tenait déjà dans le titre du bloc. */
                   : <div style={{ color: "var(--text-muted)", fontSize: 12.5 }}>
-                      Personne n&apos;a encore relevé les drops de cette instance. Ce n&apos;est pas la
-                      preuve que rien n&apos;y tombe : le butin ordinaire des monstres est calculé par
-                      le serveur, il n&apos;existe nulle part dans les fichiers du jeu.
+                      Non relevés. Le butin ordinaire est calculé par le serveur : son absence
+                      ici ne veut pas dire que rien ne tombe.
                     </div>}
               </>);
             })()}

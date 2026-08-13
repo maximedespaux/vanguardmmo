@@ -109,16 +109,22 @@ export type Bilan = ReturnType<typeof bilan>;
  * on ne sait pas ce qu'elles disent, et on ne le devine pas.
  */
 export const DEROULE: { id: string; texte: string; ceQueCaDit: string }[] = [
-  { id: "08", texte: "Préparez-vous !", ceQueCaDit: "Le mode démarre par un temps mort. Tu n'es pas lâché dans la vague à la seconde où tu arrives." },
-  { id: "12", texte: "[Protection de l'Oasis] Les monstres vont apparaître dans %u secondes !", ceQueCaDit: "Un compte à rebours d'apparition annoncé en secondes : le temps de se placer, de se buffer, de se répartir." },
-  { id: "11", texte: "[Protection de l'Oasis] C'est parti !", ceQueCaDit: "Le lancement est explicite, donc rien ne commence sans que tu le saches." },
-  { id: "01", texte: "Vague nº %u", ceQueCaDit: "Les vagues sont numérotées à l'écran : tu sais toujours où tu en es dans les 52." },
-  { id: "07", texte: "La vague se termine dans %02dmn:%02ds", ceQueCaDit: "Chaque vague a un MINUTEUR, en minutes et secondes. Ce n'est pas « tue-les quand tu veux » : il y a un temps imparti." },
-  { id: "16", texte: "Monstres restant: %u", ceQueCaDit: "Un compteur de ce qui reste debout. Utile quand un monstre traîne hors de vue sur une arène où l'on vole." },
-  { id: "06", texte: "[Protection de l'Oasis] La vague nº %u est terminée. Félicitations !", ceQueCaDit: "La fin de vague est confirmée vague par vague." },
-  { id: "09", texte: "[Protection de l'Oasis] Vous avez obtenu %dx (%s) en guise de récompense. Bravo!", ceQueCaDit: "La prime tombe À CHAQUE VAGUE, avec sa quantité et le nom de l'objet. On n'attend pas la fin du tour pour être payé." },
-  { id: "02", texte: "Classement", ceQueCaDit: "Il y a un classement entre joueurs. Le mode n'est donc pas seulement une survie : il compare." },
-  { id: "14", texte: "[Protection de l'Oasis] Vous venez de terminer la dernière vague.", ceQueCaDit: "La chaîne qui tue le nom « Tour sans fin » : il y a une dernière vague, et notre relevé la situe à la 52e." },
+  /* LES GLOSES SONT PASSÉES DE PHRASES À DES GROUPES DE MOTS. Chacune disait la
+     même chose deux fois : une fois le fait, une fois sa portée (« donc rien ne
+     commence sans que tu le saches »). La portée s'invente à la lecture ; le fait,
+     non. Deux gloses ont disparu pour de bon — « le lancement est explicite » et
+     « la fin de vague est confirmée » ne faisaient que traduire en français le
+     message affiché juste à côté d'elles. */
+  { id: "08", texte: "Préparez-vous !", ceQueCaDit: "Un temps mort avant la première vague." },
+  { id: "12", texte: "[Protection de l'Oasis] Les monstres vont apparaître dans %u secondes !", ceQueCaDit: "Compte à rebours d'apparition : de quoi se placer et se buffer." },
+  { id: "11", texte: "[Protection de l'Oasis] C'est parti !", ceQueCaDit: "" },
+  { id: "01", texte: "Vague nº %u", ceQueCaDit: "Les vagues sont numérotées à l'écran." },
+  { id: "07", texte: "La vague se termine dans %02dmn:%02ds", ceQueCaDit: "Chaque vague a un MINUTEUR : il y a un temps imparti." },
+  { id: "16", texte: "Monstres restant: %u", ceQueCaDit: "Compteur de ce qui reste debout — utile sur une arène où l'on vole." },
+  { id: "06", texte: "[Protection de l'Oasis] La vague nº %u est terminée. Félicitations !", ceQueCaDit: "" },
+  { id: "09", texte: "[Protection de l'Oasis] Vous avez obtenu %dx (%s) en guise de récompense. Bravo!", ceQueCaDit: "La prime tombe À CHAQUE VAGUE, pas à la fin du tour." },
+  { id: "02", texte: "Classement", ceQueCaDit: "Un classement entre joueurs : le mode compare, il ne fait pas que survivre." },
+  { id: "14", texte: "[Protection de l'Oasis] Vous venez de terminer la dernière vague.", ceQueCaDit: "Il y a une dernière vague. Notre relevé la situe à la 52e." },
 ];
 
 /**
@@ -131,10 +137,20 @@ export const DEROULE: { id: string; texte: string; ceQueCaDit: string }[] = [
  */
 export const CARTE = [
   { quoi: "Son nom dans le client", valeur: "Tour Infernale", precision: "monde nº 8, dossier WdTowermap" },
-  { quoi: "La taille de l'arène", valeur: "128 × 128 unités", precision: "à égalité pour la plus petite des 93 cartes ; un donjon standard fait 2 560 × 2 560, soit 400 fois la surface" },
-  { quoi: "En extérieur, et on y vole", valeur: "vol autorisé", precision: "l'arène est déclarée en extérieur, le vol n'y est pas bridé" },
-  { quoi: "Si tu meurs", valeur: "retour à Flaris", precision: "le point de réapparition de la carte est Flaris, pas l'arène" },
-  { quoi: "Ce que la carte contient", valeur: "rien", precision: "0 zone de regénération, 0 monstre posé, 0 sortie, deux objets de décor — tout le reste vient du serveur" },
+  /* DEUX MOTS REMIS, ET CHACUN PORTAIT UNE VÉRITÉ.
+     « à égalité pour » : la version d'avant disait « à égalité pour la plus petite des
+     93 cartes ». En le coupant, on transforme une ÉGALITÉ en une UNICITÉ — l'arène
+     devient « la plus petite », alors que la source dit qu'elle partage ce rang.
+     « standard » : la version d'avant disait « un donjon STANDARD fait 2 560 × 2 560,
+     soit 400 fois la surface ». Sans le mot, le ×400 se lit comme valant pour tout
+     donjon. RECOMPTÉ SUR donjons-client.json : 13 des 23 donjons font 2 560 × 2 560,
+     donc bien ×400 — mais les dix autres vont de 384 × 384 (×9) à 5 120 × 5 120
+     (×1 600). Le qualificatif n'était pas du remplissage, c'est lui qui rendait la
+     phrase vraie. */
+  { quoi: "La taille de l'arène", valeur: "128 × 128 unités", precision: "à égalité pour la plus petite des 93 cartes ; un donjon standard en fait 400 fois la surface" },
+  { quoi: "En extérieur, et on y vole", valeur: "vol autorisé", precision: "" },
+  { quoi: "Si tu meurs", valeur: "retour à Flaris", precision: "pas au pied de l'arène" },
+  { quoi: "Ce que la carte contient", valeur: "rien", precision: "0 monstre posé, 0 sortie — tout vient du serveur" },
 ];
 
 /**

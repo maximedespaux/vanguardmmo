@@ -84,6 +84,17 @@ export const ESPACES: Espace[] = [
       // ils appartiennent donc à cet espace-là. Sans ces deux entrées, les pages
       // n'étaient atteignables qu'en tapant leur adresse — et absentes du
       // sommaire, qui est généré depuis ce fichier.
+      /* LE WIKI EN PREMIER, parce que c'est la porte de tout le reste. La page cherche
+         d'un seul coup dans les 12 134 objets, les 1 124 monstres, les 834 recettes et
+         les 293 PNJ — là où le site portait AU MOINS DIX recherches séparées, chacune
+         sur son îlot. Un joueur qui tape « Âme de démon » ne savait pas s'il devait
+         aller sur /objets, /monstres ou /crafts.
+
+         Elle a été créée sans entrée de menu, comme six pages avant elle : c'est la
+         troisième fois que ça arrive dans ce chantier, et c'est toujours la même cause —
+         j'interdis `nav.ts` aux passes parallèles pour éviter les conflits d'écriture,
+         puis j'oublie de poser l'entrée derrière. */
+      { label: "Le wiki", href: "/wiki", icon: "search", desc: "Cherche n'importe quoi : un objet, un monstre, une recette, un PNJ." },
       { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient." },
       /* QUATRE ENTRÉES ONT DISPARU D'ICI, et ce n'est pas une perte de contenu :
          les pages ont FUSIONNÉ dans le compartiment qui les concernait. Demande de
@@ -164,9 +175,16 @@ export const ESPACES: Espace[] = [
        portent l'exigence — ceux du staff restent marques `admin`. */
     label: "Guilde",
     icon: "shield",
-    href: "/compositions",
+    /* L'ESPACE OUVRE SUR SON ACCUEIL, plus sur les Chambres Secrètes. Demande de
+       Maxime : « faire un même système pour l'accueil guilde (par défaut l'accueil de
+       la guilde) ». /dashboard est devenu cet accueil — le même système de portes que
+       l'accueil public — et il n'était atteignable que par une porte de la page
+       publique, jamais par le menu. Cliquer « Guilde » tombait donc directement sur
+       une composition, ce qui n'est pas ce qu'on cherche en arrivant. */
+    href: "/dashboard",
     acces: "guild",
     liens: [
+      { label: "Accueil de la guilde", href: "/dashboard", icon: "home", desc: "Où j'en suis, et tout ce qui est réservé aux membres." },
       /* « Chambres Secrètes » et non « Compositions » — demande de Maxime, et la
          bannière de la page portait déjà ce nom : le menu était le seul endroit à
          dire autre chose. L'ADRESSE, elle, reste /compositions : des inscriptions,
@@ -194,4 +212,16 @@ export const HORS_ESPACES: Lien[] = [
   { label: "Accueil", href: "/", icon: "home", desc: "Le jeu, les huit classes, et par où commencer.", acces: "public" },
   { label: "La guilde", href: "/histoire", icon: "book", desc: "La guilde, son histoire et ses règles.", acces: "public" },
   { label: "Candidature", href: "/candidature", icon: "user-plus", desc: "Rejoindre Vanguard.", acces: "public" },
+  /* LE SOMMAIRE N'ÉTAIT ATTEIGNABLE QU'EN TAPANT SON ADRESSE. Un audit des 48 routes du
+     dépôt l'a montré : il n'était cité nulle part comme LIEN — seulement dans la table
+     des fonds d'écran de Shell, ce qui ne mène à rien. Le panneau « Tout » n'y menait pas
+     davantage, puisqu'il rend les entrées de ce fichier et que celle-ci n'existait pas.
+
+     Il est ici et non dans un espace : c'est la page qui liste TOUS les espaces, la
+     ranger dans l'un d'eux la subordonnerait à son voisin. Elle se génère depuis ce
+     fichier, donc s'y déclarer est un peu circulaire — et sans conséquence : elle
+     s'affichera dans sa propre liste, ce qui est exactement ce qu'on attend d'un index.
+
+     Réservée à la guilde, comme la garde du middleware l'exige déjà pour cette adresse. */
+  { label: "Toutes les pages", href: "/sommaire", icon: "grid", desc: "L'index du site, espace par espace.", acces: "guild" },
 ];

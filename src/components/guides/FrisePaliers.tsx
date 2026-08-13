@@ -102,7 +102,10 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
                     ))}
                   </div>
                 ) : (
-                  <div className="fr-rien">Rien de neuf</div>
+                  /* Un tiret plutôt que « Rien de neuf » écrit quatre fois : la ligne
+                     du palier est vide, et c'est ça l'information. Le mot reste dans
+                     le title, pour qui doute de ce que le tiret veut dire. */
+                  <div className="fr-rien" title="Ce palier n'ouvre aucune instance">—</div>
                 )
               )}
               {cout ? (
@@ -123,10 +126,23 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         );
       })}
 
+      {/* ── POURQUOI CETTE CSS EST ÉCRITE COMME ÇA ── (sorti du littéral de gabarit :
+          là-dedans, ces lignes partaient dans le `<style>` servi au navigateur, sur
+          les deux pages qui emploient la frise)
+
+          .fr-l — le badge du palier a une colonne à lui : les dix badges s'alignent,
+          et la frise se lit verticalement comme une échelle.
+
+          .fr-i — une ligne d'instance : icône, nom, barre, valeur. La barre prend la
+          place qui reste ; le nom et la valeur sont à largeur fixe pour que tout
+          s'aligne d'un palier à l'autre. Sous 560 px le nom et la barre ne tiennent
+          plus sur une ligne : le nom prend toute la largeur, barre et valeur passent
+          dessous.
+
+          .fr-cout — le coût du palier suivant est fait de pastilles icône + nombre,
+          pas d'une phrase. */}
       <style>{`
         .fr{display:grid;gap:7px}
-        /* Le badge du palier a une colonne a lui : les dix badges s'alignent, et la
-           frise se lit verticalement comme une echelle. */
         .fr-l{display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px;align-items:start;
           background:var(--bg-3);border:1px solid var(--border);border-radius:11px;padding:9px 12px}
         .fr-l.on{border-color:var(--orange);background:rgba(255,140,26,.07)}
@@ -135,9 +151,6 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
           font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px}
         .fr-c{min-width:0;display:grid;gap:6px}
         .fr-inst{display:grid;gap:4px}
-        /* Une ligne d'instance : icone, nom, barre, valeur. La barre prend la place qui
-           reste ; le nom et la valeur sont a largeur fixe pour que tout s'aligne d'un
-           palier a l'autre. */
         .fr-i{display:grid;grid-template-columns:16px minmax(0,1fr) 88px 52px;align-items:center;gap:9px;
           text-decoration:none;color:var(--text);border-radius:7px;padding:2px 4px;margin:0 -4px}
         .fr-i:hover{background:rgba(255,140,26,.09)}
@@ -148,7 +161,6 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         .fr-iv{font-size:11.5px;text-align:right;color:var(--gold);font-variant-numeric:tabular-nums;
           font-family:'Rubik',sans-serif}
         .fr-rien{font-size:11.5px;color:var(--text-muted)}
-        /* Le cout du palier suivant : des pastilles icone + nombre, pas une phrase. */
         .fr-cout{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
         .fr-fl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--orange);
           font-family:'Rubik',sans-serif;font-weight:700}
@@ -159,8 +171,6 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
           border:1px solid var(--border);border-radius:20px;padding:2px 9px 2px 6px}
         .fr-chip b{font-size:11.5px;font-variant-numeric:tabular-nums;font-family:'Rubik',sans-serif;color:var(--text)}
         @media(max-width:560px){
-          /* Sous 560 px la barre et le nom ne tiennent plus sur une ligne : le nom prend
-             toute la largeur, la barre et la valeur passent dessous. */
           .fr-i{grid-template-columns:16px minmax(0,1fr) 52px;row-gap:2px}
           .fr-in{grid-column:2 / -1;white-space:normal}
           .fr-ib{grid-column:2}

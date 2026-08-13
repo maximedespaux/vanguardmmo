@@ -35,28 +35,55 @@ import {
 
 type Onglet = "chercher" | "boss" | "frappeurs";
 
-export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs }: {
+export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agressifs, objetsLaches }: {
   boss: Monstre[]; frappeurs: Monstre[]; compteurs: Compteurs; total: number;
   groupes: { nom: string; n: number }[];
   /** Compté sur le catalogue, jamais écrit : cf. `catalogue.faits()`. */
   agressifs: number;
+  /** Combien d'objets distincts le relevé rattache à un monstre — la mesure du pont
+   *  vers le catalogue d'objets, comptée elle aussi. */
+  objetsLaches: number;
 }) {
   useCardFx();
   const [onglet, setOnglet] = useState<Onglet>("chercher");
+  /**
+   * LE FILTRE DEMANDÉ PAR UNE TUILE.
+   *
+   * `numero` ne sert qu'à faire remonter la recherche : sans lui, cliquer deux fois
+   * sur la même tuile ne rejouerait rien, et cliquer sur une autre laisserait l'état
+   * précédent. C'est plus court qu'une synchronisation par effet, et il n'y a aucun
+   * état de recherche à préserver — on vient justement de le remplacer.
+   */
+  const [demande, setDemande] = useState<{ provenance?: "maison" | "base"; vies?: boolean; numero: number }>({ numero: 0 });
   const roi = boss[0];
+
+  const filtrer = (d: { provenance?: "maison" | "base"; vies?: boolean }) => {
+    setDemande({ ...d, numero: demande.numero + 1 });
+    setOnglet("chercher");
+  };
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
 
       {/* Ce que le catalogue contient, en chiffres. C'est ce qui donne l'échelle :
           « 142 monstres au-dessus du milliard de PV » dit plus sur le haut niveau
-          d'AirFlyff qu'un paragraphe. */}
+          d'AirFlyff qu'un paragraphe.
+
+          DEUX D'ENTRE EUX SONT MAINTENANT DES BOUTONS. « Ajoutés par AirFlyff » est la
+          spécificité du serveur et « se relèvent » son piège le plus coûteux : on
+          lisait les deux nombres et il fallait redescendre chercher le filtre qui va
+          avec. La tuile EST le filtre. Les trois autres restent des constats — aucun
+          filtre du catalogue ne leur correspond, et un bouton qui ne fait rien est
+          pire qu'un chiffre. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(146px,1fr))", gap: 9 }}>
         <Chiffre icon="paw" valeur={entier(total)} quoi="monstres" />
-        <Chiffre icon="sparkles" valeur={entier(compteurs.maison)} quoi="ajoutés par AirFlyff" ton="var(--purple)" />
-        <Chiffre icon="skull" valeur={entier(compteurs.vies)} quoi="se relèvent" ton="var(--red)" />
+        <Chiffre icon="sparkles" valeur={entier(compteurs.maison)} quoi="ajoutés par AirFlyff" ton="var(--purple)"
+          onClick={() => filtrer({ provenance: "maison" })} />
+        <Chiffre icon="skull" valeur={entier(compteurs.vies)} quoi="se relèvent" ton="var(--red)"
+          onClick={() => filtrer({ vies: true })} />
         <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--orange)" />
         <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--gold)" />
+        <Chiffre icon="package" valeur={entier(objetsLaches)} quoi="objets nommés dans leur butin" ton="var(--green)" />
       </div>
 
       <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
@@ -71,7 +98,10 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agre
         ))}
       </div>
 
-      {onglet === "chercher" && <RechercheMonstres />}
+      {onglet === "chercher" && (
+        <RechercheMonstres key={demande.numero}
+          departProvenance={demande.provenance ?? ""} departVies={demande.vies ?? false} />
+      )}
 
       {onglet === "boss" && (
         <div style={{ display: "grid", gap: 14 }}>
@@ -125,16 +155,33 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, groupes, agre
   );
 }
 
-function Chiffre({ icon, valeur, quoi, ton = "var(--text)" }: {
+/** Une tuile de compteur — et un BOUTON quand un filtre du catalogue lui correspond.
+ *  Le pointillé sous le libellé est le seul signal qu'on peut cliquer : sans lui, une
+ *  tuile cliquable et une tuile morte se ressemblent trait pour trait. */
+function Chiffre({ icon, valeur, quoi, ton = "var(--text)", onClick }: {
   icon: Parameters<typeof Icon>[0]["name"]; valeur: string; quoi: string; ton?: string;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 13px", minWidth: 0 }}>
+  const cadre: React.CSSProperties = {
+    background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12,
+    padding: "12px 13px", minWidth: 0, textAlign: "left",
+  };
+  const dedans = (
+    <>
       <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 20, fontWeight: 700, color: ton, fontVariantNumeric: "tabular-nums" }}>
         <Icon name={icon} size={15} style={{ color: ton, opacity: 0.85 }} />{valeur}
       </div>
-      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2 }}>{quoi}</div>
-    </div>
+      <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, borderBottom: onClick ? "1px dotted var(--orange)" : undefined, display: "inline-block" }}>
+        {quoi}
+      </div>
+    </>
+  );
+  if (!onClick) return <div className="fx-card" style={cadre}>{dedans}</div>;
+  return (
+    <button className="fx-card" onClick={onClick} aria-label={`Chercher : ${quoi}`}
+      style={{ ...cadre, cursor: "pointer", fontFamily: "inherit", color: "inherit", width: "100%", display: "block" }}>
+      {dedans}
+    </button>
   );
 }
 

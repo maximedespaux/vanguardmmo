@@ -339,6 +339,67 @@ db.MECH.arme.nonCalculable = db.MECH.armure.upgrade.nonCalculable;
 db.SYNO = SYNO;
 db.SYNO_SRC = SYNO_SRC;
 
+/* ── LES ILLUSTRATIONS DES CARNETS DES ARCANES ──────────────────────────────
+   Maxime : « tu avais fait le deck des arcanes et tu as repris dans collections le
+   carnet des arcanes, intègre les assets, évite les doublons — c'est de ça que je te
+   parle ».
+
+   L'ÉTAT AVANT CE BLOC, mesuré : `db.CARNETS` porte les QUINZE NOMS FRANÇAIS écrits à
+   la main par Maxime (« L'appel de l'aventure », « Domaine élémentaire », « Le poids du
+   destin ») et ZÉRO illustration. Le relevé du client, lui, porte 59 illustrations et
+   AUCUN nom français. Une passe précédente avait tranché à l'envers : elle a écarté le
+   carnet fait main en jugeant ses bonus « très pauvres » et affiché la clé non traduite
+   `TID_DECK_ARCANE_4` faute de nom — alors que les noms existaient.
+
+   src/data/carnets-arcanes.json est la réconciliation des deux, et elle DORMAIT : ce
+   fichier n'était importé nulle part. On le greffe ici, dans le générateur plutôt qu'à
+   la main, sinon la prochaine régénération de data.json effacerait les illustrations.
+
+   LA JONCTION SE FAIT PAR LA SIGNATURE DES CARTES, jamais par l'index — les deux
+   numérotations diffèrent. Vérifié carnet par carnet : les 1 à 4 coïncident, puis le 5
+   du fait-main occupe la position 15 chez le client, et les 6 à 15 correspondent aux
+   5 à 14. Une jonction par index aurait collé les illustrations du mauvais carnet à
+   onze des quinze, et RIEN ne l'aurait signalé — ni la compilation, ni l'œil.
+
+   Le poids est négligeable : un nom de fichier par carte, 63 cartes. */
+const clefCarte = (s) =>
+  String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/\bcarte\b/g, "").replace(/[^a-z0-9]/g, "");
+const signatureCarnet = (cartes) =>
+  (cartes ?? []).map((c) => clefCarte(c.nom ?? c.n)).sort().join("|");
+
+let carnetsIllustres = 0;
+let cartesIllustrees = 0;
+try {
+  const fusion = lire("src/data/carnets-arcanes.json");
+  const parSignature = new Map(
+    (fusion.liste ?? []).map((d) => [signatureCarnet(d.cartes), d])
+  );
+  for (const c of db.CARNETS ?? []) {
+    const jumeau = parSignature.get(signatureCarnet(c.cartes));
+    if (!jumeau) continue;
+    // L'illustration s'apparie carte par carte, par le nom : l'ordre des cartes n'est
+    // pas garanti identique entre les deux relevés, et se fier au rang aurait donné
+    // l'image de la voisine.
+    const artParClef = new Map(
+      (jumeau.cartes ?? []).filter((x) => x.art).map((x) => [clefCarte(x.nom), x.art])
+    );
+    let touche = false;
+    for (const carte of c.cartes ?? []) {
+      const art = artParClef.get(clefCarte(carte.nom ?? carte.n));
+      if (!art) continue;
+      carte.art = art;
+      cartesIllustrees += 1;
+      touche = true;
+    }
+    if (touche) carnetsIllustres += 1;
+  }
+} catch {
+  // Le fichier de fusion est facultatif : sans lui, les carnets gardent les noms de
+  // Maxime et n'ont simplement pas d'image. On ne casse pas le builder pour ça.
+  carnetsIllustres = -1;
+}
+
 /* ── LES SOURCES, POUR L'ÉCRAN ──────────────────────────────────────────────
    Décision de Maxime : « afficher le calcul et sa source, sans le donner pour
    exact ». Le moteur a donc besoin des sources EN LIGNE, pas dans un commentaire
@@ -373,3 +434,6 @@ for (const x of rapport.lignesAjoutees) console.log(`   ${x.n} : ${x.avant} → 
 console.log(`panoplies d'armure : ${panoTrouvees}/${sigPieces.size} signatures, ${lignesNegatives} lignes négatives`);
 console.log(`paliers de bijou : ${paliersFichier.total.paliers} sur ${paliersFichier.total.bijoux} bijoux · ${nbPlateaux} plateaux`);
 console.log(`MECH : ${Object.keys(db.MECH).join(", ")}`);
+console.log(carnetsIllustres < 0
+  ? "carnets des arcanes : fusion absente, les noms restent, pas d image"
+  : `carnets des arcanes : ${carnetsIllustres}/${(db.CARNETS ?? []).length} illustres, ${cartesIllustrees} cartes`);

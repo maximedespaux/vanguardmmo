@@ -49,6 +49,37 @@ export function NomObjet({ nom, icone, couleur, taille = 20 }: {
             {nom} → sa fiche
           </Link>
           <OuTrouver nom={nom} compact />
+          {/* LE TROISIÈME LIEN, ET IL MANQUAIT. Demande de Maxime : « pour passer une
+              requête il faut plus de liens logiques ». La bulle savait dire CE QUE c'est
+              et D'OÙ ça vient ; elle ne savait pas dire « je le veux ». Or c'est la
+              question suivante, et il fallait revenir au menu, ouvrir la boutique, et
+              retaper le nom.
+
+              On dépose le nom là où la boutique le lit déjà — `vg_demande_pieces`, le
+              même dépôt que l'AirBuilder emploie pour « Demander cet objet ». Le nom
+              seul suffit : la boutique le met dans sa recherche, et si l'objet n'est pas
+              une pièce équipable (une poudre, un matériau, une clé), elle le DIT au lieu
+              de l'abandonner en silence — c'était un défaut, il est corrigé dans le même
+              mouvement.
+
+              `<a>` et non `<Link>` : il faut écrire dans le localStorage AVANT de
+              naviguer, et la navigation douce de Next ne garantit pas l'ordre. */}
+          <a
+            href="/boutique"
+            onClick={(e) => {
+              try {
+                const pile = [{ nom }];
+                localStorage.setItem("vg_demande_pieces", JSON.stringify(pile));
+              } catch {
+                // Stockage refusé (navigation privée, réglage du navigateur) : on laisse
+                // le lien mener à la boutique, où la recherche reste à portée de main.
+                void e;
+              }
+            }}
+            style={{ color: "var(--gold)", fontWeight: 700, textDecoration: "none", fontSize: 12.5 }}
+          >
+            Le demander à la guilde →
+          </a>
         </span>
       }
     >

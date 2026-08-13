@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { type SectionVolet } from "@/components/VoletSections";
-import { Cartes } from "./Cartes";
 import { Karma } from "./Karma";
 import { Succes } from "./Succes";
 import { Titres } from "./Titres";
@@ -69,9 +68,39 @@ const VOLETS: Volet[] = [
     contenu: (d) => <Succes familles={d.succesFamilles} nbSucces={d.nbSucces} source={d.sources.succes} />,
   },
   {
-    clef: "cartes", titre: "Carnets de cartes", sous: "Les bonus, avec les illustrations", icon: "card",
+    /* LES CARNETS DES ARCANES ONT QUITTÉ CETTE PAGE, et c'est un doublon corrigé, pas
+       une perte. Maxime : « tu avais fait le deck des arcanes et tu as repris dans
+       collections le carnet des arcanes — évite les doublons, c'est de ça que je te
+       parle. »
+
+       Le sujet appartient à l'AIRBUILDER : un carnet donne un BONUS DE BUILD, on le
+       consulte au moment d'équiper, pas en faisant l'inventaire de ses collections.
+       C'est la même correction que la maîtrise d'arme et les anges, déplacés pour la
+       même raison.
+
+       ET LA VERSION D'ICI ÉTAIT LA MOINS BONNE DES DEUX. Elle lisait le relevé du
+       client, qui n'a AUCUN nom français : elle affichait donc les carnets numérotés,
+       en expliquant « on n'invente pas de nom français » — alors que les quinze noms
+       existaient, écrits à la main par Maxime dans le builder. Celui du builder porte
+       maintenant les deux : ses noms, et les 59 illustrations du client, greffées par
+       scripts/completer-airbuilder-data.mjs.
+
+       Le volet devient donc un RENVOI. Il reste dans le rail parce qu'on le cherche
+       ici — les carnets sont bien une collection — mais il n'en développe plus le
+       détail : une phrase et un lien. */
+    clef: "cartes", titre: "Carnets de cartes", sous: "Le détail est dans l'AirBuilder", icon: "card",
     compte: (d) => d.decks.length,
-    contenu: (d) => <Cartes decks={d.decks} definies={d.nbCartesDefinies} placees={d.nbCartesPlacees} source={d.sources.decks} />,
+    contenu: (d) => (
+      <div style={{ fontSize: 13, lineHeight: 1.65 }}>
+        Les {d.decks.length} carnets et leurs {d.nbCartesDefinies} cartes vivent dans l&apos;
+        <a href="/builder" style={{ color: "var(--orange)" }}>AirBuilder</a> : leur bonus
+        compte dans ton build, donc il se lit au moment où tu équipes.
+        <div style={{ color: "var(--text-muted)", marginTop: 8, fontSize: 12 }}>
+          On y trouve les noms français des carnets et les illustrations du client, réunis —
+          cette page-ci n&apos;avait que les seconds.
+        </div>
+      </div>
+    ),
   },
   {
     clef: "karma", titre: "Karma PK", sous: "Ce que coûte une mauvaise réputation", icon: "skull",

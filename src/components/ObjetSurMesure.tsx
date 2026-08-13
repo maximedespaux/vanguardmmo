@@ -207,7 +207,26 @@ export function ObjetSurMesure({ onEnvoye }: { onEnvoye?: () => void }) {
     const s = ["fhead", "ftop", "fhand", "ffoot"].includes(brutSlot) ? "fashion" : brutSlot;
     const liste = items[s] ?? [];
     const trouve = liste.find((i) => String(i.id) === String(d.itemId)) ?? liste.find((i) => i.n === d.nom);
-    if (!trouve) return;
+    if (!trouve) {
+      /* UN DÉPÔT DONT L'OBJET N'EST PAS AU CATALOGUE ÉTAIT ABANDONNÉ EN SILENCE.
+         `return` sec : on arrivait sur une boutique vide, sans un mot, en ayant cliqué
+         « demander cet objet ». Le cas n'est pas rare et va le devenir — le catalogue du
+         builder ne porte que les 390 pièces ÉQUIPABLES, alors qu'on veut aussi pouvoir
+         demander un matériau : une poudre féerique, un morceau de craft, une clé. Le
+         client en nomme 12 134.
+
+         On garde donc le nom : il part dans la recherche, et le lecteur voit ce qu'il
+         venait chercher. S'il n'y est pas non plus, la note lui dit d'écrire sa demande
+         à la main plutôt que de le laisser conclure à une panne. */
+      if (d.nom) {
+        setQ(d.nom);
+        setEtat({
+          ok: false,
+          msg: `« ${d.nom} » n'est pas une pièce équipable du builder — son nom est dans la recherche. Si tu ne le trouves pas ici, compose la pièce la plus proche et précise-le dans la note.`,
+        });
+      }
+      return;
+    }
     setSlot(s);
     setChoisi(trouve);
     setChoix({ ...CHOIX_VIDE, ...(d.choix ?? {}) });

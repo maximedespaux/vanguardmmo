@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { VoletSections, EnteteVolet, type SectionVolet } from "@/components/VoletSections";
 import { CarteFx } from "@/components/astuces/CarteFx";
 import { VoletAnges, VoletMaitrise } from "@/components/mecaniques/SectionsBuild";
+import { Calcul } from "@/components/mecaniques/SectionsCalcul";
 import { Fashion } from "@/components/mecaniques/SectionsFashion";
 import {
   Ailleurs, Amelioration, Artefact, Eveil, FAMILLES, Gemmes, Percage, Rarete, Runes, Sertissage,
@@ -13,6 +14,7 @@ import {
   nombreDeGemmesMenteuses, runes, setsDeFashion,
 } from "@/components/mecaniques/releves";
 import { paliersDeGemme, panopliesNegatives } from "@/components/mecaniques/sources";
+import { chiffresDuCalcul } from "@/components/statistiques/donnees";
 import { ICONE_ELEMENT } from "@/lib/assetsJeu";
 import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
 
@@ -91,7 +93,25 @@ export default function MecaniquesPage() {
   const maitrise = chiffresMaitrise();
   const anges = chiffresAnges();
 
+  const chiffres = chiffresDuCalcul();
+
   const sections: SectionVolet[] = [
+    /* ── LE CALCUL OUVRE LE RAIL, et c'est un changement de rang assumé ───────
+       Les volets qui suivent expliquent CE QU'UNE MÉCANIQUE VEUT DIRE ; celui-ci
+       montre CE QU'ELLE FAIT AU NOMBRE. La demande de Maxime est « voir le rendu
+       dégâts », donc voir comment on y arrive : c'est la question qu'on se pose en
+       arrivant, et les définitions viennent après, quand un terme du calcul n'est
+       pas clair. */
+    {
+      clef: "calcul", titre: "Le calcul, terme par terme", icon: "bar-chart",
+      compte: chiffres.feuilles,
+      /* LE BADGE PORTE DÉJÀ LE NOMBRE DE FEUILLES : le répéter dans la ligne du
+         dessous donnait « 5 » puis « 5 calculs complets », qui se lisaient collés en
+         « 55 ». Le sous-titre dit donc ce que le badge ne dit pas — le grain du
+         calcul, et combien de termes on annonce comme non calculables. */
+      sous: `${chiffres.termes} termes sourcés, dont ${chiffres.absents} annoncés non calculables`,
+      contenu: <Calcul />,
+    },
     {
       clef: "gemmes", titre: "Les gemmes mentent", icon: "alert", compte: nGemmes,
       sous: `${menteuses} noms sur ${nGemmes} donnent l'effet d'une autre`,
@@ -200,7 +220,15 @@ export default function MecaniquesPage() {
       <CarteFx>
         <VoletSections
           sections={sections}
-          defaut="gemmes"
+          /* LE VOLET OUVERT EST CELUI DU CALCUL, et pas celui des gemmes.
+             L'avertissement sur les gemmes reste EN TÊTE, dans l'entête, donc
+             visible sans rien ouvrir — il ne perd rien au change. Ce qui change,
+             c'est ce qu'on trouve déplié en arrivant : la question qu'on se pose en
+             ouvrant cette page est « combien je tape », et les définitions viennent
+             après, quand un terme du calcul n'est pas clair. Ouvrir « gemmes »
+             pendant que « calcul » ouvre le rail donnait un rail dont la première
+             entrée n'était pas celle qu'on lisait. */
+          defaut="calcul"
           entete={
             <EnteteVolet
               icon="alert"

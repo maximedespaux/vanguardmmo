@@ -160,6 +160,48 @@
 .die img{width:36px;height:18px;object-fit:cover;object-position:top;border-radius:3px;image-rendering:pixelated;flex:none}
 .die b{font-family:Rubik;font-weight:700;font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
 .die.nil{opacity:.5}.die.nil b{color:var(--mut)}
+/* ═══════════ LE PANNEAU QUI MONTRE D'OU VIENT CHAQUE POINT ═══════════════
+   Le resume n'affichait qu'un total par statistique. Un total ne se verifie pas :
+   on ne peut ni le contester, ni retrouver la piece a changer. Trois ajouts, et
+   chacun repond a une question qu'on se posait sans pouvoir y repondre.
+
+   .stbar / .stfill — LA BARRE. Deux regles, les memes que partout sur ce site :
+     une SEULE teinte (celle que la colonne emploie deja) parce que c'est la
+     LONGUEUR qui porte la grandeur — peindre les grandes valeurs en vert et les
+     petites en dore ne se distingue pas pour un daltonien protan, 5,8 de deltaE
+     mesure, sous le seuil de perception ; et un plancher a 1,5 % sans quoi une
+     valeur minuscule perd sa barre, et l'absence de barre se lit comme une
+     donnee manquante. Elle part du MILIEU : une ligne de panoplie peut RETIRER
+     des points, et une barre qui ne saurait aller qu'a droite ferait passer un
+     malus pour un petit bonus.
+   .stneg — la marque « une piece en retire ». Le signe est deja dans le nombre ;
+     cette marque dit que le SIGNE VIENT D'UNE PIECE, pas d'un calcul. Les 64
+     panoplies d'armure du releve portent chacune une ligne negative, et la
+     fenetre de panoplie du jeu n'en affiche aucune.
+   .stn — le nombre de sources. Il dit, sans deplier, qu'une ligne a plusieurs
+     origines : c'est l'invitation a survoler.
+   .stabs — les termes NON COMPTES. Replies par defaut (un stuff maximise en
+     donne une trentaine) mais leur COMPTE est visible, et c'est ce compte qui
+     empeche de prendre le total pour la verite.                                */
+#stats .l.stl{position:relative;flex-wrap:wrap;cursor:help}
+#stats .l.stl>b.moins{color:var(--red,#f87171)}
+.stbar{flex:0 0 100%;position:relative;display:block;height:4px;border-radius:3px;
+  background:rgba(255,255,255,.05);margin-top:3px}
+.stfill{position:absolute;top:0;bottom:0;border-radius:3px;
+  background:color-mix(in srgb, var(--green,#4ade80) 55%, transparent)}
+.stfill.moins{background:color-mix(in srgb, var(--red,#f87171) 55%, transparent)}
+.stneg{font-style:normal;font-weight:700;color:var(--red,#f87171);font-size:13px;line-height:1}
+.stn{font-style:normal;font-size:10px;color:var(--mut,#9a9aa3);background:rgba(255,255,255,.06);
+  border-radius:20px;padding:0 5px;vertical-align:1px}
+.stabs{margin-top:10px;background:rgba(248,113,113,.05);border:1px dashed rgba(248,113,113,.28);
+  border-radius:10px;padding:8px 12px}
+.stabs>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--red,#f87171);
+  display:flex;align-items:center;gap:7px;list-style:none}
+.stabs>summary::-webkit-details-marker{display:none}
+.stabs-l{display:flex;flex-direction:column;gap:1px;font-size:11.5px;padding:5px 0;
+  border-top:1px solid rgba(255,255,255,.06)}
+.stabs-l>span{color:var(--text,#e8e8ee)}
+.stabs-l>i{font-style:normal;color:var(--mut,#9a9aa3);line-height:1.45}
 /* ─────────── LA PANOPLIE ──────────────────────────────────────────────────
    Quatre vignettes, celles qu'on porte allumees. Le compte est ecrit a cote
    pour qui ne distingue pas l'allume de l'eteint.                            */

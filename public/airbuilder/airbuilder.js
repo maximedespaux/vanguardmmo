@@ -425,21 +425,164 @@ function renderCarnets(){const c=C();ST();
  * comparerait entre deux builds comme s'il etait mesure. Le panneau porte donc
  * sa legende, qui dit ce que le nombre couvre.
  */
-function totals(){const acc={};const add=(k,v)=>{if(v)acc[k]=(acc[k]||0)+v;};
-  const st=ST();for(const s in st.eq){const e=st.eq[s];if(!e||!e.item||s==='familier')continue;
-    (e.item.b||[]).forEach(b=>add(b[0],b[1]));
-    if(e.cfg&&e.cfg.pierce){try{const pt=pierceTotals(e.cfg,s);if(pt&&pt.brut)pt.brut.forEach(b=>add(b[0],b[1]));}catch(x){}}
+/* ═══════════════ LES PALIERS D'ACCESSOIRE, CHARGES A LA DEMANDE ═══════════════
+   Le builder laissait les bijoux hors du total : un anneau a +30 ne comptait pour
+   rien, alors que le client ECRIT ce qu'il donne a chaque palier. Le releve fait
+   131 Ko, donc il ne part PAS dans data.json (qui, lui, est inline dans la page) :
+   on le va chercher au premier bijou ameliore, une fois, et on redessine.
+
+   POURQUOI UN SEUL RENDU DE PLUS, et pas un par appel : `_palP` retient la
+   promesse. Sans elle, un stuff a cinq bijoux lancait cinq requetes et cinq
+   rendus, et le panneau clignotait. */
+var _pal=null,_palP=null;
+function paliersBijoux(){
+  if(_pal)return _pal;
+  if(!_palP){_palP=fetch('/airbuilder/paliers.json').then(function(r){return r.json();})
+    /* LE PANNEAU SE REDESSINE, ET LE TOTAL PUBLIE SE REFAIT AUSSI. Redessiner ne
+       suffisait pas : `totals()` part aussi vers /api/characters/sync (GuildViewer,
+       Compositions, Dashboard) par vgPushCloud, et le premier appel — celui qui
+       lance cette requete — rend un total AMPUTE de tous les paliers de bijou.
+       Mesure : Boucles d'Oreille Harpe +30 seules, 1500 au premier appel contre
+       2500 apres. Sans ce rappel, c'est l'amputation qui restait en base jusqu'a
+       la prochaine modification du build. */
+    .then(function(d){_pal=d||{bijoux:{}};try{renderStats();}catch(x){}
+      try{if(typeof vgPushCloud==='function')vgPushCloud();}catch(x2){}return _pal;})
+    /* Un releve injoignable ne doit pas vider le panneau : on retient un objet
+       vide, le terme part en « non compte » et le reste du total tient. */
+    .catch(function(){_pal={bijoux:{}};return _pal;});}
+  return null;
+}
+/** Les bonus qu'un bijou donne AU PALIER ATTEINT. Le palier REMPLACE, il ne
+ *  s'additionne pas : on lit la seule case du rang, jamais la somme des rangs.
+ *  La preuve est dans le releve — 78 paliers y recopient a l'identique le
+ *  precedent, ce qu'un cumul rendrait absurde. */
+function bonusDePalier(item,up){
+  if(!item||!up)return null;
+  var p=paliersBijoux();if(!p)return null;
+  var b=p.bijoux&&p.bijoux[String(item.id)];if(!b||!b.rangs)return null;
+  var r=b.rangs[Math.min(up,b.plafond||up)];
+  return (r&&r.length)?{lignes:r,plafond:b.plafond,cle:b.cle}:null;
+}
+
+/**
+ * LE RESUME DU BUILD — ce qui s'additionne, ET D'OU CHAQUE POINT VIENT.
+ *
+ * Cette fonction ne rendait qu'un total par statistique. Un total ne se verifie
+ * pas : on ne peut ni le contester, ni retrouver la piece a changer. Elle rend
+ * maintenant, pour chaque statistique, la LISTE DE SES APPORTS — la piece qui
+ * donne, combien, et le fichier du client d'ou sort le nombre.
+ *
+ * `totals()` garde sa signature d'avant (statistique → nombre) parce que
+ * `exportBuild()` et `vgCollectBuilds()` l'envoient telle quelle a
+ * /api/characters/sync : changer sa forme casserait le GuildViewer.
+ *
+ * CE QUI EST COMPTE, et rien d'autre :
+ *   · les bonus propres de chaque piece (`b` du releve) ;
+ *   · les cartes de percage, sur les quatre emplacements qui se percent ;
+ *   · LE PALIER D'UN BIJOU (nouveau) : le client ecrit ce que chaque palier
+ *     donne, et le palier remplace ;
+ *   · le bonus de set du costume, une seule fois, aux quatre pieces portees ;
+ *   · le bonus de panoplie d'armure a 4/4, LIGNES NEGATIVES COMPRISES ;
+ *   · les carnets des arcanes.
+ *
+ * CE QUI NE L'EST PAS SE DIT A VOIX HAUTE. `absents` rassemble les termes qu'on
+ * refuse de chiffrer : le +N d'une arme ou d'une armure (propEnchant.inc ne donne
+ * que des coefficients, sans dire ce qu'ils multiplient), l'eveil, le scroll, le
+ * sertissage, les gemmes de costume — le builder retient la STATISTIQUE choisie,
+ * jamais la valeur obtenue. Un total ampute en silence se compare entre deux
+ * builds comme s'il etait complet.
+ */
+function totalsDetail(){
+  var acc={},ordre=[],absents=[];
+  function add(stat,v,de,src,cert){
+    if(!v||!stat)return;
+    if(!acc[stat]){acc[stat]=[];ordre.push(stat);}
+    acc[stat].push({de:de,v:v,src:src,cert:cert||'client'});
   }
+  function absent(quoi,pourquoi){absents.push({quoi:quoi,pourquoi:pourquoi});}
+
+  var st=ST(),lbl=function(s){return (SLOTS[s]&&SLOTS[s].lbl)||s;};
+  for(var s in st.eq){
+    var e=st.eq[s];if(!e||!e.item||s==='familier')continue;
+    var nom=e.item.n||lbl(s);
+    (e.item.b||[]).forEach(function(b){
+      add(b[0],b[1],nom,'Bonus propre de la piece — Spec_Item.txt du client, champ b du releve d\'objets.','client');});
+    var c=e.cfg;
+    if(c&&c.pierce){try{var pt=pierceTotals(c,s);if(pt&&pt.brut)pt.brut.forEach(function(b){
+      add(b[0],b[1],nom+' — percage '+(pt.el||''),'Carte de percage posee : la table de valeurs vient du client (cartes '+(pt.el||'')+').','client');});}catch(x){}}
+    /* Le palier d'un bijou : la seule valeur du rang atteint. */
+    if(c&&c.up&&['ring1','ring2','earring1','earring2','necklace'].indexOf(s)>=0){
+      var bp=bonusDePalier(e.item,c.up);
+      if(bp){bp.lignes.forEach(function(l){
+        add(l[0],l[1],nom+' +'+c.up,'accessory.inc du client, palier '+c.up+' sur '+(bp.plafond||c.up)+'. Le palier REMPLACE : cette valeur ne s\'ajoute pas aux precedentes.','client');});}
+      else if(_pal)absent(nom+' +'+c.up,'Le client n\'ecrit aucun palier pour ce bijou : sa valeur de base s\'applique seule.');
+    }
+    /* Le +N d'une arme ou d'une armure : le terme existe, sa valeur non. */
+    if(c&&c.up&&['ring1','ring2','earring1','earring2','necklace'].indexOf(s)<0)
+      absent(nom+' +'+c.up,'propEnchant.inc ne donne que des coefficients, sans dire ce qu\'ils multiplient. Un gain affiche ici serait une invention.');
+    if(c&&c.evS)absent(nom+' — eveil '+(c.evL||'R1')+' '+c.evS,'Le builder retient la statistique choisie, pas la valeur obtenue.');
+    if(c&&c.scrL&&c.scrS)absent(nom+' — scroll '+c.scrS+' +'+c.scrL,'Le builder retient la statistique, le client ne donne pas le gain par niveau de scroll.');
+    if(c&&c.dia)c.dia.concat(c.holo||[]).forEach(function(d){if(d)absent(nom+' — sertissage '+d,'Le plafond de la statistique est connu (MECH.arme.sertissage), le gain du palier pose ne l\'est pas.');});
+    if(c&&c.gems)c.gems.forEach(function(g){if(g)absent(nom+' — gemme de costume '+g,'Le builder retient la statistique, pas le palier de la gemme.');});
+    if(c&&c.elemLvl)absent(nom+' — element '+(c.elemType||'')+' +'+c.elemLvl,'Le bonus d\'element est un plafond de 20 dans MECH.arme, pas une valeur par palier.');
+  }
+
   /* Le costume : aucune piece ne paie seule, c'est le SET qui paie — et il ne
      paie qu'aux quatre pieces portees. Les quatre pieces d'un set portent le
      MEME tableau `setb` dans le releve : on l'ajoute donc une fois, pas quatre. */
-  const mode=panEtat(true);
+  var mode=panEtat(true);
   if(mode&&!mode.manquantes.length){
-    const un=st.eq[FASHION[0]];
-    ((un&&un.item&&un.item.setb)||[]).forEach(b=>add(b[0],b[1]));
+    var un=st.eq[FASHION[0]];
+    ((un&&un.item&&un.item.setb)||[]).forEach(function(b){
+      add(b[0],b[1],'Costume '+((mode.nom)||'')+' 4/4','Bonus de SET : il ne tombe qu\'aux quatre pieces portees, et une seule fois.','client');});
   }
-  const _c=C();(_c.carnets||[]).forEach(ci=>{const cn=CARNETS[ci];if(!cn)return;((_c.carnetsFull||[]).includes(ci)?cn.complet:cn.base).forEach(b=>add(b[0],b[1]));});
-  return acc;}
+  /* ═══ LA PANOPLIE D'ARMURE, AU SEUIL DE PIECES ATTEINT ═══════════════════
+     Le bonus d'une panoplie d'armure n'est PAS dans `setb` de la piece — les 256
+     armures du releve n'en portent aucun — il est dans `PANO`, range par
+     SIGNATURE, et chaque ligne y porte SON SEUIL de pieces : les 64 signatures
+     n'emploient que deux seuils, 1 et 4. Une ligne a 4 ne tombe donc qu'a
+     l'ensemble complet, une ligne a 1 des la premiere piece.
+
+     LES 64 SIGNATURES PORTENT CHACUNE UNE LIGNE NEGATIVE. Aucune exception. La
+     fenetre de panoplie du jeu n'affiche que ce que l'ensemble AJOUTE : celle-la
+     ne se voit nulle part en jouant, et elle RETIRE — les eternels perdent 200
+     de degats JcJ en pourcentage a l'ensemble complet. C'est le fait le plus
+     invisible du panneau, et c'est pour ca qu'il compte. */
+  /* `DB.PANO` et non `PANO` : la ligne de destructuration en tete du fichier ne
+     nomme pas PANO, et ce panneau est le premier a s'en servir. On lit la source
+     directement plutot que d'ajouter un nom global qu'un seul bloc emploie.
+     LA CLE DE PANO N'EST PAS LA SIGNATURE : `panSig` prefixe 'A|' pour distinguer
+     l'armure du costume, PANO range sous « tier|classe|sexe ». D'ou le `slice(2)`,
+     et sans lui le bonus de panoplie ne tombait jamais. */
+  var arm=panEtat(false),PANOD=(typeof DB!=='undefined'&&DB.PANO)||null;
+  if(arm&&PANOD){
+    var pn=PANOD[arm.sig.slice(2)];
+    ((pn&&pn.lignes)||[]).forEach(function(l){
+      var seuil=l[0];if(arm.portees<seuil)return;
+      add(l[1],l[2],'Panoplie '+(arm.nom||'')+' '+arm.portees+'/'+arm.pieces.length,
+        'propItemEtc.inc du client : cette ligne tombe a '+seuil+' piece'+(seuil>1?'s':'')+' portee'+(seuil>1?'s':'')+'.'
+        +(l[2]<0?' ELLE RETIRE : la fenetre de panoplie du jeu ne l\'affiche pas.':''),'client');});
+    /* Ce que l'ensemble donnerait EN PLUS s'il etait complet : ce n'est pas un
+       total, c'est le geste qui reste a faire, et il se dit sans etre compte. */
+    ((pn&&pn.lignes)||[]).forEach(function(l){
+      if(arm.portees>=l[0])return;
+      absent('Panoplie '+(arm.nom||'')+' a '+l[0]+'/'+arm.pieces.length+' : '+l[1]+' '+(l[2]>0?'+':'')+l[2],
+        'Il manque '+(l[0]-arm.portees)+' piece(s) : ce bonus n\'est pas encore acquis.');});
+  }
+  var _c=C();(_c.carnets||[]).forEach(function(ci){var cn=CARNETS[ci];if(!cn)return;
+    ((_c.carnetsFull||[]).indexOf(ci)>=0?cn.complet:cn.base).forEach(function(b){
+      add(b[0],b[1],'Carnet '+cn.nom,'Carnet des Arcanes, bonus '+((_c.carnetsFull||[]).indexOf(ci)>=0?'du set complet':'de base')+'.','client');});});
+
+  return {acc:acc,ordre:ordre,absents:absents};
+}
+
+/** Le total par statistique, forme d'origine. `exportBuild()` et
+ *  `vgCollectBuilds()` l'envoient a /api/characters/sync : cette signature ne
+ *  bouge pas. */
+function totals(){
+  var d=totalsDetail().acc,out={};
+  for(var k in d){var t=0;d[k].forEach(function(a){t+=a.v;});if(t)out[k]=t;}
+  return out;}
 /**
  * LES TROIS STATISTIQUES QUI NE VONT PAS A L'ECRAN.
  *
@@ -509,10 +652,41 @@ function panResume(mode){
     +'</div>';
 }
 
+/* ═════════════ LA BULLE DE PROVENANCE D'UNE STATISTIQUE ═════════════════════
+   Le panneau ne peut pas derouler les apports de quarante statistiques : un stuff
+   complet donnerait cent lignes a faire defiler, et on ne comparerait plus rien.
+   La ligne montre donc le TOTAL, une BARRE, et le nombre de sources ; le detail
+   arrive au SURVOL, dans la meme bulle que celle des pieces (`_itip`), avec le
+   fichier du client sous chaque apport.
+
+   `_statTip` garde les apports du dernier rendu : les passer en attribut HTML
+   aurait echappe des guillemets dans des phrases entieres, cinquante fois. */
+var _statTip={};
+function statTipShow(ev,cle){
+  var l=_statTip[cle];if(!l||!l.length)return;
+  var el=_itip();
+  var tot=0;l.forEach(function(a){tot+=a.v;});
+  el.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:7px">'+esc(cle)
+    +' <span style="color:'+(tot<0?'var(--red,#f87171)':'var(--gold,#ffd24a)')+'">'+(tot>0?'+':'')+tot.toLocaleString('fr-FR')+'</span></div>'
+    +l.map(function(a){
+      return '<div style="display:flex;gap:9px;justify-content:space-between;align-items:baseline;font-size:12px;padding:3px 0;border-top:1px solid rgba(255,255,255,.07)">'
+        +'<span style="min-width:0">'+esc(a.de)+'<br><span style="font-size:10.5px;color:var(--mut,#9a9aa3);line-height:1.4">'+esc(a.src)+'</span></span>'
+        +'<b style="flex:none;color:'+(a.v<0?'var(--red,#f87171)':'var(--gold,#ffd24a)')+'">'+(a.v>0?'+':'')+a.v.toLocaleString('fr-FR')+'</b></div>';
+    }).join('');
+  el.style.display='block';itipMove(ev);
+}
+
 function renderStats(){var n=document.getElementById('stats');if(!n)return;
-  var t=totals();var G={off:[],def:[],vit:[],uti:[]};
-  Object.entries(t).filter(function(p){return !STAT_RECOMPENSE.test(p[0]);})
-    .sort(function(a,b){return b[1]-a[1];}).forEach(function(p){G[statCat(p[0])].push(p);});
+  var D=totalsDetail(),t={},G={off:[],def:[],vit:[],uti:[]};
+  _statTip={};
+  Object.keys(D.acc).forEach(function(k){
+    if(STAT_RECOMPENSE.test(k))return;
+    var v=0;D.acc[k].forEach(function(a){v+=a.v;});
+    if(!v&&!D.acc[k].length)return;
+    t[k]=v;_statTip[k]=D.acc[k].slice().sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v);});
+    G[statCat(k)].push([k,v,D.acc[k].length,D.acc[k].some(function(a){return a.v<0;})]);
+  });
+  ['off','def','vit','uti'].forEach(function(g){G[g].sort(function(a,b){return Math.abs(b[1])-Math.abs(a[1]);});});
   var META={off:['<i class=vgi-sword-cross></i> Offensif','#F87171'],def:['<i class=vgi-shield></i> Défensif','#4EA8FF'],vit:['<i class=vgi-heart></i> Vitalité','#4ADE80'],uti:['<i class=vgi-sparkles></i> Utilitaire','#FFD24A']};
   var html='<h3><i class=vgi-bar-chart></i> Résumé du build</h3>',any=false;
   /* Les panoplies EN TETE du resume : c'est le premier geste qui reste a faire
@@ -525,20 +699,56 @@ function renderStats(){var n=document.getElementById('stats');if(!n)return;
      cadre qui apparait et disparait se lit moins bien qu'un cadre a zero. */
   html+='<div class="dice">'+['Force','Endurance','Dextérité','Intelligence'].map(function(s){
     var v=t[s]||0;
-    return '<span class="die'+(v?'':' nil')+'"><img src="'+DEIMG[s]+'" alt="'+s+'" title="'+s+'"><b>'
-      +(v?'+'+v.toLocaleString('fr-FR'):'—')+'</b></span>';}).join('')+'</div>';
+    return '<span class="die'+(v?'':' nil')+'"'+(v?' onmousemove="statTipShow(event,\''+s+'\')" onmouseleave="itipHide()"':'')
+      +'><img src="'+DEIMG[s]+'" alt="'+s+'" title="'+s+'"><b>'
+      +(v?(v>0?'+':'')+v.toLocaleString('fr-FR'):'—')+'</b></span>';}).join('')+'</div>';
   /* Les quatre familles COTE A COTE. En une seule colonne, un stuff complet
-     donnait quarante lignes a derouler et on ne comparait plus rien. */
+     donnait quarante lignes a derouler et on ne comparait plus rien.
+
+     LA BARRE, ET SES DEUX REGLES. Une seule teinte — celle que la colonne
+     emploie deja — et c'est la LONGUEUR qui porte la grandeur : peindre les
+     grandes valeurs en vert et les petites en dore ne se distingue pas pour un
+     daltonien protan (5,8 de deltaE mesure, sous le seuil de perception).
+     Plancher a 1,5 %, sans quoi une valeur minuscule perd sa barre et l'absence
+     de barre se lit comme une donnee manquante. Elle part du MILIEU parce
+     qu'une ligne de panoplie peut RETIRER des points : une barre qui ne saurait
+     aller qu'a droite ferait passer un malus pour un petit bonus. */
   var cols='';
   ['off','def','vit','uti'].forEach(function(g){if(!G[g].length)return;any=true;
+    var haut=1;G[g].forEach(function(p){if(Math.abs(p[1])>haut)haut=Math.abs(p[1]);});
     cols+='<div class="statcol"><div class="sh" style="color:'+META[g][1]+'">'+META[g][0]+'</div>'+
-      G[g].map(function(p){return '<div class="l"><span>'+esc(p[0])+'</span><b>+'+(+p[1]).toLocaleString('fr-FR')+'</b></div>';}).join('')+'</div>';});
+      G[g].map(function(p){
+        var v=p[1],neg=v<0,part=Math.max(1.5,(Math.abs(v)/haut)*50);
+        return '<div class="l stl" onmousemove="statTipShow(event,\''+p[0].replace(/'/g,"\\'")+'\')" onmouseleave="itipHide()">'
+          +'<span>'+esc(p[0])+(p[3]?' <i class="stneg" title="une pièce en retire">−</i>':'')
+          +(p[2]>1?' <i class="stn">'+p[2]+'</i>':'')+'</span>'
+          +'<b'+(neg?' class="moins"':'')+'>'+(v>0?'+':'')+v.toLocaleString('fr-FR')+'</b>'
+          +'<span class="stbar"><span class="stfill'+(neg?' moins':'')+'" style="'+(neg?'right:50%;width:':'left:50%;width:')+part+'%"></span></span>'
+          +'</div>';}).join('')+'</div>';});
   if(any)html+='<div class="statgrid">'+cols+'</div>'
     /* La legende du nombre, pas un aveu d'ignorance : elle dit CE QUI est
        additionne, pour qu'on ne compare pas deux builds sur un total qui ne
-       couvre pas la meme chose. */
+       couvre pas la meme chose. Le compte des apports se calcule — il change a
+       chaque piece posee, et un nombre recopie serait faux au coup suivant. */
     +'<div class="mini" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,44,54,.6)">'
-    +'Additionne les bonus des pièces, les cartes de perçage, le bonus de set du costume à 4/4 et les carnets.</div>';
+    +'Survole une ligne : elle dit d\'où vient chaque point. '
+    +'Additionne les bonus des pièces, les cartes de perçage, les paliers de bijou, '
+    +'le bonus de panoplie au seuil de pièces atteint et les carnets.</div>';
+  /* ═══ CE QUI N'EST PAS COMPTE, ET POURQUOI — dit, pas cache ════════════════
+     Le panneau annonçait un total sans dire ce qu'il laissait dehors. Un total
+     ampute en silence se compare entre deux builds comme s'il etait complet :
+     deux stuffs a +10 et +30 affichaient le meme nombre, et rien ne le disait.
+     La liste est REPLIABLE et FERMEE par defaut — elle peut compter trente
+     lignes sur un stuff maximise — mais son COMPTE est visible, lui, et c'est
+     ce compte qui empeche de prendre le total pour la verite. */
+  if(D.absents.length){
+    html+='<details class="stabs"><summary><i class=vgi-alert></i> '+D.absents.length
+      +' terme'+(D.absents.length>1?'s':'')+' non compté'+(D.absents.length>1?'s':'')
+      +' — la valeur n\'est pas dans le client</summary>'
+      +D.absents.map(function(a){
+        return '<div class="stabs-l"><span>'+esc(a.quoi)+'</span><i>'+esc(a.pourquoi)+'</i></div>';}).join('')
+      +'</details>';
+  }
   /* L'INVITATION NE S'AFFICHE QUE SI RIEN N'EST EQUIPE.
      Elle disait « Équipe des pièces pour voir le résumé… » des que le total etait
      vide — et il l'est TRES souvent avec des pieces aux doigts : AUCUNE des 256
@@ -547,7 +757,7 @@ function renderStats(){var n=document.getElementById('stats');if(!n)return;
      un bandeau de panoplie bien visible, une phrase qui demandait d'equiper des
      pieces. Sans piece du tout la phrase est juste ; avec des pieces on ne dit
      rien, la rangee de des a zero suffit. */
-  else if(!Object.keys((ST()||{}).eq||{}).length)
+  if(!any&&!D.absents.length&&!Object.keys((ST()||{}).eq||{}).length)
     html+='<div style="color:var(--mut);font-size:12px">Équipe des pièces pour voir le résumé…</div>';
   n.innerHTML=html;}
 

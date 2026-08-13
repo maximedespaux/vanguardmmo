@@ -1,0 +1,12592 @@
+{
+ "genere": "2026-08-13",
+ "source": "Client/data-02.air ▸ accessory.inc (bonus par palier) · propEnchant.inc · Client/data-00.air ▸ defineitem.h, defineachievement.h · FSDATA/COMMON/Systems/data.air ▸ artefact.json, angels.json, propweaponleveling.inc, randomitemstat.inc",
+ "quoi": "Les bonus d'un bijou à chaque palier d'amélioration, libellés en français. Index = le rang du palier ; une case vide signifie que le client n'écrit rien à ce rang.",
+ "regle": {
+  "laquelle": "REMPLACEMENT",
+  "ecriteDansLeClient": false,
+  "pourquoiCertaine": [
+   "LE PLATEAU. Sur les six accessoires à 30 paliers, une statistique est réécrite À L'IDENTIQUE d'un palier au suivant : DST_ATKPOWER vaut 1000 aux paliers 20 à 30 des Boucles Harpe (25178) et du Collier d'Ange (25179), DST_STA vaut 40 aux paliers 20 à 30 des versions Pures. Sous un cumul, réécrire la même valeur onze fois de suite ajouterait onze fois 1000 d'attaque — ce que le fichier ne peut pas vouloir dire, puisqu'il change de statistique précisément à partir du palier 21.",
+   "LA DESCRIPTION FRANÇAISE DU CLIENT. Le Grenat d'Amour (II_GEN_JEW_RIN_JESSICA) n'a AUCUN bonus dans Spec_Item.txt, et sa description (data-01.air ▸ propitem.txt.txt, IDS_PROPITEM_TXT_016410) dit : « Cet anneau palpite d'énergie magique, il fournit de l'ATQ ainsi qu'un pourcentage de défense suivant son niveau d'amélioration. » Sa ligne d'accessory.inc donne exactement cela : DST_CHR_DMG plus DST_ADJDEF_RATE. « suivant son niveau d'amélioration » désigne une valeur DÉTERMINÉE PAR le niveau, pas une somme accumulée."
+  ],
+  "palierVide": "Un palier dont la case est vide ne retire rien : c'est la base de l'objet (Spec_Item.txt, le champ `b` du catalogue) qui s'applique seule. Sur les six accessoires de Noël 2016, les deux sources ne parlent jamais de la même statistique."
+ },
+ "plateaux": {
+  "combien": 78,
+  "quoi": "Nombre de paliers qui RECOPIENT à l'identique le palier précédent. « Chaque palier est différent » est donc faux : le fichier fait des plateaux, et on ne les lisse pas."
+ },
+ "total": {
+  "bijoux": 75,
+  "paliers": 1635,
+  "avecPaliers": 65
+ },
+ "bijoux": {
+  "20211": {
+   "n": "Anneau Vigor rubis",
+   "cle": "II_GEN_JEW_RIN_FIRERING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      21
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      24
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      27
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      40
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      55
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      80
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ]
+   ]
+  },
+  "20212": {
+   "n": "Anneau Stam diamant",
+   "cle": "II_GEN_JEW_RIN_LANDRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      19
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      21
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      24
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      27
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      55
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      80
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ]
+   ]
+  },
+  "20213": {
+   "n": "Anneau Intel saphir",
+   "cle": "II_GEN_JEW_RIN_WATERRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Intelligence",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      11
+     ],
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      13
+     ],
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      15
+     ],
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      17
+     ],
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      19
+     ],
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      21
+     ],
+     [
+      "Dégâts sur monstres %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      24
+     ],
+     [
+      "Dégâts sur monstres %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      27
+     ],
+     [
+      "Dégâts sur monstres %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      40
+     ],
+     [
+      "Dégâts sur monstres %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      55
+     ],
+     [
+      "Dégâts sur monstres %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      80
+     ],
+     [
+      "Dégâts sur monstres %",
+      5
+     ]
+    ]
+   ]
+  },
+  "20214": {
+   "n": "Anneau Arek émeraude",
+   "cle": "II_GEN_JEW_RIN_ELECTRICRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      11
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      13
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      15
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      17
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      19
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      21
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      24
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      27
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      40
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      55
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      80
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ]
+   ]
+  },
+  "20215": {
+   "n": "Boucle d'oreille Demol rubis",
+   "cle": "II_GEN_JEW_EAR_ATTEARRINGEST",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dégâts subis réduits",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      22
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      28
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      33
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      39
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      45
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      53
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      62
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      73
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      85
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      99
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      116
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      138
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      165
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      187
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      220
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      259
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      303
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      352
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      513
+     ]
+    ]
+   ]
+  },
+  "20216": {
+   "n": "Boucle d'oreille Plug diamant",
+   "cle": "II_GEN_JEW_EAR_DEFEARRINGEST",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Défense",
+      54
+     ]
+    ],
+    [
+     [
+      "Défense",
+      59
+     ]
+    ],
+    [
+     [
+      "Défense",
+      65
+     ]
+    ],
+    [
+     [
+      "Défense",
+      70
+     ]
+    ],
+    [
+     [
+      "Défense",
+      77
+     ]
+    ],
+    [
+     [
+      "Défense",
+      84
+     ]
+    ],
+    [
+     [
+      "Défense",
+      90
+     ]
+    ],
+    [
+     [
+      "Défense",
+      98
+     ]
+    ],
+    [
+     [
+      "Défense",
+      106
+     ]
+    ],
+    [
+     [
+      "Défense",
+      114
+     ]
+    ],
+    [
+     [
+      "Défense",
+      124
+     ]
+    ],
+    [
+     [
+      "Défense",
+      135
+     ]
+    ],
+    [
+     [
+      "Défense",
+      149
+     ]
+    ],
+    [
+     [
+      "Défense",
+      165
+     ]
+    ],
+    [
+     [
+      "Défense",
+      185
+     ]
+    ],
+    [
+     [
+      "Défense",
+      208
+     ]
+    ],
+    [
+     [
+      "Défense",
+      234
+     ]
+    ],
+    [
+     [
+      "Défense",
+      264
+     ]
+    ],
+    [
+     [
+      "Défense",
+      297
+     ]
+    ],
+    [
+     [
+      "Défense",
+      341
+     ]
+    ],
+    [
+     [
+      "Défense",
+      570
+     ]
+    ]
+   ]
+  },
+  "20217": {
+   "n": "Collier Gore rubis",
+   "cle": "II_GEN_JEW_NEC_HPNECKLACEMR",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      82
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PV max",
+      118
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PV max",
+      154
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PV max",
+      190
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PV max",
+      226
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PV max",
+      262
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PV max",
+      298
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PV max",
+      334
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PV max",
+      370
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PV max",
+      418
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PV max",
+      466
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PV max",
+      514
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PV max",
+      562
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PV max",
+      610
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PV max",
+      658
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PV max",
+      706
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PV max",
+      766
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PV max",
+      826
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PV max",
+      886
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PV max",
+      946
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PV max",
+      2018
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "20218": {
+   "n": "Collier Mental saphir",
+   "cle": "II_GEN_JEW_NEC_MPNECKLACEMR",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PM max",
+      57
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PM max",
+      65
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PM max",
+      73
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PM max",
+      81
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PM max",
+      89
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PM max",
+      97
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PM max",
+      105
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PM max",
+      113
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PM max",
+      121
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PM max",
+      129
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PM max",
+      137
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PM max",
+      146
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PM max",
+      155
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PM max",
+      164
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PM max",
+      173
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PM max",
+      182
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PM max",
+      191
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PM max",
+      200
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PM max",
+      209
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PM max",
+      218
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PM max",
+      2018
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "20219": {
+   "n": "Collier Paison émeraude",
+   "cle": "II_GEN_JEW_NEC_FPNECKLACEMR",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      57
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PV max",
+      65
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PV max",
+      73
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PV max",
+      81
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PV max",
+      89
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PV max",
+      97
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PV max",
+      105
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PV max",
+      113
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PV max",
+      121
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PV max",
+      129
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PV max",
+      137
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PV max",
+      146
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PV max",
+      155
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PV max",
+      164
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PV max",
+      173
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PV max",
+      182
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PV max",
+      191
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PV max",
+      200
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PV max",
+      209
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PV max",
+      218
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PV max",
+      2018
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "20220": {
+   "n": "Collier Gore diamant",
+   "cle": "II_GEN_JEW_NEC_HPMPNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      82
+     ],
+     [
+      "PM max",
+      57
+     ]
+    ],
+    [
+     [
+      "PV max",
+      118
+     ],
+     [
+      "PM max",
+      65
+     ]
+    ],
+    [
+     [
+      "PV max",
+      154
+     ],
+     [
+      "PM max",
+      73
+     ]
+    ],
+    [
+     [
+      "PV max",
+      190
+     ],
+     [
+      "PM max",
+      81
+     ]
+    ],
+    [
+     [
+      "PV max",
+      226
+     ],
+     [
+      "PM max",
+      89
+     ]
+    ],
+    [
+     [
+      "PV max",
+      262
+     ],
+     [
+      "PM max",
+      97
+     ]
+    ],
+    [
+     [
+      "PV max",
+      298
+     ],
+     [
+      "PM max",
+      105
+     ]
+    ],
+    [
+     [
+      "PV max",
+      334
+     ],
+     [
+      "PM max",
+      113
+     ]
+    ],
+    [
+     [
+      "PV max",
+      370
+     ],
+     [
+      "PM max",
+      121
+     ]
+    ],
+    [
+     [
+      "PV max",
+      418
+     ],
+     [
+      "PM max",
+      129
+     ]
+    ],
+    [
+     [
+      "PV max",
+      466
+     ],
+     [
+      "PM max",
+      137
+     ]
+    ],
+    [
+     [
+      "PV max",
+      514
+     ],
+     [
+      "PM max",
+      146
+     ]
+    ],
+    [
+     [
+      "PV max",
+      562
+     ],
+     [
+      "PM max",
+      155
+     ]
+    ],
+    [
+     [
+      "PV max",
+      610
+     ],
+     [
+      "PM max",
+      164
+     ]
+    ],
+    [
+     [
+      "PV max",
+      658
+     ],
+     [
+      "PM max",
+      173
+     ]
+    ],
+    [
+     [
+      "PV max",
+      706
+     ],
+     [
+      "PM max",
+      182
+     ]
+    ],
+    [
+     [
+      "PV max",
+      766
+     ],
+     [
+      "PM max",
+      191
+     ]
+    ],
+    [
+     [
+      "PV max",
+      826
+     ],
+     [
+      "PM max",
+      200
+     ]
+    ],
+    [
+     [
+      "PV max",
+      886
+     ],
+     [
+      "PM max",
+      209
+     ]
+    ],
+    [
+     [
+      "PV max",
+      946
+     ],
+     [
+      "PM max",
+      218
+     ]
+    ],
+    [
+     [
+      "PV max",
+      2018
+     ],
+     [
+      "PM max",
+      227
+     ]
+    ]
+   ]
+  },
+  "20221": {
+   "n": "Boucle d'oreille magique saphir",
+   "cle": "II_GEN_JEW_EAR_MAGICRINGEST",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dégâts magiques",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      22
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      28
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      33
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      39
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      45
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      53
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      62
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      73
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      85
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      99
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      116
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      138
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      165
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      187
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      220
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      259
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      303
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      352
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      513
+     ]
+    ]
+   ]
+  },
+  "20222": {
+   "n": "Boucle d'oreille de jet émeraude",
+   "cle": "II_GEN_JEW_EAR_RANGERINGEST",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      10
+     ],
+     [
+      "Dégâts d'arc",
+      10
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      17
+     ],
+     [
+      "Dégâts d'arc",
+      17
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      22
+     ],
+     [
+      "Dégâts d'arc",
+      22
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      28
+     ],
+     [
+      "Dégâts d'arc",
+      28
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      33
+     ],
+     [
+      "Dégâts d'arc",
+      33
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      39
+     ],
+     [
+      "Dégâts d'arc",
+      39
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      45
+     ],
+     [
+      "Dégâts d'arc",
+      45
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      53
+     ],
+     [
+      "Dégâts d'arc",
+      53
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      62
+     ],
+     [
+      "Dégâts d'arc",
+      62
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      73
+     ],
+     [
+      "Dégâts d'arc",
+      73
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      85
+     ],
+     [
+      "Dégâts d'arc",
+      85
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      99
+     ],
+     [
+      "Dégâts d'arc",
+      99
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      116
+     ],
+     [
+      "Dégâts d'arc",
+      116
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      138
+     ],
+     [
+      "Dégâts d'arc",
+      138
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      165
+     ],
+     [
+      "Dégâts d'arc",
+      165
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      187
+     ],
+     [
+      "Dégâts d'arc",
+      187
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      220
+     ],
+     [
+      "Dégâts d'arc",
+      220
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      259
+     ],
+     [
+      "Dégâts d'arc",
+      259
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      303
+     ],
+     [
+      "Dégâts d'arc",
+      303
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      352
+     ],
+     [
+      "Dégâts d'arc",
+      352
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      413
+     ],
+     [
+      "Dégâts d'arc",
+      413
+     ]
+    ]
+   ]
+  },
+  "23446": {
+   "n": "Anneau érodé",
+   "cle": "II_GEN_JEW_EAR_FEELSOGOODOLDRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "23686": {
+   "n": "Boîte pierre lunaire cassée",
+   "cle": "II_SYS_SYS_EVE_BROKENMOONSTONEBOX",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "23919": {
+   "n": "Anneau étrange",
+   "cle": "II_GEN_JEW_RIN_SANTAEVENTRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "23920": {
+   "n": "Bague de débutant",
+   "cle": "II_GEN_JEW_RIN_RUDOLPHRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "23921": {
+   "n": "Collier de débutant",
+   "cle": "II_GEN_JEW_NEC_RUDOLPHNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "23922": {
+   "n": "Boucle d'oreille de débutant",
+   "cle": "II_GEN_JEW_EAR_RUDOLPHEARRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "24268": {
+   "n": "Petite étoile",
+   "cle": "II_GEN_JEW_RIN_SUMMEREVENTRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "24270": {
+   "n": "Anneau de Shade",
+   "cle": "II_GEN_JEW_RIN_SUMMERSETRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "24271": {
+   "n": "Collier d'Ivillis",
+   "cle": "II_GEN_JEW_NEC_SUMMERSETNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "24272": {
+   "n": "Boucle d'oreille de Bubble",
+   "cle": "II_GEN_JEW_EAR_SUMMERSETEARRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+   ]
+  },
+  "24337": {
+   "n": "Anneau béni de Bonhomme",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_RING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      1
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24338": {
+   "n": "Collier béni de Bonhomme",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_NECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      12
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      14
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      16
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      18
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      20
+     ],
+     [
+      "Dégâts JcJ",
+      5
+     ]
+    ]
+   ]
+  },
+  "24339": {
+   "n": "Boucle d'oreille bénie de Bonhomme",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_EARRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Intelligence",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24365": {
+   "n": "Grenat d'Amour",
+   "cle": "II_GEN_JEW_RIN_JESSICA",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dégâts subis réduits",
+      30
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      60
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      90
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      120
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      150
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      190
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      230
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      270
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      310
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      350
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      400
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      450
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      500
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      550
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      600
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      660
+     ],
+     [
+      "Défense %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      720
+     ],
+     [
+      "Défense %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      780
+     ],
+     [
+      "Défense %",
+      8
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      840
+     ],
+     [
+      "Défense %",
+      9
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      900
+     ],
+     [
+      "Défense %",
+      10
+     ]
+    ]
+   ]
+  },
+  "24366": {
+   "n": "Lapis-lazuli de Beauté",
+   "cle": "II_GEN_JEW_RIN_NANA",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Défense",
+      30
+     ]
+    ],
+    [
+     [
+      "Défense",
+      60
+     ]
+    ],
+    [
+     [
+      "Défense",
+      90
+     ]
+    ],
+    [
+     [
+      "Défense",
+      120
+     ]
+    ],
+    [
+     [
+      "Défense",
+      150
+     ]
+    ],
+    [
+     [
+      "Défense",
+      190
+     ]
+    ],
+    [
+     [
+      "Défense",
+      230
+     ]
+    ],
+    [
+     [
+      "Défense",
+      270
+     ]
+    ],
+    [
+     [
+      "Défense",
+      310
+     ]
+    ],
+    [
+     [
+      "Défense",
+      350
+     ]
+    ],
+    [
+     [
+      "Défense",
+      400
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Défense",
+      450
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Défense",
+      500
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Défense",
+      550
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Défense",
+      600
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ],
+    [
+     [
+      "Défense",
+      660
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Défense",
+      720
+     ],
+     [
+      "Attaque %",
+      7
+     ]
+    ],
+    [
+     [
+      "Défense",
+      780
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ],
+    [
+     [
+      "Défense",
+      840
+     ],
+     [
+      "Attaque %",
+      9
+     ]
+    ],
+    [
+     [
+      "Défense",
+      900
+     ],
+     [
+      "Attaque %",
+      10
+     ]
+    ]
+   ]
+  },
+  "24397": {
+   "n": "Anneau des neiges éternelles",
+   "cle": "II_GEN_JEW_RIN_NEWCHRISTMAS_RING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      1
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24398": {
+   "n": "Collier des neiges éternelles",
+   "cle": "II_GEN_JEW_NEC_NEWCHRISTMAS_NECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      12
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      14
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      16
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      18
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      20
+     ],
+     [
+      "Dégâts JcJ",
+      5
+     ]
+    ]
+   ]
+  },
+  "24399": {
+   "n": "Boucle d'oreille des neiges éternelles",
+   "cle": "II_GEN_JEW_EAR_NEWCHRISTMAS_EARRING",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Intelligence",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24485": {
+   "n": "Boucle d'oreille des Fées de Noël",
+   "cle": "II_SYS_SYS_CHRISTMAS_EARRING_2014",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24486": {
+   "n": "Collier des Fées de Noël",
+   "cle": "II_SYS_SYS_CHRISTMAS_NECKLACE_2014",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      12
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      14
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      16
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      18
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      20
+     ],
+     [
+      "Dégâts JcJ",
+      5
+     ]
+    ]
+   ]
+  },
+  "24487": {
+   "n": "Anneau des Fées de Noël",
+   "cle": "II_SYS_SYS_CHRISTMAS_RING_2014",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      1
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Vitesse d'attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Vitesse d'attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Vitesse d'attaque %",
+      5
+     ]
+    ]
+   ]
+  },
+  "24496": {
+   "n": "Grenat d'Amour Pur",
+   "cle": "II_SYS_SYS_EVE_JESSICAS_RING_2015",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dégâts subis réduits",
+      30
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      60
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      90
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      120
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      150
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      190
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      230
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      270
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      310
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      350
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      400
+     ],
+     [
+      "Défense %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      450
+     ],
+     [
+      "Défense %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      500
+     ],
+     [
+      "Défense %",
+      8
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      550
+     ],
+     [
+      "Défense %",
+      9
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      600
+     ],
+     [
+      "Défense %",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      660
+     ],
+     [
+      "Défense %",
+      11
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      720
+     ],
+     [
+      "Défense %",
+      12
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      780
+     ],
+     [
+      "Défense %",
+      13
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      840
+     ],
+     [
+      "Défense %",
+      14
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      900
+     ],
+     [
+      "Défense %",
+      15
+     ]
+    ]
+   ]
+  },
+  "24499": {
+   "n": "Lapis-lazuli de Beauté Pure",
+   "cle": "II_SYS_SYS_EVE_NANAS_RING_2015",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Défense",
+      30
+     ]
+    ],
+    [
+     [
+      "Défense",
+      60
+     ]
+    ],
+    [
+     [
+      "Défense",
+      90
+     ]
+    ],
+    [
+     [
+      "Défense",
+      120
+     ]
+    ],
+    [
+     [
+      "Défense",
+      150
+     ]
+    ],
+    [
+     [
+      "Défense",
+      190
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Défense",
+      230
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Défense",
+      270
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Défense",
+      310
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Défense",
+      350
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ],
+    [
+     [
+      "Défense",
+      400
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Défense",
+      450
+     ],
+     [
+      "Attaque %",
+      7
+     ]
+    ],
+    [
+     [
+      "Défense",
+      500
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ],
+    [
+     [
+      "Défense",
+      550
+     ],
+     [
+      "Attaque %",
+      9
+     ]
+    ],
+    [
+     [
+      "Défense",
+      600
+     ],
+     [
+      "Attaque %",
+      10
+     ]
+    ],
+    [
+     [
+      "Défense",
+      660
+     ],
+     [
+      "Attaque %",
+      11
+     ]
+    ],
+    [
+     [
+      "Défense",
+      720
+     ],
+     [
+      "Attaque %",
+      12
+     ]
+    ],
+    [
+     [
+      "Défense",
+      780
+     ],
+     [
+      "Attaque %",
+      13
+     ]
+    ],
+    [
+     [
+      "Défense",
+      840
+     ],
+     [
+      "Attaque %",
+      14
+     ]
+    ],
+    [
+     [
+      "Défense",
+      900
+     ],
+     [
+      "Attaque %",
+      15
+     ]
+    ]
+   ]
+  },
+  "24675": {
+   "n": "Bague en gâteau",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_CAKE_RING_2015",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      12
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      14
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      16
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      20
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      25
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      30
+     ],
+     [
+      "Blocage à distance",
+      5
+     ]
+    ]
+   ]
+  },
+  "24676": {
+   "n": "Collier de poulet rôti",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_COOKIE_NECKLACE_2015",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      2
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      3
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      3
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      3
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      3
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      4
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      4
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      4
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      6
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Temps d'incantation %",
+      8
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ]
+   ]
+  },
+  "24677": {
+   "n": "Boucles d'oreilles en biscuit",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_CHICKEN_EARRING_2015",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      12
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      14
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      16
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Blocage corps à corps",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      20
+     ],
+     [
+      "Blocage corps à corps",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      25
+     ],
+     [
+      "Blocage corps à corps",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      30
+     ],
+     [
+      "Blocage corps à corps",
+      5
+     ]
+    ]
+   ]
+  },
+  "25049": {
+   "n": "Anneau Vigor Rubis",
+   "cle": "II_GEN_JEW_RIN_FIRERING_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      21
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      24
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      27
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      31
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      35
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      40
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ]
+   ]
+  },
+  "25050": {
+   "n": "Anneau Stam Diamant",
+   "cle": "II_GEN_JEW_RIN_LANDRING_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      19
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      21
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      24
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      27
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      31
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      35
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ]
+   ]
+  },
+  "25051": {
+   "n": "Anneau Intel Saphir",
+   "cle": "II_GEN_JEW_RIN_WATERRING_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Intelligence",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ],
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ],
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ],
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ],
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      11
+     ],
+     [
+      "Temps d'incantation %",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      13
+     ],
+     [
+      "Temps d'incantation %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      15
+     ],
+     [
+      "Temps d'incantation %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      17
+     ],
+     [
+      "Temps d'incantation %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      19
+     ],
+     [
+      "Temps d'incantation %",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      21
+     ],
+     [
+      "Temps d'incantation %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      24
+     ],
+     [
+      "Temps d'incantation %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      27
+     ],
+     [
+      "Temps d'incantation %",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      31
+     ],
+     [
+      "Temps d'incantation %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      35
+     ],
+     [
+      "Temps d'incantation %",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      40
+     ],
+     [
+      "Temps d'incantation %",
+      5
+     ]
+    ]
+   ]
+  },
+  "25052": {
+   "n": "Anneau Arek Emeraude",
+   "cle": "II_GEN_JEW_RIN_ELECTRICRING_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Parade",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Parade",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Parade",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Parade",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      11
+     ],
+     [
+      "Parade",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      13
+     ],
+     [
+      "Parade",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      15
+     ],
+     [
+      "Parade",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      17
+     ],
+     [
+      "Parade",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      19
+     ],
+     [
+      "Parade",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      21
+     ],
+     [
+      "Parade",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      24
+     ],
+     [
+      "Parade",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      27
+     ],
+     [
+      "Parade",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      31
+     ],
+     [
+      "Parade",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      35
+     ],
+     [
+      "Parade",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      40
+     ],
+     [
+      "Parade",
+      5
+     ]
+    ]
+   ]
+  },
+  "25053": {
+   "n": "Boucle d'Oreille Demol Rubis",
+   "cle": "II_GEN_JEW_EAR_ATTEARRINGEST_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dégâts subis réduits",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      22
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      28
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      33
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      39
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      45
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      53
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      62
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      73
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      85
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      99
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      116
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      138
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      165
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      187
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      220
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      259
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      303
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      352
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      413
+     ]
+    ]
+   ]
+  },
+  "25054": {
+   "n": "Boucle d'Oreille Plug Diamant",
+   "cle": "II_GEN_JEW_EAR_DEFEARRINGEST_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Défense",
+      54
+     ]
+    ],
+    [
+     [
+      "Défense",
+      59
+     ]
+    ],
+    [
+     [
+      "Défense",
+      65
+     ]
+    ],
+    [
+     [
+      "Défense",
+      70
+     ]
+    ],
+    [
+     [
+      "Défense",
+      77
+     ]
+    ],
+    [
+     [
+      "Défense",
+      84
+     ]
+    ],
+    [
+     [
+      "Défense",
+      90
+     ]
+    ],
+    [
+     [
+      "Défense",
+      98
+     ]
+    ],
+    [
+     [
+      "Défense",
+      106
+     ]
+    ],
+    [
+     [
+      "Défense",
+      114
+     ]
+    ],
+    [
+     [
+      "Défense",
+      124
+     ]
+    ],
+    [
+     [
+      "Défense",
+      135
+     ]
+    ],
+    [
+     [
+      "Défense",
+      149
+     ]
+    ],
+    [
+     [
+      "Défense",
+      165
+     ]
+    ],
+    [
+     [
+      "Défense",
+      185
+     ]
+    ],
+    [
+     [
+      "Défense",
+      208
+     ]
+    ],
+    [
+     [
+      "Défense",
+      234
+     ]
+    ],
+    [
+     [
+      "Défense",
+      264
+     ]
+    ],
+    [
+     [
+      "Défense",
+      297
+     ]
+    ],
+    [
+     [
+      "Défense",
+      341
+     ]
+    ],
+    [
+     [
+      "Défense",
+      370
+     ]
+    ]
+   ]
+  },
+  "25055": {
+   "n": "Boucle d'Oreille Magique Saphir",
+   "cle": "II_GEN_JEW_EAR_MAGICRINGEST_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dégâts magiques",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      22
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      28
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      33
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      39
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      45
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      53
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      62
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      73
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      85
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      99
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      116
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      138
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      165
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      187
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      220
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      259
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      303
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      352
+     ]
+    ],
+    [
+     [
+      "Dégâts magiques",
+      413
+     ]
+    ]
+   ]
+  },
+  "25056": {
+   "n": "Boucle d'Oreille de Jet Emeraude",
+   "cle": "II_GEN_JEW_EAR_RANGERINGEST_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      10
+     ],
+     [
+      "Dégâts d'arc",
+      10
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      17
+     ],
+     [
+      "Dégâts d'arc",
+      17
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      22
+     ],
+     [
+      "Dégâts d'arc",
+      22
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      28
+     ],
+     [
+      "Dégâts d'arc",
+      28
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      33
+     ],
+     [
+      "Dégâts d'arc",
+      33
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      39
+     ],
+     [
+      "Dégâts d'arc",
+      39
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      45
+     ],
+     [
+      "Dégâts d'arc",
+      45
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      53
+     ],
+     [
+      "Dégâts d'arc",
+      53
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      62
+     ],
+     [
+      "Dégâts d'arc",
+      62
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      73
+     ],
+     [
+      "Dégâts d'arc",
+      73
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      85
+     ],
+     [
+      "Dégâts d'arc",
+      85
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      99
+     ],
+     [
+      "Dégâts d'arc",
+      99
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      116
+     ],
+     [
+      "Dégâts d'arc",
+      116
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      138
+     ],
+     [
+      "Dégâts d'arc",
+      138
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      165
+     ],
+     [
+      "Dégâts d'arc",
+      165
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      187
+     ],
+     [
+      "Dégâts d'arc",
+      187
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      220
+     ],
+     [
+      "Dégâts d'arc",
+      220
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      259
+     ],
+     [
+      "Dégâts d'arc",
+      259
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      303
+     ],
+     [
+      "Dégâts d'arc",
+      303
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      352
+     ],
+     [
+      "Dégâts d'arc",
+      352
+     ]
+    ],
+    [
+     [
+      "Puissance d'attaque du yo-yo",
+      513
+     ],
+     [
+      "Dégâts d'arc",
+      413
+     ]
+    ]
+   ]
+  },
+  "25057": {
+   "n": "Collier Gore Rubis",
+   "cle": "II_GEN_JEW_NEC_HPNECKLACEMR_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      82
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PV max",
+      118
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PV max",
+      154
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PV max",
+      190
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PV max",
+      226
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PV max",
+      262
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PV max",
+      298
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PV max",
+      334
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PV max",
+      370
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PV max",
+      418
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PV max",
+      466
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PV max",
+      514
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PV max",
+      562
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PV max",
+      610
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PV max",
+      658
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PV max",
+      706
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PV max",
+      766
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PV max",
+      826
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PV max",
+      886
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PV max",
+      946
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1018
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "25058": {
+   "n": "Collier Mental Saphir",
+   "cle": "II_GEN_JEW_NEC_MPNECKLACEMR_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PM max",
+      57
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PM max",
+      65
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PM max",
+      73
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PM max",
+      81
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PM max",
+      89
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PM max",
+      97
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PM max",
+      105
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PM max",
+      113
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PM max",
+      121
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PM max",
+      129
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PM max",
+      137
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PM max",
+      146
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PM max",
+      155
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PM max",
+      164
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PM max",
+      173
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PM max",
+      182
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PM max",
+      191
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PM max",
+      200
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PM max",
+      209
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PM max",
+      218
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PM max",
+      227
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "25059": {
+   "n": "Collier Paison Emeraude",
+   "cle": "II_GEN_JEW_NEC_FPNECKLACEMR_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PC max",
+      57
+     ],
+     [
+      "Résistance magique",
+      10
+     ]
+    ],
+    [
+     [
+      "PC max",
+      65
+     ],
+     [
+      "Résistance magique",
+      20
+     ]
+    ],
+    [
+     [
+      "PC max",
+      73
+     ],
+     [
+      "Résistance magique",
+      30
+     ]
+    ],
+    [
+     [
+      "PC max",
+      81
+     ],
+     [
+      "Résistance magique",
+      40
+     ]
+    ],
+    [
+     [
+      "PC max",
+      89
+     ],
+     [
+      "Résistance magique",
+      50
+     ]
+    ],
+    [
+     [
+      "PC max",
+      97
+     ],
+     [
+      "Résistance magique",
+      60
+     ]
+    ],
+    [
+     [
+      "PC max",
+      105
+     ],
+     [
+      "Résistance magique",
+      70
+     ]
+    ],
+    [
+     [
+      "PC max",
+      113
+     ],
+     [
+      "Résistance magique",
+      80
+     ]
+    ],
+    [
+     [
+      "PC max",
+      121
+     ],
+     [
+      "Résistance magique",
+      90
+     ]
+    ],
+    [
+     [
+      "PC max",
+      129
+     ],
+     [
+      "Résistance magique",
+      100
+     ]
+    ],
+    [
+     [
+      "PC max",
+      137
+     ],
+     [
+      "Résistance magique",
+      115
+     ]
+    ],
+    [
+     [
+      "PC max",
+      146
+     ],
+     [
+      "Résistance magique",
+      130
+     ]
+    ],
+    [
+     [
+      "PC max",
+      155
+     ],
+     [
+      "Résistance magique",
+      145
+     ]
+    ],
+    [
+     [
+      "PC max",
+      164
+     ],
+     [
+      "Résistance magique",
+      160
+     ]
+    ],
+    [
+     [
+      "PC max",
+      173
+     ],
+     [
+      "Résistance magique",
+      175
+     ]
+    ],
+    [
+     [
+      "PC max",
+      182
+     ],
+     [
+      "Résistance magique",
+      190
+     ]
+    ],
+    [
+     [
+      "PC max",
+      191
+     ],
+     [
+      "Résistance magique",
+      210
+     ]
+    ],
+    [
+     [
+      "PC max",
+      200
+     ],
+     [
+      "Résistance magique",
+      230
+     ]
+    ],
+    [
+     [
+      "PC max",
+      209
+     ],
+     [
+      "Résistance magique",
+      250
+     ]
+    ],
+    [
+     [
+      "PC max",
+      218
+     ],
+     [
+      "Résistance magique",
+      270
+     ]
+    ],
+    [
+     [
+      "PC max",
+      227
+     ],
+     [
+      "Résistance magique",
+      300
+     ]
+    ]
+   ]
+  },
+  "25060": {
+   "n": "Collier Gore Diamant",
+   "cle": "II_GEN_JEW_NEC_HPMPNECKLACE_EVENT",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      82
+     ],
+     [
+      "PM max",
+      57
+     ]
+    ],
+    [
+     [
+      "PV max",
+      118
+     ],
+     [
+      "PM max",
+      65
+     ]
+    ],
+    [
+     [
+      "PV max",
+      154
+     ],
+     [
+      "PM max",
+      73
+     ]
+    ],
+    [
+     [
+      "PV max",
+      190
+     ],
+     [
+      "PM max",
+      81
+     ]
+    ],
+    [
+     [
+      "PV max",
+      226
+     ],
+     [
+      "PM max",
+      89
+     ]
+    ],
+    [
+     [
+      "PV max",
+      262
+     ],
+     [
+      "PM max",
+      97
+     ]
+    ],
+    [
+     [
+      "PV max",
+      298
+     ],
+     [
+      "PM max",
+      105
+     ]
+    ],
+    [
+     [
+      "PV max",
+      334
+     ],
+     [
+      "PM max",
+      113
+     ]
+    ],
+    [
+     [
+      "PV max",
+      370
+     ],
+     [
+      "PM max",
+      121
+     ]
+    ],
+    [
+     [
+      "PV max",
+      418
+     ],
+     [
+      "PM max",
+      129
+     ]
+    ],
+    [
+     [
+      "PV max",
+      466
+     ],
+     [
+      "PM max",
+      137
+     ]
+    ],
+    [
+     [
+      "PV max",
+      514
+     ],
+     [
+      "PM max",
+      146
+     ]
+    ],
+    [
+     [
+      "PV max",
+      562
+     ],
+     [
+      "PM max",
+      155
+     ]
+    ],
+    [
+     [
+      "PV max",
+      610
+     ],
+     [
+      "PM max",
+      164
+     ]
+    ],
+    [
+     [
+      "PV max",
+      658
+     ],
+     [
+      "PM max",
+      173
+     ]
+    ],
+    [
+     [
+      "PV max",
+      706
+     ],
+     [
+      "PM max",
+      182
+     ]
+    ],
+    [
+     [
+      "PV max",
+      766
+     ],
+     [
+      "PM max",
+      191
+     ]
+    ],
+    [
+     [
+      "PV max",
+      826
+     ],
+     [
+      "PM max",
+      200
+     ]
+    ],
+    [
+     [
+      "PV max",
+      886
+     ],
+     [
+      "PM max",
+      209
+     ]
+    ],
+    [
+     [
+      "PV max",
+      946
+     ],
+     [
+      "PM max",
+      218
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1018
+     ],
+     [
+      "PM max",
+      227
+     ]
+    ]
+   ]
+  },
+  "25177": {
+   "n": "Anneau Ailé",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_WING_RING_2016",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Dégâts sur monstres %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      8
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      9
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      11
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      12
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      13
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      14
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      15
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      16
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      18
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      19
+     ]
+    ],
+    [
+     [
+      "Dégâts sur monstres %",
+      20
+     ]
+    ]
+   ]
+  },
+  "25178": {
+   "n": "Boucles d'Oreille Harpe",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_HARP_EARRING_2016",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Attaque",
+      10
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      20
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      30
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      40
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      50
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      60
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      70
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      80
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      90
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      100
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      150
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      200
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      250
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      300
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      400
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      500
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      600
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      700
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      800
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      1
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      2
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      3
+     ],
+     [
+      "Dégâts critiques",
+      6
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      4
+     ],
+     [
+      "Dégâts critiques",
+      8
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      5
+     ],
+     [
+      "Dégâts critiques",
+      10
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      6
+     ],
+     [
+      "Dégâts critiques",
+      12
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      7
+     ],
+     [
+      "Dégâts critiques",
+      14
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      8
+     ],
+     [
+      "Dégâts critiques",
+      16
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      9
+     ],
+     [
+      "Dégâts critiques",
+      18
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Dégâts magiques %",
+      10
+     ],
+     [
+      "Dégâts critiques",
+      20
+     ]
+    ]
+   ]
+  },
+  "25179": {
+   "n": "Collier d'Ange",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_ANGEL_NECKLACE_2016",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Attaque",
+      10
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      20
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      30
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      40
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      50
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      60
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      70
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      80
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      90
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      100
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      150
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      200
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      250
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      300
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      400
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      500
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      600
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      700
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      800
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      1
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      2
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      3
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      4
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      5
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      6
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      7
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      8
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      9
+     ]
+    ],
+    [
+     [
+      "Attaque",
+      1000
+     ],
+     [
+      "Taux de butin %",
+      10
+     ]
+    ]
+   ]
+  },
+  "25184": {
+   "n": "Anneau Ailé Pur",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_WING_RING_2016_02",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      12
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      14
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      16
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      21
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      30
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      7
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      8
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      9
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      10
+     ]
+    ]
+   ]
+  },
+  "25185": {
+   "n": "Boucles d'Oreille Harpe Pur",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_HARP_EARRING_2016_02",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      12
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      14
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      16
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      21
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      30
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      7
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      8
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      9
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ],
+     [
+      "PV max %",
+      10
+     ]
+    ]
+   ]
+  },
+  "25186": {
+   "n": "Collier d'Ange Pur",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_ANGEL_NECKLACE_2016_02",
+   "plafond": 30,
+   "rangs": [
+    [],
+    [
+     [
+      "Défense",
+      10
+     ]
+    ],
+    [
+     [
+      "Défense",
+      20
+     ]
+    ],
+    [
+     [
+      "Défense",
+      30
+     ]
+    ],
+    [
+     [
+      "Défense",
+      40
+     ]
+    ],
+    [
+     [
+      "Défense",
+      50
+     ]
+    ],
+    [
+     [
+      "Défense",
+      60
+     ]
+    ],
+    [
+     [
+      "Défense",
+      70
+     ]
+    ],
+    [
+     [
+      "Défense",
+      80
+     ]
+    ],
+    [
+     [
+      "Défense",
+      90
+     ]
+    ],
+    [
+     [
+      "Défense",
+      100
+     ]
+    ],
+    [
+     [
+      "Défense",
+      200
+     ]
+    ],
+    [
+     [
+      "Défense",
+      300
+     ]
+    ],
+    [
+     [
+      "Défense",
+      400
+     ]
+    ],
+    [
+     [
+      "Défense",
+      500
+     ]
+    ],
+    [
+     [
+      "Défense",
+      600
+     ]
+    ],
+    [
+     [
+      "Défense",
+      650
+     ]
+    ],
+    [
+     [
+      "Défense",
+      700
+     ]
+    ],
+    [
+     [
+      "Défense",
+      750
+     ]
+    ],
+    [
+     [
+      "Défense",
+      900
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      1
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      2
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      3
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      4
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      5
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      6
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      7
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      8
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      9
+     ]
+    ],
+    [
+     [
+      "Défense",
+      1500
+     ],
+     [
+      "Endurance %",
+      10
+     ]
+    ]
+   ]
+  },
+  "25245": {
+   "n": "Anneau Ailé 2017",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_WING_RING_2017",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dextérité",
+      5
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      11
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      12
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      13
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      14
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      15
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      16
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      17
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      18
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      19
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      20
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      21
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      22
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      23
+     ],
+     [
+      "Attaque %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      25
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ]
+   ]
+  },
+  "25246": {
+   "n": "Boucles d'Oreille Harpe 2017",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_HARP_EARRING_2017",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "PV max",
+      100
+     ]
+    ],
+    [
+     [
+      "PV max",
+      200
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      300
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      400
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      500
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      600
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      700
+     ],
+     [
+      "Blocage à distance",
+      1
+     ]
+    ],
+    [
+     [
+      "PV max",
+      800
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "PV max",
+      900
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1000
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1100
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1200
+     ],
+     [
+      "Blocage à distance",
+      2
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1300
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1400
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1500
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1600
+     ],
+     [
+      "Blocage à distance",
+      3
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1700
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1800
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "PV max",
+      2000
+     ],
+     [
+      "Blocage à distance",
+      4
+     ]
+    ],
+    [
+     [
+      "PV max",
+      3000
+     ],
+     [
+      "Blocage à distance",
+      5
+     ]
+    ]
+   ]
+  },
+  "25247": {
+   "n": "Collier d'Ange 2017",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_ANGEL_NECKLACE_2017",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Force",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ],
+     [
+      "Dégâts critiques",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ],
+     [
+      "Dégâts critiques",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ],
+     [
+      "Dégâts critiques",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ],
+     [
+      "Dégâts critiques",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      12
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      14
+     ],
+     [
+      "Dégâts critiques",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ],
+     [
+      "Dégâts critiques",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      16
+     ],
+     [
+      "Dégâts critiques",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ],
+     [
+      "Dégâts critiques",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      18
+     ],
+     [
+      "Dégâts critiques",
+      7
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ],
+     [
+      "Dégâts critiques",
+      7
+     ]
+    ],
+    [
+     [
+      "Force",
+      20
+     ],
+     [
+      "Dégâts critiques",
+      7
+     ]
+    ],
+    [
+     [
+      "Force",
+      21
+     ],
+     [
+      "Dégâts critiques",
+      8
+     ]
+    ],
+    [
+     [
+      "Force",
+      22
+     ],
+     [
+      "Dégâts critiques",
+      8
+     ]
+    ],
+    [
+     [
+      "Force",
+      23
+     ],
+     [
+      "Dégâts critiques",
+      9
+     ]
+    ],
+    [
+     [
+      "Force",
+      25
+     ],
+     [
+      "Dégâts critiques",
+      10
+     ]
+    ]
+   ]
+  },
+  "25847": {
+   "n": "Grenat d'Amour 2019",
+   "cle": "II_SYS_SYS_EVE_JESSICAS_RING_2019",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dégâts critiques",
+      1
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      1
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      2
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      2
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      3
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      3
+     ],
+     [
+      "Défense %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      4
+     ],
+     [
+      "Défense %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      4
+     ],
+     [
+      "Défense %",
+      8
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      5
+     ],
+     [
+      "Défense %",
+      9
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      5
+     ],
+     [
+      "Défense %",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      6
+     ],
+     [
+      "Défense %",
+      11
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      6
+     ],
+     [
+      "Défense %",
+      12
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      7
+     ],
+     [
+      "Défense %",
+      13
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      7
+     ],
+     [
+      "Défense %",
+      14
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      8
+     ],
+     [
+      "Défense %",
+      15
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      8
+     ],
+     [
+      "Défense %",
+      16
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      9
+     ],
+     [
+      "Défense %",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      10
+     ],
+     [
+      "Défense %",
+      18
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      11
+     ],
+     [
+      "Défense %",
+      19
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      12
+     ],
+     [
+      "Défense %",
+      20
+     ]
+    ]
+   ]
+  },
+  "25849": {
+   "n": "Lapis Lazuli de Beauté 2019",
+   "cle": "II_SYS_SYS_EVE_NANAS_RING_2019",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Taux critique",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      1
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      2
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      2
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      3
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      3
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      4
+     ],
+     [
+      "Attaque %",
+      7
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      4
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      5
+     ],
+     [
+      "Attaque %",
+      9
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      5
+     ],
+     [
+      "Attaque %",
+      10
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      6
+     ],
+     [
+      "Attaque %",
+      11
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      6
+     ],
+     [
+      "Attaque %",
+      12
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      7
+     ],
+     [
+      "Attaque %",
+      13
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      7
+     ],
+     [
+      "Attaque %",
+      14
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      8
+     ],
+     [
+      "Attaque %",
+      15
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      8
+     ],
+     [
+      "Attaque %",
+      16
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      9
+     ],
+     [
+      "Attaque %",
+      17
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      10
+     ],
+     [
+      "Attaque %",
+      18
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      11
+     ],
+     [
+      "Attaque %",
+      19
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      12
+     ],
+     [
+      "Attaque %",
+      20
+     ]
+    ]
+   ]
+  },
+  "25891": {
+   "n": "Grenat d'Amour 2019",
+   "cle": "II_SYS_SYS_EVE_JESSICAS_RING_2019_EU",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Dégâts critiques",
+      1
+     ],
+     [
+      "Défense %",
+      1
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      1
+     ],
+     [
+      "Défense %",
+      2
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      2
+     ],
+     [
+      "Défense %",
+      3
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      2
+     ],
+     [
+      "Défense %",
+      4
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      3
+     ],
+     [
+      "Défense %",
+      5
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      3
+     ],
+     [
+      "Défense %",
+      6
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      4
+     ],
+     [
+      "Défense %",
+      7
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      4
+     ],
+     [
+      "Défense %",
+      8
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      5
+     ],
+     [
+      "Défense %",
+      9
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      5
+     ],
+     [
+      "Défense %",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      6
+     ],
+     [
+      "Défense %",
+      11
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      6
+     ],
+     [
+      "Défense %",
+      12
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      7
+     ],
+     [
+      "Défense %",
+      13
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      7
+     ],
+     [
+      "Défense %",
+      14
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      8
+     ],
+     [
+      "Défense %",
+      15
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      8
+     ],
+     [
+      "Défense %",
+      16
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      9
+     ],
+     [
+      "Défense %",
+      17
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      10
+     ],
+     [
+      "Défense %",
+      18
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      11
+     ],
+     [
+      "Défense %",
+      19
+     ]
+    ],
+    [
+     [
+      "Dégâts critiques",
+      12
+     ],
+     [
+      "Défense %",
+      20
+     ]
+    ]
+   ]
+  },
+  "25892": {
+   "n": "Lapis Lazuli de Beauté 2019",
+   "cle": "II_SYS_SYS_EVE_NANAS_RING_2019_EU",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Taux critique",
+      1
+     ],
+     [
+      "Attaque %",
+      1
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      1
+     ],
+     [
+      "Attaque %",
+      2
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      2
+     ],
+     [
+      "Attaque %",
+      3
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      2
+     ],
+     [
+      "Attaque %",
+      4
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      3
+     ],
+     [
+      "Attaque %",
+      5
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      3
+     ],
+     [
+      "Attaque %",
+      6
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      4
+     ],
+     [
+      "Attaque %",
+      7
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      4
+     ],
+     [
+      "Attaque %",
+      8
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      5
+     ],
+     [
+      "Attaque %",
+      9
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      5
+     ],
+     [
+      "Attaque %",
+      10
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      6
+     ],
+     [
+      "Attaque %",
+      11
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      6
+     ],
+     [
+      "Attaque %",
+      12
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      7
+     ],
+     [
+      "Attaque %",
+      13
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      7
+     ],
+     [
+      "Attaque %",
+      14
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      8
+     ],
+     [
+      "Attaque %",
+      15
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      8
+     ],
+     [
+      "Attaque %",
+      16
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      9
+     ],
+     [
+      "Attaque %",
+      17
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      10
+     ],
+     [
+      "Attaque %",
+      18
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      11
+     ],
+     [
+      "Attaque %",
+      19
+     ]
+    ],
+    [
+     [
+      "Taux critique",
+      12
+     ],
+     [
+      "Attaque %",
+      20
+     ]
+    ]
+   ]
+  },
+  "26464": {
+   "n": "Anneau Vigor",
+   "cle": "II_GEN_JEW_RIN_STRRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Force",
+      1
+     ]
+    ],
+    [
+     [
+      "Force",
+      2
+     ]
+    ],
+    [
+     [
+      "Force",
+      3
+     ]
+    ],
+    [
+     [
+      "Force",
+      4
+     ]
+    ],
+    [
+     [
+      "Force",
+      5
+     ]
+    ],
+    [
+     [
+      "Force",
+      6
+     ]
+    ],
+    [
+     [
+      "Force",
+      7
+     ]
+    ],
+    [
+     [
+      "Force",
+      8
+     ]
+    ],
+    [
+     [
+      "Force",
+      9
+     ]
+    ],
+    [
+     [
+      "Force",
+      10
+     ]
+    ],
+    [
+     [
+      "Force",
+      11
+     ]
+    ],
+    [
+     [
+      "Force",
+      13
+     ]
+    ],
+    [
+     [
+      "Force",
+      15
+     ]
+    ],
+    [
+     [
+      "Force",
+      17
+     ]
+    ],
+    [
+     [
+      "Force",
+      19
+     ]
+    ],
+    [
+     [
+      "Force",
+      21
+     ]
+    ],
+    [
+     [
+      "Force",
+      24
+     ]
+    ],
+    [
+     [
+      "Force",
+      27
+     ]
+    ],
+    [
+     [
+      "Force",
+      31
+     ]
+    ],
+    [
+     [
+      "Force",
+      35
+     ]
+    ],
+    [
+     [
+      "Force",
+      40
+     ]
+    ]
+   ]
+  },
+  "26465": {
+   "n": "Anneau Stam",
+   "cle": "II_GEN_JEW_RIN_STARING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Endurance",
+      1
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      2
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      3
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      4
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      5
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      6
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      7
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      8
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      9
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      10
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      11
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      13
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      15
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      17
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      19
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      21
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      24
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      27
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      31
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      35
+     ]
+    ],
+    [
+     [
+      "Endurance",
+      40
+     ]
+    ]
+   ]
+  },
+  "26466": {
+   "n": "Anneau Arek",
+   "cle": "II_GEN_JEW_RIN_DEXRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dextérité",
+      1
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      2
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      3
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      4
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      5
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      6
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      7
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      8
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      9
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      10
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      11
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      13
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      15
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      17
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      19
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      21
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      24
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      27
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      31
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      35
+     ]
+    ],
+    [
+     [
+      "Dextérité",
+      40
+     ]
+    ]
+   ]
+  },
+  "26467": {
+   "n": "Anneau Intel",
+   "cle": "II_GEN_JEW_RIN_INTRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Intelligence",
+      1
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      2
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      3
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      4
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      5
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      6
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      7
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      8
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      9
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      10
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      11
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      13
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      15
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      17
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      19
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      21
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      24
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      27
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      31
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      35
+     ]
+    ],
+    [
+     [
+      "Intelligence",
+      40
+     ]
+    ]
+   ]
+  },
+  "26468": {
+   "n": "Boucle d'oreille Demol",
+   "cle": "II_GEN_JEW_EAR_ATTEARRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Dégâts subis réduits",
+      10
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      15
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      20
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      25
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      30
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      35
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      41
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      48
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      56
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      66
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      77
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      90
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      105
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      125
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      150
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      170
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      200
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      235
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      275
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      320
+     ]
+    ],
+    [
+     [
+      "Dégâts subis réduits",
+      375
+     ]
+    ]
+   ]
+  },
+  "26469": {
+   "n": "Boucle d'oreille Plug",
+   "cle": "II_GEN_JEW_EAR_DEFEARRING",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "Défense",
+      44
+     ]
+    ],
+    [
+     [
+      "Défense",
+      49
+     ]
+    ],
+    [
+     [
+      "Défense",
+      54
+     ]
+    ],
+    [
+     [
+      "Défense",
+      59
+     ]
+    ],
+    [
+     [
+      "Défense",
+      64
+     ]
+    ],
+    [
+     [
+      "Défense",
+      70
+     ]
+    ],
+    [
+     [
+      "Défense",
+      76
+     ]
+    ],
+    [
+     [
+      "Défense",
+      82
+     ]
+    ],
+    [
+     [
+      "Défense",
+      89
+     ]
+    ],
+    [
+     [
+      "Défense",
+      96
+     ]
+    ],
+    [
+     [
+      "Défense",
+      104
+     ]
+    ],
+    [
+     [
+      "Défense",
+      113
+     ]
+    ],
+    [
+     [
+      "Défense",
+      123
+     ]
+    ],
+    [
+     [
+      "Défense",
+      135
+     ]
+    ],
+    [
+     [
+      "Défense",
+      150
+     ]
+    ],
+    [
+     [
+      "Défense",
+      168
+     ]
+    ],
+    [
+     [
+      "Défense",
+      189
+     ]
+    ],
+    [
+     [
+      "Défense",
+      213
+     ]
+    ],
+    [
+     [
+      "Défense",
+      240
+     ]
+    ],
+    [
+     [
+      "Défense",
+      270
+     ]
+    ],
+    [
+     [
+      "Défense",
+      310
+     ]
+    ]
+   ]
+  },
+  "26470": {
+   "n": "Collier Gore",
+   "cle": "II_GEN_JEW_NEC_HPNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PV max",
+      82
+     ]
+    ],
+    [
+     [
+      "PV max",
+      118
+     ]
+    ],
+    [
+     [
+      "PV max",
+      154
+     ]
+    ],
+    [
+     [
+      "PV max",
+      190
+     ]
+    ],
+    [
+     [
+      "PV max",
+      226
+     ]
+    ],
+    [
+     [
+      "PV max",
+      262
+     ]
+    ],
+    [
+     [
+      "PV max",
+      298
+     ]
+    ],
+    [
+     [
+      "PV max",
+      334
+     ]
+    ],
+    [
+     [
+      "PV max",
+      370
+     ]
+    ],
+    [
+     [
+      "PV max",
+      418
+     ]
+    ],
+    [
+     [
+      "PV max",
+      466
+     ]
+    ],
+    [
+     [
+      "PV max",
+      514
+     ]
+    ],
+    [
+     [
+      "PV max",
+      562
+     ]
+    ],
+    [
+     [
+      "PV max",
+      610
+     ]
+    ],
+    [
+     [
+      "PV max",
+      658
+     ]
+    ],
+    [
+     [
+      "PV max",
+      706
+     ]
+    ],
+    [
+     [
+      "PV max",
+      766
+     ]
+    ],
+    [
+     [
+      "PV max",
+      826
+     ]
+    ],
+    [
+     [
+      "PV max",
+      886
+     ]
+    ],
+    [
+     [
+      "PV max",
+      946
+     ]
+    ],
+    [
+     [
+      "PV max",
+      1018
+     ]
+    ]
+   ]
+  },
+  "26471": {
+   "n": "Collier Mental",
+   "cle": "II_GEN_JEW_NEC_MPNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PM max",
+      57
+     ]
+    ],
+    [
+     [
+      "PM max",
+      65
+     ]
+    ],
+    [
+     [
+      "PM max",
+      73
+     ]
+    ],
+    [
+     [
+      "PM max",
+      81
+     ]
+    ],
+    [
+     [
+      "PM max",
+      89
+     ]
+    ],
+    [
+     [
+      "PM max",
+      97
+     ]
+    ],
+    [
+     [
+      "PM max",
+      105
+     ]
+    ],
+    [
+     [
+      "PM max",
+      113
+     ]
+    ],
+    [
+     [
+      "PM max",
+      121
+     ]
+    ],
+    [
+     [
+      "PM max",
+      129
+     ]
+    ],
+    [
+     [
+      "PM max",
+      137
+     ]
+    ],
+    [
+     [
+      "PM max",
+      146
+     ]
+    ],
+    [
+     [
+      "PM max",
+      155
+     ]
+    ],
+    [
+     [
+      "PM max",
+      164
+     ]
+    ],
+    [
+     [
+      "PM max",
+      173
+     ]
+    ],
+    [
+     [
+      "PM max",
+      182
+     ]
+    ],
+    [
+     [
+      "PM max",
+      191
+     ]
+    ],
+    [
+     [
+      "PM max",
+      200
+     ]
+    ],
+    [
+     [
+      "PM max",
+      209
+     ]
+    ],
+    [
+     [
+      "PM max",
+      218
+     ]
+    ],
+    [
+     [
+      "PM max",
+      227
+     ]
+    ]
+   ]
+  },
+  "26472": {
+   "n": "Collier Paison",
+   "cle": "II_GEN_JEW_NEC_FPNECKLACE",
+   "plafond": 20,
+   "rangs": [
+    [
+     [
+      "PC max",
+      57
+     ]
+    ],
+    [
+     [
+      "PC max",
+      65
+     ]
+    ],
+    [
+     [
+      "PC max",
+      73
+     ]
+    ],
+    [
+     [
+      "PC max",
+      81
+     ]
+    ],
+    [
+     [
+      "PC max",
+      89
+     ]
+    ],
+    [
+     [
+      "PC max",
+      97
+     ]
+    ],
+    [
+     [
+      "PC max",
+      105
+     ]
+    ],
+    [
+     [
+      "PC max",
+      113
+     ]
+    ],
+    [
+     [
+      "PC max",
+      121
+     ]
+    ],
+    [
+     [
+      "PC max",
+      129
+     ]
+    ],
+    [
+     [
+      "PC max",
+      137
+     ]
+    ],
+    [
+     [
+      "PC max",
+      146
+     ]
+    ],
+    [
+     [
+      "PC max",
+      155
+     ]
+    ],
+    [
+     [
+      "PC max",
+      164
+     ]
+    ],
+    [
+     [
+      "PC max",
+      173
+     ]
+    ],
+    [
+     [
+      "PC max",
+      182
+     ]
+    ],
+    [
+     [
+      "PC max",
+      191
+     ]
+    ],
+    [
+     [
+      "PC max",
+      200
+     ]
+    ],
+    [
+     [
+      "PC max",
+      209
+     ]
+    ],
+    [
+     [
+      "PC max",
+      218
+     ]
+    ],
+    [
+     [
+      "PC max",
+      227
+     ]
+    ]
+   ]
+  },
+  "27719": {
+   "n": "Anneau Gâteau à la Fraise",
+   "cle": "II_GEN_JEW_RIN_CHRISTMAS_CAKE_RING_2019",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [
+     [
+      "Blocage à distance",
+      1
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      1
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      1
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      1
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      1
+     ],
+     [
+      "Blocage corps à corps",
+      1
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      2
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      2
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      2
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      2
+     ],
+     [
+      "Blocage corps à corps",
+      2
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      3
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      3
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      3
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      3
+     ],
+     [
+      "Blocage corps à corps",
+      3
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      4
+     ],
+     [
+      "Blocage corps à corps",
+      4
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      4
+     ],
+     [
+      "Blocage corps à corps",
+      4
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      5
+     ],
+     [
+      "Blocage corps à corps",
+      5
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      5
+     ],
+     [
+      "Blocage corps à corps",
+      5
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      6
+     ],
+     [
+      "Blocage corps à corps",
+      6
+     ]
+    ],
+    [
+     [
+      "Blocage à distance",
+      7
+     ],
+     [
+      "Blocage corps à corps",
+      7
+     ]
+    ]
+   ]
+  },
+  "27720": {
+   "n": "Collier Dinde Perdue",
+   "cle": "II_GEN_JEW_NEC_CHRISTMAS_TURKEY_NECKLACE_2019",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [],
+    [
+     [
+      "Attaque %",
+      4
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      1
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      2
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      5
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      6
+     ],
+     [
+      "Dégâts JcJ",
+      3
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      6
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      7
+     ],
+     [
+      "Dégâts JcJ",
+      4
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      7
+     ],
+     [
+      "Dégâts JcJ",
+      5
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      8
+     ],
+     [
+      "Dégâts JcJ",
+      5
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      8
+     ],
+     [
+      "Dégâts JcJ",
+      6
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      9
+     ],
+     [
+      "Dégâts JcJ",
+      6
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      9
+     ],
+     [
+      "Dégâts JcJ",
+      7
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      10
+     ],
+     [
+      "Dégâts JcJ",
+      7
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      11
+     ],
+     [
+      "Dégâts JcJ",
+      8
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      12
+     ],
+     [
+      "Dégâts JcJ",
+      8
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      13
+     ],
+     [
+      "Dégâts JcJ",
+      9
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      14
+     ],
+     [
+      "Dégâts JcJ",
+      9
+     ]
+    ],
+    [
+     [
+      "Attaque %",
+      15
+     ],
+     [
+      "Dégâts JcJ",
+      10
+     ]
+    ]
+   ]
+  },
+  "27721": {
+   "n": "Boucles Cookie Chochochip",
+   "cle": "II_GEN_JEW_EAR_CHRISTMAS_COOKIE_EARRING_2019",
+   "plafond": 20,
+   "rangs": [
+    [],
+    [
+     [
+      "Toutes les statistiques",
+      5
+     ],
+     [
+      "PV max",
+      100
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      6
+     ],
+     [
+      "PV max",
+      200
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      7
+     ],
+     [
+      "PV max",
+      300
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      8
+     ],
+     [
+      "PV max",
+      400
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      9
+     ],
+     [
+      "PV max",
+      500
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      10
+     ],
+     [
+      "PV max",
+      600
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      11
+     ],
+     [
+      "PV max",
+      700
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      12
+     ],
+     [
+      "PV max",
+      800
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      13
+     ],
+     [
+      "PV max",
+      900
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      14
+     ],
+     [
+      "PV max",
+      1000
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      15
+     ],
+     [
+      "PV max",
+      1100
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      16
+     ],
+     [
+      "PV max",
+      1200
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      17
+     ],
+     [
+      "PV max",
+      1300
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      18
+     ],
+     [
+      "PV max",
+      1400
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      19
+     ],
+     [
+      "PV max",
+      1500
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      20
+     ],
+     [
+      "PV max",
+      1600
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      21
+     ],
+     [
+      "PV max",
+      1700
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      22
+     ],
+     [
+      "PV max",
+      1800
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      23
+     ],
+     [
+      "PV max",
+      2000
+     ]
+    ],
+    [
+     [
+      "Toutes les statistiques",
+      25
+     ],
+     [
+      "PV max",
+      3000
+     ]
+    ]
+   ]
+  }
+ }
+}

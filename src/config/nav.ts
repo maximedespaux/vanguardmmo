@@ -75,9 +75,29 @@ export const ESPACES: Espace[] = [
     href: "/donjons",
     acces: "public",
     liens: [
-      // La description dit les TROIS blocs de la page depuis que l'Oasis l'a
-      // rejointe : un contenu que le menu ne promet pas ne se trouve pas.
-      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les 23 instances, la Tour Oubliée, et les 52 vagues de l'Oasis." },
+      /* La description dit les TROIS blocs de la page depuis que l'Oasis l'a
+         rejointe : un contenu que le menu ne promet pas ne se trouve pas.
+
+         ┌──── ELLE ANNONÇAIT « 23 » ET « 52 », ET C'EST PARTI ────┐
+         │ Les deux nombres étaient JUSTES — 23 instances dans      │
+         │ dungeons.json, 52 vagues dans oasis-vagues.json, tous    │
+         │ deux recomptés. Mais ils étaient écrits À LA MAIN dans   │
+         │ un bloc servi sur LES VINGT ROUTES du site : le premier  │
+         │ versement de données qui ajoute une instance rendait la  │
+         │ navigation menteuse partout d'un coup, en silence.       │
+         │                                                          │
+         │ On ne les CALCULE pas non plus, et c'est mesuré :        │
+         │ `Shell.tsx` est un composant client, donc tout ce que ce │
+         │ fichier importe part dans le paquet du navigateur —      │
+         │ competences.json pèse 196 Ko. Cent quatre-vingt-seize    │
+         │ kilo-octets sur chaque page pour afficher « 197 ».       │
+         │                                                          │
+         │ La règle 4 se satisfait donc ici par le RETRAIT : une    │
+         │ description de menu dit ce qu'il y a derrière le lien,   │
+         │ pas combien. Les pages, elles, comptent — et elles       │
+         │ comptent juste.                                          │
+         └──────────────────────────────────────────────────────────┘ */
+      { label: "Donjons", href: "/donjons", icon: "skull", desc: "Les instances du téléporteur, la Tour Oubliée, et les vagues de l'Oasis." },
       { label: "Guide de progression", href: "/astuces", icon: "compass", desc: "Par où commencer, et quoi viser ensuite." },
       { label: "Prestige", href: "/prestige", icon: "star", desc: "Ce que coûte un prestige, ce qu'il rapporte." },
       // Les objets et les classes viennent du client du jeu, pas de la guilde :
@@ -114,7 +134,8 @@ export const ESPACES: Espace[] = [
          Les quatre adresses restent vivantes en redirection : elles ont pu circuler
          sur le Discord. Mais on ne navigue plus par elles — les liens internes du
          site pointent la destination directement. Douze entrées, huit désormais. */
-      { label: "Classes & compétences", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, et les 197 compétences qu'elle apprend." },
+      // « les 197 compétences » : même retrait, même raison qu'au-dessus.
+      { label: "Classes & compétences", href: "/classes", icon: "sword-cross", desc: "La chaîne de promotion, et les compétences qu'elle apprend." },
       // « paw » et non « skull » : Donjons porte déjà skull dans ce groupe, et
       // deux voisins de la même liste avec la même icône ne se distinguent plus.
       { label: "Monstres", href: "/monstres", icon: "paw", desc: "PV, dégâts, élément — et les boss à plusieurs vies." },

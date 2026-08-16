@@ -43,7 +43,35 @@ export type ChiffreAccueil = { n: number; libelle: string };
  * provenance » serait un mensonge sur nos données, pas une information.
  */
 export function chiffresAccueil(): ChiffreAccueil[] {
-  const objets = compteur("ou-trouver.json", (d) => (d as { compteurs?: { objets?: number } }).compteurs?.objets ?? null);
+  /* ┌──── ON NE LIT PLUS `compteurs.objets`, ET C'EST UNE CORRECTION ────┐
+       Ce compteur vaut 4 970 : c'est le nombre d'ENREGISTREMENTS de la
+       table de provenance, pas le nombre d'objets. Vérifié en comptant
+       les noms distincts du même tableau : 4 867. Cent trois objets
+       tombent à DEUX endroits — ils y occupent deux lignes, et l'accueil
+       les annonçait comme deux objets sous la phrase « objets dont on
+       sait la provenance ».
+
+       Le défaut se voyait en comparant deux pages : le wiki annonce
+       « 5 253 objets qui disent d'où ils viennent » (des FICHES de
+       catalogue, cf. le commentaire de app/(public)/wiki/page.tsx), et
+       l'accueil 4 970 sous une phrase indiscernable. Trois populations
+       différentes — enregistrements, noms, fiches — dont deux se
+       présentaient comme la même chose.
+
+       On compte donc les NOMS, qui est ce que la phrase promet. Le
+       chiffre baisse de 103, et il devient vrai.                      */
+  /* Le champ est `nom` et non `n` — les deux conventions coexistent sur ce site
+     (le butin d'un monstre écrit `o`, le catalogue écrit `n`, cette table écrit
+     `nom`). Une première version lisait `n` : le Set était vide, `compteur`
+     rendait null, et le chiffre DISPARAISSAIT de l'accueil au lieu de crier.
+     C'est le repli « un relevé absent ne fait pas tomber la page » qui a servi
+     de tapis — vérifier que le chiffre s'affiche encore fait donc partie du
+     travail, pas seulement qu'il compile. */
+  const objets = compteur("ou-trouver.json", (d) => {
+    const liste = (d as { objets?: { nom?: string }[] }).objets;
+    if (!Array.isArray(liste)) return null;
+    return new Set(liste.map((x) => x?.nom).filter(Boolean)).size;
+  });
   const vagues = compteur("oasis-vagues.json", (d) => (d as { vagues?: unknown[] }).vagues?.length ?? null);
 
   return [

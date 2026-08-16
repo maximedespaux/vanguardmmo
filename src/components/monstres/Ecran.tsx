@@ -102,7 +102,23 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
         } />
         <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--orange)" />
         <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--red)" />
-        <Chiffre icon="package" valeur={entier(objetsLaches)} quoi="objets nommés dans leur butin" ton="var(--green)" />
+        {/* ┌──── « OBJETS » DISAIT 106, LE CATALOGUE EN MONTRE 108 ────┐
+               Les deux comptes sont JUSTES, et c'est bien le problème :
+               ils ne comptent pas la même chose et aucun ne le disait.
+               Ici on compte des NOMS (`indexButin().size`) ; le filtre
+               « Que lâche un monstre » de /objets compte des LIGNES DE
+               CATALOGUE. Recalculé sur les données : deux noms sont
+               portés par deux fiches chacun — « Pierre des Héros »
+               (ids 10245 et 18170) et « Épée Entanalle » (18145 au
+               niveau 30, 18146 au niveau 1). 106 noms, 108 fiches.
+               Un joueur qui lit 106 puis clique le filtre voit 108
+               cartes ; le mot « noms » suffit à lever la surprise, et
+               la bulle dit le reste pour qui la cherche.               */}
+        <Chiffre icon="package" valeur={entier(objetsLaches)} ton="var(--green)" quoi={
+          <Bulle quoi={<>On compte des <b>noms</b>. Le catalogue en montre deux de plus : « Pierre des Héros » et « Épée Entanalle » existent chacune en deux versions, à deux niveaux requis.</>}>
+            <span>noms d&apos;objets dans leur butin</span>
+          </Bulle>
+        } />
       </div>
 
       <div className="vg-subtabs" style={{ margin: 0 }}>

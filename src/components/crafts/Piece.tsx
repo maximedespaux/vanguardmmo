@@ -1,5 +1,6 @@
 "use client";
 import { Icon } from "@/components/Icon";
+import { NomObjet } from "@/components/objets/NomObjet";
 
 /**
  * Les briques d'une recette : un objet avec sa quantité, un statut, une carte.
@@ -47,24 +48,47 @@ export function Objet({ p, gros = false }: { p: Piece; gros?: boolean }) {
   const t = gros ? 34 : 26;
   return (
     <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
-      {p.ic ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/jeu/icones/${p.ic}`} alt="" width={t} height={t}
-          style={{ width: t, height: t, flexShrink: 0, objectFit: "contain", imageRendering: "pixelated" }} />
-      ) : (
-        <span style={{ width: t, height: t, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
-          <Icon name="package" size={Math.round(t * 0.6)} />
+      {/* ┌──────── LES 236 OBJETS DE CETTE PAGE ÉTAIENT DES CULS-DE-SAC ────────┐
+             Mesuré dans le DOM : /crafts servait 236 icônes d'objet et ZÉRO
+             poignée de bulle, quand /donjons en sert 63 et une fiche de monstre
+             4 sur ses 4 butins. C'était le seul écart du site, et sur la page qui
+             nomme le PLUS d'objets — chaque « ce que tu donnes » aligne ses
+             ingrédients. `Arbre.tsx`, juste à côté, employait bien `NomObjet` ;
+             ce fichier-ci, qui rend les 834 échanges, ne l'employait pas du tout.
+
+             Devant « Rune d'énergie d'Isthar ×700 », la question suivante est
+             « où ça tombe » et « je peux le demander à la guilde ? ». Les trois
+             réponses existaient — fiche, provenance, requête — et elles étaient
+             hors d'atteinte ici. Demande de Maxime, mot pour mot : « pour passer
+             une requête il faut plus de liens logiques ».
+
+             L'ICÔNE ENTRE DANS LA POIGNÉE au lieu de rester à côté : c'est
+             `NomObjet` qui la pose, et la survoler ouvre donc la bulle elle
+             aussi — la cible est plus grande, ce qui compte au doigt.
+
+             UN OBJET SANS NOM NE DEVIENT PAS UN LIEN. Le client en porte, et une
+             bulle sur « objet sans nom français » mènerait à une fiche vide :
+             il garde son gabarit d'icône et son italique, comme avant.        */}
+      {p.n ? (
+        <span style={{ minWidth: 0, flex: 1, fontSize: gros ? 14.5 : 13, fontWeight: gros ? 700 : 500, wordBreak: "break-word" }}>
+          <NomObjet nom={p.n} icone={p.ic} taille={t} />
         </span>
-      )}
-      <span style={{ minWidth: 0, flex: 1 }}>
-        {p.n ? (
-          <span style={{ fontSize: gros ? 14.5 : 13, fontWeight: gros ? 700 : 500, wordBreak: "break-word" }}>{p.n}</span>
-        ) : (
-          <span style={{ fontSize: gros ? 14 : 12.5, fontStyle: "italic", color: "var(--text-muted)" }}>
+      ) : (
+        <>
+          {p.ic ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/jeu/icones/${p.ic}`} alt="" width={t} height={t}
+              style={{ width: t, height: t, flexShrink: 0, objectFit: "contain", imageRendering: "pixelated" }} />
+          ) : (
+            <span style={{ width: t, height: t, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
+              <Icon name="package" size={Math.round(t * 0.6)} />
+            </span>
+          )}
+          <span style={{ minWidth: 0, flex: 1, fontSize: gros ? 14 : 12.5, fontStyle: "italic", color: "var(--text-muted)" }}>
             objet sans nom français dans le client
           </span>
-        )}
-      </span>
+        </>
+      )}
       {p.q > 1 && (
         <b style={{ flexShrink: 0, fontSize: gros ? 14 : 13, fontVariantNumeric: "tabular-nums", color: "var(--gold)" }}>
           ×{p.q.toLocaleString("fr-FR")}

@@ -115,7 +115,27 @@ export const ESPACES: Espace[] = [
          j'interdis `nav.ts` aux passes parallèles pour éviter les conflits d'écriture,
          puis j'oublie de poser l'entrée derrière. */
       { label: "Le wiki", href: "/wiki", icon: "search", desc: "Cherche n'importe quoi : un objet, un monstre, une recette, un PNJ." },
-      { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient." },
+      /* ┌──── `acces: "guild"` — ET J'AI D'ABORD CORRIGÉ ÇA À L'ENVERS ────┐
+           L'entrée ne portait pas d'`acces`, donc elle héritait du PUBLIC de
+           l'espace Astuces, alors que la page vit sous `(guild)` : le visiteur
+           voyait « Objets » au menu, cliquait, et se faisait rediriger.
+
+           J'ai d'abord déplacé la PAGE vers `(public)`, en m'appuyant sur un
+           relevé que j'avais mal fait : je cherchais `apiGuild|requireGuild`
+           dans les routes, et `/api/objets` se garde avec `apiAuth()` +
+           `canAccessGuild()`. La route REFUSE donc un visiteur — la page
+           publique s'affichait, et sa recherche répondait 403 sans rien dire.
+           Une page qui a l'air de marcher et ne renvoie rien est pire que la
+           redirection qu'elle remplaçait.
+
+           On remet donc la page sous garde et c'est le MENU qui dit vrai. Ouvrir
+           vraiment le catalogue au public demanderait d'ouvrir aussi
+           `/api/objets`, et ça, c'est une décision sur ce qu'on expose — pas une
+           correction de cohérence. Elle appartient à Maxime.
+
+           `/api/pnj` et `/api/monstres`, eux, n'ont bien aucune garde : c'est
+           pourquoi /pnj et /monstres sont publics sans rien casser.          */
+      { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient.", acces: "guild" },
       /* QUATRE ENTRÉES ONT DISPARU D'ICI, et ce n'est pas une perte de contenu :
          les pages ont FUSIONNÉ dans le compartiment qui les concernait. Demande de
          Maxime, mot pour mot : « le but est d'avoir le moins de page possible mais

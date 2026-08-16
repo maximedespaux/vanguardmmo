@@ -17,7 +17,7 @@ import {
   Point, Vignettes, ligneDe, type Vue,
 } from "./Blocs";
 import {
-  ECHELLE, PARCHEMINS_ABSOLUS, RAMASSEUR, RUNE_TANK,
+  ECHELLE, PARCHEMINS_ABSOLUS, PARCHEMINS_EVEIL, RAMASSEUR, RUNE_TANK,
   cartesDElement, cartesDePercage, comptoirDeLuca, eveilFixe, famillesDeJoyau, iconeDe, iconePercage,
   mantras, nombreDeGemmesMenteuses, objet, objets, ordresDeSertissage,
   panneau, parcheminsClasses, plafondDeStat, plafondsDeSertissage, rareteChiffree, runes, tableauDesGemmes,
@@ -226,6 +226,7 @@ export function Sertissage() {
   const dia = ARME_ARTEFACT.sertissage?.diamants ?? 0;
   const nHolo = ARME_ARTEFACT.sertissage?.holo ?? 0;
   const holo = objet("II_SYS_SYS_DIAMOND_ARTEFACT");
+  const diamant = objet("II_GEN_MAT_DIAMOND");
   const plafonds = plafondsDeSertissage();
   const p = paliersDeGemme();
 
@@ -246,9 +247,19 @@ export function Sertissage() {
             legende: <>{dia} diamants <b>+ {nHolo} holographiques</b></>,
           },
         ]} />
+        {/* LES DEUX PIERRES SONT CELLES DU CLIENT, ET C'ETAIT UNE CORRECTION.
+            `ICONE_HOLO` (`/airbuilder/icons/sertissage/diamant-holo.png`) est un
+            diamant VIOLET dessine pour le builder : verifie empreinte par
+            empreinte, ce fichier n'existe nulle part ailleurs dans le depot et ne
+            correspond a aucune icone du client. Le vrai Diamant holographique
+            d'AirFlyff est MULTICOLORE (`itm_diamant_multicolore.webp`) — et la
+            case portait un violet invente juste au-dessus de la phrase du client
+            qui decrit l'objet. La pierre ordinaire, elle, est pixel pour pixel la
+            meme des deux cotes : on prend quand meme celle du client, pour que la
+            grille ait une seule source. Le fichier du builder reste en repli. */}
         <Grille cases={[
-          { cle: "d", src: ICONE_DIAMANT, nom: "Diamant" },
-          { cle: "h", src: ICONE_HOLO, nom: "Holographique", cherche: "Diamant holographique" },
+          { cle: "d", src: iconeDe(diamant) ?? ICONE_DIAMANT, nom: "Diamant", cherche: diamant?.n },
+          { cle: "h", src: iconeDe(holo) ?? ICONE_HOLO, nom: "Holographique", cherche: holo?.n ?? "Diamant holographique" },
         ]} />
         {/* LA PREUVE, PAR DEUX FICHIERS QUI NE SE PARLENT PAS : la phrase que le
             client ecrit sur l'objet, et la FORME de sa table de valeurs. */}
@@ -402,10 +413,10 @@ export function Amelioration() {
             titre={`Taux de réussite par palier, en pourcentage : ${courbe.map((x) => `+${x.niveau} ${x.pct}`).join(", ")}`}
             marches={courbe.map((x) => ({ de: x.niveau, a: x.niveau, v: x.pct, nom: `+${x.niveau}` }))}
           />
-          <p className="mc-src">
-            De +{courbe[0].niveau} à +{bas.niveau} : c&apos;est cette pente qui décide où poser sa
-            protection.
-          </p>
+          {/* « De +11 a +20 » disait pour la troisieme fois la meme tranche : le
+              titre du point la porte deja, et l'escalier l'ecrit sous chaque
+              marche. Reste ce que le dessin ne dit pas — ce qu'on en FAIT. */}
+          <p className="mc-src">C&apos;est cette pente qui décide où poser sa protection.</p>
         </Point>
       )}
 
@@ -463,7 +474,9 @@ export function Amelioration() {
           ["Arme Artefact", `+${ARME_ARTEFACT.upMax}`],
           ["Arme, tenue, casque, gants", `+${TENUE.upMax}`],
         ]} />
-        <p className="mc-src">Un « +20 » ne dit rien tant qu&apos;on ignore de quelle pièce on parle.</p>
+        {/* « Un +20 ne dit rien tant qu'on ignore de quelle piece on parle » est
+            parti : le bareme juste au-dessus met trois pieces en face de trois
+            plafonds differents, il DIT deja ca, et mieux qu'une phrase. */}
         <div>
           {ECHELLE.map((e) => {
             const l = objets(e.cles);
@@ -636,9 +649,30 @@ export function Rarete() {
 
 /* ═══ 7. Éveil, scroll, élément ══════════════════════════════════════════════ */
 
+/** « Parchemin de Léthargie » → « Léthargie ». Les quatre parchemins d'éveil
+ *  commencent tous par le même mot, et la case le porterait quatre fois : ce qui
+ *  distingue les quatre est ce qui vient APRÈS. Le nom entier reste dans le lien
+ *  vers la fiche, parce que c'est lui qu'on tape dans le jeu. */
+const courtParchemin = (n: string) => {
+  const s = n.replace(/^Parchemin\s+(?:d[e’']\s*)?/i, "");
+  return s ? s[0].toUpperCase() + s.slice(1) : n;
+};
+
 export function Eveil() {
   const cartes = cartesDElement();
-  const obsoletes = cartes.filter((x) => x.obsolete).length;
+  const obsoletes = cartes.filter((x) => x.obsolete);
+  /* LES DEUX PLAFONDS SE LISENT, ils ne s'ecrivent plus. La phrase disait
+     « elles plafonnent a +5, quatre fois plus bas que leur voisine » : deux
+     chiffres tapes a la main sur une page dont toute la valeur est de ne jamais
+     en taper. Ils sortent maintenant de la phrase du client, carte par carte. */
+  const plafondBas = obsoletes[0]?.max ?? null;
+  const plafondPlein = cartes.find((x) => !x.obsolete)?.max ?? null;
+  const parcheminsDEveil = objets(PARCHEMINS_EVEIL);
+  const revele = parcheminsDEveil[0];
+  /** Le prix d'un tirage, tel que la fenêtre du jeu l'annonce. Un COÛT reste à
+   *  l'écran là où une récompense n'y va pas : c'est lui qui dit combien coûte
+   *  un éveil raté. */
+  const coutEveil = panneau(/veil d.objet/i)?.penya?.[0] ?? "";
   const fixes = eveilFixe(/^II_SYS_SYS_SCR_FIX_AWAKE_/);
   const changer = panneau(/changement d.él[eé]ment/i);
   return (
@@ -654,11 +688,14 @@ export function Eveil() {
         ["Scroll de stat", `+1 → +4 sur ${STATS_SCROLL.length} statistiques de base`],
         ["Élément de l'arme", `jusqu'à +${ARME_ARTEFACT.elementMax}`],
       ]} />
+      {/* LA MOITIE DE CETTE LIGNE EST PARTIE. Elle finissait par « l'element ne se
+          confond pas avec les cartes de percage » — le Groupe juste dessous le dit
+          deja, et mieux : « elles s'appellent aussi Carte et ne percent rien ».
+          Reste ce que rien d'autre ne donne : le mot a taper dans le jeu. */}
       <p className="mc-src">
         <Bulle quoi={<>Le client dit « <b>foudre</b> », le builder dit « <b>Électricité</b> ». Même élément, deux mots — celui qu&apos;on cherche en jeu est « foudre ».</>}>
           Deux mots pour le même élément
         </Bulle>
-        {" "}· l&apos;élément ne se confond pas avec les cartes de perçage.
       </p>
 
       <Groupe titre={`Ce qui monte l'élément : ${cartes.length} cartes, et un piège`}>
@@ -669,8 +706,10 @@ export function Eveil() {
         }))} />
         <p className="mc-note">
           Elles s&apos;appellent aussi « Carte » et ne percent rien. Deux par élément, dont
-          {" "}<b>{obsoletes} marquées obsolètes par le client</b> : elles plafonnent à +5, quatre
-          fois plus bas que leur voisine.
+          {" "}<b>{obsoletes.length} marquées obsolètes par le client</b>
+          {plafondBas != null && plafondPlein != null
+            ? <> : elles plafonnent à <b>+{plafondBas}</b> contre <b>+{plafondPlein}</b>.</>
+            : "."}
         </p>
       </Groupe>
 
@@ -681,6 +720,30 @@ export function Eveil() {
             élémentarisée au mauvais élément n&apos;est <b>pas perdue</b>, et se vend au même prix.
             Le jeu ne le dit que dans sa fenêtre de transformation.
           </p>
+        </Point>
+      )}
+
+      {/* ── LE VOLET NE MONTRAIT PAS COMMENT ON EVEILLE ─────────────────────
+          Il ouvrait sur R1 et R2 comme sur deux cases a cocher, et le point
+          suivant vantait les parchemins « qui posent la ligne qu'on veut » sans
+          jamais dire CONTRE QUOI. Contre un tirage : le client ecrit sur son
+          propre parchemin que la propriete revelee peut etre NEGATIVE, et la
+          fenetre du jeu facture chaque essai. Les quatre images sont celles du
+          client (`/jeu/icones`), pas les copies renommees de
+          `/jeu/mecaniques/eveil-*.webp` — memes pixels, empreinte verifiee, et
+          celles-ci ouvrent la fiche de l'objet. */}
+      {parcheminsDEveil.length > 0 && (
+        <Point titre="L'éveil est un tirage, pas un réglage" marque="piege">
+          <Grille cases={parcheminsDEveil.map((o): Vue => ({
+            cle: o.cle, src: iconeDe(o), nom: courtParchemin(o.n), cherche: o.n,
+          }))} />
+          {revele?.d && <p className="mc-cite">« {revele.d} »</p>}
+          {coutEveil && (
+            <p className="mc-src">
+              Chaque essai coûte <b>{coutEveil} penyas</b> : la <b>Léthargie</b> le rejoue, le
+              {" "}<b>Lprotect</b> garde le meilleur des deux.
+            </p>
+          )}
         </Point>
       )}
 
@@ -695,11 +758,15 @@ export function Eveil() {
             `${l.label || l.code}${l.pieces.length ? ` — ${l.pieces.join(", ")}` : ""}`,
             `R1 +${l.r1}${l.pourcent ? " %" : ""} · R2 +${l.r2}${l.pourcent ? " %" : ""}`,
           ] as [string, string])} />
-          <p className="mc-src">
-            Chacun nomme <b>les pièces où il se pose</b> : la Force ne va pas sur des bottes.
-            {fixes.pasDouble.length === 0 && <> Le <b>rang 2 vaut le double du rang 1</b> — pas sur
-              la série pour costumes.</>}
-          </p>
+          {/* « Chacun nomme les pieces ou il se pose : la Force ne va pas sur des
+              bottes » est parti : le bareme du dessus LISTE ces pieces, ligne par
+              ligne. La phrase decrivait le tableau qu'on avait sous les yeux.
+              Reste le rapport entre les deux rangs, qu'aucune ligne ne donne. */}
+          {fixes.pasDouble.length === 0 && (
+            <p className="mc-src">
+              Le <b>rang 2 vaut le double du rang 1</b> — pas sur la série pour costumes.
+            </p>
+          )}
         </Point>
       )}
     </div>

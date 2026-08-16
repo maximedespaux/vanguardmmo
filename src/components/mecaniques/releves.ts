@@ -466,8 +466,10 @@ export function cartesDePercage() {
 
 /** Les dix cartes d'élémentarisation — celles qui montent l'ÉLÉMENT d'une pièce,
  *  et qu'on confond avec les cartes de perçage parce qu'elles s'appellent aussi
- *  « Carte ». Deux par élément : une obsolète qui plafonne à +5, une complète.
- *  La plage vient de la description du client. */
+ *  « Carte ». Deux par élément : une obsolète, une complète. Leurs deux plafonds
+ *  viennent de la description du client, et JAMAIS du clavier — la planche
+ *  écrivait « +5, quatre fois plus bas que sa voisine » à la main, deux chiffres
+ *  qui devenaient faux au premier versement du client sans que rien ne le dise. */
 export function cartesDElement() {
   const CLES = [
     "II_GEN_MAT_ELE_TOUCH", "II_GEN_MAT_ELE_FLAME",
@@ -476,11 +478,16 @@ export function cartesDElement() {
     "II_GEN_MAT_ELE_STONE", "II_GEN_MAT_ELE_DESERT",
     "II_GEN_MAT_ELE_VOLTAGE", "II_GEN_MAT_ELE_GENERATOR",
   ];
-  return objets(CLES).map((o) => ({
-    fiche: o,
-    plage: /\+1 à \+(\d+)/.exec(o.d ?? "")?.[0] ?? "",
-    obsolete: /obsolete/i.test(o.d ?? ""),
-  }));
+  return objets(CLES).map((o) => {
+    const m = /\+1 à \+(\d+)/.exec(o.d ?? "");
+    return {
+      fiche: o,
+      plage: m?.[0] ?? "",
+      /** Le plafond que la carte atteint, ou `null` si la phrase ne le donne pas. */
+      max: m ? Number(m[1]) : null,
+      obsolete: /obsolete/i.test(o.d ?? ""),
+    };
+  });
 }
 
 /* ── L'échelle d'amélioration ─────────────────────────────────────────────── */
@@ -557,6 +564,29 @@ export function parcheminsClasses() {
   };
 }
 export const PARCHEMINS_ABSOLUS = ["II_SYS_SYS_SCR_ENCHANT_ABSOLUTE06", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE07", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE08", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE09", "II_SYS_SYS_SCR_ENCHANT_ABSOLUTE10"];
+
+/**
+ * LES QUATRE PARCHEMINS QUI FONT L'ÉVEIL — et qui manquaient à la planche.
+ *
+ * Le volet « Éveil » montrait R1 et R2 comme on montre un réglage : deux cases à
+ * cocher. C'est le contresens le plus cher de la page. L'éveil est un TIRAGE : le
+ * client écrit noir sur blanc, sur son propre parchemin, que « les propriétés
+ * peuvent être négatives ». Les trois autres n'existent que pour ça — annuler
+ * (Léthargie), garder l'éveil qu'on vient d'annuler (Lprotect), et la version
+ * familier.
+ *
+ * L'ORDRE EST CELUI DU GESTE : on éveille, on annule, on protège. La version
+ * familier ferme la liste parce qu'elle ne se pose pas sur une pièce.
+ *
+ * `…AWAKECANCEL02` — la Léthargie d'évènement — n'y est pas : même dessin, même
+ * effet, deux clés. Une case de plus aurait fait croire à deux objets.
+ */
+export const PARCHEMINS_EVEIL = [
+  "II_SYS_SYS_SCR_AWAKE",
+  "II_SYS_SYS_SCR_AWAKECANCEL",
+  "II_SYS_SYS_SCR_AWAKESAFE",
+  "II_SYS_SYS_SCR_PETAWAKE",
+];
 
 /**
  * Tout ce que le PNJ « Donjon Luca » échange, et ses deux monnaies.

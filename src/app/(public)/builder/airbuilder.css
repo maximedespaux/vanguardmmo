@@ -504,3 +504,76 @@
    une boîte de 36px) et l'icône apparaît décentrée. */
 .slot .ico{display:flex;align-items:center;justify-content:center;line-height:0;width:100%;height:100%}
 .ptab .x,.stab .x{display:inline-flex;align-items:center;justify-content:center;line-height:0}
+
+/* ═══════════════ LES DESSINS DU JEU DANS LES PANNEAUX ═══════════════════════
+   Toutes les icônes du builder sont des sprites de client : `image-rendering:
+   pixelated` est la règle de la maison ici (voir .ghic / .pcard plus haut), un
+   lissage bicubique sur un dessin de 32 px le rend flou. Les tailles reprennent
+   celles de leurs voisines immédiates plutôt que d'en inventer de nouvelles. */
+
+/* Le parchemin de rareté, dans le bouton du palier. */
+.tierbtn .raric{width:15px;height:15px;object-fit:contain;image-rendering:pixelated;
+  vertical-align:-3px;margin-right:5px}
+
+/* L'ascension : trois parchemins d'arme là où il y avait trois étoiles dorées.
+   Le bouton garde exactement la forme de .tierbtn — c'est son voisin de rangée. */
+.tierbtn.ascbtn{display:inline-flex;align-items:center;gap:2px;padding:3px 7px;min-height:26px}
+.ascic{width:17px;height:17px;object-fit:contain;image-rendering:pixelated;display:block}
+
+/* CE QUE LE PALIER COÛTE. Une ligne, la pierre à gauche, le parchemin de
+   protection à droite quand le client en décrit un. */
+.wp .upcost{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:7px;
+  padding:6px 8px;border-radius:8px;background:rgba(255,210,74,.06);
+  border:1px solid rgba(255,210,74,.2)}
+.wp .upcost .upic{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;flex:none}
+.wp .upcost .upl{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text)}
+.wp .upcost .upl b{color:var(--gold);font-family:Rubik,sans-serif;font-weight:700}
+.wp .upcost .upl.prot{color:var(--mut);margin-left:auto}
+
+/* CE QUI N'EST PAS COMPTÉ, dit à l'endroit du geste et non seulement dans la
+   liste repliée du résumé. Même dessin que .stabs — c'est la même famille de
+   renseignement, il ne faut pas deux vocabulaires visuels pour un seul fait. */
+.wp .mini.upnc{display:flex;align-items:flex-start;gap:6px;margin-top:7px;padding:6px 8px;
+  border-radius:8px;line-height:1.5;background:rgba(248,113,113,.05);
+  border:1px dashed rgba(248,113,113,.26);color:var(--mut)}
+.wp .mini.upnc>i:first-child{color:var(--red);flex:none;margin-top:1px}
+.wp .mini.upnc>span{min-width:0;flex:1 1 auto}
+
+/* LE PALIER D'UN BIJOU — ce qu'il donne au rang atteint, et les plateaux. */
+.wp .palbloc{margin-top:8px;padding:8px;border-radius:8px;background:var(--bg2);
+  border:1px solid var(--border)}
+.wp .palbloc .pall{font-size:12px;line-height:1.6;color:var(--text)}
+.wp .palbloc .pall b{color:var(--gold);font-family:Rubik,sans-serif;font-weight:700}
+.wp .palbloc .mini{margin-top:4px;line-height:1.55}
+.wp .palbloc .mini.palerr{color:var(--text);background:rgba(255,140,26,.08);
+  border:1px solid rgba(255,140,26,.28);border-radius:7px;padding:5px 7px}
+.wp .palbloc .mini.palerr>i:first-child{color:var(--orange);margin-right:4px}
+.wp .palbloc .mini.palerr b{color:var(--orange)}
+
+/* LA LIGNE NÉGATIVE D'UNE PANOPLIE. Elle se lit sous le bandeau du résumé ET
+   dans la fenêtre de choix, juste au-dessus du bouton qui pose l'ensemble. */
+.panneg{display:flex;align-items:flex-start;gap:7px;margin-top:7px;
+  padding:7px 9px;border-radius:9px;font-size:11.5px;line-height:1.55;color:var(--text);
+  background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3)}
+.panneg>i:first-child{color:var(--red);flex:none;margin-top:1px}
+.panneg>span{min-width:0;flex:1 1 auto}
+.panneg b,.panneg u{color:var(--red);font-family:Rubik,sans-serif;font-weight:700;text-decoration:none}
+.panneg.avenir{background:rgba(255,210,74,.07);border-color:rgba(255,210,74,.28)}
+.panneg.avenir>i:first-child,.panneg.avenir b,.panneg.avenir u{color:var(--gold)}
+
+/* ═══ LE REPÈRE « INVISIBLE EN JEU » ═════════════════════════════════════════
+   Un fait que le client ne montre nulle part. Discret par défaut, il s'ouvre au
+   survol (title) ET au clic — `title` ne s'ouvre pas au doigt, et ces faits-là
+   sont ceux qu'on a le plus besoin de lire avant de dépenser. */
+.vginv{display:inline-flex;align-items:center;gap:4px;vertical-align:baseline;
+  font-family:Rubik,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--purple);background:rgba(199,125,255,.1);
+  border:1px solid rgba(199,125,255,.3);border-radius:20px;padding:1px 8px;
+  cursor:pointer;user-select:none;white-space:nowrap;transition:background .14s,border-color .14s}
+.vginv:hover{background:rgba(199,125,255,.2);border-color:var(--purple)}
+.vginv:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.vginv i{width:12px;height:12px}
+
+/* Le vrai Diamant holographique en tête de ses trois emplacements : le moteur
+   n'en montrait qu'une version teintée du diamant ordinaire. */
+.wp .mini.holohd{display:flex;align-items:center;gap:6px}

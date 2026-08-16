@@ -577,3 +577,89 @@
 /* Le vrai Diamant holographique en tête de ses trois emplacements : le moteur
    n'en montrait qu'une version teintée du diamant ordinaire. */
 .wp .mini.holohd{display:flex;align-items:center;gap:6px}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LA BULLE ET LE PANNEAU — « MOINS CHIFFON »
+   Le désordre venait de trois causes mesurables, et chacune a sa règle ici :
+     · des lignes qui se battent pour la largeur (le champ chiffré de la maîtrise
+       se cassait SOUS son curseur au lieu de tenir à côté) ;
+     · des grandeurs non alignées (chaque valeur tombait où elle pouvait) ;
+     · l'objet énoncé mais jamais montré au-dessus de ses propres réglages.
+   Les valeurs s'alignent donc à droite sur une seule colonne, et les blocs de
+   lignes partagent tous la même forme, dans la bulle comme dans le panneau.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* La bulle porte désormais le palier du bijou, la maîtrise et l'éveil chiffré :
+   290px obligeaient « Vitesse d'incantation » à se casser en deux. */
+.itip{width:322px}
+
+/* LE PALIER D'UN BIJOU. Teinte propre — c'est un bloc qui REMPLACE les rangs
+   précédents, pas un bonus de plus à confondre avec ceux de la pièce. */
+.itip .bl.pal{color:var(--gold)}
+.itip .bl.pal span:last-child{color:var(--gold)}
+.itip .palw{font-size:10.5px;line-height:1.5;color:var(--mut);margin-top:4px}
+/* La mise en garde qui évite une dépense : un cran qui ne rapporte rien.
+   UNE SEULE TEINTE et pas de pastille de couleur — c'est du texte, il se lit. */
+.itip .palw.warn{color:var(--gold);background:rgba(255,210,74,.08);
+  border-left:2px solid rgba(255,210,74,.45);padding:4px 7px;border-radius:0 5px 5px 0;margin-top:5px}
+
+/* L'ÉVEIL CHIFFRÉ : deux séries nommées, l'une sous l'autre, jamais un nombre nu. */
+.itip .evd{display:flex;flex-direction:column;gap:1px;margin-top:2px}
+.itip .evs{display:flex;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--mut)}
+.itip .evs b{color:var(--c-eveil);font-weight:700;white-space:nowrap}
+
+/* LES LIGNES DE MAÎTRISE — même forme dans la bulle et dans le panneau, parce
+   que c'est le même renseignement. Éteinte = discrète, allumée = lisible ;
+   l'état se lit à l'opacité ET au tiret, jamais à la seule couleur. */
+.mlist{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px}
+.mline{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;
+  color:var(--mut);opacity:.55;padding:1px 0}
+.mline.on{opacity:1;color:var(--text)}
+.mline span:last-child{font-family:Rubik,sans-serif;font-weight:700;white-space:nowrap;color:var(--mut)}
+.mline.on span:last-child{color:var(--gold)}
+.mnote{font-size:10.5px;line-height:1.5;color:var(--mut);margin-top:2px}
+.mnote b{color:var(--text);font-weight:700}
+.itip .mline{font-size:11px}
+
+/* LA PIÈCE MONTRÉE EN TÊTE DE SON PANNEAU. On la réglait sans jamais la voir :
+   seul le nom de l'emplacement la rappelait. */
+.pent{display:flex;align-items:center;gap:11px;margin:0 0 12px;padding:10px 12px;
+  border:1px solid var(--border);border-radius:10px;background:var(--bg3)}
+.pent-ic{width:46px;height:46px;flex:none;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:9px;background:var(--bg2)}
+.pent-ic img{width:38px;height:38px;object-fit:contain;image-rendering:pixelated}
+.pent-ic i{width:22px;height:22px;color:var(--mut)}
+.pent-n{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.pent-n>b{font-family:Rubik,sans-serif;font-weight:700;font-size:14px;letter-spacing:.3px;
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;line-height:1.25}
+.pent-tags{display:flex;gap:4px;flex-wrap:wrap}
+.pent-tags .tag{display:inline-block;font-size:10px;padding:1px 7px;border-radius:20px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.pent-sub{font-size:11.5px;color:var(--mut)}
+.pent .arts{display:inline-flex;align-items:center;gap:1px}
+.pent .arts img{width:15px;height:15px;object-fit:contain;image-rendering:pixelated}
+
+/* LE CURSEUR ET SON CHAMP CHIFFRÉ SUR LA MÊME LIGNE. `.lvl` est une colonne :
+   le champ, posé après le curseur, tombait donc DESSOUS et flottait seul contre
+   le bord gauche — c'était la ligne la plus chiffonnée du panneau. */
+.lvl.lvlnum .lvlrow{display:flex;align-items:center;gap:8px}
+.lvl.lvlnum .lvlrow input[type=range]{flex:1;min-width:0}
+.lvl.lvlnum .lvlrow input[type=number]{width:60px;flex:none;text-align:center}
+
+/* Les lignes de rareté tirées au sort appartiennent au groupe RARETÉ : elles
+   passaient sous le titre « Maîtrise de l'arme », qui s'était glissé entre. */
+.rlines{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.rlines:empty{margin-top:0}
+.rarnote{line-height:1.5;margin-bottom:2px}
+
+/* L'ICÔNE SEULE QUI SE CENTRE — le piège du projet, payé une fois de plus.
+   `[class^="vgi-"]:only-child` pose `margin:auto` pour centrer une icône posée
+   seule dans un bouton. Dans un en-tête de groupe, le titre qui suit l'icône est
+   un NŒUD DE TEXTE, et `:only-child` ne compte que les ÉLÉMENTS : l'icône se
+   croyait donc seule, se centrait, et poussait le titre contre le bord droit.
+   Le titre « Maîtrise de l'arme » l'a révélé en perdant le `<span>` qui portait
+   son « (0 à 100) » — l'en-tête de la fée avait le même défaut depuis toujours.
+   On neutralise là où un en-tête est toujours « icône + titre », plutôt que de
+   remettre un élément vide à côté de chaque icône. */
+.wp .gh>[class^="vgi-"],.pent [class^="vgi-"]{margin-left:0;margin-right:0;
+  display:inline-block;vertical-align:-.14em}

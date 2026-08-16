@@ -458,13 +458,24 @@ function paliersBijoux(){
          requete restait sur le plafond par defaut. Limite aux emplacements de
          bijou pour ne pas redessiner sous les doigts d'une recherche en cours
          ailleurs. */
-      try{if(pickSlot&&['ring1','ring2','earring1','earring2','necklace'].indexOf(pickSlot)>=0)drawPick(curQ());}catch(x3){}
+      try{if(pickSlot&&BIJOUX.indexOf(pickSlot)>=0)drawPick(curQ());}catch(x3){}
+      /* LA BULLE AUSSI : c'est elle qui montre le palier du bijou, et elle vit
+         hors du panneau que `drawPick` vient de refaire. Ouverte avant l'arrivee
+         du releve, elle afficherait le bonus de base seul — le defaut meme qu'on
+         repare deux fonctions plus bas. */
+      try{itipRefresh();}catch(x4){}
       return _pal;})
     /* Un releve injoignable ne doit pas vider le panneau : on retient un objet
        vide, le terme part en « non compte » et le reste du total tient. */
     .catch(function(){_pal={bijoux:{}};return _pal;});}
   return null;
 }
+/* LES CINQ EMPLACEMENTS DE BIJOU, ECRITS UNE FOIS. La liste etait recopiee a
+   l'identique a SEPT endroits — le total, le panneau, les valeurs par defaut,
+   le rappel de `paliersBijoux()` — et un emplacement ajoute a six d'entre eux
+   serait passe inapercu dans le septieme. Meme raison que les nombres : ce qui
+   est ecrit deux fois finit par diverger. */
+const BIJOUX=['ring1','ring2','earring1','earring2','necklace'];
 /** Les bonus qu'un bijou donne AU PALIER ATTEINT. Le palier REMPLACE, il ne
  *  s'additionne pas : on lit la seule case du rang, jamais la somme des rangs.
  *  La preuve est dans le releve — 78 paliers y recopient a l'identique le
@@ -562,6 +573,9 @@ function mecaniques(){
          pourtant elle qui porte les panneaux de configuration, donc la
          quasi-totalite des images de cette table. */
       try{if(pickSlot)drawPick(curQ());}catch(x2){}
+      /* La bulle porte desormais la maitrise, l'eveil chiffre et le parchemin
+         d'ascension : elle depend de cette table autant que les panneaux. */
+      try{itipRefresh();}catch(x3){}
       return _meca;})
     .catch(function(){_meca={};return _meca;});}
   return null;
@@ -586,6 +600,166 @@ function mecaIc(o,cls){
 }
 /** La table, ou un objet vide tant qu'elle n'est pas arrivee. */
 function meca(){return mecaniques()||{};}
+/** Les faits releves sur le client. Meme contrat que `meca()` : un objet vide
+ *  tant que la table n'est pas la, jamais `undefined` a dereferencer. */
+function faits(){return meca().faits||{};}
+/* LE PLAFOND DE MAITRISE SE LIT, IL NE S'ECRIT PAS. Le « 100 » etait pose a la
+   main a DEUX endroits — la pastille de la bulle et le curseur du panneau — et
+   le repli du panneau visait `maitrise.niveauMax`, une cle qui N'EXISTE PAS :
+   le releve range le nombre sous `maitrise.niveau.max`. Les deux ecrans
+   affichaient donc la constante du fichier, jamais celle du client, et un
+   plafond deplace dans le relevé ne serait apparu nulle part.
+   Le repli a 100 reste pour l'instant ou la table n'est pas encore arrivee —
+   sans lui la pastille afficherait « 50/ » pendant le chargement. */
+function maitriseMax(){
+  var M=faits().maitrise;
+  return (M&&M.niveau&&M.niveau.max)||100;
+}
+
+/* ═════════ LE JOINT : UNE ARME DU CATALOGUE -> LES TABLES DU CLIENT ═════════
+   `data.json ▸ ITEMS.weapon` ne porte qu'un id numerique. Tout le reste du
+   client est range par CLE (II_WEA_SWO_LUZA) ou par TYPE (WEAPON_ONESWORD) :
+   sans table de correspondance, une arme du builder ne peut etre reliee ni a sa
+   maitrise, ni a son vivier de rarete, ni a son parchemin d'ascension.
+   `faits.armes` est cette table, et elle couvre 43 des 45 armes du catalogue.
+
+   LES DEUX QUI MANQUENT RENDENT `null`, ET C'EST VOULU. L'Arc de Luzaka oublie
+   DPS et TANK portent un identifiant invente par le builder, que le releve du
+   client ne connait pas. L'ecran doit alors ecrire « non renseigne » : leur
+   preter la maitrise ou la famille de l'arme voisine serait une invention. */
+function armeFait(item){
+  var A=faits().armes;
+  return (A&&item&&item.id!=null)?(A[String(item.id)]||null):null;
+}
+
+/* ═════════ L'ORDRE DES RARETES, LU ET NON RECOPIE ═══════════════════════════
+   `MECH.arme.rarete_tiers` porte les six paliers dans l'ordre, et
+   `faits.rarete.codes` fait le pont avec les codes du client (Commun -> NONE
+   ... Mythique -> MYTHIC). Comparer deux raretes revient donc a comparer deux
+   rangs DANS CETTE LISTE : aucune echelle n'est ecrite ici, et en ajouter un
+   palier au releve suffit a la deplacer. */
+function rangRarete(tier){return (MECH.arme.rarete_tiers||[]).indexOf(tier);}
+function rareteDuCode(code){
+  var C=(faits().rarete||{}).codes||{};
+  for(var t in C)if(C[t]===code)return t;
+  return '';
+}
+
+/* ═════════ LA MAITRISE D'ARME — CE QUE LA RARETE ALLUME ═════════════════════
+   DEUX FAITS DU RELEVE QUE L'ECRAN NE DOIT PAS DEBORDER :
+
+   1. LA RARETE ALLUME LA LIGNE, ELLE NE LA FAIT PAS MONTER. Les 26 lignes du
+      client valent [Commun 0, puis LA MEME VALEUR jusqu'au dernier palier] : 4
+      pour les lignes physiques, 2 pour les trois lignes magiques. Dessiner une
+      montee en puissance de Rare a Mythique inventerait une progression que le
+      fichier n'accorde a personne — c'est pourquoi le releve ne porte qu'UNE
+      valeur `v` et UN seuil `des`, et non six cases.
+   2. LA LIGNE NOMMEE L'EMPORTE SUR LA LIGNE DE TYPE, elle ne s'y ajoute pas.
+      Treize armes recoivent une ligne a leur nom TOUT EN AYANT une ligne de
+      type ; `faits.armes[].mai` ne retient que celle qui s'applique et nomme
+      l'ecartee a cote. Les additionner donnerait a l'Epee eternelle 4 points de
+      degats critiques que le client ne lui accorde pas. */
+function maitriseDe(item){
+  var M=faits().maitrise,j=armeFait(item);
+  if(!M||!j||!j.mai)return null;
+  var nomme=(j.mai[0]==='o');
+  var lignes=((nomme?M.parObjet:M.parType)||{})[j.mai[1]]||[];
+  if(!lignes.length)return null;
+  /* L'ECARTEE SE DIT EN FRANCAIS, PAS EN CODE MACHINE. `mai[2]` porte la cle du
+     TYPE (WEAPON_ONESWORD) ; ce qui interesse le joueur, c'est la ligne que ce
+     type lui aurait donnee. On la resout donc dans `parType` — et si elle n'y
+     est pas, on ne montre rien plutot qu'un identifiant. */
+  var ec=nomme?(((M.parType||{})[j.mai[2]])||[]):[];
+  return {lignes:lignes,nomme:nomme,ecartee:ec,dit:M.dit||''};
+}
+/** Les libelles d'une liste de lignes de maitrise, en clair. */
+function maitriseMots(lignes){
+  return (lignes||[]).map(function(l){return l.fr+' +'+l.v;}).join(' · ');
+}
+/** Une ligne de maitrise est-elle allumee au palier choisi ? Le seuil vient de
+ *  la ligne elle-meme (`des`), pas d'une constante posee ici. */
+function maitriseAllumee(l,tier){
+  var seuil=rangRarete(rareteDuCode(l&&l.des)),ici=rangRarete(tier);
+  return (seuil>=0&&ici>=0&&ici>=seuil);
+}
+
+/* ═════════ L'EVEIL CHIFFRE — DEUX SERIES QU'ON NE MELANGE PAS ═══════════════
+   Le builder retient LA LIGNE (R1 ou R2) et LA STATISTIQUE. Il ne retient ni la
+   valeur obtenue, ni LA VOIE empruntee — et le client en a deux, qui ne donnent
+   pas les memes nombres :
+
+     · le parchemin ORDINAIRE tire au sort, et le client ecrit sur le parchemin
+       lui-meme que « les proprietes peuvent etre negatives ». Le seul chiffre
+       disponible est alors un PLAFOND par statistique (MECH.arme.eveil : Force
+       15), pas un gain.
+     · les parchemins d'eveil FIXE chiffrent le gain — Force R1 30, R2 60 — et
+       leur R2 vaut exactement le double du R1 sur les 11 lignes, sans exception.
+
+   Le fixe vaut DEUX A QUATRE FOIS le plafond du tirage. Poser un nombre nu a
+   cote de la statistique reviendrait donc a choisir une voie a la place du
+   joueur : chaque serie est NOMMEE, ou elle ne s'affiche pas. C'est la meme
+   reserve que `totalsDetail`, qui range l'eveil parmi les termes non comptes. */
+function eveilChiffre(stat){
+  if(!stat)return null;
+  var E=faits().eveil||{},L=(E.fixe&&E.fixe.lignes)||[],fixe=null;
+  for(var i=0;i<L.length;i++)if(L[i].fr===stat){fixe=L[i];break;}
+  var plaf=(MECH.arme.eveil||{})[stat];
+  return (fixe||plaf!=null)?{fixe:fixe,plafond:(plaf!=null?plaf:null)}:null;
+}
+
+/* ═════════ L'ESPRIT DE LA FEE — UN CURSEUR QUI NE PRODUIT RIEN ══════════════
+   Le builder pose un curseur 0 -> 50 sur une piece dont le tableau de bonus est
+   VIDE : le niveau ne rapporte rien au total, et rien ne le disait. Le client,
+   lui, chiffre cinq paliers par esprit.
+
+   L'APPARIEMENT N'EST PAS UNE DEVINETTE : la piece du catalogue s'appelle
+   « Elerina, Esprit de la vigueur et de la magie » et le releve range ses
+   paliers sous « Elerina ». On compare donc le nom AVANT la virgule a la cle du
+   releve — egalite stricte, pas un prefixe. LES CINQ FEES DU CATALOGUE SONT
+   TOUTES DANS LE RELEVE, Goldea comprise : le repli `null` existe pour une
+   piece que le client ne nommerait pas, il ne sert aujourd'hui a aucune. */
+function espritDe(item){
+  var L=(faits().esprit||{}).esprits;
+  if(!L||!item||!item.n)return null;
+  var nom=String(item.n).split(',')[0].trim();
+  for(var i=0;i<L.length;i++)if(L[i].n===nom)return L[i];
+  return null;
+}
+/** Le palier atteint par un niveau de fee : le DERNIER seuil franchi, pas la
+ *  somme des precedents — meme regle que les paliers de bijou. */
+function espritPalier(esp,niv){
+  var p=(esp&&esp.paliers)||[],at=null;
+  for(var i=0;i<p.length;i++)if((niv|0)>=p[i][0])at=p[i];
+  return at;
+}
+/* ═══ LES RECOMPENSES NE SONT PAS A L'ECRAN — Y COMPRIS EN TEXTE LIBRE ═══════
+   `STAT_RECOMPENSE` protege les LIBELLES DE STATISTIQUE, ceux qui arrivent en
+   couples [nom, valeur]. L'esprit de la fee, lui, arrive en PHRASE : le client
+   ecrit « Exp +25% / PvE +1% / Depla +5% / All Stat +10 » d'un seul tenant, et
+   le palier 50 de Goldea vaut « Drop +1 / Penyas 35% ». Aucune expression posee
+   sur un libelle ne peut attraper ca — l'experience, le butin et les penyas
+   s'affichaient donc en clair sur le seul ecran qui les ecrit en prose.
+
+   ON DECOUPE SUR LE SEPARATEUR DU CLIENT (« / ») ET ON RETIRE LES SEGMENTS DE
+   RECOMPENSE, comme les carnets retirent leurs lignes. Le reste du palier est
+   conserve : « Depla +5% » et « All Stat +10 » sont des bonus ordinaires, les
+   effacer avec le voisin ferait disparaitre un renseignement juste.
+
+   QUAND IL NE RESTE RIEN, LE PALIER RESTE VISIBLE. Un « Niveau 50 » efface
+   ferait croire a un palier mort, et un joueur s'arreterait a 40 : c'est
+   exactement le geste qu'une omission ne doit pas provoquer. On rend une chaine
+   vide, et l'appelant ecrit pourquoi. */
+var MOT_RECOMPENSE=/\b(exp|xp|exp[ée]rience|drop|butin|penyas?)\b/i;
+function sansRecompense(txt){
+  return String(txt||'').split('/')
+    .filter(function(seg){return seg.trim()&&!MOT_RECOMPENSE.test(seg);})
+    .map(function(seg){return seg.trim();}).join(' / ');
+}
+/** Le palier tel qu'il s'affiche, et s'il a fallu en retirer quelque chose. */
+function espritTexte(p){
+  var brut=(p&&p[1])||'',net=sansRecompense(brut);
+  return {texte:net,ampute:(net!==brut.split('/').map(function(s){return s.trim();}).join(' / '))};
+}
 
 /* ═════════════ LE REPERE « INVISIBLE EN JEU » ═══════════════════════════════
    Trois faits de ce panneau ne se voient NULLE PART dans le client : la ligne
@@ -660,14 +834,14 @@ function totalsDetail(){
     if(c&&c.pierce){try{var pt=pierceTotals(c,s);if(pt&&pt.brut)pt.brut.forEach(function(b){
       add(b[0],b[1],nom+' — percage '+(pt.el||''),'Carte de percage posee : la table de valeurs vient du client (cartes '+(pt.el||'')+').','client');});}catch(x){}}
     /* Le palier d'un bijou : la seule valeur du rang atteint. */
-    if(c&&c.up&&['ring1','ring2','earring1','earring2','necklace'].indexOf(s)>=0){
+    if(c&&c.up&&BIJOUX.indexOf(s)>=0){
       var bp=bonusDePalier(e.item,c.up);
       if(bp){bp.lignes.forEach(function(l){
         add(l[0],l[1],nom+' +'+c.up,'accessory.inc du client, palier '+c.up+' sur '+(bp.plafond||c.up)+'. Le palier REMPLACE : cette valeur ne s\'ajoute pas aux precedentes.','client');});}
       else if(_pal)absent(nom+' +'+c.up,'Le client n\'ecrit aucun palier pour ce bijou : sa valeur de base s\'applique seule.');
     }
     /* Le +N d'une arme ou d'une armure : le terme existe, sa valeur non. */
-    if(c&&c.up&&['ring1','ring2','earring1','earring2','necklace'].indexOf(s)<0)
+    if(c&&c.up&&BIJOUX.indexOf(s)<0)
       absent(nom+' +'+c.up,'propEnchant.inc ne donne que des coefficients, sans dire ce qu\'ils multiplient. Un gain affiche ici serait une invention.');
     if(c&&c.evS)absent(nom+' — eveil '+(c.evL||'R1')+' '+c.evS,'Le builder retient la statistique choisie, pas la valeur obtenue.');
     if(c&&c.scrL&&c.scrS)absent(nom+' — scroll '+c.scrS+' +'+c.scrL,'Le builder retient la statistique, le client ne donne pas le gain par niveau de scroll.');
@@ -751,7 +925,22 @@ function totals(){
  * UN COUT en penyas n'est PAS concerne : la regle vise les recompenses, pas les
  * prix d'operation.
  */
-const STAT_RECOMPENSE=/^(exp[ée]rience|taux de drop|taux de penyas)$/i;
+/* LA REGLE ETAIT ECRITE, LE FILTRE NE L'APPLIQUAIT PAS. Les trois noms cherches
+   — « Experience », « Taux de drop », « Taux de penyas » — N'EXISTENT DANS
+   AUCUN DES DEUX RELEVES. Recompte sur data.json et paliers.json reunis : 47
+   libelles de statistique, et l'ancienne expression n'en attrapait ZERO. Les
+   trois recompenses que la maison ne montre pas s'appellent en realite
+   « Experience % », « Penyas gagnes % » et « Taux de butin % », et elles
+   s'affichaient donc toutes les trois — dans la colonne Utilitaire du resume, et
+   sur la Cape Farmeur comme sur les carnets.
+   Le filtre porte desormais les noms du releve, avec le « % » facultatif qui les
+   termine. Controle : il n'attrape aucune statistique de combat.
+
+   IL RESTE UN FILTRE D'AFFICHAGE, ET C'EST DELIBERE : `totals()` part aussi vers
+   /api/characters/sync, et le vider a la source amputerait la donnee de
+   GuildViewer, Compositions et Dashboard. On ne montre pas, on n'efface pas.
+   UN COUT en penyas n'est pas concerne : la regle vise les recompenses. */
+const STAT_RECOMPENSE=/^(exp[ée]rience|taux de (butin|drop)|penyas gagn[ée]s|taux de penyas)\s*%?$/i;
 // Catégorie d'une stat pour le résumé groupé.
 function statCat(k){var s=(k||'').toLowerCase();
   if(s.indexOf("vitesse d'attaque")>=0)return 'off';
@@ -1131,11 +1320,21 @@ function runeImg(tier){
 function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.ic&&IC[it.ic])?`<img src="${IC[it.ic]}">`:'';
   const isW=(slot==='weapon'||slot==='weapon2');
   const up=(cfg&&cfg.up)?` <span style="color:var(--gold)">+${cfg.up}</span>`:'';
-  const stars=(isW&&cfg&&cfg.stars)?` <span class="arts">${'<img src="/airbuilder/icons/sertissage/artefact.png" alt="">'.repeat(cfg.stars)}</span>`:'';
+  /* L'ASCENSION, AVEC LE DESSIN DE SA FAMILLE — la bulle etait en retard sur son
+     propre panneau. Elle repetait une petite etoile generique tandis que `upUI`
+     servait deja les vrais parchemins du client, un par famille d'arme et par
+     rang (27 en tout). On sert donc le meme dessin au meme rang, pour que
+     l'objet survole et l'objet regle se ressemblent.
+     LE REPLI RESTE L'ETOILE : une arme hors du joint (les deux Arcs de Luzaka)
+     ou une famille sans dessin garde ce qu'elle avait, plutot qu'un trou. */
+  const asc=isW?ascensionDe(it):null;
+  const stars=(isW&&cfg&&cfg.stars)?` <span class="arts" title="${escA(asc?('Ascension '+asc.fam+' — rang '+cfg.stars+(asc.par==='type'?' (famille donnée par le type d\'arme : le client ne nomme pas cette pièce)':'')):('Ascension — rang '+cfg.stars))}">${
+    asc?Array.from({length:cfg.stars},(_,i)=>`<img src="${asc.img[Math.min(i,asc.img.length-1)]}" alt="">`).join('')
+       :'<img src="/airbuilder/icons/sertissage/artefact.png" alt="">'.repeat(cfg.stars)}</span>`:'';
   /* Le jeu annonce d'abord CE QUE C'EST, puis SI ON PEUT LE PORTER, et enfin ce
      qu'il apporte. L'ordre comptait : le niveau requis etait relegue tout en bas,
      alors que c'est la premiere chose qu'on cherche devant une piece convoitee. */
-  let h=`<div class="t" style="color:${col}">${icon}<span>${esc(it.n)}${it.sex?' ('+it.sex+')':''}${up}${stars}</span></div>`;
+  let h=`<div class="t" style="color:${col}">${icon}<span>${nomPiece(it)}${up}${stars}</span></div>`;
   const tags=[];
   /* Le palier s'affichait pour les seules armes. Une armure Yggdrasil ou Lusaka
      en a un aussi, et il porte la couleur qui identifie la piece d'un coup d'oeil. */
@@ -1164,12 +1363,46 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
   const configured=!!(cfg||(slot==='familier'&&e));
   /* Les bonus de base disparaissaient des qu'une piece etait configuree : on ne
      pouvait plus voir ce qu'elle apporte sans la desequiper. Ils restent. */
-  if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>+${b[1]}</span></div>`).join('');}
+  if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.filter(b=>!STAT_RECOMPENSE.test(b[0])).map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>${b[1]<0?'':'+'}${b[1]}</span></div>`).join('');}
+  /* ═══ LE PALIER DU BIJOU — LE DEFAUT QUE CETTE BULLE AVAIT DEPUIS TOUJOURS ═══
+     Elle n'affichait que `it.b`, les bonus DE BASE de la piece, et n'appelait
+     jamais `bonusDePalier()`. Un Anneau Aile a +30 annoncait donc ce qu'il vaut
+     a +0, pendant que le total, lui, comptait juste : le joueur lisait deux
+     nombres inconciliables sur le meme objet.
+
+     ELLE APPELLE MAINTENANT LA MEME FONCTION QUE LE TOTAL — `bonusDePalier`,
+     celle de `totalsDetail` — et surtout pas une seconde lecture du releve. Une
+     deuxieme implementation aurait fini par diverger de la premiere, et c'est
+     precisement le defaut qu'on repare.
+
+     LE PALIER S'AJOUTE AU BONUS DE BASE, mais NE S'AJOUTE PAS AUX PALIERS
+     PRECEDENTS : `rangs[palier]` est la valeur totale au rang atteint. Les deux
+     blocs sont donc distincts a l'ecran, comme ils le sont dans le total. */
+  if(cfg&&cfg.up&&BIJOUX.indexOf(slot)>=0){
+    const bp=bonusDePalier(it,cfg.up),bm=bijouPaliers(it,cfg.up);
+    if(bp&&bp.lignes.length){
+      h+=`<div class="sec">Palier +${cfg.up}${bp.plafond?' <span style="text-transform:none;letter-spacing:0">sur +'+bp.plafond+'</span>':''}</div>`
+        +bp.lignes.filter(l=>!STAT_RECOMPENSE.test(l[0])).map(l=>`<div class="bl pal"><span>${esc(l[0])}</span><span>${l[1]<0?'':'+'}${l[1]}</span></div>`).join('')
+        +`<div class="palw" title="${escA('Le palier atteint REMPLACE les précédents : cette valeur est le total du rang '+cfg.up+', pas un gain qui s\'ajoute aux rangs d\'avant. Le jeu ne le dit nulle part.')}">Ce bloc remplace les paliers précédents, il ne s'y ajoute pas.</div>`;
+    }
+    /* LES DEUX RENSEIGNEMENTS QUI EVITENT UNE DEPENSE. Monter d'un cran peut ne
+       RIEN rapporter — le releve compte 78 rangs qui recopient a l'identique le
+       precedent — et le jeu ne le dit pas davantage. C'est le genre de mise en
+       garde que la regle de la maison garde meme quand elle allonge la bulle :
+       elle change le geste du joueur. */
+    if(bm&&bm.vide)h+=`<div class="palw warn">Le client n'écrit aucun palier pour ce bijou : l'améliorer ne lui ajoute rien.</div>`;
+    else if(bm&&bm.plateau)h+=`<div class="palw warn">+${bm.n} recopie +${bm.n-1} à l'identique : ce cran n'a rien rapporté.${bm.suivant?' Prochain palier qui change : +'+bm.suivant+'.':' Aucun palier au-dessus ne change quoi que ce soit.'}</div>`;
+    /* UN SEUL CRAN MORT NE S'ECRIT PAS COMME UN INTERVALLE : « Les crans +3 a
+       +3 ne changent rien » se lit comme une coquille et fait douter du reste
+       de la bulle. Le cas est le plus frequent des trois — la plupart des
+       trous du releve font un cran. */
+    else if(bm&&bm.suivant&&bm.suivant>bm.n+1)h+=`<div class="palw">${bm.suivant===bm.n+2?`Le cran +${bm.n+1} ne change rien`:`Les crans +${bm.n+1} à +${bm.suivant-1} ne changent rien`}. Prochain palier utile : +${bm.suivant}.</div>`;
+  }
   // --- Schéma de configuration (pièce équipée) ---
   if(configured){let cf='';const chips=[];
     if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut);opacity:.65'}">${runeImg(it.tier)} ${esc(runeName(it.tier))}</span>`);
     else if(cfg&&typeof cfg.rune==='string'&&cfg.rune){const _rc=STATCOL[cfg.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(cfg.rune)} ${esc(cfg.rune)}</span>`);}
-    if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/100</span>`);
+    if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/${maitriseMax()}</span>`);
     if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(e.rune)} ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
     if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:12px;color:var(--c-diamant);font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:12px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
@@ -1187,19 +1420,150 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
         pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66">${pel?`<img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">`:'<i class=vgi-card></i>'} ${open}/${pierceMaxFor(slot,it)}</span>${pel?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">${esc(pel)}${phaut?' '+plib(phaut):''}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
         if(pcard){const t=pierceTotals(cfg,slot);if(t&&t.lines.length)pc+=`<div style="font-size:12px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
         pc+=`</div></div>`;cf+=pc;}}
-    if(cfg&&cfg.evL)cf+=`<div class="crow"><span class="lab">Éveil</span><b style="font-size:12px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b></div>`;
+    /* ═══ L'EVEIL DIT ENFIN SON CHIFFRE — ET DIT DE QUELLE SERIE IL VIENT ═══
+       La bulle donnait la ligne et la statistique, jamais un nombre : « R2 ·
+       Force » ne dit pas ce que R2 rapporte, et c'est la question qu'on se pose.
+
+       POURQUOI PAS UN NOMBRE NU. Le builder retient la ligne et la statistique ;
+       il ne retient NI la valeur obtenue, NI la voie empruntee. Or le client a
+       deux voies aux chiffres inconciliables — le parchemin ordinaire TIRE AU
+       SORT sous un plafond (Force 15) et previent que « les proprietes peuvent
+       etre negatives », le parchemin d'eveil FIXE donne 30 en R1 et 60 en R2.
+       Le fixe vaut deux a quatre fois le plafond du tirage. Poser « +60 » a cote
+       de « Force » choisirait donc une voie a la place du joueur, et afficherait
+       comme sien un chiffre qui n'est peut-etre pas le sien.
+       Les deux series sont donc NOMMEES l'une et l'autre. C'est ce que le total
+       dit deja de son cote, en rangeant l'eveil parmi les termes non comptes. */
+    if(cfg&&cfg.evL){
+      const ev=eveilChiffre(cfg.evS),pc=(ev&&ev.fixe&&ev.fixe.pourcent)?' %':'';
+      let evd='';
+      if(ev&&ev.fixe)evd+=`<span class="evs">Parchemin fixe <b>+${ev.fixe[cfg.evL]!=null?ev.fixe[cfg.evL]:ev.fixe.R1}${pc}</b></span>`;
+      /* LES DEUX NOMBRES SONT LA MEME STATISTIQUE : ILS PORTENT LA MEME UNITE.
+         Le plafond du tirage s'affichait NU pendant que le parchemin fixe
+         portait son « % » — « Parchemin fixe +40 % » au-dessus de « Tirage au
+         plus +10 » pour les MEMES Degats critiques. Les deux lignes n'existent
+         que pour etre comparees, et deux unites differentes rendaient la
+         comparaison fausse a l'oeil. `eveilChiffre` cherche les deux sous LA
+         MEME cle de statistique : le « % » que le releve pose sur elle vaut
+         donc pour l'un comme pour l'autre. La ou le releve ne le dit pas
+         (aucune ligne fixe), on n'ajoute rien plutot que de le supposer. */
+      if(ev&&ev.plafond!=null)evd+=`<span class="evs">Tirage <b>au plus +${ev.plafond}${pc}</b></span>`;
+      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Éveil</span><div style="flex:1;min-width:0"><b style="font-size:12px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b>${
+        evd?`<div class="evd" title="${escA('Le builder retient la ligne et la statistique, pas la valeur obtenue ni la voie employée. Les deux séries du client sont donc données telles quelles : le parchemin d\'éveil fixe chiffre son gain, le parchemin ordinaire tire au sort sous un plafond et peut sortir négatif.')}">${evd}</div>`:''}</div></div>`;}
     if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><img class="runeic" src="/airbuilder/icons/sertissage/statscroll.png" alt="">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
-    if(slot==='fairy'&&cfg&&cfg.lvl)cf+=`<div class="crow"><span class="lab">Niveau fée</span><b style="font-size:12px">${cfg.lvl}</b></div>`;
+    /* ═══ CE QUE LA MAITRISE ALLUME, LIGNE PAR LIGNE ═══════════════════════
+       La bulle n'avait qu'une pastille « 42/100 » : le NIVEAU, qui ne dit pas ce
+       que l'arme gagne. Ce que l'arme gagne tient a sa RARETE, et le releve le
+       chiffre ligne par ligne.
+       LA RARETE ALLUME, ELLE NE FAIT PAS MONTER : les 26 lignes du client valent
+       0 en Commun puis la meme valeur a tous les paliers. On montre donc un etat
+       — eteint ou allume — et la valeur, sans dessiner une montee de Rare a
+       Mythique qui n'existe dans aucun fichier.
+       ET ON N'ADDITIONNE PAS : quand une ligne est nommee pour cette arme, elle
+       REMPLACE la ligne de son type ; l'ecartee est dite a part, en clair. */
+    if(isW&&cfg){
+      const mz=maitriseDe(it);
+      if(mz){
+        const seuil=rareteDuCode(mz.lignes[0]&&mz.lignes[0].des);
+        cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0">`
+          +mz.lignes.map(l=>{const on=maitriseAllumee(l,cfg.tier);
+            return `<div class="mline${on?' on':''}" title="${escA(l.code+' — '+(on?('allumée dès '+rareteDuCode(l.des)):('éteinte : cette ligne s\'allume à partir de '+rareteDuCode(l.des))))}"><span>${esc(l.fr)}</span><span>${on?'+'+l.v:'—'}</span></div>`;}).join('')
+          +`<div class="mnote">${seuil?`La rareté <b>allume</b> la ligne dès ${esc(seuil)}, elle ne la fait pas monter : même valeur jusqu'au dernier palier.`:''}</div>`
+          +(mz.nomme&&mz.ecartee.length?`<div class="mnote">Ligne propre à cette arme : elle <b>remplace</b> celle de son type (${esc(maitriseMots(mz.ecartee))}), elle ne s'y ajoute pas.</div>`:'')
+          +`</div></div>`;
+      } else if(cfg.mastery&&!armeFait(it)){
+        cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0"><span class="mnote">Non renseigné : le relevé du client ne connaît pas cette arme.</span></div></div>`;
+      }
+    }
+    /* ═══ LA FEE : UN CURSEUR 0 -> 50 QUI NE PRODUISAIT RIEN ═══════════════
+       Le tableau de bonus de la piece est VIDE : monter le niveau ne change pas
+       le total, et rien ne le disait. Le client, lui, chiffre cinq paliers par
+       esprit. On montre le palier ATTEINT — le dernier seuil franchi, pas la
+       somme — et on dit franchement qu'il n'entre pas dans le total. */
+    if(slot==='fairy'&&cfg&&cfg.lvl){
+      const esp=espritDe(it),pal=esp?espritPalier(esp,cfg.lvl):null;
+      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Niveau fée</span><div style="flex:1;min-width:0"><b style="font-size:12px">${cfg.lvl}${esp?' / '+((faits().esprit||{}).max||cfg.lvl):''}</b>${
+        pal?`<div class="evd"><span class="evs">Palier ${pal[0]} <b>${espritTexte(pal).texte?esc(espritTexte(pal).texte):'non affiché ici'}</b></span></div><div class="mnote">Non compté dans le total : le relevé chiffre l'effet, la pièce ne porte aucun bonus.${espritTexte(pal).ampute?' Ce palier rapporte aussi de l\'expérience, du butin ou des penyas — non montrés ici.':''}</div>`
+          :(esp?`<div class="mnote">Aucun palier atteint : le premier est à ${esp.paliers[0][0]}.</div>`:'')}</div></div>`;}
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
   return h;}
 /* L'emplacement est passe a la bulle : c'est lui qui autorise l'etiquette de
    panoplie. Sans lui, `itipBuild` ne savait pas si l'objet survole etait une
    piece d'armure ou une arme. */
-function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(it,null,pickSlot);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
+/* ═══ LE PIEGE DU DIFFERE, COTE BULLE ════════════════════════════════════════
+   `paliers.json` et `mecaniques.json` arrivent APRES le premier rendu. Une bulle
+   ouverte pendant ce temps est construite sans eux : elle montre un bijou sans
+   son palier et une arme sans sa maitrise, puis reste ainsi tant que la souris
+   ne repart pas. `render()` ne la rattrape pas — elle vit hors du panneau.
+
+   On retient donc de quoi la REFAIRE a l'identique, et les deux chargements la
+   rappellent en arrivant, exactement comme ils rappellent deja le rendu et la
+   fenetre de choix. La bulle n'est pas redessinee si elle est fermee : on ne
+   fabrique pas du HTML pour un element invisible. */
+var _itipArgs=null;
+function itipRefresh(){
+  if(!_itipEl||_itipEl.style.display!=='block'||!_itipArgs)return;
+  var a=_itipArgs;
+  try{_itipEl.innerHTML=itipBuild(a.it,a.cfg,a.slot,a.e);itipTeinte(_itipEl,a.it,a.cfg);}catch(x){}
+}
+function itipShow(ev,idRaw){if(!pickSlot)return;const id=String(idRaw);const it=(listFor(pickSlot)||[]).find(x=>String(x.id)===id);if(!it){itipHide();return;}const el=_itip();_itipArgs={it:it,cfg:null,slot:pickSlot,e:null};el.innerHTML=itipBuild(it,null,pickSlot);itipTeinte(el,it);el.style.display='block';itipMove(ev);}
 function itipTeinte(el,it,cfg){const c=couleurPiece(it,cfg);el.style.borderColor=c?c+'88':'';el.style.boxShadow=c?`0 14px 36px #000d, 0 0 0 1px ${c}22 inset`:'';}
-function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item,e.cfg);el.style.display='block';itipMove(ev);}
+function itipSlot(ev,slot){const e=E(slot);if(!e||!e.item){itipHide();return;}const el=_itip();_itipArgs={it:e.item,cfg:e.cfg,slot:slot,e:e};el.innerHTML=itipBuild(e.item,e.cfg,slot,e);itipTeinte(el,e.item,e.cfg);el.style.display='block';itipMove(ev);}
 function itipMove(ev){if(!_itipEl||_itipEl.style.display!=='block')return;const pad=14,w=_itipEl.offsetWidth,h=_itipEl.offsetHeight;let x=ev.clientX+pad,y=ev.clientY+pad;if(x+w>window.innerWidth-8)x=ev.clientX-w-pad;if(x<8)x=8;if(y+h>window.innerHeight-8)y=window.innerHeight-h-8;if(y<8)y=8;_itipEl.style.left=x+'px';_itipEl.style.top=y+'px';}
-function itipHide(){if(_itipEl)_itipEl.style.display='none';}
+function itipHide(){if(_itipEl)_itipEl.style.display='none';_itipArgs=null;}
+/* ═══ LA PIECE REGLEE, MONTREE EN TETE DE SON PANNEAU ════════════════════════
+   On reglait une piece sans jamais la voir. Le panneau s'ouvrait droit sur
+   « Rune Eternelle — Oui / Non », et le seul rappel de ce qu'on tenait etait le
+   titre de l'emplacement : « ARME — ARCANISTE G ». La bulle, elle, sait tout
+   montrer — mais elle ne s'ouvre qu'au survol de la LISTE, jamais au-dessus des
+   reglages.
+
+   On reprend donc ici la meme lecture que la bulle, et dans le meme ordre : le
+   dessin, le nom a la couleur de la piece, le palier de rarete regle, l'attaque.
+   MEMES SOURCES, PAS UNE COPIE D'AFFICHAGE : `couleurPiece` et `ascensionDe`
+   sont celles de la bulle, si bien qu'une arme ne peut pas etre orange ici et
+   rouge deux centimetres plus bas. */
+/**
+ * LE NOM D'UNE PIECE, AVEC SON SEXE UNE SEULE FOIS.
+ *
+ * Le moteur ajoutait ' (G)' des que l'objet portait un sexe — et le releve
+ * ecrit deja la mention DANS le nom pour la quasi-totalite des pieces, d'ou
+ * « Grande Tenue des eternels  (G) (G) » a l'ecran. La mention reste utile la
+ * ou le nom se tait (les tenues de mode, qui n'ont que « — tete », « — torse »).
+ *
+ * LA CONDITION SE LIT SUR LE NOM DE CHAQUE OBJET, pas sur un compte ecrit ici :
+ * si le releve cessait de porter la mention, le suffixe reviendrait tout seul.
+ */
+function nomPiece(it){
+  if(!it||!it.n)return '';
+  var n=esc(it.n);
+  if(!it.sex)return n;
+  return (it.n.indexOf('('+it.sex+')')>=0)?n:n+' ('+it.sex+')';
+}
+function pieceEntete(slot,e){
+  if(!e||!e.item)return '';
+  var it=e.item,cfg=e.cfg,col=couleurPiece(it,cfg);
+  var isW=(slot==='weapon'||slot==='weapon2');
+  var ic=(it.ic&&IC[it.ic])?'<img src="'+IC[it.ic]+'" alt="">':'<i class=vgi-package></i>';
+  var asc=isW?ascensionDe(it):null;
+  var etoiles=(isW&&cfg&&cfg.stars)?'<span class="arts">'+(asc
+        ?Array.from({length:cfg.stars},function(_,i){return '<img src="'+asc.img[Math.min(i,asc.img.length-1)]+'" alt="">';}).join('')
+        :new Array(cfg.stars+1).join('<img src="/airbuilder/icons/sertissage/artefact.png" alt="">'))+'</span>':'';
+  var tg=[];
+  if(cfg&&cfg.tier&&RARCOL[cfg.tier])tg.push('<span class="tag" style="background:'+col+'1a;color:'+col+';border:1px solid '+col+'66">'+esc(cfg.tier)+'</span>');
+  if(it.tier)tg.push('<span class="tag" style="background:'+(it.col||'#cfd2dc')+'14;color:'+(it.col||'var(--mut)')+';border:1px solid '+(it.col||'#cfd2dc')+'55">'+esc(it.tier)+'</span>');
+  var sous=[];
+  if(it.lv)sous.push('Niveau '+it.lv);
+  if(it.pr)sous.push('Prestige '+it.pr);
+  if(it.atk)sous.push('Attaque '+it.atk[0]+' ~ '+it.atk[1]);
+  return '<div class="pent" style="border-color:'+col+'44">'
+    +'<span class="pent-ic" style="border-color:'+col+'55">'+ic+'</span>'
+    +'<span class="pent-n"><b style="color:'+col+'">'+nomPiece(it)
+      +((cfg&&cfg.up)?' <span style="color:var(--gold)">+'+cfg.up+'</span>':'')+etoiles+'</b>'
+    +(tg.length?'<span class="pent-tags">'+tg.join('')+'</span>':'')
+    +(sous.length?'<span class="pent-sub">'+esc(sous.join(' · '))+'</span>':'')
+    +'</span></div>';
+}
 function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{lbl:slot};
   let body='';
   // familier : sections + rang
@@ -1220,8 +1584,8 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const grpKey=(slot==='mantra'||slot==='masque')?'cat':(slot==='ramasseur'?null:(['fhead','ftop','fhand','ffoot'].includes(slot)?'cat':'tier'));
   const byTier={};items.forEach(it=>{const g=grpKey?(it[grpKey]||'—'):'';(byTier[g]=byTier[g]||[]).push(it);});
   const pick=`<input class="srch" placeholder="${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
-    <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${esc(it.n)}${it.sex?' ('+it.sex+')':''}<div style="font-size:11px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:11px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
-  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${body}${pick}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
+    <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${nomPiece(it)}<div style="font-size:11px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:11px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
+  document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${pieceEntete(slot,e)}${body}${pick}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
 function equip(id){if(_ro())return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
 function equipFam(id,n){if(_ro())return;const e=E('familier');ST().eq.familier={item:{id:id,n:n,ic:id,b:[]},rank:(e&&e.rank)||'S'};render();drawPick('');}
@@ -1434,7 +1798,7 @@ function defCfg(slot){
   if(slot==='cape')return{rune:'',evL:'',evS:''};
   if(slot==='ramasseur')return{rune:''};
   if(slot==='fairy')return{lvl:0};
-  if(['ring1','ring2','earring1','earring2','necklace'].includes(slot))return{up:0,evL:'',evS:''};
+  if(BIJOUX.includes(slot))return{up:0,evL:'',evS:''};
   return {};
 }
 // Maximise les NIVEAUX d'une pièce équipée (upgrade, étoiles, perçage plein au meilleur palier, scroll, élément, maîtrise, fée).
@@ -1463,7 +1827,7 @@ function maxCfg(slot,tier){var c=cfgOf(slot);if(!c)return;var artef=['Éternel',
          reellement : 20 points de Degats sur monstres % en moins, et c'est cet
          etat-la qui part en sauvegarde.
      Une seconde de reseau lent suffisait a produire la seconde. */
-  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){
+  else if(BIJOUX.indexOf(slot)>=0){
     var e=E(slot),P=e&&e.item?bijouPaliers(e.item,0):null;
     c.up=P?P.plafond:(MECH.bijou.upgrade.max||MECH.bijou.upgrade.courant||20);}
   else if(slot==='fairy'){c.lvl=(typeof FAIRYMAX!=='undefined')?FAIRYMAX:50;}
@@ -1496,7 +1860,7 @@ function defaultCfg(slot,tier,cls){var c=cfgOf(slot);if(!c)return;var magic=MAGI
   else if(slot==='shield'){c.up=10;setCard(10);setEv();}
   else if(slot==='suit'){c.up=10;c.elemType='Vent';c.elemLvl=20;setCard(4);setEv();}
   else if(['helmet','gauntlet','boots'].indexOf(slot)>=0){c.up=10;setEv();}
-  else if(['ring1','ring2','earring1','earring2','necklace'].indexOf(slot)>=0){c.up=20;setEv();}
+  else if(BIJOUX.indexOf(slot)>=0){c.up=20;setEv();}
   else if(['fhead','ftop','fhand','ffoot'].indexOf(slot)>=0){c.up=0;}
 }
 /* ═══ CE QUE L'AMELIORATION COUTE, PARCE QUE CE QU'ELLE RAPPORTE NE SE CALCULE
@@ -1541,17 +1905,26 @@ function nonCalculable(famille){
    D'ARME et par rang (27 en tout) : la famille se lit dans le premier mot du nom
    de la piece, et une arme qui n'appartient a aucune famille du releve garde ses
    etoiles plutot que d'emprunter le dessin d'une autre. */
+/* LA FAMILLE SE LIT DESORMAIS, ELLE NE SE DEVINE PLUS.
+   Elle etait cherchee dans le PREMIER MOT du nom francais de la piece. Le
+   procede rend `null` sur « Arbalete en Yggdrasil Purifie » — verifie en direct
+   sur cette page — parce que le nom ne commence par aucune famille, et il
+   aurait donne la mauvaise a toute arme dont le nom commence par le mot d'une
+   autre.
+
+   Elle vient maintenant du NOM DU PARCHEMIN que le client attache a l'arme
+   (`artefact.starUpgrade`), releve dans `faits.armes[].asc`. Le second element
+   dit D'OU vient la famille : « objet » quand le client nomme l'arme, « type »
+   quand il s'est tu et qu'elle vient du type d'arme — le seul cas est le Glaive
+   eternel, au plafond de percage 12 mais sans parchemin a son nom.
+
+   PAS DE REPLI PAR LE NOM. Une arme absente du joint garde ses etoiles : servir
+   le dessin d'une autre famille serait exactement l'emprunt qu'on retire. */
 function ascensionDe(item){
-  var a=meca().ascension;if(!a||!item||!item.n)return null;
-  var n=SANSACCENT(item.n);
-  for(var fam in a){
-    var mots=fam.split(' et ');
-    for(var i=0;i<mots.length;i++){
-      var m=SANSACCENT(mots[i]);
-      if(m&&n.indexOf(m)===0)return {fam:fam,img:a[fam]};
-    }
-  }
-  return null;
+  var a=meca().ascension,j=armeFait(item);
+  if(!a||!j||!j.asc)return null;
+  var img=a[j.asc[0]];
+  return (img&&img.length)?{fam:j.asc[0],img:img,par:j.asc[1]||''}:null;
 }
 function upUI(slot,max){const w=cfgOf(slot);const v=w.up||0;const isW=(slot==='weapon'||slot==='weapon2');const art=(isW&&max>10&&v>10);
   const it=(E(slot)||{}).item;
@@ -1704,6 +2077,34 @@ function scrollUI(slot){const w=cfgOf(slot);
 // Ne concerne QUE l'element de la piece, pas le percage (pierceEl).
 const ELEMIC={'Feu':'FireSmall','Eau':'WaterSmall','Vent':'WindSmall','Terre':'EarthSmall','Électricité':'ElectricSmall'};
 /** Le parchemin de rareté du palier, quand le client en dessine un. */
+/* ═══ LA CHAINE DE RARETE, COMPTEE SUR LE RELEVE ═══════════════════════════
+   Cette note portait un nombre ecrit a la main — « Mythique ... s'obtient sur une
+   arme niveau 100 » — dont AUCUNE source n'a ete retrouvee dans le client. Le
+   mot MYTHIC n'y apparait qu'a un seul endroit, la table de maitrise d'arme, et
+   le seul « 100 » voisin est le niveau MAX de maitrise, qui est autre chose.
+   La phrase tombe donc, et ce qui reste est ce que le releve etablit vraiment :
+   la chaine des parchemins, comptee et non recopiee, et les paliers auxquels le
+   client n'attache aucun parchemin.
+
+   CE QUE LE CLIENT NE DIT PAS EST DIT COMME TEL. Sa chaine s'arrete a
+   Pre-Mythique ; que le Mythique EXIGE le Pre-Mythique n'est ecrit nulle part.
+   Un joueur qui vise ce palier doit savoir que le releve s'arrete la, plutot que
+   de lire une regle inventee : c'est ce qui change son geste. */
+function rareteNote(tierChoisi){
+  var R=faits().rarete||{},ch=R.chaine||[],sp=R.sansParchemin||[];
+  if(!ch.length)return '';
+  var dernier=ch[ch.length-1].vers;
+  var h='<div class="mini rarnote">Le parchemin dessiné est celui qui fait monter à ce palier : '
+    +ch.length+' maillons, de '+esc(ch[0].vers)+' à '+esc(dernier)+'.'
+    +(sp.length?' '+sp.map(esc).join(' et ')+' n\'en '+(sp.length>1?'ont':'a')+' pas — le client n\'écrit aucun parchemin pour '+(sp.length>1?'ces deux paliers-là':'ce palier-là')+'.':'')
+    +'</div>';
+  /* La mise en garde ne s'affiche qu'au palier concerne : hors de lui, elle
+     n'est qu'une ligne de plus qui se bat pour la largeur. */
+  if(tierChoisi&&sp.indexOf(tierChoisi)>=0&&tierChoisi!==(MECH.arme.rarete_tiers||[])[0])
+    h+='<div class="mini upnc"><i class=vgi-info></i> Le relevé ne décrit aucun moyen d\'atteindre '+esc(tierChoisi)
+      +' : la chaîne de parchemins du client s\'arrête à '+esc(dernier)+'. Ce palier reste réglable ici, mais rien dans le client ne dit comment on l\'obtient.</div>';
+  return h;
+}
 function rareteIc(tier){
   const r=(meca().rarete||{})[tier];
   return r?`<img class="ghic" src="${r}" alt="" title="${escA('Parchemin de rareté — '+tier)}">`
@@ -1730,7 +2131,7 @@ function panelFor(slot,e){
   if(slot==='ramasseur')return ramasseurPanel(e);
   if(slot==='fairy')return fairyPanel(e);
   if(['fhead','ftop','fhand','ffoot'].includes(slot))return fashionPanel(slot,e);
-  if(['ring1','ring2','earring1','earring2','necklace'].includes(slot))return jewelPanel(slot,e);
+  if(BIJOUX.includes(slot))return jewelPanel(slot,e);
   if(slot==='mantra'||slot==='masque'){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).join(' · ');return `<div class="wp"><div class="grp"><div class="gh">${slot==='mantra'?'<i class=vgi-scroll></i> Mantra':'<i class=vgi-mask></i> Masque'} ${esc(e.item.cat||'')}${e.item.lvl?' '+e.item.lvl:''}</div><div class="cb" style="color:var(--green);font-size:12px">${b||'—'}</div></div>${slot==='masque'?eveilUI('masque'):''}</div>`;}
   return '';
 }
@@ -1746,11 +2147,10 @@ function weaponPanelImpl(SL,e){const w=cfgOf(SL);const artefactable=['Éternel',
      ${art?'<div class="mini holohd" style="color:var(--purple);margin-top:5px">'+(meca().holo?mecaIc(meca().holo,'ghic'):'')+'Diamants holographiques :</div>'+Array.from({length:3},(_,i)=>`<div class="dslot holo"><span class="mini" style="width:54px">Holo ${i+1}</span><select onchange="cdia('${SL}','holo',${i},this.value)"><option value="">—</option>${HOLOSTATS.map(d=>`<option value="${d[0]}" ${w.holo[i]===d[0]?'selected':''}>${d[0]} +${d[1]}</option>`).join('')}</select></div>`).join(''):'<div class="mini">Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).</div>'}</div>
    ${pierceUI(SL,pMax)}
    <div class="grp"><div class="gh">${rareteIc(w.tier)} Rareté</div><div class="row">${MECH.arme.rarete_tiers.map(t=>{const rc=RARCOL[t]||'';const ri=(meca().rarete||{})[t];return `<span class="tierbtn ${w.tier===t?'on':''}" style="${w.tier===t?`background:${rc};color:#0c0c11;border-color:${rc}`:`color:${rc};border-color:${rc}55`}" onclick="cset('${SL}','tier','${t}')">${ri?`<img class="raric" src="${ri}" alt="">`:''}${t}</span>`;}).join('')}</div>
-     <div class="mini">${(meca().rarete&&Object.keys(meca().rarete).length)?'Le parchemin dessiné est celui qui fait monter à ce palier. Commun et Mythique n\'en ont pas : l\'un est la base, l\'autre s\'obtient sur une arme niveau 100.':''}</div>
-     ${artefactable?masteryUI(SL):''}
-     ${w.tier==='Mythique'?'<div class="mini" style="color:var(--gold)">Mythique = arme niveau 100.</div>':''}
-     <div style="margin-top:6px">${(w.rlines||[]).map((l,i)=>`<div class="line"><select onchange="crl(${i},this.value)"><option value="">— ligne de bonus —</option>${MECH.arme.rarete_pool.map(b=>`<option ${l===b.stat?'selected':''}>${b.stat}</option>`).join('')}</select><span class="pill" onclick="crlDel(${i})"><i class=vgi-x></i></span></div>`).join('')}</div>
-     ${(w.rlines||[]).length<4?'<span class="pill" onclick="crlAdd()">+ ligne (max 4)</span>':''}<div class="mini">% variable selon la stat.</div></div>
+     ${rareteNote(w.tier)}
+     <div class="rlines">${(w.rlines||[]).map((l,i)=>`<div class="line"><select onchange="crl(${i},this.value)"><option value="">— ligne de bonus —</option>${MECH.arme.rarete_pool.map(b=>`<option ${l===b.stat?'selected':''}>${b.stat}</option>`).join('')}</select><span class="pill" onclick="crlDel(${i})"><i class=vgi-x></i></span></div>`).join('')}</div>
+     <div class="row" style="justify-content:space-between;margin-top:6px">${(w.rlines||[]).length<4?'<span class="pill" onclick="crlAdd()">+ ligne (max 4)</span>':'<span></span>'}<span class="mini">% variable selon la stat.</span></div></div>
+   ${artefactable?masteryUI(SL,e.item):''}
    ${eveilUI(SL)}
    ${scrollUI(SL)}
    ${elemUI(SL,20)}
@@ -1849,9 +2249,32 @@ function jewelPanel(slot,e){const w=cfgOf(slot);
 
 function capePanel(e){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).join(' · ');return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-cape></i> ${esc(e.item.n)}</div><div class="cb" style="color:var(--green);font-size:12px">${b||'—'}</div></div>${runeUI('cape')}${eveilUI('cape')}</div>`;}
 function ramasseurPanel(e){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).join(' · ');return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-paw></i> ${esc(e.item.n)}</div><div class="cb" style="color:var(--green);font-size:12px">${b||'—'}</div></div>${runeUI('ramasseur')}</div>`;}
-function fairyPanel(e){const w=cfgOf('fairy');return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-fairy></i> ${esc(e.item.n)}</div>
-   <div class="lvl"><span class="mini">Niveau de la fée : <b>${w.lvl||0}</b> / ${FAIRYMAX}</span><input type="range" min="0" max="${FAIRYMAX}" value="${w.lvl||0}" oninput="flvLive(this)" onchange="cset('fairy','lvl',+this.value)"></div>
-   <div class="mini">Le bonus dépend du niveau (voir wiki).</div></div></div>`;}
+/* ═══ LA FEE : LE CURSEUR LE PLUS MUET DU BUILDER ═══════════════════════════
+   « Le bonus depend du niveau (voir wiki) » renvoyait ailleurs un joueur qui
+   avait la reponse sous les yeux — et le tableau de bonus de la piece etant
+   VIDE, monter le curseur ne changeait rien au total sans que rien ne le dise.
+   Le releve chiffre cinq paliers par esprit : on les montre, on marque celui qui
+   est atteint, et on ecrit que le total ne les compte pas.
+   LE PALIER ATTEINT EST LE DERNIER SEUIL FRANCHI, pas la somme des cinq — meme
+   regle que les paliers de bijou, et pour la meme raison. */
+function fairyPanel(e){const w=cfgOf('fairy');const niv=w.lvl||0;
+  const esp=espritDe(e.item),ES=faits().esprit||{};
+  const max=ES.max||FAIRYMAX;
+  const atteint=esp?espritPalier(esp,niv):null;
+  let corps='';
+  if(esp){
+    /* Le palier vide n'est pas masque : il est marque. Voir `sansRecompense`. */
+    corps=`<div class="mlist">`+esp.paliers.map(p=>{const on=niv>=p[0];const T=espritTexte(p);
+      return `<div class="mline${on?' on':''}"><span>Niveau ${p[0]}</span><span>${T.texte?esc(T.texte):'<span class="mini">non affiché ici</span>'}</span></div>`;}).join('')+`</div>`
+      +(esp.paliers.some(p=>espritTexte(p).ampute)?`<div class="mini mnote">Cette fée rapporte aussi de l'expérience, du butin ou des penyas : le site ne montre pas ces gains-là. Les paliers concernés ne sont donc pas vides, ils sont incomplets ici.</div>`:'')
+      +`<div class="mini mnote">Non compté dans le total : le relevé chiffre l'effet, mais la pièce ne porte aucun bonus que le builder puisse additionner.</div>`
+      +(esp.cumul?`<div class="mini mnote">Monter cette fée de 1 à ${max} coûte ${esp.cumul.toLocaleString('fr-FR')} ${esc(ES.poudre||'')}.</div>`:'');
+  } else {
+    corps=`<div class="mini mnote">Non renseigné : le relevé du client ne chiffre pas les paliers de cette fée.</div>`;
+  }
+  return `<div class="wp"><div class="grp"><div class="gh"><i class=vgi-fairy></i> ${esc(e.item.n)}</div>
+   <div class="lvl"><span class="mini">Niveau de la fée : <b>${niv}</b> / ${max}${atteint?' · palier '+atteint[0]:''}</span><input type="range" min="0" max="${max}" value="${niv}" oninput="flvLive(this)" onchange="cset('fairy','lvl',+this.value)"></div>
+   ${corps}</div></div>`;}
 function flvLive(el){const b=el.parentNode.querySelector('.mini b');if(b)b.textContent=el.value;}
 function fashionPanel(slot,e){const w=cfgOf(slot);const setb=(e.item.setb||[]).map(b=>esc(b[0])+' +'+b[1]).join(' · ');
   return `<div class="wp">
@@ -1866,12 +2289,42 @@ const STATCOL={Force:'#F87171',Endurance:'#4ADE80','Dextérité':'#FFD24A',Intel
 function statS2(o,on,onclk){const c=STATCOL[o];const st=c?(on?`background:${c};color:#0a0a0c;border-color:${c};font-weight:700`:`color:${c};border-color:${c}66`):'';return `<div class="s2 ${(!c&&on)?'on':''}" style="${st}" onclick="${onclk}">${o}</div>`;}
 function seg2stat(slot,key,opts){const w=cfgOf(slot);return `<div class="seg2" style="flex-wrap:wrap;max-width:340px">${opts.map(o=>statS2(o,w[key]===o,`cset('${slot}','${key}','${o}')`)).join('')}<div class="s2 ${!w[key]?'on':''}" onclick="cset('${slot}','${key}','')">—</div></div>`;}
 function upLive(el,slot,max){const lbl=el.parentNode.querySelector('.mini b');if(lbl)lbl.textContent='+'+el.value;}
-function masteryUI(slot){const w=cfgOf(slot);const v=w.mastery||0;
-  return `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><div class="gh" style="font-size:12px;margin-bottom:4px"><i class=vgi-target></i> Maîtrise de l'arme <span class="mini">(0 à 100)</span></div>
-   <div class="lvl"><span class="mini">Niveau : <b>${v}</b> / 100</span>
-   <input type="range" min="0" max="100" value="${v}" oninput="masteryLive(this)" onchange="cset('${slot}','mastery',+this.value)">
-   <input type="number" min="0" max="100" value="${v}" style="width:52px;margin-left:6px" onchange="cset('${slot}','mastery',Math.max(0,Math.min(100,parseInt(this.value)||0)))"></div></div>`;}
-function masteryLive(el){const b=el.parentNode.querySelector('.mini b');if(b)b.textContent=el.value;}
+/* ═══ LA MAITRISE D'ARME : UN GROUPE A ELLE, ET CE QU'ELLE ALLUME ═══════════
+   ELLE ETAIT LOGEE AU MILIEU DU GROUPE « RARETE », entre la phrase des
+   parchemins et les lignes de bonus tirees au sort. A l'ecran, « + ligne
+   (max 4) » et « % variable selon la stat » — qui appartiennent a la RARETE —
+   tombaient sous le titre « Maitrise de l'arme » et semblaient regler la
+   maitrise. Deux mecaniques distinctes lues comme une seule : c'est le desordre
+   que Maxime appelle chiffon, et il vient de l'ordre du HTML, pas du style.
+
+   ELLE MONTRE MAINTENANT SES LIGNES. Le curseur ne donnait que le NIVEAU, qui ne
+   dit pas ce que l'arme gagne ; ce qu'elle gagne tient a sa RARETE, et le releve
+   le chiffre. On montre donc l'etat de chaque ligne au palier choisi.
+
+   NIVEAU ET RARETE SONT DEUX CHOSES, ET RESTENT SEPAREES : le curseur 0-100 est
+   l'experience de l'arme, l'allumage vient du palier. Les melanger laisserait
+   croire qu'atteindre 100 allume la ligne, ce que le client ne dit pas. */
+function masteryUI(slot,item){const w=cfgOf(slot);const v=w.mastery||0;
+  const mz=maitriseDe(item),max=maitriseMax();
+  let lig='';
+  if(mz){
+    const seuil=rareteDuCode(mz.lignes[0]&&mz.lignes[0].des);
+    lig=`<div class="mlist">`+mz.lignes.map(l=>{const on=maitriseAllumee(l,w.tier);
+      return `<div class="mline${on?' on':''}" title="${escA(l.code+(on?' — allumée dès '+rareteDuCode(l.des):' — éteinte : cette ligne s\'allume à partir de '+rareteDuCode(l.des)))}"><span>${esc(l.fr)}</span><span>${on?'+'+l.v:'—'}</span></div>`;}).join('')+`</div>`
+      +`<div class="mini mnote">${seuil?`La rareté <b>allume</b> la ligne dès ${esc(seuil)} et ne la fait plus monter ensuite : même valeur jusqu'au dernier palier.`:''}</div>`
+      +(mz.nomme&&mz.ecartee.length?`<div class="mini mnote">Ligne propre à cette arme : elle <b>remplace</b> celle de son type (${esc(maitriseMots(mz.ecartee))}), elle ne s'y ajoute pas — les additionner inventerait un bonus.</div>`:'');
+  } else if(!armeFait(item)){
+    lig=`<div class="mini mnote">Non renseigné : le relevé du client ne connaît pas cette arme, et lui prêter la maîtrise d'une voisine serait une invention.</div>`;
+  }
+  return `<div class="grp"><div class="gh"><i class=vgi-target></i> Maîtrise de l'arme</div>
+   <div class="lvl lvlnum"><span class="mini">Niveau : <b>${v}</b> / ${max}</span>
+   <span class="lvlrow"><input type="range" min="0" max="${max}" value="${v}" oninput="masteryLive(this)" onchange="cset('${slot}','mastery',+this.value)">
+   <input type="number" min="0" max="${max}" value="${v}" onchange="cset('${slot}','mastery',Math.max(0,Math.min(${max},parseInt(this.value)||0)))"></span></div>
+   ${lig}</div>`;}
+/* Le curseur et son champ chiffre sont desormais dans une rangee a eux (pour
+   qu'ils cessent de se casser l'un sous l'autre), donc le libelle vivant n'est
+   plus dans le parent immediat : on remonte au bloc `.lvl` qui les contient. */
+function masteryLive(el){const w=(el.closest&&el.closest('.lvl'))||el.parentNode;const b=w&&w.querySelector('.mini b');if(b)b.textContent=el.value;}
 function elemLive(el,slot){const lbl=el.parentNode.querySelector('.mini b');if(lbl)lbl.textContent='+'+el.value;}
 function cset(slot,key,val){keepScroll();const w=cfgOf(slot);if(!w)return;if(key==='up'&&slot==='weapon'){w.up=val;E('weapon').artefact=val>10;if(val<=10)w.holo=['','',''];}else w[key]=val;render();drawPick(curQ());restoreScroll();}
 function cdia(slot,arr,i,v){keepScroll();const w=cfgOf(slot);w[arr][i]=v;render();restoreScroll();}

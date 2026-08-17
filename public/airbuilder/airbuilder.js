@@ -391,6 +391,59 @@ function etuiHtml(coul,col){
   return '<img class="etui" src="/assets/site/etuis/etui-'+n+'.webp" alt="" title="Étui '+esc(coul)+'"'
     +' onerror="if(!this.dataset.png){this.dataset.png=1;this.src=\'/assets/site/etuis/etui-'+n+'.png\';}else{'+repli+'}">';
 }
+/* ═══ LES DESSINS DES CARTES, DANS LE CARNET DES ARCANES ═════════════════════
+   MESURE AVANT : le builder servait ZERO illustration de carte. Quinze carnets,
+   soixante-trois listes de noms — pour un objet qu'on reconnait en jeu a son
+   dessin, jamais a son intitule.
+
+   LE JOINT EST DEJA FAIT, ET IL EST FAIT PAR SIGNATURE. Chaque carte du releve
+   porte son champ `art` (data.json ▸ CARNETS), pose en amont par
+   src/data/carnets-arcanes.json — « par la signature des cartes, PAS par
+   l'index : les deux numerotations different, le carnet 5 du fait-main est le
+   15e du client ». On LIT donc ce champ ; on ne recalcule ni ne devine un nom de
+   fichier ici, et surtout pas une position dans le dossier.
+
+   LES 63 CARTES ONT LEUR DESSIN, ET LES QUATRE DERNIERES ONT ETE RETROUVEES
+   TARD. Le client nomme ses dessins par rang de paquet
+   (`couleur_ii_sys_sys_monsterdeck_37.webp`), et c'est ce nom que `decks` porte ;
+   quatre cartes n'ont pas de rang, leur fichier etant nomme d'apres la carte
+   elle-meme (`couleur_sasha_bck.webp`). Le client ne les rattachait a rien, donc
+   `art` restait nul et le carnet servait quatre cadres vides — une consigne
+   avait meme conclu a tort qu'elles n'avaient pas de dessin.
+   `scripts/fusionner-carnets.mjs` porte maintenant un REPLI PAR NOM DE CARTE qui
+   ne s'applique QUE si le fichier est sur le disque : on ne devine jamais une
+   adresse, et une carte sans dessin resterait sans dessin. Le cadre vide et son
+   survol restent en place pour ce cas-la.
+   ON NE PRETE PAS le dessin d'une voisine : ce serait un mensonge muet, comme le
+   bouquet de fleurs servi sur 265 fiches de monstre.
+
+   UN SEUL FICHIER PAR DESSIN. Le dossier porte aussi les 59 memes dessins en
+   noir et blanc (`nb_…`), verifies a l'ecran : c'est le meme dessin desature et
+   assombri. Une carte d'un carnet qu'on ne possede pas est donc grisee PAR LA
+   CSS — pas par un second telechargement du meme dessin sous un autre nom.
+
+   `loading="lazy"` N'EST PAS UNE PRECAUTION DE STYLE, ET LE CHIFFRE EST CELUI DES
+   FICHIERS SERVIS. Les 59 illustrations de public/jeu/cartes pesent 443 826
+   octets en tout — 7 522 o en moyenne, 10 236 o pour la plus lourde. Soit 433 ko
+   demandes d'avance pour un carnet qui est EN BAS DE PAGE, a comparer aux 440 ko
+   de airbuilder.js, data.json et la CSS reunis : on doublerait le poids du
+   builder pour des dessins que la plupart des visiteurs ne feront jamais
+   defiler. Le navigateur ne les demande qu'en approchant.
+   MESURE PRISE SUR LES .webp DU DEPOT, PAS SUR UNE CONVERSION : ouvrir une de
+   ces cartes en PNG pour la regarder donne ~50 ko, sept fois le poids du fichier
+   reellement telecharge. C'est le .webp qui part sur le reseau. */
+function carteArts(cn){
+  var l=(cn&&cn.cartes)||[];
+  if(!l.length)return '';
+  return '<div class="cc-arts">'+l.map(function(ca){
+    var t=(ca.nom||'')+(ca.rarete?' · '+ca.rarete:'')
+      +(ca.art?'':' — aucun dessin dans le relevé du client');
+    return '<span class="cc-a r-'+String(ca.rarete||'').toLowerCase()+'" title="'+escA(t)+'">'
+      +(ca.art?'<img src="/jeu/cartes/'+encodeURIComponent(ca.art)+'" alt=""'
+          +' width="110" height="250" loading="lazy" decoding="async" onerror="this.remove()">'
+        :'')+'</span>';
+  }).join('')+'</div>';
+}
 function renderCarnets(){const c=C();ST();
   document.getElementById('carnetsPanel').innerHTML=`<h3><i class=vgi-book></i> Carnets des Arcanes — ${esc(c.name)} <span style="color:var(--mut);font-weight:400;font-size:12px;text-transform:none">liés au personnage, partagés entre ses stuffs</span></h3>
    <div class="carnets">${CARNETS.map((cn,i)=>{const on=(c.carnets||[]).includes(i);const full=(c.carnetsFull||[]).includes(i);
@@ -404,6 +457,7 @@ function renderCarnets(){const c=C();ST();
      return `<div class="carn ${on?'on':''}" style="border-left:3px solid ${cn.col};box-shadow:inset 14px 0 22px -16px ${cn.col}">
          <div class="cn" onclick="toggleCarnet(${i})">${etuiHtml(cn.etui_couleur,cn.col)}${esc(cn.nom)}</div>
          <div style="font-size:11px;color:var(--mut);margin-bottom:4px">Étui ${esc(cn.etui_couleur)} · ${esc(cn.rarete)} · ${cn.tier===1?'1 carte de chaque (set complet)':cn.copies+' carte(s) de chaque'}</div>
+         ${carteArts(cn)}
          <div class="cc-cards">${cn.cartes.map(ca=>`<span class="cc-card r-${(ca.rarete||'').toLowerCase()}">${esc(ca.nom)}</span>`).join('')}</div>
          ${on&&cn.tier>1?`<div class="seg"><div class="sg ${!full?'on':''}" onclick="setMode(${i},false)"><i class=vgi-star></i> Base</div><div class="sg ${full?'on':''}" onclick="setMode(${i},true)"><i class=vgi-star></i> Complet</div></div>`:''}
          ${bonus.length?`<div class="cb">${bonus.map(b=>esc(b[0])+' +'+b[1]).join(' · ')}</div>`:''}</div>`;}).join('')}</div>`;}
@@ -731,6 +785,70 @@ function espritPalier(esp,niv){
   var p=(esp&&esp.paliers)||[],at=null;
   for(var i=0;i<p.length;i++)if((niv|0)>=p[i][0])at=p[i];
   return at;
+}
+/** Le PROCHAIN seuil, celui qu'on n'a pas encore franchi, ou `null` au bout. */
+function espritSuivant(esp,niv){
+  var p=(esp&&esp.paliers)||[];
+  for(var i=0;i<p.length;i++)if((niv|0)<p[i][0])return p[i];
+  return null;
+}
+/* ═══ CE QUE COUTE LE PROCHAIN PALIER — LA SEULE QUESTION QUI COMPTE ═════════
+   « J'en suis au 27, il me faut combien pour aller au 40. » La page Craft et
+   Collections repond a ca avec un calculateur (src/components/collections/
+   Anges.tsx) ; ce fichier est du JS nu et ne peut pas importer le composant, il
+   reprend donc la MEME LECTURE DE LA GRILLE, celle qui compte :
+
+   `couts[i]` PAIE LE PASSAGE DU NIVEAU i+1 AU NIVEAU i+2. La grille porte 49
+   entrees pour 50 niveaux — un niveau de plus que de passages — et leur somme
+   vaut exactement le `cumul` que le releve donne par esprit. Se tromper d'un
+   cran ici afficherait un prix faux sans que rien ne le signale, d'ou le
+   garde-fou : on ne sort jamais de la grille.
+
+   LE NIVEAU 0 EST UNE PIECE NON MONTEE, pas un niveau du client : la grille
+   commence au 1. On part donc du 1 dans ce cas — le trajet complet, ce que le
+   joueur a effectivement a payer. */
+function espritCout(de,a){
+  var G=(faits().esprit||{}).couts;if(!G||!G.length)return null;
+  var d=Math.max(1,de|0),t=Math.min(a|0,G.length+1),s=0;
+  if(t<=d)return 0;
+  for(var i=d-1;i<t-1;i++)s+=G[i]||0;
+  return s;
+}
+/** Le cumul depuis le niveau 1, comme la colonne du tableau de Craft. */
+function espritCumul(niv){return espritCout(1,niv);}
+/** Le nombre en francais, sans dependance : 82132 -> « 82 132 ». */
+function nbFr(n){return (n==null)?'':Number(n).toLocaleString('fr-FR');}
+/* UN PRIX, SA MONNAIE ET SON DESSIN — jamais un nombre nu. « 3 080 » seul ne dit
+   pas en quoi ca se paie, et la poudre feerique ne s'achete pas comme les penyas.
+   Le fichier d'icone est celui que la page Craft et Collections sert deja, sous
+   le meme nom : pas une seconde copie renommee du meme sac de poudre.
+   `onerror` retire l'image plutot que de laisser un cadre casse — le prix, lui,
+   reste lisible sans son dessin. */
+function poudreHtml(n){
+  var E=faits().esprit||{};
+  /* PAS de `loading="lazy"` ici, contrairement aux illustrations de cartes : la
+     bulle est fabriquee AU SURVOL et l'icone pese deux kilo-octets. Differer sa
+     demande la ferait apparaitre apres coup, sous les yeux du joueur, pour
+     economiser un aller-retour qui ne se voit pas. Le differe se justifie pour
+     les 433 ko de dessins de carte en bas de page, pas pour ce sac de poudre :
+     itm_poudre_feerique.webp pese 2 284 octets, mesure sur le fichier. */
+  return (E.poudreIc?'<img class="poudic" src="/jeu/icones/'+E.poudreIc+'" alt=""'
+      +' width="16" height="16" decoding="async" onerror="this.remove()">':'')
+    +'<b>'+nbFr(n)+'</b>'+(E.poudre?' '+esc(E.poudre):'');
+}
+/* ═══ LES CRANS QUI NE RAPPORTENT RIEN, DIT AVANT LA DEPENSE ═════════════════
+   Un palier se franchit tous les dix niveaux. ENTRE DEUX PALIERS, MONTER NE
+   CHANGE RIEN A L'EFFET : le curseur bouge, la pastille change, et le joueur
+   paie une poudre qui coute jusqu'a 9 999 le cran pour aucun gain.
+   C'est la meme famille de mise en garde que les plateaux de palier de bijou —
+   celle qui change le GESTE — et elle reste donc a l'ecran (regle 3).
+   Elle NE S'AFFICHE PAS quand le cran suivant fait basculer le palier : la, le
+   niveau suivant rapporte, et l'avertissement serait faux. */
+function espritPlateau(esp,niv){
+  var s=espritSuivant(esp,niv);if(!s)return null;
+  var de=(niv|0)+1,a=s[0]-1;
+  if(a<de)return null;
+  return {de:de,a:a,seuil:s[0],cout:espritCout(niv,a)};
 }
 /* ═══ LES RECOMPENSES NE SONT PAS A L'ECRAN — Y COMPRIS EN TEXTE LIBRE ═══════
    `STAT_RECOMPENSE` protege les LIBELLES DE STATISTIQUE, ceux qui arrivent en
@@ -1317,6 +1435,176 @@ function runeImg(tier){
   if(r&&r.f)return `<img class="runeic" src="${r.f}" alt="" title="${escA(runeName(tier)+(r.modeles?' — le même dessin pour les '+r.modeles+' modèles d\'arme de la gamme':''))}">`;
   return '<i class=vgi-rune></i>';
 }
+/* ═══ CE QUE LA FOURCHETTE `atk` COMPTE VRAIMENT ═════════════════════════════
+   `data.json ▸ ITEMS` porte UN SEUL champ `atk` pour toutes les pieces, et la
+   bulle l'annonçait « Attaque » partout. Le releve du client dit le contraire :
+   la Coiffe des eternels vaut 800~802 de DEFENSE — objets-fiches ▸ dn/dx, sur
+   une piece de famille « armure » — et pas d'attaque. La bulle ecrivait donc
+   « Attaque » sur 194 pieces chiffrees du catalogue (192 armures et 2
+   boucliers) ; seules les 45 armes etaient justes.
+
+   LE GRIMOIRE N'EST PAS UNE EXCEPTION, ET LA CLE II_WEA_ NE SUFFIT PAS A EN
+   FAIRE UNE. Une premiere version de cette fonction rendait « Attaque » des que
+   la piece portait `offhand`, au motif que le « Grimoire en Yggdrasil Purifie »
+   porte la cle II_WEA_BOOK_YGG. Le releve dit quatre fois le contraire :
+     · sa famille est « armure », comme les six boucliers du catalogue ;
+     · il s'equipe en PARTS_SHIELD, jamais en PARTS_RWEAPON — les 43 armes du
+       catalogue presentes dans le releve sont toutes en PARTS_RWEAPON ;
+     · il n'a AUCUNE vitesse d'attaque (`dwAttackSpeed`), que toute arme porte ;
+     · ses 662~665 sont EXACTEMENT ceux du « Bouclier en Yggdrasil Purifie »,
+       son jumeau de meme niveau — deux fois le meme chiffre de defense.
+   Et sur les quinze grimoires du releve, DOUZE portent une cle II_ARM_ : le
+   prefixe de la cle ne dit pas de quel cote tombe la colonne. La page /objets du
+   site, elle, affiche deja « Defense 662 ~ 665 » sur cet objet
+   (src/components/objets/vocabulaire.ts, `chiffreDeCombat`) : garder « Attaque »
+   ici aurait mis deux pages du meme site en contradiction sur le meme objet.
+   `offhand` reste lu — il NOMME la piece dans les etiquettes (« Grimoire »),
+   ce qui est le seul renseignement que le releve lui donne vraiment. */
+function abilLabel(slot,it){
+  if(slot==='weapon'||slot==='weapon2')return 'Attaque';
+  return 'Défense';
+}
+/** La chance de reussite du palier d'amelioration, en pourcentage, ou `null`.
+ *  Le releve ne chiffre que les paliers Artefact : en dessous on n'ecrit rien
+ *  plutot que de supposer une reussite garantie. */
+function amelReussite(up){
+  var R=(faits().amelioration||{}).reussite||[];
+  for(var i=0;i<R.length;i++)if(R[i][0]===(up|0))return Math.round(R[i][1]*100);
+  return null;
+}
+/* ═══ LE SERTISSAGE — DEUX MECANIQUES QU'ON NE MELANGE PAS ═══════════════════
+   1. LE JOYAU ORDINAIRE : son palier est LE NOMBRE DE JOYAUX DE LA MEME
+      STATISTIQUE, et la valeur du palier REMPLACE les precedentes. L'echelle du
+      releve est cumulative par construction — l'additionner la compterait deux
+      fois. Le client le dit a sa façon : « tout nouveau joyau du meme type
+      ajoute augmente la meme statistique ».
+   2. LE DIAMANT HOLOGRAPHIQUE : une valeur FIXE, hors echelle, qui elle
+      S'AJOUTE. C'est un autre mecanisme, il se lit sur une autre ligne.
+   Le joyau n'est PAS retenu par le builder (il retient la statistique de chaque
+   logement) : on NOMME donc celui dont on lit l'echelle, comme les deux series
+   de l'eveil sont nommees. Un nombre sans son joyau annoncerait un gain qui
+   n'est peut-etre pas celui du joueur. */
+function sertGemme(it){
+  var T=(faits().sertissage||{}).tranches||[];if(!T.length||!it)return '';
+  var lv=it.lv|0,g='';
+  for(var i=0;i<T.length;i++)if(lv>=T[i].de)g=T[i].n;
+  return g;
+}
+function sertValeur(stat,gemme,palier){
+  var E=(faits().sertissage||{}).echelle||[];
+  for(var i=0;i<E.length;i++){
+    if(E[i].fr!==stat)continue;
+    var G=E[i].gemmes||[];
+    for(var j=0;j<G.length;j++)if(G[j].n===gemme)return (G[j].p||[])[(palier|0)-1]||null;
+  }
+  return null;
+}
+/** La valeur fixe d'un diamant holographique, lue dans la liste que le panneau
+ *  propose deja — aucun nombre n'est recopie ici. */
+function holoValeur(stat){
+  var H=(typeof HOLOSTATS!=='undefined')?HOLOSTATS:[];
+  for(var i=0;i<H.length;i++)if(H[i][0]===stat)return H[i][1];
+  return null;
+}
+/** Le tri d'une liste de logements : chaque statistique et son NOMBRE de
+ *  logements, dans l'ordre ou ils ont ete poses. C'est ce nombre qui EST le
+ *  palier de sertissage. */
+function sertGroupes(arr){
+  var m={},o=[];(arr||[]).forEach(function(x){if(x){if(m[x]==null){m[x]=0;o.push(x);}m[x]++;}});
+  return o.map(function(k){return [k,m[k]];});
+}
+/* ═══ LE VIVIER DE RARETE — CE QUE CETTE ARME PEUT REELLEMENT TIRER ══════════
+   Le panneau propose les SEPT statistiques de `MECH.arme.rarete_pool` a toutes
+   les armes. Le client, lui, donne a chaque arme SON vivier de quatre lignes, et
+   les deux ne concordent pas : l'Arc eternel tire Endurance, PV max %, Blocage
+   corps a corps et Blocage a distance — aucune des quatre que le panneau met en
+   tete de liste. Choisir « Precision » sur cet arc decrit donc un objet qui
+   n'existe pas, et rien ne le disait.
+   La bulle lit le vivier de l'arme (`faits.rarete`, par objet ou par famille) et
+   NOMME les lignes choisies qui n'y figurent pas. On ne touche pas aux choix du
+   panneau : ils ne comptent pas dans le total, et les retirer sans l'accord de
+   Maxime effacerait des reglages deja enregistres. */
+function vivierDe(it){
+  var R=faits().rarete||{},j=armeFait(it);
+  if(!j||!j.viv)return null;
+  var v=(j.viv[0]==='o')?((R.viviersParObjet||{})[j.viv[1]]):((R.viviers||{})[j.viv[1]]);
+  return (v&&v.b&&v.b.length)?v.b:null;
+}
+/** La chance d'obtenir N lignes de rarete au tirage, en pourcentage, ou `null`. */
+function rareteChance(n){
+  var L=(MECH.arme&&MECH.arme.rarete_lignes)||[];
+  for(var i=0;i<L.length;i++)if(L[i].amount===(n|0))return L[i].chance;
+  return null;
+}
+/* ═══ POURQUOI LA BULLE NE REPETE PAS « NON COMPTE » SOUS CHAQUE BLOC ════════
+   Neuf mecaniques sur dix-huit n'entrent pas dans le total (`faits.nonCompte`),
+   et une premiere version de ce chantier l'annonçait sous chacune. Mesure : six
+   paragraphes, une trentaine de pixels chacun, sur une bulle qui frolait deja la
+   hauteur de l'ecran — pour repeter six fois le meme fait.
+   ET LE RESUME LE DIT DEJA MIEUX : `totalsDetail` rend `absents`, et
+   `renderStats` en fait un depliant « N termes non comptes » qui nomme LA PIECE,
+   LE TERME et LA RAISON, un par un. Un doublon dans la bulle aurait fini par
+   diverger de lui.
+   IL RESTE DEUX ENDROITS OU LA BULLE LE DIT, et pour la meme raison dans les
+   deux cas : c'est l'ABSENCE D'UN NOMBRE qui se lit comme un defaut du site. Le
+   « +20 » d'une arme, ecrit en or a cote du nom et suivi de rien ; et le niveau
+   de fee, dont le curseur ne produit aucun bonus. Partout ailleurs la bulle
+   montre desormais un chiffre, donc il n'y a plus de trou a expliquer. */
+/* ═══ LE BANDEAU DE PANOPLIE, EN TETE DU CADRE ═══════════════════════════════
+   Demande de Maxime, mot pour mot : « le rendre esthetique, visible uniquement
+   sur la partie bulle informative en haut du cadre, c'est pas un element
+   important ». C'etait une etiquette « Panoplie · 4 pieces » perdue au milieu
+   des autres, qui donnait le NOMBRE DE PIECES DE L'ENSEMBLE — jamais celles
+   qu'on porte. Quatre petits carres, allumes ou eteints, disent « 3 sur 4 »
+   mieux qu'une phrase, et sans une ligne de texte.
+
+   CE QUI RESTE ECRIT, PARCE QUE C'EST UNE MISE EN GARDE ET NON UNE DECORATION :
+   les signatures du releve portent CHACUNE une ligne NEGATIVE, et la fenetre de
+   panoplie du jeu n'affiche que ce que l'ensemble AJOUTE. Porter les eternels au
+   complet COUTE des degats JcJ. Le compte et le chiffre sont LUS dans la table,
+   pas recopies dans cette phrase.
+
+   MAIS ELLE NE PASSE PAS AVANT LE NOM DE LA PIECE. Une premiere version collait
+   cette phrase rouge DANS le bandeau, donc au-dessus du titre : sur les 256
+   armures du catalogue, la premiere ligne lue n'etait plus l'objet survole mais
+   un avertissement. Maxime demande l'inverse de ce ton-la — « c'est pas un
+   element important ». D'ou les DEUX morceaux : `quoi='bar'` rend le bandeau
+   (dessin et compte, aucune phrase) qui passe avant le nom ; `quoi='w'` rend la
+   mise en garde, posee plus bas avec les autres `.palw` de la bulle, la ou l'on
+   lit deja « ce cran ne rapporte rien » et « +N non compte ». Rien n'est perdu :
+   la meme phrase, le meme chiffre, quatre lignes plus bas.
+
+   `panBloc(slot)` de la fenetre de choix n'est pas touche : il rend un autre
+   service — poser les quatre pieces en un geste — et il porte le bouton.
+
+   LE SENS TIENT AU DESSIN ET AU COMPTE, PAS AU `title`. La bulle porte
+   `pointer-events:none` et suit le curseur : aucun `title` pose dedans ne
+   s'ouvre, ni a la souris ni au doigt. Les vignettes en gardent un par coherence
+   avec `panResume`, mais rien de ce qu'il faut lire n'y est enferme. */
+function itipPano(slot,it,quoi){
+  if(!slot||(ARMOR.indexOf(slot)<0&&FASHION.indexOf(slot)<0))return '';
+  var sig=panSigDe(slot,it);if(!sig)return '';
+  var mode=FASHION.indexOf(slot)>=0;
+  var p=panEtat(mode,sig);if(!p)return '';
+  if(quoi==='w'){
+    var L=panLignes(mode,sig);
+    if(!L||!(L.negAcquises.length||L.negAVenir.length))return '';
+    var acq=L.negAcquises.length?L.negAcquises:L.negAVenir;
+    var dit=acq.map(function(l){return Math.abs(l.v)+' de '+l.stat;}).join(' · ');
+    return '<div class="panbarw">'+(L.negAcquises.length?'Retire ':'À '+acq[0].seuil+'/'+L.p.pieces.length+' : retirera ')
+      +esc(dit)+' — la fenêtre du jeu ne le montre pas.</div>';
+  }
+  var col=panCouleur(p);
+  var cases=p.pieces.map(function(x){
+    var on=p.porte(x.slot);
+    return '<span class="pc'+(on?' on':'')+'" title="'+escA(x.item.n)+'">'
+      +((x.item.ic&&IC[x.item.ic])?'<img src="'+IC[x.item.ic]+'" alt="">':'')+'</span>';
+  }).join('');
+  return '<div class="panbar" style="--pcol:'+col+'">'
+    +'<span class="pcs">'+cases+'</span>'
+    +'<span class="pnm">'+esc(p.nom)+'</span>'
+    +'<span class="pnn">'+p.portees+'/'+p.pieces.length+'</span></div>';
+}
 function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.ic&&IC[it.ic])?`<img src="${IC[it.ic]}">`:'';
   const isW=(slot==='weapon'||slot==='weapon2');
   const up=(cfg&&cfg.up)?` <span style="color:var(--gold)">+${cfg.up}</span>`:'';
@@ -1334,22 +1622,26 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
   /* Le jeu annonce d'abord CE QUE C'EST, puis SI ON PEUT LE PORTER, et enfin ce
      qu'il apporte. L'ordre comptait : le niveau requis etait relegue tout en bas,
      alors que c'est la premiere chose qu'on cherche devant une piece convoitee. */
-  let h=`<div class="t" style="color:${col}">${icon}<span>${nomPiece(it)}${up}${stars}</span></div>`;
+  /* LE BANDEAU DE PANOPLIE PASSE AVANT LE NOM : « en haut du cadre », comme
+     demande. L'etiquette qu'il remplace est retiree plus bas. Le bandeau SEUL :
+     sa mise en garde est posee plus bas, avec les autres. */
+  let h=itipPano(slot,it,'bar')
+    +`<div class="t" style="color:${col}">${icon}<span>${nomPiece(it)}${up}${stars}</span></div>`;
   const tags=[];
   /* Le palier s'affichait pour les seules armes. Une armure Yggdrasil ou Lusaka
      en a un aussi, et il porte la couleur qui identifie la piece d'un coup d'oeil. */
   if(cfg&&cfg.tier&&RARCOL[cfg.tier])tags.push(`<span class="tag" style="background:${col}1a;color:${col};border:1px solid ${col}66">${esc(cfg.tier)}</span>`);
   if(it.tier)tags.push(`<span class="tag" style="background:${(it.col||'#cfd2dc')}14;color:${it.col||'var(--mut)'};border:1px solid ${(it.col||'#cfd2dc')}55">${esc(it.tier)}</span>`);
   if(it.set)tags.push(`<span class="tag" style="background:#ffffff0d;color:var(--mut);border:1px solid #ffffff24">Set ${esc(it.set)}</span>`);
-  /* « Cette piece fait partie d'un ensemble de quatre » : c'est ce qu'on veut
-     savoir AVANT de l'equiper, pas apres. Le nombre est compte sur le releve.
-     GATE SUR L'EMPLACEMENT et non sur les champs de la piece : une arme et un
-     bouclier portent aussi un `tier` et une `cls`, et sans ce garde-fou un
-     bouclier Eternel se serait vu annoncer la panoplie de la tenue. */
-  if(slot&&(ARMOR.indexOf(slot)>=0||FASHION.indexOf(slot)>=0)){
-    const _sg=panSigDe(slot,it);const _np=_sg?panPieces(_sg).length:0;
-    if(_np>1)tags.push(`<span class="tag" style="background:rgba(255,210,74,.10);color:var(--gold);border:1px solid rgba(255,210,74,.4)"><i class=vgi-shirt-armor></i> Panoplie · ${_np} pièces</span>`);
-  }
+  /* CE QU'EST LA PIECE, quand son emplacement ne suffit pas a le dire.
+     · `offhand` nomme la piece de main gauche qui n'est pas un bouclier — un
+       GRIMOIRE, et c'est aussi lui qui rend son « Attaque » a la fourchette.
+     · `cat` et `lvl` sont TOUT ce qu'un mantra ou un masque possede en propre
+       (« PvP 3 », « PvE 1 ») : le panneau les affichait, la bulle les taisait, et
+       deux masques de categories differentes s'y lisaient a l'identique. */
+  if(it.offhand){const _oh=String(it.offhand);
+    tags.push(`<span class="tag" style="background:#ffffff0d;color:var(--mut);border:1px solid #ffffff24">${esc(_oh.charAt(0).toUpperCase()+_oh.slice(1))}</span>`);}
+  if(it.cat&&(slot==='mantra'||slot==='masque'))tags.push(`<span class="tag" style="background:rgba(78,168,255,.12);color:var(--blue);border:1px solid rgba(78,168,255,.4)">${esc(it.cat)}${it.lvl?' '+it.lvl:''}</span>`);
   if(tags.length)h+=`<div class="tags">${tags.join('')}</div>`;
   /* Conditions pour equiper, juste sous le nom, comme en jeu. */
   const cond=[];
@@ -1358,12 +1650,32 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
   const cl=clsLabel(it);
   if(cl&&cl!=='Toutes')cond.push(cl);
   if(cond.length)h+=`<div class="cond">${cond.map(c=>esc(c)).join(' · ')}</div>`;
-  if(it.atk)h+=`<div class="atk"><span>Attaque</span><b>${it.atk[0]} ~ ${it.atk[1]}</b></div>`;
+  /* LE LIBELLE DE LA FOURCHETTE VIENT DE L'EMPLACEMENT — voir `abilLabel`. */
+  if(it.atk)h+=`<div class="atk"><span>${abilLabel(slot,it)}</span><b>${it.atk[0]} ~ ${it.atk[1]}</b></div>`;
+  /* CE QUE LE RELEVE NE CONNAIT PAS, DIT UNE FOIS. Le champ `manual` marque les
+     deux pieces que le builder a saisies a la main : sans cle du client, elles
+     n'ont ni maitrise, ni vivier de rarete, ni parchemin d'ascension. Le bloc de
+     maitrise le disait, mais seulement une fois la maitrise reglee — devant une
+     arme nue, les trois absences passaient pour un oubli du site. */
+  if(it.manual)h+=`<div class="palw">Pièce saisie à la main : ni maîtrise, ni vivier de rareté, ni ascension dans le relevé du client.</div>`;
   const setb=it.setb&&it.setb.length,bonus=setb?it.setb:(it.b||[]);
   const configured=!!(cfg||(slot==='familier'&&e));
   /* Les bonus de base disparaissaient des qu'une piece etait configuree : on ne
      pouvait plus voir ce qu'elle apporte sans la desequiper. Ils restent. */
   if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.filter(b=>!STAT_RECOMPENSE.test(b[0])).map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>${b[1]<0?'':'+'}${b[1]}</span></div>`).join('');}
+  /* ═══ UNE ARMURE A ZERO N'EST PAS UN BUG D'AFFICHAGE ═════════════════════════
+     Aucune armure du catalogue ne porte de bonus propre — le releve le compte —
+     et la bulle n'ecrivait alors RIEN entre les conditions et la configuration.
+     Un blanc a cet endroit se lit comme une piece cassee, et c'est le panneau de
+     reglage, lui, qui portait deja l'explication. Le nombre est LU. */
+  else if(slot&&ARMOR.indexOf(slot)>=0&&(MECH.armure||{}).bonusPropre){
+    const _bp=MECH.armure.bonusPropre;
+    h+=`<div class="palw">Aucun bonus propre — comme les ${_bp.objets} armures du catalogue. Sa valeur est dans la panoplie, le palier, le perçage et l'éveil.</div>`;
+  }
+  /* LA LIGNE NEGATIVE DE LA PANOPLIE, ICI ET PAS DANS LE BANDEAU. Elle appartient
+     a cette rangee de mises en garde — celles qui pesent sur un chiffre affiche —
+     et non au dessin d'en-tete, qui doit rester muet. Voir `itipPano`. */
+  h+=itipPano(slot,it,'w');
   /* ═══ LE PALIER DU BIJOU — LE DEFAUT QUE CETTE BULLE AVAIT DEPUIS TOUJOURS ═══
      Elle n'affichait que `it.b`, les bonus DE BASE de la piece, et n'appelait
      jamais `bonusDePalier()`. Un Anneau Aile a +30 annoncait donc ce qu'il vaut
@@ -1398,6 +1710,21 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
        trous du releve font un cran. */
     else if(bm&&bm.suivant&&bm.suivant>bm.n+1)h+=`<div class="palw">${bm.suivant===bm.n+2?`Le cran +${bm.n+1} ne change rien`:`Les crans +${bm.n+1} à +${bm.suivant-1} ne changent rien`}. Prochain palier utile : +${bm.suivant}.</div>`;
   }
+  /* ═══ LE PALIER D'UNE ARME, D'UNE ARMURE OU D'UN COSTUME ═════════════════════
+     Le +N s'affichait en or a cote du nom, et RIEN dessous. Le bijou, lui, a
+     desormais son bloc chiffre : la meme bulle montrait donc un « +20 » qui
+     rapporte sur un anneau et un « +20 » muet sur une arme, sans jamais dire que
+     la difference vient du RELEVE et non du site. Un joueur y lit un oubli.
+     LE FAIT EST ETABLI ET ON NE LE CONTOURNE PAS : `propEnchant.inc` ne porte
+     que des coefficients, et ce qu'ils multiplient n'est ecrit dans aucun
+     fichier. Le costume n'a meme pas de table. On l'ECRIT, on ne l'estime pas.
+     LA REUSSITE, ELLE, EST CHIFFREE — et c'est le seul nombre de cette mecanique
+     qui change le geste : a +20 il reste un essai sur dix. */
+  else if(cfg&&cfg.up&&slot&&(isW||slot==='shield'||ARMOR.indexOf(slot)>=0||FASHION.indexOf(slot)>=0)){
+    const _r=amelReussite(cfg.up);
+    h+=`<div class="palw warn">+${cfg.up} non compté : le client ne chiffre pas ce gain.`
+      +(_r!=null?` Réussite : ${_r} %.`:'')+`</div>`;
+  }
   // --- Schéma de configuration (pièce équipée) ---
   if(configured){let cf='';const chips=[];
     if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut);opacity:.65'}">${runeImg(it.tier)} ${esc(runeName(it.tier))}</span>`);
@@ -1405,8 +1732,39 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
     if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/${maitriseMax()}</span>`);
     if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(e.rune)} ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
-    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');const dT=statTally(cfg.dia),hT=statTally(cfg.holo);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${dT?`<div style="font-size:12px;color:var(--c-diamant);font-weight:600;margin-top:2px">${dT}</div>`:''}${hT?`<div style="font-size:12px;color:var(--c-holo);font-weight:600;margin-top:1px">Holo : ${hT}</div>`:''}</div></div>`;}
-    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>gemmeCostume(slot,d)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div style="font-size:12px;color:var(--c-diamant);font-weight:600;margin-top:2px">${gT}</div>`:''}</div></div>`;}
+    /* ═══ LE SERTISSAGE DIT ENFIN CE QU'IL VAUT ════════════════════════════════
+       La bulle listait les statistiques choisies et leur nombre — « Attaque ×3 »
+       — sans jamais le NOMBRE que ça donne, alors que le releve porte l'echelle
+       complete : 9 statistiques, 5 joyaux, 8 paliers.
+       LE « ×3 » ETAIT DEJA LE PALIER SANS LE DIRE : le palier de sertissage est
+       le nombre de joyaux DE LA MEME STATISTIQUE, et sa valeur REMPLACE les
+       precedentes. L'ecrire « palier 3 » plutot que « ×3 » evite la lecture
+       naturelle et fausse — trois fois la valeur d'un joyau.
+       LE JOYAU EST NOMME. Le builder retient la statistique de chaque logement,
+       jamais le joyau pose : on lit l'echelle de celui que le niveau de la piece
+       situe, et on l'ecrit, exactement comme l'eveil nomme ses deux series.
+       L'HOLOGRAPHIQUE RESTE SUR SA LIGNE, avec sa valeur fixe et le mot qui dit
+       qu'elle S'AJOUTE : c'est l'autre mecanique, et les confondre ferait
+       additionner ce qui remplace. */
+    if(cfg&&cfg.dia){const gems=cfg.dia.map(d=>diaImg(d,false)).join('');const holos=(cfg.holo||[]).map(d=>diaImg(d,true)).join('');
+      const _gm=sertGemme(it);
+      const dG=sertGroupes(cfg.dia),hG=sertGroupes(cfg.holo);
+      const dT=dG.map(function(g){const v=_gm?sertValeur(g[0],_gm,g[1]):null;
+        return esc(g[0])+(g[1]>1?' palier '+g[1]:'')+(v!=null?' <b>+'+v+'</b>':'');}).join(' · ');
+      const hT=hG.map(function(g){const v=holoValeur(g[0]);
+        return esc(g[0])+(g[1]>1?' ×'+g[1]:'')+(v!=null?' <b>+'+(v*g[1])+'</b>':'');}).join(' · ');
+      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Sertissage</span><div style="flex:1;min-width:0"><div class="gems">${gems}${holos?'<span class="sep"></span>'+holos:''}</div>${
+        dT?`<div class="sertl dia">${dT}</div>`:''}${
+        hT?`<div class="sertl holo">Holo : ${hT} <span class="sertn">fixe, s'ajoute</span></div>`:''}${
+        dT&&_gm?`<div class="mnote">Échelle du ${esc(_gm)} · un palier remplace le précédent.</div>`:''}</div></div>`;}
+    /* LES GEMMES DE COSTUME N'ONT PAS DE CHIFFRE, ET C'EST LA REGLE 3 QUI DECIDE.
+       `GEMC` ne donne qu'un PLAFOND par statistique (Force 40, PV max 28 500) —
+       le meme genre de nombre que `GEMU` pour l'arme, dont `faits.sertissage`
+       precise qu'il est « le dernier palier numerote du Diamant, et rien
+       d'autre ». Aucune table de paliers n'existe pour le costume. Poser 40 a
+       cote de « Force » se lirait comme le gain du logement : on n'ecrit donc que
+       la statistique, sur la meme grille de lecture que le sertissage d'arme. */
+    if(cfg&&cfg.gems){const gems=cfg.gems.map(d=>gemmeCostume(slot,d)).join('');const gT=statTally(cfg.gems);cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Gemmes</span><div style="flex:1;min-width:0"><div class="gems">${gems}</div>${gT?`<div class="sertl dia">${gT}</div>`:''}</div></div>`;}
     if(cfg&&cfg.pierce){const pel=pierceElDe(cfg,slot);const pcard=PIERCECARD[pel];const ecol=pcard?pcard.col:'#9a9aa8';const open=(cfg.pn!=null)?cfg.pn:cfg.pierce.filter(x=>x).length;
       const pgr=pierceGrades(pel);const plib=g=>pcard&&pcard.fam==='def'?g+'%':g;
       const pcas=pierceCases(cfg,slot);
@@ -1418,7 +1776,22 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
           return `<span class="pip"></span>`;}).join('');
         let pc=`<div class="crow" style="align-items:flex-start"><span class="lab">Perçage</span><div style="flex:1;min-width:0">`;
         pc+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px"><span class="chip" style="color:${ecol};border-color:${ecol}66">${pel?`<img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">`:'<i class=vgi-card></i>'} ${open}/${pierceMaxFor(slot,it)}</span>${pel?`<span class="chip" style="color:${ecol};border-color:${ecol}66;background:${ecol}1a"><img class="pcard mini" src="${pierceCarte(pel,slot,phaut)}" alt="">${esc(pel)}${phaut?' '+plib(phaut):''}</span>`:''}<div class="pips">${pips||'<span class="mini">—</span>'}</div></div>`;
-        if(pcard){const t=pierceTotals(cfg,slot);if(t&&t.lines.length)pc+=`<div style="font-size:12px;color:var(--c-percage);font-weight:700">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
+        if(pcard){const t=pierceTotals(cfg,slot);if(t&&t.lines.length)pc+=`<div class="sertl per">${t.lines.map(l=>esc(l[0])+' '+l[1]).join(' · ')}</div>`;}
+        /* ═══ LES DEUX FAITS DU PERÇAGE QUI COUTENT DE L'ARGENT, EN UNE LIGNE ═══
+           1. LES DERNIERS LOGEMENTS NE S'OUVRENT PAS A COUP SUR. Le releve chiffre
+              la chance des emplacements 11 et 12 ; la bulle affichait « 12/12 »
+              comme un etat acquis. Les rangs et les taux sont LUS dans
+              `faits.percage.ouverture`, jamais recopies.
+           2. ON NE RETIRE PAS LA CARTE QU'ON VEUT — le jeu previent, mot pour
+              mot, que « la derniere carte sertie sera retiree (celle du bas) », et
+              l'operation se paie. Une mise en garde qui evite une depense reste,
+              c'est la regle ; les DEUX tiennent sur une seule ligne plutot que
+              sur deux paragraphes, et c'est tout ce que la hauteur permet. */
+        const _pf=faits().percage||{},_ouv=(_pf.ouverture||[]).filter(function(o){return open>=o[0];});
+        const _pw=[];
+        if(_ouv.length)_pw.push('ouverture des logements '+_ouv.map(function(o){return o[0]+' ('+Math.round(o[1]*100)+' %)';}).join(' et '));
+        if(open&&_pf.retrait)_pw.push('retrait : la dernière carte, '+(_pf.cout?esc(String(_pf.cout).replace(/^Le coût est de /,'').replace(/\.$/,'')):'payant'));
+        if(_pw.length)pc+=`<div class="mnote">${_pw.join(' · ')}.</div>`;
         pc+=`</div></div>`;cf+=pc;}}
     /* ═══ L'EVEIL DIT ENFIN SON CHIFFRE — ET DIT DE QUELLE SERIE IL VIENT ═══
        La bulle donnait la ligne et la statistique, jamais un nombre : « R2 ·
@@ -1447,10 +1820,69 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
          MEME cle de statistique : le « % » que le releve pose sur elle vaut
          donc pour l'un comme pour l'autre. La ou le releve ne le dit pas
          (aucune ligne fixe), on n'ajoute rien plutot que de le supposer. */
-      if(ev&&ev.plafond!=null)evd+=`<span class="evs">Tirage <b>au plus +${ev.plafond}${pc}</b></span>`;
+      /* LE MOT QUE LE PARCHEMIN PORTE LUI-MEME. « Tirage au plus +15 » se lit
+         comme une fourchette de 0 a 15, alors que le client ecrit sur l'objet que
+         « les proprietes peuvent etre negatives » : le plancher n'est pas zero.
+         Le mot tient DANS la ligne existante — l'etiquette de gauche etait
+         presque vide — donc il ne coute pas un pixel de hauteur, et il ne
+         s'affiche que si le releve documente bien la voie du tirage. */
+      if(ev&&ev.plafond!=null)evd+=`<span class="evs">Tirage${(faits().eveil||{}).tirage?', peut être négatif':''} <b>au plus +${ev.plafond}${pc}</b></span>`;
       cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Éveil</span><div style="flex:1;min-width:0"><b style="font-size:12px;color:var(--c-eveil)">${cfg.evL}${cfg.evS?' · '+esc(cfg.evS):''}</b>${
         evd?`<div class="evd" title="${escA('Le builder retient la ligne et la statistique, pas la valeur obtenue ni la voie employée. Les deux séries du client sont donc données telles quelles : le parchemin d\'éveil fixe chiffre son gain, le parchemin ordinaire tire au sort sous un plafond et peut sortir négatif.')}">${evd}</div>`:''}</div></div>`;}
-    if(cfg&&cfg.scrS)cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><img class="runeic" src="/airbuilder/icons/sertissage/statscroll.png" alt="">${esc(cfg.scrS)} +${cfg.scrL||0}</b></div>`;
+    /* LE SCROLL : LA PLAGE ICI, L'AVERTISSEMENT DANS LE PANNEAU.
+       « Force +4 » ne disait pas que le niveau se TIRE AU SORT entre +1 et +4 :
+       la plage du releve tient dans la ligne existante, elle ne coute rien.
+       LA PHRASE QUI COUTE DE L'ARGENT — « Ceci remplace toute statistique
+       existante sur l'arme » — est passee dans `scrollUI`, la ou l'on choisit le
+       parchemin. Elle valait trente pixels de bulle pour un renseignement qui ne
+       sert qu'au MOMENT du geste, et une bulle qui deborde de l'ecran ne le dirait
+       a personne. Elle n'est pas retiree du service : elle a change de place. */
+    if(cfg&&cfg.scrS){const _sc=faits().scroll||{};
+      cf+=`<div class="crow"><span class="lab">Scroll</span><b style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><img class="runeic" src="/airbuilder/icons/sertissage/statscroll.png" alt="">${esc(cfg.scrS)} +${cfg.scrL||0}${_sc.plage?` <span class="sertn">tiré ${esc(_sc.plage)}</span>`:''}</b></div>`;}
+    /* ═══ L'ELEMENT — UN CURSEUR QUI N'APPARAISSAIT NULLE PART ═════════════════
+       Le panneau propose cinq cartes et un niveau jusqu'a +20, et la bulle n'en
+       montrait RIEN : une arme reglee « Feu +20 » se relisait sans element. La
+       carte du client porte son dessin dans la table, donc on la sert — le meme
+       dessin que l'en-tete du panneau, pas un symbole different. */
+    if(cfg&&(cfg.elemType||cfg.elemLvl)){const _ec=(meca().element||{})[cfg.elemType];
+      cf+=`<div class="crow"><span class="lab">Élément</span><b style="font-size:12px;display:inline-flex;align-items:center;gap:5px">${
+        _ec&&_ec.f?`<img class="runeic" src="${_ec.f}" alt="">`:'<i class=vgi-flame></i>'}${esc(cfg.elemType||'—')} +${cfg.elemLvl||0}${
+        (faits().element||{}).max?` <span class="sertn">sur +${faits().element.max}</span>`:''}</b></div>`;}
+    /* ═══ LES LIGNES DE RARETE — « LES BONUS », DEMANDE PAR MAXIME ═════════════
+       La bulle portait l'etiquette du palier de rarete et rien de ses LIGNES,
+       qui sont pourtant tout ce que la rarete apporte. Trois faits du releve
+       viennent avec, et ils changent le geste :
+         · la fourchette de chaque ligne, prise dans le vivier de CETTE arme ;
+         · la chance d'en obtenir autant — quatre lignes valent 2 % ;
+         · le vivier lui-meme, quand la ligne choisie n'y figure pas. Le panneau
+           propose les sept statistiques de `MECH.arme.rarete_pool` a toutes les
+           armes, et le client, lui, n'en autorise que quatre par arme : l'Arc
+           eternel tire Endurance, PV max %, Blocage corps a corps et Blocage a
+           distance, aucune des quatre que le panneau met en tete. Le dire ici est
+           le seul endroit ou ça se voit. */
+    if(isW&&cfg&&(cfg.rlines||[]).filter(Boolean).length){
+      const _rl=(cfg.rlines||[]).filter(Boolean),_vv=vivierDe(it);
+      const _pool={};((MECH.arme&&MECH.arme.rarete_pool)||[]).forEach(function(b){_pool[b.stat]=[b.min,b.max];});
+      (_vv||[]).forEach(function(b){_pool[b[0]]=[b[1],b[2]];});
+      const _hors=_vv?_rl.filter(function(s){return !_vv.some(function(b){return b[0]===s;});}):[];
+      const _ch=rareteChance(_rl.length);
+      /* LA FOURCHETTE S'ECRIT UNE FOIS QUAND ELLE EST LA MEME POUR TOUTES. Quatre
+         lignes alignees a droite coutaient quatre rangees pour repeter « +10 →
+         +50 » quatre fois. On la sort du tableau des qu'elle est commune, et on
+         ne la garde par ligne que si le releve en donne de differentes. */
+      const _r0=_rl.map(function(s){return _pool[s];});
+      const _un=_r0.every(function(r){return r&&_r0[0]&&r[0]===_r0[0][0]&&r[1]===_r0[0][1];})?_r0[0]:null;
+      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Rareté</span><div style="flex:1;min-width:0">`
+        +`<div class="sertl rar">${_rl.map(function(s){const r=_pool[s];
+            return esc(s)+((!_un&&r)?' <b>+'+r[0]+'→+'+r[1]+'</b>':'');}).join(' · ')}</div>`
+        +`<div class="mnote">${_un?'+'+_un[0]+' → +'+_un[1]+' par ligne':'tiré au sort'}${
+            _ch!=null?` · ${_rl.length} ligne${_rl.length>1?'s':''} = ${_ch} % au tirage`:''}.</div>`
+        +(_hors.length?`<div class="mnote warn">${
+            _hors.length===_rl.length?'Aucune n\'est dans le vivier'
+              :esc(_hors.join(' · '))+' hors du vivier'
+            } de l'arme, qui tire ${esc((_vv||[]).map(function(b){return b[0];}).join(' · '))}.</div>`:'')
+        +`</div></div>`;
+    }
     /* ═══ CE QUE LA MAITRISE ALLUME, LIGNE PAR LIGNE ═══════════════════════
        La bulle n'avait qu'une pastille « 42/100 » : le NIVEAU, qui ne dit pas ce
        que l'arme gagne. Ce que l'arme gagne tient a sa RARETE, et le releve le
@@ -1468,8 +1900,15 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
         cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0">`
           +mz.lignes.map(l=>{const on=maitriseAllumee(l,cfg.tier);
             return `<div class="mline${on?' on':''}" title="${escA(l.code+' — '+(on?('allumée dès '+rareteDuCode(l.des)):('éteinte : cette ligne s\'allume à partir de '+rareteDuCode(l.des))))}"><span>${esc(l.fr)}</span><span>${on?'+'+l.v:'—'}</span></div>`;}).join('')
-          +`<div class="mnote">${seuil?`La rareté <b>allume</b> la ligne dès ${esc(seuil)}, elle ne la fait pas monter : même valeur jusqu'au dernier palier.`:''}</div>`
-          +(mz.nomme&&mz.ecartee.length?`<div class="mnote">Ligne propre à cette arme : elle <b>remplace</b> celle de son type (${esc(maitriseMots(mz.ecartee))}), elle ne s'y ajoute pas.</div>`:'')
+          /* CES DEUX NOTES ONT ETE RESSERREES, PAS RETIREES. Elles disaient la
+             meme chose en trois lignes chacune sur une bulle deja haute ; le
+             fait, lui, tient en une. Le troisieme — LE NIVEAU DE MAITRISE NE
+             CHANGE AUCUNE VALEUR — manquait, et c'est celui qui coute : la
+             pastille « 100/100 » fait croire a une progression, alors que le
+             releve n'attache aucune statistique aux paliers. */
+          +`<div class="mnote">${seuil?`<b>Allumée</b> dès ${esc(seuil)}, sans monter.`:''}${
+              (((faits().maitrise||{}).niveau||{}).sansEffetSurLaValeur)?` Le niveau ne change rien.`:''}</div>`
+          +(mz.nomme&&mz.ecartee.length?`<div class="mnote"><b>Remplace</b> la ligne de type (${esc(maitriseMots(mz.ecartee))}).</div>`:'')
           +`</div></div>`;
       } else if(cfg.mastery&&!armeFait(it)){
         cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0"><span class="mnote">Non renseigné : le relevé du client ne connaît pas cette arme.</span></div></div>`;
@@ -1479,17 +1918,38 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
        Le tableau de bonus de la piece est VIDE : monter le niveau ne change pas
        le total, et rien ne le disait. Le client, lui, chiffre cinq paliers par
        esprit. On montre le palier ATTEINT — le dernier seuil franchi, pas la
-       somme — et on dit franchement qu'il n'entre pas dans le total. */
-    if(slot==='fairy'&&cfg&&cfg.lvl){
-      const esp=espritDe(it),pal=esp?espritPalier(esp,cfg.lvl):null;
-      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Niveau fée</span><div style="flex:1;min-width:0"><b style="font-size:12px">${cfg.lvl}${esp?' / '+((faits().esprit||{}).max||cfg.lvl):''}</b>${
-        pal?`<div class="evd"><span class="evs">Palier ${pal[0]} <b>${espritTexte(pal).texte?esc(espritTexte(pal).texte):'non affiché ici'}</b></span></div><div class="mnote">Non compté dans le total : le relevé chiffre l'effet, la pièce ne porte aucun bonus.${espritTexte(pal).ampute?' Ce palier rapporte aussi de l\'expérience, du butin ou des penyas — non montrés ici.':''}</div>`
-          :(esp?`<div class="mnote">Aucun palier atteint : le premier est à ${esp.paliers[0][0]}.</div>`:'')}</div></div>`;}
+       somme — et on dit franchement qu'il n'entre pas dans le total.
+
+       CE QUE CE LOT AJOUTE, dans l'ordre ou ca sert : l'effet ATTEINT, l'effet
+       du PALIER SUIVANT, CE QU'IL COUTE pour y aller, et les crans qui ne
+       rapportent rien avant lui. C'est la lecture de la page Craft et
+       Collections, la seule qui reponde a « j'en suis la, il me faut combien ».
+
+       LE NIVEAU 0 N'EST PLUS UN SILENCE. La condition exigeait `cfg.lvl` : une
+       fee posee et pas encore montee — le cas de depart de tout le monde — ne
+       disait donc RIEN, ni ce qu'elle apporterait, ni a quel prix. C'est
+       precisement l'ecran ou le renseignement decide d'une depense. */
+    if(slot==='fairy'&&cfg){
+      const niv=cfg.lvl|0,esp=espritDe(it),ES=faits().esprit||{};
+      const pal=esp?espritPalier(esp,niv):null,suiv=esp?espritSuivant(esp,niv):null;
+      const plat=esp?espritPlateau(esp,niv):null;
+      const cout=suiv?espritCout(niv,suiv[0]):null;
+      const tA=pal?espritTexte(pal):null,tB=suiv?espritTexte(suiv):null;
+      cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Niveau fée</span><div style="flex:1;min-width:0"><b style="font-size:12px">${niv}${esp?' / '+(ES.max||niv):''}</b>${
+        (pal||suiv)?`<div class="evd">${
+          pal?`<span class="evs fee"><span>Palier ${pal[0]}${suiv?'':' <span class="sertn">· le dernier</span>'}</span><b>${tA.texte?esc(tA.texte):'non affiché ici'}</b></span>`:''}${
+          suiv?`<span class="evs fee next"><span>Suivant · ${suiv[0]}</span><b>${tB.texte?esc(tB.texte):'non affiché ici'}</b></span>`:''}</div>`:''}${
+        (cout!=null&&cout>0)?`<div class="sertl pou">${poudreHtml(cout)} <span class="sertn">du ${Math.max(1,niv)} au ${suiv[0]}</span></div>`:''}${
+        plat?`<div class="mnote warn">Du ${plat.de} au ${plat.a}, rien ne change : l'effet monte au ${plat.seuil}.</div>`:''}${
+        esp?`<div class="mnote">Non compté dans le total : le relevé chiffre l'effet, la pièce ne porte aucun bonus.${(tA&&tA.ampute)||(tB&&tB.ampute)?` Ces paliers rapportent aussi de l'expérience, du butin ou des penyas — non montrés ici.`:''}</div>`
+          :`<div class="mnote">Non renseigné : le relevé du client ne chiffre pas les paliers de cette fée.</div>`}</div></div>`;}
     if(cf)h+=`<div class="sec">Configuration</div>${cf}`;}
   return h;}
-/* L'emplacement est passe a la bulle : c'est lui qui autorise l'etiquette de
-   panoplie. Sans lui, `itipBuild` ne savait pas si l'objet survole etait une
-   piece d'armure ou une arme. */
+/* L'EMPLACEMENT EST LE QUATRIEME ARGUMENT, ET IL DECIDE DE TROIS CHOSES : le
+   bandeau de panoplie (armure et costume seulement), le libelle de la fourchette
+   `atk` — « Attaque » sur une arme, « Defense » ailleurs — et le bloc de palier
+   (bijou chiffre, ou mention « non compte »). Sans lui, `itipBuild` ne saurait
+   pas si l'objet survole est une piece d'armure ou une arme. */
 /* ═══ LE PIEGE DU DIFFERE, COTE BULLE ════════════════════════════════════════
    `paliers.json` et `mecaniques.json` arrivent APRES le premier rendu. Une bulle
    ouverte pendant ce temps est construite sans eux : elle montre un bijou sans
@@ -2057,21 +2517,44 @@ function pierceUI(slot,max){const w=cfgOf(slot);if(w.pn==null)w.pn=0;const n=w.p
    ${legend}
    <div class="lvl"><span class="mini">Niveau de perçage : <b>${n}</b> / ${max}</span><input type="range" min="0" max="${max}" value="${n}" oninput="pnLive(this,'${slot}')" onchange="cpn('${slot}',+this.value,${max})"></div>
    <div class="row" style="gap:4px;margin-top:6px">${Array.from({length:n},(_,i)=>{const v=card&&card.g[cas[i]]?cas[i]:null;const fort=v===grades[grades.length-1];const cs=elCol&&v?`border-color:${elCol};color:${elCol}`+(fort?`;background:${elCol}33`:''):'';return `<div class="cslot ${v?'on':''}" style="${cs}" onclick="cpierce('${slot}',${i})">${v?lib(v):'+'}</div>`;}).join('')||'<span class="mini">Monte le niveau pour ouvrir des emplacements.</span>'}</div>
-   <div class="mini" style="margin-top:5px">Total : ${totalHtml}${grades.length?' · clique une case → '+grades.map(lib).join(' → '):''}</div></div>`;}
+   <div class="mini" style="margin-top:5px">Total : ${totalHtml}${grades.length?' · clique une case → '+grades.map(lib).join(' → '):''}</div>
+   ${(function(){/* CE QUE LE JEU PREVIENT AU MOMENT DU RETRAIT. Le releve porte la
+        phrase exacte — « la derniere carte sertie sera retiree (celle du bas) » —
+        et son prix. La bulle en donne la version courte ; ici, la version du
+        client, la ou l'on pose et retire les cartes. */
+     var P=faits().percage||{},m=[P.retrait,P.cout].filter(Boolean);
+     return m.length?'<div class="mini upnc"><i class=vgi-alert></i><span>'+m.map(function(x){return esc(x);}).join(' ')+'</span></div>':'';})()}</div>`;}
 function pnLive(el,slot){const b=el.parentNode.querySelector('.mini b');if(b)b.textContent=el.value;}
 function cpn(slot,v,max){keepScroll();const w=cfgOf(slot);w.pn=Math.max(0,Math.min(v,max));render();drawPick(curQ());restoreScroll();}
 // Ordre des stats d'éveil par pièce (priorité iBeats en début de liste, le reste ensuite)
 const EVORDER={ring1:['Intelligence','Dégâts critiques','Endurance','Force'],ring2:['Intelligence','Dégâts critiques','Endurance','Force'],earring1:['Intelligence','Dégâts critiques','Endurance','Force'],earring2:['Intelligence','Dégâts critiques','Endurance','Force'],necklace:['Intelligence','Dégâts critiques','Endurance','Force'],weapon:['Intelligence','Dégâts critiques','Endurance','Force'],weapon2:['Intelligence','Dégâts critiques','Endurance','Force'],shield:['Intelligence','Dégâts critiques','Endurance','Force'],cape:['Intelligence','Dégâts critiques','Endurance','Force'],masque:['Intelligence','Dégâts critiques','Endurance','Force'],fhead:['Intelligence','Dégâts critiques','Endurance','Force'],ftop:['Intelligence','Dégâts critiques','Endurance','Force'],fhand:['Intelligence','Dégâts critiques','Endurance','Force'],ffoot:['Intelligence','Dégâts critiques','Endurance','Force'],helmet:['Intelligence','Endurance','Force','Dextérité'],suit:['Intelligence','Dégâts critiques','Endurance','Force','MP max'],gauntlet:['Attaque','PV max','MP max'],boots:['Dégâts critiques','Attaque','PV max','MP max']};
 function evStatsFor(slot){var pri=EVORDER[slot]||[];return pri.concat(EVSTATS.filter(function(s){return pri.indexOf(s)<0;}));}
+/* L'EVEIL : LES DEUX CHIFFRES DANS LA BULLE, LE PRIX ET LE RISQUE ICI.
+   La bulle nomme les deux series et leurs valeurs — c'est le renseignement qu'on
+   cherche en regardant un objet. Ce panneau ajoute ce qu'on veut savoir AVANT de
+   depenser : le prix de l'operation, et le mot que le client ecrit sur le
+   parchemin lui-meme (« les proprietes peuvent etre negatives »). Les deux
+   sortent de `faits.eveil.tirage`, aucun n'est recopie. */
 function eveilUI(slot){const w=cfgOf(slot);
   const p=meca().eveil;
+  const tg=(faits().eveil||{}).tirage||{};
+  const mots=[(tg.parchemin||{}).d,tg.cout].filter(Boolean);
   return `<div class="grp"><div class="gh">${p&&p.f?mecaIc(p,'ghic'):'<img class="ghic" src="/airbuilder/icons/R1.png" alt="">'} Éveil (R1 ou R2)</div>
    <div class="row"><div class="seg2 seg-ev" style="max-width:186px"><div class="s2 ${w.evL==='R1'?'on':''}" onclick="cset('${slot}','evL','R1')"><img src="/airbuilder/icons/R1.png" alt="">R1</div><div class="s2 ${w.evL==='R2'?'on':''}" onclick="cset('${slot}','evL','R2')"><img src="/airbuilder/icons/R2.png" alt="">R2</div><div class="s2 ${!w.evL?'on':''}" onclick="cset('${slot}','evL','')">—</div></div>
-   <select onchange="cset('${slot}','evS',this.value)"><option value="">— statistique —</option>${evStatsFor(slot).map(s=>`<option ${w.evS===s?'selected':''}>${s}</option>`).join('')}</select></div></div>`;}
-function scrollUI(slot){const w=cfgOf(slot);
-  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/statscroll.png" alt=""> Scroll stat</div><div class="row">
+   <select onchange="cset('${slot}','evS',this.value)"><option value="">— statistique —</option>${evStatsFor(slot).map(s=>`<option ${w.evS===s?'selected':''}>${s}</option>`).join('')}</select></div>
+   ${mots.length?`<div class="mini upnc"><i class=vgi-alert></i><span>${mots.map(m=>esc(m)).join(' ')}</span></div>`:''}</div>`;}
+/* LE PARCHEMIN QUI EFFACE — LA PHRASE EST ICI, PAS DANS LA BULLE.
+   Le client l'ecrit sur le parchemin lui-meme : « Ceci remplace toute statistique
+   existante sur l'arme ». C'est la mise en garde la plus chere de la piece — un
+   parchemin pose au mauvais moment supprime le travail d'avant — et elle se lit
+   au MOMENT du choix, pas au survol de l'objet. Elle a donc sa place dans ce
+   panneau, ou l'on clique, plutot que dans une bulle qui deborde de l'ecran.
+   La phrase est LUE dans `faits.scroll.remplace`, jamais recopiee. */
+function scrollUI(slot){const w=cfgOf(slot);const sc=faits().scroll||{};
+  return `<div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/statscroll.png" alt=""> Scroll stat${sc.plage?` <span class="mini">(${esc(sc.plage)}, tiré au sort)</span>`:''}</div><div class="row">
    <select onchange="cset('${slot}','scrS',this.value)"><option value="">— stat —</option>${['Force','Endurance','Dextérité','Intelligence'].map(s=>`<option ${w.scrS===s?'selected':''}>${s}</option>`).join('')}</select>
-   <span class="mini">Niveau</span><select onchange="cset('${slot}','scrL',+this.value)">${[0,1,2,3,4].map(n=>`<option ${w.scrL===n?'selected':''}>+${n}</option>`).join('')}</select></div></div>`;}
+   <span class="mini">Niveau</span><select onchange="cset('${slot}','scrL',+this.value)">${[0,1,2,3,4].map(n=>`<option ${w.scrL===n?'selected':''}>+${n}</option>`).join('')}</select></div>
+   ${sc.remplace?`<div class="mini upnc"><i class=vgi-alert></i><span>${esc(sc.remplace)}</span></div>`:''}</div>`;}
 // Icone de jeu par element. Un <select> ne sait pas afficher d'image : l'element
 // se choisit donc sur une rangee de boutons, comme le percage juste au-dessus.
 // Ne concerne QUE l'element de la piece, pas le percage (pierceEl).
@@ -2104,6 +2587,26 @@ function rareteNote(tierChoisi){
     h+='<div class="mini upnc"><i class=vgi-info></i> Le relevé ne décrit aucun moyen d\'atteindre '+esc(tierChoisi)
       +' : la chaîne de parchemins du client s\'arrête à '+esc(dernier)+'. Ce palier reste réglable ici, mais rien dans le client ne dit comment on l\'obtient.</div>';
   return h;
+}
+/* ═══ LES TROIS PHRASES DU PANNEAU DE SERTISSAGE DU JEU ══════════════════════
+   Le releve les porte mot pour mot et aucun ecran ne les servait : la condition
+   d'entree (« une arme ultime +6 ou plus », 90 % de reussite), le tirage au sort
+   de la statistique, et les deux qui coutent de l'argent — a l'echec « seul le
+   joyau sera detruit », et « il sera impossible d'annuler apres la confirmation ».
+   ELLES SONT ICI ET PAS DANS LA BULLE, ET C'EST DELIBERE : on lit une mise en
+   garde AVANT de cliquer, et c'est dans ce panneau qu'on clique. La bulle, elle,
+   porte les nombres — le palier atteint et ce qu'il vaut.
+   LA TRANCHE DE NIVEAU EST CALCULEE SUR LA PIECE, pas recopiee : c'est le joyau
+   dont la bulle lit l'echelle, et les deux ecrans doivent nommer le meme. */
+function sertNote(item){
+  var S=faits().sertissage||{};
+  var mots=[S.condition,S.auHasard,S.echec,S.retrait].filter(Boolean);
+  if(!mots.length)return '';
+  var gm=sertGemme(item);
+  return '<div class="mini upnc" style="margin-top:6px"><i class=vgi-alert></i><span>'
+    +mots.map(function(m){return esc(m);}).join(' ')
+    +(gm?' Au niveau de cette pièce, l\'échelle est celle du '+esc(gm)+'.':'')
+    +'</span></div>';
 }
 function rareteIc(tier){
   const r=(meca().rarete||{})[tier];
@@ -2144,7 +2647,8 @@ function weaponPanelImpl(SL,e){const w=cfgOf(SL);const artefactable=['Éternel',
    ${upUI(SL,upMax)}
    <div class="grp"><div class="gh"><img class="ghic" src="/airbuilder/icons/sertissage/diamant.png" alt=""> Sertissage (5 diamants${art?' + 3 holographiques':''})</div>
      ${Array.from({length:5},(_,i)=>`<div class="dslot"><span class="mini" style="width:54px">Diamant ${i+1}</span><select onchange="cdia('${SL}','dia',${i},this.value)"><option value="">—</option>${DIASTATS.map(s=>`<option ${w.dia[i]===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('')}
-     ${art?'<div class="mini holohd" style="color:var(--purple);margin-top:5px">'+(meca().holo?mecaIc(meca().holo,'ghic'):'')+'Diamants holographiques :</div>'+Array.from({length:3},(_,i)=>`<div class="dslot holo"><span class="mini" style="width:54px">Holo ${i+1}</span><select onchange="cdia('${SL}','holo',${i},this.value)"><option value="">—</option>${HOLOSTATS.map(d=>`<option value="${d[0]}" ${w.holo[i]===d[0]?'selected':''}>${d[0]} +${d[1]}</option>`).join('')}</select></div>`).join(''):'<div class="mini">Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).</div>'}</div>
+     ${art?'<div class="mini holohd" style="color:var(--purple);margin-top:5px">'+(meca().holo?mecaIc(meca().holo,'ghic'):'')+'Diamants holographiques :</div>'+Array.from({length:3},(_,i)=>`<div class="dslot holo"><span class="mini" style="width:54px">Holo ${i+1}</span><select onchange="cdia('${SL}','holo',${i},this.value)"><option value="">—</option>${HOLOSTATS.map(d=>`<option value="${d[0]}" ${w.holo[i]===d[0]?'selected':''}>${d[0]} +${d[1]}</option>`).join('')}</select></div>`).join(''):'<div class="mini">Les 3 diamants holographiques se débloquent en Artefact (+11 à +20).</div>'}
+     ${sertNote(e.item)}</div>
    ${pierceUI(SL,pMax)}
    <div class="grp"><div class="gh">${rareteIc(w.tier)} Rareté</div><div class="row">${MECH.arme.rarete_tiers.map(t=>{const rc=RARCOL[t]||'';const ri=(meca().rarete||{})[t];return `<span class="tierbtn ${w.tier===t?'on':''}" style="${w.tier===t?`background:${rc};color:#0c0c11;border-color:${rc}`:`color:${rc};border-color:${rc}55`}" onclick="cset('${SL}','tier','${t}')">${ri?`<img class="raric" src="${ri}" alt="">`:''}${t}</span>`;}).join('')}</div>
      ${rareteNote(w.tier)}
@@ -2256,19 +2760,67 @@ function ramasseurPanel(e){const b=(e.item.b||[]).map(x=>esc(x[0])+' +'+x[1]).jo
    Le releve chiffre cinq paliers par esprit : on les montre, on marque celui qui
    est atteint, et on ecrit que le total ne les compte pas.
    LE PALIER ATTEINT EST LE DERNIER SEUIL FRANCHI, pas la somme des cinq — meme
-   regle que les paliers de bijou, et pour la meme raison. */
+   regle que les paliers de bijou, et pour la meme raison.
+
+   CE QUE CE LOT AJOUTE — la demande de Maxime, « comme dans Craft et
+   Collections ». La page /crafts pose la question a l'endroit
+   (src/components/collections/Anges.tsx) : pas « voici 49 niveaux » mais « il te
+   faut combien pour aller au 40 ». Trois choses manquaient ici :
+     · CE QU'IL RESTE A PAYER pour le palier suivant, et ce que ce palier donne.
+       En tete du panneau, avant le tableau : c'est la question du curseur.
+     · LA POUDRE CUMULEE DEPUIS LE 1 a chaque palier — la troisieme colonne du
+       tableau de Craft. Elle situe un palier dans la depense totale.
+     · LES CRANS QUI NE RAPPORTENT RIEN. Un palier tous les dix niveaux : entre
+       deux, le curseur bouge, la pastille change, et la poudre part pour rien.
+       Meme mise en garde que les plateaux de palier de bijou, meme dessin
+       (`.palerr`) — c'est le meme fait.
+   LA GRILLE DE COUT EST ECRITE UNE FOIS. `memeCoutPourTous` dit que les esprits
+   montables la partagent ; le nombre d'esprits et de crans est COMPTE, et le
+   prix du trajet complet est CALCULE — pas le champ `cumul` recopie a cote. */
 function fairyPanel(e){const w=cfgOf('fairy');const niv=w.lvl||0;
   const esp=espritDe(e.item),ES=faits().esprit||{};
   const max=ES.max||FAIRYMAX;
   const atteint=esp?espritPalier(esp,niv):null;
+  const suiv=esp?espritSuivant(esp,niv):null;
+  const plat=esp?espritPlateau(esp,niv):null;
+  const G=ES.couts||[];
   let corps='';
   if(esp){
-    /* Le palier vide n'est pas masque : il est marque. Voir `sansRecompense`. */
-    corps=`<div class="mlist">`+esp.paliers.map(p=>{const on=niv>=p[0];const T=espritTexte(p);
-      return `<div class="mline${on?' on':''}"><span>Niveau ${p[0]}</span><span>${T.texte?esc(T.texte):'<span class="mini">non affiché ici</span>'}</span></div>`;}).join('')+`</div>`
+    /* ── CE QU'IL TE RESTE A PAYER, EN TETE ────────────────────────────────
+       Le panneau donnait les cinq paliers et le prix du trajet complet. Aucun
+       des deux ne repond a la question qu'on se pose la main sur le curseur :
+       « j'en suis au 27, il me faut combien pour aller au 40 ». La page Craft et
+       Collections y repond par un calculateur ; ici le niveau est deja connu, la
+       reponse se calcule donc sans rien demander. */
+    corps=`<div class="feepay">`
+      +(suiv?`<div class="sertl pou">${poudreHtml(espritCout(niv,suiv[0]))}`
+              +` <span class="sertn">du ${Math.max(1,niv)} au ${suiv[0]}</span></div>`
+              +`<div class="mini">Pour le palier <b>${suiv[0]}</b> : ${espritTexte(suiv).texte?esc(espritTexte(suiv).texte):'effet non affiché ici'}.</div>`
+             :`<div class="mini">Palier <b>${max}</b> atteint : plus rien à payer.</div>`)
+      +(plat?`<div class="mini palerr"><i class=vgi-alert></i> Du <b>${plat.de}</b> au <b>${plat.a}</b>, rien ne change : un palier tous les dix niveaux, et l'effet ne monte qu'au <b>${plat.seuil}</b>.</div>`:'')
+      +`</div>`
+    /* Le palier vide n'est pas masque : il est marque. Voir `sansRecompense`.
+       LA TROISIEME COLONNE EST LE CUMUL DEPUIS LE 1, comme la colonne du tableau
+       de Craft et Collections : elle situe chaque palier dans la depense totale,
+       et elle est CALCULEE sur la grille — jamais recopiee palier par palier. */
+      +`<div class="mlist">`
+      /* UNE COLONNE DE NOMBRES SANS EN-TETE NE SE LIT PAS : « 219 » posé seul a
+         cote d'un palier ressemble a un bonus. L'en-tete coute une rangee et rend
+         la colonne lisible ; sans lui il faudrait la retirer (regle du
+         renseignement incomplet). Il ne s'affiche donc QUE si la grille est la. */
+      +(G.length?`<div class="mline m3 mhead"><span>Palier</span><span>Effet</span><span>Poudre depuis le 1</span></div>`:'')
+      +esp.paliers.map(p=>{const on=niv>=p[0];const T=espritTexte(p);
+      return `<div class="mline m3${on?' on':''}"><span>Niveau ${p[0]}</span><span>${T.texte?esc(T.texte):'<span class="mini">non affiché ici</span>'}</span><span>${G.length?nbFr(espritCumul(p[0])):''}</span></div>`;}).join('')+`</div>`
       +(esp.paliers.some(p=>espritTexte(p).ampute)?`<div class="mini mnote">Cette fée rapporte aussi de l'expérience, du butin ou des penyas : le site ne montre pas ces gains-là. Les paliers concernés ne sont donc pas vides, ils sont incomplets ici.</div>`:'')
       +`<div class="mini mnote">Non compté dans le total : le relevé chiffre l'effet, mais la pièce ne porte aucun bonus que le builder puisse additionner.</div>`
-      +(esp.cumul?`<div class="mini mnote">Monter cette fée de 1 à ${max} coûte ${esp.cumul.toLocaleString('fr-FR')} ${esc(ES.poudre||'')}.</div>`:'');
+    /* LA GRILLE DE COUT EST ECRITE UNE FOIS, PAS CINQ. Le releve porte
+       `memeCoutPourTous` : les esprits montables partagent la meme grille, et le
+       generateur ne pose ce drapeau que s'il n'a trouve QU'UNE suite de couts.
+       Le nombre d'esprits et le nombre de crans sont COMPTES ici, et le prix du
+       trajet est celui que `espritCout` calcule — pas le champ `cumul` recopie a
+       cote, qui servirait a se croire d'accord avec soi-meme. */
+      +(G.length?`<div class="mini mnote">Monter du 1 au ${G.length+1} coûte <b>${nbFr(espritCout(1,G.length+1))}</b> ${esc(ES.poudre||'')} en ${G.length} crans${
+          ES.memeCoutPourTous&&(ES.esprits||[]).length>1?`, la même grille pour les ${(ES.esprits||[]).length} esprits`:''}. Le premier cran coûte ${nbFr(G[0])}, le dernier ${nbFr(G[G.length-1])}.</div>`:'');
   } else {
     corps=`<div class="mini mnote">Non renseigné : le relevé du client ne chiffre pas les paliers de cette fée.</div>`;
   }

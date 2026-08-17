@@ -117,6 +117,42 @@
 .cc-card.r-rare{border-color:#4ea8ff88;color:#bfe0ff;background:rgba(78,168,255,.12)}
 .cc-card.r-épique{border-color:#c77dff88;color:#e6cfff;background:rgba(199,125,255,.12)}
 .cc-card.r-légendaire{border-color:#FFD24A88;color:#ffeaa8;background:rgba(255,210,74,.12)}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LES DESSINS DES CARTES DU CARNET — demande de Maxime, « ajouter les assets des
+   cartes dans le carnet des arcanes ». Le carnet n'en servait aucun.
+
+   LA LARGEUR N'EST PAS UN NOMBRE MAGIQUE : les cartes se partagent la rangée
+   (`flex:1 1 0`), donc trois cartes sont plus grandes que six et la vignette
+   grandit toute seule quand la colonne grandit. Un `40px` fixe aurait débordé les
+   carnets à six cartes dans une colonne de 184 px — la mesure : six vignettes de
+   34 px plus les écarts font 224 px pour 175 px utiles, et la rangée passait à la
+   ligne. `max-width` garde une vignette de trois cartes à une taille de carte.
+   LE FORMAT VIENT DU FICHIER : 110 × 250, l'`aspect-ratio` du client. Une carte
+   déformée se voit tout de suite.
+   LES NOMS RESTENT SOUS LES DESSINS. À vingt-six pixels de large on reconnaît une
+   carte qu'on a déjà vue ; on ne lit pas laquelle il faut aller chercher. Les
+   deux rangées ne se répètent donc pas, elles répondent à deux questions.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.cc-arts{display:flex;gap:4px;margin-top:8px}
+.cc-arts+.cc-cards{margin-top:5px}
+.cc-arts .cc-a{flex:1 1 0;min-width:0;max-width:40px;aspect-ratio:110/250;
+  border-radius:4px;overflow:hidden;background:rgba(0,0,0,.4);
+  border:1px solid var(--border);box-sizing:border-box}
+.cc-arts .cc-a img{width:100%;height:100%;object-fit:cover;display:block;
+  /* LE CARNET QU'ON NE POSSÈDE PAS EST GRIS, comme les 59 fichiers `nb_…` du
+     client — le même dessin désaturé et assombri. On applique le filtre plutôt
+     que de télécharger le second jeu de fichiers : un dessin, un fichier. */
+  filter:grayscale(1) brightness(.62);transition:filter .16s}
+.carn.on .cc-arts .cc-a img{filter:none}
+/* La carte sans dessin garde son cadre, en pointillé : le vide est un fait du
+   relevé, pas un chargement en cours. */
+.cc-arts .cc-a:empty{border-style:dashed;background:rgba(0,0,0,.25)}
+/* La rareté teinte le cadre de la vignette comme elle teinte la pastille du nom
+   juste dessous — mêmes valeurs, une seule grille de lecture. */
+.cc-arts .cc-a.r-rare{border-color:#4ea8ff88}
+.cc-arts .cc-a.r-épique{border-color:#c77dff88}
+.cc-arts .cc-a.r-légendaire{border-color:#FFD24A88}
 .carn .cb{color:var(--green);font-size:11px;margin-top:8px;line-height:1.45;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);font-weight:600}
 .carn .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
 .seg{display:flex;gap:0;margin:8px 0 2px;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:11px}
@@ -545,10 +581,15 @@
 .wp .palbloc .pall{font-size:12px;line-height:1.6;color:var(--text)}
 .wp .palbloc .pall b{color:var(--gold);font-family:Rubik,sans-serif;font-weight:700}
 .wp .palbloc .mini{margin-top:4px;line-height:1.55}
-.wp .palbloc .mini.palerr{color:var(--text);background:rgba(255,140,26,.08);
+/* LA MISE EN GARDE « CE CRAN NE RAPPORTE RIEN » N'EST PLUS RÉSERVÉE AU BIJOU :
+   la fée a exactement le même plateau — un palier tous les dix niveaux, et rien
+   entre les deux. La règle est donc décrochée de `.palbloc` pour que les deux
+   plateaux se lisent de la même façon, au lieu d'inventer une seconde forme pour
+   le même fait. Personne d'autre ne porte `.palerr`. */
+.wp .mini.palerr{color:var(--text);background:rgba(255,140,26,.08);
   border:1px solid rgba(255,140,26,.28);border-radius:7px;padding:5px 7px}
-.wp .palbloc .mini.palerr>i:first-child{color:var(--orange);margin-right:4px}
-.wp .palbloc .mini.palerr b{color:var(--orange)}
+.wp .mini.palerr>i:first-child{color:var(--orange);margin-right:4px}
+.wp .mini.palerr b{color:var(--orange)}
 
 /* LA LIGNE NÉGATIVE D'UNE PANOPLIE. Elle se lit sous le bandeau du résumé ET
    dans la fenêtre de choix, juste au-dessus du bouton qui pose l'ensemble. */
@@ -663,3 +704,167 @@
    remettre un élément vide à côté de chaque icône. */
 .wp .gh>[class^="vgi-"],.pent [class^="vgi-"]{margin-left:0;margin-right:0;
   display:inline-block;vertical-align:-.14em}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   TOUT L'OBJET DANS LA BULLE — et la bulle qui ne devient pas un mur.
+
+   MESURÉ AVANT D'ÉCRIRE UNE RÈGLE : une arme entièrement configurée (palier 20,
+   ascension 3, rareté Mythique 4 lignes, maîtrise, éveil, scroll, perçage 12/12,
+   sertissage 5 + 3 holos, élément) faisait déjà 673 px de haut pour 322 de
+   large. Sur un portable de 13 pouces, la fenêtre n'en montre pas autant :
+   `itipMove` colle alors le haut de la bulle à 8 px du bord et c'est le BAS qui
+   sort de l'écran. L'ordre de la bulle vaut donc hiérarchie, et la densité du
+   texte est le seul levier qui ajoute des faits sans ajouter des pixels.
+
+   DEUX AVERTISSEMENTS À NE PAS ESSAYER DE CONTOURNER :
+   · `.itip` porte `pointer-events:none` ET suit le curseur (`itipMove`) : aucun
+     `title` posé dans cette bulle n'est atteignable, ni à la souris ni au doigt.
+     Reléguer un détail dans un `title` ÉQUIVAUT donc à le supprimer. Ce qui doit
+     se lire se lit en clair, ou vit dans le panneau de réglage.
+   · un accent grave dans un commentaire CSS à l'intérieur d'un littéral de
+     gabarit ferme le littéral : ce fichier-ci est un vrai .css, mais la règle
+     tient toujours pour tout ce qui s'écrit dans airbuilder.js.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* LA DENSITÉ, PAYÉE UNE FOIS POUR TOUTES. Ces quatre valeurs ne changent aucun
+   renseignement : elles resserrent l'interligne et les marges de section pour
+   financer les faits ajoutés. Reprise de 1.55 à 1.4 sur les lignes de bonus (5 à
+   12 par pièce), et de 8 à 6 px au-dessus des en-têtes de section. */
+.itip .bl{line-height:1.4}
+.itip .mline{padding:0;line-height:1.45}
+.itip .sec{margin:6px 0 2px}
+.itip .crow{margin:4px 0}
+.itip .mnote{line-height:1.45}
+
+/* LA LARGEUR EST LE LEVIER LE MOINS CHER CONTRE LA HAUTEUR, et c'est mesuré :
+   à 322 px la colonne utile d'une ligne de configuration fait 212 px, soit une
+   quarantaine de caractères — chaque fait ajouté y coûtait deux ou trois
+   rangées. À 372 px la même phrase tient sur une rangée de moins, et huit
+   renseignements neufs rentrent pour une trentaine de pixels au lieu de trois
+   cent soixante. Rien n'est retiré : le texte respire.
+   LE `min()` PROTÈGE LE TÉLÉPHONE. La bulle est en `position:fixed` et suit le
+   curseur : figée à 372 px elle dépasserait un écran de 375 px de large. Elle ne
+   dépasse jamais la fenêtre moins ses marges.
+   L'ÉTIQUETTE DE GAUCHE PERD DIX PIXELS au passage — « Sertissage » est le plus
+   long des sept libellés et il tient encore. Dix pixels rendus à la colonne du
+   texte, sept fois par bulle. */
+.itip{width:min(372px,calc(100vw - 20px))}
+.itip .crow .lab{width:60px}
+
+/* LE BANDEAU DE PANOPLIE, EN TÊTE DU CADRE ET DISCRET — demande de Maxime, mot
+   pour mot : « c'est pas un élément important ». Donc pas de bloc, pas de titre
+   en capitales : une seule ligne de 25 px au-dessus du nom, quatre vignettes de
+   18 px, les portées allumées et les manquantes éteintes en gris. Un dessin dit
+   « 3 sur 4 » sans l'écrire.
+   `--pcol` porte la teinte de l'ensemble (elle vient de ses pièces, en hexa :
+   `var(--gold)55` n'est pas une couleur et la déclaration entière serait jetée). */
+.itip .panbar{display:flex;align-items:center;gap:7px;margin:-2px 0 7px;padding-bottom:6px;
+  border-bottom:1px solid #ffffff14}
+.itip .panbar .pcs{display:flex;gap:3px;flex:none}
+.itip .panbar .pc{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  background:#ffffff08;border:1px solid #ffffff1a;box-sizing:border-box}
+.itip .panbar .pc img{width:14px;height:14px;object-fit:contain;image-rendering:pixelated;
+  filter:grayscale(1);opacity:.38}
+.itip .panbar .pc.on{border-color:var(--pcol);background:color-mix(in srgb,var(--pcol) 16%,transparent)}
+.itip .panbar .pc.on img{filter:none;opacity:1}
+.itip .panbar .pnm{font-family:Rubik,sans-serif;font-weight:600;font-size:10.5px;color:var(--pcol);
+  text-transform:uppercase;letter-spacing:.7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.itip .panbar .pnn{margin-left:auto;font-family:Rubik,sans-serif;font-weight:700;font-size:10.5px;
+  color:var(--mut);font-variant-numeric:tabular-nums;flex:none}
+/* LA LIGNE NÉGATIVE RESTE ÉCRITE MÊME SOUS UN BANDEAU DISCRET : c'est une mise
+   en garde, pas une décoration. La fenêtre de panoplie du jeu n'affiche que ce
+   que l'ensemble AJOUTE — celle-là ne se voit nulle part en jouant.
+   ELLE N'EST PLUS DANS LE BANDEAU, donc plus de marge négative pour la coller
+   sous lui : elle vit maintenant dans la rangée des `.palw`, sous les bonus de
+   la pièce, et prend la même respiration qu'eux. Le rouge est celui du site
+   (`--red`), pas un hexa recopié : la même couleur sert déjà aux statistiques
+   qui descendent, dans le résumé. */
+.itip .panbarw{font-size:10.5px;line-height:1.45;color:var(--red,#f87171);margin:4px 0 0}
+
+/* LES VALEURS DE SERTISSAGE ET DE PERÇAGE. Même forme pour les trois familles,
+   chacune sur sa teinte : bleu clair = joyau, rouge = holographique, violet =
+   perçage. La teinte dit d'où vient le nombre sans une ligne de plus. */
+.itip .sertl{font-size:11.5px;font-weight:600;margin-top:2px;line-height:1.4}
+.itip .sertl b{font-family:Rubik,sans-serif;font-weight:700}
+.itip .sertl.dia{color:var(--c-diamant)}
+.itip .sertl.holo{color:var(--c-holo)}
+.itip .sertl.per{color:var(--c-percage)}
+/* Les lignes de rareté partagent la forme : la teinte du palier de rareté
+   n'irait pas (elle change à chaque palier), donc l'or des bonus tirés au sort. */
+.itip .sertl.rar{color:var(--gold)}
+/* Le mot qui qualifie un nombre sans lui voler la vedette : « fixe, s'ajoute »,
+   « sur +20 », « +1 à +4 ». */
+.itip .sertn{font-family:inherit;font-weight:500;font-size:10px;color:var(--mut);text-transform:none;letter-spacing:0}
+
+/* LES DOUZE CARTES DE PERÇAGE SUR UNE SEULE RANGÉE. À 18 px elles débordaient
+   la colonne de la bulle (212 px utiles) et repassaient à la ligne : deux
+   rangées pour un renseignement qui tient sur une. Le panneau de réglage garde
+   ses grandes cartes, c'est là qu'on clique. */
+.itip .pips .pcard{width:13px;height:13px}
+
+/* La note qui protège d'une dépense garde la teinte d'or des autres mises en
+   garde de la bulle (voir .palw.warn) — une seule grille de lecture. */
+.itip .mnote.warn{color:var(--gold)}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   LA FÉE — L'EFFET ATTEINT, CELUI D'APRÈS, ET CE QU'IL COÛTE.
+
+   La bulle écrivait « 30 / 50 » et le palier atteint. Manquaient les deux
+   renseignements qui décident d'une dépense : ce que le PALIER SUIVANT apporte,
+   et ce qu'il coûte en poudre. C'est la lecture de la page Craft et Collections,
+   reprise ici parce que c'est la même question.
+
+   TROIS TEINTES, TROIS NATURES, et pas une de plus : vert = l'effet qu'on a
+   (comme les bonus propres de la pièce, `.bl`), gris = celui qu'on n'a pas
+   encore, or = ce qu'il faut payer (comme toutes les mises en garde de dépense
+   de cette bulle). L'éveil garde son bleu : ce n'est pas la même mécanique et
+   `.evs b` ne devait pas se mettre à parler de fées.
+   ══════════════════════════════════════════════════════════════════════════════ */
+.itip .evs.fee b{color:var(--green)}
+/* LE PALIER QU'ON N'A PAS ENCORE N'EST PAS BLEU. `.evs b` est bleu parce que
+   `.evs` sert d'abord à l'ÉVEIL : sans cette règle, l'effet du palier suivant
+   d'une fée arrivait dans la teinte d'une autre mécanique, à deux lignes de
+   distance d'un bloc d'éveil. Gris = pas encore acquis, comme une ligne de
+   maîtrise éteinte. */
+.itip .evs.fee.next b{color:var(--mut)}
+
+/* LE PRIX EN POUDRE — MÊME FORME DANS LA BULLE ET DANS LE PANNEAU, exactement
+   pour la raison qui vaut déjà pour `.mline` : c'est le même renseignement, et
+   deux dessins pour un même fait finissent par diverger. La règle n'est donc PAS
+   préfixée par `.itip`. Dans la bulle elle s'ajoute à `.sertl` (11,5 px, marge
+   serrée) ; dans le panneau `.feepay` la remonte à 13 px.
+   L'icône du sac de poudre est celle de /jeu/icones — le même fichier que la page
+   Craft et Collections, pas une copie renommée. */
+.pou{display:flex;align-items:center;gap:5px;flex-wrap:wrap;color:var(--gold);line-height:1.4}
+.pou .poudic{width:14px;height:14px;object-fit:contain;image-rendering:pixelated;flex:none}
+.pou b{font-family:Rubik,sans-serif;font-weight:700}
+
+/* ── LE PANNEAU DE LA FÉE ─────────────────────────────────────────────────────
+   « Ce qu'il te reste à payer » est le premier bloc du panneau, avant le tableau
+   des paliers : c'est la question qu'on se pose la main sur le curseur. Même
+   cadre que le palier d'un bijou (`.palbloc`), parce que c'est le même genre de
+   renseignement — ce que coûte le cran suivant et ce qu'il rapporte. */
+.wp .feepay{margin:8px 0 2px;padding:8px;border-radius:8px;background:var(--bg2);
+  border:1px solid var(--border)}
+.wp .feepay .pou{font-size:14px}
+.wp .feepay .mini{margin-top:5px;line-height:1.55}
+
+/* LE TABLEAU DES PALIERS PASSE À TROIS COLONNES : niveau · effet · poudre
+   dépensée depuis le 1 — la colonne du tableau de Craft et Collections.
+   `.mline` est un flex à deux enfants et sa règle `span:last-child` habille LE
+   SECOND, c'est-à-dire l'effet ; avec un troisième enfant elle habillerait le
+   nombre et l'effet perdrait sa graisse. D'où un modificateur explicite plutôt
+   qu'un `nth-child` posé à l'aveugle sur la règle d'origine. */
+.mline.m3{display:grid;grid-template-columns:auto 1fr auto;align-items:baseline;gap:10px}
+.mline.m3>span:nth-child(2){font-family:Rubik,sans-serif;font-weight:700;color:var(--mut);
+  white-space:normal}
+.mline.m3.on>span:nth-child(2){color:var(--gold)}
+.mline.m3>span:last-child{font-family:Rubik,sans-serif;font-weight:500;font-size:11px;
+  color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mline.m3.on>span:last-child{color:var(--mut)}
+/* L'en-tête du tableau : la même grille, en petites capitales muettes. Il ne
+   s'allume jamais — ce n'est pas un palier. */
+.mline.m3.mhead{opacity:1;font-size:10px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--mut);padding-bottom:2px;border-bottom:1px solid var(--border);margin-bottom:2px}
+.mline.m3.mhead>span:nth-child(2),.mline.m3.mhead>span:last-child{font-family:inherit;
+  font-weight:600;font-size:10px;color:var(--mut)}

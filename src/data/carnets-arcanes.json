@@ -7,7 +7,7 @@
  "jonction": "par la signature des cartes, PAS par l'index : les deux numérotations diffèrent (le carnet 5 du fait-main est le 15e du client)",
  "carnets": 15,
  "cartes": 63,
- "illustrations": 59,
+ "illustrations": 63,
  "orphelins": [],
  "liste": [
   {
@@ -22,11 +22,11 @@
    "difficulte": false,
    "complet": [
     [
-     "Vitesse",
+     "Vitesse de déplacement",
      15
     ],
     [
-     "Expérience",
+     "Expérience %",
      20
     ]
    ],
@@ -34,12 +34,12 @@
     {
      "label": "Vitesse de déplacement %",
      "valeur": 15,
-     "labelFaitMain": "Vitesse"
+     "labelFaitMain": "Vitesse de déplacement"
     },
     {
      "label": "Expérience %",
      "valeur": 20,
-     "labelFaitMain": "Expérience"
+     "labelFaitMain": "Expérience %"
     }
    ],
    "eveille": [
@@ -91,11 +91,11 @@
    "difficulte": false,
    "complet": [
     [
-     "Toutes stats",
+     "Toutes les statistiques",
      10
     ],
     [
-     "Vitesse d'incantation",
+     "Temps d'incantation %",
      25
     ]
    ],
@@ -103,12 +103,12 @@
     {
      "label": "Toutes stats",
      "valeur": 10,
-     "labelFaitMain": "Toutes stats"
+     "labelFaitMain": "Toutes les statistiques"
     },
     {
      "label": "Vitesse d'incantation %",
      "valeur": 25,
-     "labelFaitMain": "Vitesse d'incantation"
+     "labelFaitMain": "Temps d'incantation %"
     }
    ],
    "eveille": [
@@ -160,7 +160,7 @@
    "difficulte": false,
    "complet": [
     [
-     "Toutes stats",
+     "Toutes les statistiques",
      10
     ],
     [
@@ -172,7 +172,7 @@
     {
      "label": "Toutes stats",
      "valeur": 10,
-     "labelFaitMain": "Toutes stats"
+     "labelFaitMain": "Toutes les statistiques"
     },
     {
      "label": "Attaque",
@@ -229,11 +229,11 @@
    "difficulte": false,
    "complet": [
     [
-     "Expérience",
+     "Expérience %",
      40
     ],
     [
-     "Vitesse",
+     "Vitesse de déplacement",
      15
     ]
    ],
@@ -241,12 +241,12 @@
     {
      "label": "Expérience %",
      "valeur": 40,
-     "labelFaitMain": "Expérience"
+     "labelFaitMain": "Expérience %"
     },
     {
      "label": "Vitesse de déplacement %",
      "valeur": 15,
-     "labelFaitMain": "Vitesse"
+     "labelFaitMain": "Vitesse de déplacement"
     }
    ],
    "eveille": [
@@ -298,11 +298,11 @@
    "difficulte": false,
    "complet": [
     [
-     "Taux de penyas",
+     "Penyas gagnés %",
      5
     ],
     [
-     "Vitesse",
+     "Vitesse de déplacement",
      15
     ]
    ],
@@ -310,12 +310,12 @@
     {
      "label": "Penyas %",
      "valeur": 5,
-     "labelFaitMain": "Taux de penyas"
+     "labelFaitMain": "Penyas gagnés %"
     },
     {
      "label": "Vitesse de déplacement %",
      "valeur": 15,
-     "labelFaitMain": "Vitesse"
+     "labelFaitMain": "Vitesse de déplacement"
     }
    ],
    "eveille": [
@@ -333,7 +333,7 @@
      "nom": "Carte Macoodoo",
      "rarete": "Commune",
      "quantite": 1,
-     "art": null,
+     "art": "couleur_macoodoo_bck.webp",
      "sujet": "monstre",
      "niveau": 112
     },
@@ -341,7 +341,7 @@
      "nom": "Carte Maitre des cartes",
      "rarete": "Commune",
      "quantite": 1,
-     "art": null,
+     "art": "couleur_maitre_des_cartes_bck.webp",
      "sujet": null,
      "niveau": null
     },
@@ -349,7 +349,7 @@
      "nom": "Carte Sasha",
      "rarete": "Commune",
      "quantite": 1,
-     "art": null,
+     "art": "couleur_sasha_bck.webp",
      "sujet": null,
      "niveau": null
     }
@@ -367,7 +367,7 @@
    "difficulte": true,
    "complet": [
     [
-     "Maîtrise d'arme",
+     "Maîtrise d'arme %",
      25
     ],
     [
@@ -383,7 +383,7 @@
     {
      "label": "XP de maîtrise d'arme %",
      "valeur": 15,
-     "labelFaitMain": "Maîtrise d'arme"
+     "labelFaitMain": "Maîtrise d'arme %"
     },
     {
      "label": "Précision %",
@@ -457,11 +457,11 @@
    "difficulte": true,
    "complet": [
     [
-     "Taux de drop",
+     "Taux de butin %",
      15
     ],
     [
-     "Taux de penyas",
+     "Penyas gagnés %",
      8
     ]
    ],
@@ -469,12 +469,12 @@
     {
      "label": "Chance de butin %",
      "valeur": 10,
-     "labelFaitMain": "Taux de drop"
+     "labelFaitMain": "Taux de butin %"
     },
     {
      "label": "Penyas %",
      "valeur": 5,
-     "labelFaitMain": "Taux de penyas"
+     "labelFaitMain": "Penyas gagnés %"
     }
    ],
    "eveille": [
@@ -590,7 +590,7 @@
      "nom": "Carte Souverain Prestigieux",
      "rarete": "Rare",
      "quantite": 2,
-     "art": null,
+     "art": "couleur_souverain_prestigieux_bck.webp",
      "sujet": null,
      "niveau": null
     },
@@ -894,11 +894,11 @@
    "difficulte": true,
    "complet": [
     [
-     "Taux de drop",
+     "Taux de butin %",
      30
     ],
     [
-     "Taux de penyas",
+     "Penyas gagnés %",
      15
     ]
    ],
@@ -906,12 +906,12 @@
     {
      "label": "Chance de butin %",
      "valeur": 15,
-     "labelFaitMain": "Taux de drop"
+     "labelFaitMain": "Taux de butin %"
     },
     {
      "label": "Penyas %",
      "valeur": 8,
-     "labelFaitMain": "Taux de penyas"
+     "labelFaitMain": "Penyas gagnés %"
     }
    ],
    "eveille": [
@@ -1118,7 +1118,7 @@
      1000
     ],
     [
-     "Dégâts aux monstres",
+     "Dégâts sur monstres %",
      16
     ]
    ],
@@ -1141,7 +1141,7 @@
     {
      "label": "Dégâts contre monstres (PvE) %",
      "valeur": 8,
-     "labelFaitMain": "Dégâts aux monstres"
+     "labelFaitMain": "Dégâts sur monstres %"
     }
    ],
    "eveille": [
@@ -1237,7 +1237,7 @@
      85
     ],
     [
-     "Dégâts aux monstres",
+     "Dégâts sur monstres %",
      16
     ]
    ],
@@ -1260,7 +1260,7 @@
     {
      "label": "Dégâts contre monstres (PvE) %",
      "valeur": 8,
-     "labelFaitMain": "Dégâts aux monstres"
+     "labelFaitMain": "Dégâts sur monstres %"
     }
    ],
    "eveille": [

@@ -925,6 +925,13 @@ const faits = {
   esprit: {
     max: DATA.FAIRYMAX,
     poudre: COLL.poudre?.n ?? "",
+    /* L'ICÔNE DE LA MONNAIE DE MONTÉE, et pourquoi elle est ici plutôt que dans
+       data.json : le builder affiche désormais le coût du palier suivant, et un
+       nombre nu ne dit pas en quoi il se paie. Le fichier est celui que la page
+       Craft et Collections sert déjà (`/jeu/icones/…`) — le même dessin sous le
+       même nom, jamais une copie renommée. data.json est injecté en ligne dans
+       la page : on n'y ajoute pas un octet, ce fichier-ci est chargé en différé. */
+    poudreIc: COLL.poudre?.ic ?? "",
     couts: coutsEsprit.length === 1 ? (COLL.anges ?? []).find((a) => a.montable)?.couts ?? null : null,
     memeCoutPourTous: coutsEsprit.length === 1,
     esprits,

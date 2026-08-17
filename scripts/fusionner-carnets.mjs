@@ -48,6 +48,44 @@ const clef = (s) =>
 
 const signature = (cartes) => (cartes ?? []).map((c) => clef(c.nom ?? c.n)).sort().join("|");
 
+/**
+ * LE REPLI PAR NOM DE CARTE — quatre illustrations que la jonction manquait.
+ *
+ * Le relevé du client nomme ses dessins par rang de paquet
+ * (`couleur_ii_sys_sys_monsterdeck_37.webp`), et c'est ce nom que `decks` porte.
+ * Mais QUATRE cartes n'ont pas de rang : leur fichier est nommé d'après la carte
+ * elle-même — `couleur_sasha_bck.webp`, `couleur_macoodoo_bck.webp`,
+ * `couleur_maitre_des_cartes_bck.webp`, `couleur_souverain_prestigieux_bck.webp`.
+ * Le client ne les rattache à rien, donc `art` restait nul et le carnet servait
+ * quatre cadres vides.
+ *
+ * ┌──────── POURQUOI UNE RÈGLE ET NON QUATRE NOMS ÉCRITS ────────┐
+ * │ Quatre noms en dur auraient réglé aujourd'hui et rien demain. │
+ * │ La règle se dérive du nom de la carte, et surtout ELLE NE     │
+ * │ S'APPLIQUE QUE SI LE FICHIER EXISTE : on ne devine jamais une  │
+ * │ adresse. Une carte future dans le même cas est ramassée seule ;│
+ * │ une carte dont le dessin n'existe pas reste sans dessin.      │
+ * └──────────────────────────────────────────────────────────────┘
+ *
+ * LES QUATRE ONT ÉTÉ OUVERTES avant d'écrire ceci, pas seulement testées en 200 :
+ * Sasha est un personnage au béret rouge tenant un félin ; le Maître des cartes
+ * tient un éventail de cartes à jouer ; Macoodoo est un colosse à colliers de
+ * crânes ; le Souverain Prestigieux est un guerrier-lion. Ce sont bien quatre
+ * faces de carte, et chacune porte le sujet que son nom annonce — la règle ne
+ * rapproche pas deux choses qui se ressemblent par hasard.
+ */
+const DOSSIER_CARTES = "public/jeu/cartes";
+const artParNom = (nom) => {
+  const base = String(nom ?? "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/^\s*carte\s+/i, "")
+    .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (!base) return null;
+  const f = `couleur_${base}_bck.webp`;
+  return fs.existsSync(`${DOSSIER_CARTES}/${f}`) ? f : null;
+};
+let repliParNom = 0;
+
 const parSignature = new Map();
 for (const d of client) parSignature.set(signature(d.cartes), d);
 
@@ -66,11 +104,15 @@ for (const [i, m] of main.entries()) {
   const cartes = (m.cartes ?? []).map((x) => {
     const k = clef(x.nom ?? x.n);
     const cc = artParClef.get(k);
+    // Le client d'abord ; son nom de fichier est la source. Le repli par nom ne
+    // sert que là où il ne dit rien, et seulement si le fichier est sur le disque.
+    let art = cc?.art ?? null;
+    if (!art) { const r = artParNom(x.nom ?? x.n); if (r) { art = r; repliParNom++; } }
     return {
       nom: x.nom ?? x.n,
       rarete: x.rarete ?? null,
       quantite: x.qte ?? null,
-      art: cc?.art ?? null,
+      art,
       sujet: cc?.sujet ?? null,
       niveau: cc?.niv ?? null,
     };
@@ -122,5 +164,6 @@ const sortie = {
 fs.writeFileSync("src/data/carnets-arcanes.json", JSON.stringify(sortie, null, 1));
 console.log(`carnets fusionnés : ${sortie.carnets}/${main.length}`);
 console.log(`cartes : ${sortie.cartes} · illustrations retrouvées : ${sortie.illustrations}`);
+console.log(`dont par repli sur le nom de la carte : ${repliParNom}`);
 console.log(`orphelins : ${orphelins.length}${orphelins.length ? " → " + JSON.stringify(orphelins) : ""}`);
 console.log(`noms français conservés : ${fusionnes.filter((d) => d.nom).length}`);

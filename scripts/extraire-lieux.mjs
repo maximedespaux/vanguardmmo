@@ -94,8 +94,8 @@ function carte(fichier) {
  *     niveaux — voir `peuplementsDe()`, qui les distingue sur la PROVENANCE et
  *     non sur ces noms de zone.
  * Les fondre en un seul intervalle donnerait « du niveau 73 au 210 » et ferait
- * croire à une progression continue ; n'en garder qu'un ferait disparaître la
- * zone la plus fournie du jeu.
+ * croire à une progression continue ; n'en garder qu'un ferait disparaître le
+ * farm de fin de jeu du serveur — 4 130 emplacements, 3ᵉ lieu du relevé.
  */
 const LIEUX = [
   {
@@ -188,9 +188,36 @@ const LIEUX = [
  * huit lieux de cette page : un superlatif calculé sur huit lignes ne vaudrait
  * que pour ces huit lignes, et l'écran dirait « du jeu ».
  */
+/**
+ * ┌──── LE RANG SE COMPTE PAR LIEU, PAS PAR NOM DE ZONE ────┐
+ * │ Première version : un total par nom de zone. Elle       │
+ * │ classait Azria PREMIÈRE sur 65 avec ses 4 130           │
+ * │ emplacements — et c'était faux. Le Parc prestigieux et  │
+ * │ le Royaume de Kaelis sont chacun découpés en DEUX modes │
+ * │ (« … 1v1 » et « … AoE ») qui sont le même endroit :     │
+ * │ comptés séparément ils passaient sous Azria, regroupés  │
+ * │ ils la dépassent nettement.                              │
+ * │                                                          │
+ * │     Parc prestigieux   6 400   (3 200 + 3 200)          │
+ * │     Royaume de Kaelis  6 072   (3 036 + 3 036)          │
+ * │     Azria              4 130                             │
+ * │                                                          │
+ * │ Azria est TROISIÈME. C'est exactement la maladie déjà    │
+ * │ corrigée sur /objets — compter une unité et présenter le │
+ * │ résultat comme une autre.                                │
+ * └──────────────────────────────────────────────────────────┘
+ *
+ * Le suffixe de mode est retiré pour regrouper. La règle est dérivable et ne
+ * nomme aucun lieu : elle vaut pour tout découpage à venir du même genre.
+ */
+const SANS_MODE = (z) => (z ?? "").replace(/\s*(1v1|AoE)\s*$/i, "").trim();
+
 const POSES_PAR_ZONE = (() => {
   const t = new Map();
-  for (const m of MONSTRES) for (const l of m.lieux ?? []) t.set(l.z, (t.get(l.z) ?? 0) + (l.n ?? 0));
+  for (const m of MONSTRES) for (const l of m.lieux ?? []) {
+    const k = SANS_MODE(l.z);
+    t.set(k, (t.get(k) ?? 0) + (l.n ?? 0));
+  }
   return t;
 })();
 const TOTAUX_TRIES = [...POSES_PAR_ZONE.values()].sort((a, b) => b - a);

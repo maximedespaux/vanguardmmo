@@ -273,6 +273,23 @@ export function Sertissage() {
             <Paliers total={p.total} lignes={p.familles.map((f) => ({
               cle: f.cle, nom: f.nom, sous: f.plage, servis: f.remplis,
             }))} />
+            {/* ┌──── CE QUE LE CLIENT PORTE N'EST PAS CE QUI CIRCULE ────┐
+                   La table ci-dessus est celle du client, et elle est juste :
+                   cinq familles de joyau y ont leurs paliers. Mais sur le
+                   serveur, seuls le Diamant et le Diamant holographique
+                   servent au sertissage — les quatre autres familles ne se
+                   rencontrent pas. Aucun fichier ne le dit : le relevé donne
+                   une provenance à chacune des cinq, parce qu'il décrit ce
+                   qui est REPRÉSENTABLE, pas ce qui tourne aujourd'hui.
+                   C'est donc une observation de jeu, et elle est signée comme
+                   telle — la règle de la maison interdit de faire passer un
+                   constat pour une donnée.                                */}
+            <p className="mc-src">
+              <b>Constaté en jeu par la guilde</b>, et non lu dans le client :
+              seuls le <b>Diamant</b> et le <b>Diamant holographique</b> servent au
+              sertissage. Les quatre autres familles existent dans la table sans
+              circuler.
+            </p>
             {p.complets.length > 0 && p.plafonnent.length > 0 && (
               <p className="mc-src">
                 Les {p.total - p.nommes} paliers de plus du{" "}
@@ -346,6 +363,23 @@ export function Percage() {
         <Bulle quoi={<>Une arme et un bouclier prennent des cartes d&apos;<b>attaque</b>, une tenue des cartes de <b>défense</b>. Le feu attaque sous « Feu » et défend sous « Volcano » — d&apos;où deux séries de dessins pour cinq éléments.</>}>
           {c.nAttaque} cartes d&apos;attaque, {c.nDefense} de défense
         </Bulle>.
+      </p>
+
+      {/* ┌──── LA PLANCHE MONTRE TOUS LES RANGS, TROIS SEULEMENT CIRCULENT ────┐
+             Les rangées ci-dessous sont celles du client : D, C, B, A, S, R pour
+             l'attaque. Sur le serveur, seuls B, A et S se rencontrent — les
+             autres rangs existent dans le catalogue sans être distribués.
+             LE RELEVÉ NE PEUT PAS LE DIRE : il donne une provenance à D et à C
+             comme aux trois autres, parce qu'il décrit les tables du client et
+             non ce qui tourne. R et SR, eux, n'ont AUCUNE source dans le relevé
+             (et SR est du Baruna, hors sujet ici) — c'est le seul indice que les
+             fichiers portent, et il ne suffit pas à trancher pour D et C.
+             D'où une observation de jeu, signée comme telle plutôt que glissée
+             parmi les faits.                                                   */}
+      <p className="mc-src">
+        <b>Constaté en jeu par la guilde</b>, et non lu dans le client : seules les
+        cartes <b>B</b>, <b>A</b> et <b>S</b> circulent pour l&apos;instant. Les autres
+        rangs figurent dans le catalogue sans se rencontrer.
       </p>
 
       <Groupe titre={`Attaque — arme et bouclier (${CARTES_ATTAQUE.length} éléments)`}>

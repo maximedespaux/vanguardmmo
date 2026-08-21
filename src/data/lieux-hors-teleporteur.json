@@ -1,7 +1,7 @@
 {
  "genere": "2026-08-21",
  "source": "public/wiki/monstres.json + public/wiki/ou-trouver.json + cartouches lus sur public/jeu/cartes-monde/",
- "zonesDuReleve": 65,
+ "zonesDuReleve": 63,
  "lieux": [
   {
    "groupe": "ticket",
@@ -79,7 +79,7 @@
       "rang": "normal",
       "poses": 335
      },
-     "rangPoses": 9
+     "rangPoses": 7
     },
     {
      "origine": "airborn",
@@ -94,7 +94,7 @@
       "rang": "capitaine",
       "poses": 2030
      },
-     "rangPoses": 1
+     "rangPoses": 3
     }
    ],
    "objets": [],
@@ -140,7 +140,7 @@
       "rang": "super",
       "poses": 1
      },
-     "rangPoses": 17
+     "rangPoses": 15
     }
    ],
    "objets": [
@@ -207,7 +207,7 @@
       "rang": "super",
       "poses": 1
      },
-     "rangPoses": 20
+     "rangPoses": 18
     }
    ],
    "objets": [],
@@ -251,7 +251,7 @@
       "rang": "boss",
       "poses": 2
      },
-     "rangPoses": 20
+     "rangPoses": 18
     }
    ],
    "objets": [
@@ -343,7 +343,7 @@
       "rang": "boss",
       "poses": 3
      },
-     "rangPoses": 14
+     "rangPoses": 12
     }
    ],
    "objets": [
@@ -459,7 +459,7 @@
       "rang": "demi-boss",
       "poses": 1
      },
-     "rangPoses": 35
+     "rangPoses": 33
     }
    ],
    "objets": [

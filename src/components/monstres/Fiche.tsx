@@ -212,13 +212,19 @@ export function FicheMonstre({ m, voisins, regle = null }: {
       compte: null,
       contenu: (
         <div style={{ display: "flex", gap: 15, alignItems: "flex-start", flexWrap: "wrap" }}>
-          {/* L'illustration de sa carte du client — huit monstres du catalogue en
-              ont une dont le dessin a été vérifié (cf. `portraitDe`). Quand il n'y
-              en a pas, on ne met rien : ni cadre vide, ni pictogramme générique. */}
+          {/* Son image, quand elle existe et qu'elle a été vérifiée (cf. `portraitDe`) :
+              soit l'illustration de sa carte du client, soit le rendu détouré du wiki
+              officiel. Quand il n'y en a pas, on ne met rien : ni cadre vide, ni
+              pictogramme générique.
+              LES DEUX FORMATS COHABITENT SANS ROGNAGE : on borne la hauteur et la
+              largeur, l'image garde sa proportion. Une carte (110 × 250) sort à
+              96 × 218 comme avant ; un dragon aux ailes déployées sort large et bas
+              au lieu d'être coupé en son milieu. */}
           {portrait && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={portrait} alt={m.nom} width={96} height={218}
-              style={{ width: 96, height: 218, objectFit: "cover", borderRadius: 10, border: "1px solid var(--border)", flexShrink: 0 }} />
+            <img src={portrait.src} alt={m.nom} width={portrait.largeur} height={portrait.hauteur}
+              title={`Image : ${portrait.origine}`}
+              style={{ maxHeight: 218, maxWidth: 240, height: "auto", width: "auto", borderRadius: 10, border: "1px solid var(--border)", flexShrink: 0 }} />
           )}
           <div style={{ display: "grid", gap: 14, flex: "1 1 300px", minWidth: 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(148px,1fr))", gap: 9 }}>

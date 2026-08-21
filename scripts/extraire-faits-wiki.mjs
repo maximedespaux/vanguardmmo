@@ -745,6 +745,21 @@ async function confronter(instances, faits) {
         ` Les ${comparees - pvEcart.length} instances identiques sont toutes des instances récentes — le relevé du site semble simplement plus ancien que le wiki, pas faux par principe.`,
     })
   }
+  if (!pvEcart.length) {
+    /* PLUS AUCUN ÉCART — et c'est le résultat d'une correction, pas d'un hasard.
+       Le sujet reste au relevé sous forme CONFIRME : effacer la ligne effacerait
+       la trace de la plus grave des huit contradictions, et personne ne saurait
+       plus que ces PV viennent du wiki et non d'un relevé du client. */
+    const comparees = instances.filter((i) => i.pvTank && parCle.get(cleInstance(i.nom))).length
+    pousse({
+      sujet: 'Instances — PV conseillés pour le tank', verdict: 'CONFIRME', id: 'instance.pvTank',
+      gravite: 'haute',
+      wiki: 'les PV annoncés par les pages d’instance du wiki officiel',
+      site: 'src/data/dungeons.json ▸ hp, servi sous le libellé « PV recommandés » sur /donjons',
+      compte: { instancesComparees: comparees, identiques: comparees, enEcart: 0 },
+      dit: `Les ${comparees} instances comparées portent le même chiffre des deux côtés. Elles ne l'ont pas toujours porté : voir l'arbitrage.`,
+    })
+  }
   const nonVues = dj.filter((d) => !vues.has(cleInstance(d.name))).map((d) => d.name)
   if (nonVues.length) {
     pousse({ sujet: 'Instances', verdict: 'COMPLETE', id: 'instance.sansPageWiki', site: nonVues, wiki: null, dit: 'Instances du site sans page correspondante dans le wiki.' })
@@ -959,6 +974,102 @@ async function confronter(instances, faits) {
   return ecarts
 }
 
+/* ── L'ARBITRAGE ──────────────────────────────────────────────────────────── */
+
+/**
+ * QUI L'EMPORTE QUAND LES DEUX SOURCES SE CONTREDISENT.
+ *
+ * ┌──── LA RÈGLE, ARRÊTÉE PAR MAXIME, ET ELLE A DEUX ÉTAGES ──────────────────┐
+ * │  · LE WIKI OFFICIEL FAIT FOI CONTRE UNE DÉDUCTION. Un chiffre que le site │
+ * │    a déduit, hérité d'une ancienne page ou recopié sans source ne pèse    │
+ * │    rien face à la page vivante du wiki.                                    │
+ * │  · LE CLIENT FAIT FOI CONTRE LE WIKI quand les deux se contredisent sur   │
+ * │    un chiffre QUE LE CLIENT ÉCRIT NOIR SUR BLANC. Une phrase de wiki ne   │
+ * │    renverse pas une table du jeu.                                          │
+ * │ Et le cas qui reste : quand NI l'un NI l'autre n'écrit le chiffre — deux  │
+ * │ pages du même wiki qui divergent, par exemple — personne ne tranche, et   │
+ * │ rien ne va à l'écran. Un chiffre inventé est pire que pas de chiffre.     │
+ * └───────────────────────────────────────────────────────────────────────────┘
+ *
+ * L'EXTRACTION, ELLE, RESTE MÉCANIQUE. Rien de ce qui est ici ne change une
+ * valeur relevée : la confrontation continue de porter LES DEUX chiffres, et
+ * l'arbitrage est un champ de plus, qui dit qui gagne, POURQUOI, et surtout CE
+ * QUE ÇA CHANGE — un arbitrage qui ne change aucun geste ne sert à rien.
+ *
+ * `applique` est le seul champ qui engage le dépôt : il nomme ce qui a été
+ * corrigé dans les données du site, ou dit qu'il n'y avait rien à corriger.
+ */
+const ARBITRAGES = {
+  'instance.pvTank': {
+    tranche: 'wiki',
+    parceQue:
+      "Le client n'écrit NULLE PART de PV conseillés pour le tank : defineinstance.h ne porte que des types, des états et des difficultés, et aucun des 148 fichiers de données du client d'août 2026 ne contient ces valeurs. Le champ `pvClient` de src/data/donjons-client.json, qui a l'air d'être un relevé du jeu, est identique au champ `hp` du site sur les 23 instances sans exception — c'est une copie du chiffre du site, pas une lecture du client. Il ne reste donc qu'une source, et c'est le wiki.",
+    changeQuoiPourLeJoueur:
+      "Tout : c'est un seuil d'entrée. Un tank qui se prépare sur le chiffre du site arrive sous-équipé et fait rater la run à neuf autres joueurs. L'écart va de +29 % à ×4.",
+    applique: 'src/data/dungeons.json ▸ hp — corrigé par scripts/appliquer-arbitrage-wiki.mjs',
+  },
+  'instance.prestige.mausolee des divinites': {
+    tranche: 'client',
+    parceQue:
+      "Le prestige d'entrée est un chiffre que le client porte : `prestigeClient` diverge du site sur quatre instances (Clairière de la fée, Jardin de Jade, Sanctuaire Shogun, Jardin des Rois), ce qui prouve que ce n'est pas une copie du site — contrairement aux PV. Sur le Mausolée, client et site disent 9 tous les deux ; c'est le wiki qui est seul à dire 10.",
+    changeQuoiPourLeJoueur:
+      "Rien à l'écran : le site affichait déjà 9, et 9 est le chiffre du jeu. Un joueur au prestige 9 aurait renoncé à entrer s'il avait cru le wiki.",
+    applique: 'rien — le site portait déjà la valeur du client.',
+  },
+  'rarete.nombreDeTiers': {
+    tranche: 'client',
+    parceQue:
+      "Le client déclare six paliers, Pré-mythique compris. Et le wiki ne le contredit pas vraiment : sa page Rareté nomme Pré-mythique en quatrième ligne, seule sa table de maîtrise l'oublie. C'est donc une page incomplète du wiki contre une table du jeu.",
+    changeQuoiPourLeJoueur:
+      "Rien : le site affiche six paliers et laisse à `null` le plafond de maîtrise du Pré-mythique, que personne n'écrit. Inventer ce plafond aurait été le seul vrai risque.",
+    applique: 'rien — le site suivait déjà le client.',
+  },
+  'rarete.plafondLigne': {
+    tranche: 'client',
+    parceQue:
+      "Les viviers de rareté sont des tables du client, ligne par ligne : IK3_SWD et IK3_AXE y sont écrits 20–100 quand tous les autres sont 10–50. Le « jusqu'à 50 % » du wiki est une généralisation de page d'accueil, pas une table.",
+    changeQuoiPourLeJoueur:
+      "Le plafond réel d'une ligne dépend de l'arme : croire le wiki fait sous-estimer de moitié ce qu'une épée ou une hache peut sortir.",
+    applique:
+      "rien — le relevé porte déjà les deux échelles. LE DOUTE QUI RESTE EST NOMMÉ : personne n'a mesuré en jeu si l'écran divise ces 100 par deux, et tant que ce n'est pas mesuré, le site montre le vivier du client sans promettre un pourcentage.",
+  },
+  'eveil.basique.costume': {
+    tranche: 'client',
+    parceQue:
+      "maxawakes.json, dans le client, écrit le plafond d'éveil de costume statistique par statistique : 28 en Force comme en Dextérité. C'est un chiffre écrit noir sur blanc dans une table du jeu ; le 7 du wiki est une phrase.",
+    changeQuoiPourLeJoueur:
+      "Le plafond qu'on peut espérer d'un éveil de fashion, donc le moment où l'on arrête de relancer. Quatre fois plus haut d'un côté que de l'autre.",
+    applique:
+      "rien — le relevé porte les deux. ET LE DOUTE EST RÉEL : le fichier du client qui porte ce 28 vient de la fouille d'octobre 2025, il n'est pas dans l'extraction d'août 2026, et le site officiel annonce depuis un redémarrage complet du serveur. Le chiffre du client l'emporte parce que c'est la règle, pas parce qu'on l'a revu.",
+  },
+  'esprits.paliers': {
+    tranche: 'wiki',
+    parceQue:
+      "C'est la seule contradiction où le client NE PERD PAS sur un chiffre mais sur une DATE. Les deux séries ne divergent pas d'une valeur : elles ne parlent pas de la même chose (progression et déplacement d'un côté, butin et penyas de l'autre) sur les quatre premiers paliers de Goldea, et se rejoignent mot pour mot au palier 50. Une lecture fautive ne produit pas ça ; un rééquilibrage, si. Le relevé du client date d'octobre 2025 et le site officiel annonce un départ commun depuis — la page du wiki est la seule source postérieure.",
+    changeQuoiPourLeJoueur:
+      "Quel esprit monter pour farmer : le site promet de l'expérience et de la vitesse là où le wiki promet du butin et des penyas. Ce n'est pas le même choix.",
+    applique:
+      "rien dans ce lot : le chiffre affiché vient de public/airbuilder/mecaniques.json, qui n'appartient pas à ce lot. La demande est portée à l'orchestrateur.",
+  },
+  'prestige.badgeWorldboss': {
+    tranche: 'wiki',
+    parceQue:
+      "Le wiki d'aujourd'hui ne publie AUCUNE table de coût de prestige — la seule chose qu'il écrit sur ce badge, c'est que la quête qui le produit ouvre au prestige 8, chez le Souverain Prestigieux, et qu'il se craft avec deux rubis de chaque sorte. La table du site, elle, se déclare « source : wiki Airborn » : c'est une page disparue, donc une déduction. Le client ne porte que le nom de l'objet, jamais la condition de la quête.",
+    changeQuoiPourLeJoueur:
+      "Beaucoup : la table du site fait payer le passage 7 → 8 avec un badge que, si le wiki dit vrai, on ne peut obtenir qu'UNE FOIS au prestige 8. Un joueur au prestige 7 peut y perdre des soirées.",
+    applique:
+      "rien n'est effacé — on ne remplace pas un coût par une devinette. La mise en garde reste : c'est exactement le cas où un renseignement incomplet doit RESTER, parce qu'il protège d'une erreur coûteuse.",
+  },
+  'masques.niveau2': {
+    tranche: 'personne',
+    parceQue:
+      "Les deux valeurs viennent du MÊME wiki, sur deux pages différentes (10 % et 8 %), et le client n'écrit rien là-dessus. Aucune des deux règles ne s'applique : il n'y a pas de source à départager, il y a une source qui se contredit.",
+    changeQuoiPourLeJoueur:
+      "Rien, et c'est voulu : aucun chiffre n'est servi. En afficher un serait un coup de dés maquillé en donnée.",
+    applique: 'rien — et rien ne doit être affiché tant que le wiki ne se sera pas mis d’accord avec lui-même.',
+  },
+}
+
 /* ── ASSEMBLAGE ───────────────────────────────────────────────────────────── */
 
 async function fichiersMarkdown(dir, prefixe = '') {
@@ -1039,11 +1150,16 @@ async function principal() {
   const confrontation = await confronter(instances, FAITS)
   const ordre = { haute: 0, moyenne: 1 }
   confrontation.sort((a, b) => (ordre[a.gravite] ?? 9) - (ordre[b.gravite] ?? 9))
+  for (const c of confrontation) if (ARBITRAGES[c.id]) c.arbitrage = ARBITRAGES[c.id]
+  const sansArbitrage = confrontation.filter((c) => c.verdict === 'CONTREDIT' && !c.arbitrage)
+  if (sansArbitrage.length) {
+    process.stdout.write(`  !! ${sansArbitrage.length} contradiction(s) sans arbitrage : ${sansArbitrage.map((c) => c.id).join(' · ')}\n`)
+  }
 
   const releve = {
     genere: new Date().toISOString(),
     quoi: "Les FAITS du wiki officiel d'Airborn : Winds of Rhisis — chiffres, seuils, tables, conditions — et leur confrontation au relevé tiré du client du jeu.",
-    regle: "On extrait des faits, pas de la prose : des valeurs, des seuils, des listes, et l'adresse de la page qui les porte. Les champs de texte sont des étiquettes du wiki (un nom d'objet, un nom de PNJ, une valeur de puce), jamais ses paragraphes — les puces sont lues en tête de ligne pour ne pas attraper la phrase de description qui les précède. Chaque fait déclare des preuves que le script recherche dans la page téléchargée ; un fait dont une preuve tombe est marqué verifie:false.",
+    regle: "On extrait des faits, pas de la prose : des valeurs, des seuils, des listes, et l'adresse de la page qui les porte. Les champs de texte sont des étiquettes du wiki (un nom d'objet, un nom de PNJ, une valeur de puce), jamais ses paragraphes — les puces sont lues en tête de ligne pour ne pas attraper la phrase de description qui les précède. Chaque fait déclare des preuves que le script recherche dans la page téléchargée ; un fait dont une preuve tombe est marqué verifie:false. La confrontation, elle, reste MÉCANIQUE : elle porte toujours les deux chiffres. Ce qui tranche est à part, dans le champ `arbitrage` — qui gagne, pourquoi, ce que ça change pour le joueur, et ce qui a été corrigé dans le dépôt.",
     source: { wiki: WIKI, tableDesMatieres: `${WIKI}/llms.txt`, pagesAnnoncees: index.pages.length, pagesLues: chemins.length },
     confronteA: [
       'src/data/dungeons.json', 'src/data/prestige.ts', 'src/data/carnets-arcanes.json',
@@ -1060,6 +1176,10 @@ async function principal() {
       objetsSansDessin: objets.filter((o) => !o.icone).length,
       dessinsRegardes: objets.filter((o) => o.dessinRegarde).length,
       confrontations: confrontation.length,
+      arbitres: confrontation.filter((c) => c.arbitrage).length,
+      arbitragesAuWiki: confrontation.filter((c) => c.arbitrage?.tranche === 'wiki').length,
+      arbitragesAuClient: confrontation.filter((c) => c.arbitrage?.tranche === 'client').length,
+      arbitragesSansVainqueur: confrontation.filter((c) => c.arbitrage?.tranche === 'personne').length,
       contredit: confrontation.filter((c) => c.verdict === 'CONTREDIT').length,
       confirme: confrontation.filter((c) => c.verdict === 'CONFIRME').length,
       complete: confrontation.filter((c) => c.verdict === 'COMPLETE').length,

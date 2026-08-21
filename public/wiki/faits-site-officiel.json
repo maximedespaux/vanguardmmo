@@ -1,0 +1,357 @@
+{
+ "genere": "2026-08-21T16:03:17.814Z",
+ "quoi": "Les FAITS du site officiel d'Airborn : Winds of Rhisis — prix, seuils, configurations, listes — tires du paquet JavaScript qu'il sert.",
+ "regle": "Aucune phrase du site n'est recopiee : on extrait des valeurs et on nomme la page qui les porte. Chaque fait declare des preuves que le script recherche dans le paquet telecharge ; une preuve absente marque le fait verifie:false.",
+ "source": {
+  "site": "https://windsofrhisis.com",
+  "paquet": "https://windsofrhisis.com/static/js/main.f3a8b53e.js",
+  "octetsDuPaquet": 944400
+ },
+ "ceQuOnNeLitPas": "Le classement (/ranking) et le catalogue de boutique (/shop-items) se remplissent depuis la base du serveur a l'execution. Ce sont des donnees vivantes : on ne les aspire pas, et un classement fige n'est pas un fait.",
+ "comptes": {
+  "faits": 9,
+  "faitsVerifies": 9,
+  "echecs": 0
+ },
+ "faits": [
+  {
+   "sujet": "AirPoints — ce que coute la monnaie du site",
+   "id": "airpoints.lots",
+   "page": "https://windsofrhisis.com/shop-points",
+   "valeur": {
+    "lots": [
+     {
+      "prixEuros": 10,
+      "points": 100,
+      "bonusPourCent": 0,
+      "nom": "Débutant"
+     },
+     {
+      "prixEuros": 20,
+      "points": 200,
+      "bonusPourCent": 0,
+      "nom": "Aventurier"
+     },
+     {
+      "prixEuros": 50,
+      "points": 525,
+      "bonusPourCent": 5,
+      "nom": "Chevalier"
+     },
+     {
+      "prixEuros": 100,
+      "points": 1100,
+      "bonusPourCent": 10,
+      "nom": "Héros"
+     },
+     {
+      "prixEuros": 250,
+      "points": 2875,
+      "bonusPourCent": 15,
+      "nom": "Légende"
+     }
+    ],
+    "pointsParEuroSansBonus": 10,
+    "lotsAvecBonus": 3,
+    "pointsParEuroAuMeilleurLot": 11.5
+   },
+   "preuves": [
+    "points:100,bonus:null",
+    "points:2875,bonus:15"
+   ],
+   "dit": "Le site vend 5 lots d'AirPoints. Sans bonus, 10 point(s) par euro ; les 3 plus gros ajoutent de 5 a 15 % de points en plus. C'est le taux de change reel entre l'euro et la monnaie de boutique, et il n'existe nulle part ailleurs.",
+   "verifie": true
+  },
+  {
+   "sujet": "Fidelite — les paliers et leur seuil",
+   "id": "fidelite.paliers",
+   "page": "https://windsofrhisis.com/me/fidelity",
+   "valeur": {
+    "paliers": [
+     {
+      "rang": 1,
+      "nom": "Bronze",
+      "airPointsRequis": 525
+     },
+     {
+      "rang": 2,
+      "nom": "Argent",
+      "airPointsRequis": 1100
+     },
+     {
+      "rang": 3,
+      "nom": "Or",
+      "airPointsRequis": 1900
+     },
+     {
+      "rang": 4,
+      "nom": "Platine",
+      "airPointsRequis": 3200
+     },
+     {
+      "rang": 5,
+      "nom": "Diamant",
+      "airPointsRequis": 5300
+     }
+    ],
+    "horsPaliers": [
+     "Special"
+    ]
+   },
+   "preuves": [
+    "requiredAmount:525",
+    "requiredAmount:5300"
+   ],
+   "dit": "5 paliers de fidelite, de Bronze (525 AirPoints) a Diamant (5300). Le seuil se compte en AirPoints recharges, pas en euros.",
+   "verifie": true
+  },
+  {
+   "sujet": "Fidelite — ce que contient chaque boite",
+   "id": "fidelite.boites",
+   "page": "https://windsofrhisis.com/me/fidelity",
+   "valeur": {
+    "boites": [
+     {
+      "identifiantJeu": 60582,
+      "nom": "Boîte de fidélité Modeste",
+      "icone": "box_fidelite_1.webp",
+      "palier": "Bronze",
+      "contenu": [
+       {
+        "quantite": 2,
+        "objet": "tissus premium cosmétiques"
+       },
+       {
+        "quantite": 5,
+        "objet": "maîtrises S"
+       },
+       {
+        "quantite": 1,
+        "objet": "mutagène"
+       },
+       {
+        "quantite": 7,
+        "objet": "clés du ramasseur"
+       },
+       {
+        "quantite": 3500,
+        "objet": "nucleus neutres"
+       },
+       {
+        "quantite": 45,
+        "objet": "jetons d'Air"
+       }
+      ]
+     },
+     {
+      "identifiantJeu": 60583,
+      "nom": "Boîte de fidélité Prestigieuse",
+      "icone": "box_fidelite_2.webp",
+      "palier": "Argent",
+      "contenu": [
+       {
+        "quantite": null,
+        "objet": "Boîte Prestige 1-5"
+       },
+       {
+        "quantite": 15,
+        "objet": "coffrets à paquets de cartes aléatoires"
+       },
+       {
+        "quantite": 2,
+        "objet": "étuis de rang 1"
+       }
+      ]
+     },
+     {
+      "identifiantJeu": 60584,
+      "nom": "Boîte de fidélité Éminente",
+      "icone": "box_fidelite_3.webp",
+      "palier": "Or",
+      "contenu": [
+       {
+        "quantite": 10,
+        "objet": "coffrets à cape donjon"
+       },
+       {
+        "quantite": 50,
+        "objet": "coffres de donjon"
+       }
+      ]
+     },
+     {
+      "identifiantJeu": 60585,
+      "nom": "Boîte de fidélité Majestueuse",
+      "icone": "box_fidelite_4.webp",
+      "palier": "Platine",
+      "contenu": [
+       {
+        "quantite": null,
+        "objet": "Nectar des Légendes : Drop +1"
+       },
+       {
+        "quantite": null,
+        "objet": "Penyas +10%"
+       },
+       {
+        "quantite": null,
+        "objet": "Déplacement +20%"
+       },
+       {
+        "quantite": null,
+        "objet": "Expérience de maîtrise d'arme +10% pendant 31 jours"
+       }
+      ]
+     }
+    ]
+   },
+   "preuves": [
+    "box_fidelite_1.webp",
+    "box_fidelite_5.webp"
+   ],
+   "dit": "4 boites de recompense, 4 dont le contenu est chiffre. Chacune porte son identifiant d'objet en jeu — c'est le pont entre le site officiel et le catalogue du client.",
+   "verifie": true
+  },
+  {
+   "sujet": "Client — la configuration que le site annonce",
+   "id": "client.configuration",
+   "page": "https://windsofrhisis.com/download",
+   "valeur": {
+    "Architecture": "x64 (64 Bits)",
+    "Système d'exploitation": "Windows 10, 11 (La compatibilité avec Windows 7, 8 et 8.1 reste possible)",
+    "Mémoire vive (RAM)": "1Go (par client ouvert)",
+    "CPU (Processeur)": "Intel Core i3, AMD Ryzen 3",
+    "Carte graphique": "Intel Graphics HD, Nvidia Gefore, AMD Radeon",
+    "Disque dur": "8Gb disponibles"
+   },
+   "preuves": [
+    "Configuration requise",
+    "x64 (64 Bits)"
+   ],
+   "dit": "6 rubriques de configuration. La memoire est annoncee PAR CLIENT OUVERT : c'est le seul chiffre de cette liste qui change un geste, celui du joueur qui fait tourner plusieurs fenetres.",
+   "verifie": true
+  },
+  {
+   "sujet": "Client — ou le telecharger",
+   "id": "client.miroirs",
+   "page": "https://windsofrhisis.com/download",
+   "valeur": {
+    "miroirs": [
+     {
+      "hebergeur": "MEGA",
+      "forme": "Archive compressée, sans installateur",
+      "adresse": "https://mega.nz/file/oYlhzIxZ#YKr_xPVphtq-NcvBVyvKYYj-H1fdpdD8eoWtdjQKD5g"
+     },
+     {
+      "hebergeur": "Google Drive",
+      "forme": "Archive compressée, sans installateur",
+      "adresse": "https://drive.google.com/file/d/1v6CN6NHLBr0Yixwln85O8zWaFYsuvGwy/view?usp=sharing"
+     }
+    ]
+   },
+   "preuves": [
+    "/img/mirrors/mega.png",
+    "/img/mirrors/google-drive.png"
+   ],
+   "dit": "2 miroirs, tous deux hors du site (MEGA et Google Drive), et sans installateur. Aucune version n'est affichee : le site ne dit pas quelle version du client il distribue.",
+   "verifie": true
+  },
+  {
+   "sujet": "Site — les pages publiques",
+   "id": "site.pages",
+   "page": "https://windsofrhisis.com",
+   "valeur": {
+    "routes": [
+     "/",
+     "/cgu",
+     "/auth/login",
+     "/auth/register",
+     "/auth/reset-password",
+     "/download",
+     "/ranking",
+     "/me/profile",
+     "/me/accounts",
+     "/me/fidelity",
+     "/me/accounts/:accountId",
+     "/shop-points",
+     "/shop-items",
+     "/shop-points-success",
+     "/shop-points-failure",
+     "/shop-transfer-success",
+     "/shop-transfer-failure",
+     "/fidelity-claim-success",
+     "/fidelity-claim-failure"
+    ],
+    "comptes": {
+     "total": 19,
+     "compte": 7
+    }
+   },
+   "preuves": [
+    "path:\"/ranking\"",
+    "path:\"/shop-items\""
+   ],
+   "dit": "19 adresses declarees. Deux seulement portent des donnees de jeu — le classement et le catalogue de boutique — et les deux se remplissent a l'execution depuis la base du serveur : elles ne sont pas lisibles hors ligne.",
+   "verifie": true
+  },
+  {
+   "sujet": "Classement officiel — ce qui est compare",
+   "id": "classement.colonnes",
+   "page": "https://windsofrhisis.com/ranking",
+   "valeur": {
+    "colonnes": [
+     "Personnage",
+     "Guilde",
+     "Classe",
+     "Niveau",
+     "Temps de jeu"
+    ]
+   },
+   "preuves": [
+    "path:\"/ranking\"",
+    "children:\"Temps de jeu\""
+   ],
+   "dit": "Le classement officiel compare 5 colonnes : Personnage · Guilde · Classe · Niveau · Temps de jeu. Le TEMPS DE JEU y figure a cote du niveau — le serveur mesure donc publiquement les heures passees, pas seulement la progression.",
+   "verifie": true
+  },
+  {
+   "sujet": "Serveur — un depart commun",
+   "id": "serveur.freshStart",
+   "page": "https://windsofrhisis.com",
+   "valeur": {
+    "misEnAvant": "Fresh Start",
+    "arguments": [
+     "Fresh Start",
+     "Progression accélérée",
+     "Contenu évolutif",
+     "Compétition permanente",
+     "PvP & rivalités",
+     "Une aventure communautaire"
+    ]
+   },
+   "preuves": [
+    "Fresh Start"
+   ],
+   "dit": "Le premier argument de la page d'accueil est un DEPART COMMUN : tout le monde recommence en meme temps. C'est ce qui date le contenu du site de guilde — un releve tire d'un client d'octobre 2025 ne decrit pas forcement l'etat d'un serveur reparti de zero.",
+   "verifie": true
+  },
+  {
+   "sujet": "AirPoints — sens unique",
+   "id": "airpoints.sensUnique",
+   "page": "https://windsofrhisis.com/cgu",
+   "valeur": {
+    "transfertVersLeJeu": true,
+    "retourVersLEuro": false,
+    "retractationJours": 14,
+    "conditionDuRemboursement": "points non transferes en jeu"
+   },
+   "preuves": [
+    "AirPoints",
+    "shop-transfer-success"
+   ],
+   "dit": "Les AirPoints vont du site vers un personnage, jamais l'inverse, et le delai de retractation ne porte que sur les points NON transferes. Un point transfere est consomme : c'est ce qui rend le prix d'un objet de boutique irreversible.",
+   "verifie": true
+  }
+ ],
+ "echecs": []
+}

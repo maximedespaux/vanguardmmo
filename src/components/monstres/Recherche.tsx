@@ -311,9 +311,11 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
 export function CarteMonstre({ m }: { m: Monstre }) {
   const ic = iconeElement(m.elem);
   const seReleve = (m.vies ?? 0) > 1;
-  /* Le portrait n'existe que pour huit monstres du catalogue (cf. `portraitDe`) :
-     quand il manque, on ne met RIEN à sa place — un cadre vide ferait croire à une
-     image cassée, et un pictogramme générique répété 1 123 fois n'apprend rien. */
+  /* Le portrait n'existe que pour une poignée de monstres du catalogue (cf.
+     `portraitDe` : les cartes du client dont le dessin a été vérifié, plus les
+     rendus détourés du wiki officiel). Quand il manque, on ne met RIEN à sa place —
+     un cadre vide ferait croire à une image cassée, et un pictogramme générique
+     répété 1 123 fois n'apprend rien. */
   const portrait = portraitDe(m.id);
   return (
     <Link href={`/monstres/${m.id}`} className="glass-card fx-card"
@@ -323,7 +325,8 @@ export function CarteMonstre({ m }: { m: Monstre }) {
       <span style={{ display: "flex", alignItems: "flex-start", gap: 9 }}>
         {portrait && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={portrait} alt="" width={26} height={59} style={{ width: 26, height: 59, objectFit: "cover", borderRadius: 5, flexShrink: 0, border: "1px solid var(--border)" }} />
+          <img src={portrait.src} alt="" width={portrait.largeur} height={portrait.hauteur}
+            style={{ maxHeight: 59, maxWidth: 66, height: "auto", width: "auto", borderRadius: 5, flexShrink: 0, border: "1px solid var(--border)" }} />
         )}
         <span style={{ minWidth: 0, flex: 1 }}>
           <span className="font-heading" style={{ display: "block", fontSize: 13.5, fontWeight: 700, lineHeight: 1.25 }}>{m.nom}</span>

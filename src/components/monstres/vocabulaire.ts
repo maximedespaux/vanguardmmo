@@ -19,6 +19,10 @@
  * │ chose dont on se fiche.                                        │
  * └────────────────────────────────────────────────────────────────┘
  */
+// 2 Ko : les rendus détourés que le wiki officiel publie, rattachés par le nom
+// (scripts/rattacher-portraits-wiki.mjs). Petit, donc importé statiquement — le
+// catalogue de 612 Ko, lui, reste derrière `fs` dans `catalogue.ts`.
+import PORTRAITS_WIKI from "@/data/monstres-portraits.json";
 
 /** Le monstre tel que `public/wiki/monstres.json` le porte. Les noms de champs
  *  sont courts parce qu'ils sont répétés 1 124 fois dans un fichier de 612 Ko :
@@ -396,8 +400,44 @@ const PORTRAITS: Record<string, number> = {
   MI_RANGDA01: 59, MI_RANGDA01_1: 59,
 };
 
-export const portraitDe = (id: string) =>
-  PORTRAITS[id] ? `/jeu/cartes/couleur_ii_sys_sys_monsterdeck_${PORTRAITS[id]}.webp` : null;
+/**
+ * ET LES RENDUS DÉTOURÉS DU WIKI OFFICIEL — ce que le client ne savait pas donner.
+ *
+ * Le wiki d'Airborn publie, sur ses pages de contenu récent, le MODÈLE du boss
+ * seul sur fond transparent. Le client n'a rien de tel : ses seules illustrations
+ * de monstre sont les cartes à collectionner ci-dessus, et douze d'entre elles
+ * seulement portent un nom de bête. J'avais écrit ici que l'apparence d'un monstre
+ * était hors de portée ; elle l'est depuis le client, pas depuis le wiki.
+ *
+ * La table est produite par `scripts/rattacher-portraits-wiki.mjs`, qui n'accepte
+ * une image que si elle est détourée, que sa légende ne nomme qu'une bête, qu'elle
+ * ne dénombre pas (« 12 mini-boss Asuras » décrit une salle) et que ce nom tombe
+ * sur un seul monstre du catalogue. Le compte, les écartés et le motif de chaque
+ * refus sont dans le fichier lui-même — rien n'est décidé ici.
+ *
+ * LES DEUX SOURCES N'ONT PAS LA MÊME FORME : une carte est un portrait vertical
+ * (110 × 250), un rendu du wiki est large et de proportion libre. C'est pourquoi
+ * cette fonction rend les DIMENSIONS avec l'adresse : l'écran cadre dessus au lieu
+ * de rogner au milieu d'un dragon aux ailes déployées.
+ */
+export type Portrait = {
+  src: string;
+  largeur: number;
+  hauteur: number;
+  origine: "carte du client" | "rendu du wiki officiel";
+};
+
+export function portraitDe(id: string): Portrait | null {
+  const wiki = (PORTRAITS_WIKI.portraits as Record<string, { fichier: string; largeur: number; hauteur: number }>)[id];
+  if (wiki) return { src: wiki.fichier, largeur: wiki.largeur, hauteur: wiki.hauteur, origine: "rendu du wiki officiel" };
+  if (PORTRAITS[id]) {
+    return {
+      src: `/jeu/cartes/couleur_ii_sys_sys_monsterdeck_${PORTRAITS[id]}.webp`,
+      largeur: 110, hauteur: 250, origine: "carte du client",
+    };
+  }
+  return null;
+}
 
 /**
  * LES SIX ICÔNES DE BUTIN QUE LE PONT NE TROUVE PAS — ET QU'ON A OUVERTES.

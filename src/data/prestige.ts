@@ -2,6 +2,22 @@
 //  COÛTS DE PRESTIGE — données RÉELLES Airborn
 //  Par palier de départ : P(n) → P(n+1). Clés dynamiques (l'item
 //  demandé varie selon le palier). Source : wiki Airborn.
+//
+//  ┌──── UN COÛT QUI NE COLLE PAS, ET QUI COÛTE DES SOIRÉES ────┐
+//  │ Le passage 7 → 8 demande ici un « Badge World Boss         │
+//  │ prestigieux ». Or le wiki officiel d'aujourd'hui écrit que  │
+//  │ la SEULE quête qui produit ce badge — chez le Souverain     │
+//  │ Prestigieux, deux rubis de chaque sorte — n'est accessible  │
+//  │ QU'À PARTIR DU PRESTIGE 8. Un joueur au prestige 7 partirait│
+//  │ donc chercher un objet qu'il ne peut pas encore obtenir.    │
+//  │                                                             │
+//  │ RIEN N'EST CORRIGÉ ICI, ET C'EST VOULU : le wiki ne publie  │
+//  │ plus de table de coûts, celle-ci vient d'une page disparue, │
+//  │ et remplacer un coût par une devinette serait pire. Le      │
+//  │ constat, ses deux sources et l'arbitrage sont dans          │
+//  │ public/wiki/faits-wiki-officiel.json ▸ confrontation ▸      │
+//  │ « prestige.badgeWorldboss ».                                │
+//  └─────────────────────────────────────────────────────────────┘
 // ════════════════════════════════════════════════════════════
 
 export const PRESTIGE_COSTS: Record<number, Record<string, number>> = {

@@ -1,0 +1,206 @@
+{
+ "genere": "2026-08-21T16:09:58.734Z",
+ "quoi": "Les rendus detoures de monstre publies par le wiki officiel d'Airborn, rattaches aux fiches de /monstres par le nom.",
+ "source": "https://airborn.gitbook.io/airborn",
+ "regle": "Un portrait n'est retenu que si l'image est detouree (couche alpha), que sa legende ne nomme qu'une bete, qu'elle ne denombre pas, et que ce nom tombe sur un seul monstre du catalogue. Les rendus sont recadres sur la matiere.",
+ "comptes": {
+  "monstresDuCatalogue": 1124,
+  "imagesDuWiki": 195,
+  "portraits": 5,
+  "ecartes": 12
+ },
+ "portraits": {
+  "MI_CHAMBRE_BOSS_5": {
+   "nom": "Dra’Zhul, le briseur de crânes",
+   "fichier": "/jeu/wiki/portraits/mi_chambre_boss_5.webp",
+   "largeur": 420,
+   "hauteur": 302,
+   "octets": 33768,
+   "legende": "Dra’Zhul",
+   "page": "https://airborn.gitbook.io/airborn/activites/pve/pve-chambres-secretes",
+   "cadreDOrigine": "1314x834",
+   "appariement": "nom identique"
+  },
+  "MI_CHAMBRE_BOSS_2": {
+   "nom": "Nyzzara, la mère dévoreuse",
+   "fichier": "/jeu/wiki/portraits/mi_chambre_boss_2.webp",
+   "largeur": 420,
+   "hauteur": 340,
+   "octets": 47114,
+   "legende": "Nyzarra",
+   "page": "https://airborn.gitbook.io/airborn/activites/pve/pve-chambres-secretes",
+   "cadreDOrigine": "1314x834",
+   "appariement": "verifie a l’œil (voir EXCEPTIONS dans le script)"
+  },
+  "MI_CHAMBRE_BOSS_3": {
+   "nom": "Gor’Thar, le faucheur d’âmes",
+   "fichier": "/jeu/wiki/portraits/mi_chambre_boss_3.webp",
+   "largeur": 420,
+   "hauteur": 294,
+   "octets": 54360,
+   "legende": "Gor’Thar",
+   "page": "https://airborn.gitbook.io/airborn/activites/pve/pve-chambres-secretes",
+   "cadreDOrigine": "1314x834",
+   "appariement": "nom identique"
+  },
+  "MI_ICE_RUSH_MINI_BOSS_1": {
+   "nom": "Golem Cryolith",
+   "fichier": "/jeu/wiki/portraits/mi_ice_rush_mini_boss_1.webp",
+   "largeur": 420,
+   "hauteur": 384,
+   "octets": 39264,
+   "legende": "Golem Cryolith",
+   "page": "https://airborn.gitbook.io/airborn/activites/pve/pve-donjon-rush",
+   "cadreDOrigine": "1314x834",
+   "appariement": "nom identique"
+  },
+  "MI_ICE_RUSH_FINAL_BOSS": {
+   "nom": "Azharyon, Couronne du Givre",
+   "fichier": "/jeu/wiki/portraits/mi_ice_rush_final_boss.webp",
+   "largeur": 420,
+   "hauteur": 186,
+   "octets": 28732,
+   "legende": "Azharyon, Couronne du Givre",
+   "page": "https://airborn.gitbook.io/airborn/activites/pve/pve-donjon-rush",
+   "cadreDOrigine": "1314x834",
+   "appariement": "nom identique"
+  }
+ },
+ "ecartes": [
+  {
+   "fichier": "/jeu/wiki/taram.webp",
+   "legende": "Taram, seigneur des ténèbres",
+   "page": "activites/event-halloween/donjon-de-guilde",
+   "monstres": [
+    "MI_MNSTR_HALLO_15"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/darkside.webp",
+   "legende": "Darkside, le sans-cœur",
+   "page": "activites/event-halloween/donjon-de-guilde",
+   "monstres": [
+    "MI_MNSTR_HALLO_16"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/rammot.webp",
+   "legende": "Rammot, la chimère des murmures",
+   "page": "activites/event-halloween/donjon-de-guilde",
+   "monstres": [
+    "MI_MNSTR_HALLO_17"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/taverne_boss.webp",
+   "legende": "Drakul, l'Empaleur",
+   "page": "activites/event-halloween/donjons-solo",
+   "monstres": [
+    "MI_MNSTR_HALLO_11"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/atelier_boss.webp",
+   "legende": "Dr. Toxicus",
+   "page": "activites/event-halloween/donjons-solo",
+   "monstres": [
+    "MI_MNSTR_HALLO_13"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/bibi.webp",
+   "legende": "Bibi, sbire des abysses",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_1"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/casper.webp",
+   "legende": "Casper, sbire des abysses",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_2"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/diaby.webp",
+   "legende": "Diaby, sbire des abysses",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_3"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/mordred.webp",
+   "legende": "Mordred, La Calamité et son emplacement",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_5"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure",
+    "la legende nomme plusieurs betes"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/jason.webp",
+   "legende": "Jason, Le Découpeur et son emplacement",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_6"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure",
+    "la legende nomme plusieurs betes"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/remus.webp",
+   "legende": "Remus, Le Maraudeur et son emplacement",
+   "page": "activites/event-halloween/invasion-de-nilfheim",
+   "monstres": [
+    "MI_MNSTR_HALLO_4"
+   ],
+   "pourquoi": [
+    "capture de jeu, pas un rendu detoure",
+    "la legende nomme plusieurs betes"
+   ]
+  },
+  {
+   "fichier": "/jeu/wiki/boss_5.webp",
+   "legende": "Naarah, Souveraine de l'hiver & Gremlin hivernal (x2)",
+   "page": "activites/pve/pve-donjon-rush",
+   "monstres": [
+    "MI_ICE_RUSH_MINI_BOSS_3"
+   ],
+   "pourquoi": [
+    "la legende nomme plusieurs betes"
+   ]
+  }
+ ]
+}

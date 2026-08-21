@@ -1040,7 +1040,7 @@ const ARBITRAGES = {
     changeQuoiPourLeJoueur:
       "Le plafond qu'on peut espérer d'un éveil de fashion, donc le moment où l'on arrête de relancer. Quatre fois plus haut d'un côté que de l'autre.",
     applique:
-      "rien — le relevé porte les deux. ET LE DOUTE EST RÉEL : le fichier du client qui porte ce 28 vient de la fouille d'octobre 2025, il n'est pas dans l'extraction d'août 2026, et le site officiel annonce depuis un redémarrage complet du serveur. Le chiffre du client l'emporte parce que c'est la règle, pas parce qu'on l'a revu.",
+      "rien — le relevé porte les deux. LE 28 A ÉTÉ RELU DANS LE CLIENT ACTUEL : maxawakes.json vit dans FSDATA/CLIENT/data.air du dossier « Airborn Client » (archive du 2026-08-19) et y écrit costume.DST_STR = 28, costume.DST_DEX = 28. Il n'est absent que d'une extraction partielle du scratchpad, pas du client. Le chiffre du client l'emporte, et cette fois on l'a revu.",
   },
   'esprits.paliers': {
     tranche: 'wiki',

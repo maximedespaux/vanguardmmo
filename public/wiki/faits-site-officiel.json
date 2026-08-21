@@ -1,11 +1,11 @@
 {
- "genere": "2026-08-21T16:03:17.814Z",
+ "genere": "2026-08-21T17:19:30.214Z",
  "quoi": "Les FAITS du site officiel d'Airborn : Winds of Rhisis — prix, seuils, configurations, listes — tires du paquet JavaScript qu'il sert.",
  "regle": "Aucune phrase du site n'est recopiee : on extrait des valeurs et on nomme la page qui les porte. Chaque fait declare des preuves que le script recherche dans le paquet telecharge ; une preuve absente marque le fait verifie:false.",
  "source": {
   "site": "https://windsofrhisis.com",
-  "paquet": "https://windsofrhisis.com/static/js/main.f3a8b53e.js",
-  "octetsDuPaquet": 944400
+  "paquet": "https://windsofrhisis.com/static/js/main.5e6b0140.js",
+  "octetsDuPaquet": 944858
  },
  "ceQuOnNeLitPas": "Le classement (/ranking) et le catalogue de boutique (/shop-items) se remplissent depuis la base du serveur a l'execution. Ce sont des donnees vivantes : on ne les aspire pas, et un classement fige n'est pas un fait.",
  "comptes": {
@@ -202,14 +202,22 @@
         "objet": "Expérience de maîtrise d'arme +10% pendant 31 jours"
        }
       ]
+     },
+     {
+      "identifiantJeu": 60586,
+      "nom": "Boîte de fidélité Légendaire",
+      "icone": "box_fidelite_5.webp",
+      "palier": "Diamant",
+      "contenu": null
      }
-    ]
+    ],
+    "boitesAttendues": 5
    },
    "preuves": [
     "box_fidelite_1.webp",
     "box_fidelite_5.webp"
    ],
-   "dit": "4 boites de recompense, 4 dont le contenu est chiffre. Chacune porte son identifiant d'objet en jeu — c'est le pont entre le site officiel et le catalogue du client.",
+   "dit": "5 boites de recompense, 4 dont le contenu est chiffre. Chacune porte son identifiant d'objet en jeu — c'est le pont entre le site officiel et le catalogue du client.",
    "verifie": true
   },
   {

@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-21T16:16:02.323Z",
+ "genere": "2026-08-21T17:25:02.431Z",
  "quoi": "Les FAITS du wiki officiel d'Airborn : Winds of Rhisis — chiffres, seuils, tables, conditions — et leur confrontation au relevé tiré du client du jeu.",
  "regle": "On extrait des faits, pas de la prose : des valeurs, des seuils, des listes, et l'adresse de la page qui les porte. Les champs de texte sont des étiquettes du wiki (un nom d'objet, un nom de PNJ, une valeur de puce), jamais ses paragraphes — les puces sont lues en tête de ligne pour ne pas attraper la phrase de description qui les précède. Chaque fait déclare des preuves que le script recherche dans la page téléchargée ; un fait dont une preuve tombe est marqué verifie:false. La confrontation, elle, reste MÉCANIQUE : elle porte toujours les deux chiffres. Ce qui tranche est à part, dans le champ `arbitrage` — qui gagne, pourquoi, ce que ça change pour le joueur, et ce qui a été corrigé dans le dépôt.",
  "source": {
@@ -519,7 +519,7 @@
     "tranche": "client",
     "parceQue": "maxawakes.json, dans le client, écrit le plafond d'éveil de costume statistique par statistique : 28 en Force comme en Dextérité. C'est un chiffre écrit noir sur blanc dans une table du jeu ; le 7 du wiki est une phrase.",
     "changeQuoiPourLeJoueur": "Le plafond qu'on peut espérer d'un éveil de fashion, donc le moment où l'on arrête de relancer. Quatre fois plus haut d'un côté que de l'autre.",
-    "applique": "rien — le relevé porte les deux. ET LE DOUTE EST RÉEL : le fichier du client qui porte ce 28 vient de la fouille d'octobre 2025, il n'est pas dans l'extraction d'août 2026, et le site officiel annonce depuis un redémarrage complet du serveur. Le chiffre du client l'emporte parce que c'est la règle, pas parce qu'on l'a revu."
+    "applique": "rien — le relevé porte les deux. LE 28 A ÉTÉ RELU DANS LE CLIENT ACTUEL : maxawakes.json vit dans FSDATA/CLIENT/data.air du dossier « Airborn Client » (archive du 2026-08-19) et y écrit costume.DST_STR = 28, costume.DST_DEX = 28. Il n'est absent que d'une extraction partielle du scratchpad, pas du client. Le chiffre du client l'emporte, et cette fois on l'a revu."
    }
   },
   {

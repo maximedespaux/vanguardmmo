@@ -149,20 +149,47 @@ async function principal() {
     })
   }
 
-  /* 4 — les boites de fidelite : identifiant en jeu et contenu */
-  const boites = [...paquet.matchAll(/\{id:(\d+),name:"(Bo[^"]*fidélité[^"]*|Bo[^"]*fid\\xe9lit\\xe9[^"]*)",icon:"([^"]+)",description:"([^"]*)"\}/g)].map((m) => ({
-    identifiantJeu: Number(m[1]),
-    nom: lisible(m[2]),
-    icone: m[3],
-    palier: (lisible(m[4]).match(/palier\s+(\w+)/) || [])[1] || null,
-    contenu: contenuDeLaBoite(m[4]),
-  }))
+  /*
+   * 4 — les boites de fidelite : identifiant en jeu et contenu.
+   *
+   * ATTENTION, LE PIEGE : le paquet ecrit la description de QUATRE boites comme
+   * une chaine, et celle de la CINQUIEME comme un element JSX
+   * (`description:(0,X.jsx)("span",{children:"…"})`). Un motif qui n'accepte que
+   * la chaine perd la boite Legendaire — celle du palier Diamant, la plus haute —
+   * sans rien signaler. On accepte donc les deux formes.
+   */
+  const boites = [
+    ...paquet.matchAll(
+      /\{id:(\d+),name:"(Bo[^"]*fidélité[^"]*|Bo[^"]*fid\\xe9lit\\xe9[^"]*)",icon:"([^"]+)",description:(?:"([^"]*)"|\(0,[\w$]+\.jsx\)\("span",\{children:"([^"]*)"\})/g,
+    ),
+  ].map((m) => {
+    const description = m[4] !== undefined ? m[4] : m[5] || ''
+    return {
+      identifiantJeu: Number(m[1]),
+      nom: lisible(m[2]),
+      icone: m[3],
+      palier: (lisible(description).match(/palier\s+(\w+)/) || [])[1] || null,
+      contenu: contenuDeLaBoite(description),
+    }
+  })
+  /*
+   * LE COMPTE SE PROUVE SUR LE PAQUET, PAS SUR LE MOTIF. Le paquet nomme une
+   * icone `box_fidelite_N.webp` par boite : si le motif en ramene moins, il en a
+   * perdu une et le script le crie au lieu de publier une liste courte.
+   */
+  const iconesDeBoite = new Set(paquet.match(/box_fidelite_\d+\.webp/g) || [])
+  if (boites.length !== iconesDeBoite.size) {
+    echecs.push({
+      sujet: 'Fidelite — ce que contient chaque boite',
+      manquantes: [`${iconesDeBoite.size} icones de boite dans le paquet, ${boites.length} boites lues`],
+    })
+  }
   if (boites.length) {
     pousse({
       sujet: 'Fidelite — ce que contient chaque boite',
       id: 'fidelite.boites',
       page: `${SITE}/me/fidelity`,
-      valeur: { boites },
+      valeur: { boites, boitesAttendues: iconesDeBoite.size },
       preuves: ['box_fidelite_1.webp', 'box_fidelite_5.webp'],
       dit:
         `${boites.length} boites de recompense, ${boites.filter((b) => b.contenu).length} dont le contenu est chiffre.` +

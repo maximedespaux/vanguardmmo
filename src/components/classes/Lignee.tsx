@@ -1,7 +1,7 @@
 "use client";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { Cadre, Pastille, SousTitre, TD, TH } from "@/components/competences/ui";
-import { PM_MUR, fmt } from "@/components/competences/donnees";
+import { PM_MUR, classeAffichee, fmt } from "@/components/competences/donnees";
 import { LIMITES, type CompetenceLegendaire, type CompetencePalier, type Lignee } from "@/app/(public)/classes/donnees";
 import { PALIERS, duree, type LigneeVue } from "./vue";
 
@@ -35,7 +35,7 @@ export function Chaine({ vue }: { vue: LigneeVue }) {
             <div className="cl-marche" style={{ borderColor: `color-mix(in srgb, ${p.couleur} 45%, var(--border))` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={e.embleme} alt="" width={40} height={40} style={{ objectFit: "contain" }} />
-              <span style={{ fontSize: 11.5, fontWeight: 700, textAlign: "center", lineHeight: 1.15 }}>{e.nom}</span>
+              <span style={{ fontSize: 11.5, fontWeight: 700, textAlign: "center", lineHeight: 1.15 }}>{classeAffichee(e.nom)}</span>
               <span style={{ fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".5px", color: p.couleur, fontWeight: 700 }}>{p.nom}</span>
               <span style={{ fontSize: 10.5, color: "var(--text-muted)", ...NUM }}>
                 {e.nb} comp.{e.requis ? ` · dès ${e.requis}` : ""}

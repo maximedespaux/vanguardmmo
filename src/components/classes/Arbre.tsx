@@ -1,4 +1,5 @@
 "use client";
+import { classeAffichee } from "@/components/competences/donnees";
 import { LIGNEES } from "@/app/(public)/classes/donnees";
 import { NB_NOMS_DE_CLASSE, PALIERS } from "./vue";
 
@@ -198,7 +199,7 @@ function CaseMetier2({ x, y, w, etape, promotions, nb, actif }: {
         stroke={actif ? "var(--orange)" : PALIERS.metier2.couleur} strokeWidth={actif ? 1.8 : 1} />
       <image href={etape.embleme} x={x + 6} y={y - 11} width={22} height={22} preserveAspectRatio="xMidYMid meet" />
       <text x={x + 33} y={nb != null ? y - 1 : y + 4} fontSize={11.5} fontWeight={700}
-        fill={actif ? "var(--orange)" : "var(--text)"}>{etape.nom}</text>
+        fill={actif ? "var(--orange)" : "var(--text)"}>{classeAffichee(etape.nom)}</text>
       {nb != null && <text x={x + 33} y={y + 10} fontSize={9} fill="var(--text-muted)">{nb} comp.</text>}
 
       <line x1={filet} y1={y - 12} x2={filet} y2={y + 12} stroke="var(--border)" strokeWidth={1} strokeDasharray="2 2" />

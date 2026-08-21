@@ -232,10 +232,44 @@ export const nbHorsClasse = (h: HorsClasse) => h.groupe.length + h.souverain.len
  * libelle. La correction se fait ici, en un seul endroit, parce que ce nom
  * s'affiche dans le catalogue, dans les fiches et dans les chaines de promotion.
  */
-const CLASSE_PERIMEE: Record<string, string> = { Assistant: "Acolyte" };
+const CLASSE_PERIMEE: Record<string, string> = {
+  Assistant: "Acolyte",
+  /* ┌──── QUATRE AUTRES, SIGNALES PAR MAXIME ET CONFIRMES PAR LE CLIENT ────┐
+       Meme cause que « Assistant » : `propJob.inc` a garde des libelles que le
+       jeu n'emploie plus, et c'est de lui que sortent les noms du releve. Le
+       compte est fait sur les 148 fichiers de texte du client d'aout 2026 —
+       occurrences du nom du releve, contre occurrences du nom du jeu :
 
-/** Le nom d'une classe tel qu'on l'ecrit a l'ecran. */
-export const classeAffichee = (nom: string) => CLASSE_PERIMEE[nom] ?? nom;
+           Lame       25  contre  Assassin   124
+           Baladin     0  contre  Jester   2 163
+           Meneur      0  contre  Pretre      95
+           Psykeeper   3  contre  Sorcier    130
+
+       « Baladin » et « Meneur » n'apparaissent PAS UNE FOIS dans tout le client.
+       Ce ne sont pas des variantes regionales, ce sont des noms morts.        */
+  Lame: "Assassin",
+  Baladin: "Jester",
+  Meneur: "Prêtre",
+  Psykeeper: "Sorcier",
+};
+
+/**
+ * Le nom d'une classe tel qu'on l'ecrit a l'ecran.
+ *
+ * LE RANG SUIT LE NOM. Le releve ecrit « Lame Maitre » et « Baladin Heros » : une
+ * table a correspondance EXACTE laissait passer ces variantes, et la meme lignee
+ * s'affichait « Assassin » a un endroit et « Baladin Heros » deux lignes plus bas.
+ * On corrige donc la BASE et on garde ce qui suit — le jour ou un rang s'ajoute,
+ * il est repris sans qu'on y touche.
+ */
+export const classeAffichee = (nom: string) => {
+  const exact = CLASSE_PERIMEE[nom];
+  if (exact) return exact;
+  for (const [ancien, neuf] of Object.entries(CLASSE_PERIMEE)) {
+    if (nom.startsWith(ancien + " ")) return neuf + nom.slice(ancien.length);
+  }
+  return nom;
+};
 
 // ── Mise en français des chiffres ─────────────────────────────────────────
 

@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     // plutôt que de renvoyer une liste vide sans expliquer pourquoi.
     niveau: Number.isFinite(niveauBrut) && niveauBrut >= 1 && niveauBrut <= 200 ? niveauBrut : null,
     avecBonus: p.get("bonus") === "1",
-    // Le filtre qui compte sur un serveur privé : ce qu'AirFlyff a AJOUTÉ. Le
+    // Le filtre qui compte sur un serveur privé : ce qu'Airborn a AJOUTÉ. Le
     // marqueur vient des espaces de noms du client — IDS_AIRFLYFF_TXT_ et
     // IDS_PROPITEM_NEWSERV_ contre IDS_PROPITEM_TXT_ pour l'original.
     maison: p.get("maison") === "1",

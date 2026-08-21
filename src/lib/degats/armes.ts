@@ -13,7 +13,7 @@
 //    Flyff officiel, reprises telles quelles et marquées comme telles.
 //
 //  UNE DIVERGENCE À CONNAÎTRE. Chez le Flyff officiel, le facteur d'arme varie
-//  d'une classe à l'autre. Dans `propJob.inc` d'AirFlyff, les sept colonnes
+//  d'une classe à l'autre. Dans `propJob.inc` d'Airborn, les sept colonnes
 //  d'arme portent la MÊME valeur sur les quarante lignes de classe : ce sont des
 //  constantes d'arme recopiées. On ne les indexe donc pas par classe.
 //

@@ -140,7 +140,10 @@ export function phraseAccueil(): string {
   const instances = n("instances");
   const objets = n("objets");
   return (
-    "La guilde Vanguard sur le serveur privé Flyff AirFlyff : " +
+    // LE NOM COMPLET DU SERVEUR PORTE DÉJÀ UN DEUX-POINTS. La phrase enchaînait
+    // sur « : les N instances… » — deux deux-points dans la même ligne, illisible.
+    // Le tiret cadratin prend le relais de l'énumération.
+    "La guilde Vanguard sur Airborn : Winds of Rhisis, serveur privé Flyff — " +
     (instances ? `les ${instances} instances et leurs butins, ` : "les instances et leurs butins, ") +
     (objets ? `la provenance de ${objets.toLocaleString("fr-FR")} objets, ` : "la provenance des objets, ") +
     "les paliers de prestige et l'AirBuilder. Consultable sans compte."

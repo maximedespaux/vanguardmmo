@@ -48,7 +48,7 @@ export type Monstre = {
   agro: string | null;
   vole: boolean;
   zone: string | null;
-  /** Porte une clé `NEWSERV` : c'est du contenu ajouté par AirFlyff. */
+  /** Porte une clé `NEWSERV` : c'est du contenu ajouté par Airborn. */
   maison: boolean;
   vies: number | null;
   /** PV × vies. Égal aux PV quand il n'y a qu'une vie. */
@@ -113,7 +113,7 @@ export type Compteurs = {
 };
 
 /** Recherche à accents normalisés : « Bàäl'tru » se trouve en tapant « baaltru »,
- *  et « Ame » trouve « Âme ». Sans ça, la moitié des noms d'AirFlyff — qui sont
+ *  et « Ame » trouve « Âme ». Sans ça, la moitié des noms d'Airborn — qui sont
  *  pleins de diacritiques et d'apostrophes — sont introuvables au clavier. */
 export const clefRecherche = (s: string) =>
   (s || "").normalize("NFD").replace(/\p{Mn}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();

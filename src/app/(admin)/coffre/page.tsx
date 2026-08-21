@@ -12,7 +12,7 @@ const MARKUP = `<div class="wrap">
   </div>
   <div class="tabs" id="tabs"></div>
   <div id="view"></div>
-  <div class="foot">Données recoupées depuis les .air d'AirFlyff + le coffre Excel. 1 slot = 9 999 unités (médailles &amp; reliques : à l'unité). Tout est enregistré et partagé pour toute la guilde.</div>
+  <div class="foot">Données recoupées depuis les .air d'Airborn + le coffre Excel. 1 slot = 9 999 unités (médailles &amp; reliques : à l'unité). Tout est enregistré et partagé pour toute la guilde.</div>
 </div>
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>`;
 

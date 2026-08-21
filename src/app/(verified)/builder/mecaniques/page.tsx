@@ -71,7 +71,7 @@ import { RARETES, reglagesDeSlot } from "@/lib/specsFlyff";
  * `CarteFx`, seule chose cliente de la page.
  */
 export const metadata: Metadata = {
-  title: "Les mécaniques d'AirFlyff — Vanguard",
+  title: "Les mécaniques d'Airborn — Vanguard",
   description:
     "Rareté, artefact, perçage, éveil, sertissage, runes, costumes, panoplies : ce que chaque mot veut dire, avec les images du jeu — et les plafonds que le jeu n'annonce pas.",
 };

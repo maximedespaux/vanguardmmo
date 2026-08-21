@@ -22,7 +22,7 @@ import type { ChiffreAccueil } from "@/components/accueil/chiffres";
  * maintenant de son imagerie officielle. Ensuite le `?error=` posé par le
  * middleware quand une page se refuse partait à la poubelle avec la redirection.
  *
- * Elle ne remplace pas `/histoire` et n'en recopie rien : ici c'est AirFlyff et
+ * Elle ne remplace pas `/histoire` et n'en recopie rien : ici c'est Airborn et
  * ce que le site en sait ; là-bas c'est qui on est et ce qu'on attend. Le lien y
  * mène, deux fois.
  *
@@ -92,8 +92,16 @@ export function PageAccueil({ chiffres, comptes = {} }: {
         {/* ── Le jeu, avec ses propres images en fond ── */}
         <BandeauCartes>
           <div className="vg-reveal">
+            {/* LE NOM DU SERVEUR NE SE COUPE PAS EN DEUX. Cette pastille tient sur une
+                ligne au-dessus de ~700 px, mais en dessous elle en prend deux, et sans
+                le `nowrap` la coupure tombait AU MILIEU DU NOM : « SERVEUR PRIVÉ
+                AIRBORN : WINDS » / « OF RHISIS ». Le nom entier est un seul bloc
+                insécable, donc la coupure tombe après « privé » — 25 signes contre
+                29 pour l'ancienne première ligne, ça passe partout où l'ancienne
+                passait. Le nom est plus long qu'« AirFlyff » : le cas n'existait pas
+                avant le renommage, il existe maintenant. */}
             <div className="font-heading" style={{ fontSize: 13, letterSpacing: 2.4, textTransform: "uppercase", color: "var(--orange)" }}>
-              Serveur privé AirFlyff
+              Serveur privé <span style={{ whiteSpace: "nowrap" }}>Airborn : Winds of Rhisis</span>
             </div>
             <h2 className="font-heading" style={{ fontSize: "clamp(22px,3.4vw,30px)", margin: "8px 0 12px", letterSpacing: .5 }}>
               On a ouvert le jeu, et on a tout mis ici
@@ -113,7 +121,7 @@ export function PageAccueil({ chiffres, comptes = {} }: {
                 remplissage — ce qui reste est le seul fait que ce paragraphe est seul à
                 porter : d'où viennent les données, et qu'on entre sans compte. */}
             <p style={{ margin: 0, maxWidth: 620, fontSize: 15, lineHeight: 1.75, color: "#d9d9e2" }}>
-              Tout est lu dans les fichiers du client d&apos;AirFlyff, et{" "}
+              Tout est lu dans les fichiers du client d&apos;Airborn, et{" "}
               <b style={{ color: "var(--orange)" }}>ça se consulte sans compte</b> — Discord
               ne garde que ce qui t&apos;appartient.
             </p>
@@ -197,11 +205,18 @@ export function PageAccueil({ chiffres, comptes = {} }: {
 
         {/* ── Rejoindre ── */}
         <div className="vg-reveal acc-join">
-          {/* L'ILLUSTRATION OFFICIELLE D'AIRFLYFF — `accueil/login_screen_01.webp`,
-              l'écran de connexion du serveur.
+          {/* L'ILLUSTRATION OFFICIELLE DU SERVEUR — `accueil/login_screen_01.webp`,
+              l'écran de connexion.
+              ATTENTION, FAIT VÉRIFIÉ SUR LES PIXELS : le logo peint dans cette image
+              est l'ANCIEN, « AIRFLYFF ». Le serveur s'appelle maintenant Airborn :
+              Winds of Rhisis, mais l'illustration date du client d'octobre 2025 et
+              n'a pas été refaite. On ne fait donc pas dire à cette image un nom
+              qu'elle ne porte pas : le texte de remplacement transcrit le logo tel
+              qu'il est peint. À remplacer le jour où le serveur publie sa nouvelle
+              illustration de connexion.
               C'est la seule des sept images de `public/jeu/accueil/` qui soit
               exploitable telle quelle, et elle vaut la place : elle porte le NOM du
-              serveur et sa devise, peinte par AirFlyff et non reprise de l'éditeur —
+              serveur et sa devise, peinte par le serveur et non reprise de l'éditeur —
               aucun logo Gala, aucune barre de chargement, aucun avertissement d'âge
               incrusté (les six autres en portent, voir le compte rendu). Sur la page
               qui doit donner envie de rejoindre, c'est l'image la plus utile du dépôt.
@@ -214,7 +229,7 @@ export function PageAccueil({ chiffres, comptes = {} }: {
           <img
             className="acc-join-art"
             src="/jeu/accueil/login_screen_01.webp"
-            alt="L'illustration officielle d'AirFlyff : quatre aventuriers face à un colosse de pierre en flammes, sous la devise du serveur « L'air se raréfie »."
+            alt="L'illustration officielle du serveur : quatre aventuriers face à un colosse de pierre en flammes, sous le logo AIRFLYFF — l'ancien nom, tel qu'il est peint dans l'image — et la devise « L'air se raréfie »."
             width={1400}
             height={785}
             loading="lazy"

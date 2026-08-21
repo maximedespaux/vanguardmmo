@@ -304,10 +304,10 @@ export default function AccueilGuildePage() {
 
   return (
     <div ref={conteneur} className="dash-accueil" style={{ padding: "28px 32px 64px", maxWidth: 1100, margin: "0 auto" }}>
-      {/* L'ART DE L'EN-TÊTE EST UNE CAPTURE DU VRAI AIRFLYFF —
+      {/* L'ART DE L'EN-TÊTE EST UNE CAPTURE DU VRAI AIRBORN —
           `accueil/flyff00000.webp`, la seule image du dépôt prise sur le serveur
           lui-même et non dans l'imagerie de base du jeu. C'est la règle : ce qui
-          vaut la place, c'est ce qu'AirFlyff a changé.
+          vaut la place, c'est ce qu'Airborn a changé.
           Le recadrage est CALCULÉ, pas choisi à l'œil, et sa valeur est celle du
           bloc de style plus bas (24 %) : le détail du calcul y est. Aucun texte du
           jeu n'entre dans le cadre — vérifié en recadrant le fichier source sur la

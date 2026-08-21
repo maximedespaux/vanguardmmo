@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
-import { MARQUEUR_AIRFLYFF } from "@/components/objets/vocabulaire";
+import { MARQUEUR_AIRBORN } from "@/components/objets/vocabulaire";
 import { Resultat } from "./Resultat";
 import { useWiki, type ReponseWiki } from "./useWiki";
 import { TYPES, type TypeEntree } from "./vocabulaire";
@@ -198,7 +198,7 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
   const parType = r?.parType ?? faits.parType;
   const nMaison = r?.maison ?? faits.maison;
   /* Le compte de « Tout » est la SOMME des cinq natures pour les critères courants, et
-     pas la taille de l'index : avec le filtre AirFlyff allumé, « Tout 14 219 » sous une
+     pas la taille de l'index : avec le filtre Airborn allumé, « Tout 14 219 » sous une
      liste de 1 740 réponses se lit comme une contradiction. */
   const nTout = Object.values(parType).reduce((a, b) => a + b, 0) || faits.total;
 
@@ -253,12 +253,12 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
               valide : le clic du filtre se perdrait. */}
           <Pastille on={maison} onClick={() => setMaison(!maison)}>
             <Icon name="sparkles" size={13} style={{ color: maison ? "#0A0A0C" : "var(--orange)" }} />
-            Ajouts AirFlyff
+            Ajouts Airborn
             {nMaison > 0 && <span style={{ ...NUM, opacity: maison ? .7 : .55 }}>{fr(nMaison)}</span>}
           </Pastille>
           {/* Le même texte que sur /objets, et il n'est plus écrit deux fois : voir
-              `MARQUEUR_AIRFLYFF` dans components/objets/vocabulaire.ts. */}
-          <Invisible enJeu={MARQUEUR_AIRFLYFF}>
+              `MARQUEUR_AIRBORN` dans components/objets/vocabulaire.ts. */}
+          <Invisible enJeu={MARQUEUR_AIRBORN}>
             <></>
           </Invisible>
           {filtre && (
@@ -278,7 +278,7 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
             <b style={{ color: "var(--text)", ...NUM }}>{fr(r.total)}</b>
             {r.total === 1 ? "réponse" : "réponses"}
             {/* « les plus proches » n'a de sens qu'avec un mot-clé : sans lui il n'y a
-                pas de proximité, il y a un ordre — les ajouts d'AirFlyff d'abord. */}
+                pas de proximité, il y a un ordre — les ajouts d'Airborn d'abord. */}
             {r.total > r.montres && (
               q.trim() || type
                 ? <span>· les {r.montres} plus proches sont affichées</span>

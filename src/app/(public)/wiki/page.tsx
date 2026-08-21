@@ -23,7 +23,7 @@ const fr = (n: number) => n.toLocaleString("fr-FR");
 export const metadata = {
   title: "Le wiki · Vanguard",
   description:
-    "Un seul champ pour tout AirFlyff : objets, monstres, recettes, PNJ et compétences, par leur nom ou par leurs mots-clés — et quel monstre lâche quoi.",
+    "Un seul champ pour tout Airborn : objets, monstres, recettes, PNJ et compétences, par leur nom ou par leurs mots-clés — et quel monstre lâche quoi.",
 };
 
 export default async function WikiPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {

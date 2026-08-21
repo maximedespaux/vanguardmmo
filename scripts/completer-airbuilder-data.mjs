@@ -412,7 +412,7 @@ db.SRC = {
   percage: "Descriptions du jeu, relevées à la main dans le builder",
   sertissage: "Client ▸ Ultimate_GemAbility.txt — huit emplacements par gemme, dont trois sans titre",
   reserve:
-    "Les formules de dégâts publiées ailleurs sont celles du Flyff OFFICIEL ; AirFlyff a changé des valeurs. Un nombre affiché ici est la somme de ce qui est ÉCRIT dans le client, pas un dégât mesuré en jeu.",
+    "Les formules de dégâts publiées ailleurs sont celles du Flyff OFFICIEL ; Airborn a changé des valeurs. Un nombre affiché ici est la somme de ce qui est ÉCRIT dans le client, pas un dégât mesuré en jeu.",
 };
 
 /* ── ÉCRITURE ───────────────────────────────────────────────────────────────

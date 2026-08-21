@@ -35,7 +35,7 @@ import {
  * │ constats : les deux tuiles qui étaient des FILTRES ne │
  * │ se distinguaient pas des quatre qui n'étaient que des │
  * │ chiffres, et le fait qui les relie — tout monstre à   │
- * │ plusieurs vies est du contenu AirFlyff — ne se lisait │
+ * │ plusieurs vies est du contenu Airborn — ne se lisait  │
  * │ nulle part.                                           │
  * └──────────────────────────────────────────────────────┘
  */
@@ -82,7 +82,7 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
           Les six tuiles d'avant se ressemblaient trait pour trait, alors que deux
           d'entre elles étaient des BOUTONS et les quatre autres des constats. Pire :
           le fait qui relie les deux boutons — les 94 monstres qui se relèvent sont
-          TOUS du contenu AirFlyff — ne se lisait nulle part, et une rangée de
+          TOUS du contenu Airborn — ne se lisait nulle part, et une rangée de
           pastilles ne sait pas dire « celui-là est dedans ». Trois barres à la même
           échelle le disent d'un regard, et les deux dernières restent des filtres. */}
       <ProvenanceMonstres
@@ -182,7 +182,7 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
 /**
  * Une tuile de compteur — un CONSTAT, et rien d'autre.
  *
- * Elle savait aussi être un bouton, du temps où « ajoutés par AirFlyff » et « se
+ * Elle savait aussi être un bouton, du temps où « ajoutés par Airborn » et « se
  * relèvent » vivaient dans cette rangée. Ces deux-là sont passés dans le schéma
  * d'emboîtement, qui dit en plus comment ils se contiennent : la tuile n'a plus
  * besoin de faire deux métiers, et une tuile qui ne peut pas être cliquable ne

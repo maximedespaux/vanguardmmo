@@ -13,7 +13,7 @@ import { aUneCarte, CarteVille, REGIONS_CARTOGRAPHIEES } from "@/components/pnj/
 /**
  * L'ANNUAIRE DES PNJ — « qui vend quoi, qui fabrique quoi, et où ».
  *
- * Le client d'AirFlyff porte 131 portraits de dialogue (200×240, canal alpha) que rien
+ * Le client d'Airborn porte 131 portraits de dialogue (200×240, canal alpha) que rien
  * n'affichait. L'appariement ne devine rien : `character.inc` donne, pour chaque PNJ,
  * un `SetImage( IDS_CHARACTER_INC_xxxxxx )` qui se résout dans `character.txt` en un
  * nom de fichier. C'est le jeu qui dit qui porte quel visage.
@@ -202,7 +202,7 @@ function Vente({ vend }: { vend: Objet[] }) {
 /**
  * L'ÉTAL À JETONS, groupé par monnaie.
  *
- * C'est la mécanique maison d'AirFlyff : on paie avec un OBJET — jeton rouge, nucléus,
+ * C'est la mécanique maison d'Airborn : on paie avec un OBJET — jeton rouge, nucléus,
  * médaille de donjon — et pas avec des perins. Le client dit ce qui est en vente et
  * contre quoi ; la QUANTITÉ exigée, elle, est décidée côté serveur. Ce trou-là reste
  * signalé, mais dans une bulle et pas en paragraphe : il protège d'un farm inutile,
@@ -642,7 +642,7 @@ export function AnnuairePnj({ depart = "", cleDepart = "" }: {
     <>
       {/* Un intérieur habité, avec une PNJ debout derrière son comptoir : c'est à ça
           que ressemble la rencontre dont parle la page. */}
-      <PageHeader art="/jeu/chargement/maploading_guildhouse.webp" icon="users" title="Les PNJ d'AirFlyff"
+      <PageHeader art="/jeu/chargement/maploading_guildhouse.webp" icon="users" title="Les PNJ d'Airborn"
         subtitle="Qui vend quoi, qui fabrique quoi, et dans quelle ville le trouver." />
 
       {erreur && (

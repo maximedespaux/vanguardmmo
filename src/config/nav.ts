@@ -240,7 +240,7 @@ export const ESPACES: Espace[] = [
       { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Programmer les passages, suivre les venues." , acces: "admin" },
       { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." , acces: "admin" },
       { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Un message à toute la guilde, sur Discord." , acces: "admin" },
-      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements AirFlyff annoncés par le bot." , acces: "admin" },
+      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements Airborn annoncés par le bot." , acces: "admin" },
     ],
   },
 ];

@@ -11,7 +11,7 @@ import { chiffresAccueil, comptesPortes, phraseAccueil } from "@/components/accu
  * redirection, sans un mot pour l'utilisateur.
  *
  * `/histoire` n'a pas bougé et reste l'entrée « Accueil » de la navigation ; deux
- * liens d'ici y mènent. Cette page prend l'autre moitié du sujet : AirFlyff, ses
+ * liens d'ici y mènent. Cette page prend l'autre moitié du sujet : Airborn, ses
  * huit fins de partie, et les quatre portes ouvertes sans compte.
  *
  * Pourquoi ce fichier reste un composant SERVEUR alors que tout son contenu est
@@ -26,7 +26,7 @@ import { chiffresAccueil, comptesPortes, phraseAccueil } from "@/components/accu
  * contredire.
  */
 export const metadata = {
-  title: "Vanguard — guilde AirFlyff",
+  title: "Vanguard — guilde Airborn : Winds of Rhisis",
   description: phraseAccueil(),
 };
 

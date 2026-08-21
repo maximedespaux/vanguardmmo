@@ -12,7 +12,7 @@
 //  les manques de `nonPrisEnCompte` sont à afficher AVEC le nombre. C'est la
 //  décision prise avec Maxime — le calcul s'affiche avec sa source, sans être
 //  donné pour exact, parce que les formules publiées ailleurs sont celles du
-//  Flyff OFFICIEL et qu'AirFlyff a changé des valeurs.
+//  Flyff OFFICIEL et qu'Airborn a changé des valeurs.
 //
 //  D'où sortent les chiffres, en un coup d'œil :
 //    · public/wiki/objets-stats.json  — 5 075 objets : fourchettes, vitesses, bonus

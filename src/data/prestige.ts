@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════
-//  COÛTS DE PRESTIGE — données RÉELLES AirFlyff
+//  COÛTS DE PRESTIGE — données RÉELLES Airborn
 //  Par palier de départ : P(n) → P(n+1). Clés dynamiques (l'item
-//  demandé varie selon le palier). Source : wiki AirFlyff.
+//  demandé varie selon le palier). Source : wiki Airborn.
 // ════════════════════════════════════════════════════════════
 
 export const PRESTIGE_COSTS: Record<number, Record<string, number>> = {

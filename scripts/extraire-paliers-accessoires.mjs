@@ -402,7 +402,7 @@ const plafonds = {
     valeur: 10,
     source: "Client/Client/data.air ▸ help.txt.txt, IDS_CLIENT_HELP_INC_000571",
     citation: "les cartes d'élément existent « pour les enchantements de +1 à +5 et pour les enchantements de +6 à +10 »",
-    reserve: "c'est un TEXTE D'AIDE, pas une table. Le même fichier parle de la « boutique Flyff » et du « site officiel » : il peut avoir été hérité du Flyff officiel sans être remis à jour pour AirFlyff. Le chiffre 10 est corroboré par propEnchant.inc, mais la valeur du bonus élémentaire à chaque palier n'est écrite nulle part.",
+    reserve: "c'est un TEXTE D'AIDE, pas une table. Le même fichier parle de la « boutique Flyff » et du « site officiel » : il peut avoir été hérité du Flyff officiel sans être remis à jour pour Airborn. Le chiffre 10 est corroboré par propEnchant.inc, mais la valeur du bonus élémentaire à chaque palier n'est écrite nulle part.",
   },
 };
 

@@ -168,7 +168,7 @@ export const CARTE: { quoi: string; valeur: string; precision: string; enBulle?:
 ];
 
 /**
- * OÙ PARTENT LES EMBLÈMES — lu dans la table d'échanges d'AirFlyff, pas deviné.
+ * OÙ PARTENT LES EMBLÈMES — lu dans la table d'échanges d'Airborn, pas deviné.
  *
  * C'est ce qui donne un sens aux 52 vagues : la prime n'est pas un trophée, c'est
  * la monnaie des paliers de prestige hauts. Les comptes viennent de

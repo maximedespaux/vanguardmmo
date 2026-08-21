@@ -207,13 +207,13 @@ export const nombreDeGemmesNommees = () =>
 /**
  * LE FAIT LE PLUS UTILE DE TOUTE LA PAGE, ET IL SE CALCULE.
  *
- * AirFlyff a changé l'ordre des neuf statistiques de sertissage sans retoucher
+ * Airborn a changé l'ordre des neuf statistiques de sertissage sans retoucher
  * les textes d'objets, restés sur l'ordre du Flyff d'origine : le nom qu'on lit
  * décrit donc l'effet d'une AUTRE gemme. Ça se lisait comme une affirmation ;
  * ça se DÉMONTRE dans le relevé, et sans écrire un seul nom à la main.
  *
  * Les cinq familles de joyau portent neuf gemmes nommées chacune (`…TOPAZ04`) :
- * ce sont les anciens libellés. À côté, AirFlyff a ajouté neuf Diamants dont le
+ * ce sont les anciens libellés. À côté, Airborn a ajouté neuf Diamants dont le
  * libellé DIT ce qu'ils font (`…DIAMOND_4` = « sertissage en siphon de vie ») et
  * qui suivent l'ordre du fichier. Rang par rang, on compare donc le nom ancien au
  * libellé neuf ; là où les deux ne parlent pas de la même statistique, le nom
@@ -385,7 +385,7 @@ export function runes() {
  * paliers.
  *
  * Rien n'est nommé à la main : la famille EST le jeu de bonus de la pierre, le
- * palier son rang dans la clé. Le jour où AirFlyff en ajoute une quatrième, elle
+ * palier son rang dans la clé. Le jour où Airborn en ajoute une quatrième, elle
  * apparaît d'elle-même — et si l'un d'eux perd ses bonus, il quitte la liste au
  * lieu d'y rester vide.
  */
@@ -671,7 +671,7 @@ export const plafondsDeSertissage = () =>
 /**
  * LES DOUBLETS DE VOCABULAIRE DU CLIENT, et pourquoi il faut les traiter.
  *
- * AirFlyff nomme plusieurs fois la même statistique avec deux mots : « HP max »
+ * Airborn nomme plusieurs fois la même statistique avec deux mots : « HP max »
  * et « PV max », « Dégâts PvP » et « Dégâts JcJ », « Siphon de vie » et « Melee
  * Stealhp ». Comparer les libellés à la lettre faisait donc passer trois rangs
  * pour un désaccord entre les deux fichiers, alors que les deux parlent de la
@@ -732,7 +732,7 @@ export function plafondDeStat(nom: string): number | null {
  * Le builder porte les mêmes neuf statistiques DEUX FOIS, dans deux ordres qui
  * ne se ressemblent pas : `DIASTATS` alimente la liste déroulante que le joueur
  * voit, `GEMU` porte les valeurs. On compare donc, rang par rang, l'ordre de
- * `GEMU` aux neuf Diamants d'AirFlyff — deux fichiers que personne n'a écrits
+ * `GEMU` aux neuf Diamants d'Airborn — deux fichiers que personne n'a écrits
  * ensemble. Là où les neuf rangs concordent, l'ordre réel est établi ; et il
  * n'est pas celui de la liste déroulante.
  *
@@ -824,7 +824,7 @@ const JOYAUX_COSTUME: { cle: string; img: string; morceau: string; imgMorceau: s
  * possibles dans celle du coffret : les deux phrases sont celles que le joueur a
  * sous les yeux, donc elles ne peuvent pas se désynchroniser de son écran.
  *
- * À côté du joyau brut, AirFlyff a posé des joyaux NOMMÉS (`…_GARNET_FOR`) —
+ * À côté du joyau brut, Airborn a posé des joyaux NOMMÉS (`…_GARNET_FOR`) —
  * exactement le geste qu'il a fait sur les Diamants d'arme. On les compte plutôt
  * que de l'annoncer.
  */
@@ -1226,7 +1226,7 @@ export function eveilFixe(motif: RegExp) {
  * seule paie.
  *
  * La rotation est lue dans les recettes du client (`crafts.json`), pas décrite :
- * si AirFlyff l'ouvre ou la ferme, la page suit.
+ * si Airborn l'ouvre ou la ferme, la page suit.
  */
 /** Les objets que le client appelle « Teinture ». Ils se comptent au lieu
  *  d'être annoncés : la page dit qu'il n'existe pas de teinture de costume, et

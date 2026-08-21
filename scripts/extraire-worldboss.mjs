@@ -10,7 +10,7 @@
  * src/data/chambres-adversaires.json le fait pour les Chambres Secrètes.
  *
  * ── LES TROIS CRITÈRES, ET POURQUOI CEUX-LÀ ───────────────────────────────────
- * Il n'existe AUCUN rang « world boss » dans AirFlyff : les 1 124 monstres se
+ * Il n'existe AUCUN rang « world boss » dans Airborn : les 1 124 monstres se
  * rangent en sept rangs (faible, normal, capitaine, demi-boss, boss, super,
  * materiau) et pas un ne porte ce mot. On ne peut donc pas répondre par un filtre de
  * rang. Ce que les fichiers écrivent, en revanche :
@@ -83,7 +83,7 @@ const ORDRE_RANGS = ["faible", "normal", "capitaine", "demi-boss", "boss", "supe
 const presents = new Set(M.map((x) => x.rang).filter(Boolean));
 
 const paquet = {
-  genere: "extrait de public/wiki/monstres.json (fouille du client AirFlyff d'octobre 2025)",
+  genere: "extrait de public/wiki/monstres.json (fouille du client Airborn d'octobre 2025)",
   catalogue: d.total,
   rangs: ORDRE_RANGS.filter((r) => presents.has(r)),
   // Combien de monstres portent VRAIMENT un rang : deux du catalogue n'en ont

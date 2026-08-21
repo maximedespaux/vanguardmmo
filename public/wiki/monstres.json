@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-11",
- "source": "Client AirFlyff d'octobre 2025 (propMover.txt, propMoverEx.inc, propquest*.inc)",
+ "source": "Client Airborn d'octobre 2025 (propMover.txt, propMoverEx.inc, propquest*.inc)",
  "total": 1124,
  "compteurs": {
   "maison": 256,
@@ -59433,8 +59433,8 @@
  ],
  "marqueurMaison": {
   "regle": "maison = maison d'origine OU vies > 1",
-  "pourquoi": "Un monstre à plusieurs barres de vie est du contenu AirFlyff : les 94 concernés portent des préfixes d'identifiant qui le disent tous (FASHION, CHAMBER, CHAMBRE, DONJON, ARCANIQUE, ANNIV, SHOGUN…), et deux de ces préfixes sont des mots FRANÇAIS — impossible dans un client de base écrit en anglais.",
-  "reciproqueFausse": "162 monstres à une seule vie sont marqués maison : AirFlyff a ajouté beaucoup de contenu ordinaire. On ne déduit donc jamais l'origine de l'ABSENCE de plusieurs vies, et ce script n'enlève aucun marqueur.",
+  "pourquoi": "Un monstre à plusieurs barres de vie est du contenu Airborn : les 94 concernés portent des préfixes d'identifiant qui le disent tous (FASHION, CHAMBER, CHAMBRE, DONJON, ARCANIQUE, ANNIV, SHOGUN…), et deux de ces préfixes sont des mots FRANÇAIS — impossible dans un client de base écrit en anglais.",
+  "reciproqueFausse": "162 monstres à une seule vie sont marqués maison : Airborn a ajouté beaucoup de contenu ordinaire. On ne déduit donc jamais l'origine de l'ABSENCE de plusieurs vies, et ce script n'enlève aucun marqueur.",
   "critereOriginePerdu": "monstres.json a été généré le 2026-08-11 sans script versionné : le critère qui a posé les 235 premiers marqueurs n'est pas reproductible. Celui-ci l'est.",
   "ajoutesParCetteRegle": 21
  }

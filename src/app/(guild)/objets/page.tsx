@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { RechercheObjets } from "@/components/objets/Recherche";
-/* `comptesGlobaux` n'est plus appelé ICI : les comptes qu'il rend (ajouts AirFlyff,
+/* `comptesGlobaux` n'est plus appelé ICI : les comptes qu'il rend (ajouts Airborn,
    grades, bonus, butin) sont portés par les pastilles de filtre, qui les reçoivent de
    /api/objets. Les lire deux fois pour écrire le même nombre dans un sous-titre était
    la définition du doublon. */
@@ -14,7 +14,7 @@ import { statsDisponibles } from "@/components/objets/stats";
  * chercher un : leurs noms n'apparaissaient qu'en passant, dans le coffre, dans
  * une requête, dans le builder. On cherchait donc ailleurs, sur un wiki dont les
  * niveaux sont faux (il montre le niveau DE L'OBJET, pas le niveau requis) et
- * qui a perdu 108 objets ajoutés par AirFlyff.
+ * qui a perdu 108 objets ajoutés par Airborn.
  *
  * Le mot-clé arrive parfois d'ailleurs (`?q=`) : le plan de farm et les requêtes
  * d'objet peuvent renvoyer ici avec le nom déjà écrit. `?stat=DST_…` vient des fiches
@@ -34,8 +34,8 @@ export default async function ObjetsPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader icon="package" title="Les objets"
-        // « dont N ajoutés par AirFlyff » est parti du sous-titre : la pastille
-        // « Ajouts AirFlyff » porte déjà ce compte, à dix centimètres. Reste le total,
+        // « dont N ajoutés par Airborn » est parti du sous-titre : la pastille
+        // « Ajouts Airborn » porte déjà ce compte, à dix centimètres. Reste le total,
         // qui ne figure nulle part ailleurs, et les trois façons de chercher.
         subtitle={`${total.toLocaleString("fr-FR")} objets du client. Cherche par nom, par bonus, ou par ce qui le lâche.`}
         right={

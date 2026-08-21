@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════
-//  LA CHAÎNE DE PROMOTION — donnees extraites du client AirFlyff
+//  LA CHAÎNE DE PROMOTION — donnees extraites du client Airborn
 //
 //  Genere depuis `competences.json` (fouille du client, octobre 2025), qui vit
 //  hors du depot : ce fichier en est la copie reduite — la STRUCTURE de la

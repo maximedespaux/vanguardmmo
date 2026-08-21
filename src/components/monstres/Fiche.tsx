@@ -453,7 +453,7 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
           <EnteteVolet
             icon={seReleve ? "skull" : "paw"}
             titre={m.nom}
-            marque={seReleve ? { texte: `${vies} vies`, couleur: "var(--red)" } : m.maison ? { texte: "AirFlyff", couleur: "var(--purple)" } : undefined}
+            marque={seReleve ? { texte: `${vies} vies`, couleur: "var(--red)" } : m.maison ? { texte: "Airborn", couleur: "var(--purple)" } : undefined}
             sous={
               <span style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
                 <b style={{ color: tonRang(m.rang) }}>{m.rang ?? "rang inconnu"}</b>
@@ -467,7 +467,7 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
                 )}
                 {m.zone && <span>· {m.zone}</span>}
                 {m.groupe && <span>· {m.groupe}</span>}
-                {m.maison && seReleve && <span style={{ color: "var(--purple)" }}>· AirFlyff</span>}
+                {m.maison && seReleve && <span style={{ color: "var(--purple)" }}>· Airborn</span>}
               </span>
             }
           />

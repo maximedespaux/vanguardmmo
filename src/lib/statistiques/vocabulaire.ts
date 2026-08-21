@@ -23,7 +23,7 @@
  *   · « suffixe »  le code finit par _RATE ou _PERCENT. Aucun doute.
  *   · « libellé »  le libellé du client finit par « % ». Écrit par le jeu.
  *   · « lecture »  ni l'un ni l'autre : le classement vient de la façon dont un
- *                  calculateur de Flyff OFFICIEL lit ce code. AirFlyff a changé
+ *                  calculateur de Flyff OFFICIEL lit ce code. Airborn a changé
  *                  des valeurs — cette origine est donc une RÉSERVE, pas une preuve.
  */
 
@@ -160,7 +160,7 @@ const APPLIQUE_A: Record<string, { appliqueA: string; moment?: Moment; sens?: "r
  *   · sur l'attribut ALLOUÉ seul (15 + points dépensés) ;
  *   · sur l'attribut alloué PLUS les bonus absolus de l'équipement.
  * Le calculateur du Flyff officiel n'en applique AUCUNE : sa somme d'attribut ne
- * regarde que les absolus. Ces quatre codes sont donc une invention d'AirFlyff,
+ * regarde que les absolus. Ces quatre codes sont donc une invention d'Airborn,
  * et rien ne permet de choisir.
  *
  * Le moteur rend LES DEUX lectures, côte à côte, et n'en promeut aucune.

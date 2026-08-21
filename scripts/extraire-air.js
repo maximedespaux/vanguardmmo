@@ -1,4 +1,4 @@
-// Extracteur complet des archives .air d'AirFlyff.
+// Extracteur complet des archives .air d'Airborn.
 //
 // Deux couches :
 //  1. L'INDEX est brouille par echange des quartets de chaque octet puis XOR 0xF7.

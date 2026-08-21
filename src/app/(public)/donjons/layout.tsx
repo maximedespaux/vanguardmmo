@@ -13,7 +13,11 @@ import type { Metadata } from "next";
  * recherche qui menait à elle ne mènerait plus nulle part.
  */
 export const metadata: Metadata = {
-  title: "Donjons, Tour Oubliée et Protection de l'Oasis — Flyff AirFlyff",
+  /* LE SEUL TITRE QUI NE PORTE PAS LE NOM COMPLET. La règle du site : « Airborn :
+     Winds of Rhisis » en entier dans un titre, « Airborn » seul quand la place
+     manque. Avec le nom complet celui-ci ferait 74 signes — un moteur en coupe
+     une soixantaine, et « Protection de l'Oasis » tomberait hors du lien. */
+  title: "Donjons, Tour Oubliée et Protection de l'Oasis — Airborn",
   /* RAMENÉE DE 315 À 158 CARACTÈRES, et ce n'est pas pour faire baisser un compteur :
      un moteur coupe la description vers 160 signes, donc la moitié de l'ancienne
      n'était lue par personne — ni par un robot, ni dans un aperçu de lien Discord.

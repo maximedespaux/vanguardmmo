@@ -1,0 +1,2781 @@
+{
+ "genere": "2026-08-21T06:41:23.285Z",
+ "quoi": "Les FAITS du wiki officiel d'Airborn : Winds of Rhisis — chiffres, seuils, tables, conditions — et leur confrontation au relevé tiré du client du jeu.",
+ "regle": "On extrait des faits, pas de la prose : des valeurs, des seuils, des listes, et l'adresse de la page qui les porte. Les champs de texte sont des étiquettes du wiki (un nom d'objet, un nom de PNJ, une valeur de puce), jamais ses paragraphes — les puces sont lues en tête de ligne pour ne pas attraper la phrase de description qui les précède. Chaque fait déclare des preuves que le script recherche dans la page téléchargée ; un fait dont une preuve tombe est marqué verifie:false.",
+ "source": {
+  "wiki": "https://airborn.gitbook.io/airborn",
+  "tableDesMatieres": "https://airborn.gitbook.io/airborn/llms.txt",
+  "pagesAnnoncees": 106,
+  "pagesLues": 106
+ },
+ "confronteA": [
+  "src/data/dungeons.json",
+  "src/data/prestige.ts",
+  "src/data/carnets-arcanes.json",
+  "public/airbuilder/mecaniques.json",
+  "public/wiki/bonus-sources.json",
+  "public/wiki/oasis-vagues.json"
+ ],
+ "assets": "Aucune image n'est prise au wiki. Les objets nommés sont rattachés aux dessins DÉJÀ extraits du client, par le nom français du catalogue (public/wiki/objets-fiches.json), accents et casse mis de côté — c'est le client lui-même qui apparie le nom et le dessin, jamais nous d'après un nom de fichier. Deux objets peuvent porter le même nom : l'homonymie n'est jamais tranchée par l'ordre du catalogue, il faut nommer la clé du client, sinon l'objet ressort sans dessin et le champ `ambiguite` dit entre quoi le choix restait à faire. `dessinRegarde` dit lesquels ont en plus été ouverts à l'œil : les noms de fichiers mentent, et ce dépôt a déjà payé cinq fois pour l'avoir oublié.",
+ "comptes": {
+  "faits": 38,
+  "faitsVerifies": 38,
+  "instances": 24,
+  "objetsRattaches": 24,
+  "objetsSansDessin": 0,
+  "dessinsRegardes": 10,
+  "confrontations": 22,
+  "contredit": 8,
+  "confirme": 8,
+  "complete": 6
+ },
+ "confrontation": [
+  {
+   "sujet": "Instances — PV conseillés pour le tank",
+   "verdict": "CONTREDIT",
+   "id": "instance.pvTank",
+   "gravite": "haute",
+   "wiki": "les PV annoncés par les pages d’instance du wiki officiel",
+   "site": "src/data/dungeons.json ▸ hp, servi sous le libellé « PV recommandés » sur /donjons",
+   "lignes": [
+    {
+     "nom": "Fosse aux esprits",
+     "site": 115000,
+     "wiki": 170000,
+     "ecart": 55000,
+     "ratio": 1.48
+    },
+    {
+     "nom": "Catacombes",
+     "site": 215000,
+     "wiki": 285000,
+     "ecart": 70000,
+     "ratio": 1.33
+    },
+    {
+     "nom": "Château de Draken",
+     "site": 275000,
+     "wiki": 380000,
+     "ecart": 105000,
+     "ratio": 1.38
+    },
+    {
+     "nom": "Crypte des sans repos",
+     "site": 315000,
+     "wiki": 425000,
+     "ecart": 110000,
+     "ratio": 1.35
+    },
+    {
+     "nom": "Bastion de l'Archange",
+     "site": 385000,
+     "wiki": 530000,
+     "ecart": 145000,
+     "ratio": 1.38
+    },
+    {
+     "nom": "Behemoth",
+     "site": 430000,
+     "wiki": 590000,
+     "ecart": 160000,
+     "ratio": 1.37
+    },
+    {
+     "nom": "Dédale de Rhisis",
+     "site": 1300000,
+     "wiki": 2100000,
+     "ecart": 800000,
+     "ratio": 1.62
+    },
+    {
+     "nom": "Sentier de Rhisis",
+     "site": 1300000,
+     "wiki": 2100000,
+     "ecart": 800000,
+     "ratio": 1.62
+    },
+    {
+     "nom": "Sietch Kalgas",
+     "site": 1700000,
+     "wiki": 2200000,
+     "ecart": 500000,
+     "ratio": 1.29
+    },
+    {
+     "nom": "Jardin de Jade",
+     "site": 1500000,
+     "wiki": 2500000,
+     "ecart": 1000000,
+     "ratio": 1.67
+    },
+    {
+     "nom": "Faille du débutant",
+     "site": 3000,
+     "wiki": 12000,
+     "ecart": 9000,
+     "ratio": 4
+    },
+    {
+     "nom": "Désiréa",
+     "site": 13000,
+     "wiki": 22000,
+     "ecart": 9000,
+     "ratio": 1.69
+    },
+    {
+     "nom": "Forêt d'Euphrasia",
+     "site": 25000,
+     "wiki": 45000,
+     "ecart": 20000,
+     "ratio": 1.8
+    },
+    {
+     "nom": "Grotte d'Herneos",
+     "site": 65000,
+     "wiki": 85000,
+     "ecart": 20000,
+     "ratio": 1.31
+    },
+    {
+     "nom": "Ruines givrées",
+     "site": 65000,
+     "wiki": 110000,
+     "ecart": 45000,
+     "ratio": 1.69
+    },
+    {
+     "nom": "USS Celestia",
+     "site": 145000,
+     "wiki": 200000,
+     "ecart": 55000,
+     "ratio": 1.38
+    },
+    {
+     "nom": "Ruine Prestigieuse",
+     "site": 120000,
+     "wiki": 210000,
+     "ecart": 90000,
+     "ratio": 1.75
+    }
+   ],
+   "compte": {
+    "instancesComparees": 23,
+    "identiques": 6,
+    "enEcart": 17,
+    "siteEnDessous": 17
+   },
+   "dit": "17 des 23 instances comparées portent deux chiffres différents, et 17 d'entre elles ont le chiffre du site EN DESSOUS de celui du wiki (au pire Faille du débutant : 3000 contre 12000, soit ×4). C'est un seuil d'entrée servi à l'écran : un tank qui s'aligne sur le site arrive sous-équipé et fait rater la run à son groupe. Les 6 instances identiques sont toutes des instances récentes — le relevé du site semble simplement plus ancien que le wiki, pas faux par principe."
+  },
+  {
+   "sujet": "Éveils fixes — DEUX familles, pas trois séries",
+   "verdict": "COMPLETE",
+   "id": "eveil.fixe.deuxFamilles",
+   "gravite": "haute",
+   "wiki": {
+    "série d’origine (armes, armures, boucliers)": {
+     "R1": 30,
+     "R2": 60,
+     "ou": "Temple de Zerkattak / Behemoth",
+     "preuve": "légendes des deux captures du wiki : END+30, INT+60"
+    },
+    "série acte 3 (bijoux, fashions, capes, masques)": {
+     "porte": [
+      "bijoux (Temple Aérien)",
+      "fashions, capes et masques (Paradis Arcanique)"
+     ],
+     "R1": {
+      "INT": 10,
+      "END": 10,
+      "FOR": 10,
+      "MP": 200,
+      "DCC": 8
+     },
+     "R2": {
+      "INT": 20,
+      "END": 20,
+      "FOR": 20,
+      "MP": 400,
+      "DCC": 15
+     }
+    },
+    "contrainte": "une seule ligne d’éveil fixe par pièce"
+   },
+   "site": [
+    {
+     "code": "DST_STR",
+     "fr": "Force",
+     "parTirage": true,
+     "pourcent": false,
+     "R1": 30,
+     "R2": 60
+    },
+    {
+     "code": "DST_STA",
+     "fr": "Endurance",
+     "parTirage": true,
+     "pourcent": false,
+     "R1": 30,
+     "R2": 60
+    },
+    {
+     "code": "DST_DEX",
+     "fr": "Dextérité",
+     "parTirage": true,
+     "pourcent": false,
+     "R1": 30,
+     "R2": 60
+    },
+    {
+     "code": "DST_INT",
+     "fr": "Intelligence",
+     "parTirage": true,
+     "pourcent": false,
+     "R1": 30,
+     "R2": 60
+    },
+    {
+     "code": "DST_CRITICAL_BONUS",
+     "fr": "Dégâts critiques",
+     "parTirage": true,
+     "pourcent": true,
+     "R1": 20,
+     "R2": 40
+    }
+   ],
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.eveil",
+   "dit": "Le site portait 30 / 60 et le wiki 10 / 20 : ce n'est pas une contradiction, ce sont DEUX FAMILLES DE PARCHEMINS. La série 30/60 va sur les armes, armures et boucliers (Behemoth) ; la série 10 INT-END-FOR / 200 MP / 8 % DCC (R1) et 20 / 400 / 15 % (R2) est celle de l'acte 3, pour les BIJOUX (Temple Aérien) et les FASHIONS, CAPES et MASQUES (Paradis Arcanique). Un chiffre affiché doit donc dire SUR QUELLE PIÈCE il s'applique — et le builder doit ajouter la contrainte que le client ne porte pas : UNE SEULE ligne d'éveil fixe, là où l'éveil basique en autorise trois."
+  },
+  {
+   "sujet": "Ascension",
+   "verdict": "COMPLETE",
+   "id": "ascension.gain",
+   "gravite": "haute",
+   "wiki": {
+    "niveau1": 5,
+    "niveau2": 10,
+    "niveau3": 15,
+    "total": 30,
+    "porte": "chacune des statistiques de l’arme",
+    "premiereMainSeule": true
+   },
+   "site": {
+    "dansLeTotal": false,
+    "pourquoiPas": "Le client ne chiffre aucun gain d'ascension : les parchemins ne portent que leur rang."
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.ascension",
+   "dit": "Le site écrit « le client ne chiffre aucun gain d'ascension ». Le wiki le chiffre : +5 % au niveau 1, +10 % au niveau 2, +15 % au niveau 3 sur CHACUNE des statistiques de l'arme, 30 % en tout — et seulement sur la première main. C'est une mécanique aujourd'hui marquée « non comptée » dans le builder qui devient calculable."
+  },
+  {
+   "sujet": "Raretés — combien y en a-t-il ?",
+   "verdict": "CONTREDIT",
+   "id": "rarete.nombreDeTiers",
+   "gravite": "moyenne",
+   "wiki": {
+    "nommees": 5,
+    "liste": [
+     "Commune",
+     "Rare",
+     "Épique",
+     "Légendaire",
+     "Mythique"
+    ],
+    "note": "la page Maîtrise saute Pré-mythique ; la page Rareté, elle, le nomme comme 4ᵉ ligne"
+   },
+   "site": {
+    "declarees": 6,
+    "liste": [
+     "NONE",
+     "RARE",
+     "EPIC",
+     "LEGENDARY",
+     "PREMYTHIC",
+     "MYTHIC"
+    ]
+   },
+   "ou": "public/airbuilder/data.json ▸ MECH.arme.rarete_tiers",
+   "dit": "Le client déclare SIX paliers (dont PREMYTHIC) ; la table des plafonds de maîtrise du wiki n'en nomme que CINQ et ne dit pas où s'arrête un Pré-mythique. Le site a raison de laisser ce plafond à `null` plutôt que de l'inventer."
+  },
+  {
+   "sujet": "Esprits — bonus par palier",
+   "verdict": "CONTREDIT",
+   "id": "esprits.paliers",
+   "gravite": "moyenne",
+   "wiki": {
+    "Elerina": {
+     "10": "PvP 3% / MP 500",
+     "20": "PvP 6% / MP 1000",
+     "30": "PvP 9% / MP 1500",
+     "40": "PvP 12% / MP 2000",
+     "50": "PvP 15% / MP 2500"
+    },
+    "Lyrina": {
+     "10": "Attaque 2% / DCC 20%",
+     "20": "Attaque 4% / DCC 40%",
+     "30": "Attaque 6% / DCC 60%",
+     "40": "Attaque 8% / DCC 80%",
+     "50": "Attaque 10% / DCC 100%"
+    },
+    "Elowen": {
+     "10": "INT 20 / Soin 50%",
+     "20": "INT 40 / Soin 100%",
+     "30": "INT 60 / Soin 150%",
+     "40": "INT 80 / Soin 200%",
+     "50": "INT 20% / Soin 250%"
+    },
+    "Veloria": {
+     "10": "END 20 / PV 4%",
+     "20": "END 40 / PV 8%",
+     "30": "END 60 / PV 12%",
+     "40": "END 80 / PV 16%",
+     "50": "END 100 / PV 20%"
+    },
+    "Goldea": {
+     "10": "Drop 12% / Penyas 9%",
+     "20": "Drop 20% / Penyas 15%",
+     "30": "Drop 28% / Penyas 21%",
+     "40": "Drop 36% / Penyas 27%",
+     "50": "Drop +1 / Penyas 35%"
+    }
+   },
+   "site": {
+    "Elerina": {
+     "10": "PVP 3% / MP 500",
+     "20": "PVP 6% / MP 1000",
+     "30": "PVP 9% / MP 1500",
+     "40": "PVP 12% / MP 2000",
+     "50": "PVP 15% / MP 2500"
+    },
+    "Lyrina": {
+     "10": "Attaque 2% / Dcc 20%",
+     "20": "Attaque 4% / Dcc 40%",
+     "30": "Attaque 6% / Dcc 60%",
+     "40": "Attaque 8% / Dcc 80%",
+     "50": "Attaque 10% / Dcc 100%"
+    },
+    "Elowen": {
+     "10": "Int 20 / Soin 50%",
+     "20": "Int 40 / Soin 100%",
+     "30": "Int 60 / Soin 150%",
+     "40": "Int 80 / Soin 200%",
+     "50": "Int 20% / Soin 250%"
+    },
+    "Veloria": {
+     "10": "End 20 / PV 4%",
+     "20": "End 40 / PV 8%",
+     "30": "End 60 / PV 12%",
+     "40": "End 80 / PV 16%",
+     "50": "End 100 / PV 20%"
+    },
+    "Goldea": {
+     "10": "Exp +25% / PvE +1% / Dépla +5% / All Stat +10",
+     "20": "Exp +50% / PvE +2% / Dépla +10% / All Stat +15",
+     "30": "Exp +75% / PvE +3% / Dépla +15% / All Stat +20",
+     "40": "Exp +125% / PvE +7% / Dépla +30% / All Stat +35",
+     "50": "Drop +1 / Penyas 35%"
+    }
+   },
+   "lignes": [
+    {
+     "esprit": "Goldea",
+     "palier": 10,
+     "site": "Exp +25% / PvE +1% / Dépla +5% / All Stat +10",
+     "wiki": "Drop 12% / Penyas 9%"
+    },
+    {
+     "esprit": "Goldea",
+     "palier": 20,
+     "site": "Exp +50% / PvE +2% / Dépla +10% / All Stat +15",
+     "wiki": "Drop 20% / Penyas 15%"
+    },
+    {
+     "esprit": "Goldea",
+     "palier": 30,
+     "site": "Exp +75% / PvE +3% / Dépla +15% / All Stat +20",
+     "wiki": "Drop 28% / Penyas 21%"
+    },
+    {
+     "esprit": "Goldea",
+     "palier": 40,
+     "site": "Exp +125% / PvE +7% / Dépla +30% / All Stat +35",
+     "wiki": "Drop 36% / Penyas 27%"
+    }
+   ],
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.esprit (relevé de public/wiki/collections.json ▸ anges)",
+   "dit": "4 paliers ne concordent pas, et tous sur le même esprit : Goldea, aux paliers 10, 20, 30, 40. Les quatre autres esprits concordent palier pour palier, et le palier 50 de Goldea est identique des deux côtés — c'est donc bien le même esprit, pas un mauvais appariement de noms. Mais les deux séries ne parlent pas de la même chose : le client donne des bonus de progression (Exp, PvE, déplacement, All Stat) là où le wiki donne du drop et des penyas. Le relevé du client date de la fouille d'octobre 2025 ; le wiki est la source vivante. Ne pas trancher sans regarder l'esprit en jeu."
+  },
+  {
+   "sujet": "Prestige — Badge du Worldboss Prestigieux",
+   "verdict": "CONTREDIT",
+   "id": "prestige.badgeWorldboss",
+   "gravite": "moyenne",
+   "wiki": {
+    "queteAccessibleAPartirDuPrestige": 8
+   },
+   "site": {
+    "P7 → P8": "Badge World Boss prestigieux ×1"
+   },
+   "ou": "src/data/prestige.ts ▸ PRESTIGE_COSTS[7]",
+   "dit": "Le site fait payer le passage 7 → 8 avec un badge dont le wiki dit que la quête n'ouvre qu'AU prestige 8. L'un des deux se trompe, et la page /prestige envoie sinon le joueur farmer une quête qu'il ne peut pas prendre."
+  },
+  {
+   "sujet": "Rareté — plafond d’une ligne",
+   "verdict": "CONTREDIT",
+   "id": "rarete.plafondLigne",
+   "gravite": "moyenne",
+   "wiki": {
+    "maxParLigne": 50
+   },
+   "site": {
+    "viviersAuDessusDe50": [
+     "IK3_SWD",
+     "IK3_AXE"
+    ],
+    "detail": {
+     "IK3_SWD": [
+      [
+       "Précision",
+       20,
+       100
+      ],
+      [
+       "Dégâts critiques",
+       20,
+       100
+      ],
+      [
+       "Taux critique",
+       20,
+       100
+      ],
+      [
+       "Attaque %",
+       20,
+       100
+      ]
+     ],
+     "IK3_AXE": [
+      [
+       "Précision",
+       20,
+       100
+      ],
+      [
+       "Dégâts critiques",
+       20,
+       100
+      ],
+      [
+       "Taux critique",
+       20,
+       100
+      ],
+      [
+       "Attaque %",
+       20,
+       100
+      ]
+     ]
+    }
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.rarete.viviers",
+   "dit": "Le wiki écrit « jusqu'à 50 % maximum » par ligne, et le rang Mythique comme « 4 lignes toutes à 50 % ». Le client donne pourtant 20–100 % sur IK3_SWD et IK3_AXE contre 10–50 % sur tous les autres viviers. Le « 50 % » du wiki ne vaut donc pas pour toutes les armes, ou le client porte une échelle que l'écran divise par deux."
+  },
+  {
+   "sujet": "Instances",
+   "verdict": "CONTREDIT",
+   "id": "instance.prestige.mausolee des divinites",
+   "wiki": {
+    "prestigeMini": 10
+   },
+   "site": {
+    "prestige": 9
+   },
+   "ou": "src/data/dungeons.json",
+   "page": "https://airborn.gitbook.io/airborn/instances/groupe/mausolee-des-divinites.md",
+   "dit": "Mausolée des Divinités : le site demande prestige 9, le wiki prestige 10."
+  },
+  {
+   "sujet": "Instances",
+   "verdict": "COMPLETE",
+   "id": "instance.absente.assaut du port",
+   "wiki": {
+    "nom": "L'assaut du port",
+    "famille": "guilde",
+    "pvTank": 2130000,
+    "entreesParJour": 1,
+    "butin": [
+     "Parchemin de point de guilde (PvE) (50)"
+    ]
+   },
+   "site": null,
+   "ou": "src/data/dungeons.json",
+   "dit": "Le wiki porte une instance que le relevé du site ne connaît pas : « L'assaut du port » (famille guilde). L'ajouter fait passer le site de 23 à 24 instances — et « 23 instances » est un compte qui se dit ailleurs dans la navigation : il se recalcule sur le fichier, il ne se retape pas."
+  },
+  {
+   "sujet": "Instances — élément d’armure du tank",
+   "verdict": "CONFIRME",
+   "id": "instance.elementArmure",
+   "wiki": {
+    "valeurs": [
+     "Vent",
+     "Vent +10"
+    ],
+    "pages": 24
+   },
+   "site": {
+    "valeurs": [
+     "Armure vent +20"
+    ],
+    "instancesSansArmure": [
+     "Faille du débutant",
+     "Désiréa",
+     "Forêt d'Euphrasia",
+     "Fosse aux esprits"
+    ]
+   },
+   "ou": "src/data/dungeons.json ▸ armor",
+   "dit": "Le wiki demande le même élément sur les 24 pages d'instance : Vent · Vent +10. Le site l'écrit déjà (« Armure vent +20 »), donc l'ÉLÉMENT est confirmé. Deux réserves quand même. Le « +20 » est du site seul : le wiki ne chiffre le palier d'armure qu'une fois, « Vent +10 » à Désirea, et laisse les autres sans niveau. Et 4 instances du site n'affichent aucune armure (Faille du débutant, Désiréa, Forêt d'Euphrasia, Fosse aux esprits) alors que le wiki en demande une sur chacune."
+  },
+  {
+   "sujet": "Maîtrise de l’arme",
+   "verdict": "CONFIRME",
+   "id": "maitrise.plafonds",
+   "wiki": {
+    "NONE": 10,
+    "RARE": 40,
+    "EPIC": 60,
+    "LEGENDARY": 80,
+    "MYTHIC": 100,
+    "PREMYTHIC": null
+   },
+   "site": {
+    "NONE": 10,
+    "RARE": 40,
+    "EPIC": 60,
+    "LEGENDARY": 80,
+    "PREMYTHIC": null,
+    "MYTHIC": 100
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.maitrise",
+   "dit": "Le site a déjà intégré les plafonds du wiki. Le gain par palier (4 / 2) vient du client, les plafonds du wiki : les deux moitiés du mécanisme viennent de deux sources différentes et l’arithmétique ferme (10 paliers × 4 % = 40 %, le maximum annoncé)."
+  },
+  {
+   "sujet": "Éveil basique — plafonds de tirage",
+   "verdict": "CONFIRME",
+   "id": "eveil.basique",
+   "wiki": {
+    "stat": 15,
+    "pourcent": 10,
+    "attaque": 100,
+    "mp": 100,
+    "hp": 100
+   },
+   "site": {
+    "DST_STR": 15,
+    "DST_CRITICAL_BONUS": 10,
+    "DST_HP_MAX": 100,
+    "DST_MP_MAX": 100,
+    "DST_ATKPOWER": 100
+   },
+   "ou": "public/wiki/bonus-sources.json ▸ eveil.general (= data.json ▸ MECH.arme.eveil)",
+   "dit": "LA RÉSERVE TOMBE. MECH.arme.eveil (Force 15, PV 100…) n'est pas une troisième série concurrente : c'est le PLAFOND DE L'ÉVEIL BASIQUE, et le wiki l'écrit mot pour mot — 15 en stat, 10 % sur les stats à %, 100 pour attaque/MP/PV. Les trois séries ne se contredisent pas, elles ne parlent pas de la même chose."
+  },
+  {
+   "sujet": "Éveil basique sur fashion",
+   "verdict": "CONTREDIT",
+   "id": "eveil.basique.costume",
+   "wiki": {
+    "stat": 7,
+    "dcc": 5,
+    "attaque": 100,
+    "mp": 100,
+    "hp": 100
+   },
+   "site": {
+    "DST_STR": 28,
+    "DST_DEX": 28
+   },
+   "ou": "public/wiki/bonus-sources.json ▸ eveil.costume",
+   "dit": "Le wiki plafonne l'éveil de fashion à 7 en statistique et 5 % de DCC ; le client déclare {\"DST_STR\":28,\"DST_DEX\":28}. Personne ne peut trancher sans mesurer en jeu : le relevé porte les deux."
+  },
+  {
+   "sujet": "Amélioration +1 → +20",
+   "verdict": "CONFIRME",
+   "id": "amelioration.silence",
+   "wiki": {
+    "gainParPalier": null,
+    "ceQuIlDit": [
+     "+1 → +10 sur l’arme",
+     "+11 → +20 réservé au statut Artefact",
+     "protection = 100 % de réussite"
+    ]
+   },
+   "site": {
+    "nonCalculable": "Le gain d'un palier d'amélioration d'arme ou d'armure n'existe pas dans le client : propEnchant.inc porte des coefficients dont le multiplicande n'est écrit nulle part."
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.nonCalculable.upgradeArme",
+   "dit": "Le wiki ne comble PAS ce trou : il ne chiffre aucun gain par palier d'amélioration d'arme. La mention « non compté » du builder reste juste — et c'est maintenant vérifié sur les deux sources, plus seulement sur le client."
+  },
+  {
+   "sujet": "Amélioration de costume",
+   "verdict": "COMPLETE",
+   "id": "amelioration.costume",
+   "wiki": {
+    "plage": [
+     1,
+     10
+    ],
+    "pnj": "[Forge] Bobochan, Flaris Centre",
+    "menu": "Amélioration de Costume sécurisée",
+    "pieces": [
+     "Tête",
+     "Corps",
+     "Gants",
+     "Bottes"
+    ],
+    "slotsOuvertsDe": 7,
+    "slotsTotal": 4,
+    "materiaux": [
+     "Pierre Jupiter",
+     "Parchemin de Protection de Costume",
+     "Perin / Penya"
+    ]
+   },
+   "site": {
+    "nonCalculable": "Le client ne documente aucun gain d'amélioration pour le costume : ni table de paliers, ni coefficient."
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.nonCalculable.upgradeCostume",
+   "dit": "Le site cherchait un gain par palier de costume dans le client et n'en trouvait pas. Le wiki explique pourquoi : l'upgrade de costume ne DONNE pas de statistique, il OUVRE des emplacements de sertissage (+7 à +10, quatre au total). La valeur est dans la gemme, pas dans le palier."
+  },
+  {
+   "sujet": "Sertissage — deux systèmes distincts",
+   "verdict": "COMPLETE",
+   "id": "sertissage.deuxSystemes",
+   "wiki": {
+    "costume": [
+     "Grenat",
+     "Turquoise",
+     "Aigue-marine",
+     "Améthyste"
+    ],
+    "echelle": "1 à 4 gemmes par pièce"
+   },
+   "site": {
+    "armeArmure": [
+     "PV max",
+     "Attaque",
+     "Défense",
+     "Syphon de vie",
+     "Dégâts JcJ",
+     "Force",
+     "Endurance",
+     "Dextérité",
+     "Intelligence"
+    ],
+    "gemmes": [
+     "Topaze",
+     "Rubis",
+     "Saphir",
+     "Emeraude",
+     "Diamant"
+    ]
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.sertissage",
+   "dit": "Ce ne sont pas les mêmes pierres ni les mêmes pièces. Le relevé du site couvre le sertissage d'ARME et d'ARMURE (Topaze, Rubis, Saphir, Émeraude, Diamant) ; le wiki documente le sertissage de COSTUME (Grenat pour la tête, Turquoise pour le corps, Aigue-marine pour les gants, Améthyste pour les bottes), que le site ne porte pas du tout."
+  },
+  {
+   "sujet": "Esprits — combien sont montables",
+   "verdict": "CONFIRME",
+   "id": "esprits.montables",
+   "wiki": {
+    "craftables": 4,
+    "boutiqueSeule": [
+     "Goldea"
+    ],
+    "total": 5
+   },
+   "site": {
+    "montables": [
+     "Elerina",
+     "Lyrina",
+     "Elowen",
+     "Veloria",
+     "Goldea"
+    ],
+    "entreesDansLeReleve": 20
+   },
+   "ou": "public/wiki/collections.json ▸ anges",
+   "dit": "Le wiki annonce 4 esprits craftables plus Goldea en boutique. Le relevé du client porte 20 entrées d'esprit, dont exactement 5 marquées « montable » : Elerina, Lyrina, Elowen, Veloria, Goldea. Les deux sources désignent le même quintette — les 15 autres entrées sont des esprits à palier unique, sans progression."
+  },
+  {
+   "sujet": "Esprits — pourquoi le builder ne les compte pas",
+   "verdict": "COMPLETE",
+   "id": "esprits.dansLeTotal",
+   "wiki": {
+    "palierMax": 50,
+    "bonusChiffres": true
+   },
+   "site": {
+    "dansLeTotal": false,
+    "pourquoiPas": "Les pièces d'esprit du catalogue portent un tableau de bonus vide : le niveau ne produit rien dans le total. Les paliers ci-dessus sont ceux du client."
+   },
+   "ou": "public/airbuilder/mecaniques.json ▸ faits.esprit",
+   "dit": "Le builder écarte les esprits parce que les pièces du catalogue portent un tableau de bonus VIDE. Le wiki, lui, chiffre les cinq esprits palier par palier : la mécanique est calculable à partir du wiki, pas à partir du client."
+  },
+  {
+   "sujet": "Carnet d’Arcanes — composition des étuis",
+   "verdict": "CONFIRME",
+   "id": "arcanes.composition",
+   "wiki": {
+    "Étui 1": {
+     "Commune": null
+    },
+    "Étui 2": {
+     "Rare": 3,
+     "Commune": 1
+    },
+    "Étui 3": {
+     "Épique": 3,
+     "Légendaire": 3
+    }
+   },
+   "site": {
+    "carnets": 15,
+    "cartes": 63
+   },
+   "lignes": [],
+   "ou": "src/data/carnets-arcanes.json",
+   "dit": "La règle du wiki (étui 1 : que des communes · étui 2 : 3 rares + 1 commune · étui 3 : 3 épiques + 3 légendaires) se vérifie sur les 15 carnets et les 63 cartes du relevé, sans exception."
+  },
+  {
+   "sujet": "Prestige — badges de donjon mineur",
+   "verdict": "CONFIRME",
+   "id": "prestige.donjonMineur",
+   "wiki": {
+    "aPartirDuPrestige": 8,
+    "pour": [
+     9,
+     10
+    ],
+    "nombreParPalier": 2
+   },
+   "site": {
+    "P8 → P9": 2,
+    "P9 → P10": 2
+   },
+   "ou": "src/data/prestige.ts",
+   "dit": "Le wiki et la table de coûts du site donnent le même nombre de badges de donjon mineur aux deux derniers paliers."
+  },
+  {
+   "sujet": "Protection de l’Oasis — nombre d’étages",
+   "verdict": "CONFIRME",
+   "id": "oasis.etages",
+   "wiki": {
+    "page Protection de l’Oasis": 52,
+    "page L’Oasis": 25
+   },
+   "site": {
+    "vagues": 52
+   },
+   "ou": "public/wiki/oasis-vagues.json",
+   "dit": "Le wiki se contredit LUI-MÊME : sa page « Protection de l'Oasis » annonce 52 étages, sa page « L'Oasis » en annonce 25. Le relevé du client en compte 52. La page Oasis du wiki est simplement restée à l'ancienne extension."
+  },
+  {
+   "sujet": "Masques — bonus de niveau 2",
+   "verdict": "CONTREDIT",
+   "id": "masques.niveau2",
+   "wiki": {
+    "page Masques": 10,
+    "page L’Oasis": 8
+   },
+   "site": null,
+   "ou": "aucun relevé du site ne porte ce chiffre",
+   "dit": "Deux pages du même wiki donnent deux valeurs pour le masque de niveau 2 : 10 % et 8 %. Rien ne permet de trancher ici — un chiffre servi à l'écran serait un coup de dés."
+  }
+ ],
+ "instances": [
+  {
+   "page": "instances/groupe/fosse-aux-esprits",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/fosse-aux-esprits.md",
+   "nom": "Fosse aux esprits",
+   "famille": "groupe",
+   "niveauMini": 120,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 170000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Armes vampirique"
+   ],
+   "cooldown": null,
+   "entreesParJour": 4
+  },
+  {
+   "page": "instances/groupe/catacombes",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/catacombes.md",
+   "nom": "Catacombes",
+   "famille": "groupe",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 285000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Set Shaitan"
+   ],
+   "cooldown": null,
+   "entreesParJour": 5
+  },
+  {
+   "page": "instances/groupe/chateau-de-draken",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/chateau-de-draken.md",
+   "nom": "Château de Draken",
+   "famille": "groupe",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 380000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Set d'équipement Dryades"
+   ],
+   "cooldown": null,
+   "entreesParJour": 4
+  },
+  {
+   "page": "instances/groupe/crypte-des-sans-repos",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/crypte-des-sans-repos.md",
+   "nom": "Crypte des sans repos",
+   "famille": "groupe",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 425000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Rune vampirique Vierge"
+   ],
+   "cooldown": null,
+   "entreesParJour": 4
+  },
+  {
+   "page": "instances/groupe/bastion-de-larchange",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/bastion-de-larchange.md",
+   "nom": "Bastion de l'Archange",
+   "famille": "groupe",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 530000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Bijoux DPS",
+    "TANK"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/temple-de-zerkattak-behemoth",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/temple-de-zerkattak-behemoth.md",
+   "nom": "Temple de Zerkattak / Behemoth",
+   "famille": "groupe",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 590000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Parchemin d'éveil rang 1",
+    "2"
+   ],
+   "cooldown": null,
+   "entreesParJour": 4
+  },
+  {
+   "page": "instances/groupe/dedale-de-rhisis",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/dedale-de-rhisis.md",
+   "nom": "Dédale de Rhisis",
+   "famille": "groupe",
+   "niveauMini": 180,
+   "prestigeMini": 3,
+   "prestigePaliers": null,
+   "pvTank": 2100000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Armes Yggdrasil",
+    "Morceau d'oeuf dorés Dédale Rhisis",
+    "capes de fusion vierges"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/sentier-de-rhisis",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/sentier-de-rhisis.md",
+   "nom": "Sentier de Rhisis",
+   "famille": "groupe",
+   "niveauMini": 180,
+   "prestigeMini": 3,
+   "prestigePaliers": null,
+   "pvTank": 2100000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Sets Yggdrasil",
+    "Morceau d'oeuf dorés Sentier Rhisis",
+    "capes de fusion vierges"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/sietch-kalgas",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/sietch-kalgas.md",
+   "nom": "Sietch Kalgas",
+   "famille": "groupe",
+   "niveauMini": 180,
+   "prestigeMini": 5,
+   "prestigePaliers": null,
+   "pvTank": 2200000,
+   "pvApproche": true,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Carte S",
+    "10",
+    "morceau d'oeuf dorés Kalgas",
+    "capes de fusion vierges"
+   ],
+   "cooldown": null,
+   "entreesParJour": 5
+  },
+  {
+   "page": "instances/groupe/jardin-de-jade",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/jardin-de-jade.md",
+   "nom": "Jardin de Jade",
+   "famille": "groupe",
+   "niveauMini": 180,
+   "prestigeMini": 7,
+   "prestigePaliers": null,
+   "pvTank": 2500000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Marteau Runique yggdrasil (petits monstres)",
+    "Rune Yggdrasil Vierge (Boss)"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/mausolee-des-divinites",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/mausolee-des-divinites.md",
+   "nom": "Mausolée des Divinités",
+   "famille": "groupe",
+   "niveauMini": 200,
+   "prestigeMini": 10,
+   "prestigePaliers": null,
+   "pvTank": 3700000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Nouvelles armes éternelles et Bouclier éternel",
+    "Ailes enchantées",
+    "Redbull Magique",
+    "Voeux de Rhisis",
+    "Coffret à packet de cartes Epic",
+    "Coffret à packet de cartes Rare",
+    "Coffre à packet de cartes aléatoires",
+    "Coffre de Donjon"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/paradis-arcanique",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/paradis-arcanique.md",
+   "nom": "Paradis Arcanique",
+   "famille": "groupe",
+   "niveauMini": 200,
+   "prestigeMini": 8,
+   "prestigePaliers": null,
+   "pvTank": 3700000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Étui à carte 1",
+    "Étui à carte 2",
+    "Étui à carte 3",
+    "Parchemins d'éveils à Fashion Rang 1 et 2",
+    "Plan de Fabrication d'Artefact",
+    "Pierre d'amélioration Artefact",
+    "Ailes enchantées",
+    "Redbull Magique",
+    "Voeux de Rhisis",
+    "Coffret à packet de cartes Epic",
+    "Coffret à packet de cartes Rare",
+    "Coffre à packet de cartes aléatoires",
+    "Coffre de Donjon"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/sanctuaire-de-shogun",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/sanctuaire-de-shogun.md",
+   "nom": "Sanctuaire de Shogun",
+   "famille": "groupe",
+   "niveauMini": 200,
+   "prestigeMini": 10,
+   "prestigePaliers": null,
+   "pvTank": 3700000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Fragments d'essence armure pour chaque classe",
+    "Ailes enchantées",
+    "Redbull Magique",
+    "Voeux de Rhisis",
+    "Coffret à packet de cartes Epic",
+    "Coffret à packet de cartes Rare",
+    "Coffre à packet de cartes aléatoires",
+    "Coffre de Donjon"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/groupe/jardin-des-rois",
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/jardin-des-rois.md",
+   "nom": "Jardin des Rois",
+   "famille": "groupe",
+   "niveauMini": 200,
+   "prestigeMini": 10,
+   "prestigePaliers": null,
+   "pvTank": 4100000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Groupe",
+   "butin": [
+    "Runes armes Eternelles",
+    "Diamant Holographique",
+    "Pierre d'amélioration parure Tank",
+    "DPS",
+    "Ailes enchantées",
+    "Redbull Magique",
+    "Voeux de Rhisis",
+    "Coffret à packet de cartes Epic",
+    "Coffret à packet de cartes Rare",
+    "Coffre à packet de cartes aléatoires",
+    "Coffre de Donjon"
+   ],
+   "cooldown": null,
+   "entreesParJour": 3
+  },
+  {
+   "page": "instances/guilde/lassaut-du-port",
+   "url": "https://airborn.gitbook.io/airborn/instances/guilde/lassaut-du-port.md",
+   "nom": "L'assaut du port",
+   "famille": "guilde",
+   "niveauMini": null,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 2130000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Guilde",
+   "butin": [
+    "Parchemin de point de guilde (PvE) (50)"
+   ],
+   "cooldown": null,
+   "entreesParJour": 1
+  },
+  {
+   "page": "instances/solo/faille-du-debutant",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/faille-du-debutant.md",
+   "nom": "Faille du débutant",
+   "famille": "solo",
+   "niveauMini": 80,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 12000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Penyas",
+    "Jeton d'Air"
+   ],
+   "cooldown": "15 minutes",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/desirea",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/desirea.md",
+   "nom": "Désirea",
+   "famille": "solo",
+   "niveauMini": 90,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 22000,
+   "pvApproche": false,
+   "elementArmure": "Vent +10",
+   "type": "Solo",
+   "butin": [
+    "Bouclier",
+    "armes Luzaka DPS",
+    "TANK"
+   ],
+   "cooldown": "30 minutes",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/foret-deuphrasia",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/foret-deuphrasia.md",
+   "nom": "Forêt d'Euphrasia",
+   "famille": "solo",
+   "niveauMini": 120,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 45000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Parrure de bijoux débutant",
+    "perles level 3"
+   ],
+   "cooldown": "15 minutes",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/grotte-dherneos",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/grotte-dherneos.md",
+   "nom": "Grotte d'Herneos",
+   "famille": "solo",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 85000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Rune pour arme luzaka tank",
+    "Perles level 3"
+   ],
+   "cooldown": "1h",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/ruines-givrees",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/ruines-givrees.md",
+   "nom": "Ruines Givrées",
+   "famille": "solo",
+   "niveauMini": 130,
+   "prestigeMini": null,
+   "prestigePaliers": null,
+   "pvTank": 110000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Trousses à outils mystérieuse (monstres normaux)",
+    "Epée en bois Bahamut (boss)"
+   ],
+   "cooldown": null,
+   "entreesParJour": 1
+  },
+  {
+   "page": "instances/solo/uss-celestia",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/uss-celestia.md",
+   "nom": "USS Celestia",
+   "famille": "solo",
+   "niveauMini": 180,
+   "prestigeMini": 1,
+   "prestigePaliers": null,
+   "pvTank": 200000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Ramasseurs à bonus PVE/PVP avec stat %",
+    "Morceau d'oeuf dorés Britannia"
+   ],
+   "cooldown": "2h",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/ruines-prestigieuses",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/ruines-prestigieuses.md",
+   "nom": "Ruines Prestigieuses",
+   "famille": "solo",
+   "niveauMini": 180,
+   "prestigeMini": 3,
+   "prestigePaliers": [
+    3,
+    6
+   ],
+   "pvTank": 210000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Lianes sur les petits monstres et Terreau sur les boss"
+   ],
+   "cooldown": null,
+   "entreesParJour": 1
+  },
+  {
+   "page": "instances/solo/clairiere-de-la-fee",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/clairiere-de-la-fee.md",
+   "nom": "Clairière de la fée",
+   "famille": "solo",
+   "niveauMini": 200,
+   "prestigeMini": 10,
+   "prestigePaliers": null,
+   "pvTank": 350000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Boss : Poudre Féerique",
+    "Cristal féérique",
+    "Essence de Luciole",
+    "Coeur d'Ange",
+    "Perles de niveau 4",
+    "Coffret à packet de cartes aléatoires",
+    "Coffre de donjon. Les petits monstres quand à eux droppent uniquement de la Poudre Féerique"
+   ],
+   "cooldown": "3h",
+   "entreesParJour": null
+  },
+  {
+   "page": "instances/solo/temple-aerien",
+   "url": "https://airborn.gitbook.io/airborn/instances/solo/temple-aerien.md",
+   "nom": "Temple Aérien",
+   "famille": "solo",
+   "niveauMini": 200,
+   "prestigeMini": 8,
+   "prestigePaliers": null,
+   "pvTank": 350000,
+   "pvApproche": false,
+   "elementArmure": "Vent",
+   "type": "Solo",
+   "butin": [
+    "Plan de Fabrication d'Artéfact",
+    "Pierre d'amélioration d'Artefact",
+    "Perles de niveau 4",
+    "Pierre d'amélioration pour parure Tank",
+    "DPS",
+    "Coffret à packet de cartes aléatoires",
+    "Coffre de Donjon"
+   ],
+   "cooldown": "3h",
+   "entreesParJour": null
+  }
+ ],
+ "faits": [
+  {
+   "id": "maitrise.plafondParRarete",
+   "sujet": "Maîtrise de l’arme",
+   "page": "activites/pve/pve-les-armes/maitrise-de-larme",
+   "valeurs": {
+    "NONE": 10,
+    "RARE": 40,
+    "EPIC": 60,
+    "LEGENDARY": 80,
+    "MYTHIC": 100,
+    "PREMYTHIC": null
+   },
+   "note": "Le wiki ne nomme pas le palier Pré-mythique dans cette liste : cinq raretés, pas six.",
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/maitrise-de-larme.md",
+   "titrePage": "Maîtrise de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "maitrise.gainParPalier",
+   "sujet": "Maîtrise de l’arme",
+   "page": "activites/pve/pve-les-armes/maitrise-de-larme",
+   "valeurs": {
+    "pas": 10,
+    "cumule": true,
+    "physique": {
+     "stat": "Dégâts critiques %",
+     "parPalier": 4,
+     "max": 40,
+     "sauf": "doloire"
+    },
+    "magique": {
+     "stat": "Dégâts magiques %",
+     "parPalier": 2,
+     "max": 20
+    },
+    "tank": {
+     "stat": "PV %",
+     "parPalier": 4,
+     "max": 40
+    },
+    "support": {
+     "stat": "Soins %",
+     "parPalier": 4,
+     "objet": "Sceptre de Luzaka support"
+    }
+   },
+   "preuves": 6,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/maitrise-de-larme.md",
+   "titrePage": "Maîtrise de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "maitrise.bahamuth",
+   "sujet": "Maîtrise de l’arme",
+   "page": "activites/pve/pve-les-armes/maitrise-de-larme",
+   "valeurs": {
+    "familier": "Bahamut",
+    "donne": "% d'expérience de maîtrise d'arme"
+   },
+   "preuves": 1,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/maitrise-de-larme.md",
+   "titrePage": "Maîtrise de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "rarete.lignes",
+   "sujet": "Rareté de l’arme",
+   "page": "activites/pve/pve-les-armes/rarete-de-larme",
+   "valeurs": {
+    "regle": "la rareté est le nombre de lignes de statistiques",
+    "paliers": [
+     {
+      "lignes": 0,
+      "nom": "Commune"
+     },
+     {
+      "lignes": 1,
+      "nom": "Rare"
+     },
+     {
+      "lignes": 2,
+      "nom": "Épique"
+     },
+     {
+      "lignes": 3,
+      "nom": "Légendaire"
+     },
+     {
+      "lignes": 4,
+      "nom": "Pré-mythique"
+     }
+    ],
+    "mythique": "4 lignes toutes portées à 50 %",
+    "maxParLigne": 50,
+    "premiereMainSeule": "assassins"
+   },
+   "preuves": 8,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/rarete-de-larme.md",
+   "titrePage": "Rareté de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "rarete.statsParFamille",
+   "sujet": "Rareté de l’arme",
+   "page": "activites/pve/pve-les-armes/rarete-de-larme",
+   "valeurs": {
+    "physique": [
+     "Toucher",
+     "Dégâts critiques",
+     "Critique",
+     "Attaque"
+    ],
+    "magique": [
+     "Attaque",
+     "Dégâts magiques %",
+     "Int",
+     "Puissance magique"
+    ],
+    "tank": [
+     "PV %",
+     "Bloc mêlée/distance",
+     "Endurance"
+    ]
+   },
+   "preuves": 3,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/rarete-de-larme.md",
+   "titrePage": "Rareté de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "rarete.chaineDesParchemins",
+   "sujet": "Rareté de l’arme",
+   "page": "activites/pve/pve-les-armes/rarete-de-larme",
+   "valeurs": [
+    {
+     "de": "Commun",
+     "vers": "Rare",
+     "ou": "drop sur les géants de Madrigal"
+    },
+    {
+     "de": "Rare",
+     "vers": "Épique",
+     "ou": "Bob",
+     "cout": {
+      "nucleus": 5000
+     }
+    },
+    {
+     "de": "Épique",
+     "vers": "Légendaire",
+     "ou": "Pépito",
+     "cout": {
+      "morceaux d’arme vampirique": 20
+     }
+    },
+    {
+     "de": "Légendaire",
+     "vers": "Pré-mythique",
+     "ou": "LootBox (PNJ Couturier, Oasis) ou boutique"
+    },
+    {
+     "de": "Pré-mythique",
+     "vers": "Mythique",
+     "ou": "aucun parchemin : porter les 4 lignes à 50 %"
+    }
+   ],
+   "complement": "Le modificateur de rareté (Pépito, contre des poussières d’armes) retire la valeur d’une ligne au hasard mais ne change JAMAIS quelle ligne est présente.",
+   "preuves": 6,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/rarete-de-larme.md",
+   "titrePage": "Rareté de l'arme",
+   "verifie": true
+  },
+  {
+   "id": "eveil.basique.plafonds",
+   "sujet": "Éveils basiques",
+   "page": "activites/pve/pve-eveils/eveils-basique",
+   "valeurs": {
+    "lignesMax": 3,
+    "equipement": {
+     "stat": 15,
+     "pourcent": 10,
+     "attaque": 100,
+     "mp": 100,
+     "hp": 100
+    },
+    "fashion": {
+     "stat": 7,
+     "dcc": 5,
+     "attaque": 100,
+     "mp": 100,
+     "hp": 100
+    },
+    "ou": "Menu ▸ Systèmes Airborn ▸ Éveil"
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-eveils/eveils-basique.md",
+   "titrePage": "Éveils basique",
+   "verifie": true
+  },
+  {
+   "id": "eveil.fixe.uneSeuleLigne",
+   "sujet": "Éveils fixes",
+   "page": "activites/pve/pve-eveils/eveils-fixes",
+   "valeurs": {
+    "lignesMax": 1
+   },
+   "pourquoiCaCompte": "C'est une CONTRAINTE, pas un gain : elle change ce que le joueur peut poser sur une pièce. L'éveil basique en autorise trois, l'éveil fixe une seule.",
+   "preuves": 1,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-eveils/eveils-fixes.md",
+   "titrePage": "Éveils fixes",
+   "verifie": true
+  },
+  {
+   "id": "eveil.fixe.acte3",
+   "sujet": "Éveils fixes (acte 3)",
+   "page": "activites/pve/pve-eveils/eveils-fixes",
+   "valeurs": {
+    "porte": [
+     "bijoux (Temple Aérien)",
+     "fashions, capes et masques (Paradis Arcanique)"
+    ],
+    "R1": {
+     "INT": 10,
+     "END": 10,
+     "FOR": 10,
+     "MP": 200,
+     "DCC": 8
+    },
+    "R2": {
+     "INT": 20,
+     "END": 20,
+     "FOR": 20,
+     "MP": 400,
+     "DCC": 15
+    }
+   },
+   "preuves": 9,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-eveils/eveils-fixes.md",
+   "titrePage": "Éveils fixes",
+   "verifie": true
+  },
+  {
+   "id": "eveil.fixe.serieHistorique",
+   "sujet": "Éveils fixes (série d’origine)",
+   "page": "activites/pve/pve-eveils/eveils-fixes",
+   "valeurs": {
+    "R1": 30,
+    "R2": 60,
+    "porte": "armes, armures et boucliers",
+    "ou": "Temple de Zerkattak / Behemoth, ou boîte d’éveil aléatoire en boutique Airpoints"
+   },
+   "note": "Cette série n'est pas dans le texte du wiki : elle est dans les LÉGENDES de ses deux captures (« éveil fixe END+30 », « éveil fixe INT+60 »). C'est la série que porte déjà le relevé du client.",
+   "preuves": 3,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-eveils/eveils-fixes.md",
+   "titrePage": "Éveils fixes",
+   "verifie": true
+  },
+  {
+   "id": "eveil.fixe.ouLesTrouver",
+   "sujet": "Éveils fixes",
+   "page": "instances/groupe/temple-de-zerkattak-behemoth",
+   "valeurs": {
+    "instance": "Temple de Zerkattak / Behemoth",
+    "butin": "Parchemin d’éveil rang 1 & 2"
+   },
+   "preuves": 1,
+   "url": "https://airborn.gitbook.io/airborn/instances/groupe/temple-de-zerkattak-behemoth.md",
+   "titrePage": "Temple de Zerkattak / Behemoth",
+   "verifie": true
+  },
+  {
+   "id": "artefact.conditions",
+   "sujet": "Artefact",
+   "page": "fonctionnalites/artefact",
+   "valeurs": {
+    "armesEligibles": [
+     "Yggdrasil Purifié",
+     "Éternelle"
+    ],
+    "prerequis": "+10",
+    "pnj": "Heimerdinger",
+    "objets": [
+     "Pierre d'amélioration Artefact",
+     "Parchemin de protection d'Artefact",
+     "Plan de fabrication d'Artefact"
+    ],
+    "tauxAvecProtection": 100,
+    "ouvre": {
+     "upgrade": [
+      11,
+      20
+     ],
+     "slotsHolo": 3,
+     "slotsHoloA": 20,
+     "percage": [
+      11,
+      12
+     ],
+     "ascensionNiveaux": 3
+    },
+    "diamantsAcceptes": "Diamants Holographiques uniquement, dans les 3 slots ouverts au +20"
+   },
+   "preuves": 8,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/artefact.md",
+   "titrePage": "Artefact",
+   "verifie": true
+  },
+  {
+   "id": "artefact.ascension.gain",
+   "sujet": "Ascension",
+   "page": "fonctionnalites/artefact",
+   "valeurs": {
+    "niveau1": 5,
+    "niveau2": 10,
+    "niveau3": 15,
+    "total": 30,
+    "porte": "chacune des statistiques de l’arme",
+    "premiereMainSeule": true
+   },
+   "combleUnTrou": "Le client ne chiffre AUCUN gain d'ascension — les parchemins ne portent que leur rang. Le wiki donne les trois pourcentages et leur somme.",
+   "preuves": 3,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/artefact.md",
+   "titrePage": "Artefact",
+   "verifie": true
+  },
+  {
+   "id": "artefact.ascension.cout",
+   "sujet": "Ascension",
+   "page": "fonctionnalites/artefact",
+   "valeurs": {
+    "essencesParNiveau": [
+     1,
+     2,
+     3
+    ],
+    "sacrifices": 6,
+    "armesArtefactConsommees": 12,
+    "sacrifice": "une arme Yggdrasil Purifié + une arme Éternelle de la même classe, toutes deux en statut Artefact",
+    "ordreImpose": true
+   },
+   "preuves": 3,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/artefact.md",
+   "titrePage": "Artefact",
+   "verifie": true
+  },
+  {
+   "id": "fashion.upgrade",
+   "sujet": "Upgrade de costume",
+   "page": "fonctionnalites/upgrade-fashion/systeme-dupgrade",
+   "valeurs": {
+    "plage": [
+     1,
+     10
+    ],
+    "pnj": "[Forge] Bobochan, Flaris Centre",
+    "menu": "Amélioration de Costume sécurisée",
+    "pieces": [
+     "Tête",
+     "Corps",
+     "Gants",
+     "Bottes"
+    ],
+    "slotsOuvertsDe": 7,
+    "slotsTotal": 4,
+    "materiaux": [
+     "Pierre Jupiter",
+     "Parchemin de Protection de Costume",
+     "Perin / Penya"
+    ]
+   },
+   "combleUnTrou": "Le client ne documente aucun gain de statistique par palier d'upgrade de costume — et pour cause : le wiki dit que l'upgrade n'en donne pas. Il OUVRE des emplacements de sertissage, à partir du +7. C'est le sertissage qui donne les statistiques.",
+   "preuves": 6,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/upgrade-fashion/systeme-dupgrade.md",
+   "titrePage": "Système d'Upgrade",
+   "verifie": true
+  },
+  {
+   "id": "fashion.sertissage.gemmes",
+   "sujet": "Sertissage de costume",
+   "page": "fonctionnalites/upgrade-fashion/le-sertissage",
+   "valeurs": {
+    "pnj": "[Joaillère] Angie, Flaris Centre",
+    "echecImpossible": true,
+    "retrait": "Parchemin de Réinitialisation de Gemme, ligne choisie",
+    "gemmeParPiece": {
+     "Tête": "Grenat",
+     "Corps": "Turquoise",
+     "Gants": "Aigue-marine",
+     "Bottes": "Améthyste"
+    },
+    "communes": {
+     "statistiques": [
+      "FOR",
+      "END",
+      "DEX",
+      "INT"
+     ],
+     "parNombreDeGemmes": [
+      5,
+      15,
+      25,
+      40
+     ]
+    },
+    "specifiques": {
+     "Tête": {
+      "Attaque": [
+       400,
+       800,
+       1400,
+       2100
+      ],
+      "Puissance magique": [
+       800,
+       1600,
+       2800,
+       4200
+      ]
+     },
+     "Corps": {
+      "Dégâts critiques %": [
+       8,
+       16,
+       32,
+       65
+      ],
+      "Dégâts magiques %": [
+       3,
+       7,
+       12,
+       32
+      ]
+     },
+     "Gants": {
+      "Soin %": [
+       10,
+       20,
+       40,
+       75
+      ],
+      "PV": [
+       2276,
+       4552,
+       11380,
+       28500
+      ]
+     },
+     "Bottes": {
+      "Soin %": [
+       10,
+       20,
+       40,
+       75
+      ],
+      "Défense": [
+       200,
+       400,
+       700,
+       900
+      ]
+     }
+    }
+   },
+   "preuves": 18,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/upgrade-fashion/le-sertissage.md",
+   "titrePage": "🪨Le sertissage",
+   "verifie": true
+  },
+  {
+   "id": "parures.upgrade21a30",
+   "sujet": "Parures du Bastion (+21 → +30)",
+   "page": "fonctionnalites/parures-nouveaux-upgrades",
+   "valeurs": {
+    "plage": [
+     21,
+     30
+    ],
+    "pierres": {
+     "DPS": "Pierre d’amélioration parure DPS",
+     "TANK": "Pierre d’amélioration parure Tank"
+    },
+    "ouTrouverLesPierres": [
+     "Temple Aérien",
+     "Jardin des Rois"
+    ],
+    "protection": {
+     "objet": "Parchemin Aprotect Lunaire",
+     "ou": "PNJ Donjon, contre des médailles de donjon"
+    },
+    "DPS": {
+     "Anneaux": {
+      "parNiveau": {
+       "Dégâts PvE %": 1
+      },
+      "total": {
+       "Dégâts PvE %": 10
+      }
+     },
+     "Boucles d’oreilles": {
+      "parNiveau": {
+       "DCC %": 2,
+       "Dégâts magiques %": 1
+      },
+      "total": {
+       "DCC %": 20,
+       "Dégâts magiques %": 10
+      }
+     },
+     "Collier": {
+      "parNiveau": {
+       "Drop %": 1
+      },
+      "total": {
+       "Drop %": 10
+      }
+     }
+    },
+    "TANK": {
+     "Anneau": {
+      "parNiveau": {
+       "PV %": 1
+      },
+      "total": {
+       "PV %": 10
+      }
+     },
+     "Boucles d’oreilles": {
+      "parNiveau": {
+       "PV %": 1
+      },
+      "total": {
+       "PV %": 10
+      }
+     },
+     "Collier": {
+      "parNiveau": {
+       "END %": 1
+      },
+      "total": {
+       "END %": 10
+      }
+     }
+    }
+   },
+   "combleUnTrou": "Le relevé du site nomme la pierre du +21 → +30 mais ne chiffre rien. Le wiki donne le gain par niveau ET le total, et les deux ferment : 10 niveaux × le gain par niveau = le total annoncé, sur les six pièces.",
+   "preuves": 8,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/parures-nouveaux-upgrades.md",
+   "titrePage": "Parures : Nouveaux upgrades",
+   "verifie": true
+  },
+  {
+   "id": "esprits.paliers",
+   "sujet": "Esprits",
+   "page": "fonctionnalites/les-esprits",
+   "valeurs": {
+    "palierMax": 50,
+    "nourriture": "Poudre Féerique",
+    "craftNourriture": "1 objet de la Clairière = 500 Poudre Féerique (PNJ Capitaine Hook)",
+    "pnj": "Capitaine Hook, devant la Clairière de la Fée",
+    "craftables": 4,
+    "boutiqueSeule": [
+     "Goldea"
+    ],
+    "esprits": {
+     "Elerina": {
+      "10": "PvP 3% / MP 500",
+      "20": "PvP 6% / MP 1000",
+      "30": "PvP 9% / MP 1500",
+      "40": "PvP 12% / MP 2000",
+      "50": "PvP 15% / MP 2500"
+     },
+     "Lyrina": {
+      "10": "Attaque 2% / DCC 20%",
+      "20": "Attaque 4% / DCC 40%",
+      "30": "Attaque 6% / DCC 60%",
+      "40": "Attaque 8% / DCC 80%",
+      "50": "Attaque 10% / DCC 100%"
+     },
+     "Elowen": {
+      "10": "INT 20 / Soin 50%",
+      "20": "INT 40 / Soin 100%",
+      "30": "INT 60 / Soin 150%",
+      "40": "INT 80 / Soin 200%",
+      "50": "INT 20% / Soin 250%"
+     },
+     "Veloria": {
+      "10": "END 20 / PV 4%",
+      "20": "END 40 / PV 8%",
+      "30": "END 60 / PV 12%",
+      "40": "END 80 / PV 16%",
+      "50": "END 100 / PV 20%"
+     },
+     "Goldea": {
+      "10": "Drop 12% / Penyas 9%",
+      "20": "Drop 20% / Penyas 15%",
+      "30": "Drop 28% / Penyas 21%",
+      "40": "Drop 36% / Penyas 27%",
+      "50": "Drop +1 / Penyas 35%"
+     }
+    },
+    "composants": {
+     "Clairière de la fée": [
+      "Cristal féérique",
+      "Essence de Luciole",
+      "Coeur d'Ange"
+     ],
+     "Paradis Arcanique · Mausolée des Divinités · Sanctuaire de Shogun · Jardin des Rois": [
+      "Ailes enchantées",
+      "Redbull Magique",
+      "Voeux de Rhisis"
+     ]
+    }
+   },
+   "regleMaison": "Les paliers de Goldea sont chiffrés en drop et en penyas : la maison ne met pas de taux de drop à l'écran. Le fait est relevé, son affichage est un arbitrage.",
+   "preuves": 10,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/les-esprits.md",
+   "titrePage": "Les Esprits",
+   "verifie": true
+  },
+  {
+   "id": "arcanes.etuis",
+   "sujet": "Carnet d’Arcanes",
+   "page": "fonctionnalites/carnet-darcanes",
+   "valeurs": {
+    "etuis": 3,
+    "raretesDeCarte": [
+     "Commune",
+     "Rare",
+     "Épique",
+     "Légendaire"
+    ],
+    "composition": {
+     "Étui 1": {
+      "Commune": "toutes"
+     },
+     "Étui 2": {
+      "Rare": 3,
+      "Commune": 1
+     },
+     "Étui 3": {
+      "Épique": 3,
+      "Légendaire": 3
+     }
+    },
+    "deuxBonus": {
+     "base": "une carte de chaque emplacement",
+     "complet": "autant d’exemplaires identiques que la carte porte de losanges"
+    },
+    "exception": "les carnets communs n’ont qu’un seul bonus",
+    "ouTrouverLesEtuis": "Paradis Arcanique",
+    "paquets": {
+     "aleatoires": "tous les nouveaux donjons, solo et groupe",
+     "rares": "donjons de groupe",
+     "epiques": "donjons de groupe",
+     "legendaires": "PNJ Donjon (Luca) ou boutique"
+    },
+    "ou": "Menu ▸ Systèmes Airborn ▸ Carnet d’arcanes"
+   },
+   "preuves": 10,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/carnet-darcanes.md",
+   "titrePage": "Carnet d'Arcanes",
+   "verifie": true
+  },
+  {
+   "id": "cartes.paliers",
+   "sujet": "Cartes d’élément",
+   "page": "fonctionnalites/les-cartes",
+   "valeurs": {
+    "B et 4%": "drop sur tous les monstres, plus facilement en zones de farm B1 à B4",
+    "A et 7%": "craft chez le maître des cartes à Flaris, à partir des B et 4%",
+    "S et 10%": "drop sur le boss du Sietch Kalgas",
+    "changements": {
+     "Foudre": "donne du DCC au lieu du CC bonus",
+     "Eau": "donne du Soin % en plus des MP bonus"
+    }
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/les-cartes.md",
+   "titrePage": "Les cartes",
+   "verifie": true
+  },
+  {
+   "id": "prestige.echelle",
+   "sujet": "Prestige",
+   "page": "fonctionnalites/le-prestige",
+   "valeurs": {
+    "depart": 0,
+    "maximum": 10,
+    "pnj": "Souverain Prestigieux, Oasis (à gauche de Plank)",
+    "seuils": {
+     "USS Celestia": 1,
+     "Sentier de Rhisis": 3,
+     "Dédale de Rhisis": 3,
+     "Sietch Kalgas": 5
+    }
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/le-prestige.md",
+   "titrePage": "Le Prestige",
+   "verifie": true
+  },
+  {
+   "id": "prestige.quetesDeBadges",
+   "sujet": "Prestige",
+   "page": "fonctionnalites/le-prestige/autres-quetes-pour-le-prestige",
+   "valeurs": {
+    "Badge de la Tour": [
+     {
+      "quete": "Badge farming AoE",
+      "cible": "Capitaine Dantalian",
+      "nombre": 40000,
+      "zone": "B4"
+     },
+     {
+      "quete": "Badge farming 1v1",
+      "cible": "Capitaine Hague",
+      "nombre": 15000,
+      "zone": "B3"
+     }
+    ],
+    "Badge Donjon": {
+     "pnj": "Flore Aison, Jardin Prestigieux",
+     "cibles": [
+      [
+       "Azranoct",
+       10
+      ],
+      [
+       "Zerkattak Furieux",
+       10
+      ],
+      [
+       "Mahtolle",
+       10
+      ],
+      [
+       "Anagrero, Hanades et Nehnoruh",
+       10
+      ],
+      [
+       "Branche d'Yggdrasil Contaminée",
+       10
+      ]
+     ]
+    },
+    "Badge du Jardin Prestigieux": {
+     "quetes": [
+      "Nettoyage jardin - 1 : 1000 monstres normaux de chaque type",
+      "Nettoyage jardin - 2 : 10 géants de chacun"
+     ]
+    },
+    "Badge de donjon mineur": {
+     "aPartirDuPrestige": 8,
+     "pour": [
+      9,
+      10
+     ],
+     "nombreParPalier": 2,
+     "cibles": [
+      [
+       "Draken Behemoth",
+       10
+      ],
+      [
+       "Rangda l'Effroyable",
+       10
+      ],
+      [
+       "Archange, Sanadalphon",
+       9
+      ],
+      [
+       "Harpyness Matriarche",
+       10
+      ]
+     ]
+    },
+    "Badge du Worldboss Prestigieux": {
+     "aPartirDuPrestige": 8,
+     "recette": "2 rubis de chagrin + 2 de joie + 2 de colère, chez le Souverain Prestigieux"
+    }
+   },
+   "preuves": 9,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/le-prestige/autres-quetes-pour-le-prestige.md",
+   "titrePage": "Autres quêtes pour le Prestige",
+   "verifie": true
+  },
+  {
+   "id": "chambres.cadre",
+   "sujet": "Chambres Secrètes",
+   "page": "activites/pve/pve-chambres-secretes",
+   "valeurs": {
+    "horaires": [
+     "Mercredi 21h",
+     "Dimanche 21h"
+    ],
+    "guildesMax": 12,
+    "joueursParGuilde": 10,
+    "buffGagnants": {
+     "PvE %": 10,
+     "Drop %": 20
+    },
+    "buffParticipants": {
+     "PvE %": 5,
+     "Drop %": 5
+    },
+    "partie1": {
+     "prerequis": "niveau 180, stuff acte 2",
+     "mobs": 480,
+     "miniBoss": {
+      "nom": "Asuras Mutant",
+      "nombre": 12
+     },
+     "boss": {
+      "nom": "Malphas",
+      "nombre": 3
+     },
+     "monnaie": "Jeton Secret",
+     "rendementRun": 2000,
+     "rendementParJoueur": 200
+    },
+    "partie2": {
+     "prerequis": "niveau 200, prestige 10, stuff acte 3",
+     "mobs": 400,
+     "miniBoss": 4,
+     "boss": 4,
+     "monnaie": "Obsidienne Corrompue",
+     "rendementRun": 1600,
+     "rendementParJoueur": 160
+    }
+   },
+   "preuves": 13,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-chambres-secretes.md",
+   "titrePage": "🗝️ [PvE] Chambres Secrètes",
+   "verifie": true
+  },
+  {
+   "id": "chambres.mecaniques",
+   "sujet": "Chambres Secrètes",
+   "page": "activites/pve/pve-chambres-secretes",
+   "valeurs": {
+    "Kraavus & Kraavos": {
+     "barres": 3,
+     "regeneration": "≈ 13 319 999 PV/s, décroissante",
+     "invincibleA": "15 % de la dernière barre",
+     "ecartMaxEntreLesDeuxMorts": "4 s",
+     "penalite": "régénération de 50 % des PV"
+    },
+    "Nyzarra": {
+     "barres": 5,
+     "retourDeDouleur": "10 % des dégâts renvoyés",
+     "fenetre": "4 s pour cesser toute attaque"
+    },
+    "Aatrox": {
+     "barres": 6,
+     "resistancesCycliques": {
+      "jaune": "corps à corps",
+      "vert": "distance",
+      "violet": "magique"
+     },
+     "dureeDePhase": "10 s",
+     "debut": "20 s de combat",
+     "rage": "à 3 barres restantes, le mauvais type de dégâts le SOIGNE du double"
+    },
+    "Gor’Thar": {
+     "barres": 2
+    },
+    "Dra’Zhul": {
+     "barres": 1
+    }
+   },
+   "pourquoiCaCompte": "Ce sont des conditions, pas de la couleur : frapper Aatrox du mauvais type le soigne, et tuer les jumeaux à plus de 4 secondes d'écart rend la moitié de leur vie. Une composition d'équipe se décide là-dessus.",
+   "preuves": 10,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-chambres-secretes.md",
+   "titrePage": "🗝️ [PvE] Chambres Secrètes",
+   "verifie": true
+  },
+  {
+   "id": "worldboss.horaires",
+   "sujet": "World Boss",
+   "page": "activites/pve/pve-world-boss",
+   "valeurs": {
+    "Patate de Forain": {
+     "heure": "17h30",
+     "ou": "ancienne arène de Saint City",
+     "aLaMort": "event souverain EXP +25 % / Drop +5 %"
+    },
+    "Clockworks": {
+     "heures": [
+      "18h30",
+      "00h30"
+     ],
+     "ou": "Jardin Prestigieux",
+     "accesPrestige": 5,
+     "aLaMort": "event souverain EXP +25 % / Drop +5 %",
+     "buffDeProximite": {
+      "duree": "2 h",
+      "PvE %": 10,
+      "PV %": 10,
+      "Penyas %": 10,
+      "Drop %": 5
+     }
+    }
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-world-boss.md",
+   "titrePage": "[PvE] World Boss",
+   "verifie": true
+  },
+  {
+   "id": "donjonRush.cadre",
+   "sujet": "Donjon Rush",
+   "page": "activites/pve/pve-donjon-rush",
+   "valeurs": {
+    "donjon": "La Caverne de Glace",
+    "ou": "Flaris Nord",
+    "entreesParJour": 6,
+    "participants": 2,
+    "quotaSbires": 271,
+    "quotaPart": "70 % des trashs",
+    "pantheon": {
+     "equipes": 12,
+     "personnages": 24
+    },
+    "buffsBossFinal": {
+     "PV %": 12,
+     "Drop %": 20,
+     "Penyas %": 13,
+     "Exp maîtrise des armes %": 25
+    },
+    "pvConseilles": {
+     "midboss": 130000,
+     "bossFinal": 160000
+    },
+    "bossFinal": "Azharyon, Couronne du Givre",
+    "resistances": {
+     "bleu": "physique (mêlée et distance)",
+     "violet": "magique"
+    },
+    "rage": "à 7 barres restantes, le mauvais type de dégâts le soigne du double"
+   },
+   "preuves": 10,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-donjon-rush.md",
+   "titrePage": "🏃​⚔️​​​ [PVE] Donjon rush",
+   "verifie": true
+  },
+  {
+   "id": "guilde.pointsPvE",
+   "sujet": "Points de guilde PvE",
+   "page": "fonctionnalites/les-points-de-guilde-pve",
+   "valeurs": {
+    "sources": [
+     {
+      "ou": "Sentier de la damnation",
+      "taux": "1500 emblèmes de la damnation → 50 points"
+     },
+     {
+      "ou": "Chambres Secrètes",
+      "taux": "1600 jetons secrets → 200 points"
+     },
+     {
+      "ou": "Donjon de guilde",
+      "taux": "parchemins de 50 points, 1 entrée par jour"
+     }
+    ],
+    "donjonDeGuilde": {
+     "ouvertPar": "chef de guilde ou général",
+     "objet": "acheté 2 000 000 000 penyas chez « Passpaspartout », Flarine Centre",
+     "duree": "3 minutes",
+     "pvConseilles": 2130000
+    },
+    "buffs": {
+     "cout": {
+      "points": 500,
+      "penyas": 2000000000
+     },
+     "liste": {
+      "Enchantement de Shade": "PvE +10 % / Dégâts contre les boss +10 %",
+      "Armure d'Yggdrasil": "PV +10 % / Exp +20 %",
+      "Bénédiction de Rhisis": "Drop +20 %",
+      "Avarice": "Penyas +15 % / Vitesse de déplacement +20 %"
+     }
+    }
+   },
+   "preuves": 10,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/les-points-de-guilde-pve.md",
+   "titrePage": "Les points de guilde PvE",
+   "verifie": true
+  },
+  {
+   "id": "groupe.niveaux",
+   "sujet": "Groupes",
+   "page": "fonctionnalites/les-groupes",
+   "valeurs": {
+    "niveauDeDepart": 1,
+    "parchemins": {
+     "niveau 50": "Bob, Oasis",
+     "niveau 100": "Airpoints, Oasis"
+    },
+    "buffAgressivite": {
+     "PvE +5 %": 75,
+     "Penyas +10 %": 100
+    },
+    "changements": [
+     "parchemin de déploiement passif pour tous",
+     "buffs TPF toujours au maximum quel que soit l’effectif",
+     "exp de groupe possible en solo, sans pénalité"
+    ]
+   },
+   "preuves": 4,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/les-groupes.md",
+   "titrePage": "Les groupes",
+   "verifie": true
+  },
+  {
+   "id": "familiersDores.parfaits",
+   "sujet": "Familiers dorés",
+   "page": "fonctionnalites/familiers-dores",
+   "valeurs": {
+    "craft": {
+     "pnj": "Éleveur Sacha",
+     "base": "20 morceaux d’œuf doré + 1000 perins"
+    },
+    "Licorne majestueuse": {
+     "INT": 150,
+     "Dégâts magiques %": 25,
+     "DCC %": 100,
+     "DEX": 150
+    },
+    "Hyppogriphe sombre": {
+     "FOR": 150,
+     "DCC %": 100,
+     "MP": 3000,
+     "Soin %": 100
+    },
+    "familier tank (acte 3)": {
+     "END": 100,
+     "PV": 4000,
+     "PV %": 15,
+     "Défense %": 25,
+     "surcout": "+50 % des anciennes ressources et 15 catalyseurs d’énergie de Bubble"
+    }
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/familiers-dores.md",
+   "titrePage": "Familiers Dorés",
+   "verifie": true
+  },
+  {
+   "id": "melee.horaires",
+   "sujet": "Mêlée générale",
+   "page": "activites/pvp/pvp-melee-generale",
+   "valeurs": {
+    "pnj": "Creed, Oasis",
+    "modes": {
+     "Objectif de points": 100,
+     "Vies limitées": 25,
+     "Limite de temps": "15 minutes (à venir)"
+    },
+    "calendrier": [
+     [
+      "Lundi",
+      "19:00",
+      "Objectif de points"
+     ],
+     [
+      "Mardi",
+      "18:00",
+      "Vies limitées"
+     ],
+     [
+      "Mercredi",
+      "21:30",
+      "Objectif de points"
+     ],
+     [
+      "Jeudi",
+      "18:00",
+      "Vies limitées"
+     ],
+     [
+      "Vendredi",
+      "19:00",
+      "Objectif de points"
+     ],
+     [
+      "Samedi",
+      "16:00",
+      "Vies limitées"
+     ],
+     [
+      "Samedi",
+      "18:00",
+      "Objectif de points"
+     ],
+     [
+      "Dimanche",
+      "16:00",
+      "Objectif de points"
+     ],
+     [
+      "Dimanche",
+      "20:00",
+      "Vies limitées"
+     ]
+    ]
+   },
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/activites/pvp/pvp-melee-generale.md",
+   "titrePage": "[PvP] Mêlée générale",
+   "verifie": true
+  },
+  {
+   "id": "guildSiege.cadre",
+   "sujet": "Guild Siege",
+   "page": "activites/pvp/pvp-guild-siege",
+   "valeurs": {
+    "frequence": "tous les jours",
+    "finDesInscriptions": [
+     "19h",
+     "22h"
+    ],
+    "buffs": {
+     "participant": "Penyas +5 %",
+     "gagnant": "Penyas +15 %"
+    }
+   },
+   "preuves": 3,
+   "url": "https://airborn.gitbook.io/airborn/activites/pvp/pvp-guild-siege.md",
+   "titrePage": "[PvP] Guild Siege",
+   "verifie": true
+  },
+  {
+   "id": "oasis.protection",
+   "sujet": "Protection de l’Oasis",
+   "page": "activites/pve/pve-protection-de-loasis-solo",
+   "valeurs": {
+    "etages": 52,
+    "pvPourToutTank": 200000,
+    "sautsDeDifficulte": [
+     26,
+     36
+    ],
+    "niveauConseilleA36": 180
+   },
+   "preuves": 4,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-protection-de-loasis-solo.md",
+   "titrePage": "[PvE] Protection de l'Oasis (Solo)",
+   "verifie": true
+  },
+  {
+   "id": "farming.zones",
+   "sujet": "Farming",
+   "page": "activites/pve/pve-farming",
+   "valeurs": {
+    "B1": {
+     "niveau": 120,
+     "mode": "1v1"
+    },
+    "B2": {
+     "niveau": 120,
+     "mode": "AoE"
+    },
+    "B3": {
+     "niveau": 121,
+     "mode": "1v1"
+    },
+    "B4": {
+     "niveau": 121,
+     "mode": "AoE"
+    },
+    "zonesPrestigieuses": {
+     "niveau": 180,
+     "prestige": 7,
+     "ou": "Jardinet Prestigieux",
+     "tenteBlanche": "AoE",
+     "tenteJaune": "1v1",
+     "gainAnnonce": "≈ +30 % de drop et de penyas",
+     "quete": {
+      "1v1": 1200,
+      "AoE": 3000
+     }
+    },
+    "acte3": "les monstres de ces zones sont passés aux alentours du niveau 200"
+   },
+   "regleMaison": "Le « +30 % » est un rendement de drop et de penyas : à relever, pas forcément à afficher.",
+   "preuves": 5,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-farming.md",
+   "titrePage": "[PvE] Farming",
+   "verifie": true
+  },
+  {
+   "id": "rookie.paliers",
+   "sujet": "Voie du Rookie",
+   "page": "debutant/debutant-voie-du-rookie",
+   "valeurs": {
+    "pnj": "[Rookie] Pompon, Flaris Nord",
+    "paliers": {
+     "60": "45 Pièces de Rookie",
+     "90": "100 Pièces + 250 Cartes Élément Vent",
+     "107": "500 Orichalque, Pierre Lunaire, Sprotect, Gprotect + 20 Jetons d’Air",
+     "120": "225 Pièces + 450 Orichalque Scintillant & Sprotect Ultime + 1 Pièce Rookie Vampirique",
+     "122": "2 Runes Vampiriques + Masque HP & PVE 1",
+     "131": "300 Pièces + 500 Orichalque, Pierre Lunaire, Sprotect, Gprotect + 4 Fulgur et Volcane (7 %)",
+     "150": "800 Pièces de Rookie",
+     "200": "400 Pièces + 1 Boîte de Meubles + 1 Boîte de Consommables Rookie + Parchemins de Prestige 1, 2 et 3"
+    },
+    "sacDuDebutant": {
+     "duree": "15 j",
+     "All Stats": 35,
+     "Vitesse de déplacement %": 20,
+     "DCC %": 15,
+     "Incantation %": 20,
+     "Dégâts magiques %": 5
+    },
+    "nyx": {
+     "XP %": 125,
+     "PvE %": 7,
+     "Déplacement %": 30,
+     "All Stats": 35
+    },
+    "mantraRookie": {
+     "PvE %": 3,
+     "PV %": 3
+    }
+   },
+   "preuves": 7,
+   "url": "https://airborn.gitbook.io/airborn/debutant/debutant-voie-du-rookie.md",
+   "titrePage": "🧭 [Débutant] Voie du Rookie",
+   "verifie": true
+  },
+  {
+   "id": "masques.niveaux",
+   "sujet": "Masques",
+   "page": "activites/pve/pve-crafting-divers/masques",
+   "valeurs": {
+    "pnj": "Bibi la Bicrave, Oasis",
+    "types": [
+     "PvE",
+     "PV",
+     "PvP/MP"
+    ],
+    "niveau1": 3,
+    "niveau2": 10,
+    "niveau3": "existe, matériaux dans tout Darkon et la Mine Dekanes"
+   },
+   "divergenceInterne": "La page « L'Oasis » du MÊME wiki écrit 8 % pour le niveau 2, pas 10 %. Le wiki se contredit lui-même ; aucune des deux valeurs ne peut être servie sans dire laquelle.",
+   "preuves": 2,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-crafting-divers/masques.md",
+   "titrePage": "Masques",
+   "verifie": true
+  },
+  {
+   "id": "mantras.niveaux",
+   "sujet": "Mantras",
+   "page": "activites/pve/pve-crafting-divers/mantra",
+   "valeurs": {
+    "pnj": "Sage des Mantras, Flarine Centre",
+    "emplacement": "à la place des flèches",
+    "niveau1": {
+     "PvE": 5,
+     "PV": 5,
+     "PvP + MP": 5
+    },
+    "niveau2": "existe (Gouffre d’Ishtar, Général d’Ishtar)"
+   },
+   "preuves": 6,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-crafting-divers/mantra.md",
+   "titrePage": "Mantra",
+   "verifie": true
+  },
+  {
+   "id": "capes.fusion",
+   "sujet": "Capes de fusion",
+   "page": "activites/pve/pve-crafting-divers/cape",
+   "valeurs": {
+    "pnj": "Couturier Karlagarfeld, Oasis",
+    "recettes": [
+     {
+      "resultat": "Cape donjon dorée",
+      "bonus": "Drop +1 & dégâts contre les boss +30 %"
+     },
+     {
+      "resultat": "Cape du farmeur doré",
+      "bonus": "Drop +1 & Penyas +50 % & Déplacement +30 %"
+     },
+     {
+      "resultat": "Cape draconique Fulgurante",
+      "bonus": "END +10 % & PV +20 % & Déplacement +25 %"
+     }
+    ]
+   },
+   "preuves": 4,
+   "url": "https://airborn.gitbook.io/airborn/activites/pve/pve-crafting-divers/cape.md",
+   "titrePage": "Cape",
+   "verifie": true
+  },
+  {
+   "id": "amelioration.trouNonComble",
+   "sujet": "Amélioration (+1 → +20)",
+   "page": "fonctionnalites/artefact",
+   "valeurs": {
+    "gainParPalier": null
+   },
+   "constat": "LE TROU RESTE OUVERT. Le wiki dit OÙ et AVEC QUOI on améliore une arme (+1 → +10 puis, en statut Artefact, +11 → +20), et que la protection donne 100 % de réussite. Il ne dit NULLE PART ce qu'un palier d'amélioration RAPPORTE en statistique — exactement comme le client, dont propEnchant.inc ne porte que des coefficients sans multiplicande. Aucune des deux sources ne permet de chiffrer le +N : il reste « non compté ».",
+   "preuves": 1,
+   "url": "https://airborn.gitbook.io/airborn/fonctionnalites/artefact.md",
+   "titrePage": "Artefact",
+   "verifie": true
+  }
+ ],
+ "objets": [
+  {
+   "nom": "Poudre Féerique",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_UPGRADE_ANGE",
+   "icone": "/jeu/icones/itm_poudre_feerique.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Pierre Jupiter",
+   "fait": "fashion.upgrade",
+   "cleClient": "II_GEN_MAT_LIGHTNINGSTONE",
+   "icone": "/jeu/icones/itm_syssysscrscraplightningstone.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Jeton Secret",
+   "fait": "chambres.cadre",
+   "cleClient": "II_CHP_EVEGOLD",
+   "icone": "/jeu/icones/itm_goldchip.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Obsidienne Corrompue",
+   "fait": "chambres.cadre",
+   "cleClient": "II_GEN_GEM_GEM_CHAMBRE_2",
+   "icone": "/jeu/icones/itm_obsidienne_corrompue.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Diamant Holographique",
+   "fait": "artefact.conditions",
+   "cleClient": "II_SYS_SYS_DIAMOND_ARTEFACT",
+   "icone": "/jeu/icones/itm_diamant_multicolore.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Orichalque",
+   "fait": "amelioration.trouNonComble",
+   "cleClient": "II_GEN_MAT_ORICHALCUM01",
+   "icone": "/jeu/icones/itm_genmatorichalcum01.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Orichalque Scintillant",
+   "fait": "amelioration.trouNonComble",
+   "cleClient": "II_GEN_MAT_ORICHALCUM02",
+   "icone": "/jeu/icones/itm_genmatorichalcum02.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Pierre Lunaire",
+   "fait": "amelioration.trouNonComble",
+   "cleClient": "II_GEN_MAT_MOONSTONE",
+   "icone": "/jeu/icones/itm_genmatmoonstone.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Médaille de donjon",
+   "fait": "parures.upgrade21a30",
+   "cleClient": "II_MEDAILLE_DONJON",
+   "icone": "/jeu/icones/itm_medaille_donjon.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Étui à carte 1",
+   "fait": "arcanes.etuis",
+   "cleClient": "II_ETUIT_1",
+   "icone": "/jeu/icones/itm_etui_tier1.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Étui à carte 2",
+   "fait": "arcanes.etuis",
+   "cleClient": "II_ETUIT_2",
+   "icone": "/jeu/icones/itm_etui_tier2.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Étui à carte 3",
+   "fait": "arcanes.etuis",
+   "cleClient": "II_ETUIT_3",
+   "icone": "/jeu/icones/itm_etui_tier3.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Cristal féérique",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_1",
+   "icone": "/jeu/icones/itm_crystal_feerique.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Essence de Luciole",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_2",
+   "icone": "/jeu/icones/itm_essence_luciole.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Coeur d'Ange",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_3",
+   "icone": "/jeu/icones/itm_heart_angel.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Ailes enchantées",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_4",
+   "icone": "/jeu/icones/itm_ailes_enchantee.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Redbull Magique",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_5",
+   "icone": "/jeu/icones/itm_redbull_magique.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Voeux de Rhisis",
+   "fait": "esprits.paliers",
+   "cleClient": "II_SYS_SYS_CRAFTING_ANGE_6",
+   "icone": "/jeu/icones/itm_voeux_rhisis.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Grenat",
+   "fait": "fashion.sertissage.gemmes",
+   "cleClient": "II_GEN_MAT_GARNET",
+   "icone": "/jeu/icones/itm_syssysscrscrapgarnet.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Turquoise",
+   "fait": "fashion.sertissage.gemmes",
+   "cleClient": "II_GEN_MAT_TURQUOISE",
+   "icone": "/jeu/icones/itm_syssysscrscrapturquoise.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Aigue-marine",
+   "fait": "fashion.sertissage.gemmes",
+   "cleClient": "II_GEN_MAT_AQUAMARINE",
+   "icone": "/jeu/icones/itm_syssysscrscrapaquamarine.webp",
+   "dessinRegarde": false
+  },
+  {
+   "nom": "Améthyste",
+   "fait": "fashion.sertissage.gemmes",
+   "cleClient": "II_GEN_MAT_AMETHYST",
+   "icone": "/jeu/icones/itm_syssysscrscrapamethyst.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Rune vampirique Vierge",
+   "fait": null,
+   "cleClient": "II_SYS_SYS_QUE_ARMORSHARD01",
+   "icone": "/jeu/icones/itm_armorshard.webp",
+   "dessinRegarde": true
+  },
+  {
+   "nom": "Rune Yggdrasil Vierge",
+   "fait": null,
+   "cleClient": "II_SYS_SYS_EVE_HEART_CARD",
+   "icone": "/jeu/icones/itm_rune_vierge_yggdrasil.webp",
+   "dessinRegarde": true
+  }
+ ]
+}

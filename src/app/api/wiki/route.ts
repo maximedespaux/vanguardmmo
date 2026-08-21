@@ -47,7 +47,7 @@ export async function GET(req: Request) {
   const c: Critere = {
     q: p.get("q") ?? "",
     type: (TYPES_VALIDES.includes(type) ? type : "") as TypeEntree | "",
-    // Le filtre qui compte sur un serveur privé : ce qu'AirFlyff a AJOUTÉ. Trois
+    // Le filtre qui compte sur un serveur privé : ce qu'Airborn a AJOUTÉ. Trois
     // marqueurs le donnent — les deux espaces de noms d'objets propres au serveur,
     // et le drapeau `NEWSERV` des monstres.
     maison: p.get("maison") === "1",

@@ -381,7 +381,7 @@ export default function CandidaturePage() {
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="flame" size={18} />Motivation</h2>
           <textarea rows={2} value={motivation} onChange={e => setMotivation(e.target.value)} style={inp} placeholder="Pourquoi rejoindre Vanguard ?" />
           <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="book" size={18} />Expérience</h2>
-          <textarea rows={2} value={experience} onChange={e => setExperience(e.target.value)} style={inp} placeholder="Ton parcours sur AirFlyff..." />
+          <textarea rows={2} value={experience} onChange={e => setExperience(e.target.value)} style={inp} placeholder="Ton parcours sur Airborn..." />
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between" }}><button onClick={() => setStep(1)} style={btnG}>← Retour</button><button onClick={() => setStep(3)} disabled={!canNext(2)} className="vg-btn" style={{ opacity: canNext(2) ? 1 : 0.4 }}>Suivant →</button></div>
         </div>
       )}

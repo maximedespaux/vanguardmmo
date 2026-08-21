@@ -57,7 +57,7 @@ import FASHION from "@/data/fashion-bonus.json";
  *  - le niveau DE L'OBJET n'est pas le niveau REQUIS (le wiki confond les deux, d'où
  *    3 437 niveaux faux là-bas) : on montre le requis en gros et on ne signale
  *    l'autre que quand il diverge ;
- *  - `dwHanded` et la portée sont incohérents sur les armes d'AirFlyff : on ne les
+ *  - `dwHanded` et la portée sont incohérents sur les armes d'Airborn : on ne les
  *    affiche pas du tout, le type dit déjà « deux mains » ;
  *  - le poids de rareté (`dwItemRare`) ressemble à une rareté mais n'en est pas une :
  *    il est resté hors du catalogue réduit, et c'est pourquoi aucun cadre de carte
@@ -196,7 +196,7 @@ function ChezQui({ marchands, total, objet }: { marchands: Marchand[]; total: nu
  * de coordonnées. Rangés du plus bas niveau au plus haut : on veut le plus abordable.
  *
  * Rien ne s'affiche quand le relevé ne sait pas — pas d'encadré pour expliquer le
- * trou. Le butin ordinaire d'AirFlyff est calculé côté serveur et n'est pas dans les
+ * trou. Le butin ordinaire d'Airborn est calculé côté serveur et n'est pas dans les
  * fichiers ; le dire à chaque fiche serait répéter un constat d'ignorance 12 134 fois.
  *
  * PLAFONNÉ À HUIT, comme « Chez qui » juste dessous, et pour la même raison mesurée :
@@ -233,7 +233,7 @@ function LachePar({ lacheurs, total }: { lacheurs: Lacheur[]; total: number }) {
               <span style={{ minWidth: 0, flex: 1, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {m.nom}
               </span>
-              {m.maison && <span style={{ fontSize: 10, color: "var(--purple)", fontWeight: 700, flexShrink: 0 }}>AirFlyff</span>}
+              {m.maison && <span style={{ fontSize: 10, color: "var(--purple)", fontWeight: 700, flexShrink: 0 }}>Airborn</span>}
               {m.niv != null && (
                 <span style={{ color: tonRang(m.rang), flexShrink: 0, ...NUM }}>niv. {m.niv}</span>
               )}
@@ -353,7 +353,7 @@ export function Fiche({ o, voisins, bonus, lacheurs = [], lacheursTotal = 0, mar
               <img src={BADGE_ULTIME} alt="Ultime" title="Grade Ultime" height={14} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
             )}
             {o.g === "Unique" && <Etiquette grade="unique" />}
-            {o.af === 1 && <Marque texte="Ajout AirFlyff" couleur="var(--orange)" icon="sparkles" />}
+            {o.af === 1 && <Marque texte="Ajout Airborn" couleur="var(--orange)" icon="sparkles" />}
             {o.ne === 1 && <Marque texte="Non échangeable" couleur="var(--red)" image={CADENAS} />}
             {o.li === 1 && <Marque texte="Lié au personnage" couleur="var(--red)" image={CADENAS} />}
             {o.li === 2 && <Marque texte="Lié à l’équipement" couleur="var(--gold)" image={CADENAS} />}

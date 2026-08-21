@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════
-//  LIRE UNE ARCHIVE .air DU CLIENT AIRFLYFF
+//  LIRE UNE ARCHIVE .air DU CLIENT AIRBORN
 // ════════════════════════════════════════════════════════════════════════
 //
 // Même serrure que `scripts/extraire-air.js`, mais en module : les scripts

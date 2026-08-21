@@ -664,7 +664,10 @@ function faits(){return meca().faits||{};}
    affichaient donc la constante du fichier, jamais celle du client, et un
    plafond deplace dans le relevé ne serait apparu nulle part.
    Le repli a 100 reste pour l'instant ou la table n'est pas encore arrivee —
-   sans lui la pastille afficherait « 50/ » pendant le chargement. */
+   sans lui le curseur afficherait « 50/ » pendant le chargement.
+   CE MAXIMUM EST CELUI DE LA COURSE DU CURSEUR, PAS CELUI D'UNE ARME. Le niveau
+   qu'une arme peut reellement atteindre depend de sa rarete : c'est
+   `maitrisePlafond(tier)`, et c'est lui que la pastille de la bulle affiche. */
 function maitriseMax(){
   var M=faits().maitrise;
   return (M&&M.niveau&&M.niveau.max)||100;
@@ -699,20 +702,69 @@ function rareteDuCode(code){
   return '';
 }
 
-/* ═════════ LA MAITRISE D'ARME — CE QUE LA RARETE ALLUME ═════════════════════
-   DEUX FAITS DU RELEVE QUE L'ECRAN NE DOIT PAS DEBORDER :
+/* ═════════ LA MAITRISE D'ARME — UN GAIN PAR PALIER, PLAFONNE PAR LA RARETE ══
+   CE BLOC A DIT LE CONTRAIRE DE LA VERITE, ET VOICI CE QUI MANQUAIT.
 
-   1. LA RARETE ALLUME LA LIGNE, ELLE NE LA FAIT PAS MONTER. Les 26 lignes du
-      client valent [Commun 0, puis LA MEME VALEUR jusqu'au dernier palier] : 4
-      pour les lignes physiques, 2 pour les trois lignes magiques. Dessiner une
-      montee en puissance de Rare a Mythique inventerait une progression que le
-      fichier n'accorde a personne — c'est pourquoi le releve ne porte qu'UNE
-      valeur `v` et UN seuil `des`, et non six cases.
-   2. LA LIGNE NOMMEE L'EMPORTE SUR LA LIGNE DE TYPE, elle ne s'y ajoute pas.
+   Il lisait le `4` du client comme LE TOTAL de la ligne et en concluait « la
+   rarete allume, elle ne fait pas monter ». Ce `4` est un GAIN PAR PALIER DE DIX
+   NIVEAUX, il se CUMULE, et c'est la rarete qui plafonne le niveau de maitrise —
+   donc le nombre de paliers qu'on peut franchir. La progression que l'ecran
+   niait est celle-la : 0 · 16 · 24 · 32 · ? · 40 pour une ligne a 4.
+
+   TROIS FAITS DU RELEVE QUE L'ECRAN NE DOIT PAS DEBORDER :
+
+   1. RIEN NE SE MULTIPLIE ICI QUI PUISSE SE LIRE AILLEURS. `faits.maitrise`
+      porte `pas` (dix), `plafondNiveau` par rarete et `echelle` — le total
+      atteignable, deja calcule, par gain par palier et par rarete. L'ecran lit
+      ces nombres ; il n'en fabrique aucun.
+   2. LE PRE-MYTHIQUE N'A PAS DE PLAFOND PUBLIE. Le wiki nomme cinq plafonds et
+      saute celui-la, alors que ses propres pages et `MECH.arme.rarete_tiers` en
+      declarent SIX. `plafondNiveau.PREMYTHIC` vaut donc `null` et l'ecran ecrit
+      « non renseigne » : interpoler entre 80 et 100 serait une invention.
+   3. LA LIGNE NOMMEE L'EMPORTE SUR LA LIGNE DE TYPE, elle ne s'y ajoute pas.
       Treize armes recoivent une ligne a leur nom TOUT EN AYANT une ligne de
       type ; `faits.armes[].mai` ne retient que celle qui s'applique et nomme
-      l'ecartee a cote. Les additionner donnerait a l'Epee eternelle 4 points de
-      degats critiques que le client ne lui accorde pas. */
+      l'ecartee a cote. Les additionner donnerait a l'Epee eternelle des degats
+      critiques que le client ne lui accorde pas. */
+function maitriseFaits(){return faits().maitrise||{};}
+/** Le pas du palier : un versement tous les N niveaux. Lu, jamais pose ici — un
+ *  pas absent rend 0, et tout le bloc retombe alors a zero au lieu d'inventer. */
+function maitrisePas(){var p=maitriseFaits().pas;return (p>0)?p:0;}
+/** Le code du client pour un palier du builder (« Mythique » -> MYTHIC). */
+function maitriseCode(tier){return (((faits().rarete||{}).codes)||{})[tier];}
+/** Le plafond de NIVEAU de maitrise qu'accorde une rarete, ou `null` quand il
+ *  n'est pas publie (Pre-Mythique). */
+function maitrisePlafond(tier){
+  var p=(maitriseFaits().plafondNiveau||{})[maitriseCode(tier)];
+  return (typeof p==='number')?p:null;
+}
+/** Les paliers FRANCHIS a ce niveau et a cette rarete, ou `null` quand la rarete
+ *  n'a pas de plafond publie : sans plafond, on ne sait pas si le niveau regle
+ *  est seulement atteignable, et le compter reviendrait a interpoler. */
+function maitrisePaliers(niveau,tier){
+  var pas=maitrisePas(),pl=maitrisePlafond(tier);
+  if(!pas||pl==null)return null;
+  return Math.floor(Math.min(Math.max(0,niveau|0),pl)/pas);
+}
+/** Le gain d'une ligne, au niveau et a la rarete regles.
+ *  `0` quand la rarete ne l'allume pas — une arme commune franchit bien un
+ *  palier, le client lui donne 0 par palier. `null` quand le plafond de la
+ *  rarete n'est pas publie : un trou, pas un zero. */
+function maitriseGain(l,niveau,tier){
+  if(!l||!l.pp)return 0;
+  var n=maitrisePaliers(niveau,tier);
+  if(n==null)return null;
+  return maitriseAllumee(l,tier)?(l.pp*n):0;
+}
+/** Le gain d'une ligne, ecrit : « +32 », « — » ou « ? ». */
+function maitriseTexte(g){return (g==null)?'?':(g?'+'+g:'—');}
+/** Le total ATTEIGNABLE d'une ligne a une rarete donnee, LU dans l'echelle du
+ *  releve. `null` quand la rarete n'a pas de plafond publie. */
+function maitriseAtteignable(l,tier){
+  var e=(maitriseFaits().echelle||{})[String(l&&l.pp)];
+  var v=e?e[maitriseCode(tier)]:undefined;
+  return (typeof v==='number')?v:null;
+}
 function maitriseDe(item){
   var M=faits().maitrise,j=armeFait(item);
   if(!M||!j||!j.mai)return null;
@@ -726,15 +778,47 @@ function maitriseDe(item){
   var ec=nomme?(((M.parType||{})[j.mai[2]])||[]):[];
   return {lignes:lignes,nomme:nomme,ecartee:ec,dit:M.dit||''};
 }
-/** Les libelles d'une liste de lignes de maitrise, en clair. */
-function maitriseMots(lignes){
-  return (lignes||[]).map(function(l){return l.fr+' +'+l.v;}).join(' · ');
+/** Les libelles d'une liste de lignes de maitrise, avec CE QU'ELLES VALENT au
+ *  niveau et a la rarete regles — et non le gain d'un seul palier, qui se
+ *  lisait comme un total. */
+function maitriseMots(lignes,niveau,tier){
+  return (lignes||[]).map(function(l){return l.fr+' '+maitriseTexte(maitriseGain(l,niveau,tier));}).join(' · ');
 }
 /** Une ligne de maitrise est-elle allumee au palier choisi ? Le seuil vient de
  *  la ligne elle-meme (`des`), pas d'une constante posee ici. */
 function maitriseAllumee(l,tier){
   var seuil=rangRarete(rareteDuCode(l&&l.des)),ici=rangRarete(tier);
   return (seuil>=0&&ici>=0&&ici>=seuil);
+}
+/** L'ECHELLE D'UNE LIGNE, RARETE PAR RARETE : ce que chacune permet d'atteindre.
+ *  C'est la progression que l'ecran doit montrer, et elle est LUE. */
+function maitriseEchelle(l){
+  return ((MECH.arme&&MECH.arme.rarete_tiers)||[]).map(function(t){
+    return {tier:t,max:maitriseAtteignable(l,t),niveau:maitrisePlafond(t)};});
+}
+/** La phrase du plafond, pour la rarete reglee. Elle protege d'un geste couteux :
+ *  monter la maitrise au-dela du plafond de sa rarete ne rapporte rien. */
+function maitrisePhrasePlafond(niveau,tier){
+  var pl=maitrisePlafond(tier),pas=maitrisePas();
+  /* LE PRE-MYTHIQUE : LE SEUL TROU, ET IL EST DIT. Le wiki nomme cinq plafonds
+     et saute celui-la, alors que sa page « Rareté de l'arme » et
+     `MECH.arme.rarete_tiers` en declarent SIX. Interpoler entre 80 et 100 pour
+     boucher le trou donnerait un nombre qu'aucune source n'ecrit. */
+  if(pl==null)return esc(tier)+' : aucune source ne publie son plafond de maîtrise. Le wiki en nomme cinq et saute celui-là, alors que le client déclare bien six raretés — le gain reste donc <b>non renseigné</b> ici.';
+  /* DEUX COMPTES QU'ON NE CONFOND PAS, ET LA CONFUSION A ETE VUE A L'ECRAN.
+     `na` = les paliers QUE LA RARETE ACCORDE ; `nf` = ceux DEJA FRANCHIS au
+     niveau regle. La phrase annonce un PLAFOND : c'est `na` qui doit y figurer.
+     Elle portait `nf`, et disait donc « Rare plafonne la maîtrise à 40 — 2
+     paliers » a maitrise 25, en contradiction directe avec le tableau juste en
+     dessous qui accorde +16 a Rare, soit quatre paliers. Le franchi se dit a
+     part, apres la virgule, tant qu'il reste du chemin.
+     `na` est LU dans la table (`paliersAtteignables`, calcule sur le plafond) :
+     aucun compte n'est refait ici. */
+  var na=(maitriseFaits().paliersAtteignables||{})[maitriseCode(tier)];
+  var nf=maitrisePaliers(niveau,tier);
+  return esc(tier)+' plafonne la maîtrise à <b>'+pl+'</b> — '+na+' palier'+(na>1?'s':'')+' de '+pas+' niveaux'
+    +(((niveau|0)>pl)?', et le niveau réglé les dépasse déjà : au-delà, rien de plus.'
+      :((nf<na)?', dont <b>'+nf+'</b> franchi'+(nf>1?'s':'')+'.':'.'));
 }
 
 /* ═════════ L'EVEIL CHIFFRE — DEUX SERIES QU'ON NE MELANGE PAS ═══════════════
@@ -951,6 +1035,28 @@ function totalsDetail(){
     var c=e.cfg;
     if(c&&c.pierce){try{var pt=pierceTotals(c,s);if(pt&&pt.brut)pt.brut.forEach(function(b){
       add(b[0],b[1],nom+' — percage '+(pt.el||''),'Carte de percage posee : la table de valeurs vient du client (cartes '+(pt.el||'')+').','client');});}catch(x){}}
+    /* ═══ LA MAITRISE D'ARME ENTRE DANS LE TOTAL, ET C'EST NOUVEAU ═════════
+       Elle en etait absente — pas meme rangee parmi les termes non comptes —
+       tant qu'on prenait le `4` du client pour un plat sans interet. Le modele
+       par palier donne un nombre EXACT : le gain par palier vient du client, le
+       nombre de paliers du plafond de niveau publie par le wiki, et le libelle
+       est celui que le builder emploie deja pour les bonus propres des pieces
+       (« Degats critiques », « PV max % »), donc les points se rejoignent sur la
+       meme ligne du resume.
+       UN GAIN NUL N'EST PAS UN TERME MANQUANT. Une arme commune, ou une maitrise
+       qui n'a pas franchi son premier palier, vaut zero : ajouter zero ne change
+       rien et le ranger parmi les « termes non comptes » ferait passer un fait
+       connu pour un trou. Le panneau et la bulle disent deja pourquoi.
+       LE VRAI TROU, LUI, EST DIT : les deux armes que le releve du client ne
+       connait pas n'ont aucune ligne de maitrise, et leur bonus manque
+       reellement au total. */
+    if(c&&(s==='weapon'||s==='weapon2')){var mzT=maitriseDe(e.item);
+      if(mzT)mzT.lignes.forEach(function(l){
+        var niv=c.mastery||0,g=maitriseGain(l,niv,c.tier),np=maitrisePaliers(niv,c.tier),pl=maitrisePlafond(c.tier);
+        if(g)add(l.fr,g,nom+' — maitrise '+niv,'Maitrise d\'arme : '+l.pp+' par palier de '+maitrisePas()+' niveaux (propweaponleveling.inc du client) x '+np+' paliers franchis, la rarete '+c.tier+' plafonnant la maitrise a '+pl+' (wiki officiel).','client');
+        else if(g==null)absent(nom+' — maitrise '+l.fr,'Aucune source ne publie le plafond de maitrise du '+c.tier+' : sans lui le nombre de paliers franchis ne se compte pas, et l\'interpoler depuis les raretes voisines serait une invention.');});
+      else if(c.mastery&&!armeFait(e.item))
+        absent(nom+' — maitrise '+c.mastery,'Le releve du client ne connait pas cette arme : sa ligne de maitrise est inconnue, et lui preter celle d\'une voisine serait une invention.');}
     /* Le palier d'un bijou : la seule valeur du rang atteint. */
     if(c&&c.up&&BIJOUX.indexOf(s)>=0){
       var bp=bonusDePalier(e.item,c.up);
@@ -1249,7 +1355,7 @@ function renderStats(){var n=document.getElementById('stats');if(!n)return;
     +'<div class="mini" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,44,54,.6)">'
     +'Survole une ligne : elle dit d\'où vient chaque point. '
     +'Additionne les bonus des pièces, les cartes de perçage, les paliers de bijou, '
-    +'le bonus de panoplie au seuil de pièces atteint et les carnets.</div>';
+    +'la maîtrise d\'arme, le bonus de panoplie au seuil de pièces atteint et les carnets.</div>';
   /* ═══ CE QUI N'EST PAS COMPTE, ET POURQUOI — dit, pas cache ════════════════
      Le panneau annonçait un total sans dire ce qu'il laissait dehors. Un total
      ampute en silence se compare entre deux builds comme s'il etait complet :
@@ -1537,7 +1643,8 @@ function rareteChance(n){
   return null;
 }
 /* ═══ POURQUOI LA BULLE NE REPETE PAS « NON COMPTE » SOUS CHAQUE BLOC ════════
-   Neuf mecaniques sur dix-huit n'entrent pas dans le total (`faits.nonCompte`),
+   Une bonne moitie des mecaniques n'entre pas dans le total (`faits.nonCompte`
+   les compte, et la maitrise vient d'en sortir),
    et une premiere version de ce chantier l'annonçait sous chacune. Mesure : six
    paragraphes, une trentaine de pixels chacun, sur une bulle qui frolait deja la
    hauteur de l'ecran — pour repeter six fois le meme fait.
@@ -1729,7 +1836,13 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
   if(configured){let cf='';const chips=[];
     if(isW&&cfg)chips.push(`<span class="chip" style="${cfg.rune?'color:var(--green);border-color:#4ADE8055':'color:var(--mut);opacity:.65'}">${runeImg(it.tier)} ${esc(runeName(it.tier))}</span>`);
     else if(cfg&&typeof cfg.rune==='string'&&cfg.rune){const _rc=STATCOL[cfg.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(cfg.rune)} ${esc(cfg.rune)}</span>`);}
-    if(isW&&cfg&&cfg.mastery)chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${cfg.mastery}/${maitriseMax()}</span>`);
+    /* LA PASTILLE COMPTE SUR LE PLAFOND DE LA RARETE, pas sur le 100 global :
+       « 100/100 » sur une arme Rare annonçait une maitrise pleine la ou la
+       rarete l'arrete a 40. Et quand le plafond n'est pas publie, le
+       denominateur DISPARAIT plutot que de retomber sur 100 — ce serait poser
+       pour le Pre-Mythique un plafond qu'aucune source n'ecrit. */
+    if(isW&&cfg&&cfg.mastery){const _pl=maitrisePlafond(cfg.tier);
+      chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-target></i> ${_pl==null?cfg.mastery:(Math.min(cfg.mastery,_pl)+'/'+_pl)}</span>`);}
     if(slot==='familier'&&e){chips.push(`<span class="chip" style="color:var(--gold);border-color:#FFD24A55"><i class=vgi-medal></i> Rang ${e.rank||'D'}</span>`);if(typeof e.rune==='string'&&e.rune){const _rc=STATCOL[e.rune]||'#4ADE80';chips.push(`<span class="chip" style="color:${_rc};border-color:${_rc}55">${runeBonusImg(e.rune)} ${esc(e.rune)}</span>`);}}
     if(chips.length)cf+=`<div class="chips">${chips.join('')}</div>`;
     /* ═══ LE SERTISSAGE DIT ENFIN CE QU'IL VAUT ════════════════════════════════
@@ -1883,32 +1996,29 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
             } de l'arme, qui tire ${esc((_vv||[]).map(function(b){return b[0];}).join(' · '))}.</div>`:'')
         +`</div></div>`;
     }
-    /* ═══ CE QUE LA MAITRISE ALLUME, LIGNE PAR LIGNE ═══════════════════════
-       La bulle n'avait qu'une pastille « 42/100 » : le NIVEAU, qui ne dit pas ce
-       que l'arme gagne. Ce que l'arme gagne tient a sa RARETE, et le releve le
-       chiffre ligne par ligne.
-       LA RARETE ALLUME, ELLE NE FAIT PAS MONTER : les 26 lignes du client valent
-       0 en Commun puis la meme valeur a tous les paliers. On montre donc un etat
-       — eteint ou allume — et la valeur, sans dessiner une montee de Rare a
-       Mythique qui n'existe dans aucun fichier.
+    /* ═══ CE QUE LA MAITRISE RAPPORTE, LIGNE PAR LIGNE ═════════════════════
+       La bulle affichait « +4 » sur une arme Mythique a maitrise 100 — le gain
+       d'UN palier, pris pour le total — et ajoutait « le niveau ne change rien ».
+       Les deux etaient faux : le gain tombe par palier de dix niveaux, il se
+       cumule, et la rarete plafonne le niveau donc le nombre de paliers.
+       ELLE MONTRE MAINTENANT LE GAIN ACQUIS, et le plafond qui le borne. Le
+       maximum de la rarete reglee est dit a cote quand il reste a atteindre :
+       c'est le geste qui reste a faire, pas un second total.
        ET ON N'ADDITIONNE PAS : quand une ligne est nommee pour cette arme, elle
        REMPLACE la ligne de son type ; l'ecartee est dite a part, en clair. */
     if(isW&&cfg){
       const mz=maitriseDe(it);
       if(mz){
-        const seuil=rareteDuCode(mz.lignes[0]&&mz.lignes[0].des);
+        const _niv=cfg.mastery||0;
         cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0">`
-          +mz.lignes.map(l=>{const on=maitriseAllumee(l,cfg.tier);
-            return `<div class="mline${on?' on':''}" title="${escA(l.code+' — '+(on?('allumée dès '+rareteDuCode(l.des)):('éteinte : cette ligne s\'allume à partir de '+rareteDuCode(l.des))))}"><span>${esc(l.fr)}</span><span>${on?'+'+l.v:'—'}</span></div>`;}).join('')
-          /* CES DEUX NOTES ONT ETE RESSERREES, PAS RETIREES. Elles disaient la
-             meme chose en trois lignes chacune sur une bulle deja haute ; le
-             fait, lui, tient en une. Le troisieme — LE NIVEAU DE MAITRISE NE
-             CHANGE AUCUNE VALEUR — manquait, et c'est celui qui coute : la
-             pastille « 100/100 » fait croire a une progression, alors que le
-             releve n'attache aucune statistique aux paliers. */
-          +`<div class="mnote">${seuil?`<b>Allumée</b> dès ${esc(seuil)}, sans monter.`:''}${
-              (((faits().maitrise||{}).niveau||{}).sansEffetSurLaValeur)?` Le niveau ne change rien.`:''}</div>`
-          +(mz.nomme&&mz.ecartee.length?`<div class="mnote"><b>Remplace</b> la ligne de type (${esc(maitriseMots(mz.ecartee))}).</div>`:'')
+          +mz.lignes.map(l=>{const g=maitriseGain(l,_niv,cfg.tier),plein=maitriseAtteignable(l,cfg.tier);
+            return `<div class="mline${g?' on':''}" title="${escA(l.code+' — '+l.pp+' par palier de '+maitrisePas()+' niveaux'+(maitriseAllumee(l,cfg.tier)?'':(', et cette ligne ne rapporte rien avant '+rareteDuCode(l.des))))}"><span>${esc(l.fr)}</span><span>${maitriseTexte(g)}${(g!=null&&plein!=null&&plein>g)?` <i style="opacity:.6;font-style:normal">/ ${plein}</i>`:''}</span></div>`;}).join('')
+          /* UNE SEULE NOTE, ET C'EST CELLE QUI CHANGE LE GESTE : combien de
+             paliers sont acquis, et a quel niveau la rarete arrete la maitrise.
+             Elle remplace « allumee des Rare, sans monter » et « le niveau ne
+             change rien », qui disaient tous deux le contraire de la verite. */
+          +`<div class="mnote">${maitrisePhrasePlafond(_niv,cfg.tier)}</div>`
+          +(mz.nomme&&mz.ecartee.length?`<div class="mnote"><b>Remplace</b> la ligne de type (${esc(maitriseMots(mz.ecartee,_niv,cfg.tier))}).</div>`:'')
           +`</div></div>`;
       } else if(cfg.mastery&&!armeFait(it)){
         cf+=`<div class="crow" style="align-items:flex-start"><span class="lab">Maîtrise</span><div style="flex:1;min-width:0"><span class="mnote">Non renseigné : le relevé du client ne connaît pas cette arme.</span></div></div>`;
@@ -2841,7 +2951,7 @@ const STATCOL={Force:'#F87171',Endurance:'#4ADE80','Dextérité':'#FFD24A',Intel
 function statS2(o,on,onclk){const c=STATCOL[o];const st=c?(on?`background:${c};color:#0a0a0c;border-color:${c};font-weight:700`:`color:${c};border-color:${c}66`):'';return `<div class="s2 ${(!c&&on)?'on':''}" style="${st}" onclick="${onclk}">${o}</div>`;}
 function seg2stat(slot,key,opts){const w=cfgOf(slot);return `<div class="seg2" style="flex-wrap:wrap;max-width:340px">${opts.map(o=>statS2(o,w[key]===o,`cset('${slot}','${key}','${o}')`)).join('')}<div class="s2 ${!w[key]?'on':''}" onclick="cset('${slot}','${key}','')">—</div></div>`;}
 function upLive(el,slot,max){const lbl=el.parentNode.querySelector('.mini b');if(lbl)lbl.textContent='+'+el.value;}
-/* ═══ LA MAITRISE D'ARME : UN GROUPE A ELLE, ET CE QU'ELLE ALLUME ═══════════
+/* ═══ LA MAITRISE D'ARME : UN GROUPE A ELLE, ET CE QU'ELLE RAPPORTE ═════════
    ELLE ETAIT LOGEE AU MILIEU DU GROUPE « RARETE », entre la phrase des
    parchemins et les lignes de bonus tirees au sort. A l'ecran, « + ligne
    (max 4) » et « % variable selon la stat » — qui appartiennent a la RARETE —
@@ -2849,22 +2959,38 @@ function upLive(el,slot,max){const lbl=el.parentNode.querySelector('.mini b');if
    maitrise. Deux mecaniques distinctes lues comme une seule : c'est le desordre
    que Maxime appelle chiffon, et il vient de l'ordre du HTML, pas du style.
 
-   ELLE MONTRE MAINTENANT SES LIGNES. Le curseur ne donnait que le NIVEAU, qui ne
-   dit pas ce que l'arme gagne ; ce qu'elle gagne tient a sa RARETE, et le releve
-   le chiffre. On montre donc l'etat de chaque ligne au palier choisi.
+   ELLE MONTRE MAINTENANT CE QUE L'ARME GAGNE, ET LA PROGRESSION QUI Y MENE. Le
+   panneau ecrivait « +4 » et « la rarete allume la ligne, elle ne la fait plus
+   monter ensuite » : c'etait le gain d'UN palier pris pour un total, et la
+   negation d'une progression bien reelle. Le gain tombe par palier de dix
+   niveaux et se CUMULE ; la rarete plafonne le NIVEAU, donc le nombre de paliers.
 
-   NIVEAU ET RARETE SONT DEUX CHOSES, ET RESTENT SEPAREES : le curseur 0-100 est
-   l'experience de l'arme, l'allumage vient du palier. Les melanger laisserait
-   croire qu'atteindre 100 allume la ligne, ce que le client ne dit pas. */
+   NIVEAU ET RARETE RESTENT DEUX CHOSES, mais elles se multiplient : le curseur
+   donne les paliers franchis, la rarete donne le plafond qui les borne. Le
+   tableau des six raretes le montre d'un coup d'oeil — et la case du
+   Pre-Mythique reste vide parce qu'aucune source ne publie son plafond.
+
+   LE CURSEUR GARDE SA COURSE COMPLETE, exprès. Le brider au plafond de la rarete
+   effacerait en silence un niveau deja enregistre des qu'on redescend d'un
+   palier ; on ramene donc le CALCUL au plafond, et on ecrit ce qui est perdu. */
 function masteryUI(slot,item){const w=cfgOf(slot);const v=w.mastery||0;
   const mz=maitriseDe(item),max=maitriseMax();
   let lig='';
   if(mz){
-    const seuil=rareteDuCode(mz.lignes[0]&&mz.lignes[0].des);
-    lig=`<div class="mlist">`+mz.lignes.map(l=>{const on=maitriseAllumee(l,w.tier);
-      return `<div class="mline${on?' on':''}" title="${escA(l.code+(on?' — allumée dès '+rareteDuCode(l.des):' — éteinte : cette ligne s\'allume à partir de '+rareteDuCode(l.des)))}"><span>${esc(l.fr)}</span><span>${on?'+'+l.v:'—'}</span></div>`;}).join('')+`</div>`
-      +`<div class="mini mnote">${seuil?`La rareté <b>allume</b> la ligne dès ${esc(seuil)} et ne la fait plus monter ensuite : même valeur jusqu'au dernier palier.`:''}</div>`
-      +(mz.nomme&&mz.ecartee.length?`<div class="mini mnote">Ligne propre à cette arme : elle <b>remplace</b> celle de son type (${esc(maitriseMots(mz.ecartee))}), elle ne s'y ajoute pas — les additionner inventerait un bonus.</div>`:'');
+    /* LE TABLEAU DES SIX RARETES, sur la premiere ligne de l'arme. `.mline.m3`
+       existe deja (niveau · effet · coût) et sert ici a rarete · gain · niveau
+       de maitrise requis. La rangee de la rarete reglee est la seule allumee :
+       marquer aussi celles d'en dessous laisserait croire qu'elles s'ajoutent. */
+    const l0=mz.lignes[0];
+    const ech=`<div class="mlist" style="margin-top:6px">`
+      +`<div class="mline m3 mhead"><span>Rareté</span><span>${esc(l0.fr)}</span><span>Maîtrise</span></div>`
+      +maitriseEchelle(l0).map(e=>`<div class="mline m3${e.tier===w.tier?' on':''}"><span>${esc(e.tier)}</span><span>${e.max==null?'non renseigné':maitriseTexte(e.max)}</span><span>${e.niveau==null?'—':e.niveau}</span></div>`).join('')
+      +`</div>`;
+    lig=`<div class="mlist">`+mz.lignes.map(l=>{const g=maitriseGain(l,v,w.tier),plein=maitriseAtteignable(l,w.tier);
+      return `<div class="mline${g?' on':''}" title="${escA(l.code+' — '+l.pp+' par palier de '+maitrisePas()+' niveaux'+(maitriseAllumee(l,w.tier)?'':(', et rien avant '+rareteDuCode(l.des))))}"><span>${esc(l.fr)}</span><span>${maitriseTexte(g)}${(g!=null&&plein!=null&&plein>g)?` <i style="opacity:.6;font-style:normal">/ ${plein}</i>`:''}</span></div>`;}).join('')+`</div>`
+      +`<div class="mini mnote">${l0.pp} par palier de ${maitrisePas()} niveaux, <b>cumulé</b>. ${maitrisePhrasePlafond(v,w.tier)}</div>`
+      +ech
+      +(mz.nomme&&mz.ecartee.length?`<div class="mini mnote">Ligne propre à cette arme : elle <b>remplace</b> celle de son type (${esc(maitriseMots(mz.ecartee,v,w.tier))}), elle ne s'y ajoute pas — les additionner inventerait un bonus.</div>`:'');
   } else if(!armeFait(item)){
     lig=`<div class="mini mnote">Non renseigné : le relevé du client ne connaît pas cette arme, et lui prêter la maîtrise d'une voisine serait une invention.</div>`;
   }

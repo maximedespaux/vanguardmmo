@@ -13,9 +13,16 @@ import { nb, type Maitrise as TMaitrise } from "./donnees";
  * les taux du client (5 XP par monstre normal, 25 par coup sur un boss).
  *
  * La table a DEUX colonnes parce que l'XP demandée dépend du niveau de l'arme :
- * au-delà du niveau 120, le même palier coûte jusqu'à vingt fois plus. C'est
+ * au-delà du niveau 120, la même tranche coûte jusqu'à vingt fois plus. C'est
  * l'information la plus utile de la section, donc elle est côte à côte et pas
  * dans deux tableaux séparés.
+ *
+ * UN MOT POUR DEUX CHOSES, ET IL FAISAIT UN FAUX CALCUL. Cette page appelait
+ * « paliers » les treize TRANCHES D'XP du client (2-10, 11-20 … 99-100) ET les
+ * paliers de BONUS, qui tombent tous les dix niveaux. Les deux comptes lus côte
+ * à côte invitent à multiplier le gain par treize, là où le jeu et le wiki
+ * officiel affichent dix versements au maximum. Les tranches d'XP portent donc
+ * ici leur vrai nom ; « palier » ne désigne plus que le versement du bonus.
  */
 export function Maitrise({ m, source }: { m: TMaitrise; source: string }) {
   const [haut, setHaut] = useState(true);
@@ -43,9 +50,10 @@ export function Maitrise({ m, source }: { m: TMaitrise; source: string }) {
   const boss = Math.ceil(total / (m.xp["boss frappé en instance"] || 25));
   const geants = Math.ceil(total / (m.xp["monstre géant tué"] || 100));
 
-  // La rareté ne module presque rien : « commun » ne rapporte rien, et tous les
-  // autres paliers donnent le MÊME gain. Le dire épargne un tableau de six
-  // colonnes identiques.
+  // Le gain PAR PALIER est le même à toutes les raretés non nulles (« commun »
+  // ne rapporte rien) : le dire épargne un tableau de six colonnes identiques.
+  // Ce qui change d'une rareté à l'autre, c'est le NOMBRE de paliers — et ce
+  // plafond-là n'est pas dans collections.json ; voir la note du bloc.
   const gainsParStat = useMemo(() => {
     const par = new Map<string, { stat: string; gain: number; armes: string[] }>();
     for (const a of m.armes) {
@@ -101,7 +109,7 @@ export function Maitrise({ m, source }: { m: TMaitrise; source: string }) {
         </div>
       </Bloc>
 
-      <Bloc titre={`Les ${m.paliers.length} paliers, jusqu'au niveau ${m.niveauMax}`} icon="layers"
+      <Bloc titre={`Les ${m.paliers.length} tranches d'XP, jusqu'au niveau ${m.niveauMax}`} icon="layers"
         sous="L'XP demandée pour CHAQUE niveau de la tranche. La colonne qui compte est celle du niveau de ton arme.">
         <Tableau>
           <thead>
@@ -127,8 +135,15 @@ export function Maitrise({ m, source }: { m: TMaitrise; source: string }) {
         </Tableau>
       </Bloc>
 
+      {/* CE QUE CE BLOC NE PEUT PAS ENCORE DIRE. Le gain se CUMULE d'un palier à
+          l'autre, et la rareté plafonne le niveau de maîtrise atteignable — donc
+          le nombre de paliers. Ce plafond n'existe pas dans le client : il vient
+          du wiki officiel, et il est aujourd'hui dans mecaniques.json
+          (`faits.maitrise.plafondNiveau`), pas dans collections.json. Tant qu'il
+          n'est pas ici, cette page montre le gain d'UN palier et se garde de
+          laisser croire qu'il vaut le total. */}
       <Bloc titre="Ce que la maîtrise rapporte, par arme" icon="sword"
-        sous="Le gain à chaque palier de maîtrise. Une arme commune n'en gagne aucun ; à partir de Rare, toutes les raretés donnent le même.">
+        sous="Le gain d'UN palier de maîtrise — il se cumule d'un palier au suivant, et ce n'est pas le total. Une arme commune n'en gagne aucun ; à partir de Rare, toutes les raretés donnent le même gain par palier, mais pas le même nombre de paliers : le builder montre la progression complète.">
         <div style={{ display: "grid", gap: 8 }}>
           {gainsParStat.map((g) => (
             <div key={g.stat + g.gain} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>

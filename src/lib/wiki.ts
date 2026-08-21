@@ -280,7 +280,7 @@ function charger() {
         t: "recette", id: String(r.id), nom,
         img: sortie.ic ? `/jeu/icones/${sortie.ic}` : null,
         href: `/crafts?q=${encodeURIComponent(nom)}`,
-        // Les recettes maison d'AirFlyff sont regroupées par le relevé : masques,
+        // Les recettes maison d'Airborn sont regroupées par le relevé : masques,
         // mantras, buffs, couturier, matériaux.
         maison: MAISON_CRAFT.has(r.g),
         sous: lisible(r.pnj[0]) ? `chez ${lisible(r.pnj[0])}` : "Échange",
@@ -566,7 +566,7 @@ export function chercher(c: Critere, limite = 40): Reponse {
     if (s < 0) continue;
     // Les comptes des pastilles IGNORENT le filtre qu'elles portent — sinon
     // « Monstres » afficherait 0 dès qu'on a choisi « Objets », et « Ajouts
-    // AirFlyff » ne dirait plus combien il y en a.
+    // Airborn » ne dirait plus combien il y en a.
     if (!c.maison || e.maison) parType[e.t] = (parType[e.t] ?? 0) + 1;
     if (e.maison && (!c.type || e.t === c.type)) maison++;
     if (c.type && e.t !== c.type) continue;
@@ -576,13 +576,13 @@ export function chercher(c: Critere, limite = 40): Reponse {
 
   gardes.sort((a, b) => {
     if (b.s !== a.s) return b.s - a.s;
-    // À pertinence égale, CE QUI N'EXISTE QUE SUR AIRFLYFF passe devant : c'est la
+    // À pertinence égale, CE QUI N'EXISTE QUE SUR AIRBORN passe devant : c'est la
     // règle de tri de tout le site, et c'est aussi ce qu'on ne trouve nulle part
     // ailleurs. Sans mot-clé, c'est donc l'écran d'accueil de la recherche.
     if (a.e.maison !== b.e.maison) return a.e.maison ? -1 : 1;
     const ra = RANG_TYPE.get(a.e.t) ?? 9, rb = RANG_TYPE.get(b.e.t) ?? 9;
     if (ra !== rb) return ra - rb;
-    /* On classe sur la CLÉ et pas sur le nom affiché : les noms d'AirFlyff commencent
+    /* On classe sur la CLÉ et pas sur le nom affiché : les noms d'Airborn commencent
        souvent par un crochet (« [Familier] Rune… », « [Âme de la mort] Obnis ») et le
        crochet passe avant les lettres — l'ordre alphabétique remontait donc trente
        lignes de familiers en tête de l'écran d'accueil. La clé n'a pas de crochets. */
@@ -595,7 +595,7 @@ export function chercher(c: Critere, limite = 40): Reponse {
    * │ Ce qu'il montrait, relevé sur le HTML servi : « 1e Fragment de pierre Précieuse
    * │ Koori · Objet · Divers / boîte », puis « 2e Fragment de pierre précieuse Koori ·
    * │ Objet · Divers / boîte », puis trente-huit lignes du même tonneau. Le tri sans
-   * │ mot-clé met les ajouts AirFlyff devant, puis les objets (première nature du rang),
+   * │ mot-clé met les ajouts Airborn devant, puis les objets (première nature du rang),
    * │ puis l'ordre alphabétique : les quarante lignes de la porte du site étaient donc
    * │ QUARANTE MATÉRIAUX DE CRAFT rangés par ordre alphabétique, et « Objet · Divers /
    * │ boîte » y était écrit trente fois. Six cents mots pour ne rien apprendre, et
@@ -631,7 +631,7 @@ export function chercher(c: Critere, limite = 40): Reponse {
  * Une tranche répartie entre les natures, chacune gardant SON ordre.
  *
  * Un tour de rôle et pas un quota fixe de huit : si une nature s'épuise (les compétences
- * n'existent pas sous le filtre « Ajouts AirFlyff »), les autres se partagent la place au
+ * n'existent pas sous le filtre « Ajouts Airborn »), les autres se partagent la place au
  * lieu de laisser des lignes vides. L'ordre de sortie suit le rang des natures, pour que
  * la liste reste rangée et pas alternée ligne à ligne.
  */

@@ -31,7 +31,7 @@ import {
  * avec.
  *
  * ┌──────── CE QU'IL REMPLACE, ET POURQUOI ────────┐
- * │ « Ajoutés par AirFlyff » et « se relèvent »     │
+ * │ « Ajoutés par Airborn » et « se relèvent »      │
  * │ étaient deux tuiles au milieu de six, de la     │
  * │ même taille et de la même forme que les quatre  │
  * │ constats qui les entouraient. Or ce sont les    │
@@ -39,7 +39,7 @@ import {
  * │ serveur a ajouté passe devant le jeu de base),  │
  * │ et le fait qui les relie ne se lisait nulle     │
  * │ part : les monstres à plusieurs vies sont TOUS  │
- * │ du contenu AirFlyff. Une rangée de pastilles ne │
+ * │ du contenu Airborn. Une rangée de pastilles ne  │
  * │ peut pas dire « celui-là est DANS celui-là ».   │
  * │ Trois barres à la même échelle, si.             │
  * └────────────────────────────────────────────────┘
@@ -48,12 +48,12 @@ import {
  * partent du même bord gauche et la plus courte est visiblement contenue dans la
  * précédente. Chaque barre porte son nombre et son nom en texte à côté d'elle —
  * la teinte n'est que celle que la page emploie déjà pour ce mot (violet pour
- * AirFlyff, rouge pour ceux qui se relèvent, comme les branches de la recherche),
+ * Airborn, rouge pour ceux qui se relèvent, comme les branches de la recherche),
  * elle ne code aucune grandeur.
  *
  * `viesMaison` décide de la PHRASE : tant qu'il vaut exactement `vies`, on dessine
  * l'un dans l'autre et on le dit ; s'il tombe en dessous à la prochaine fouille,
- * la ligne devient « dont N du contenu AirFlyff » sans qu'on ait rien à réécrire.
+ * la ligne devient « dont N du contenu Airborn » sans qu'on ait rien à réécrire.
  */
 export function ProvenanceMonstres({ total, maison, vies, viesMaison, surMaison, surVies }: {
   total: number; maison: number; vies: number; viesMaison: number;
@@ -68,10 +68,10 @@ export function ProvenanceMonstres({ total, maison, vies, viesMaison, surMaison,
     <div className="glass-card" style={{ padding: "14px 16px", display: "grid", gap: 12 }}>
       <Bande part={1} valeur={total} teinte="var(--orange)" libelle="monstres dans le client" />
       <Bande part={part(maison)} valeur={maison} teinte="var(--purple)"
-        libelle="ajoutés par AirFlyff" action={surMaison} />
+        libelle="ajoutés par Airborn" action={surMaison} />
       <Bande part={part(vies)} valeur={vies} teinte="var(--red)" decale action={surVies}
         libelle="se relèvent"
-        suite={tousMaison ? "tous du contenu AirFlyff" : `dont ${entier(viesMaison)} du contenu AirFlyff`}
+        suite={tousMaison ? "tous du contenu Airborn" : `dont ${entier(viesMaison)} du contenu Airborn`}
         detail={tousMaison
           ? "Plusieurs barres de vie = contenu ajouté par le serveur. La règle se vérifie ligne à ligne dans le relevé : aucun monstre du jeu d'origine ne se relève, et la marque du serveur est écrite dans leur identifiant."
           : "Le relevé compte ici des monstres à plusieurs vies qui ne portent pas la marque du serveur : la règle ne tient plus, ce chiffre le dit."} />

@@ -93,7 +93,7 @@ rôles qu'il distribue dans la liste des rôles du serveur.
 
 ## 📅 Configurer les événements du jeu
 
-AirFlyff n'a pas d'API : le calendrier se renseigne **à la main**, une fois (il change
+Airborn n'a pas d'API : le calendrier se renseigne **à la main**, une fois (il change
 rarement). Ouvre [`bot/config.ts`](config.ts) → tableau `EVENTS`. Une ligne par événement
 récurrent :
 
@@ -132,7 +132,7 @@ export const EVENTS: GameEvent[] = [
 
 - [ ] **Régénérer** le `DISCORD_BOT_TOKEN` et la clé secrète sur le portail Discord
       (ils ont circulé en clair pendant le dev) puis mettre à jour le `.env`.
-- [ ] Renseigner le tableau `EVENTS` avec le vrai calendrier AirFlyff.
+- [ ] Renseigner le tableau `EVENTS` avec le vrai calendrier d'Airborn.
 - [ ] Vérifier les permissions du bot (rôles + posts forum) sur le serveur.
 - [ ] Faire tourner le bot **24/7** (VPS) au lieu d'une fenêtre locale.
 

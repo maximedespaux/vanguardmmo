@@ -276,7 +276,7 @@ export function EcranEconomie({ etat }: { etat?: EtatVisiteur }) {
        revenir avec un message d'erreur technique. On lui dit ce qui manque, à la place. */
     if (!peutAgir) {
       setARelire(false);
-      flash("Pour commander, il faut être sur le serveur Discord AirFlyff et connecté ici — la boutique est en visite libre.");
+      flash("Pour commander, il faut être sur le serveur Discord Airborn et connecté ici — la boutique est en visite libre.");
       return;
     }
     setSending(true);

@@ -63,7 +63,7 @@ export function BandeauVitrine({ etat, quoi, action }: {
           <>
             Ce ne sont pas des données d&apos;exemple : c&apos;est ce que la guilde a réellement.
             Pour <b style={{ color: "var(--text)" }}>{action}</b>, deux choses sont nécessaires —
-            être <b style={{ color: "var(--text)" }}>sur le serveur Discord AirFlyff</b>, et{" "}
+            être <b style={{ color: "var(--text)" }}>sur le serveur Discord Airborn</b>, et{" "}
             <b style={{ color: "var(--text)" }}>connecté ici</b> avec ce compte.
           </>
         )}

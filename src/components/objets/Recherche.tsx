@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { IconeObjet } from "./IconeObjet";
-import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, elementPorte, emblemeClasse, FAMILLES, libelleEtPourcent, MARQUEUR_AIRFLYFF, RESISTANCES, type Famille, type ObjetFiche } from "./vocabulaire";
+import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, elementPorte, emblemeClasse, FAMILLES, libelleEtPourcent, MARQUEUR_AIRBORN, RESISTANCES, type Famille, type ObjetFiche } from "./vocabulaire";
 
 /**
  * CHERCHER UN OBJET — le catalogue du client du jeu, 12 134 lignes.
@@ -22,7 +22,7 @@ import { BADGE_ULTIME, CADENAS, COULEUR_GRADE, chiffreDeCombat, classeFr, elemen
  * │ · Le PRIX a quitté la carte. Un montant de PNJ ne dit    │
  * │   rien du marché entre joueurs, et il occupait la place   │
  * │   d'un renseignement qui, lui, sert : les bonus.          │
- * │ · Un filtre AJOUTS AIRFLYFF est arrivé. C'est le tri qui  │
+ * │ · Un filtre AJOUTS AIRBORN est arrivé. C'est le tri qui   │
  * │   compte sur un serveur privé — 1 455 objets sortent des  │
  * │   espaces de noms propres au serveur, et ceux-là          │
  * │   n'existent nulle part ailleurs.                         │
@@ -189,12 +189,12 @@ export function RechercheObjets({ depart = "", departStat = "", stats = [] }: {
               `Invisible` rend un bouton, et un bouton dans un bouton n'est pas du HTML
               valide — le clic du filtre se serait perdu. */}
           <Pastille on={maison} onClick={() => setMaison(!maison)}>
-            <Icon name="sparkles" size={13} /> Ajouts AirFlyff
+            <Icon name="sparkles" size={13} /> Ajouts Airborn
             <Compte n={c?.maison} on={maison} />
           </Pastille>
-          {/* Le texte est celui de `MARQUEUR_AIRFLYFF` — le même que sur /wiki. Il était
+          {/* Le texte est celui de `MARQUEUR_AIRBORN` — le même que sur /wiki. Il était
               écrit à la main dans les deux fichiers, en deux versions différentes. */}
-          <Invisible enJeu={MARQUEUR_AIRFLYFF}>
+          <Invisible enJeu={MARQUEUR_AIRBORN}>
             <></>
           </Invisible>
           <Pastille on={grade === "Unique"} couleur={COULEUR_GRADE.Unique} onClick={() => setGrade(grade === "Unique" ? "" : "Unique")}>

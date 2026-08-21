@@ -6,8 +6,8 @@ import type { Metadata } from "next";
  * moteur de recherche, c'est par là qu'un joueur découvre Vanguard.
  */
 export const metadata: Metadata = {
-  title: "Calculateur de prestige — Flyff AirFlyff",
-  description: "Ce que coûte un prestige sur AirFlyff et ce qu'il rapporte, palier par palier. Calcule le tien avant de te lancer.",
+  title: "Calculateur de prestige — Airborn : Winds of Rhisis",
+  description: "Ce que coûte un prestige sur Airborn, le serveur privé Flyff, et ce qu'il rapporte, palier par palier. Calcule le tien avant de te lancer.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

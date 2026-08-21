@@ -3,7 +3,7 @@
 //
 //  Il existe une roue des éléments (le feu bat le vent, l'eau bat le feu…) et
 //  elle est tentante : cinq relations, une table de 5 × 5, et on croit tenir la
-//  résistance de n'importe quel monstre. C'EST FAUX SUR AIRFLYFF. Le relevé
+//  résistance de n'importe quel monstre. C'EST FAUX SUR AIRBORN. Le relevé
 //  porte cinq colonnes par monstre, et huit monstres résistent à TROIS éléments
 //  à la fois — ce qu'aucune roue ne peut produire. On lit donc les colonnes.
 //
@@ -181,9 +181,9 @@ export function bonusElementaire(bonus: Record<string, number>, element: Element
  * LE PALIER D'ÉLÉMENT D'UNE ARME N'EST PAS CALCULABLE, et c'est la même cause
  * que pour le +N d'amélioration : la table qui dit ce que rapporte un palier
  * d'élément (l'équivalent de `UpgradeBonus` du Flyff officiel) n'est dans aucun
- * fichier du client AirFlyff. Poser un élément sur une arme change donc QUEL
+ * fichier du client Airborn. Poser un élément sur une arme change donc QUEL
  * facteur de résistance s'applique — ce qui est calculable — mais le bonus
  * d'attaque élémentaire du palier, non.
  */
 export const PALIER_ELEMENT_NON_CALCULABLE =
-  "Le gain d'un palier d'élément sur l'arme n'est pas compté : la table qui le donne (UpgradeBonus chez le Flyff officiel) n'existe pas dans les fichiers du client AirFlyff. Seul l'élément lui-même est pris en compte, par la résistance de la cible.";
+  "Le gain d'un palier d'élément sur l'arme n'est pas compté : la table qui le donne (UpgradeBonus chez le Flyff officiel) n'existe pas dans les fichiers du client Airborn. Seul l'élément lui-même est pris en compte, par la résistance de la cible.";

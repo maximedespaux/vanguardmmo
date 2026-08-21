@@ -13,7 +13,7 @@ import { CLASSES } from "@/data/classes";
  *
  * Pourquoi une correspondance est nécessaire : le site nomme ses classes comme on
  * les nomme en vocal (Spadassin, Chanoine…), alors que le client range ses
- * emblèmes sous les codes de métier AirFlyff. Aucun des deux jeux de noms ne se
+ * emblèmes sous les codes de métier Airborn. Aucun des deux jeux de noms ne se
  * déduit de l'autre — « Primat » ne ressemble pas à « Florist ».
  *
  * Elle n'est pas devinée : chaque code de métier a été relié à sa classe par les

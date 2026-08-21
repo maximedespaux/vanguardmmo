@@ -69,7 +69,7 @@ function charger(): Fichier {
   return CACHE;
 }
 
-/** Les groupes qu'on présente comme « fait maison AirFlyff ». */
+/** Les groupes qu'on présente comme « fait maison Airborn ». */
 const MAISON = new Set(["masques", "mantras", "buffs", "couturier", "materiaux"]);
 /** Les comptoirs où l'on paie en jetons plutôt qu'en matériaux. */
 const COMPTOIRS = new Set(["gvg", "jetons-guilde", "colisee", "flyshop", "fragments", "coupang", "yggdrasil"]);

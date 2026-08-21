@@ -24,11 +24,11 @@
  * │ Flyffulator est sous GPL v3 : recopier son code obligerait à publier tout   │
  * │ ce site sous GPL v3. Son code a donc été LU pour comprendre l'ORDRE DES     │
  * │ OPÉRATIONS de Flyff — une mécanique de jeu ne s'approprie pas — puis        │
- * │ ré-écrit ici, en français, sur les relevés d'AirFlyff. Aucune fonction,     │
+ * │ ré-écrit ici, en français, sur les relevés d'Airborn. Aucune fonction,     │
  * │ aucun nom de variable, aucun commentaire n'en vient.                       │
  * │                                                                            │
  * │ ET C'EST AUSSI UNE PRÉCAUTION DE JUSTESSE, pas seulement de droit : ses     │
- * │ formules sont celles du Flyff OFFICIEL. AirFlyff a changé des valeurs. Tout │
+ * │ formules sont celles du Flyff OFFICIEL. Airborn a changé des valeurs. Tout │
  * │ ce qui vient de la mécanique officielle et non d'un fichier du client est   │
  * │ donc marqué `hypothese`, et l'écran le dit.                                │
  * └────────────────────────────────────────────────────────────────────────────┘
@@ -45,12 +45,12 @@
  * LE DEGRÉ DE CERTITUDE D'UN TERME. Quatre valeurs, et l'ordre compte : c'est celui
  * dans lequel un terme perd de sa valeur de preuve.
  *
- *  · `client`    — le nombre est écrit dans un fichier du client AirFlyff. Rien à
+ *  · `client`    — le nombre est écrit dans un fichier du client Airborn. Rien à
  *                  discuter : on le lit, on le montre, on cite le fichier.
  *  · `deduit`    — le nombre n'est pas écrit mais se calcule sans choix arbitraire
  *                  sur des nombres du client (une somme, un produit, un comptage).
  *  · `hypothese` — la MÉCANIQUE vient du Flyff officiel et n'est pas confirmée sur
- *                  AirFlyff. Le nombre s'affiche, jamais sans sa réserve.
+ *                  Airborn. Le nombre s'affiche, jamais sans sa réserve.
  *  · `absent`    — la donnée n'existe pas dans le client. Le terme s'affiche à sa
  *                  place dans le calcul, sans valeur, et dit pourquoi.
  */
@@ -211,7 +211,7 @@ export const FAMILLE_FR: Record<string, string> = {
  *
  * L'apport de statistique d'une arme se lit, dans la mécanique de Flyff, comme
  * « (la statistique de référence MOINS un retrait) FOIS le facteur de famille de la
- * classe ». Le FACTEUR vient du client d'AirFlyff (tableau des classes). Le RETRAIT
+ * classe ». Le FACTEUR vient du client d'Airborn (tableau des classes). Le RETRAIT
  * et le facteur de niveau, non : ce sont des constantes du moteur officiel, absentes
  * de tout fichier lu jusqu'ici.
  *
@@ -238,7 +238,7 @@ export const CONSTANTES_HYPOTHESE = {
      source de vingt mots y coûtait cent mots servis. L'explication complète (le
      pourquoi de la licence, ce qui a été lu et ce qui a été réécrit) est dans
      l'en-tête de ce fichier et dans le volet, une seule fois. */
-  source: "Mécanique du Flyff officiel — aucun fichier du client AirFlyff ne l'écrit.",
+  source: "Mécanique du Flyff officiel — aucun fichier du client Airborn ne l'écrit.",
 };
 
 /* ── 1. La puissance d'une arme, coup par coup ──────────────────────────────── */
@@ -419,7 +419,7 @@ export function puissanceDArme(
   finMax += plat;
 
   const reserves = [
-    "L'ordre des opérations vient de la mécanique du Flyff officiel : AirFlyff a pu la changer sans que le client l'écrive.",
+    "L'ordre des opérations vient de la mécanique du Flyff officiel : Airborn a pu la changer sans que le client l'écrive.",
   ];
   if (up > 0) reserves.push(`Le palier +${up} est annoncé, pas compté.`);
   if (apportStat == null) reserves.push(`Le facteur de famille de l'${FAMILLE_FR[fam] ?? fam} n'est pas dans le tableau des classes.`);
@@ -492,7 +492,7 @@ export function reductionParDefense(attaque: number, defense: number, dOu: strin
     ],
     resultat: degats,
     unite: "dégâts",
-    reserve: "La formule de réduction n'est pas confirmée sur AirFlyff : elle donne la bonne courbe, pas forcément le bon nombre.",
+    reserve: "La formule de réduction n'est pas confirmée sur Airborn : elle donne la bonne courbe, pas forcément le bon nombre.",
   };
 }
 
@@ -642,9 +642,9 @@ export function puissanceDeCompetence(
        niveau de la compétence, et une constante y est retranchée. Prendre une
        opération d'une formule et taire les deux autres, c'est présenter un
        morceau de formule comme la formule : le total n'est pas « la mécanique
-       officielle appliquée à AirFlyff », c'est son premier tiers.
+       officielle appliquée à Airborn », c'est son premier tiers.
        On ne CHIFFRE pas ces deux opérations — rien du client ne les confirme et
-       AirFlyff a pu les changer — mais on les DIT, sinon le lecteur croit tenir
+       Airborn a pu les changer — mais on les DIT, sinon le lecteur croit tenir
        un total qui ne lui manque qu'une échelle de statistique. */
     {
       quoi: `Mise à l'échelle du niveau ${niveau} de la compétence — NON COMPTÉE`,

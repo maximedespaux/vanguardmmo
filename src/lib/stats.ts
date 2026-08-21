@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════
 //  MOTEUR DE STATS — formules de combat Flyff
 //  Implémente les formules de references/FORMULES_FR.md.
-//  Constantes officielles : à confirmer/ajuster pour AirFlyff (TODO).
+//  Constantes officielles : à confirmer/ajuster pour Airborn (TODO).
 //  Les facteurs par classe (autoAttackFactors, maxHP) peuvent être
 //  récupérés depuis l'API officielle — cf. references/API_OFFICIELLE_FR.md §5.
 // ════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 import type { ClassKey, WeaponSubtype } from "@/data/items";
 
 // ─── Modificateur de PV par classe (officiel) ──────────────
-// TODO AirFlyff : confirmer le mapping et les valeurs.
+// TODO Airborn : confirmer le mapping et les valeurs.
 export const CLASS_HP_MODIFIER: Record<ClassKey, number> = {
   Templier: 40,    // Knight
   Chanoine: 34,    // Ringmaster
@@ -43,7 +43,7 @@ export function computeMaxHp(cls: ClassKey, level: number, end: number, flatMaxH
 }
 
 // Attaque affichée (approx, cf. FORMULES_FR.md §2-3)
-// TODO AirFlyff : facteur d'auto-attaque par classe/arme (autoAttackFactors de l'API).
+// TODO Airborn : facteur d'auto-attaque par classe/arme (autoAttackFactors de l'API).
 export function computeAttackDisplay(args: {
   attMin: number; attMax: number; attackPct?: number; upcutPct?: number; flatAttack?: number;
 }): number {

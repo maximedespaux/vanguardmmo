@@ -47,7 +47,7 @@ export type Depart = {
  * libellés, et le rail aurait changé de mots en cours de route.
  */
 const META: Record<string, { titre: string; sous: string; icon: IconName }> = {
-  maison: { titre: "Ce qu’AirFlyff a écrit", sous: "masques, mantras, buffs de guilde, couturier", icon: "hammer" },
+  maison: { titre: "Ce qu’Airborn a écrit", sous: "masques, mantras, buffs de guilde, couturier", icon: "hammer" },
   arbre: { titre: "Où farmer chaque morceau", sous: "l’arbre maison, étage par étage", icon: "tree" },
   comptoirs: { titre: "Les comptoirs à jetons", sous: "GvG, Colisée, FLY SHOP, fragments", icon: "coins" },
   recherche: { titre: "Qui échange quoi", sous: "qui vend ça, et que vend celui-là", icon: "search" },
@@ -92,7 +92,7 @@ const SANS = /baruna/i;
  * comptés sur les fichiers à chaque rendu.
  */
 const PROMESSE: Record<string, string> = {
-  maison: "Les menus qu’AirFlyff a écrits lui-même — masques, mantras, buffs de guilde, couturier, rachat de matériaux — avec les quantités exactes de chaque rang.",
+  maison: "Les menus qu’Airborn a écrits lui-même — masques, mantras, buffs de guilde, couturier, rachat de matériaux — avec les quantités exactes de chaque rang.",
   arbre: "Les arbres de fabrication maison : sur quel monstre et dans quelle zone ramasser chaque morceau, étage par étage.",
   comptoirs: "Les barèmes des comptoirs à jetons : Guerre de Guilde, Colisée, FLY SHOP, fragments de cartes, Yggdrasil.",
   recherche: "Chercher un objet ou un PNJ : qui vend ça, et que vend celui-là — les deux questions au même endroit.",

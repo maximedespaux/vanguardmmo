@@ -530,7 +530,7 @@ export function calculer(personnage: Personnage, tables: Tables): Resultat {
       facteurs: facteurs ? { ...facteurs } as Record<string, number | string> : null,
       source: "public/wiki/bonus-sources.json ▸ facteursDeClasse (propJob.inc) · src/data/classes.ts pour le nom français",
       reserve:
-        "Les 15 de départ par attribut et le budget « niveau × 2 − 2 » ne sont écrits dans AUCUN fichier du client que nous détenons : ce sont les valeurs du Flyff officiel. Un budget différent sur AirFlyff décalerait tous les attributs.",
+        "Les 15 de départ par attribut et le budget « niveau × 2 − 2 » ne sont écrits dans AUCUN fichier du client que nous détenons : ce sont les valeurs du Flyff officiel. Un budget différent sur Airborn décalerait tous les attributs.",
     },
     attributs,
     absolus: [...sacAbsolus.values()].sort((a, b) => (a.libelle ?? "").localeCompare(b.libelle ?? "")),
@@ -901,9 +901,9 @@ function rarete(
  * LES GRANDEURS DÉRIVÉES — PV, PM, PC, défense, attaque, parade.
  *
  * ┌─── CE QUE CES NOMBRES SONT, ET CE QU'ILS NE SONT PAS ──────────────────┐
- * │ Les FACTEURS viennent du client d'AirFlyff (propJob.inc, relevé dans    │
+ * │ Les FACTEURS viennent du client d'Airborn (propJob.inc, relevé dans    │
  * │ bonus-sources.json ▸ facteursDeClasse). L'ORDRE DES OPÉRATIONS, lui,    │
- * │ est celui du Flyff OFFICIEL : AirFlyff a changé des valeurs, et         │
+ * │ est celui du Flyff OFFICIEL : Airborn a changé des valeurs, et         │
  * │ personne n'a mesuré ces formules en jeu. Chaque ligne porte donc sa     │
  * │ réserve. Ce sont des ordres de grandeur vérifiables, pas des vérités.   │
  * └────────────────────────────────────────────────────────────────────────┘
@@ -921,7 +921,7 @@ function rarete(
  * l'endurance dans la défense.
  *
  * LES SEPT FACTEURS D'ARME (SWD, AXE, STAFF, STICK, KNUCKLE, WAND, YOYO) NE
- * VARIENT PAS D'UNE CLASSE À L'AUTRE dans AirFlyff : les quarante lignes de
+ * VARIENT PAS D'UNE CLASSE À L'AUTRE dans Airborn : les quarante lignes de
  * propJob.inc recopient les mêmes sept nombres. Les indexer par classe donnerait
  * l'illusion d'une spécialisation qui n'existe pas.
  */
@@ -940,7 +940,7 @@ function deriver(ctx: {
   // ┌─── CE QUI VIENT DU CLIENT, ET CE QUI VIENT D'AILLEURS ─────────────────┐
   // │ Il faut le dire précisément, sinon la réserve laisse croire que seuls   │
   // │ l'ORDRE des opérations est emprunté et que les nombres, eux, sont dans  │
-  // │ le client. C'est faux. Viennent du client d'AirFlyff : les facteurs de  │
+  // │ le client. C'est faux. Viennent du client d'Airborn : les facteurs de  │
   // │ classe de propJob.inc (MaxHP, MaxMP, MaxFP, colonne5, BLOCKING,        │
   // │ CRITICAL, les sept familles d'arme) et les dn/dx des objets. Ne         │
   // │ viennent d'AUCUN fichier détenu : le 150 des PV, le 22 des PM, les      │
@@ -951,7 +951,7 @@ function deriver(ctx: {
   // │ Ces quatorze-là sont les constantes du calculateur du Flyff OFFICIEL.   │
   // └────────────────────────────────────────────────────────────────────────┘
   const reserveFormule =
-    "Ce qui vient du client d'AirFlyff : les facteurs de classe de propJob.inc et les dn/dx du relevé d'objets. Ce qui NE vient d'aucun fichier détenu : l'ordre des opérations ET les constantes numériques de la formule (150, 22, ×20, ×9, ×7, 0,01, 0,75, 2÷2,8, 0,5÷2,8, −4, le quart de la défense d'équipement, 0,5, ÷10, ÷8) — ce sont celles du calculateur du Flyff officiel, réécrites, jamais mesurées sur AirFlyff.";
+    "Ce qui vient du client d'Airborn : les facteurs de classe de propJob.inc et les dn/dx du relevé d'objets. Ce qui NE vient d'aucun fichier détenu : l'ordre des opérations ET les constantes numériques de la formule (150, 22, ×20, ×9, ×7, 0,01, 0,75, 2÷2,8, 0,5÷2,8, −4, le quart de la défense d'équipement, 0,5, ÷10, ÷8) — ce sont celles du calculateur du Flyff officiel, réécrites, jamais mesurées sur Airborn.";
 
   if (!facteurs) {
     out.push({

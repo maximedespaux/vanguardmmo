@@ -32,7 +32,7 @@ import {
  * └──────────────────────────────────────────────────────────┘
  *
  * ── LE CRITÈRE, ET POURQUOI IL EST DIFFICILE ──────────────────────────────────
- * Il n'existe AUCUN rang « world boss » dans AirFlyff : les monstres du client se
+ * Il n'existe AUCUN rang « world boss » dans Airborn : les monstres du client se
  * rangent en sept rangs et pas un ne porte ce mot. Deux marques, elles, sont
  * écrites noir sur blanc :
  *

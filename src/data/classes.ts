@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-//  CLASSES AIRFLYFF — module centralisé (logos + rôles)
+//  CLASSES AIRBORN — module centralisé (logos + rôles)
 //  Logos dans /public/classes (64x64 PNG transparent)
 // ════════════════════════════════════════════════════════════
 export type Role = "dps" | "tank" | "support";

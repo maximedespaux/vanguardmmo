@@ -79,7 +79,7 @@ export function Arbre({ choisi, onChoix, nbDe }: {
         <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img"
           style={{ display: "block", maxWidth: "none" }}
           aria-label={`Arbre des promotions : le Vagabond mène à ${troncs.length} métiers, chacun à deux lignées, soit ${LIGNEES.length} classes légendaires. Maître et Héros sont des promotions du Métier 2, pas des classes : ${NB_NOMS_DE_CLASSE} noms de classe en tout.`}>
-          <title>Les {NB_NOMS_DE_CLASSE} noms de classe d&apos;AirFlyff et leurs branchements</title>
+          <title>Les {NB_NOMS_DE_CLASSE} noms de classe d&apos;Airborn et leurs branchements</title>
 
           {/* Les en-têtes de colonne portent la couleur de leur palier : c'est le seul
               repère qui permette de lire le dessin sans légende. */}

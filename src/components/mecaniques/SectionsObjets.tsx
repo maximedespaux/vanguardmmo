@@ -177,7 +177,7 @@ export function Gemmes() {
           })}
         />
         {/* LA CAUSE, ETABLIE. L'ordre ci-dessous est celui d'Ultimate_GemAbility.txt,
-            et les neuf Diamants d'AirFlyff y repondent rang pour rang. */}
+            et les neuf Diamants d'Airborn y repondent rang pour rang. */}
         <p className="mc-src">La cause — l&apos;ordre du client, celui auquel le jeu répond :</p>
         <Codes codes={ordreDuClient()} libelle={libelleDe} />
         <p className="mc-src">
@@ -252,7 +252,7 @@ export function Sertissage() {
             diamant VIOLET dessine pour le builder : verifie empreinte par
             empreinte, ce fichier n'existe nulle part ailleurs dans le depot et ne
             correspond a aucune icone du client. Le vrai Diamant holographique
-            d'AirFlyff est MULTICOLORE (`itm_diamant_multicolore.webp`) — et la
+            d'Airborn est MULTICOLORE (`itm_diamant_multicolore.webp`) — et la
             case portait un violet invente juste au-dessus de la phrase du client
             qui decrit l'objet. La pierre ordinaire, elle, est pixel pour pixel la
             meme des deux cotes : on prend quand meme celle du client, pour que la
@@ -591,7 +591,7 @@ export function Artefact() {
 /** Les trois statistiques qu'un tank cherche. Elles servent à INTERROGER le
  *  vivier de rareté, pas à décrire son contenu : la phrase à l'écran se construit
  *  sur le résultat de la recherche, si bien qu'elle se corrige toute seule le jour
- *  où AirFlyff en ajoute une au tirage. */
+ *  où Airborn en ajoute une au tirage. */
 const STATS_DEFENSIVES = ["PV max", "Endurance", "Défense"];
 
 export function Rarete() {

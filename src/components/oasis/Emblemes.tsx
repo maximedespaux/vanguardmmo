@@ -7,7 +7,7 @@ import { DEBOUCHES, EMBLEME_SIMPLE, EMBLEME_SUP, ICONE_EMBLEME, nb, type Bilan }
  *
  * Sur 52 vagues, il n'y a que DEUX objets de prime : l'emblème de protection et
  * sa version supérieure. Dit comme ça, le mode a l'air maigre. Sauf que la table
- * d'échanges d'AirFlyff réclame ces emblèmes par MILLIERS pour les parchemins de
+ * d'échanges d'Airborn réclame ces emblèmes par MILLIERS pour les parchemins de
  * prestige 6, 7 et 10 : ce ne sont pas des trophées, c'est la monnaie du haut du
  * jeu. C'est cette information qui manquait au site, et sans elle un joueur ne
  * peut pas décider si le mode vaut sa soirée.

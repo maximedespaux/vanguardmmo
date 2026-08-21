@@ -136,7 +136,7 @@ export const PORTES_PUBLIQUES: Porte[] = [
        LA PORTE DU WIKI MANQUAIT, et c'était la plus grosse absence de cet écran.
        ══════════════════════════════════════════════════════════════════════════
        Cette liste répond à « qu'est-ce que ce site sait faire ». Or ce que le site fait
-       de plus utile — UN SEUL CHAMP pour tout AirFlyff, qui aiguille vers la page
+       de plus utile — UN SEUL CHAMP pour tout Airborn, qui aiguille vers la page
        propriétaire de ce qu'on a tapé — n'y figurait pas. Un visiteur voyait onze portes
        thématiques et devait deviner laquelle contient « Âme de démon ». C'est exactement
        le défaut que /wiki existe pour corriger, et le site venait de le refaire sur sa

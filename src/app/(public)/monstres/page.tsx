@@ -27,7 +27,7 @@ export default function MonstresPage() {
         icon="skull"
         title="Les monstres et les boss"
         // LE SOUS-TITRE NE RÉPÈTE PLUS LES COMPTEURS. Il annonçait « 1 124 monstres,
-        // dont 235 ajoutés par AirFlyff » alors que les deux tuiles juste dessous
+        // dont 235 ajoutés par Airborn » alors que les deux tuiles juste dessous
         // portent exactement ces deux nombres, calculés : le même chiffre écrit deux
         // fois à trois centimètres d'écart. Reste la promesse de la page, et le
         // « ce qu'ils lâchent » qui est neuf — chaque objet de butin mène à sa fiche.
@@ -67,5 +67,5 @@ const socle = metaCatalogue();
 export const metadata = {
   title: "Les monstres et les boss · Vanguard",
   description:
-    `Les ${socle.total.toLocaleString("fr-FR")} monstres d'AirFlyff, dont ${socle.compteurs.maison.toLocaleString("fr-FR")} ajoutés par le serveur : PV à sortir vies comprises, dégâts par coup, cadence, élément et résistances, rage et invocations.`,
+    `Les ${socle.total.toLocaleString("fr-FR")} monstres d'Airborn, dont ${socle.compteurs.maison.toLocaleString("fr-FR")} ajoutés par le serveur : PV à sortir vies comprises, dégâts par coup, cadence, élément et résistances, rage et invocations.`,
 };

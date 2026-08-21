@@ -94,7 +94,7 @@ export const CANDIDATURE_REMIND_AFTER_HOURS = 24;
 
 // ════════════════════════════════════════════════════════════
 //  📅 ÉVÉNEMENTS DU JEU À RAPPELER
-//  Remplis ce tableau avec le vrai calendrier AirFlyff.
+//  Remplis ce tableau avec le vrai calendrier d'Airborn.
 //  - day  : "lundi" | "mardi" | … | "dimanche" | "tous" (quotidien)
 //  - time : heure de l'événement, format "HH:MM" (heure de Paris)
 //  - remindBefore : minutes de rappel AVANT (0 = pas de rappel avancé)

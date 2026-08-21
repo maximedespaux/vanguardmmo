@@ -408,7 +408,7 @@ export function coupDeCompetence(c: Combattant, cible: Cible, idCompetence: stri
 
   // Les compétences ne font pas de critique.
   nonPrisEnCompte.push(
-    "Une compétence ne peut pas être un coup critique — c'est le cas chez le Flyff officiel, et rien dans le client d'AirFlyff ne l'infirme. Les bonus de dégâts critiques ne pèsent donc pas sur cette ligne.",
+    "Une compétence ne peut pas être un coup critique — c'est le cas chez le Flyff officiel, et rien dans le client d'Airborn ne l'infirme. Les bonus de dégâts critiques ne pèsent donc pas sur cette ligne.",
   );
   if (arme.upgrade > 0) nonPrisEnCompte.push(`${arme.nom} +${arme.upgrade} — ${PALIER_NON_CALCULABLE}`);
 

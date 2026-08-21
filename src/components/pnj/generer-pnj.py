@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Construit public/wiki/pnj.json : les PNJ de service AirFlyff, leur portrait
+"""Construit public/wiki/pnj.json : les PNJ de service d'Airborn, leur portrait
 apparie par la chaine SetImage -> IDS_* -> char_*.tga, leur ville, leur
 inventaire de vente (AddShopItem, avec prix) et leurs crafts.
 
@@ -17,7 +17,7 @@ SORTIE = "/Users/maximedespaux/Documents/GitHub/vanguardmmo/public/wiki/pnj.json
 # ---------- libelles ----------
 # Piege : une cinquantaine de lignes separent la cle du libelle par des ESPACES
 # et non par une tabulation. En decoupant sur "\t" on perdait 56 libelles — dont
-# tous les PNJ de l'Oasis, ceux qui portent justement les services AirFlyff.
+# tous les PNJ de l'Oasis, ceux qui portent justement les services d'Airborn.
 tids = {}
 for line in open(TXT, encoding="utf-8", errors="replace").read().splitlines():
     m = re.match(r"\s*(IDS_[A-Z_0-9]+)[ \t]+(.*)$", line)

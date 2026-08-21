@@ -28,7 +28,7 @@
  *
  * CE QUE LA PHRASE D'UN BOSS VEUT DIRE.
  *
- * Un boss d'AirFlyff ne parle pas pour le décor : chacune de ses phrases est une règle
+ * Un boss d'Airborn ne parle pas pour le décor : chacune de ses phrases est une règle
  * de combat. Elle passe UNE fois dans le chat, souvent pendant qu'on tape. C'est de la
  * connaissance de boss, donc de la page des monstres — et elle n'est écrite nulle part
  * ailleurs : `grep` sur tout le site ne trouvait ces huit phrases que dans /astuces.

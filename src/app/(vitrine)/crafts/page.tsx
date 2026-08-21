@@ -11,7 +11,7 @@ import { etatVisiteur } from "@/lib/vitrine";
  *
  * LES CRAFTS étaient la demande la plus ancienne de Maxime. Le site savait
  * nommer 13 000 objets sans jamais dire comment on en fabrique un. Les recettes
- * AirFlyff avaient été déclarées « côté serveur » lors d'une passe précédente :
+ * Airborn avaient été déclarées « côté serveur » lors d'une passe précédente :
  * c'est faux pour une bonne moitié d'entre elles, et la conclusion a coûté des
  * mois d'attente. Elles sont dans le client, à deux endroits qu'on ne regardait
  * pas — le fichier d'échange des PNJ pour les quantités et les statuts, les
@@ -83,7 +83,7 @@ export const metadata: Metadata = {
      ELLES ÉTAIENT SIX, ELLES SONT QUATRE : la maîtrise d'arme et les anges sont
      partis sur /builder/mecaniques, ce sont des mécaniques de build. Les promettre
      ici enverrait chercher sur cette page ce qui n'y est plus. */
-  description: "Ce qu’on collectionne dans AirFlyff, relevé dans le client : les titres d’honneur, les succès, les carnets de cartes et le karma PK. Les recettes d’échange et l’arbre du farm sont réservés aux membres de Vanguard.",
+  description: "Ce qu’on collectionne dans Airborn, relevé dans le client : les titres d’honneur, les succès, les carnets de cartes et le karma PK. Les recettes d’échange et l’arbre du farm sont réservés aux membres de Vanguard.",
   /* LE noindex EST TOMBÉ, et c'est réfléchi. Il protégeait deux choses : le
      référencement d'une page réservée, et l'aperçu d'un lien collé en public. Les
      deux motifs ont disparu avec le mur — et surtout, la moitié réservée n'est PAS
@@ -172,7 +172,7 @@ export default async function CraftsPage() {
           pas exister. Il est posé APRÈS l'en-tête : les comptes du sous-titre sont
           l'invitation, et c'est eux qu'on lit d'abord. Le bandeau explique ensuite ce
           qui manque pour ouvrir la moitié fermée. */}
-      <BandeauVitrine etat={etat} quoi="le relevé du client d’AirFlyff" action="ouvrir les recettes et l’arbre du farm" />
+      <BandeauVitrine etat={etat} quoi="le relevé du client d’Airborn" action="ouvrir les recettes et l’arbre du farm" />
       <Etabli etat={etat} />
       {/* LE LOGO DE L'ÉDITEUR NE DOIT PAS APPARAÎTRE. Les 35 écrans de chargement
           du client portent « Flyff », une barre de progression et le copyright

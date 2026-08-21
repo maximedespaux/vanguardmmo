@@ -537,7 +537,7 @@ export function planche(): Planche {
       resultat: final > 0 ? Math.ceil(pv / final) : null,
       unite: "coups",
       reserves: [
-        "La formule de réduction par la défense n'est pas confirmée sur AirFlyff : le nombre de coups suit la même réserve.",
+        "La formule de réduction par la défense n'est pas confirmée sur Airborn : le nombre de coups suit la même réserve.",
         "Ni le critique, ni le blocage, ni la vitesse d'attaque n'entrent dans ce compte : c'est un nombre de coups, pas une durée.",
         "Les lignes « Dégâts sur monstres % » du stuff ne sont pas appliquées : le client ne dit pas comment une ligne positive et une ligne négative se combinent.",
       ],

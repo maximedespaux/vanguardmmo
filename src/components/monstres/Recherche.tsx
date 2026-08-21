@@ -22,7 +22,7 @@ import {
  * requêtes et la plus lente écrasait la bonne.
  *
  * ┌──────── CE QUI A CHANGÉ DE PLACE, ET POURQUOI ────────┐
- * │ « Contenu AirFlyff » était une pastille parmi treize.  │
+ * │ « Contenu Airborn » était une pastille parmi treize.   │
  * │ C'est le tri qui a le plus de valeur sur un serveur    │
  * │ privé, et il ouvre donc la recherche, en trois         │
  * │ branches qui portent leurs comptes — comptes RENVOYÉS  │
@@ -112,7 +112,7 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
   /**
    * DEUX FILTRES POSÉS DE L'EXTÉRIEUR — par les compteurs en tête de page.
    *
-   * « 235 ajoutés par AirFlyff » et « 94 se relèvent » étaient de la décoration : on
+   * « 235 ajoutés par Airborn » et « 94 se relèvent » étaient de la décoration : on
    * lisait le nombre, et il fallait ensuite retrouver le filtre correspondant plus
    * bas. Les tuiles sont devenues l'entrée de la recherche, et ces deux propriétés
    * portent leur choix. Le composant est remonté par sa `key` côté parent — c'est
@@ -169,7 +169,7 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
           <Branche on={!provenance} onClick={() => setProvenance("")} icon="paw"
             label="Tout le catalogue" compte={r?.provenances.tout} couleur="var(--orange)" />
           <Branche on={provenance === "maison"} onClick={() => setProvenance("maison")} icon="sparkles"
-            label="Ajoutés par AirFlyff" compte={r?.provenances.maison} couleur="var(--purple)" />
+            label="Ajoutés par Airborn" compte={r?.provenances.maison} couleur="var(--purple)" />
           <Branche on={provenance === "base"} onClick={() => setProvenance("base")} icon="book"
             label="Jeu d'origine" compte={r?.provenances.base} couleur="var(--text-muted)" />
         </div>
@@ -276,7 +276,7 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
           <Icon name="search" size={22} style={{ opacity: 0.5 }} />
           <p style={{ margin: "9px 0 0" }}>Rien sous ce nom.</p>
           {/* LA SEULE RÉSERVE QUI RESTE, et elle n'apparaît QUE quand elle sert : à
-              zéro résultat sur un nom d'objet. Le butin ordinaire d'AirFlyff est
+              zéro résultat sur un nom d'objet. Le butin ordinaire d'Airborn est
               calculé côté serveur — un joueur qui lit « aucun monstre » et en conclut
               que l'objet ne tombe pas irait farmer ailleurs pour rien. C'est une mise
               en garde qui change un geste, pas un constat d'ignorance affiché partout. */}
@@ -374,7 +374,7 @@ export function CarteMonstre({ m }: { m: Monstre }) {
           binaires que l'icône dit déjà. Le mot passe dans `title` et dans
           `aria-label` : rien n'est perdu, ni au survol ni pour un lecteur d'écran.
           Le SEUIL de rage reste écrit, lui : c'est un nombre, et aucune icône ne le
-          porte. « AirFlyff » reste écrit aussi — la spécificité du serveur passe
+          porte. « Airborn » reste écrit aussi — la spécificité du serveur passe
           devant, et une pastille muette n'annonce rien. */}
       <span style={{ display: "flex", gap: 9, flexWrap: "wrap", fontSize: 11, color: "var(--text-muted)", alignItems: "center" }}>
         {m.delai ? (
@@ -398,7 +398,7 @@ export function CarteMonstre({ m }: { m: Monstre }) {
             <Icon name="sparkles" size={11} />
           </span>
         ) : null}
-        {m.maison && <span style={{ color: "var(--purple)", marginLeft: "auto" }}>AirFlyff</span>}
+        {m.maison && <span style={{ color: "var(--purple)", marginLeft: "auto" }}>Airborn</span>}
       </span>
     </Link>
   );

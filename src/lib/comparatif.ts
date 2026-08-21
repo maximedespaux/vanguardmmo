@@ -3,7 +3,7 @@
 //  et le build d'un membre inscrit à ce poste.
 //
 //  Pourquoi un rapport et pas un calcul de dégâts : la formule de dégâts
-//  d'AirFlyff n'est nulle part (ni dans les fichiers du client, ni côté site —
+//  d'Airborn n'est nulle part (ni dans les fichiers du client, ni côté site —
 //  src/lib/stats.ts est un essai abandonné dont les constantes sont marquées
 //  « à confirmer »). Mais on n'en a pas besoin : la question n'est pas « combien
 //  ce personnage tape » mais « à quelle distance est-il de la cible ». Un rapport

@@ -38,7 +38,7 @@ export type Entree = {
   grade?: "unique" | "ultimate";
   /** L'adresse de la fiche. Un résultat qui ne mène nulle part n'est pas un résultat. */
   href: string;
-  /** Contenu propre à AirFlyff : il passe devant le jeu de base au classement. */
+  /** Contenu propre à Airborn : il passe devant le jeu de base au classement. */
   maison: boolean;
   /** La ligne sous le nom : ce que c'est, en trois mots. */
   sous: string;
@@ -70,7 +70,7 @@ export type Reponse = {
   /** Le compte par nature, pour les critères courants : chaque pastille porte le
    *  sien, donc on sait ce qu'il y a derrière sans cliquer. */
   parType: Record<string, number>;
-  /** Combien de réponses viennent d'AirFlyff, pour la pastille du même nom. */
+  /** Combien de réponses viennent d'Airborn, pour la pastille du même nom. */
   maison: number;
 };
 

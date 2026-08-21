@@ -165,7 +165,7 @@ export type Critere = {
   grade?: "Unique" | "Ultime" | "" ;
   /** Seuls les objets qui portent au moins un bonus. */
   avecBonus?: boolean;
-  /** Seuls les objets AJOUTÉS par AirFlyff — le champ `af`, qui vient des deux
+  /** Seuls les objets AJOUTÉS par Airborn — le champ `af`, qui vient des deux
    *  espaces de noms propres au serveur. C'est le tri qui sépare le serveur du
    *  jeu de base, et c'est celui qui a le plus de valeur ici. */
   maison?: boolean;

@@ -39,7 +39,7 @@ export type ObjetFiche = {
   pnj?: 1;                      // vendable chez un PNJ
   dl?: 1;                       // durée de vie réelle
   nou?: 1;                      // nourriture
-  af?: 1;                       // nom venu des textes propres à AirFlyff
+  af?: 1;                       // nom venu des textes propres à Airborn
   hw?: 1;                       // absent du wiki du serveur
   re?: Record<string, number>;  // résistances élémentaires
   b?: [string, number][];       // bonus : libellé + valeur
@@ -185,7 +185,7 @@ export function iconeDeType(t: string | undefined, f: Famille): IconName {
  * L'arbre des métiers en français, tel que le client le nomme.
  *
  * Les huit derniers (Templier, Spadassin…) sont les classes légendaires propres
- * à AirFlyff : leurs codes ne se devinent pas (Primat = FLORIST_HERO). La
+ * à Airborn : leurs codes ne se devinent pas (Primat = FLORIST_HERO). La
  * correspondance est prouvée par les tenues « … en Yggdrasil », dont le nom
  * français porte la classe et dont la ligne porte le code.
  */
@@ -258,7 +258,7 @@ export const BADGE_ULTIME = "/jeu/interface/icon_ultimate.webp";
 export const CADENAS = "/jeu/interface/lock.webp";
 
 /**
- * CE QU'ON NE DEVINE PAS EN JOUANT : COMMENT ON SAIT QU'UN OBJET EST D'AIRFLYFF.
+ * CE QU'ON NE DEVINE PAS EN JOUANT : COMMENT ON SAIT QU'UN OBJET EST D'AIRBORN.
  *
  * La phrase existait DEUX FOIS, en deux versions qui ne disaient pas la même chose —
  * 37 mots dans la bulle du filtre de /wiki, 44 dans celle de /objets, et l'une des deux
@@ -268,8 +268,12 @@ export const CADENAS = "/jeu/interface/lock.webp";
  * Le fait, lui, est de ceux que la brique `Invisible` existe pour porter : aucun écran
  * du jeu ne montre cette différence, elle ne se lit que dans les fichiers du client.
  */
-export const MARQUEUR_AIRFLYFF =
-  "Aucun écran du jeu ne dit ce qu’AirFlyff a ajouté. Le client, lui, le dit par " +
+/* `IDS_AIRFLYFF_TXT_` N'EST PAS LE NOM DU SERVEUR : c'est l'espace de noms de la
+   base de textes du CLIENT, à côté de IDS_PROPITEM_TXT_ et IDS_PROPITEM_NEWSERV_.
+   Le serveur s'appelle maintenant Airborn : Winds of Rhisis, mais la clé du client
+   n'a pas bougé — la renommer casserait toutes les recherches dans les fichiers. */
+export const MARQUEUR_AIRBORN =
+  "Aucun écran du jeu ne dit ce qu’Airborn a ajouté. Le client, lui, le dit par " +
   "l’espace de noms : IDS_AIRFLYFF_TXT_ et IDS_PROPITEM_NEWSERV_ pour ce que le serveur " +
   "a ajouté, IDS_PROPITEM_TXT_ pour le Flyff d’origine — et NEWSERV sur les monstres.";
 

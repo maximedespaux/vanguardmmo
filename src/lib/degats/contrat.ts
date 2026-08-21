@@ -16,10 +16,10 @@
 /**
  * D'où vient un chiffre, et ce qu'on peut en attendre.
  *
- * · `client`         — lu tel quel dans un fichier du client AirFlyff. C'est un
+ * · `client`         — lu tel quel dans un fichier du client Airborn. C'est un
  *                      fait : la valeur est celle que le serveur emploie.
  * · `flyff-officiel` — la FORME du calcul vient du Flyff officiel (c'est ce que
- *                      Flyffulator applique). AirFlyff a changé des valeurs :
+ *                      Flyffulator applique). Airborn a changé des valeurs :
  *                      un terme marqué ainsi n'est PAS confirmé sur ce serveur.
  * · `inconnu`        — ni l'un ni l'autre. Un terme `inconnu` ne doit jamais
  *                      entrer dans un produit : il part dans `nonPrisEnCompte`.
@@ -136,7 +136,7 @@ export type Resultat = {
 //     DIFFÉRENTS, et jamais les paliers successifs d'un même objet.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** Les cinq éléments d'AirFlyff, écrits comme `monstres.json` les écrit. */
+/** Les cinq éléments d'Airborn, écrits comme `monstres.json` les écrit. */
 export type Element = "feu" | "eau" | "vent" | "terre" | "electricite";
 
 /** Une arme en main, telle que le moteur a besoin de la lire. */
@@ -238,7 +238,7 @@ export type Cible = {
  * pour que le site ne dise pas deux choses différentes du même sujet.
  */
 export const RESERVE_DEFENSE =
-  "La formule de réduction par la défense n'a PAS été confirmée sur AirFlyff : sa forme vient du Flyff officiel. Le nombre affiché est la somme de ce qui est ÉCRIT dans le client, pas un dégât mesuré en jeu.";
+  "La formule de réduction par la défense n'a PAS été confirmée sur Airborn : sa forme vient du Flyff officiel. Le nombre affiché est la somme de ce qui est ÉCRIT dans le client, pas un dégât mesuré en jeu.";
 
 /** Le +N d'amélioration. Le texte est celui de `MECH.arme.nonCalculable`. */
 export const PALIER_NON_CALCULABLE =

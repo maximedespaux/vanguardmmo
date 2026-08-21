@@ -2,7 +2,7 @@
 
 # 🦉 Vanguard Control Center
 
-**La plateforme tout-en-un de la guilde Vanguard** — serveur privé **AirFlyff**
+**La plateforme tout-en-un de la guilde Vanguard** — serveur privé **Airborn : Winds of Rhisis**
 
 Un site web et un bot Discord qui partagent la même base de données :
 ce qui se passe sur le site se retrouve sur Discord, et inversement.
@@ -411,6 +411,6 @@ Le guide pas-à-pas (VPS, SSL, redirect OAuth, sauvegardes) : **[`DEPLOY.md`](DE
 
 <div align="center">
 
-*Site + bot par **syko**, pour la guilde Vanguard (AirFlyff).*
+*Site + bot par **syko**, pour la guilde Vanguard (Airborn).*
 
 </div>

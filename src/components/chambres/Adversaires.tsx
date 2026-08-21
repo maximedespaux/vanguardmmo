@@ -141,8 +141,9 @@ export function AdversairesChambres() {
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,320px) minmax(0,1fr)", gap: 14, alignItems: "start" }} className="cs-haut">
         {/* LA CARTE DES CHAMBRES. Elle existait dans public/jeu/cartes-monde/ sans être
             affichée nulle part, alors que cette page parle de ces salles depuis
-            toujours. C'est une carte sur parchemin du client, avec le logo AirFlyff
-            dessus — donc rien à filtrer ni à recadrer. */}
+            toujours. C'est une carte sur parchemin du client, avec le logo AIRFLYFF
+            dessus — l'ANCIEN nom, tel qu'il est peint dans l'image ; on ne le
+            renomme pas, on décrit des pixels. Donc rien à filtrer ni à recadrer. */}
         <figure style={{ margin: 0 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/jeu/cartes-monde/dungeon_secretroom.webp" alt="Le plan des Chambres Secrètes, tel qu'il sort du client"

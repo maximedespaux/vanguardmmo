@@ -24,6 +24,6 @@ export type Marchand = {
   ville: string | null;
   comment: Comment;
   /** L'objet-monnaie exigé, quand c'est un troc. C'est la mécanique maison
-   *  d'AirFlyff : on paie avec un jeton, un nucléus, une médaille. */
+   *  d'Airborn : on paie avec un jeton, un nucléus, une médaille. */
   monnaie?: string;
 };

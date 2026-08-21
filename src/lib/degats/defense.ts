@@ -3,7 +3,7 @@
 //
 //  Tout le reste du module additionne et multiplie des nombres écrits dans le
 //  client. Ici, non : la manière dont une défense mange un coup est une formule,
-//  et cette formule vient du Flyff OFFICIEL. AirFlyff a changé des valeurs
+//  et cette formule vient du Flyff OFFICIEL. Airborn a changé des valeurs
 //  ailleurs ; rien ne garantit qu'il n'a pas changé celle-ci. Tout résultat qui
 //  passe par ce fichier repart donc avec `RESERVE_DEFENSE`, sans exception.
 //
@@ -27,7 +27,7 @@
 //  UN CHOIX ASSUMÉ, ET DIFFÉRENT DE FLYFFULATOR. Face à une compétence magique,
 //  Flyffulator ne lit pas la résistance magique du monstre — son chemin magique
 //  retombe sur un bonus d'équipement, que les monstres n'ont pas, donc sur zéro.
-//  Le client d'AirFlyff, lui, écrit bien un `resMag` par monstre (103 pour Elun).
+//  Le client d'Airborn, lui, écrit bien un `resMag` par monstre (103 pour Elun).
 //  On l'emploie, plutôt que de jeter une colonne que le serveur renseigne.
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -111,7 +111,7 @@ export function appliquerDefense(attaque: number, defense: number): Reduction {
         libelle: `Réduction par la défense : −${Math.round(attaque > 0 ? (correction / attaque) * 100 : 0)} %`,
         valeur: -correction,
         unite: "points",
-        source: "formule du Flyff officiel — NON confirmée sur AirFlyff",
+        source: "formule du Flyff officiel — NON confirmée sur Airborn",
         certitude: "flyff-officiel",
         note: "racine(défense / (défense + 2 × attaque)) sert de curseur entre la défense et l'attaque ; la valeur obtenue est retirée du coup.",
       },

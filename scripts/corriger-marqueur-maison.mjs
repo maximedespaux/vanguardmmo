@@ -1,8 +1,8 @@
 /**
- * LE MARQUEUR « CONTENU AIRFLYFF » DES MONSTRES — vérifié, corrigé, et rendu rejouable.
+ * LE MARQUEUR « CONTENU AIRBORN » DES MONSTRES — vérifié, corrigé, et rendu rejouable.
  *
  * POURQUOI CE SCRIPT EXISTE. Maxime : « estime déjà que si un monstre à plusieurs barres
- * c'est qu'il fait partie d'AirFlyff, faut juste vérifier et corriger avec les données ».
+ * c'est qu'il fait partie d'Airborn, faut juste vérifier et corriger avec les données ».
  * Son intuition était juste, et elle a révélé que le marqueur `maison` de
  * public/wiki/monstres.json est INCOMPLET : sur les 94 monstres à plusieurs vies, 73
  * étaient marqués et 21 ne l'étaient pas.
@@ -14,7 +14,7 @@
  * │ — seulement poser un critère écrit, et le rejouer.                       │
  * └─────────────────────────────────────────────────────────────────────────┘
  *
- * LA RÈGLE APPLIQUÉE : `vies > 1` implique du contenu AirFlyff.
+ * LA RÈGLE APPLIQUÉE : `vies > 1` implique du contenu Airborn.
  *
  * ELLE N'EST PAS CRUE SUR PAROLE, elle est corroborée par les identifiants du client
  * eux-mêmes. Les préfixes des 94 monstres à plusieurs vies sont :
@@ -27,7 +27,7 @@
  * serveur. Aucune barre de vie multiple ne vient du Flyff d'origine.
  *
  * CE QUE LA RÈGLE NE DIT PAS, et qu'il faut savoir : la réciproque est FAUSSE. 162
- * monstres à une seule vie sont marqués maison — AirFlyff a ajouté beaucoup de contenu
+ * monstres à une seule vie sont marqués maison — Airborn a ajouté beaucoup de contenu
  * ordinaire. On ne peut donc PAS déduire l'origine de l'absence de plusieurs vies, et ce
  * script n'enlève JAMAIS un marqueur : il n'en ajoute que.
  *
@@ -50,7 +50,7 @@ for (const m of liste) {
 }
 
 /* Les compteurs de l'en-tête doivent suivre, sinon la page afficherait « 235 ajoutés par
-   AirFlyff » au-dessus d'un catalogue qui en contient 256 — exactement le genre d'écart
+   Airborn » au-dessus d'un catalogue qui en contient 256 — exactement le genre d'écart
    entre un compteur et sa liste qui a déjà été corrigé ailleurs sur ce site. */
 const maison = liste.filter((m) => m.maison).length;
 const vies = liste.filter(plusieursVies).length;
@@ -64,9 +64,9 @@ if (brut.compteurs) {
 brut.marqueurMaison = {
   regle: "maison = maison d'origine OU vies > 1",
   pourquoi:
-    "Un monstre à plusieurs barres de vie est du contenu AirFlyff : les 94 concernés portent des préfixes d'identifiant qui le disent tous (FASHION, CHAMBER, CHAMBRE, DONJON, ARCANIQUE, ANNIV, SHOGUN…), et deux de ces préfixes sont des mots FRANÇAIS — impossible dans un client de base écrit en anglais.",
+    "Un monstre à plusieurs barres de vie est du contenu Airborn : les 94 concernés portent des préfixes d'identifiant qui le disent tous (FASHION, CHAMBER, CHAMBRE, DONJON, ARCANIQUE, ANNIV, SHOGUN…), et deux de ces préfixes sont des mots FRANÇAIS — impossible dans un client de base écrit en anglais.",
   reciproqueFausse:
-    "162 monstres à une seule vie sont marqués maison : AirFlyff a ajouté beaucoup de contenu ordinaire. On ne déduit donc jamais l'origine de l'ABSENCE de plusieurs vies, et ce script n'enlève aucun marqueur.",
+    "162 monstres à une seule vie sont marqués maison : Airborn a ajouté beaucoup de contenu ordinaire. On ne déduit donc jamais l'origine de l'ABSENCE de plusieurs vies, et ce script n'enlève aucun marqueur.",
   critereOriginePerdu:
     "monstres.json a été généré le 2026-08-11 sans script versionné : le critère qui a posé les 235 premiers marqueurs n'est pas reproductible. Celui-ci l'est.",
   ajoutesParCetteRegle: ajoutes.length,
@@ -76,7 +76,7 @@ fs.writeFileSync(CHEMIN, JSON.stringify(brut, null, 1));
 
 console.log(`monstres : ${liste.length}`);
 console.log(`a plusieurs vies : ${vies}`);
-console.log(`marques AirFlyff : ${maison}  (${ajoutes.length} ajoutes par cette regle)`);
+console.log(`marques Airborn : ${maison}  (${ajoutes.length} ajoutes par cette regle)`);
 if (ajoutes.length) {
   console.log("\najoutes :");
   for (const a of ajoutes) console.log(`   ${String(a.vies).padStart(2)} vies · niv ${String(a.niv).padStart(3)} · ${a.nom}`);

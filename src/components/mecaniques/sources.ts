@@ -132,7 +132,7 @@ function source(): Source {
  * L'ORDRE RÉEL DES NEUF STATISTIQUES DE SERTISSAGE.
  *
  * C'est la clé de tout le volet « Les gemmes mentent » : les neuf codes dans
- * l'ordre où `Ultimate_GemAbility.txt` les range. Les neuf Diamants d'AirFlyff
+ * l'ordre où `Ultimate_GemAbility.txt` les range. Les neuf Diamants d'Airborn
  * (`II_GEN_MAT_DIAMOND_1` → « sertissage en HP max ») suivent cet ordre rang pour
  * rang ; les anciens noms de gemmes, non.
  */
@@ -148,7 +148,7 @@ export const ordreDuClient = (): string[] =>
  * remplit. C'est ce qui fait qu'un build comparé sur cinq gemmes sous-estime le
  * haut du jeu, et ça se DESSINE.
  *
- * `remplis` est COMPTÉ sur les valeurs, jamais écrit : le jour où AirFlyff ouvre
+ * `remplis` est COMPTÉ sur les valeurs, jamais écrit : le jour où Airborn ouvre
  * les huit à toutes les familles, le schéma suit.
  */
 export function paliersDeGemme() {

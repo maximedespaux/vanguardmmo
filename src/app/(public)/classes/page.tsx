@@ -156,7 +156,7 @@ export default function ClassesPage() {
           du relevé. Deux mots ici valent les quarante d'une ligne de source en bas
           d'un volet qu'il faut penser à ouvrir. */}
       <PageHeader art="/jeu/chargement/maploading_arena.webp" icon="graduation" title="Classes et compétences"
-        subtitle={`Les ${LIGNEES.length} lignées d'AirFlyff, relevées dans le client d'octobre 2025.`} />
+        subtitle={`Les ${LIGNEES.length} lignées d'Airborn, relevées dans le client d'octobre 2025.`} />
 
       <VoletSections
         defaut="catalogue"

@@ -37,7 +37,7 @@ type Paquet = {
  * `k` garde les séparateurs (« baal tru »), `kc` les supprime (« baaltru »).
  * Sans la seconde, un joueur qui tape « baaltru » — sans l'apostrophe, comme on
  * le fait naturellement au clavier — ne trouvait rien alors que le monstre
- * s'appelle Bàäl'tru. Les noms d'AirFlyff sont pleins d'apostrophes et de
+ * s'appelle Bàäl'tru. Les noms d'Airborn sont pleins d'apostrophes et de
  * crochets (« [Âme de la mort] Obnis », « Gor'Thar », « Shen'long ») : une seule
  * clé rendait la moitié du haut niveau inatteignable.
  */
@@ -155,7 +155,7 @@ export const monstreParId = (id: string) => charger().PAR_ID.get(id) ?? null;
 /**
  * LES FAITS D'ENSEMBLE QUI SE COMPTENT, jamais ceux qui s'écrivent.
  *
- * « Sur AirFlyff, il n'existe plus de monstre passif » était une phrase de fiche
+ * « Sur Airborn, il n'existe plus de monstre passif » était une phrase de fiche
  * avec ses deux nombres tapés au clavier. Ils sont comptés ici, une fois, et la
  * phrase les reçoit : le jour où la fouille du client en rend d'autres, l'écran
  * suit tout seul.
@@ -170,10 +170,10 @@ export function faits() {
     base: meta.total - meta.compteurs.maison,
     maison: meta.compteurs.maison,
     /**
-     * COMBIEN DE CEUX QUI SE RELÈVENT SONT DU CONTENU AIRFLYFF.
+     * COMBIEN DE CEUX QUI SE RELÈVENT SONT DU CONTENU AIRBORN.
      *
      * La règle de Maxime — « si un monstre a plusieurs barres, c'est du contenu
-     * AirFlyff » — est vérifiable ligne à ligne, et le relevé la vérifie : les 94
+     * Airborn » — est vérifiable ligne à ligne, et le relevé la vérifie : les 94
      * concernés portent tous la marque `NEWSERV`. Le chiffre est COMPTÉ et non
      * écrit, parce que l'écran s'en sert pour choisir sa phrase : tant qu'il vaut
      * exactement `compteurs.vies`, le schéma peut dessiner l'un DANS l'autre ; le
@@ -208,7 +208,7 @@ export type Critere = {
   /**
    * D'OÙ VIENT LE MONSTRE — le tri qui a le plus de valeur sur ce serveur.
    *
-   * AirFlyff est un serveur privé : ce qui mérite la place, c'est ce qu'il a
+   * Airborn est un serveur privé : ce qui mérite la place, c'est ce qu'il a
    * ajouté. 235 monstres portent la marque `NEWSERV` du serveur, 889 viennent du
    * jeu d'origine. C'était une pastille perdue au milieu de treize autres ; c'est
    * maintenant un choix à trois branches en tête de la recherche.
@@ -295,7 +295,7 @@ export function chercher(c: Critere, limite = 48) {
 /** Les comptes par rang, par élément et par provenance, pour le jeu de critères
  *  courant : chaque pastille porte son compte, donc on sait ce qu'il y a derrière
  *  sans cliquer. Les comptes de provenance ignorent le filtre de provenance —
- *  sinon « Jeu d'origine » afficherait 0 dès qu'on a choisi « AirFlyff ». */
+ *  sinon « Jeu d'origine » afficherait 0 dès qu'on a choisi « Airborn ». */
 export function comptes(c: Critere) {
   const { TOUT: tout } = charger();
   const q = clefRecherche(c.q ?? "");

@@ -339,40 +339,91 @@ if (codesEveil.length === motsEveil.length) {
 const frBuilder = (code) => FR_BUILDER.get(code) ?? fr(code);
 
 /* ── LA MAÎTRISE D'ARME ────────────────────────────────────────────────────
-   LE MORCEAU LE PLUS FACILE À FAIRE MENTIR, et c'est pour ça qu'il est encodé
-   comme il l'est.
+   CE BLOC A MENTI, ET VOICI LA MOITIÉ QUI MANQUAIT.
 
-   Le client donne, pour chaque ligne, SIX valeurs — une par rareté. Les
-   recopier telles quelles invite le lecteur à y lire une montée en puissance.
-   Il n'y en a AUCUNE : sur les 26 lignes, les cinq raretés non nulles portent
-   partout le même nombre, seul NONE vaut zéro. La rareté ALLUME la ligne, elle
-   ne la fait pas monter.
+   Le client (`propweaponleveling.inc`, relevé dans bonus-sources ▸ maitriseArme)
+   donne SIX valeurs par ligne, une par rareté : [NONE 0, puis le même nombre
+   partout — 4 pour les lignes physiques et tank, 2 pour les magiques]. On en
+   avait conclu « la rareté allume la ligne, elle ne la fait pas monter », et
+   c'était faux : ce nombre n'est pas un TOTAL, c'est un GAIN PAR PALIER.
 
-   D'où l'encodage : UNE valeur (`v`) et LA RARETÉ OÙ ELLE S'ALLUME (`des`).
-   Un consommateur ne peut pas inventer une progression avec un seul nombre.
-   `parRarete` n'apparaît QUE si les valeurs cessent d'être plates — le jour où
-   AirFlyff les fait monter, le champ revient tout seul et `plate` tombe à
-   `false`. Rien n'est perdu, rien n'est suggéré.
+   LE WIKI OFFICIEL PORTE L'AUTRE MOITIÉ — le plafond de NIVEAU de maîtrise, qui
+   n'est écrit nulle part dans le client :
+     https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/maitrise-de-larme
+   « Chaque palier de 10 niveaux d'arme vous donnera une statistique » ·
+   commune 10 · rare 40 · épique 60 · légendaire 80 · mythique 100 ·
+   physiques +4 % de dégâts critiques par palier (max 40 %) · magiques +2 % de
+   dégâts magiques (max 20 %) · tank +4 % de PV (max 40 %).
 
-   LE NIVEAU DE MAÎTRISE (0 à 100 dans le builder) NE CHANGE PAS LA VALEUR.
-   Les treize paliers du client ne portent QUE de l'expérience à gagner ; aucune
-   valeur de statistique n'y est attachée. Le curseur du builder est donc un
-   compteur de progression, pas un facteur. */
+   LE MODÈLE COMPLET TIENT EN UNE LIGNE :
+     gain = gainParPalier(rareté) × plancher( min(niveau, plafondNiveau(rareté)) / 10 )
+   La rareté ne fait pas monter LA VALEUR DU PALIER — sur ce point le relevé
+   avait raison — elle fait monter LE NOMBRE DE PALIERS ATTEIGNABLES. D'où la
+   progression que le site niait : 0 · 16 · 24 · 32 · ? · 40 pour une ligne à 4.
+
+   TROIS TÉMOINS INDÉPENDANTS, ET ILS TOMBENT SUR LE MÊME NOMBRE :
+     · le client : 4 par palier ;
+     · le wiki : « max 40 % » ;
+     · la capture du jeu posée sur cette page du wiki — un poing Mythique à
+       maîtrise maximale affiche « Maîtrise de l'arme : 100 (Dégâts critiques
+       +40%) », et cette ligne-là y est écrite SÉPARÉMENT du bonus de rareté.
+   4 × 10 paliers = 40. La vérification est refaite plus bas SUR LES DONNÉES,
+   pas crue sur parole : si elle cesse de fermer, elle sort en écart.
+
+   UNE RÉSERVE QU'ON NE GOMME PAS. Le client découpe la maîtrise en TREIZE bandes
+   (`AddStage`), pas en dix : les cinq dernières se resserrent (81-85, 86-90,
+   91-95, 96-98, 99-100). Ces bandes ne portent QUE des coûts en expérience, et
+   les lire comme treize versements de 4 donnerait 52 % là où le jeu en affiche
+   40. Le gain tombe donc par DIX NIVEAUX, et les treize bandes restent ce
+   qu'elles sont : le prix à payer, pas le gain reçu.
+
+   L'ENCODAGE EST FAIT POUR QU'ON NE PUISSE PAS LE REMONTER À L'ENVERS. La clé
+   `v` — celle que l'écran lisait comme un total — DISPARAÎT au profit de `pp`
+   (par palier) : un consommateur resté sur l'ancien nom rend `undefined` et se
+   voit, au lieu d'afficher tranquillement un nombre dix fois trop petit. Et la
+   table porte en plus l'échelle DÉJÀ CALCULÉE des totaux atteignables par
+   rareté, pour que l'écran n'ait aucune multiplication à faire de son côté. */
 const ORDRE_RARETE = ["NONE", "RARE", "EPIC", "LEGENDARY", "PREMYTHIC", "MYTHIC"];
+
+/** Le plafond de NIVEAU de maîtrise, par rareté. Il ne vient pas du client —
+ *  `propweaponleveling.inc` ne porte que des coûts en expérience — mais du wiki
+ *  officiel (page « Maîtrise de l'arme »). C'est la seule constante écrite de ce
+ *  bloc, et tout le reste s'en déduit.
+ *
+ *  LE PRÉ-MYTHIQUE N'Y EST PAS. Le wiki nomme cinq plafonds et saute celui-là,
+ *  alors que sa propre page « Rareté de l'arme » et `MECH.arme.rarete_tiers`
+ *  déclarent bien SIX raretés. Sa case reste donc vide : rien n'est interpolé
+ *  entre Légendaire (80) et Mythique (100), et l'écran dira « non renseigné ». */
+const PLAFOND_NIVEAU = { NONE: 10, RARE: 40, EPIC: 60, LEGENDARY: 80, PREMYTHIC: null, MYTHIC: 100 };
+/** « Chaque palier de 10 niveaux d'arme » — même page du wiki. */
+const PAS_DE_PALIER = 10;
+/** Les plafonds de gain que le wiki ANNONCE, par statistique. Ils ne servent pas
+ *  à écrire la table : ils servent à la VÉRIFIER. La ligne de soin n'y est pas —
+ *  le wiki donne son gain par palier (4 %) sans annoncer de maximum. */
+const MAX_ANNONCE = { DST_CRITICAL_BONUS: 40, DST_ADDMAGIC_RATE: 20, DST_HP_MAX_RATE: 40 };
+
+/** Combien de paliers de dix niveaux chaque rareté laisse atteindre. Calculé sur
+ *  le plafond, jamais écrit : déplacer un plafond déplace le compte. */
+const paliersAtteignables = Object.fromEntries(ORDRE_RARETE.map((r) => [
+  r, PLAFOND_NIVEAU[r] == null ? null : Math.floor(PLAFOND_NIVEAU[r] / PAS_DE_PALIER),
+]));
+const sansPlafondConnu = ORDRE_RARETE.filter((r) => PLAFOND_NIVEAU[r] == null);
 
 function ligneDeMaitrise(m) {
   const vals = ORDRE_RARETE.map((r) => m.parRarete[r] ?? 0);
   const nonNuls = vals.filter((v) => v !== 0);
   const plate = new Set(nonNuls).size <= 1;
   const iPremier = vals.findIndex((v) => v !== 0);
-  const l = { code: m.code, fr: fr(m.code) };
+  const l = { code: m.code, fr: frBuilder(m.code) };
   if (plate) {
-    l.v = nonNuls[0] ?? 0;
+    // `pp` : LE GAIN PAR PALIER DE DIX NIVEAUX, et non le total de la ligne.
+    // `des` : la rareté à partir de laquelle il cesse de valoir zéro.
+    l.pp = nonNuls[0] ?? 0;
     l.des = iPremier >= 0 ? ORDRE_RARETE[iPremier] : null;
   } else {
-    // Le jour où le client fait monter une ligne : on rend les six valeurs et
-    // `faits.maitrise.plate` tombe à false. Voir l'en-tête de ce bloc.
-    l.parRarete = m.parRarete;
+    // Le jour où le client fait monter le gain par palier d'une rareté à
+    // l'autre : on rend les six valeurs et `platParRarete` tombe à false.
+    l.ppParRarete = m.parRarete;
   }
   return l;
 }
@@ -384,14 +435,56 @@ for (const m of BONUS.maitriseArme.statistiques) {
   (cible[m.cible] ??= []).push(ligneDeMaitrise(m));
 }
 const toutesLesLignes = BONUS.maitriseArme.statistiques.map(ligneDeMaitrise);
-const maitrisePlate = toutesLesLignes.every((l) => l.v !== undefined);
-/** À partir de quelle rareté les lignes s'allument. Compté, pas écrit : si une
- *  seule ligne s'allumait ailleurs, cette liste porterait deux valeurs et
- *  l'écran ne pourrait plus écrire une phrase unique. */
+/** Le gain par palier est-il le même à toutes les raretés non nulles ? C'est le
+ *  fait qu'on avait pris pour « aucune progression » : il reste vrai, il ne dit
+ *  simplement pas ce qu'on lui faisait dire. */
+const maitrisePlateParRarete = toutesLesLignes.every((l) => l.pp !== undefined);
+/** À partir de quelle rareté les lignes cessent de valoir zéro. Compté, pas
+ *  écrit : si une seule ligne s'allumait ailleurs, cette liste porterait deux
+ *  valeurs et l'écran ne pourrait plus écrire une phrase unique. */
 const allumeA = [...new Set(toutesLesLignes.map((l) => l.des).filter(Boolean))];
-/** Les valeurs distinctes réellement employées, pour que l'écran puisse dire
+/** Les gains par palier réellement employés, pour que l'écran puisse dire
  *  « 4 % ou 2 % selon l'arme » sans compter lui-même. */
-const valeursDeMaitrise = [...new Set(toutesLesLignes.map((l) => l.v).filter((v) => v))].sort((a, b) => b - a);
+const valeursDeMaitrise = [...new Set(toutesLesLignes.map((l) => l.pp).filter((v) => v))].sort((a, b) => b - a);
+
+/* L'ÉCHELLE DES TOTAUX ATTEIGNABLES, CALCULÉE UNE FOIS POUR TOUTES. Pour chaque
+   gain par palier employé (4 et 2), ce que chaque rareté permet d'atteindre À
+   SON PLAFOND DE NIVEAU. C'est CE tableau que l'écran affiche : il ne multiplie
+   rien lui-même, donc il ne peut pas se tromper de facteur.
+   Une rareté sans plafond connu porte `null` — un trou visible, pas un zéro qui
+   se lirait comme « rien ». Et le Commun porte un vrai 0 : il atteint bien un
+   palier, mais le client donne 0 par palier à cette rareté. */
+const brutParGain = new Map();
+for (const m of BONUS.maitriseArme.statistiques) {
+  const l = ligneDeMaitrise(m);
+  if (!l.pp) continue;
+  const vu = brutParGain.get(l.pp);
+  if (!vu) { brutParGain.set(l.pp, m.parRarete); continue; }
+  // Deux lignes qui portent le même gain par palier doivent porter la MÊME série
+  // par rareté, sans quoi une seule échelle ne peut pas les servir toutes deux.
+  const memeSerie = ORDRE_RARETE.every((r) => (vu[r] ?? 0) === (m.parRarete[r] ?? 0));
+  if (!memeSerie) ecartes.push({ cle: m.cible, raison: `maîtrise : deux lignes à ${l.pp} par palier ne portent pas la même série par rareté — l'échelle unique ne les couvre plus` });
+}
+const echelleMaitrise = Object.fromEntries([...brutParGain].map(([pp, parRarete]) => [pp, Object.fromEntries(
+  ORDRE_RARETE.map((r) => {
+    const n = paliersAtteignables[r];
+    return [r, n == null ? null : (parRarete[r] ?? 0) * n];
+  }),
+)]));
+
+/* LA VÉRIFICATION, SUR LES DONNÉES ET NON SUR LA PAROLE. Le total du Mythique
+   doit tomber sur le maximum que le wiki annonce pour cette statistique. S'il
+   n'y tombe pas, le modèle par palier ne ferme pas quelque part : on le DIT au
+   lieu d'arrondir. */
+const maitriseVerif = [...new Set(toutesLesLignes.map((l) => l.code))].map((code) => {
+  const l = toutesLesLignes.find((x) => x.code === code);
+  const obtenu = l.pp ? (echelleMaitrise[l.pp]?.MYTHIC ?? null) : null;
+  const annonce = MAX_ANNONCE[code] ?? null;
+  if (annonce != null && obtenu !== annonce) {
+    ecartes.push({ cle: code, raison: `maîtrise : ${l.pp} par palier × ${paliersAtteignables.MYTHIC} paliers = ${obtenu} au Mythique, là où le wiki annonce ${annonce} % — le modèle par palier ne ferme pas` });
+  }
+  return { code, fr: l.fr, pp: l.pp ?? null, mythique: obtenu, annonce };
+});
 
 /* ── L'ASCENSION, PAR TYPE D'ARME PLUTÔT QUE PAR NOM ───────────────────────
    Le builder retrouve aujourd'hui la famille d'ascension par le PREMIER MOT du
@@ -811,25 +904,55 @@ const faits = {
        `faits.armes[].mai` a déjà tranché — ce champ n'est là que pour que
        l'écran puisse écrire la règle. */
     regle: "remplacement",
-    plate: maitrisePlate,
+    /* LE MODÈLE, EN TOUTES LETTRES ET EN UN SEUL ENDROIT. L'écran n'a rien à
+       reconstituer : il lit `pas`, `plafondNiveau` et `echelle`, et il applique
+       cette formule-là. */
+    modele: "palier",
+    formule: `gain = gainParPalier(rareté) × plancher( min(niveau, plafondNiveau(rareté)) / ${PAS_DE_PALIER} )`,
+    pas: PAS_DE_PALIER,
+    /* Le gain par palier est le même à toutes les raretés non nulles — c'est ce
+       constat-là qu'on avait pris à tort pour « la maîtrise ne monte pas ». */
+    platParRarete: maitrisePlateParRarete,
     allumeA,
     valeurs: valeursDeMaitrise,
-    dit: `La rareté ALLUME la ligne, elle ne la fait pas monter : sur les ${toutesLesLignes.length} lignes du client, ${allumeA.length === 1 ? `toutes s'allument à ${allumeA[0]}` : `elles s'allument à ${allumeA.join(" ou ")}`} et gardent ensuite la même valeur jusqu'au dernier palier.`,
+    /* CE QUI VIENT DU WIKI ET NON DU CLIENT, dit à sa place. Le plafond de
+       niveau par rareté n'existe nulle part dans le client ; sans lui, le `4`
+       du client se lit comme un total et la maîtrise est sous-évaluée de dix
+       fois. Le Pré-Mythique n'a PAS de plafond publié : sa case est `null`. */
+    plafondNiveau: PLAFOND_NIVEAU,
+    paliersAtteignables,
+    sansPlafondConnu,
+    sourcePlafonds: "https://airborn.gitbook.io/airborn/activites/pve/pve-les-armes/maitrise-de-larme — wiki officiel du serveur. Le client ne porte que les coûts en expérience.",
+    /* L'ÉCHELLE : gain par palier → total atteignable, rareté par rareté. C'est
+       la progression que l'écran doit montrer, déjà multipliée. */
+    echelle: echelleMaitrise,
+    /* LA PREUVE QUE LE MODÈLE FERME, gardée à côté du résultat : le total du
+       Mythique et le maximum que le wiki annonce, statistique par statistique. */
+    verification: maitriseVerif,
+    dit: `Le gain tombe par palier de ${PAS_DE_PALIER} niveaux de maîtrise et se CUMULE. La rareté ne change pas la valeur d'un palier : elle plafonne le NIVEAU, donc le nombre de paliers atteignables — ${ORDRE_RARETE.filter((r) => paliersAtteignables[r] != null).map((r) => `${r} ${paliersAtteignables[r]}`).join(" · ")}.`,
     parType: maiParType,
     parObjet: maiParObjet,
-    /* LE NIVEAU DE MAÎTRISE (curseur 0→100 du builder) NE CHANGE RIEN À LA
-       VALEUR. Les treize paliers du client ne portent QUE de l'expérience à
-       gagner ; aucune valeur de statistique n'y est attachée. Le coût en
-       expérience de chaque palier n'entre pas dans cette table : c'est de
-       l'expérience, elle ne va pas à l'écran du builder — et l'écran qui la
-       montre déjà (`/builder/mecaniques`) la lit dans collections.json. */
+    /* LE NIVEAU DE MAÎTRISE EST UN FACTEUR, et c'est la correction de ce lot :
+       il l'a longtemps été présenté comme un simple compteur. Les treize bandes
+       du client ne portent que de l'expérience — elles disent le PRIX du niveau,
+       pas le gain — mais le niveau atteint, lui, décide du nombre de paliers.
+       Le coût en expérience n'entre pas dans cette table : il ne va pas à
+       l'écran du builder, et l'écran qui le montre (`/builder/mecaniques`) le
+       lit dans collections.json. */
     niveau: {
       max: COLL.maitrise?.niveauMax ?? null,
-      paliers: (BONUS.maitriseArme.paliers ?? []).length,
-      sansEffetSurLaValeur: "Les paliers ne portent que de l'expérience à gagner : aucune valeur de statistique n'y est attachée. Le niveau de maîtrise est un compteur de progression, pas un facteur du total.",
+      bandesExperience: (BONUS.maitriseArme.paliers ?? []).length,
+      facteur: `Le niveau décide du nombre de paliers franchis (un tous les ${PAS_DE_PALIER} niveaux) ; la rareté décide du niveau maximal atteignable.`,
+      bandesNeSontPasDesPaliers: `Le client découpe la maîtrise en ${(BONUS.maitriseArme.paliers ?? []).length} bandes d'expérience, pas en ${paliersAtteignables.MYTHIC} paliers de bonus : les lire comme des versements donnerait ${valeursDeMaitrise[0] * (BONUS.maitriseArme.paliers ?? []).length} % là où le jeu affiche ${echelleMaitrise[valeursDeMaitrise[0]]?.MYTHIC} %.`,
       detail: "public/wiki/collections.json ▸ maitrise",
     },
-    dansLeTotal: false,
+    /* ELLE ENTRE DÉSORMAIS DANS LE TOTAL, et c'est nouveau. Tant que la valeur
+       était prise pour un plat « +4 », la chiffrer n'apportait rien ; le modèle
+       par palier, lui, donne un nombre exact — gain par palier du client, nombre
+       de paliers du wiki — et la statistique porte le nom que le builder emploie
+       déjà pour les bonus propres des pièces. Il n'y a plus de raison de la
+       laisser hors du compte. */
+    dansLeTotal: true,
   },
 
   rarete: {
@@ -988,7 +1111,15 @@ console.log(`  armes jointes : ${n(armes)} / ${(DATA.ITEMS.weapon ?? []).length}
   + ` (dont ${Object.values(armes).filter((a) => a.mai?.[0] === "o").length} par une ligne NOMMÉE, ${Object.values(armes).filter((a) => a.mai?.length === 3).length} avec une ligne de type écartée)`
   + ` · perçage 12 : ${Object.values(armes).filter((a) => a.p12).length}`);
 console.log(`  maîtrise : ${toutesLesLignes.length} lignes (${n(maiParType)} par type, ${n(maiParObjet)} par objet)`
-  + ` · plates ${maitrisePlate ? "OUI" : "NON"} · s'allument à ${allumeA.join("/")} · valeurs ${valeursDeMaitrise.join(" et ")}`);
+  + ` · gain PAR PALIER de ${PAS_DE_PALIER} niveaux : ${valeursDeMaitrise.join(" et ")}`
+  + ` · même série à toutes les raretés ${maitrisePlateParRarete ? "OUI" : "NON"} · non nulle dès ${allumeA.join("/")}`);
+for (const v of maitriseVerif) {
+  console.log(`    ${v.fr} — ${v.pp} × ${paliersAtteignables.MYTHIC} paliers = ${v.mythique} au Mythique`
+    + (v.annonce == null ? " (le wiki n'annonce aucun maximum)" : ` · le wiki annonce ${v.annonce} → ${v.mythique === v.annonce ? "FERME" : "NE FERME PAS"}`));
+}
+console.log(`    échelle par rareté : ` + valeursDeMaitrise.map((pp) => `${pp}/palier → `
+  + ORDRE_RARETE.map((r) => `${r} ${echelleMaitrise[pp][r] == null ? "?" : echelleMaitrise[pp][r]}`).join(" ")).join(" | "));
+if (sansPlafondConnu.length) console.log(`    sans plafond de niveau publié : ${sansPlafondConnu.join(", ")} — laissé vide, rien n'est interpolé`);
 console.log(`  rareté : chaîne de ${chaineRarete.length} parchemins · sans parchemin : ${rareteSansParchemin.join(", ") || "aucun"}`);
 console.log(`  éveil fixe : ${fixes.length} lignes · R2 = 2 × R1 ${fixesPasDouble.length === 0 ? "partout" : "sauf " + fixesPasDouble.map((x) => x.code).join(", ")}`);
 console.log(`  écartés : ${ecartes.length}`);

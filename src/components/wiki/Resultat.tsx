@@ -142,7 +142,7 @@ export function Resultat({ e, compact = false }: { e: Entree; compact?: boolean 
             fontSize: compact ? 12.5 : 13.5, fontWeight: 700, lineHeight: 1.25, color: couleur ?? "var(--text)",
             minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           }}>{e.nom}</span>
-          {/* Le repère AirFlyff est une étincelle et pas un mot : il apparaît sur
+          {/* Le repère Airborn est une étincelle et pas un mot : il apparaît sur
               chaque ligne concernée, et un mot répété mille fois cesse d'être lu. */}
           {e.maison && <Icon name="sparkles" size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />}
           <span style={{ marginLeft: "auto" }}><Nature e={e} /></span>

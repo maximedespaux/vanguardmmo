@@ -226,7 +226,7 @@ function paliersDe(zones) {
 /**
  * CE QUE LE CLIENT ENVOIE CHERCHER LÀ-BAS.
  *
- * Les descriptions d'objets d'AirFlyff nomment le lieu de farm en clair
+ * Les descriptions d'objets d'Airborn nomment le lieu de farm en clair
  * (« Reine Tyroglyphe Bleue, Mine de Dekanes ») et les tables de quête posent la
  * zone du butin. On récolte les objets dont UNE source nomme le lieu ; les taux
  * de chute, eux, ne remontent pas — ils ne se montrent plus nulle part.

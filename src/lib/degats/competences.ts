@@ -313,7 +313,7 @@ export function echelleDeStat(c: CompetenceBrute, combattant: Combattant, niveau
       note: `Le coefficient ${c.coef} est lu dans le client, mais son unité ne l'est pas : il est pris en dixièmes (${(c.coef / 10).toString().replace(".", ",")}). Pris brut, cette compétence ajouterait ${c.coef} fois ${avecArticle(c.stat.toLowerCase())}.${lu.plate ? "" : ` Et ${avecArticle(c.stat.toLowerCase())} employée est le TOTAL (${stat}) : la forme du Flyff officiel lit ici un total SANS les pourcentages de statistique.`}`,
     },
     reserve:
-      "Le coefficient de compétence est lu dans le client ; sa division par dix est une convention du Flyff officiel, à confirmer sur AirFlyff. Le SECOND terme de la forme diverge d'un cran de la référence — elle écrit (niveau − 2) × statistique / 50 là où le moteur écrit (niveau − 1) — ce qui vaut moins d'un pour cent du coup, et la référence marque elle-même cette ligne comme douteuse.",
+      "Le coefficient de compétence est lu dans le client ; sa division par dix est une convention du Flyff officiel, à confirmer sur Airborn. Le SECOND terme de la forme diverge d'un cran de la référence — elle écrit (niveau − 2) × statistique / 50 là où le moteur écrit (niveau − 1) — ce qui vaut moins d'un pour cent du coup, et la référence marque elle-même cette ligne comme douteuse.",
     reserveStatsPlates: lu.plate ? null : RESERVE_STATS_PLATES,
   };
 }

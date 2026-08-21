@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════════
-//  LES STATISTIQUES D'OBJET — RELEVÉ DU CLIENT AIRFLYFF
+//  LES STATISTIQUES D'OBJET — RELEVÉ DU CLIENT AIRBORN
 //  node scripts/extraire-statistiques-objets.mjs
 //    →  public/wiki/objets-stats.json        (le socle : un objet, ses chiffres)
 //    →  src/data/statistiques-objets.json    (le dictionnaire des statistiques)
@@ -86,7 +86,7 @@ const ID_OBJET = defines(texte(a00.get("defineitem.h")), "II_");
 const CODE_DST = defines(texte(a00.get("defineattribute.h")), "DST_");
 
 // Trois espaces de noms cohabitent dans propitem.txt.txt : IDS_PROPITEM_TXT_
-// (l'original, 21 413 entrées) et deux ajouts d'AirFlyff, IDS_AIRFLYFF_TXT_
+// (l'original, 21 413 entrées) et deux ajouts d'Airborn, IDS_AIRFLYFF_TXT_
 // (2 703) et IDS_PROPITEM_NEWSERV_ (1 661). Les deux ajouts séparent la clé du
 // texte par des ESPACES là où l'original met un tabulateur — d'où le \s+ : à ne
 // pas remplacer par un indexOf("\t"), qui laisse 2 000 objets sans nom.

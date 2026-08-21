@@ -10,7 +10,7 @@ import {
 } from "./vocabulaire";
 
 /**
- * CHERCHER UN MONSTRE — les 1 124 fiches du client du jeu.
+ * CHERCHER UN MONSTRE — les 1 123 fiches du client du jeu.
  *
  * Rien n'arrive en bloc : le catalogue pèse 612 Ko, la route en renvoie 48 lignes
  * à la fois. On ne pagine pas non plus, exprès — au-delà de cinquante réponses la
@@ -313,7 +313,7 @@ export function CarteMonstre({ m }: { m: Monstre }) {
   const seReleve = (m.vies ?? 0) > 1;
   /* Le portrait n'existe que pour huit monstres du catalogue (cf. `portraitDe`) :
      quand il manque, on ne met RIEN à sa place — un cadre vide ferait croire à une
-     image cassée, et un pictogramme générique répété 1 124 fois n'apprend rien. */
+     image cassée, et un pictogramme générique répété 1 123 fois n'apprend rien. */
   const portrait = portraitDe(m.id);
   return (
     <Link href={`/monstres/${m.id}`} className="glass-card fx-card"

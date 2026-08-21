@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import { effetTexte, fmt, type Catalogue, type Effet, type Entree, type Fiche, type Lignee, type Niveau, type Palier } from "@/components/competences/donnees";
+import { effetTexte, fmt, type Catalogue, type Effet, type Entree, type Fiche, type Lignee, type Niveau, type Palier, type Planche, type RangsMuets } from "@/components/competences/donnees";
 
 /**
- * LES 202 COMPÉTENCES — index d'un côté, fiche complète de l'autre.
+ * LES COMPÉTENCES — index d'un côté, fiche complète de l'autre.
  *
  * Le fichier réduit fait 200 Ko : au-dessus du seuil où on se contente d'un
  * fetch depuis le navigateur, donc il est lu ici une seule fois et gardé en
  * mémoire — même approche que src/app/api/ou-trouver/route.ts.
  *
  * Deux réponses, parce qu'il y a deux moments :
- *   · sans paramètre  → l'index (202 lignes légères) + les tables de la page.
+ *   · sans paramètre  → l'index (une ligne légère par compétence) + les tables.
  *     C'est ce qu'il faut pour chercher, filtrer et reconnaître. ~45 Ko.
  *   · `?id=SI_…`      → la fiche, avec sa progression niveau par niveau.
  *     On ne la demande qu'au clic, et la page la garde ensuite.
@@ -30,6 +30,11 @@ type CompetenceBrute = {
   id: string; nom: string; desc?: string; palier: Palier; classe: string; famille?: string;
   nivPerso: number; nivMax: number; type?: string; zone?: string; porteeTexte?: string;
   arme?: string; mains?: string; stat?: string; coef?: number;
+  /** Numéro de case sur la planche, posé par scripts/extraire-icones-competences.mjs. */
+  icone?: number | null;
+  /** Les rangs qui recopient le précédent, relevés SUR LE CLIENT par
+   *  scripts/rangs-muets-competences.mjs. Absent = on n'en sait rien. */
+  rangsMuets?: number[];
   fixe: Record<string, number | null>;
   niveaux: Record<string, (number | null)[] | EffetBrut[][]>;
   effetsFixes?: EffetBrut[];
@@ -39,9 +44,14 @@ type CompetenceBrute = {
 type Fichier = {
   competences: CompetenceBrute[];
   lignees: Lignee[];
+  /** La provenance écrite par la fouille, telle quelle. Facultative : un relevé
+   *  ancien peut ne pas la porter, et l'écran dit alors « le client du jeu »
+   *  plutôt que d'annoncer une date qu'il n'a pas. */
+  source?: string;
   xpCompetence: { niveau: number; xp: number }[];
   horsClasse: Catalogue["horsClasse"];
   doublons: Catalogue["doublons"];
+  planche?: Planche;
 };
 
 let DONNEES: Fichier | null = null;
@@ -56,7 +66,7 @@ function charger(): Fichier {
   const f = path.join(process.cwd(), "public", "wiki", "competences.json");
   DONNEES = JSON.parse(fs.readFileSync(f, "utf8")) as Fichier;
   PAR_ID = new Map(DONNEES.competences.map((c) => [c.id, c]));
-  INDEX = DONNEES.competences.map(entree);
+  INDEX = DONNEES.competences.map((c) => entree(c, DONNEES!.xpCompetence));
   return DONNEES;
 }
 
@@ -86,16 +96,40 @@ function resume(c: CompetenceBrute): string | null {
   return null;
 }
 
-function entree(c: CompetenceBrute): Entree {
+/**
+ * LES RANGS QUI NE CHANGENT RIEN — et ce qu'ils coûtent quand même.
+ *
+ * LA LISTE NE SE DÉDUIT PAS ICI, ET C'EST TOUT LE SUJET. Elle est relevée sur
+ * le client par `scripts/rangs-muets-competences.mjs`, qui compare TOUTES les
+ * colonnes de `propSkillAdd.csv` d'un rang au précédent. La déduire du relevé
+ * — qui ne conserve qu'une partie des colonnes — donnait un conseil faux :
+ * « Second souffle » n'y garde que son coût en PM, lequel monte un rang sur
+ * deux, alors que le client fait monter son soin à CHAQUE rang. La page
+ * annonçait dix rangs muets sur une compétence qui s'améliore vingt fois.
+ *
+ * Champ absent = rien n'est annoncé. Un renseignement qu'on ne peut pas étayer
+ * disparaît, et un mauvais conseil coûte plus cher qu'aucun conseil.
+ *
+ * Le coût, lui, se calcule ici : c'est la même table que le budget des lignées
+ * — la table du client, pas une règle de trois.
+ */
+function rangsMuets(c: CompetenceBrute, table: { niveau: number; xp: number }[]): RangsMuets {
+  const rangs = c.rangsMuets ?? [];
+  const prix = new Map(table.map((x) => [x.niveau, x.xp]));
+  return { rangs, cout: rangs.reduce((s, r) => s + (prix.get(r) ?? 0), 0) };
+}
+
+function entree(c: CompetenceBrute, table: { niveau: number; xp: number }[]): Entree {
   return {
     id: c.id, nom: c.nom, palier: c.palier, classe: c.classe, famille: c.famille ?? null,
     nivPerso: c.nivPerso, nivMax: c.nivMax, type: c.type ?? null, arme: c.arme ?? null,
-    resume: resume(c), aPrerequis: !!c.prerequis?.length,
+    resume: resume(c), desc: c.desc ?? null, icone: c.icone ?? null,
+    prerequis: c.prerequis ?? [], nbRangsMuets: rangsMuets(c, table).rangs.length,
   };
 }
 
 /** La forme compacte du disque, dépliée en un vrai tableau de niveaux. */
-function fiche(c: CompetenceBrute): Fiche {
+function fiche(c: CompetenceBrute, table: { niveau: number; xp: number }[]): Fiche {
   const varie = Object.keys(c.niveaux);
   const colonnes = CHAMPS.filter((k) => varie.includes(k));
 
@@ -126,6 +160,8 @@ function fiche(c: CompetenceBrute): Fiche {
     niveaux,
     prerequis: c.prerequis ?? [],
     debloque: c.debloque ?? [],
+    icone: c.icone ?? null,
+    rangsMuets: rangsMuets(c, table),
   };
 }
 
@@ -136,13 +172,20 @@ export async function GET(req: Request) {
   if (id) {
     const c = PAR_ID!.get(id);
     if (!c) return NextResponse.json({ error: "Compétence inconnue" }, { status: 404 });
-    return NextResponse.json({ fiche: fiche(c) });
+    return NextResponse.json({ fiche: fiche(c, DONNEES!.xpCompetence) });
   }
 
   const d = DONNEES!;
   const catalogue: Catalogue = {
     entrees: INDEX!,
     lignees: d.lignees,
+    /* LA DATE DU RELEVÉ VOYAGE AVEC LUI, au lieu d'être retapée à l'écran.
+       La page annonçait « relevées dans le client d'octobre 2025 » en dur, à
+       quatre endroits du dépôt. C'est juste aujourd'hui, et ça devient faux le
+       jour où on refouille — sans que rien ne le signale. Même défaut que le
+       « 23 instances » de la navigation, servi sur vingt routes. */
+    source: d.source ?? null,
+    planche: d.planche ?? null,
     xpCompetence: d.xpCompetence,
     horsClasse: d.horsClasse,
     doublons: d.doublons,

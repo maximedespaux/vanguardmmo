@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  clefRecherche, coupMax,
+  clefRecherche, coupMax, regleElementaire,
   type Compteurs, type Lacheur, type LigneClassement, type Monstre,
 } from "./vocabulaire";
 // 12 Ko de pont nom/clé → identifiant d'objet (scripts/extraire-monstres-butin.mjs).
@@ -10,7 +10,10 @@ import {
 import BUTIN from "@/data/monstres-butin.json";
 
 /**
- * LES 1 124 MONSTRES DU CLIENT — lus une fois, gardés en mémoire.
+ * LES 1 123 FICHES DU CLIENT — lues une fois, gardées en mémoire.
+ *
+ * 1 123 et non les 1 124 lignes du fichier : l'une d'elles n'est pas une fiche.
+ * Voir `estUneFiche` plus bas.
  *
  * `public/wiki/monstres.json` pèse 612 Ko. Un import statique le poserait dans le
  * paquet JS de la page : 612 Ko à télécharger pour afficher une fiche. Un fetch
@@ -69,10 +72,37 @@ const PONT = (BUTIN as { objets: Record<string, { n: string; i: number; ic?: str
  *  qu'une clé technique à l'écran. */
 const nomButin = (o: string) => PONT[o]?.n ?? null;
 
+/**
+ * LA LIGNE FANTÔME DU RELEVÉ — pourquoi le catalogue en compte une de moins.
+ *
+ * `monstres.json` porte 1 124 lignes, mais l'une d'elles n'a NI identifiant, NI
+ * nom, NI niveau, NI rang, NI zone : un artefact de la fouille du client, avec
+ * seulement des chiffres épars (500 000 PV, +150 en électricité, −0,3 en terre).
+ * Elle n'est atteignable par aucun filtre — tous s'appuient sur un champ qu'elle
+ * n'a pas — mais elle GONFLAIT LE TOTAL, et le total est affiché.
+ *
+ * Le symptôme se lisait sur la page : les tuiles annonçaient 1 124 monstres pendant
+ * que les pastilles d'élément de la recherche en comptaient 1 123 (499 terre + 170
+ * sans élément + 131 vent + 112 feu + 108 eau + 103 électricité). Deux nombres pour
+ * la même chose, à un écran d'écart, et aucun ne disait lequel croire.
+ *
+ * On l'écarte donc au chargement, et `total` est RECOMPTÉ sur ce qui reste au lieu
+ * d'être repris du fichier : le jour où la fouille rend une ligne complète de plus,
+ * elle entre toute seule. Le critère est l'identifiant, parce que c'est lui qui
+ * porte l'adresse de la fiche — une ligne sans identifiant n'a pas de page où
+ * mener.
+ */
+const estUneFiche = (m: Monstre) => Boolean(m.id && m.nom);
+
 function charger() {
   if (TOUT && PAR_ID && META) return { TOUT, PAR_ID, META };
   const f = path.join(process.cwd(), "public", "wiki", "monstres.json");
-  const d = JSON.parse(fs.readFileSync(f, "utf8")) as Paquet;
+  const brut = JSON.parse(fs.readFileSync(f, "utf8")) as Paquet;
+  const d: Paquet = {
+    ...brut,
+    monstres: brut.monstres.filter(estUneFiche),
+  };
+  d.total = d.monstres.length;
   TOUT = d.monstres.map((m) => {
     const noms: string[] = [];
     for (const b of [...(m.butin ?? []), ...(m.butinClient ?? [])]) {
@@ -153,6 +183,29 @@ export const metaCatalogue = () => charger().META;
 export const monstreParId = (id: string) => charger().PAR_ID.get(id) ?? null;
 
 /**
+ * LA RÈGLE ÉLÉMENTAIRE DU CATALOGUE — comptée ici, servie aux deux écrans.
+ *
+ * Elle se calcule côté serveur pour la même raison que le reste : le catalogue
+ * pèse 612 Ko et ne descend pas au navigateur. Ce qui voyage, c'est le résultat —
+ * six lots de cinq nombres.
+ *
+ * Un seul appel, mémorisé : /monstres l'affiche en entier et chaque fiche en
+ * réclame un lot, soit 1 125 recalculs d'un résultat identique sur une visite qui
+ * parcourt le catalogue.
+ */
+let REGLE: ReturnType<typeof regleElementaire> | null = null;
+export function regleElement() {
+  REGLE ??= regleElementaire(charger().TOUT.map((e) => e.m));
+  return REGLE;
+}
+
+/** Le lot d'un élément donné — ce qu'une fiche a besoin de savoir sur ses pareils.
+ *  `null` quand l'élément n'est pas au catalogue : une fiche sans règle n'en
+ *  invente pas. */
+export const regleDuGroupe = (elem: string | null | undefined) =>
+  regleElement().lots.find((l) => l.groupe === (elem ?? "aucun")) ?? null;
+
+/**
  * LES FAITS D'ENSEMBLE QUI SE COMPTENT, jamais ceux qui s'écrivent.
  *
  * « Sur Airborn, il n'existe plus de monstre passif » était une phrase de fiche
@@ -209,8 +262,12 @@ export type Critere = {
    * D'OÙ VIENT LE MONSTRE — le tri qui a le plus de valeur sur ce serveur.
    *
    * Airborn est un serveur privé : ce qui mérite la place, c'est ce qu'il a
-   * ajouté. 235 monstres portent la marque `NEWSERV` du serveur, 889 viennent du
-   * jeu d'origine. C'était une pastille perdue au milieu de treize autres ; c'est
+   * ajouté. 256 monstres portent la marque `NEWSERV` du serveur, 867 viennent du
+   * jeu d'origine — les deux nombres sont ceux que les pastilles affichent, et ils
+   * se comptent (`compteurs.maison` et son complément sur les 1 123 fiches). La
+   * phrase disait 235 et 889 : un couple qui n'a jamais correspondu au relevé et
+   * qui totalisait les 1 124 lignes du fichier. C'était une pastille perdue au
+   * milieu de treize autres ; c'est
    * maintenant un choix à trois branches en tête de la recherche.
    */
   provenance?: "maison" | "base";

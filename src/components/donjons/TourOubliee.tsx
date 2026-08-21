@@ -132,11 +132,27 @@ export function TourOubliee() {
                   <IconeElementDonjon elem={e.elem} taille={12} />{e.elem}
                 </span>
               )}
-              {e.faible && (
+              {e.faible ? (
                 <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <Icon name="target" size={11} />
                   <IconeElementDonjon elem={e.faible} taille={12} />
                   faible
+                </span>
+              ) : (
+                /* ┌──── L'ABSENCE DE PASTILLE SE LISAIT COMME UNE ABSENCE DE RELEVÉ ────┐
+                      Quatre des cinq capitaines n'ont AUCUNE faiblesse : leurs cinq
+                      colonnes de résistance sont à zéro dans le client — vérifié
+                      colonne par colonne, ce n'est pas un trou de fouille. La tuile
+                      ne montrait alors rien du tout, et un joueur qui a lu « les
+                      monstres sont surtout de terre, prends du vent » repart d'ici
+                      en croyant que l'information manque, ou qu'il faut deviner.
+                      Le wiki des monstres écrit « indifférent » dans exactement ce
+                      cas ; la Tour dit maintenant la même chose.
+                      └────────────────────────────────────────────────────────────┘ */
+                <span title="Ses cinq colonnes de résistance sont à zéro : aucun élément ne lui fait plus de mal qu'un autre."
+                  style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <Icon name="info" size={11} />
+                  l&apos;élément n&apos;y change rien
                 </span>
               )}
             </div>

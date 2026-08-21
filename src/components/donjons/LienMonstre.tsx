@@ -8,8 +8,8 @@ import { createContext, useContext } from "react";
  * RÈGLE DE LA MAISON : un sujet, une page. Les monstres appartiennent à
  * /monstres — /donjons ne garde d'eux que ce qui fait DÉCIDER d'entrer (les PV à
  * sortir, la faiblesse, une rage scriptée) et pointe la fiche pour le reste. Sans
- * ce lien, les quatre-vingt-cinq créatures citées ici étaient des culs-de-sac : il
- * fallait retenir un nom, ouvrir /monstres, et le retaper.
+ * ce lien, les créatures citées ici étaient des culs-de-sac : il fallait retenir
+ * un nom, ouvrir /monstres, et le retaper.
  *
  * ┌───────── POURQUOI UN CONTEXTE, ET PAS UNE PROPRIÉTÉ ─────────┐
  * │ La table des identifiants est lue côté SERVEUR (le catalogue  │
@@ -24,10 +24,14 @@ import { createContext, useContext } from "react";
  * UNE seule fiche : DEUX créatures de cette page sont de vrais jumeaux — le Lézard
  * Prestigieux (niveau 180, 2 M PV, deux caméléons dans le client) et Elin (niveau
  * 129, deux mobs d'Ishtar) —, mêmes niveau, mêmes PV, deux identifiants. Comme
- * l'une des deux est nommée deux fois sur la page, ce sont TROIS mentions sur 86
- * qui restent du texte, pour 83 liées. Un lien qui se trompe une fois sur deux vaut
+ * l'une des deux est nommée deux fois sur la page, ce sont TROIS mentions sur 188
+ * qui restent du texte, pour 185 liées. Un lien qui se trompe une fois sur deux vaut
  * moins qu'un nom qui reste du texte : elles s'affichent donc telles quelles, sans
  * que rien ne le signale — il n'y a rien à en dire.
+ *
+ * Les 188 mentions comptent les panneaux des huit lieux hors téléporteur, qui
+ * nomment chacun toutes leurs créatures : elles étaient 86 quand la page ne citait
+ * que le plus coriace de chaque lieu.
  */
 const Ctx = createContext<Record<string, string>>({});
 

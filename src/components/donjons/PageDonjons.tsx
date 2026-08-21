@@ -14,7 +14,7 @@ import { BlocOasis } from "@/components/donjons/BlocOasis";
 import { CommentOnEntre, type Porte } from "@/components/donjons/CommentOnEntre";
 import { IdsMonstres } from "@/components/donjons/LienMonstre";
 import { HorsTeleporteur, GROUPES_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
-import { aDesFaiblesses, FaiblessesDonjon } from "@/components/donjons/elements";
+import { aDesFaiblesses, ConseilInstance, dominantInstance, FaiblessesDonjon } from "@/components/donjons/elements";
 import { useReglages } from "@/components/reglages/PanneauReglages";
 import type { SchemaPage } from "@/lib/reglages";
 import type { Vague } from "@/components/oasis/modele";
@@ -122,13 +122,22 @@ const butinsMontrables = (liste: string[]): string[] =>
  * interrupteur modifierait le site pour toute la guilde sans que personne l'ait
  * demandé.
  */
+/* COMBIEN DE TUILES TOMBENT SUR LA LUEUR — compté, plus écrit. L'aide du réglage
+   annonçait « les six donjons qui n'ont pas de carte montrable » ; la table des
+   plans en couvre dix-huit sur vingt-trois, donc cinq. Un nombre tapé au clavier
+   à côté d'une table qui bouge : le défaut que ce fichier a déjà payé deux fois
+   (les vues aériennes retirées après avoir été regardées, le champ « élément
+   boss »). Il se recompte ici sur les deux sources qu'il décrit. */
+const SANS_PLAN = (dungeonsData as { id: number }[])
+  .filter((d) => { const c = donjonClient(d.id); return !c || !PLANS[c.dossier]; }).length;
+
 const REGLAGES_DONJONS = {
   page: "/donjons",
   titre: "Réglages du wiki des donjons",
   quoi: "Ce que la page montre à toute la guilde. Les valeurs d'origine sont son état actuel.",
   reglages: [
     { clef: "cartes", type: "interrupteur", label: "Les cartes du jeu sur les tuiles",
-      aide: "La bande en tête de chaque tuile : le plan du client, ou une lueur élémentaire pour les six donjons qui n'ont pas de carte montrable.", defaut: true },
+      aide: `La bande en tête de chaque tuile : le plan du client, ou une lueur élémentaire pour ${SANS_PLAN} donjons sur ${(dungeonsData as unknown[]).length} qui n'ont pas de carte montrable.`, defaut: true },
     { clef: "tour", type: "interrupteur", label: "Le bloc Tour Oubliée",
       aide: "Ses cinq étages, après la grille. Ce n'est pas une destination du téléporteur — d'où le bloc séparé.", defaut: true },
     { clef: "oasis", type: "interrupteur", label: "Le bloc Protection de l'Oasis",
@@ -357,7 +366,24 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
 
                  On ne met donc PAS une fausse carte. On met une lueur du jeu
                  (public/jeu/decor/, treize textures qui ne servaient nulle part), et
-                 on la fait DIRE quelque chose : sa couleur suit l'élément du donjon.
+                 on la fait DIRE quelque chose.
+
+                 ELLE NE DISAIT RIEN. Elle suivait `d.elem`, le champ « élément boss »
+                 de dungeons.json — qui vaut « Terre » sur les vingt-trois donjons.
+                 Une clé constante donne une texture constante : les cinq bandes
+                 étaient la même image, et le commentaire annonçait une variation
+                 qui n'existait pas. Le même défaut que la pastille supprimée plus
+                 bas, à trois cents lignes d'écart.
+
+                 Elle suit maintenant l'élément DOMINANT des créatures posées, lu
+                 dans le fichier de carte du client. NE PAS SURVENDRE CE QUE ÇA
+                 DONNE : sur les cinq tuiles concernées, trois instances posent des
+                 créatures de terre (Faille du débutant, Ruines givrées, Dédale de
+                 Rhisis) et deux n'ont aucun élément relevé (Ruine Prestigieuse,
+                 Temple aérien) — donc deux textures, pas cinq. La clé n'est plus
+                 constante par construction, ce qui est le point : le jour où une
+                 fouille rend le peuplement d'une de ces cartes, la bande suit.
+                 Sans peuplement connu, la lueur neutre.
                  La bande garde la même hauteur, la grille s'aligne, et le libellé
                  avoue franchement qu'il n'y a pas de plan — au lieu de laisser croire
                  qu'on regarde une carte. */
@@ -366,7 +392,7 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                   Feu: "crystalglow05", Eau: "crystalglow01", Électricité: "crystalglow06",
                   Electricite: "crystalglow06", Vent: "crystalglow07", Terre: "crystalglow06",
                 };
-                const f = LUEUR[d.elem] ?? "aurora3";
+                const f = LUEUR[(cl && dominantInstance(cl)?.e) ?? ""] ?? "aurora3";
                 return (
                   <div style={{ position: "relative", aspectRatio: "16 / 7", overflow: "hidden", borderBottom: "1px solid var(--border)", background: "var(--bg-3)" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -528,27 +554,26 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
               lignes de texte. */}
           <div onClick={e => e.stopPropagation()} style={{ ...card, maxWidth: 720, width: "100%", marginBottom: 0, maxHeight: "calc(100vh - 108px)", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}><Icon name={sel.icon as IconName} framed frameSize={48} tone="orange" /><div style={{ minWidth: 0 }}><h2 className="font-heading" style={{ fontSize: 22 }}>{sel.name}</h2><div style={{ color: "var(--text-muted)", fontSize: 13 }}>{sel.type} · Niveau {sel.lvl}{sel.prestigeDetail ? ` · Prestige ${sel.prestigeDetail}` : sel.prestige ? ` · Prestige ${sel.prestige}` : ""}</div><EcartPrestige site={sel.prestige} client={clSel?.prestigeClient ?? null} /></div></div>
-            {/* LA SECONDE TUILE DISAIT « ÉLÉMENT BOSS : TERRE ». Elle le disait sur
-                les vingt-trois fiches — le champ vaut « Terre » partout dans
-                dungeons.json, sans exception. Un renseignement identique sur toutes
-                les fiches n'en est pas un, et la série ressemble au copier-coller
-                déjà constaté sur les prestiges du tooltip (cf. EcartPrestige).
-
-                Ce qui la remplace change, lui, ce qu'on emporte : les éléments
-                auxquels les créatures POSÉES sont faibles, lus dans leur table de
-                résistances. La tuile disparaît quand le client ne connaît pas
-                l'instance — mieux vaut une colonne qu'une tuile vide. */}
-            <div style={{ display: "grid", gridTemplateColumns: clSel && aDesFaiblesses(clSel) ? "1fr 1fr" : "1fr", gap: 10, marginBottom: 14 }}>
-              <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{hpLabel(sel.hp)}</div></div>
-              {clSel && aDesFaiblesses(clSel) && (
-                <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>Ils sont faibles à</div>
-                  <div className="font-heading" style={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
-                    <FaiblessesDonjon d={clSel} taille={18} />
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* ┌──── DEUX TUILES SONT DEVENUES UNE TUILE ET UN CONSEIL ────┐
+                   La seconde disait « ÉLÉMENT BOSS : TERRE », et elle le disait
+                   sur les vingt-trois fiches : le champ vaut « Terre » partout
+                   dans dungeons.json, sans exception. Elle a d'abord été
+                   remplacée par les icônes de faiblesse du peuplement posé — ce
+                   qui change bien ce qu'on emporte, mais ne disait toujours que
+                   la moitié. `donjons-client.json` porte DEUX champs par créature
+                   posée, `faible` ET `resiste` ; le second est renseigné sur
+                   toutes, il est juste, et il ne sortait sur aucun écran du site.
+                   C'est pourtant lui qui coûte : un joueur qui a retenu « les
+                   monstres sont surtout de terre, prends du vent » entre dans une
+                   instance dont les créatures ENCAISSENT MIEUX le vent, et croit
+                   que le wiki s'est trompé.
+                   `ConseilInstance` dit les trois — la dominante posée, ce qu'on
+                   emporte, ce qu'on laisse — comptés sur la carte de l'instance.
+                   Il ne s'affiche pas quand le client ne connaît pas l'instance :
+                   mieux vaut rien qu'un cadre vide.
+                   └───────────────────────────────────────────────────────────┘ */}
+            <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0, marginBottom: 10 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{hpLabel(sel.hp)}</div></div>
+            {clSel && <ConseilInstance d={clSel} />}
             {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
 
             {/* Tout ce qui vient de la fouille du client : où est la carte, à quoi

@@ -1,11 +1,11 @@
 import { PageHeader } from "@/components/PageHeader";
 import { EcranMonstres } from "@/components/monstres/Ecran";
-import { classementBoss, classementFrappeurs, faits, metaCatalogue } from "@/components/monstres/catalogue";
+import { classementBoss, classementFrappeurs, faits, metaCatalogue, regleElement } from "@/components/monstres/catalogue";
 
 /**
  * LES MONSTRES — le wiki de ce qu'on affronte.
  *
- * La fouille du client d'octobre 2025 livre 1 124 fiches : niveau, PV, dégâts,
+ * La fouille du client d'octobre 2025 livre 1 123 fiches : niveau, PV, dégâts,
  * cadence, élément et ses cinq résistances, et le bloc de comportement — la rage,
  * les invocations, les renforts, la fuite, et les vies.
  *
@@ -20,9 +20,11 @@ export default function MonstresPage() {
     <div style={{ padding: 32, maxWidth: 1150, margin: "0 auto" }}>
       <PageHeader
         // Clockworks, le colosse mécanique : il est DANS ce catalogue, et c'est
-        // même lui qui sert d'exemple à la page (le seul à résister à trois
-        // éléments d'un coup). L'image annonce donc la page, elle ne l'illustre
-        // pas au hasard.
+        // même lui qui sert d'exemple à la page : il résiste à TROIS éléments à la
+        // fois (+0,5 en feu, en électricité et en terre), ce que la roue élémentaire
+        // ne produit jamais. Il n'est pas le seul — ils sont huit dans ce cas, compté
+        // sur les cinq colonnes — mais c'est le plus connu, et il porte l'exemple.
+        // L'image annonce donc la page, elle ne l'illustre pas au hasard.
         art="/jeu/chargement/maploading_clockwork.webp"
         icon="skull"
         title="Les monstres et les boss"
@@ -41,7 +43,7 @@ export default function MonstresPage() {
         compteurs={meta.compteurs}
         total={meta.total}
         // `groupes` ne descend plus : les contenus se comptent sur les 94 lignes
-        // affichées, pas sur les 1 124 du catalogue. Les deux comptages voisinaient
+        // affichées, pas sur les 1 123 du catalogue. Les deux comptages voisinaient
         // à trois centimètres sans que rien ne dise qu'ils ne comptaient pas la
         // même chose — et quinze couples nom/nombre voyageaient pour ça.
         agressifs={f.agressifs}
@@ -53,6 +55,10 @@ export default function MonstresPage() {
         // Le pont vers le catalogue d'objets, compté : chaque nom de butin de ces
         // fiches mène désormais à la fiche de l'objet.
         objetsLaches={f.objetsLaches}
+        // QUEL ÉLÉMENT EMPORTER — la seule chose que la page ne disait pas. Comptée
+        // ici sur les cinq colonnes du client, pour tous les éléments : c'est le
+        // catalogue qui décide lequel domine, pas une phrase écrite au clavier.
+        regle={regleElement()}
       />
     </div>
   );

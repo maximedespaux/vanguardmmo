@@ -1,6 +1,7 @@
 // ════════════════════════════════════════════════════════════════════════
 //  LES LIEUX QUE LE TÉLÉPORTEUR NE PROPOSE PAS
 //  node scripts/extraire-lieux.mjs  →  src/data/lieux-hors-teleporteur.json
+//                                   →  src/data/lieux-monstres.json
 // ════════════════════════════════════════════════════════════════════════
 //
 // POURQUOI CE FICHIER EXISTE. La page /donjons montre les 23 destinations du
@@ -234,6 +235,84 @@ function peuplement(zones) {
 }
 
 /**
+ * LE RELEVÉ DE COMBAT — ce que chaque créature du lieu fait comme dégâts.
+ *
+ * ┌──── POURQUOI UN SECOND FICHIER, ET PAS TROIS CLÉS DE PLUS ────┐
+ * │ La tuile d'un lieu tient dans 7 Ko pour les huit. Le relevé de │
+ * │ combat, lui, pèse 102 créatures × (bornes du coup, délai,      │
+ * │ cinq résistances) : mesuré, 27 Ko. Or `lieux-hors-teleporteur` │
+ * │ est importé par un composant CLIENT — le fondre dedans aurait  │
+ * │ ajouté ces 27 Ko au paquet de /donjons pour tout le monde, y   │
+ * │ compris pour qui n'ouvre jamais un panneau. Dans son propre    │
+ * │ fichier, il n'est chargé qu'à l'ouverture du premier panneau.  │
+ * │ C'est la même raison qui a sorti les 12 Ko de vagues de l'Oasis│
+ * │ du paquet (cf. app/(public)/donjons/donnees.ts).               │
+ * └────────────────────────────────────────────────────────────────┘
+ *
+ * CE QUI N'Y EST PAS, ET POURQUOI :
+ *   · `vitAtk` — le client le porte (950, 1 000, 1 050, 1 200 ici ; 100 à 10 000
+ *     sur les world boss), aucune source ne dit dans quelle unité ni contre quoi
+ *     il se multiplie, et AUCUN écran du site ne l'affiche. Un nombre dont on ne
+ *     sait pas dire ce qu'il change ne change aucun geste.
+ *   · `vole` — les 102 créatures de ces huit lieux sont au sol. Une pastille vraie
+ *     zéro fois sur 102 n'est pas un renseignement.
+ *   · `agro` — les 102 sont agressives. Idem.
+ *   · l'expérience et la penya : elles restent dans le relevé source, elles ne
+ *     montent pas ici. Règle de la maison.
+ *
+ * `vies` n'est écrit QUE s'il dépasse 1 : aucune de ces créatures ne se relève
+ * aujourd'hui, la colonne ne s'affichera donc pas — mais le jour où une zone en
+ * gagne une, l'écran le dira sans qu'on y touche.
+ */
+function releveDeCombat(zones) {
+  const dansLaZone = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
+  const nb = (m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0);
+  const fiche = (m) => ({
+    nom: reparer(m.nom),
+    niv: m.niv,
+    rang: m.rang,
+    // Les PV EFFECTIFS, comme partout : un adversaire à plusieurs vies ne meurt
+    // pas quand sa barre atteint zéro.
+    pv: m.pvEff ?? m.pv,
+    ...((m.vies ?? 1) > 1 ? { vies: m.vies } : {}),
+    atkMin: m.atkMin ?? null,
+    atkMax: m.atkMax ?? null,
+    delai: m.delai ?? null,
+    // « aucun » n'est pas un élément, c'est une absence : `null` pour que l'écran
+    // n'aille pas chercher une icône qui n'existe pas.
+    elem: m.elem && m.elem !== "aucun" ? m.elem : null,
+    res: m.res ?? {},
+    /* ┌──── LA RAGE ET LE SOIN MONTENT, ET CE N'EST PAS DU CONFORT ────┐
+       │ La règle de la maison sur /donjons est écrite dans             │
+       │ LienMonstre.tsx : la page garde des monstres « ce qui fait     │
+       │ DÉCIDER d'entrer — les PV à sortir, la faiblesse, UNE RAGE     │
+       │ SCRIPTÉE ». La fiche de donjon la respecte déjà                │
+       │ (FicheClient.tsx écrit « Rage sous X % de PV : ×N dégâts ») ;  │
+       │ le premier relevé de ces huit lieux, lui, n'en disait rien —   │
+       │ alors que 33 de ses 102 créatures entrent en rage et que 6 se  │
+       │ soignent. Ce sont les deux faits qui font passer un combat de  │
+       │ gagné à perdu dans les derniers pour-cent, et ils changent le  │
+       │ geste : garder les soins pour le seuil, ou passer le seuil du  │
+       │ soin d'un seul coup pour qu'il ne parte pas.                   │
+       │ Le tableau est GARDÉ TEL QUEL : ce sont des seuils, pas des    │
+       │ moyennes, et deux créatures d'ici en portent DEUX.             │
+       │ Coût mesuré : voir la ligne de sortie du script.               │
+       └────────────────────────────────────────────────────────────────┘ */
+    ...(m.rage?.length ? { rage: m.rage.map((r) => ({ pv: r.pv, x: r.x })) } : {}),
+    ...(m.soigne?.length ? { soigne: m.soigne.map((s) => ({ pv: s.pv, rend: s.rend })) } : {}),
+    poses: nb(m),
+  });
+  // Le plus fort coup d'abord : c'est la question à laquelle ce relevé répond.
+  // Le niveau, lui, est déjà porté par l'échelle et par la tuile.
+  const parMenace = (a, b) =>
+    (b.delai ? Math.max(b.atkMin ?? 0, b.atkMax ?? 0) / b.delai : 0) -
+    (a.delai ? Math.max(a.atkMin ?? 0, a.atkMax ?? 0) / a.delai : 0);
+  const especes = dansLaZone.filter((m) => !estMonstreDExperience(m)).map(fiche).sort(parMenace);
+  const experience = dansLaZone.filter(estMonstreDExperience).map(fiche).sort((a, b) => a.niv - b.niv);
+  return { especes, ...(experience.length ? { experience } : {}) };
+}
+
+/**
  * LE DÉTAIL PAR ZONE, quand il dit quelque chose de plus.
  *
  * Deux conditions, et la seconde a été apprise à l'usage : il faut plusieurs
@@ -331,12 +410,14 @@ function ticketDe(prefixe) {
 }
 
 const lieux = [];
+const combats = {};
 for (const l of LIEUX) {
   const p = peuplement(l.zones);
   if (!p) {
     console.warn(`  ⚠ ${l.nom} : aucune espèce posée dans ${l.zones.join(" / ")} — écarté`);
     continue;
   }
+  combats[l.clef] = releveDeCombat(l.zones);
   lieux.push({
     groupe: l.groupe,
     clef: l.clef,
@@ -357,7 +438,23 @@ const sortie = {
 
 const cible = path.join(racine, "src", "data", "lieux-hors-teleporteur.json");
 fs.writeFileSync(cible, JSON.stringify(sortie, null, 1) + "\n");
+
+/* Le relevé de combat part dans son propre fichier, SANS INDENTATION : il n'est
+   jamais lu à l'œil — il est produit ici et consommé par un seul composant — et
+   l'indentation lui coûtait 15 Ko de plus, c'est-à-dire la moitié de son poids. */
+const cibleCombat = path.join(racine, "src", "data", "lieux-monstres.json");
+fs.writeFileSync(
+  cibleCombat,
+  JSON.stringify({
+    genere: sortie.genere,
+    source: "public/wiki/monstres.json — bornes du coup, délai entre deux coups, résistances",
+    lieux: combats,
+  }) + "\n"
+);
+
+const totalCombat = Object.values(combats).reduce((t, c) => t + c.especes.length + (c.experience?.length ?? 0), 0);
 console.log(
   `${cible}\n  ${lieux.length} lieux · ` +
-    lieux.map((l) => `${l.nom} (${l.especes} esp., niv ${l.nivMin}–${l.nivMax}, ${l.objets.length} objet(s))`).join(" · ")
+    lieux.map((l) => `${l.nom} (${l.especes} esp., niv ${l.nivMin}–${l.nivMax}, ${l.objets.length} objet(s))`).join(" · ") +
+    `\n${cibleCombat}\n  ${totalCombat} créatures relevées · ${(fs.statSync(cibleCombat).size / 1024).toFixed(1)} Ko`
 );

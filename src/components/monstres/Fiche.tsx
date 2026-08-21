@@ -8,10 +8,11 @@ import { DeStat, STATS } from "@/components/jeu/Interface";
 import { NomObjet } from "@/components/objets/NomObjet";
 import BUTIN from "@/data/monstres-butin.json";
 import { CarteMonstre } from "./Recherche";
-import { Resistances, SchemaSeuils, SchemaVies, type EvenementSeuil } from "./Graphiques";
+import { RegleSurLaFiche, Resistances, SchemaSeuils, SchemaVies, type EvenementSeuil } from "./Graphiques";
 import {
   bornesInversees, cadence, coupMax, coupMin, court, ELEMENT_FR, entier, iconeButin,
-  iconeElement, parSeconde, portraitDe, TON_ELEMENT, tonRang, type Monstre,
+  iconeElement, parSeconde, portraitDe, TON_ELEMENT, tonRang,
+  type ConseilElement, type Monstre,
 } from "./vocabulaire";
 
 /**
@@ -117,7 +118,18 @@ function Titre({ icon, ton, children, apres }: {
 const renfortUtile = (m: Monstre) =>
   m.renfort && m.renfort.n > 0 && m.renfort.m && m.renfort.m !== "0" ? m.renfort : null;
 
-export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] }) {
+export function FicheMonstre({ m, voisins, regle = null }: {
+  m: Monstre; voisins: Monstre[];
+  /**
+   * CE QUE FONT LES AUTRES MONSTRES DE SON ÉLÉMENT — le lot compté côté serveur.
+   *
+   * Sert à dire la règle générale SOUS ses cinq colonnes, jamais à leur place :
+   * quand la fiche contredit la règle, ce sont les colonnes qui commandent, et le
+   * bloc le dit. `null` quand l'élément n'est pas au catalogue — une fiche sans
+   * règle n'en invente pas.
+   */
+  regle?: ConseilElement | null;
+}) {
   useCardFx();
   const seReleve = (m.vies ?? 0) > 1;
   const vies = m.vies ?? 1;
@@ -244,6 +256,13 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
                   plus de dégâts à l'eau et résiste au feu » se lit dans le dessin,
                   et le dessin dit en plus DE COMBIEN. */}
               <Resistances res={m.res} />
+              {/* LA RÈGLE GÉNÉRALE VIENT APRÈS LES COLONNES, jamais avant, et
+                  jamais à leur place. « La plupart des monstres sont de terre,
+                  emporte du vent » est vrai du catalogue, pas de chaque fiche :
+                  une partie des monstres de terre ENCAISSE MIEUX le vent. Le bloc
+                  compare donc la règle aux colonnes juste au-dessus et dit lequel
+                  des trois cas on a sous les yeux. */}
+              <RegleSurLaFiche res={m.res} regle={regle} />
             </div>
 
             <div>
@@ -293,7 +312,7 @@ export function FicheMonstre({ m, voisins }: { m: Monstre; voisins: Monstre[] })
 
           {/* CE QUI A QUITTÉ CE BLOC, et pourquoi.
               · « Agressivité » : le relevé n'écrit que trois valeurs, toutes trois
-                commençant par « agressif », sur 1 122 monstres des 1 124. Une ligne
+                commençant par « agressif », sur 1 122 monstres des 1 123. Une ligne
                 qui dit la même chose sur toutes les fiches n'informe personne, et la
                 page d'accueil des monstres porte déjà le fait une fois. Sa précision
                 entre parenthèses est soit une redite de la ligne « Attaque à

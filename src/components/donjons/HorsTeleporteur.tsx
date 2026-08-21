@@ -1,5 +1,7 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import { Icon, type IconName } from "@/components/Icon";
 import { NomObjet } from "@/components/objets/NomObjet";
 import { pvCourt, TON_RANG } from "./donneesClient";
@@ -36,7 +38,10 @@ import TABLE from "@/data/lieux-hors-teleporteur.json";
 
 type Palier = { zone: string; especes: number; nivMin: number; nivMax: number };
 type Ticket = { nom: string; icone: string | null; durees: number[]; flycoin: number | null; pnj: string | null };
-type Lieu = {
+/** Exporté pour le panneau de détail, qui reçoit un lieu entier. `import type` :
+ *  le type disparaît à la compilation, donc pas de cycle entre les deux modules
+ *  ni de dépendance qui ramènerait le panneau dans le paquet de départ. */
+export type Lieu = {
   groupe: string; clef: string; nom: string; cartouche: string; carte: string;
   especes: number; poses: number; nivMin: number; nivMax: number;
   gros: { nom: string; niv: number; pv: number; rang: string; poses: number };
@@ -53,6 +58,45 @@ type Lieu = {
 const LIEUX = (TABLE as { lieux: Lieu[] }).lieux;
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 const fr = (n: number) => n.toLocaleString("fr-FR");
+/** « le plan d'Île Corail », pas « le plan de Île Corail ». Deux des huit noms
+ *  relevés commencent par une voyelle (Île Corail, Azria) et l'élision se lit
+ *  autant qu'elle s'entend — un lecteur d'écran prononce ce qui est écrit. */
+const de = (nom: string) => (/^[aeiouyàâäéèêëîïôöûüh]/i.test(nom) ? `d'${nom}` : `de ${nom}`);
+
+/**
+ * LE PANNEAU DE DÉTAIL, CHARGÉ SEULEMENT QUAND ON L'OUVRE.
+ *
+ * ┌──────────── POURQUOI `dynamic` ET PAS UN IMPORT ORDINAIRE ────────────┐
+ * │ /donjons est la page la plus lourde du site. Le panneau porte le      │
+ * │ relevé de combat des 102 créatures de ces huit lieux — 19,6 Ko de     │
+ * │ données, plus la brique des faiblesses et le vocabulaire des          │
+ * │ monstres. Un import ordinaire aurait mis tout ça dans le paquet de    │
+ * │ départ, pour TOUT LE MONDE, y compris pour qui n'ouvre jamais un      │
+ * │ panneau. Là, le navigateur ne le télécharge qu'au premier clic.       │
+ * │ `ssr: false` : le panneau n'existe qu'après un geste, il n'a rien à   │
+ * │ faire dans le HTML du serveur — et un panneau fermé rendu huit fois   │
+ * │ d'avance, c'est exactement ce qu'on cherche à éviter.                 │
+ * └───────────────────────────────────────────────────────────────────────┘
+ */
+const PanneauLieu = dynamic(() => import("./PanneauLieu"), {
+  ssr: false,
+  /* Le voile se pose tout de suite, sinon un clic sur un réseau lent ne produit
+     rien de visible et on reclique. Il porte la même géométrie que le panneau
+     pour que rien ne saute quand celui-ci arrive — et il passe par le MÊME
+     PORTAIL, pour la même raison : `position: fixed` ne se cale sur la fenêtre
+     que si aucun ancêtre ne porte de `transform`, et l'apparition des blocs de
+     page (`@keyframes vgfade`) en applique un. Sans le portail, le voile
+     d'attente s'affichait au milieu de la page au lieu de la couvrir. */
+  loading: () =>
+    typeof document === "undefined"
+      ? null
+      : createPortal(
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "88px 20px 20px" }}>
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Le plan arrive…</div>
+          </div>,
+          document.body
+        ),
+});
 
 /**
  * LES DEUX GROUPES, ET CE QUI LES DISTINGUE — la façon d'y entrer.
@@ -84,6 +128,10 @@ export const GROUPES_HORS_TELEPORTEUR = GROUPES
   .filter((g) => g.n > 0);
 
 export function HorsTeleporteur() {
+  /* UN SEUL PANNEAU MONTÉ À LA FOIS, ET AUCUN TANT QU'ON N'A PAS CLIQUÉ : c'est
+     un état ici, pas un état par tuile. Huit panneaux repliés d'avance auraient
+     alourdi la page la plus lourde du site de huit tableaux de créatures. */
+  const [sel, setSel] = useState<Lieu | null>(null);
   const parGroupe = useMemo(
     () => GROUPES.map((g) => ({ ...g, lieux: LIEUX.filter((l) => l.groupe === g.clef) })).filter((g) => g.lieux.length),
     []
@@ -167,7 +215,7 @@ export function HorsTeleporteur() {
               droite. Le `min()` laisse la piste se réduire sous son minimum quand la
               place manque, et ne change RIEN au-delà de 270 px. */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(270px,100%),1fr))", gap: 12 }}>
-            {g.lieux.map((l) => <CarteLieu key={l.clef} l={l} etalDitEnBas={etalDitEnBas} />)}
+            {g.lieux.map((l) => <CarteLieu key={l.clef} l={l} etalDitEnBas={etalDitEnBas} onOuvrir={() => setSel(l)} />)}
           </div>
         </div>
       ))}
@@ -197,7 +245,15 @@ export function HorsTeleporteur() {
           .ht-valeur{width:52px !important}
           .ht-jalons{display:none !important}
         }
+        .ht-plan:hover .ht-appel,.ht-plan:focus-visible .ht-appel{color:var(--orange)}
+        .ht-plan:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
       `}</style>
+
+      {/* LE PANNEAU EST RENDU ICI, À LA RACINE DU BLOC, ET PAS DANS LA TUILE. Il se
+          pose en `position: fixed` : le mettre dans la carte le ferait enfermer par
+          le premier ancêtre qui porte un `transform` — piège déjà payé sur ce site,
+          une modale s'était retrouvée coincée dans sa carte. */}
+      {sel && <PanneauLieu lieu={sel} onFermer={() => setSel(null)} />}
     </div>
   );
 }
@@ -284,18 +340,55 @@ function EchelleNiveaux() {
 }
 
 /** La tuile d'un lieu : sa carte d'abord — c'est elle qui le fait reconnaître. */
-function CarteLieu({ l, etalDitEnBas }: { l: Lieu; etalDitEnBas: boolean }) {
+function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boolean; onOuvrir: () => void }) {
   return (
     <div className="fx-card" style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
-      {/* La carte est montrée ENTIÈRE, pas recadrée : son cartouche est en bas à
-          droite et c'est la preuve du nom. Un `objectFit: cover` en bandeau, comme
-          sur les tuiles de donjon, l'aurait coupé — donc ici on garde le 4/3 du
-          fichier. */}
-      <figure style={{ margin: 0, lineHeight: 0, borderBottom: "1px solid var(--border)" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={l.carte} alt={`La carte de ${l.nom}, telle qu'elle sort du client — le cartouche imprimé dit « ${l.cartouche} »`}
-          loading="lazy" style={{ width: "100%", display: "block" }} />
-      </figure>
+      {/* ┌──── LA ZONE CLIQUABLE EST LA CARTE, ET UN VRAI `<button>` ────┐
+          Demande de Maxime : « prévoir une zone cliquable pour voir le
+          plan et les monstres ». C'est la carte qui la porte, pour deux
+          raisons : c'est l'objet dont on veut la version en grand, et
+          c'est la seule partie de la tuile qui NE CONTIENT AUCUN AUTRE
+          CONTRÔLE. Rendre la tuile entière cliquable aurait mis un lien
+          de monstre et jusqu'à vingt bulles d'objet À L'INTÉRIEUR d'un
+          bouton — du HTML invalide, et un clic sur un objet qui aurait
+          ouvert le panneau par-dessus sa bulle.
+          Un `<button>` et pas un `<div onClick>` : le clavier, le focus
+          visible et l'annonce du geste viennent avec, gratuitement.
+          └──────────────────────────────────────────────────────────────┘ */}
+      <button
+        type="button"
+        className="ht-plan"
+        onClick={onOuvrir}
+        aria-label={`Ouvrir le plan ${de(l.nom)} en grand, avec ses ${l.especes} espèces et leurs dégâts`}
+        style={{ display: "block", width: "100%", padding: 0, margin: 0, border: "none", borderBottom: "1px solid var(--border)", background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
+      >
+        {/* La carte est montrée ENTIÈRE, pas recadrée : son cartouche est en bas à
+            droite et c'est la preuve du nom. Un `objectFit: cover` en bandeau, comme
+            sur les tuiles de donjon, l'aurait coupé — donc ici on garde le 4/3 du
+            fichier. C'est aussi pourquoi l'appel au clic est posé SOUS l'image et
+            non par-dessus : un bandeau en bas aurait recouvert le cartouche. */}
+        {/* UN `<span>` ET PAS UN `<figure>` : le contenu d'un `<button>` est du
+            contenu de PHRASE, et `<figure>` est du contenu de FLUX — l'imbriquer
+            ici produit le même HTML invalide que celui qu'on évite plus bas en
+            gardant les liens de monstre et les bulles d'objet HORS du bouton.
+            Rien ne se perd : cette image n'a pas de légende dans la tuile, le
+            `<figure>` n'emballait donc rien. Celui du panneau, lui, en a une et
+            reste un vrai `<figure>`. */}
+        <span style={{ display: "block", lineHeight: 0 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={l.carte} alt={`La carte ${de(l.nom)}, telle qu'elle sort du client — le cartouche imprimé dit « ${l.cartouche} »`}
+            loading="lazy" style={{ width: "100%", display: "block" }} />
+        </span>
+        {/* Cinq mots, et ils disent le geste ET ce qu'on y gagne. La phrase
+            complète est dans l'`aria-label` : elle nomme le lieu et compte ses
+            espèces, ce qu'un lecteur d'écran a besoin d'entendre et qu'un œil lit
+            déjà deux lignes plus bas. */}
+        <span className="ht-appel" style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px 6px", fontSize: 11.5, color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
+          <Icon name="eye" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          Le plan et les créatures
+          <Icon name="chevron-right" size={12} style={{ marginLeft: "auto", flexShrink: 0 }} />
+        </span>
+      </button>
 
       <div style={{ padding: "12px 13px 13px" }}>
         <div className="font-heading" style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 6 }}>{l.nom}</div>

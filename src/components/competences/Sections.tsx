@@ -1,9 +1,9 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/Icon";
 import { findClass } from "@/data/classes";
 import { Cadre, Encart, Pastille, SousTitre, TD, TH } from "./ui";
-import { classeAffichee, coutCumule, fmt, nbHorsClasse, type Entree, type HorsClasse, type Lignee } from "./donnees";
+import { CaseVide, IconeCompetence } from "./IconeCompetence";
+import { classeAffichee, coutCumule, fmt, nbHorsClasse, type Entree, type HorsClasse, type Lignee, type Planche } from "./donnees";
 
 /**
  * Les blocs qui EXPLIQUENT, à côté du catalogue qui liste.
@@ -190,7 +190,7 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
 //  MAÎTRE ET HÉROS
 // ══════════════════════════════════════════════════════════════════════════
 
-export function Paliers({ entrees }: { entrees: Entree[] }) {
+export function Paliers({ entrees, planche }: { entrees: Entree[]; planche: Planche | null }) {
   const maitres = entrees.filter((e) => e.palier === "maitre");
   const heros = entrees.filter((e) => e.palier === "heros");
 
@@ -241,8 +241,8 @@ export function Paliers({ entrees }: { entrees: Entree[] }) {
           « Les 8 compétences de Maître » était écrit en dur pour une liste dont la
           longueur est juste à côté, dans `items`. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14, marginTop: 4 }}>
-        <ListePalier titre={`Les ${maitres.length} compétences de Maître`} icon="medal" items={maitres} />
-        <ListePalier titre={`Les ${heros.length} compétences de Héros`} icon="trophy" items={heros} />
+        <ListePalier titre={`Les ${maitres.length} compétences de Maître`} icon="medal" items={maitres} planche={planche} />
+        <ListePalier titre={`Les ${heros.length} compétences de Héros`} icon="trophy" items={heros} planche={planche} />
       </div>
 
       {/* LE RENVOI VERS « Les échelles » EST PARTI : cette entrée du rail est à
@@ -253,7 +253,7 @@ export function Paliers({ entrees }: { entrees: Entree[] }) {
   );
 }
 
-function ListePalier({ titre, icon, items }: { titre: string; icon: "medal" | "trophy"; items: Entree[] }) {
+function ListePalier({ titre, icon, items, planche }: { titre: string; icon: "medal" | "trophy"; items: Entree[]; planche: Planche | null }) {
   return (
     <div>
       <SousTitre icon={icon} apres={`niveau ${items[0]?.nivPerso ?? "?"} requis`}>{titre}</SousTitre>
@@ -262,9 +262,15 @@ function ListePalier({ titre, icon, items }: { titre: string; icon: "medal" | "t
         <tbody>
           {items.map((e) => (
             <tr key={e.id}>
-              <td style={TD}>
-                <div className="font-heading" style={{ fontSize: 12.5, fontWeight: 600 }}>{e.nom}</div>
-                <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{classeAffichee(e.classe)}</div>
+              {/* L'icône du jeu plutôt qu'une puce : ces seize compétences sont
+                  celles qu'on compare entre huit classes, et huit lignes de texte
+                  se ressemblent toutes. */}
+              <td style={{ ...TD, display: "flex", alignItems: "center", gap: 9 }}>
+                {e.icone != null ? <IconeCompetence planche={planche} index={e.icone} taille={24} titre={e.nom} /> : <CaseVide taille={24} />}
+                <span style={{ minWidth: 0 }}>
+                  <span className="font-heading" style={{ display: "block", fontSize: 12.5, fontWeight: 600 }}>{e.nom}</span>
+                  <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)" }}>{classeAffichee(e.classe)}</span>
+                </span>
               </td>
               <td style={{ ...TD, color: "var(--green)" }}>{e.resume ?? "—"}</td>
             </tr>
@@ -279,7 +285,7 @@ function ListePalier({ titre, icon, items }: { titre: string; icon: "medal" | "t
 //  HORS CLASSE
 // ══════════════════════════════════════════════════════════════════════════
 
-export function HorsClasseSection({ h }: { h: HorsClasse }) {
+export function HorsClasseSection({ h, planche }: { h: HorsClasse; planche: Planche | null }) {
   return (
     <>
       <p style={{ fontSize: 13, lineHeight: 1.65, margin: "0 0 14px" }}>
@@ -297,8 +303,9 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
           <tbody>
             {[...h.groupe].sort((a, b) => (a.niveauGroupe ?? 0) - (b.niveauGroupe ?? 0)).map((g) => (
               <tr key={g.nom} style={g.actif ? undefined : { opacity: 0.55 }}>
-                <td style={TD}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                <td style={{ ...TD, display: "flex", alignItems: "center", gap: 8 }}>
+                  {g.icone != null ? <IconeCompetence planche={planche} index={g.icone} taille={24} titre={g.nom} /> : <CaseVide taille={24} />}
+                  <span style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", minWidth: 0 }}>
                     <b className="font-heading" style={{ fontSize: 12.5 }}>{g.nom}</b>
                     {!g.actif && <Pastille texte="désactivée" couleur="var(--red)" titre="La ligne est en commentaire dans les fichiers du serveur" />}
                   </span>
@@ -328,9 +335,12 @@ export function HorsClasseSection({ h }: { h: HorsClasse }) {
           <tbody>
             {h.souverain.map((s) => (
               <tr key={s.nom}>
-                <td style={TD}>
-                  <b className="font-heading" style={{ fontSize: 12.5 }}>{s.nom}</b>
-                  <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{s.type}</div>
+                <td style={{ ...TD, display: "flex", alignItems: "center", gap: 8 }}>
+                  {s.icone != null ? <IconeCompetence planche={planche} index={s.icone} taille={24} titre={s.nom} /> : <CaseVide taille={24} />}
+                  <span style={{ minWidth: 0 }}>
+                    <b className="font-heading" style={{ display: "block", fontSize: 12.5 }}>{s.nom}</b>
+                    <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)" }}>{s.type}</span>
+                  </span>
                 </td>
                 <td style={TD}>{s.cible}</td>
                 <td style={TD}>{s.permanente ? "permanente" : s.rechargeS ? `${s.rechargeS} s` : "—"}</td>

@@ -3,10 +3,20 @@ import path from "node:path";
 import type { Vague } from "@/components/oasis/modele";
 import CLIENT_BRUT from "@/data/donjons-client.json";
 import LIEUX_BRUT from "@/data/lieux-hors-teleporteur.json";
+/* LE RELEVÉ DE COMBAT EST LU ICI AUSSI, ET C'EST SANS COÛT POUR LE NAVIGATEUR :
+   ce module est SERVEUR (il ouvre des fichiers avec `fs`, un composant client ne
+   le peut pas), donc ses 19,6 Ko restent du côté du serveur. Le navigateur, lui,
+   ne les reçoit qu'à l'ouverture d'un panneau de lieu, par le module chargé à la
+   demande — cf. src/components/donjons/PanneauLieu.tsx.
+   Ce qu'on en tire ici, ce sont les clés : les cent deux créatures du relevé sont
+   NOMMÉES à l'écran, donc chacune doit pouvoir mener à sa fiche. */
+import COMBATS_BRUT from "@/data/lieux-monstres.json";
 import type { DonjonClient, EtageTour } from "@/components/donjons/donneesClient";
 
 const CLIENT = CLIENT_BRUT as { donjons: Record<string, DonjonClient>; tourOubliee: EtageTour[] };
 const LIEUX = LIEUX_BRUT as { lieux: { gros: { nom: string; niv: number; pv: number } }[] };
+type FicheCombat = { nom: string; niv: number; pv: number };
+const COMBATS = COMBATS_BRUT as { lieux: Record<string, { especes: FicheCombat[]; experience?: FicheCombat[] }> };
 
 /**
  * LES 52 VAGUES DE LA PROTECTION DE L'OASIS, LUES ICI ET NULLE PART AILLEURS.
@@ -73,13 +83,13 @@ export function vagues(): Vague[] {
  * `MI_…` que /monstres/[id] attend.
  *
  * ┌──── POURQUOI PAS UN APPARIEMENT PAR NOM SEUL ────┐
- * │ Dix des 85 noms cités sur cette page désignent    │
- * │ DEUX créatures du catalogue : « Araignée mutante »│
- * │ en désigne quatre. Un lien par nom seul aurait    │
- * │ mené une fois sur deux à la mauvaise fiche.       │
+ * │ Des noms cités sur cette page désignent DEUX      │
+ * │ créatures du catalogue : « Araignée mutante » en  │
+ * │ désigne quatre. Un lien par nom seul aurait mené  │
+ * │ une fois sur deux à la mauvaise fiche.            │
  * │ La clé est donc nom + niveau + PV, et elle tranche│
- * │ 83 des 86 MENTIONS — 85 clés distinctes, dont 83  │
- * │ résolues. Les DEUX clés qui restent (Lézard       │
+ * │ 185 des 188 MENTIONS — 179 clés distinctes, dont  │
+ * │ 177 résolues. Les DEUX clés qui restent (Lézard   │
  * │ Prestigieux, Elin) sont de VRAIS jumeaux : mêmes  │
  * │ niveau, mêmes PV, deux identifiants, et l'une est │
  * │ nommée deux fois d'où trois mentions sans lien.   │
@@ -88,10 +98,15 @@ export function vagues(): Vague[] {
  * │ reste du texte.                                   │
  * └──────────────────────────────────────────────────┘
  *
+ * Le nombre de mentions a plus que doublé le jour où les panneaux des huit lieux
+ * hors téléporteur se sont ouverts : ils nomment les 102 créatures du relevé de
+ * combat, là où la page n'en citait qu'une par lieu. Les trois mentions sans lien
+ * n'ont pas bougé — ce sont toujours les deux mêmes paires de jumeaux.
+ *
  * Le catalogue fait 612 Ko et il est lu ICI, côté serveur. Et on n'en garde QUE
  * les créatures que cette page nomme : la table complète ferait 1 124 lignes dans
- * la charge de la page pour 86 utiles. Les clés attendues sont donc récoltées
- * d'abord dans les deux relevés de la page, puis cherchées dans le catalogue.
+ * la charge de la page pour 179 utiles. Les clés attendues sont donc récoltées
+ * d'abord dans les trois relevés de la page, puis cherchées dans le catalogue.
  */
 let IDS: Record<string, string> | null = null;
 
@@ -104,6 +119,12 @@ function clefsAttendues(): Set<string> {
   }
   for (const e of CLIENT.tourOubliee) s.add(clefMonstre(e.boss, e.niv, e.pv));
   for (const l of LIEUX.lieux) s.add(clefMonstre(l.gros.nom, l.gros.niv, l.gros.pv));
+  /* Le panneau d'un lieu à ticket nomme TOUTES ses créatures, pas seulement la
+     plus coriace : les cent deux lignes du relevé de combat entrent donc dans la
+     table. Un `Set` : la plus coriace y était déjà, elle n'y sera pas deux fois. */
+  for (const c of Object.values(COMBATS.lieux)) {
+    for (const m of [...c.especes, ...(c.experience ?? [])]) s.add(clefMonstre(m.nom, m.niv, m.pv));
+  }
   return s;
 }
 

@@ -221,7 +221,23 @@ export function Peuplement({ d }: { d: DonjonClient }) {
                 <Puce ic="sparkles" ton="var(--blue)"><IconeElementDonjon elem={m.elem} taille={12} />{m.elem}</Puce>
               )}
               {m.faible && (
-                <Puce ic="target" ton="var(--green)"><IconeElementDonjon elem={m.faible} taille={12} />Faible au {m.faible.toLowerCase()}</Puce>
+                <Puce ic="target" ton="var(--green)"><IconeElementDonjon elem={m.faible} taille={12} />Faible {A_ELEMENT[m.faible] ?? `à ${m.faible.toLowerCase()}`}</Puce>
+              )}
+              {/* CE QU'IL ENCAISSE MIEUX — le champ que le relevé porte depuis le
+                  début et que rien n'affichait. Les deux ne sont pas symétriques :
+                  la faiblesse fait gagner du temps, la résistance en fait perdre, et
+                  c'est la seconde qu'on ne devine pas. Une créature de terre qui
+                  résiste au vent dément la règle générale du wiki des monstres, et
+                  sans cette pastille elle la dément en silence. */}
+              {m.resiste && (
+                <Puce ic="shield" ton="var(--red)"><IconeElementDonjon elem={m.resiste} taille={12} />Encaisse mieux {LE_ELEMENT[m.resiste] ?? m.resiste.toLowerCase()}</Puce>
+              )}
+              {/* NI L'UN NI L'AUTRE SE DIT AUSSI. Le wiki des monstres écrit
+                  « indifférent » dans ce cas plutôt que de ne rien mettre : une case
+                  vide se lit « on n'a pas le relevé », alors que le relevé est là et
+                  ne porte que des zéros. Les deux pages doivent dire la même chose. */}
+              {!m.faible && !m.resiste && (
+                <Puce ic="info" ton="var(--text-muted)">L&apos;élément n&apos;y change rien</Puce>
               )}
               {m.rage && <Puce ic="flame" ton="var(--red)">Rage sous {m.rage[0]} % de PV : ×{m.rage[1]} dégâts</Puce>}
               {m.invoque?.map((i) => (
@@ -236,6 +252,20 @@ export function Peuplement({ d }: { d: DonjonClient }) {
     </div>
   );
 }
+
+/* LES DEUX ARTICLES DES CINQ ÉLÉMENTS, écrits comme les données de donjon les
+   écrivent (en français, avec la majuscule). Deux tables et non une règle :
+   « à + le » se contracte en « au », « à + la » ne se contracte pas, et deux des
+   cinq commencent par une voyelle. « Faible au vent », « faible à l'eau »,
+   « faible à la terre » — la version calculée donnait « faible à le vent ». */
+const A_ELEMENT: Record<string, string> = {
+  Feu: "au feu", Eau: "à l'eau", "Électricité": "à l'électricité",
+  Vent: "au vent", Terre: "à la terre",
+};
+const LE_ELEMENT: Record<string, string> = {
+  Feu: "le feu", Eau: "l'eau", "Électricité": "l'électricité",
+  Vent: "le vent", Terre: "la terre",
+};
 
 function Puce({ ic, ton, children }: { ic: IconName; ton: string; children: React.ReactNode }) {
   return (

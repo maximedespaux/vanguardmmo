@@ -12,7 +12,8 @@ import { SousTitre } from "@/components/competences/ui";
 import { classeAffichee, fmt, nbHorsClasse, type Catalogue as Cat } from "@/components/competences/donnees";
 import { BarresBudget, Chaine, Legendaires, PaliersDeLaClasse, TableLignee } from "@/components/classes/Lignee";
 import { Echelles, HuitNomsDeuxEffets } from "@/components/classes/Echelles";
-import { NB_NOMS_DE_CLASSE, emblemeDe, indexParClasse, norm, vueLignee } from "@/components/classes/vue";
+import { ArbreCompetences, compteChaines } from "@/components/classes/ArbreCompetences";
+import { NB_NOMS_DE_CLASSE, indexParClasse, norm, vueLignee } from "@/components/classes/vue";
 import { LIGNEES, XP_COMPETENCE, ligneeDe } from "./donnees";
 
 /**
@@ -67,10 +68,11 @@ export default function ClassesPage() {
 
   // La clef de lignée du relevé est accentuée (« Envoûteur »), celle de la page
   // ne l'est pas (« Envouteur ») : on résout ici, une fois.
-  const ligneeApi = useMemo(
-    () => cat?.lignees.find((x) => norm(x.cle) === norm(cle))?.cle ?? "tous",
+  const ligneeCourante = useMemo(
+    () => cat?.lignees.find((x) => norm(x.cle) === norm(cle)) ?? null,
     [cat, cle],
   );
+  const ligneeApi = ligneeCourante?.cle ?? "tous";
 
   // La table de coût vient du relevé quand il répond, de l'instantané sinon :
   // c'est la même table, mais on ne veut pas d'une section vide.
@@ -86,7 +88,17 @@ export default function ClassesPage() {
       clef: "catalogue", titre: "Le catalogue", icon: "list", compte: cat?.entrees.length ?? null,
       sous: "Cherche par classe, par palier ou par nom",
       contenu: cat
-        ? <Catalogue entrees={cat.entrees} lignees={cat.lignees} ligneeChoisie={ligneeApi} embleme={emblemeDe} />
+        ? <Catalogue entrees={cat.entrees} lignees={cat.lignees} planche={cat.planche} ligneeChoisie={ligneeApi} />
+        : attente,
+    },
+    {
+      clef: "arbre", titre: "Son arbre de compétences", icon: "path",
+      // La pastille annonce les CHAÎNES, et elle les compte avec la fonction qui
+      // les dessine : deux additions séparées finissent toujours par diverger.
+      compte: cat ? compteChaines(cat.entrees, ligneeCourante) : null,
+      sous: `Ce qui ouvre quoi, et à quel rang, chez ${lignee.nom}`,
+      contenu: cat
+        ? <ArbreCompetences entrees={cat.entrees} lignee={ligneeCourante} planche={cat.planche} />
         : attente,
     },
     {
@@ -107,7 +119,7 @@ export default function ClassesPage() {
         <>
           <PaliersDeLaClasse vue={vue} />
           <div style={{ height: 14 }} />
-          {cat ? <Paliers entrees={cat.entrees} /> : attente}
+          {cat ? <Paliers entrees={cat.entrees} planche={cat.planche} /> : attente}
         </>
       ),
     },
@@ -135,7 +147,7 @@ export default function ClassesPage() {
     {
       clef: "hors", titre: "Hors classe", icon: "users", compte: cat ? nbHorsClasse(cat.horsClasse) : null,
       sous: "Groupe, Souverain, couple",
-      contenu: cat ? <HorsClasseSection h={cat.horsClasse} /> : attente,
+      contenu: cat ? <HorsClasseSection h={cat.horsClasse} planche={cat.planche} /> : attente,
     },
     /* IL Y AVAIT UN NEUVIÈME VOLET, « Ce qu'on ne sait pas ». Il est parti par la
        règle 2 : cinq encarts dont le sujet était l'incomplétude du relevé. Le seul
@@ -151,12 +163,23 @@ export default function ClassesPage() {
       {/* Le sous-titre annonçait en trente-cinq mots ce que le rail annonce déjà, volet
           par volet, avec ses comptes. Il ne garde que ce que le rail ne peut pas
           dire : combien de lignées, et d'où vient le relevé. */}
-      {/* « du client d'octobre 2025 » et non « du client du jeu » : c'est la seule
-          chose que le volet des réserves disait et que le rail ne dit pas — la DATE
-          du relevé. Deux mots ici valent les quarante d'une ligne de source en bas
-          d'un volet qu'il faut penser à ouvrir. */}
+      {/* LA DATE DU RELEVÉ EST LA SEULE CHOSE QUE LE RAIL NE DIT PAS, et elle compte :
+          deux mots ici valent les quarante d'une ligne de source au fond d'un volet
+          qu'il faut penser à ouvrir.
+
+          ELLE NE S'ÉCRIT PLUS À LA MAIN. « relevées dans le client d'octobre 2025 »
+          était tapé ici, et répété à trois autres endroits du dépôt : juste
+          aujourd'hui, faux le jour de la prochaine fouille, sans que rien ne le
+          signale — le défaut exact du « 23 instances » servi sur vingt routes. Le
+          relevé porte sa propre provenance (`competences.json ▸ source`), elle
+          descend maintenant par l'API et c'est elle qu'on lit. Tant qu'elle n'est
+          pas arrivée, on n'annonce pas une date : on dit ce qu'on sait déjà. */}
       <PageHeader art="/jeu/chargement/maploading_arena.webp" icon="graduation" title="Classes et compétences"
-        subtitle={`Les ${LIGNEES.length} lignées d'Airborn, relevées dans le client d'octobre 2025.`} />
+        subtitle={
+          cat?.source
+            ? `Les ${LIGNEES.length} lignées d'Airborn, relevées dans le ${cat.source.replace(/^Client /, "client ").replace(/, archives.*$/i, "")}.`
+            : `Les ${LIGNEES.length} lignées d'Airborn, relevées dans le client du jeu.`
+        } />
 
       <VoletSections
         defaut="catalogue"
@@ -263,7 +286,7 @@ function ChiffresReleve({ cat }: { cat: Cat | null }) {
   if (!cat) return null;
   const chiffres = [
     { valeur: fmt(cat.entrees.length), quoi: "compétences de joueur" },
-    { valeur: fmt(cat.entrees.filter((e) => e.aPrerequis).length), quoi: "ont un prérequis" },
+    { valeur: fmt(cat.entrees.filter((e) => e.prerequis.length > 0).length), quoi: "ont un prérequis" },
     { valeur: fmt(cat.entrees.reduce((s, e) => s + e.nivMax, 0)), quoi: "niveaux à monter en tout" },
     { valeur: fmt(cat.lignees.length), quoi: "lignées couvertes" },
   ];

@@ -2,7 +2,8 @@
 import { Icon, type IconName } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import {
-  colonnesRes, court, ELEMENT_FR, ELEMENTS, entier, faiblesses, iconeElement, RES_ECHELLE,
+  colonnesRes, court, ELEMENT_FR, ELEMENTS, entier, faceALaRegle, faiblesses, iconeElement,
+  RES_ECHELLE, type ConseilElement,
 } from "./vocabulaire";
 
 /**
@@ -133,7 +134,7 @@ function Bande({ part, valeur, libelle, teinte, action, decale, suite, detail }:
  *
  * ┌──────── LE DÉFAUT QU'IL CORRIGE, ET IL ÉTAIT CHIFFRÉ ────────┐
  * │ La rangée de pastilles qui vivait ici portait les comptes du  │
- * │ CATALOGUE ENTIER (`meta.groupes`, calculés sur les 1 124      │
+ * │ CATALOGUE ENTIER (`meta.groupes`, calculés sur les 1 123      │
  * │ monstres) et elle était posée sous un tableau qui n'en montre │
  * │ que 94 : on lisait « Chambres Secrètes 16 » sous sept lignes  │
  * │ de Chambres Secrètes, « Halloween 21 » sous dix. Deux         │
@@ -408,7 +409,7 @@ export function Faiblesses({ res, bulle = true }: {
   if (faible.length === 0 && resiste.length === 0) {
     /* PAS UN TIRET. Un « — » se lit « on n'a pas le relevé », et c'est faux : le
        relevé est là, il ne porte que des zéros. Vérifié sur les deux tables — les
-       1 124 monstres et les 37 adversaires des Chambres ont TOUS leur bloc `res` ;
+       1 123 monstres et les 37 adversaires des Chambres ont TOUS leur bloc `res` ;
        le cas « aucune ligne » n'existe pas. Ce qu'il faut dire est donc l'inverse
        d'une absence : l'élément qu'on emporte ne change rien contre celui-là, ce
        qui est un renseignement, et un renseignement qui change un geste.
@@ -454,5 +455,328 @@ export function Faiblesses({ res, bulle = true }: {
         <span style={{ color: "var(--text-muted)" }}>Négatif : il prend plus.</span>
       </span>
     }>{icones}</Bulle>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   QUEL ÉLÉMENT EMPORTER — LE RENSEIGNEMENT QUI N'ÉTAIT NULLE PART
+
+   Le site savait dire, monstre par monstre, ce à quoi CELUI-LÀ est faible. Il
+   n'a jamais dit la règle pratique, celle qu'on emporte dans son sac avant
+   d'entrer : la plupart des monstres sont de terre, et c'est le vent qui les
+   ouvre. Un joueur qui ne l'a pas lue ouvre 499 fiches ou emporte au hasard.
+
+   ┌──── POURQUOI LA RÈGLE SORT TOUJOURS AVEC SON DÉMENTI ────┐
+   │ Un pourcentage seul ferait plus de mal que de bien. La    │
+   │ faiblesse dominante des monstres de terre est le vent,    │
+   │ mais une partie d'entre eux ENCAISSE MIEUX le vent, et    │
+   │ une autre ne bouge pas. Le compte des trois est donc      │
+   │ affiché ensemble : c'est ce qui autorise à s'en servir.   │
+   │ Et l'élément le plus ENCAISSÉ est nommé aussi — se        │
+   │ tromper d'élément ne coûte pas « un peu », ça tape dans   │
+   │ une résistance.                                           │
+   └──────────────────────────────────────────────────────────┘
+
+   Pas un nombre n'est écrit ici : tout vient de `regleElementaire`, qui compte
+   les cinq colonnes du client. Le jour où une fouille renverse le classement,
+   ces blocs changent de phrase tout seuls.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/** L'icône d'un élément, avec son mot en info-bulle. Les cinq dessins viennent du
+ *  client et servent déjà partout ailleurs : même élément, même image. */
+function Pastel({ e, taille = 16, anneau }: { e: string; taille?: number; anneau?: string }) {
+  const src = iconeElement(e);
+  if (!src) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={ELEMENT_FR[e]} title={ELEMENT_FR[e]} width={taille} height={taille}
+      style={{ objectFit: "contain", flexShrink: 0, verticalAlign: "-3px", borderRadius: 5, boxShadow: anneau ? `0 0 0 1.5px ${anneau}` : undefined }} />
+  );
+}
+
+/** Un élément nommé, dessin plus mot — la forme courte réutilisée par les trois
+ *  blocs. Le mot RESTE à côté du dessin : cinq icônes de 16 px ne se retiennent
+ *  pas par cœur, et c'est le mot qu'on cherche dans son inventaire. */
+function ElementDit({ e, taille = 16, anneau, gras = true }: { e: string; taille?: number; anneau?: string; gras?: boolean }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, minWidth: 0 }}>
+      <Pastel e={e} taille={taille} anneau={anneau} />
+      <span style={{ fontWeight: gras ? 700 : 400 }}>{ELEMENT_FR[e]}</span>
+    </span>
+  );
+}
+
+/** L'ÉLÉMENT AVEC SON ARTICLE : « le feu », « l'eau », « la terre ». Une table et
+ *  non une règle — « terre » est féminin, deux des cinq commencent par une
+ *  voyelle. Cinq entrées coûtent moins cher qu'une phrase fausse, et une phrase
+ *  fausse dans un conseil de combat se lit comme un site qui ne sait pas. */
+const AVEC_ARTICLE: Record<string, string> = {
+  feu: "le feu", eau: "l'eau", electricite: "l'électricité", vent: "le vent", terre: "la terre",
+};
+const avecArticle = (e: string) => AVEC_ARTICLE[e] ?? ELEMENT_FR[e] ?? e;
+
+/** La même table, contractée avec « à » : « faible AU vent », « faible À L'eau ».
+ *  Séparée de la précédente parce que « à + le » se contracte et que « à + la »
+ *  ne se contracte pas — une seule table produisait « faible à le vent ». */
+const A_ARTICLE: Record<string, string> = {
+  feu: "au feu", eau: "à l'eau", electricite: "à l'électricité", vent: "au vent", terre: "à la terre",
+};
+const aArticle = (e: string) => A_ARTICLE[e] ?? `à ${ELEMENT_FR[e] ?? e}`;
+/** « le vent » → « Le vent », « l'eau » → « L'eau ». En début de phrase seulement. */
+const capitale = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** La part en pourcent, arrondie au dixième. PAS à l'entier : 277 sur 499 vaut
+ *  55,5 %, que l'entier arrondit à 56 — et le chiffre qui circule dans la guilde
+ *  est 55. Un dixième coûte deux caractères et supprime la discussion. */
+const pourCent = (n: number, sur: number) => (sur ? (n / sur) * 100 : 0);
+const ditPourCent = (p: number) => `${p.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} %`;
+
+/**
+ * LA TABLE « CE QUE JE PRENDS CONTRE QUOI », sur tout le catalogue.
+ *
+ * Une ligne par élément de monstre, la plus peuplée en tête — l'ordre est celui
+ * du poids, pas celui du jeu, parce que la première ligne est la réponse dans la
+ * grande majorité des cas et doit se lire sans chercher.
+ *
+ * LA BARRE SUIT LA RÈGLE DE LA MAISON : une seule teinte, la longueur porte la
+ * grandeur. Elle ne dit qu'une chose — quelle part du lot s'ouvre à l'élément
+ * conseillé — et le reste est écrit en chiffres. Deux teintes auraient prétendu
+ * opposer « bon » et « mauvais » à des yeux qui ne les distinguent pas.
+ */
+export function QuelElementEmporter({ regle }: {
+  regle: { total: number; lots: ConseilElement[]; dominant: ConseilElement | null; indifferents: number };
+}) {
+  const { total, lots, dominant, indifferents } = regle;
+  /* COMBIEN D'ÉLÉMENTS IL FAUT ADDITIONNER POUR NE PAS ENCORE ÉGALER LE DOMINANT.
+     Compté, jamais « les deux suivants » écrit à la main : c'est exactement le
+     genre de phrase qui devient fausse à la fouille suivante. On n'ajoute un lot
+     que si la somme reste SOUS le dominant — sinon la phrase compterait celui qui
+     fait basculer le total et affirmerait le contraire de ce qu'elle a mesuré. */
+  const autres = lots.filter((l) => l.groupe !== "aucun" && l !== dominant);
+  let cumul = 0;
+  let combien = 0;
+  for (const l of autres) {
+    if (!dominant || cumul + l.n >= dominant.n) break;
+    cumul += l.n;
+    combien++;
+  }
+  const tousLesAutres = combien > 0 && combien === autres.length;
+
+  return (
+    <div className="glass-card" style={{ padding: "14px 16px", display: "grid", gap: 11 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
+        <span className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)" }}>
+          Quel élément emporter
+        </span>
+        {dominant?.emporter && (
+          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+            {entier(dominant.n)} des {entier(total)} monstres sont de <b style={{ color: "var(--text)" }}>{ELEMENT_FR[dominant.groupe].toLowerCase()}</b>
+            {tousLesAutres
+              ? ` — plus que les ${autres.length} autres éléments réunis`
+              : combien > 1 ? ` — plus que les ${combien} éléments suivants réunis` : ""}
+          </span>
+        )}
+      </div>
+
+      {/* LA DEUXIÈME COLONNE PASSE SOUS LA PREMIÈRE EN ÉTROIT. Mesuré à 375 px :
+          en deux colonnes, la gauche (élément + compte) se centre verticalement
+          contre une droite de cinq lignes, et le couple « ce qu'on affronte / ce
+          qu'on emporte » cesse de se lire comme un couple. Une media query et non
+          un test sur la largeur en JS : le premier rendu serait faux le temps que
+          l'effet se déclenche. Pas d'accent ni de commentaire dans cette CSS —
+          un commentaire dans un litteral de gabarit part en 500 sans que tsc le
+          voie. */}
+      <style>{`.vg-elem-ligne{display:grid;grid-template-columns:minmax(104px,auto) minmax(0,1fr);gap:4px 12px;align-items:center}
+@media(max-width:560px){.vg-elem-ligne{grid-template-columns:1fr;align-items:start;gap:6px}}`}</style>
+      <div style={{ display: "grid", gap: 7 }}>
+        {lots.map((l) => {
+          const part = l.emporter ? pourCent(l.emporter.faible, l.n) : 0;
+          return (
+            <div key={l.groupe} className="vg-elem-ligne" style={{
+              fontSize: 12.5,
+              background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 11px",
+            }}>
+              {/* CE QU'ON AFFRONTE : l'élément du monstre, et combien il y en a. */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                {l.groupe === "aucun"
+                  ? <span style={{ fontWeight: 700, color: "var(--text-muted)" }}>Sans élément</span>
+                  : <ElementDit e={l.groupe} />}
+                <span style={{ color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{entier(l.n)}</span>
+              </div>
+
+              {/* CE QU'ON EMPORTE, ET CE QU'ON LAISSE. Le second n'est pas un
+                  ornement : c'est l'erreur qui coûte, et elle ne se devine pas —
+                  rien à l'écran ne disait qu'un élément pouvait être ENCAISSÉ par
+                  la majorité d'un lot. */}
+              <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+                {l.emporter ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
+                    <Icon name="target" size={12} style={{ color: "var(--green)", flexShrink: 0 }} />
+                    <ElementDit e={l.emporter.e} anneau="var(--green)" />
+                    <Bulle largeur={280} quoi={
+                      <span style={{ display: "grid", gap: 4 }}>
+                        <span>Sur les <b>{entier(l.n)}</b> monstres {l.groupe === "aucun" ? "sans élément" : `de ${ELEMENT_FR[l.groupe].toLowerCase()}`}, face à {avecArticle(l.emporter.e)} :</span>
+                        <span><b style={{ color: "var(--green)" }}>{entier(l.emporter.faible)}</b> prennent plus</span>
+                        <span><b style={{ color: "var(--red)" }}>{entier(l.emporter.resiste)}</b> encaissent mieux</span>
+                        <span><b>{entier(l.emporter.neutre)}</b> ne bougent pas</span>
+                        <span style={{ color: "var(--text-muted)" }}>Compté dans les cinq colonnes du client, monstre par monstre.</span>
+                      </span>
+                    }>
+                      <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                        {entier(l.emporter.faible)} sur {entier(l.n)}
+                      </span>
+                    </Bulle>
+                    {/* LA BARRE : une teinte, la longueur porte la part. Plancher à
+                        1,5 % pour qu'une part minuscule reste visible au lieu de
+                        disparaître et de se lire comme « rien ». */}
+                    <span aria-hidden="true" style={{ flex: "0 1 200px", minWidth: 60, maxWidth: 240, height: 7, background: "var(--bg-2)", borderRadius: 4, overflow: "hidden", display: "block" }}>
+                      <span style={{ display: "block", width: `${Math.max(1.5, part)}%`, height: "100%", background: "var(--orange)", borderRadius: 4 }} />
+                    </span>
+                    <span style={{ color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 52, textAlign: "right" }}>{ditPourCent(part)}</span>
+                  </div>
+                ) : (
+                  <div style={{ color: "var(--text-muted)" }}>
+                    Aucun élément ne leur fait plus de mal qu'un autre.
+                  </div>
+                )}
+
+                {/* QUAND LE CONSEIL NE VAUT PAS LE GESTE, ON LE DIT. Sur les monstres
+                    sans élément, la meilleure faiblesse n'ouvre qu'une petite partie du
+                    lot pendant que la majorité ne réagit à RIEN : afficher la première
+                    ligne seule ferait changer d'arme pour rien. Le test est un
+                    comparatif de nombres, pas une liste d'exceptions écrite à la main —
+                    il suit les données. */}
+                {l.emporter && l.indifferents > l.emporter.faible && (
+                  <div style={{ color: "var(--text-muted)" }}>
+                    Mais <b style={{ color: "var(--text)" }}>{entier(l.indifferents)}</b> des {entier(l.n)} ne réagissent à aucun élément :
+                    contre ceux-là, changer d&apos;arme ne change rien.
+                  </div>
+                )}
+
+                {l.eviter && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", color: "var(--text-muted)", minWidth: 0 }}>
+                    <Icon name="shield" size={12} style={{ color: "var(--red)", flexShrink: 0 }} />
+                    <span>à laisser</span>
+                    <ElementDit e={l.eviter.e} anneau="var(--red)" gras={false} />
+                    <span style={{ fontVariantNumeric: "tabular-nums" }}>{entier(l.eviter.resiste)} l&apos;encaissent mieux</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* LE DÉMENTI, ET IL RESTE PARCE QU'IL CHANGE UN GESTE. Un joueur qui lit
+          « le vent, sur les monstres de terre » et n'entend pas « sauf pour
+          ceux-là » ouvre une fiche qui le contredit et croit le site cassé. */}
+      <div style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.55 }}>
+        <Invisible enJeu="Le jeu n'affiche aucune de ces colonnes : il montre l'élément du monstre, jamais ce qu'il encaisse. C'est pour ça que la règle circule de bouche à oreille et qu'elle circule fausse.">
+          <span>La règle générale ne remplace jamais la fiche.</span>
+        </Invisible>{" "}
+        {dominant?.emporter && (
+          <>
+            Sur les {entier(dominant.n)} monstres de {ELEMENT_FR[dominant.groupe].toLowerCase()},{" "}
+            <b style={{ color: "var(--text)" }}>{entier(dominant.emporter.resiste)}</b> encaissent mieux{" "}
+            {avecArticle(dominant.emporter.e)} malgré tout, et{" "}
+            <b style={{ color: "var(--text)" }}>{entier(dominant.emporter.neutre)}</b> n&apos;y sont ni faibles ni résistants.{" "}
+          </>
+        )}
+        {entier(indifferents)} des {entier(total)} monstres du catalogue ne portent que des zéros : contre eux, l&apos;élément ne change rien.
+        Chaque fiche montre ses cinq colonnes, et c&apos;est elle qui tranche.
+      </div>
+    </div>
+  );
+}
+
+/**
+ * LA RÈGLE, VUE DEPUIS UNE FICHE — trois cas, et le troisième est celui qui coûte.
+ *
+ * Posée sous les cinq colonnes du monstre, jamais à leur place : quand la fiche
+ * contredit la règle générale, ce sont SES colonnes qui font foi, et elles sont
+ * juste au-dessus. Le bloc dit alors la contradiction au lieu de la taire —
+ * taire un désaccord entre deux écrans du même site est la façon la plus sûre de
+ * faire emporter le mauvais élément.
+ */
+export function RegleSurLaFiche({ res, regle }: { res: Record<string, number>; regle: ConseilElement | null }) {
+  if (!regle?.emporter) return null;
+  const conseille = regle.emporter.e;
+  const etat = faceALaRegle(res, conseille);
+  const sien = faiblesses(res).faible;
+  const nomLot = regle.groupe === "aucun" ? "sans élément" : `de ${ELEMENT_FR[regle.groupe].toLowerCase()}`;
+
+  /* ┌──── « LES 176 AUTRES » EN COMPTAIT 175 ────┐
+     Les colonnes de `conseilElement` comptent TOUT le lot, cette fiche comprise :
+     un monstre neutre au vent est l'un des 176 neutres, pas un de plus. Écrire
+     « comme aux 176 autres » l'ajoutait à son propre groupe. On retire donc la
+     fiche affichée avant de dire « autres », et la clause disparaît quand il n'en
+     reste aucun — « comme aux 0 autres » ne veut rien dire.
+     └────────────────────────────────────────────┘ */
+  const lesAutres = (n: number) => n - 1;
+
+  /* Le ton et le pictogramme suivent le CAS, pas la couleur seule : chaque état a
+     son mot écrit en toutes lettres juste à côté. */
+  const cas = {
+    suit: { ic: "target" as IconName, ton: "var(--green)" },
+    neutre: { ic: "info" as IconName, ton: "var(--text-muted)" },
+    resiste: { ic: "alert" as IconName, ton: "var(--red)" },
+    sansRegle: { ic: "info" as IconName, ton: "var(--text-muted)" },
+  }[etat];
+
+  return (
+    <div style={{
+      marginTop: 9, background: "var(--bg-3)", border: "1px solid var(--border)",
+      borderRadius: 9, padding: "9px 11px", fontSize: 12, lineHeight: 1.6,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 4 }}>
+        <Icon name={cas.ic} size={13} style={{ color: cas.ton, flexShrink: 0 }} />
+        <span style={{ color: "var(--text-muted)" }}>Contre les {entier(regle.n)} monstres {nomLot}, on emporte</span>
+        <ElementDit e={conseille} anneau="var(--green)" />
+        <span style={{ color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+          ({entier(regle.emporter.faible)} sur {entier(regle.n)})
+        </span>
+      </div>
+
+      {etat === "suit" && (
+        <div>Celui-ci suit la règle : ses colonnes le donnent faible {aArticle(conseille)}.</div>
+      )}
+
+      {etat === "neutre" && (
+        <div>
+          <b style={{ color: "var(--text)" }}>Pas lui.</b>{" "}
+          {capitale(avecArticle(conseille))} ne lui fait ni plus ni moins de mal
+          {lesAutres(regle.emporter.neutre) > 1
+            ? <> — comme aux {entier(lesAutres(regle.emporter.neutre))} autres de son élément.</>
+            : lesAutres(regle.emporter.neutre) === 1
+              ? <> — comme au seul autre de son élément.</>
+              : <> — et il est le seul de son élément dans ce cas.</>}
+          {sien.length > 0
+            ? <> Ce qui l&apos;ouvre, ce sont ses colonnes ci-dessus : {sien.map((e) => ELEMENT_FR[e].toLowerCase()).join(", ")}.</>
+            : <> Ses cinq colonnes sont à zéro : aucun élément ne l&apos;ouvre.</>}
+        </div>
+      )}
+
+      {etat === "resiste" && (
+        <div>
+          <b style={{ color: "var(--red)" }}>Surtout pas lui.</b>{" "}
+          Il <b>encaisse mieux</b> {avecArticle(conseille)}
+          {lesAutres(regle.emporter.resiste) > 1
+            ? <>, comme {entier(lesAutres(regle.emporter.resiste))} autres de son élément</>
+            : lesAutres(regle.emporter.resiste) === 1
+              ? <>, comme le seul autre de son élément dans ce cas</>
+              : <>, et il est le seul de son élément dans ce cas</>}. La règle générale se trompe sur cette fiche —
+          {sien.length > 0
+            ? <> ce sont ses colonnes qui commandent : {sien.map((e) => ELEMENT_FR[e].toLowerCase()).join(", ")}.</>
+            : <> et ses cinq colonnes ne désignent aucun remplaçant.</>}
+        </div>
+      )}
+
+      {regle.eviter && regle.eviter.e !== conseille && (
+        <div style={{ color: "var(--text-muted)", marginTop: 3 }}>
+          Le piège de son élément : <ElementDit e={regle.eviter.e} taille={14} anneau="var(--red)" gras={false} />{" "}
+          — {entier(regle.eviter.resiste)} des {entier(regle.n)} l&apos;encaissent mieux.
+        </div>
+      )}
+    </div>
   );
 }

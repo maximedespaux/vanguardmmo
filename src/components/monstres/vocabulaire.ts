@@ -182,12 +182,115 @@ export function faiblesses(res: Record<string, number>) {
 export const colonnesRes = (res: Record<string, number>) =>
   ELEMENTS.map((e) => ({ e, v: typeof res?.[e] === "number" ? res[e] : 0 }));
 
+/* ════════ QUEL ÉLÉMENT EMPORTER — LA RÈGLE QUI MANQUAIT ════════
+ *
+ * Le site montrait les faiblesses MONSTRE PAR MONSTRE et n'a jamais dit la règle
+ * pratique : « la plupart sont de terre, prends du vent ». Elle se compte, et le
+ * compte porte sa propre nuance, qui est ce qui la rend utilisable :
+ *
+ *   sur les monstres de TERRE — le gros du catalogue —
+ *     le VENT est la faiblesse dominante,
+ *     et l'ÉLECTRICITÉ est ENCAISSÉE par la majorité d'entre eux.
+ *
+ * Se tromper d'élément ne fait pas « un peu moins de dégâts » : ça tape dans une
+ * résistance. C'est pour ça que la règle générale sort toujours accompagnée du
+ * compte de ceux qui la démentent — jamais d'un pourcentage seul.
+ *
+ * RIEN N'EST DÉDUIT DE LA ROUE ÉLÉMENTAIRE. La roue existe (voir `faiblesses`),
+ * mais elle ne produit ni les monstres à +0,5 sur trois éléments, ni les boss
+ * faibles à leur propre élément. Tout ci-dessous est un comptage sur les cinq
+ * colonnes du client, et rien d'autre. La règle générale se dit EN PLUS des
+ * colonnes, jamais à leur place.
+ */
+
+/** Un élément, et ce qu'un lot de monstres en fait : combien le prennent plus fort,
+ *  combien l'encaissent mieux, combien ne bougent pas. Les trois se somment à `n`. */
+export type ColonneLot = { e: string; faible: number; resiste: number; neutre: number };
+
+export type ConseilElement = {
+  /** L'élément des monstres comptés (« terre »), ou « aucun ». */
+  groupe: string;
+  /** Combien de monstres portent cet élément. */
+  n: number;
+  /** Les cinq éléments, dans l'ordre du jeu. */
+  colonnes: ColonneLot[];
+  /** Celui que le plus de monstres du lot prennent plus fort. `null` si aucun. */
+  emporter: ColonneLot | null;
+  /** Celui que le plus de monstres du lot ENCAISSENT MIEUX : le piège à éviter. */
+  eviter: ColonneLot | null;
+  /** Combien du lot ne portent que des zéros — l'élément n'y change rien. */
+  indifferents: number;
+};
+
+/** Le comptage d'un lot déjà filtré. `groupe` n'est qu'une étiquette : la fonction
+ *  ne relit pas `elem`, elle ne lit que les cinq colonnes. */
+export function conseilElement(lot: { res: Record<string, number> }[], groupe: string): ConseilElement {
+  const compte = new Map<string, ColonneLot>(
+    ELEMENTS.map((e) => [e, { e, faible: 0, resiste: 0, neutre: 0 }]),
+  );
+  let indifferents = 0;
+  for (const m of lot) {
+    let bouge = false;
+    for (const e of ELEMENTS) {
+      const c = compte.get(e)!;
+      const v = typeof m.res?.[e] === "number" ? m.res[e] : 0;
+      if (v < 0) { c.faible++; bouge = true; } else if (v > 0) { c.resiste++; bouge = true; } else c.neutre++;
+    }
+    if (!bouge) indifferents++;
+  }
+  const colonnes = ELEMENTS.map((e) => compte.get(e)!);
+  /* Départage par le NOMBRE, puis par l'ordre du jeu : sans second critère, deux
+     éléments à égalité changeaient de place d'un rendu à l'autre selon l'ordre
+     d'insertion de la table. */
+  const tete = (clef: "faible" | "resiste") => {
+    const t = [...colonnes].sort((a, b) => b[clef] - a[clef]
+      || ELEMENTS.indexOf(a.e as typeof ELEMENTS[number]) - ELEMENTS.indexOf(b.e as typeof ELEMENTS[number]))[0];
+    return t && t[clef] > 0 ? t : null;
+  };
+  return { groupe, n: lot.length, colonnes, emporter: tete("faible"), eviter: tete("resiste"), indifferents };
+}
+
+/**
+ * LE CATALOGUE ENTIER, RANGÉ PAR ÉLÉMENT DE MONSTRE — du plus peuplé au moins.
+ *
+ * C'est la table qui répond à « qu'est-ce que je prends », et le premier lot est
+ * la réponse la plus souvent utile parce que c'est le plus gros. `dominant` le
+ * nomme pour que les phrases n'aient pas à le supposer : le jour où une fouille
+ * renverse le classement, elles suivent.
+ */
+export function regleElementaire(monstres: { elem: string | null; res: Record<string, number> }[]) {
+  const parGroupe = new Map<string, { res: Record<string, number> }[]>();
+  for (const m of monstres) {
+    const g = m.elem ?? "aucun";
+    const l = parGroupe.get(g) ?? [];
+    l.push(m);
+    parGroupe.set(g, l);
+  }
+  const lots = [...parGroupe].map(([g, l]) => conseilElement(l, g)).sort((a, b) => b.n - a.n);
+  return {
+    total: monstres.length,
+    lots,
+    /** Le lot le plus peuplé — celui dont la règle sert le plus souvent. */
+    dominant: lots.find((l) => l.groupe !== "aucun") ?? null,
+    /** Combien, sur tout le catalogue, ne portent que des zéros. */
+    indifferents: lots.reduce((s, l) => s + l.indifferents, 0),
+  };
+}
+
+/** Ce que CE monstre-là fait de l'élément qu'on conseille contre les siens.
+ *  Trois réponses seulement, et chacune change le geste. */
+export function faceALaRegle(res: Record<string, number>, conseille: string | null | undefined) {
+  if (!conseille) return "sansRegle" as const;
+  const v = typeof res?.[conseille] === "number" ? res[conseille] : 0;
+  return v < 0 ? ("suit" as const) : v > 0 ? ("resiste" as const) : ("neutre" as const);
+}
+
 /**
  * L'ÉCHELLE DU GRAPHIQUE DE RÉSISTANCES, relevée sur les données.
  *
- * Les 5 606 valeurs du catalogue ne prennent que dix valeurs distinctes, et
- * 99,8 % d'entre elles tiennent entre −0,3 et +0,5. Neuf monstres portent 100,
- * 150 ou 718 — hors de toute échelle commune. On borne donc à 0,5 et on écrit le
+ * Les 5 601 valeurs du catalogue ne prennent que neuf valeurs distinctes, et
+ * 99,8 % d'entre elles tiennent entre −0,3 et +0,5. Huit monstres portent 100 ou
+ * 718 — hors de toute échelle commune. On borne donc à 0,5 et on écrit le
  * nombre à côté de la barre : une barre pleine avec « +718 » lisible dit la
  * vérité, alors qu'une échelle à 718 écraserait les 1 115 autres monstres à zéro.
  */
@@ -250,9 +353,9 @@ export function cadence(delaiMs: number | null): string | null {
  * signes. La phrase complète n'est pas perdue — elle passe dans l'infobulle du
  * navigateur, et la fiche du monstre, qui n'en montre qu'une, la garde en clair.
  *
- * L'UNITÉ CHANGE AVEC LE MONSTRE, ET C'EST VOULU. 1 039 des 1 124 frappent moins
+ * L'UNITÉ CHANGE AVEC LE MONSTRE, ET C'EST VOULU. 1 039 des 1 123 frappent moins
  * d'une fois par seconde : pour eux le chiffre qui parle est l'INTERVALLE (« 3,5 s »).
- * Les 85 autres — les boss des Chambres à 250 ms, certains du Chaos à 101 — se lisent
+ * Les 84 autres — les boss des Chambres à 250 ms, certains du Chaos à 101 — se lisent
  * en COUPS PAR SECONDE (« 9,9/s »). Le suffixe « /s » distingue les deux sans un mot :
  * « 3,5 s » est une durée, « 9,9/s » une fréquence. Tout ramener à une seule unité
  * afficherait « 0,29/s » pour le cas ordinaire, et « 0/s » pour le monstre dont le

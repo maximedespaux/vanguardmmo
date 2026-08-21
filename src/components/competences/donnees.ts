@@ -9,6 +9,11 @@
 //
 //  La source est `public/wiki/competences.json` (200 Ko), réduite depuis la
 //  fouille du client d'octobre 2025 : seuls les champs affichés ici y sont.
+//  Deux ajouts d'août 2026, faits sur le client de ce mois-là : le numéro de
+//  case d'icône de chaque compétence (bloc `planche`, voir
+//  `scripts/extraire-icones-competences.mjs`), et la vérification que les 99
+//  tables de dégâts qui varient d'un rang à l'autre y sont au chiffre près
+//  identiques — le relevé de 2025 décrit donc toujours le jeu de 2026.
 // ════════════════════════════════════════════════════════════════════════
 
 /** Les six marches où une compétence s'apprend. Mêmes noms que sur /classes. */
@@ -58,6 +63,50 @@ export type Niveau = {
   effets?: Effet[];
 };
 
+/**
+ * LA PLANCHE D'ICÔNES — une image, une case par dessin.
+ *
+ * Les 197 compétences de classe et les 17 compétences hors classe qui en ont une
+ * pointent sur un jeu plus petit de dessins : onze compétences de Magicien
+ * partagent la même icône, et c'est le client qui le dit, pas nous. Ils sont
+ * assemblés en une seule image par `scripts/extraire-icones-competences.mjs`,
+ * et une compétence ne porte que le NUMÉRO de sa case. La grille est décrite
+ * ici, jamais recopiée dans une feuille de style : le jour où le client ajoute
+ * une compétence, la planche change de forme et la page suit.
+ */
+export type Planche = {
+  fichier: string;
+  /** Le côté d'une case, en pixels. C'est la taille NATIVE des icônes du jeu. */
+  taille: number;
+  colonnes: number;
+  lignes: number;
+  cases: number;
+  source: string;
+};
+
+/**
+ * LES RANGS QUI NE CHANGENT RIEN.
+ *
+ * Certaines compétences ont des rangs dont AUCUNE colonne du client ne diffère
+ * du rang précédent — mêmes dégâts, mêmes PF, même durée, mêmes effets, même
+ * coût. Le jeu les fait payer plein tarif : c'est le renseignement qui évite
+ * une dépense, donc il est affiché.
+ *
+ * LA LISTE VIENT DU CLIENT, PAS DU RELEVÉ, et ça n'est pas un raffinement : le
+ * relevé ne garde que les colonnes qui varient, et une colonne qu'il a laissée
+ * de côté suffit à retourner le conseil. `scripts/rangs-muets-competences.mjs`
+ * relit donc `propSkillAdd.csv` rang par rang et pose la liste dans le relevé ;
+ * la route ne fait plus qu'y appliquer la table de coût. Combien de compétences
+ * sont concernées ne s'écrit nulle part : ça se compte sur `nbRangsMuets`,
+ * comme tous les autres chiffres de cette page.
+ */
+export type RangsMuets = {
+  /** Les rangs concernés, à partir du 2 — le rang 1 n'a pas de précédent. */
+  rangs: number[];
+  /** Ce que coûtent CES rangs-là, en points de compétence. */
+  cout: number;
+};
+
 /** L'entrée de catalogue : ce qu'il faut pour lister, filtrer et reconnaître. */
 export type Entree = {
   id: string;
@@ -71,8 +120,19 @@ export type Entree = {
   arme: string | null;
   /** Ce que la compétence fait, en une ligne. Composé par la route. */
   resume: string | null;
-  /** Vrai si un prérequis conditionne son apprentissage. */
-  aPrerequis: boolean;
+  /** Ce qu'elle fait, dans les mots du jeu. Il est dans l'index et plus
+   *  seulement dans la fiche : sans lui, une ligne fermée ne disait que des
+   *  chiffres, et il fallait ouvrir 197 fiches pour savoir de quoi on parle. */
+  desc: string | null;
+  /** Le numéro de case sur la planche. `null` si le client n'en donne pas. */
+  icone: number | null;
+  /** Ce qu'il faut avoir monté avant, et à quel rang. Vide = rien.
+   *  Dans l'INDEX et plus seulement dans la fiche : l'arbre des compétences se
+   *  dessine sur ces arêtes, et il ne peut pas demander 197 fiches pour les
+   *  connaître. Le surcoût est de six kilo-octets. */
+  prerequis: Lien[];
+  /** Combien de ses rangs ne changent aucune valeur. 0 = aucun. */
+  nbRangsMuets: number;
 };
 
 export type Lien = { id: string; nom: string; niveau: number };
@@ -103,6 +163,10 @@ export type Fiche = {
   prerequis: Lien[];
   /** Ce que monter cette compétence ouvre. Le sens que le client ne donne pas. */
   debloque: Lien[];
+  /** Le numéro de case sur la planche d'icônes. */
+  icone: number | null;
+  /** Les rangs qui ne changent aucune valeur, et ce qu'ils coûtent. */
+  rangsMuets: RangsMuets;
 };
 
 export type Lignee = {
@@ -118,6 +182,13 @@ export type Lignee = {
 export type Catalogue = {
   entrees: Entree[];
   lignees: Lignee[];
+  /** D'où sort ce relevé, phrase comprise — « Client Airborn (octobre 2025),
+   *  archives .air déchiffrées ». Elle voyage AVEC les données au lieu d'être
+   *  retapée à l'écran : la page l'annonçait en dur, et une refouille l'aurait
+   *  rendue fausse en silence. `null` si le relevé ne la porte pas. */
+  source: string | null;
+  /** La planche d'icônes, et sa grille. `null` si elle n'a jamais été générée. */
+  planche: Planche | null;
   /** Points à dépenser pour passer AU niveau n. Cumuler pour un budget. */
   xpCompetence: { niveau: number; xp: number }[];
   horsClasse: HorsClasse;
@@ -127,10 +198,19 @@ export type Catalogue = {
   doublons: { id: string; nom: string; classe: string }[];
 };
 
+/**
+ * Les compétences hors arbre de classe.
+ *
+ * `icone` est le numéro de case sur la même planche que les 197 autres. Il vaut
+ * `null` pour les trois compétences de COUPLE, et ce n'est pas un oubli : le
+ * client attache leurs dessins à des objets de buff libellés « Puissance
+ * d'attaque +2 % », jamais au nom de la compétence. Les relier demanderait de
+ * deviner (voir `scripts/extraire-icones-competences.mjs`).
+ */
 export type HorsClasse = {
-  souverain: { nom: string; type: string; description: string; cible: string; rechargeS: number | null; porteeMax: number | null; permanente: boolean }[];
-  groupe: { nom: string; description: string; actif: boolean; niveauGroupe: number | null; coutPoints: number | null }[];
-  couple: { nom: string; niveaux: { niveau: number; niveauCouple: number; effets: string }[] }[];
+  souverain: { nom: string; type: string; description: string; cible: string; rechargeS: number | null; porteeMax: number | null; permanente: boolean; icone: number | null }[];
+  groupe: { nom: string; description: string; actif: boolean; niveauGroupe: number | null; coutPoints: number | null; icone: number | null }[];
+  couple: { nom: string; niveaux: { niveau: number; niveauCouple: number; effets: string }[]; icone: number | null }[];
   bonusGroupe: { niveauGroupe: number; bonus: number }[];
 };
 

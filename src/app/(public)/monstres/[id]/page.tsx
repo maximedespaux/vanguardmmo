@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { monstreParId, voisins } from "@/components/monstres/catalogue";
+import { monstreParId, regleDuGroupe, voisins } from "@/components/monstres/catalogue";
 import { FicheMonstre } from "@/components/monstres/Fiche";
 import { court } from "@/components/monstres/vocabulaire";
 
@@ -19,7 +19,10 @@ export default async function FicheMonstrePage({ params }: { params: Promise<{ i
   const { id } = await params;
   const m = monstreParId(decodeURIComponent(id));
   if (!m) notFound();
-  return <FicheMonstre m={m} voisins={voisins(m)} />;
+  // Ce que font les AUTRES monstres de son élément : c'est ce qui permet à la fiche
+  // de dire « la règle générale conseille le vent — pas contre celui-là », au lieu
+  // de laisser deux écrans du même site se contredire en silence.
+  return <FicheMonstre m={m} voisins={voisins(m)} regle={regleDuGroupe(m.elem)} />;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {

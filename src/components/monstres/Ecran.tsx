@@ -5,10 +5,10 @@ import { Icon } from "@/components/Icon";
 import { Bulle, Invisible } from "@/components/Bulle";
 import { useCardFx } from "@/components/VgFx";
 import { RechercheMonstres } from "./Recherche";
-import { ContenusBoss, Faiblesses, ProvenanceMonstres, SchemaVies } from "./Graphiques";
+import { ContenusBoss, Faiblesses, ProvenanceMonstres, QuelElementEmporter, SchemaVies } from "./Graphiques";
 import {
   cadence, cadenceCourte, coupMax, court, ELEMENT_FR, entier, iconeElement, tonRang,
-  type Compteurs, type LigneClassement,
+  type Compteurs, type ConseilElement, type LigneClassement,
 } from "./vocabulaire";
 
 /**
@@ -20,7 +20,7 @@ import {
  *
  * Le classement et les frappeurs sont calculés côté serveur et passés en
  * propriétés : ils ne bougent jamais, les recalculer à chaque affichage aurait
- * relu 1 124 lignes pour un résultat identique.
+ * relu 1 123 lignes pour un résultat identique.
  *
  * ┌───────────── CE QUI A QUITTÉ CETTE PAGE ─────────────┐
  * │ L'avertissement sur le butin ordinaire coiffait la    │
@@ -42,8 +42,16 @@ import {
 
 type Onglet = "chercher" | "boss" | "frappeurs";
 
-export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, viesMaison, objetsLaches }: {
+export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, viesMaison, objetsLaches, regle }: {
   boss: LigneClassement[]; frappeurs: LigneClassement[]; compteurs: Compteurs; total: number;
+  /**
+   * QUEL ÉLÉMENT EMPORTER — comptée côté serveur sur les cinq colonnes du client.
+   *
+   * Elle descend en propriété plutôt que d'être recalculée ici : le catalogue de
+   * 612 Ko ne quitte pas le serveur, et ce sont six lots de cinq nombres qui
+   * voyagent. Voir `catalogue.regleElement()`.
+   */
+  regle: { total: number; lots: ConseilElement[]; dominant: ConseilElement | null; indifferents: number };
   /* `groupes` n'est plus reçu : les contenus se comptent sur les lignes affichées
      (`ContenusBoss`), et les comptes du catalogue entier posés sous un tableau de 94
      lignes se lisaient comme les comptes de ce tableau. Un tableau de quinze couples
@@ -120,6 +128,18 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
           </Bulle>
         } />
       </div>
+
+      {/* ┌──── LE RENSEIGNEMENT QUI MANQUAIT À TOUTE LA PAGE ────┐
+             Les faiblesses étaient là depuis le début, mais UNE PAR FICHE : pour
+             savoir quoi emporter, il fallait ouvrir les monstres un par un. La
+             règle pratique — « ils sont surtout de terre, prends du vent » — ne
+             se lisait nulle part, et un joueur qui l'ignore emporte au hasard ou
+             emporte l'élément que la majorité ENCAISSE.
+             Posée AVANT les onglets parce qu'elle se lit avant de chercher : on
+             prépare un run, puis on va voir qui on affronte. Tout est compté sur
+             les cinq colonnes du client — voir `regleElementaire`.
+             └───────────────────────────────────────────────────────┘ */}
+      <QuelElementEmporter regle={regle} />
 
       <div className="vg-subtabs" style={{ margin: 0 }}>
         {([["chercher", "Chercher"], ["boss", "Les boss par PV à sortir"], ["frappeurs", "Ceux qui frappent le plus fort"]] as const).map(([k, l]) => (

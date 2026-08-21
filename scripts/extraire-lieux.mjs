@@ -173,8 +173,38 @@ const LIEUX = [
 ];
 
 /** Le peuplement d'une zone : ce qui décide si le lieu vaut d'être montré. */
+/**
+ * LES MONSTRES D'EXPÉRIENCE NE SONT PAS UN PALIER DE LA ZONE.
+ *
+ * ┌──────────── LE DÉFAUT QUE CETTE RÈGLE CORRIGE ────────────┐
+ * │ La fiche d'Azria annonçait « du niveau 73 au 210 », en    │
+ * │ deux paliers disjoints : 8 espèces de 73 à 115, puis      │
+ * │ 3 de 190 à 210. Le second n'existe pas comme zone. Ses    │
+ * │ trois créatures portent les identifiants MI_EXP_190,      │
+ * │ MI_EXP_200 et MI_EXP_210 — ce sont des monstres           │
+ * │ D'EXPÉRIENCE qu'Airborn a posés sur la carte enneigée,    │
+ * │ pas une tranche de progression. Maxime, qui y joue, l'a   │
+ * │ dit : « Azria c'est la dernière zone, 73-114, y'a pas ».  │
+ * │ Le relevé lui donnait tort ; c'est la LECTURE du relevé   │
+ * │ qui était fausse.                                          │
+ * └────────────────────────────────────────────────────────────┘
+ *
+ * La règle se lit dans la donnée, elle n'est pas écrite pour Azria : le préfixe
+ * `MI_EXP_` désigne la famille. Vérifié — il n'en existe QUE TROIS dans tout le
+ * jeu, les trois sur Azria, les trois marqués contenu du serveur. Le jour où le
+ * serveur en pose ailleurs, ils seront traités pareil sans qu'on y touche.
+ *
+ * ILS NE DISPARAISSENT PAS POUR AUTANT : ils sortent des niveaux DE LA ZONE et
+ * reviennent dans leur propre champ. Trois monstres à 190, 200 et 210 posés pour
+ * farmer l'expérience, c'est exactement ce qu'un joueur de ce niveau cherche —
+ * et ça ne se devine pas en regardant une carte de zone 73-115.
+ */
+const estMonstreDExperience = (m) => /^MI_EXP_/i.test(m.id ?? "");
+
 function peuplement(zones) {
-  const especes = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
+  const dansLaZone = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
+  const especes = dansLaZone.filter((m) => !estMonstreDExperience(m));
+  const experience = dansLaZone.filter(estMonstreDExperience);
   if (!especes.length) return null;
   const poses = especes.reduce(
     (t, m) => t + (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0),
@@ -191,6 +221,15 @@ function peuplement(zones) {
     nivMax: Math.max(...especes.map((m) => m.niv)),
     gros: { nom: reparer(gros.nom), niv: gros.niv, pv: gros.pvEff ?? gros.pv, rang: gros.rang, poses: nb(gros) },
     paliers: paliersDe(zones),
+    /* Absent quand il n'y en a pas — un champ vide sur sept lieux sur huit
+       ferait croire à un renseignement manquant plutôt qu'à une absence. */
+    ...(experience.length
+      ? {
+          monstresDExperience: experience
+            .sort((a, b) => (a.niv ?? 0) - (b.niv ?? 0))
+            .map((m) => ({ nom: reparer(m.nom), niv: m.niv, pv: m.pvEff ?? m.pv, poses: nb(m) })),
+        }
+      : {}),
   };
 }
 
@@ -207,10 +246,17 @@ function peuplement(zones) {
  */
 function paliersDe(zones) {
   if (zones.length < 2) return undefined;
+  /* Les monstres d'expérience sont écartés ICI AUSSI, et c'est le point : c'est
+     ce découpage qui fabriquait le faux palier « Azria 190–210 ». Sans ce
+     filtre, la zone « Azria » ne contient plus qu'eux, et un lieu se retrouve
+     annoncé jusqu'au niveau 210 alors qu'il s'arrête à 115. */
   const parZone = zones.map((z) => ({
     zone: z,
-    especes: MONSTRES.filter((m) => (m.lieux ?? []).some((l) => l.z === z)),
+    especes: MONSTRES.filter((m) => !estMonstreDExperience(m) && (m.lieux ?? []).some((l) => l.z === z)),
   }));
+  /* Une zone vidée par ce filtre ne produit plus de palier du tout — c'est le
+     cas d'Azria, dont la seconde zone ne portait que les trois MI_EXP_. La fiche
+     retombe donc sur son intervalle unique, 73–115, qui est le vrai. */
   if (parZone.some((p) => !p.especes.length)) return undefined;
   const ids = parZone.map((p) => new Set(p.especes.map((m) => m.id)));
   const partage = ids.some((a, i) => ids.some((b, j) => i !== j && [...a].some((x) => b.has(x))));

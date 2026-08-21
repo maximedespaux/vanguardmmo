@@ -41,6 +41,11 @@ type Lieu = {
   especes: number; poses: number; nivMin: number; nivMax: number;
   gros: { nom: string; niv: number; pv: number; rang: string; poses: number };
   paliers?: Palier[];
+  /** Les monstres d'EXPÉRIENCE posés par le serveur sur la carte : ils ne
+   *  comptent pas dans les niveaux de la zone (cf. `extraire-lieux.mjs`), mais
+   *  ils sont là, et c'est ce qu'un joueur de leur niveau vient chercher.
+   *  Absent quand il n'y en a pas — sept lieux sur huit. */
+  monstresDExperience?: { nom: string; niv: number; pv: number; poses: number }[];
   objets: { nom: string; icone: string | null }[];
   ticket?: Ticket | null;
 };
@@ -201,8 +206,8 @@ export function HorsTeleporteur() {
  * L'ÉCHELLE DES NIVEAUX — un segment par lieu, tous sur le même axe.
  *
  * Le maximum de l'axe se LIT dans la table (le plus haut niveau rencontré),
- * arrondi à la dizaine supérieure : le fixer à 200 aurait coupé les capitaines
- * d'Azria, qui montent à 210.
+ * arrondi à la dizaine supérieure — il ne se fixe pas à la main, sinon un lieu
+ * ajouté plus haut sortirait de l'axe sans que rien ne le signale.
  *
  * UNE SEULE TEINTE, celle du bloc. C'est la position et la LONGUEUR du segment
  * qui portent le renseignement, jamais la couleur — le vert et le doré ne se
@@ -210,14 +215,24 @@ export function HorsTeleporteur() {
  * qu'un lieu à niveau unique (Mine de Dekanes, tout entière au niveau 30) garde
  * un repère visible au lieu de disparaître.
  *
- * ┌──── UN SEGMENT PAR PALIER, ET C'EST LÀ QUE LE SCHÉMA REMPLACE LA PROSE ────┐
- * │ Azria n'est pas « du niveau 73 au 210 » : elle a deux paliers DISJOINTS —   │
- * │ huit espèces de 73 à 115, puis trois de 190 à 210, et rien entre les deux.  │
- * │ Une barre pleine de 73 à 210 promettait donc du contenu au niveau 150 qui   │
- * │ n'existe pas. La tuile le rattrapait en dix-huit mots de texte ; ici c'est  │
- * │ le TROU entre les deux segments qui le dit, et les dix-huit mots partent.   │
- * │ Le détail chiffré reste dans l'étiquette lue par un lecteur d'écran.        │
- * └───────────────────────────────────────────────────────────────────────────┘
+ * ┌──── UN SEGMENT PAR PALIER — ET AZRIA N'EN A PLUS QU'UN ────┐
+ * │ Ce bloc dessinait Azria en DEUX segments disjoints, 73–115  │
+ * │ puis 190–210, en présentant le trou entre les deux comme un │
+ * │ renseignement. Le second palier n'existe pas : ses trois     │
+ * │ créatures portent les identifiants MI_EXP_190/200/210 — des │
+ * │ monstres d'EXPÉRIENCE posés par le serveur sur la carte      │
+ * │ enneigée, pas une tranche de progression. Maxime, qui y      │
+ * │ joue, l'a dit ; le relevé disait autre chose, et c'est sa    │
+ * │ LECTURE qui était fausse.                                    │
+ * │                                                              │
+ * │ `extraire-lieux.mjs` les écarte désormais des niveaux de la  │
+ * │ zone et les range dans `monstresDExperience`. Azria redevient│
+ * │ un segment unique, 73–115, et son plus gros monstre cesse    │
+ * │ d'être un mob d'XP à 2 036 000 PV.                           │
+ * │                                                              │
+ * │ Le mécanisme des paliers multiples RESTE : il servira au     │
+ * │ prochain lieu qui en aura de vrais.                          │
+ * └──────────────────────────────────────────────────────────────┘
  */
 function EchelleNiveaux() {
   const max = Math.ceil(Math.max(...LIEUX.map((l) => l.nivMax)) / 10) * 10;
@@ -307,6 +322,23 @@ function CarteLieu({ l, etalDitEnBas }: { l: Lieu; etalDitEnBas: boolean }) {
           <Puce ic="paw" titre="Espèces différentes posées sur la carte">{l.especes} espèces</Puce>
           <Puce ic="grid" titre={`${fr(l.poses)} emplacements de réapparition sur la carte`}>{fr(l.poses)}</Puce>
           <Puce ic="star" titre="Les niveaux rencontrés ici">niv. {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}</Puce>
+          {/* LES MONSTRES D'XP, À PART DES NIVEAUX DE LA ZONE ET C'EST VOULU. Les
+              compter dedans faisait annoncer Azria « jusqu'au niveau 210 » alors
+              qu'elle s'arrête à 115 — trois mobs d'expérience posés sur la carte
+              ne sont pas une tranche de progression. Mais ils existent, et un
+              joueur de 190 vient précisément pour eux : la pastille les nomme,
+              le survol donne leurs niveaux et leurs PV. */}
+          {l.monstresDExperience?.length ? (
+            <Puce
+              ic="flame"
+              titre={`Monstres d'expérience posés par Airborn sur cette carte, hors progression de la zone — ${l.monstresDExperience
+                .map((m) => `${m.nom} (niv. ${m.niv}, ${pvCourt(m.pv)} PV)`)
+                .join(" · ")}`}
+            >
+              {l.monstresDExperience.length} monstres d&apos;XP · niv.{" "}
+              {l.monstresDExperience[0].niv}–{l.monstresDExperience[l.monstresDExperience.length - 1].niv}
+            </Puce>
+          ) : null}
         </div>
 
         {/* LA LIGNE DES PALIERS EST PARTIE DANS LE SCHÉMA. Elle disait « 2 paliers

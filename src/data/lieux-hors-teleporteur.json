@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-12",
+ "genere": "2026-08-21",
  "source": "public/wiki/monstres.json + public/wiki/ou-trouver.json + cartouches lus sur public/jeu/cartes-monde/",
  "lieux": [
   {
@@ -37,29 +37,35 @@
    "nom": "Azria",
    "cartouche": "Azria",
    "carte": "/jeu/cartes-monde/world_azria.webp",
-   "especes": 11,
-   "poses": 6505,
+   "especes": 8,
+   "poses": 2375,
    "nivMin": 73,
-   "nivMax": 210,
+   "nivMax": 115,
    "gros": {
-    "nom": "Hyoubi renard hivernal",
-    "niv": 210,
-    "pv": 2036000,
-    "rang": "capitaine",
-    "poses": 2030
+    "nom": "Mammouth Cannibale",
+    "niv": 115,
+    "pv": 96403,
+    "rang": "normal",
+    "poses": 335
    },
-   "paliers": [
+   "monstresDExperience": [
     {
-     "zone": "Azria 2",
-     "especes": 8,
-     "nivMin": 73,
-     "nivMax": 115
+     "nom": "Kerobero ensorceleur glacial",
+     "niv": 190,
+     "pv": 936000,
+     "poses": 1150
     },
     {
-     "zone": "Azria",
-     "especes": 3,
-     "nivMin": 190,
-     "nivMax": 210
+     "nom": "Wampa des neiges",
+     "niv": 200,
+     "pv": 1436000,
+     "poses": 950
+    },
+    {
+     "nom": "Hyoubi renard hivernal",
+     "niv": 210,
+     "pv": 2036000,
+     "poses": 2030
     }
    ],
    "objets": [],

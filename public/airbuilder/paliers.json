@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-13",
+ "genere": "2026-08-21",
  "source": "Client/data-02.air ▸ accessory.inc (bonus par palier) · propEnchant.inc · Client/data-00.air ▸ defineitem.h, defineachievement.h · FSDATA/COMMON/Systems/data.air ▸ artefact.json, angels.json, propweaponleveling.inc, randomitemstat.inc",
  "quoi": "Les bonus d'un bijou à chaque palier d'amélioration, libellés en français. Index = le rang du palier ; une case vide signifie que le client n'écrit rien à ce rang.",
  "regle": {

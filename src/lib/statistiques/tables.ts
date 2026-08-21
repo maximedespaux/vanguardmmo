@@ -17,6 +17,8 @@ import path from "node:path";
  *                                     5 075 objets, 2 518 avec bonus, six paires au plus.
  *   src/data/statistiques-objets.json  le dictionnaire DST_ → libellé français.
  *   public/airbuilder/paliers.json     les paliers d'accessoire, libellés DÉJÀ en français.
+ *   public/wiki/balance.json           propBalance.xml : l'ÉQUILIBRAGE du serveur, 45 métiers
+ *                                     x 2 situations. La seule table qui nomme l'ARC.
  *   public/wiki/bonus-sources.json     panoplies, sertissage, perçage, rareté, maîtrise
  *                                     d'arme, éveil, artefact, anges, facteurs de classe.
  *   public/airbuilder/data.json        le catalogue du builder (ITEMS), les signatures de
@@ -131,6 +133,21 @@ export type Tables = {
   /** Facteurs de classe, par code de classe du client (VAGRANT, RANGER_HERO…). */
   facteurs: Map<string, FacteurClasse>;
   /**
+   * L'ÉQUILIBRAGE DU SERVEUR, situation PvE — `propBalance.xml`, relevé dans
+   * `public/wiki/balance.json`. Indexé par le nom de `defineJob.h` (`JOB_VAGRANT`).
+   *
+   * C'est la SECONDE table de métier du client, et elle ne dit pas la même chose que
+   * `propJob.inc` : les facteurs d'arme y varient d'un métier à l'autre, et elle
+   * nomme l'ARC, que propJob ignore. Ce n'est pas pour autant un remplacement — une
+   * ligne ne nomme que les armes de sa propre voie. Les deux tables se lisent donc
+   * ensemble, l'équilibrage d'abord.
+   *
+   * ON NE GARDE QUE LA SITUATION PvE : ce moteur calcule les caractéristiques d'un
+   * personnage face à un monstre. La table PvP existe et diverge (jusqu'à un facteur
+   * 84 sur un facteur de compétence) — la servir ici donnerait des chiffres de duel.
+   */
+  equilibrage: Map<string, LigneEquilibrage>;
+  /**
    * Catalogue du builder, par identifiant RENDU EN TEXTE. Les vingt-quatre pièces
    * de costume portent un identifiant de TEXTE (« itm_mSeakingLook01_Cap-32.dds#HP »)
    * là où tout le reste porte un nombre : un index numérique les perdrait toutes.
@@ -145,6 +162,9 @@ export type Tables = {
   /** Les sources, telles que les relevés les écrivent. */
   sources: Record<string, string>;
 };
+
+/** Une ligne de `balance.json` : un métier, une situation. */
+export type LigneEquilibrage = { id: string; metier: string; attributs: Record<string, number> };
 
 export type CatalogueEntree = {
   id: number | string; n: string; ic?: string; lv?: number; pr?: number;
@@ -322,6 +342,13 @@ export function chargerTables(): Tables {
   const fdc = (bs.facteursDeClasse ?? {}) as { classes: FacteurClasse[] };
   for (const f of fdc.classes ?? []) facteurs.set(f.classe, f);
 
+  const bal = lire("public", "wiki", "balance.json") as {
+    source: { fichiers: { chemin: string }[] };
+    equilibrages: Record<string, { metiers: LigneEquilibrage[] }>;
+  };
+  const equilibrage = new Map<string, LigneEquilibrage>();
+  for (const m of bal.equilibrages.PVE_BALANCE?.metiers ?? []) equilibrage.set(m.id, m);
+
   const items = (db.ITEMS ?? {}) as Record<string, CatalogueEntree[]>;
   const catalogue = new Map<string, CatalogueEntree>();
   for (const [emplacement, liste] of Object.entries(items)) {
@@ -344,13 +371,14 @@ export function chargerTables(): Tables {
     panoplies, panoplieDePiece, sertissage, ordreSertissage, gemmesCostume, holographiques,
     cartesParId, cartesParCle, maitriseParType, maitriseParObjet, rarete,
     plafondEveil: (bs.eveil ?? { general: {}, costume: {}, pet: {} }) as Tables["plafondEveil"],
-    facteurs, catalogue, signatures, carnets,
+    facteurs, equilibrage, catalogue, signatures, carnets,
     mech: (db.MECH ?? { arme: {}, bijou: {}, armure: {}, mode: {} }) as Mech,
     sources: {
       objets: objets.source,
       libelles: dico.source,
       paliers: pal.source,
       bonus: bs.source,
+      equilibrage: (bal.source?.fichiers ?? []).map((f) => f.chemin).join(" · "),
       builder: String((db.SRC as Record<string, string> | undefined)?.objets ?? ""),
       reserve: String((db.SRC as Record<string, string> | undefined)?.reserve ?? ""),
     },

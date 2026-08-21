@@ -84,18 +84,15 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { lireArchive, texte } from "./lib-air.mjs";
+import { archive, texte, signatureClient } from "./lib-air.mjs";
 
 const racine = process.cwd();
-const CLIENT = process.env.AIRFLYFF_CLIENT
-  ?? path.join(process.env.HOME, "Desktop/source/AirflyffClient_Octobre_2025/Client");
-
-const a00 = lireArchive(path.join(CLIENT, "data-00.air"));
-const a01 = lireArchive(path.join(CLIENT, "data-01.air"));
-const a02 = lireArchive(path.join(CLIENT, "data-02.air"));
-const a05 = lireArchive(path.join(CLIENT, "data-05.air"));
-const sys = lireArchive(path.join(CLIENT, "FSDATA/COMMON/Systems/data.air"));
-const cli = lireArchive(path.join(CLIENT, "FSDATA/CLIENT/data.air"));
+const a00 = archive("data-00.air");
+const a01 = archive("data-01.air");
+const a02 = archive("data-02.air");
+const a05 = archive("data-05.air");
+const sys = archive("FSDATA/COMMON/Systems/data.air");
+const cli = archive("FSDATA/CLIENT/data.air");
 
 const ID_OBJET = new Map();
 for (const m of texte(a00.get("defineitem.h")).matchAll(/^#define\s+(II_[A-Z0-9_]+)\s+(-?\d+)/gm)) {
@@ -382,6 +379,7 @@ const holoMain = (bd.HOLOSTATS ?? []).map(([nom, v], i) => {
 
 const sortie = {
   genere: new Date().toISOString().slice(0, 10),
+  client: signatureClient(),
   source: "Client/data-05.air (Ultimate_GemAbility.txt, Costume_GemAbility.txt) · Client/FSDATA/COMMON/Systems/data.air (propweaponleveling.inc, rarity.json, artefact.json, angels.json) · Client/FSDATA/CLIENT/data.air (maxawakes.json) · Client/data-02.air (propItemEtc.inc) · Client/data-00.air + data-01.air (identifiants et noms)",
   sertissage: {
     ultimes: gemmesUltimes,

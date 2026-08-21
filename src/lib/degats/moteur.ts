@@ -26,7 +26,8 @@
 //    · il n'affirme rien : chaque résultat repart avec ses réserves.
 // ════════════════════════════════════════════════════════════════════════════
 
-import { apportDeStat, familleDe, SANS_FACTEUR, vitesseDAttaque } from "./armes";
+import { apportDeStat, familleDe, famillesSansFacteurDArme, vitesseDAttaque } from "./armes";
+import { proprieteEquilibree } from "./balance";
 import { cadenceDe, elementDe, estOffensive, natureDe, niveauDe, puissanceDeCompetence } from "./competences";
 import {
   PALIER_NON_CALCULABLE,
@@ -82,10 +83,15 @@ export function coupOrdinaire(c: Combattant, cible: Cible, o: Options = {}): Res
     return vide(`Aucune arme en main ${o.main ?? "droite"} : rien à calculer.`);
   }
 
+  /* LE REFUS RESTE, MAIS IL SE MESURE. Il était écrit en dur sur l'arc, parce que
+     `propJob.inc` ne nomme pas cette famille. `propBalance.xml` la nomme : l'arc
+     et l'arbalète se calculent désormais, et la liste des familles sans facteur
+     se compte sur les DEUX tables — elle est vide sur ce client. La porte reste
+     ouverte : le prochain client peut très bien retirer une famille. */
   const famille = familleDe(arme);
-  if (famille && SANS_FACTEUR.includes(famille)) {
+  if (famille && famillesSansFacteurDArme().includes(famille)) {
     return vide(
-      `${arme.nom} — l'attaque ordinaire d'un arc ne se calcule pas : propJob.inc n'a pas de colonne pour l'arc, donc le coefficient qui met la Dextérité à l'échelle n'est écrit dans aucun fichier du client. Les compétences d'arc, elles, se calculent : leur coefficient est dans propSkill.txt.`,
+      `${arme.nom} — l'attaque ordinaire de cette arme ne se calcule pas : la famille ${famille} n'a de coefficient ni dans propBalance.xml ni dans propJob.inc. Les compétences, elles, se calculent : leur coefficient est dans propSkill.txt.`,
     );
   }
 
@@ -604,19 +610,32 @@ function appliquerBonusMonstres(c: Combattant, cible: Cible, min: number, max: n
 /**
  * LE COUP CRITIQUE, montré à côté du coup normal et jamais fondu dedans.
  *
- * Le taux se lit : Dextérité / 10 × le facteur CRITICAL de `propJob.inc`, plus
- * le taux critique de l'équipement. Le facteur vaut 1 pour toutes les classes
- * SAUF la famille Sylphide, où il vaut 4 — c'est écrit dans le client, et c'est
- * la seule classe pour laquelle la Dextérité paie quatre fois.
+ * Le taux se lit : Dextérité / 10 × le facteur CRITICAL du métier, plus le taux
+ * critique de l'équipement. LE FACTEUR VIENT DE DEUX TABLES QUI NE DISENT PAS LA
+ * MÊME CHOSE — `JOB_PROP_CRITICAL` est la neuvième propriété de
+ * `defineBalance.h`, au même titre que les facteurs d'arme :
+ *   · `propJob.inc` ne connaît que deux valeurs sur ses quarante lignes ;
+ *   · `propBalance.xml` en connaît davantage, et donne au Templier, au Moine et
+ *     à la Sylphide des taux distincts.
+ * Même arbitrage que pour l'arme, et pour la même raison : l'équilibrage d'abord,
+ * propJob en repli, et LES DEUX ÉCRITS dans le terme quand ils divergent.
  *
  * Le multiplicateur, lui, est du Flyff officiel : entre 1,1 et 1,4 à niveau égal,
  * entre 1,2 et 2 quand on tape plus bas que soi.
  */
 function coupCritique(c: Combattant, cible: Cible, min: number, max: number) {
   const ligne = facteursDeClasse().get(c.classe);
-  const facteurClasse = typeof ligne?.CRITICAL === "number" ? ligne.CRITICAL : 1;
+  const dePropJob = typeof ligne?.CRITICAL === "number" ? ligne.CRITICAL : null;
+  const deLEquilibrage = proprieteEquilibree(c.classe, "Critical");
+  const facteurClasse = deLEquilibrage ?? dePropJob ?? 1;
+  const divergence = deLEquilibrage != null && dePropJob != null && deLEquilibrage !== dePropJob ? dePropJob : null;
   const dex = statPourEchelle(c, "dexterite");
   const reserves: string[] = dex.plate ? [] : [RESERVE_STATS_PLATES];
+  if (divergence != null) {
+    reserves.push(
+      `Facteur critique de ${c.classe} : les deux tables du client ne s'accordent pas — propBalance.xml donne ${deLEquilibrage}, propJob.inc donne ${divergence}. Le calcul emploie l'équilibrage du serveur.`,
+    );
+  }
   const taux = Math.floor((dex.valeur / 10) * facteurClasse) + (c.bonus.DST_CHR_CHANCECRITICAL ?? 0);
   const bonusDegats = c.bonus.DST_CRITICAL_BONUS ?? 0;
 
@@ -631,9 +650,15 @@ function coupCritique(c: Combattant, cible: Cible, min: number, max: number) {
       libelle: `Taux critique : Dextérité ${dex.valeur} / 10 × ${facteurClasse}${c.bonus.DST_CHR_CHANCECRITICAL ? ` + ${c.bonus.DST_CHR_CHANCECRITICAL} d'équipement` : ""}`,
       valeur: Math.min(taux, 100),
       unite: "pourcent",
-      source: "facteur CRITICAL : Client/data-02.air ▸ propJob.inc — le / 10 : Flyff officiel",
+      source: deLEquilibrage != null
+        ? `facteur Critical : Client/data-05.air ▸ propBalance.xml, PVE_BALANCE ▸ JOB_${c.classe} — le / 10 : Flyff officiel`
+        : "facteur CRITICAL : Client/data-02.air ▸ propJob.inc — le / 10 : Flyff officiel",
       certitude: "flyff-officiel",
-      note: facteurClasse !== 1 ? `Le facteur ${facteurClasse} de cette classe est bien celui du client : la famille Sylphide est la seule à en porter un autre que 1.` : undefined,
+      note: divergence != null
+        ? `Les deux tables du client divergent : l'équilibrage donne ${facteurClasse}, propJob.inc donne ${divergence}. Le calcul emploie l'équilibrage ; les deux sont affichés.`
+        : facteurClasse !== 1
+          ? `Le facteur ${facteurClasse} de cette classe est bien celui du client : les deux tables sont d'accord.`
+          : undefined,
     },
     {
       cle: "critique.degats",

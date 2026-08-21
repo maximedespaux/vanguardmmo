@@ -98,17 +98,14 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { lireArchive, texte } from "./lib-air.mjs";
+import { archive, texte, signatureClient } from "./lib-air.mjs";
 
 const racine = process.cwd();
-const CLIENT = process.env.AIRFLYFF_CLIENT
-  ?? path.join(process.env.HOME, "Desktop/source/AirflyffClient_Octobre_2025/Client");
-
-const a00 = lireArchive(path.join(CLIENT, "data-00.air"));
-const a01 = lireArchive(path.join(CLIENT, "data-01.air"));
-const a02 = lireArchive(path.join(CLIENT, "data-02.air"));
-const a05 = lireArchive(path.join(CLIENT, "data-05.air"));
-const sys = lireArchive(path.join(CLIENT, "FSDATA/COMMON/Systems/data.air"));
+const a00 = archive("data-00.air");
+const a01 = archive("data-01.air");
+const a02 = archive("data-02.air");
+const a05 = archive("data-05.air");
+const sys = archive("FSDATA/COMMON/Systems/data.air");
 
 // ── Résolution nom/identifiant, même chaîne que extraire-bonus-sources.mjs ────
 // Le nom d'un objet ne se DÉDUIT PAS de son numéro : il faut passer par la
@@ -411,11 +408,18 @@ const mech = builder.MECH ?? {};
 const trouDansMech = {
   ou: "public/airbuilder/data.json ▸ MECH",
   famillesDeclarees: Object.keys(mech),
+  // Ce qui manque se CALCULE, il ne se recopie pas : la liste était écrite en
+  // dur (« MECH.bijou — aucune entrée… ») et elle a survécu au comblement du
+  // trou — le relevé annonçait donc trois familles absentes en même temps qu'il
+  // les listait comme déclarées. On confronte les familles dont ce relevé mesure
+  // un plafond à celles que MECH déclare, et la phrase suit le fichier.
   cequiManque: [
-    "MECH.bijou — aucune entrée : un bijou n'a donc AUCUNE mécanique déclarée, et son plafond (20, ou 30 pour six objets) est introuvable côté site",
-    "MECH.armure — aucune entrée : le plafond +10 de l'armure n'est écrit nulle part non plus",
-    "MECH.mode — aucune entrée",
-  ],
+    ["bijou", "un bijou n'a alors AUCUNE mécanique déclarée, et son plafond (" + plafonds.bijou.courant + ", ou " + plafonds.bijou.valeur + " pour " + plafonds.bijou.aTrente.length + " objets) est introuvable côté site"],
+    ["armure", "le plafond +" + plafonds.armeEtArmure.valeur + " de l'armure n'est écrit nulle part non plus"],
+    ["mode", "les " + modeAbilites.length + " statistiques de costume n'ont aucun plafond déclaré"],
+  ]
+    .filter(([f]) => !(f in mech))
+    .map(([f, quoi]) => "MECH." + f + " — aucune entrée : " + quoi),
   cequiestDejaJuste: [
     "MECH.arme.percage_max = " + (mech.arme?.percage_max ?? "?") + " ↔ artefact.json maxPiercingLevel = " + plafonds.percage.valeur,
     "MECH.arme.artefact.max = " + (mech.arme?.artefact?.max ?? "?") + " ↔ artefact.json generalUpgrade jusqu'au niveau " + plafonds.armeArtefact.valeur,
@@ -457,6 +461,7 @@ const raretes = {
 
 const sortie = {
   genere: new Date().toISOString().slice(0, 10),
+  client: signatureClient(),
   source: "Client/data-02.air ▸ accessory.inc (bonus par palier) · propEnchant.inc · Client/data-00.air ▸ defineitem.h, defineachievement.h · FSDATA/COMMON/Systems/data.air ▸ artefact.json, angels.json, propweaponleveling.inc, randomitemstat.inc",
   legende: {
     cle: "identifiant symbolique II_*",

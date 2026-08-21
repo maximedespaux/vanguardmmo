@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-// 36 Ko de dictionnaire, importés dans un module qui touche au disque : il ne peut
-// donc jamais remonter dans un composant client, et ces 36 Ko ne descendent jamais
+// 33 Ko de dictionnaire, importés dans un module qui touche au disque : il ne peut
+// donc jamais remonter dans un composant client, et ces 33 Ko ne descendent jamais
 // au navigateur. C'est la même règle que `catalogue.ts`.
 import DICO from "@/data/statistiques-objets.json";
 

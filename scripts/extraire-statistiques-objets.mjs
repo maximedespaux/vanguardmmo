@@ -64,16 +64,13 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { lireArchive, texte } from "./lib-air.mjs";
+import { archive, texte, signatureClient } from "./lib-air.mjs";
 
 const racine = process.cwd();
-const CLIENT = process.env.AIRFLYFF_CLIENT
-  ?? path.join(process.env.HOME, "Desktop/source/AirflyffClient_Octobre_2025/Client");
-
-const a00 = lireArchive(path.join(CLIENT, "data-00.air"));
-const a01 = lireArchive(path.join(CLIENT, "data-01.air"));
-const a05 = lireArchive(path.join(CLIENT, "data-05.air"));
-const a02 = lireArchive(path.join(CLIENT, "data-02.air"));
+const a00 = archive("data-00.air");
+const a01 = archive("data-01.air");
+const a05 = archive("data-05.air");
+const a02 = archive("data-02.air");
 
 // ── les tables de correspondance du client ────────────────────────────────────
 const defines = (src, prefixe) => {
@@ -339,6 +336,7 @@ const nonDefinis = employes.filter((s) => s.nonDefini).map((s) => s.code);
 const jour = new Date().toISOString().slice(0, 10);
 const socle = {
   genere: jour,
+  client: signatureClient(),
   source: "Client/data-05.air → Spec_Item.txt · data-00.air → defineitem.h, defineattribute.h · data-01.air → propitem.txt.txt",
   releve: {
     lignesObjet: lignes.length + rejetees.length,
@@ -371,6 +369,7 @@ fs.writeFileSync(cibleSocle, JSON.stringify(socle) + "\n");
 
 const dictionnaire = {
   genere: jour,
+  client: signatureClient(),
   source: "data-00.air → defineattribute.h (codes) · data-02.air → textClient.inc + data-01.air → textclient.txt.txt (libellés du client) · public/wiki/objets-fiches.json (libellés du relevé, réalignés)",
   definis: [...CODE_DST.keys()].filter((c) => c !== "DST_NONE").length,
   employes: employes.length,

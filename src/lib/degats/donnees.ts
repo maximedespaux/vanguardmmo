@@ -1,9 +1,9 @@
 // ════════════════════════════════════════════════════════════════════════════
 //  LES RELEVÉS QUE LE MOTEUR LIT — lus une fois avec `fs`, gardés en mémoire.
 //
-//  POURQUOI PAS UN IMPORT : les quatre fichiers pèsent 2,3 Mo à eux seuls
+//  POURQUOI PAS UN IMPORT : les cinq fichiers pèsent 2,4 Mo à eux seuls
 //  (objets-stats 1,1 Mo · monstres 612 Ko · bonus-sources 512 Ko · compétences
-//  196 Ko). Un import statique les poserait dans le paquet JS de la page ; un
+//  196 Ko · balance 95 Ko). Un import statique les poserait dans le paquet JS ; un
 //  fetch depuis le navigateur ferait la même bêtise en différé. Au-delà de
 //  120 Ko la maison lit avec `fs` derrière une route — même modèle que
 //  `src/lib/ouFarmer.ts` et `src/components/monstres/catalogue.ts`.
@@ -115,11 +115,26 @@ export type FacteursClasse = {
 const lire = <T,>(...bouts: string[]): T =>
   JSON.parse(fs.readFileSync(path.join(process.cwd(), ...bouts), "utf-8")) as T;
 
+/** Une ligne de `public/wiki/balance.json` — un métier, une situation. */
+export type LigneDEquilibrage = {
+  /** `JOB_VAGRANT`, `JOB_RANGER_HERO`… le nom de `defineJob.h`. */
+  id: string;
+  /** Le même sans le préfixe : la clé de `propJob.inc`. */
+  metier: string;
+  numeroDeMetier: number | null;
+  declareDansDefineJob: boolean;
+  aUneLignePropJob: boolean;
+  /** `Sword`, `Bow`, `AtkSpeed`, `Block`… tels que le XML les nomme. */
+  attributs: Record<string, number>;
+  competences: { id: string; facteur: number; nom: string | null; connueDuSite: boolean }[];
+};
+
 let COMPETENCES: Map<string, CompetenceBrute> | null = null;
 let OBJETS: Map<string, ObjetBrut> | null = null;
 let MONSTRES: Map<string, MonstreBrut> | null = null;
 let CLASSES: Map<string, FacteursClasse> | null = null;
 let LIBELLES: Map<string, string> | null = null;
+let EQUILIBRAGES: Map<string, Map<string, LigneDEquilibrage>> | null = null;
 
 export function competences(): Map<string, CompetenceBrute> {
   if (!COMPETENCES) {
@@ -165,7 +180,29 @@ export function facteursDeClasse(): Map<string, FacteursClasse> {
   return CLASSES;
 }
 
-/** Le dictionnaire `DST_*` → libellé français. 36 Ko : import direct possible,
+/**
+ * L'ÉQUILIBRAGE DU SERVEUR — `propBalance.xml`, une table par situation.
+ *
+ * La seconde table de métier du client, restée fermée jusqu'au relevé
+ * `public/wiki/balance.json`. Elle est indexée par SITUATION (`PVE_BALANCE`,
+ * `PVP_BALANCE`) puis par métier (`JOB_VAGRANT`) — et les deux situations ne se
+ * confondent pas : les mélanger donnerait, sur un Rôdeur, un facteur d'arc de
+ * 11,8 dans un duel où le serveur en applique un autre.
+ *
+ * CE N'EST PAS UN REMPLACEMENT DE `propJob.inc` : une ligne d'équilibrage ne
+ * nomme que les armes de son propre métier. L'arbitrage vit dans `balance.ts`.
+ */
+export function equilibrage(situation: string): Map<string, LigneDEquilibrage> {
+  if (!EQUILIBRAGES) {
+    const p = lire<{ equilibrages: Record<string, { metiers: LigneDEquilibrage[] }> }>("public", "wiki", "balance.json");
+    EQUILIBRAGES = new Map(
+      Object.entries(p.equilibrages).map(([s, v]) => [s, new Map(v.metiers.map((m) => [m.id, m]))]),
+    );
+  }
+  return EQUILIBRAGES.get(situation) ?? new Map();
+}
+
+/** Le dictionnaire `DST_*` → libellé français. 33 Ko : import direct possible,
  *  mais on passe par `fs` comme le reste pour que tout le module se charge pareil. */
 export function libelleStat(code: string): string {
   if (!LIBELLES) {
@@ -341,5 +378,7 @@ export function inventaire() {
     objets: objets().size,
     monstres: monstres().size,
     classes: facteursDeClasse().size,
+    equilibragePve: equilibrage("PVE_BALANCE").size,
+    equilibragePvp: equilibrage("PVP_BALANCE").size,
   };
 }

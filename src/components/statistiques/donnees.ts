@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { classeFr } from "@/components/objets/vocabulaire";
 import {
-  FAMILLE_COLONNE, FAMILLE_FR, apportDeLElement, bonusDePanoplie, palierDeBijou, panneauDeCaracteristiques,
+  FAMILLE_ATTRIBUT, FAMILLE_COLONNE, FAMILLE_FR, apportDeLElement, bonusDePanoplie, palierDeBijou, panneauDeCaracteristiques,
   puissanceDArme, puissanceDeCompetence, reductionParDefense,
   type Apport, type Arme, type Competence, type Feuille, type LigneDeStat, type Porteur,
   type SourceDuPanneau,
@@ -58,6 +58,8 @@ type PanoSource = {
   paliers: { code: string; valeur: number | null; pieces: number }[];
 };
 type FacteurClasse = Record<string, string | number>;
+/** Une ligne de `public/wiki/balance.json` : l'équilibrage d'un métier, une situation. */
+type LigneEquilibrage = { id: string; attributs: Record<string, number> };
 
 type Base = {
   objets: FicheObjet[];
@@ -66,6 +68,13 @@ type Base = {
   bijoux: Record<string, PalierBijou>;
   panoplies: PanoSource[];
   facteurs: FacteurClasse[];
+  /**
+   * L'ÉQUILIBRAGE DU SERVEUR, situation PvE — `propBalance.xml`. C'est la SECONDE
+   * table de métier du client, et elle ne dit pas la même chose que `propJob.inc`.
+   * On garde la PvE seule ici : cet écran calcule un dégât CONTRE UN MONSTRE, et
+   * confondre les deux situations donnerait des chiffres de duel sur une page de PvE.
+   */
+  equilibrage: Map<string, LigneEquilibrage>;
   /** DST_* → libellé français. 156 codes, dont 67 sans libellé : voir plus bas. */
   libelle: Map<string, string>;
   /** Le nombre TOTAL de codes du dictionnaire, libellés ou non. Gardé ici parce que
@@ -88,6 +97,7 @@ function base(): Base {
   const competences = lire("public", "wiki", "competences.json").competences as Competence[];
   const paliers = lire("public", "airbuilder", "paliers.json");
   const bonus = lire("public", "wiki", "bonus-sources.json");
+  const balance = lire("public", "wiki", "balance.json");
   const dico = lire("src", "data", "statistiques-objets.json");
   /* LE RELEVÉ DU BUILDER, pour son seul bloc MECH : c'est lui qui déclare les
      plafonds d'amélioration, et le builder les affiche déjà. Deux écrans qui
@@ -106,6 +116,9 @@ function base(): Base {
     bijoux: paliers.bijoux as Record<string, PalierBijou>,
     panoplies: bonus.panoplies as PanoSource[],
     facteurs: bonus.facteursDeClasse.classes as FacteurClasse[],
+    equilibrage: new Map(
+      (balance.equilibrages.PVE_BALANCE.metiers as LigneEquilibrage[]).map((m) => [m.id, m]),
+    ),
     libelle,
     codesTotal: (dico.stats as unknown[]).length,
     plafondArme: mech?.arme?.upgrade_normal?.max ?? 0,
@@ -227,16 +240,35 @@ function competenceLaPlusForte(classeFrancaise: string): Competence | null {
  */
 export const PORTEUR_EXEMPLE = { force: 300, endurance: 1000, dexterite: 200, intelligence: 150 };
 
+/**
+ * LE FACTEUR D'ARME SORT DE DEUX TABLES, DANS CET ORDRE.
+ *
+ *   1. `propBalance.xml` (situation PvE), quand la ligne du métier nomme cette arme ;
+ *   2. `propJob.inc` sinon — et ce n'est PAS un cas rare : une ligne d'équilibrage ne
+ *      nomme que les armes de sa propre voie, deux sur les neuf familles déclarées.
+ *
+ * Les deux valeurs repartent ensemble : `facteurDeLAutreTable` porte celle qu'on n'a
+ * pas employée, et l'écran l'affiche. Rien, dans le client, n'écrit laquelle fait foi.
+ */
 function porteurPour(job: string, niveau: number, famille: string): Porteur {
   const colonne = FAMILLE_COLONNE[famille];
   const ligne = base().facteurs.find((f) => f.classe === job);
-  const facteur = colonne && ligne ? Number(ligne[colonne]) : null;
+  const brutJob = colonne && ligne ? Number(ligne[colonne]) : null;
+  const dePropJob = brutJob != null && Number.isFinite(brutJob) ? brutJob : null;
+
+  const attribut = FAMILLE_ATTRIBUT[famille];
+  const brutBalance = attribut ? base().equilibrage.get("JOB_" + job)?.attributs[attribut] : undefined;
+  const deLEquilibrage = typeof brutBalance === "number" ? brutBalance : null;
+
+  const employe = deLEquilibrage ?? dePropJob;
   return {
     classe: job,
     classeFr: classeFr(job) ?? job,
     niveau,
     ...PORTEUR_EXEMPLE,
-    facteurDeFamille: Number.isFinite(facteur) ? (facteur as number) : null,
+    facteurDeFamille: employe,
+    tableDuFacteur: employe == null ? null : deLEquilibrage != null ? "propBalance.xml" : "propJob.inc",
+    facteurDeLAutreTable: deLEquilibrage != null ? dePropJob : null,
   };
 }
 
@@ -545,7 +577,19 @@ export function planche(): Planche {
   }
 
   /* ── Les constats chiffrés, calculés et non recopiés ────────────────────── */
-  const famillesConnues = Object.entries(FAMILLE_COLONNE).filter(([, c]) => c != null).length;
+  /* LES FAMILLES COUVERTES SE COMPTENT SUR LES DEUX TABLES, plus sur propJob seul.
+     Ce compte valait 7 sur 9 et l'écran en tirait la phrase « l'arc n'y est pas » ;
+     `propBalance.xml` nomme l'arc, et l'arbalète partage son coefficient. Le nombre
+     se mesure donc famille par famille : couverte si l'une des deux tables lui donne
+     un coefficient sur au moins un métier. */
+  const famillesCouvertes = Object.keys(FAMILLE_COLONNE).filter((fam) => {
+    if (FAMILLE_COLONNE[fam] != null) return true;
+    const attribut = FAMILLE_ATTRIBUT[fam];
+    if (!attribut) return false;
+    for (const l of B.equilibrage.values()) if (typeof l.attributs[attribut] === "number") return true;
+    return false;
+  });
+  const famillesConnues = famillesCouvertes.length;
   /* LE DÉNOMINATEUR SE COMPTE, il ne s'écrit pas. On ne retient que les familles
      d'armes qu'une CLASSE peut porter (champ `job` renseigné) : sans ce filtre, la
      « Main » — la main nue, `k3` valant HAND — compterait pour une famille d'arme. */

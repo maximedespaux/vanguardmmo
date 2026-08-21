@@ -22,6 +22,7 @@
 // D'où `texte()` : il regarde les octets au lieu de croire l'extension.
 
 import fs from "node:fs";
+import path from "node:path";
 import crypto from "node:crypto";
 
 const CLE = Buffer.from("603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4", "hex");
@@ -78,4 +79,66 @@ export function fichier(archive, nom) {
   const b = archive.get(nom);
   if (!b) throw new Error("entrée absente de l'archive : " + nom + " (présentes : " + [...archive.keys()].slice(0, 8).join(", ") + "…)");
   return texte(b);
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  OÙ EST LE CLIENT — UN SEUL ENDROIT
+// ════════════════════════════════════════════════════════════════════════
+//
+// Le client change d'adresse à chaque livraison : le relevé du site est né d'un
+// client d'octobre 2025 (`Desktop/source/AirflyffClient_Octobre_2025/Client`),
+// remplacé en août 2026 par `Desktop/Airborn Client`. Trois scripts citaient ce
+// chemin chacun de leur côté, et les trois sont tombés le même jour. Il ne se
+// cite donc plus qu'ICI.
+//
+// Ordre de résolution :
+//   1. AIRBORN_CLIENT dans l'environnement — le prochain client n'a alors
+//      RIEN à changer dans le dépôt : `AIRBORN_CLIENT=… node scripts/…`.
+//   2. AIRFLYFF_CLIENT, l'ancien nom de la même variable, encore accepté.
+//   3. les emplacements connus, du plus récent au plus ancien.
+// Un candidat n'est retenu que s'il porte `data-00.air` : un dossier qui existe
+// n'est pas un client, et un chemin faux doit se voir tout de suite plutôt que
+// de produire un relevé vide.
+const CANDIDATS_CLIENT = [
+  process.env.AIRBORN_CLIENT,
+  process.env.AIRFLYFF_CLIENT,
+  path.join(process.env.HOME ?? "", "Desktop/Airborn Client"),
+  path.join(process.env.HOME ?? "", "Desktop/source/AirflyffClient_Octobre_2025/Client"),
+].filter(Boolean);
+
+const trouve = CANDIDATS_CLIENT.find((c) => fs.existsSync(path.join(c, "data-00.air")));
+if (!trouve) {
+  throw new Error(
+    "client introuvable — aucun de ces dossiers ne porte data-00.air :\n  " +
+      CANDIDATS_CLIENT.join("\n  ") +
+      "\nPose AIRBORN_CLIENT sur le dossier du client.",
+  );
+}
+
+/** Le dossier du client Airborn : celui qui porte `data-00.air` et `FSDATA/`. */
+export const CLIENT = trouve;
+
+/** Lit une archive du client par son chemin RELATIF (« data-02.air »). */
+export const archive = (relatif) => lireArchive(path.join(CLIENT, relatif));
+
+/**
+ * La SIGNATURE du client lu : son dossier, et la date de la plus récente de ses
+ * six archives. Un relevé qui la porte dit de quel client il vient — c'est ce
+ * qui a manqué en août 2026, quand le client d'octobre 2025 avait disparu du
+ * disque et qu'aucune comparaison archive contre archive n'était plus possible.
+ * On ne compare alors plus que des relevés, et encore faut-il savoir lesquels.
+ */
+export function signatureClient() {
+  const archives = [];
+  for (let i = 0; i <= 5; i++) {
+    const p = path.join(CLIENT, "data-0" + i + ".air");
+    if (fs.existsSync(p)) { const s = fs.statSync(p); archives.push({ nom: "data-0" + i + ".air", octets: s.size, date: s.mtime.toISOString().slice(0, 10) }); }
+  }
+  return {
+    dossier: path.basename(CLIENT),
+    archives: archives.length,
+    octets: archives.reduce((n, a) => n + a.octets, 0),
+    laPlusRecente: archives.map((a) => a.date).sort().at(-1) ?? null,
+    detail: archives,
+  };
 }

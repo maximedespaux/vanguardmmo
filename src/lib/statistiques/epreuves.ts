@@ -28,11 +28,16 @@ import type { Personnage } from "./moteur";
  *     non DIASTATS), la lecture des paliers de gemme, et le fait que le +20 de
  *     l'arme ne compte pour RIEN puisque son gain n'existe dans aucun fichier.
  *
- *  4. ARBALÉTRIER ARC ÉTERNEL MYTHIQUE — le TROU. L'arc n'a pas de facteur
- *     d'arme dans propJob.inc : son attaque n'est pas chiffrable, et le moteur le
- *     DIT au lieu d'emprunter le facteur du yo-yo. La rareté Mythique y ajoute la
- *     séparation entre maîtrise d'arme (déterministe) et lignes de rareté
- *     (tirées au sort, rendues en intervalle).
+ *  4. ARBALÉTRIER ARC ÉTERNEL MYTHIQUE — LE TROU QUI S'EST REFERMÉ. Cette épreuve
+ *     existait pour prouver un REFUS : l'arc n'avait pas de facteur d'arme dans
+ *     propJob.inc, son attaque n'était pas chiffrable, et le moteur le disait au
+ *     lieu d'emprunter le facteur du yo-yo. `propBalance.xml` donne ce facteur —
+ *     `Bow="16.0"` sur `JOB_CRACKSHOOTER_HERO` — et l'épreuve prouve maintenant
+ *     l'inverse : que l'arc se calcule, et qu'il le fait avec le coefficient de SA
+ *     classe et non celui d'une autre. Le refus, lui, n'a pas disparu : il porte
+ *     désormais sur le couple métier-arme hors voie, qu'aucune des deux tables ne
+ *     couvre. La rareté Mythique y ajoute la séparation entre maîtrise d'arme
+ *     (déterministe) et lignes de rareté (tirées au sort, rendues en intervalle).
  *
  *  5. CHANOINE SCEPTRE, COSTUME COMPLET, CARNETS — les POURCENTAGES DE PARTOUT.
  *     Le costume ne paie qu'aux quatre pièces et son tableau se compte UNE fois ;

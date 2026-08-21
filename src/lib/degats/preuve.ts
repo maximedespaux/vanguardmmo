@@ -14,12 +14,14 @@
 //    2. une compétence de haut niveau, arme ultime, contre un monstre à vies ;
 //    3. une attaque ordinaire avec un élément posé, contre une cible VULNÉRABLE ;
 //    4. une compétence magique, où la résistance magique du monstre entre en jeu ;
-//    5. deux REFUS attendus — l'arc sans facteur et une ligne de résistance
-//       décalée — parce qu'un moteur qui ne sait pas refuser n'est pas fiable.
+//    5. L'ARC, qui ne se calculait pas et se calcule enfin, plus deux REFUS
+//       qui tiennent toujours — parce qu'un moteur qui ne sait pas refuser
+//       n'est pas fiable, et qu'un moteur qui refuse à tort ne l'est pas non plus.
 // ════════════════════════════════════════════════════════════════════════════
 
 import { avecAppoints, catalogueDeGuilde } from "./consommables";
 import type { Combattant, Resultat } from "./contrat";
+import { famillesSansFacteurDArme, lectureDuFacteurDArme, type FamilleArme } from "./armes";
 import { armeEquipee, bonusDObjet, cible, cibleParNom, competences } from "./donnees";
 import { coupDeCompetence, coupOrdinaire } from "./moteur";
 
@@ -177,26 +179,73 @@ function combattant(o: {
 }
 
 // ── CAS 5 ───────────────────────────────────────────────────────────────────
-// Les deux refus. Ils ne sont pas des échecs du moteur, ils en sont la garantie.
+// L'ARC, ET LES DEUX REFUS QUI TIENNENT.
+//
+// 5a était un refus pendant des mois : « propJob.inc n'a pas de colonne pour
+// l'arc ». C'était vrai de propJob.inc et faux du client — `propBalance.xml`
+// écrit `Bow="11.8"` sur un Rôdeur. Le cas est donc devenu un CALCUL, et c'est
+// le gain principal de ce lot.
+//
+// 5b et 5c restent des refus, et ce sont eux qui prouvent que le moteur n'a pas
+// simplement appris à dire oui.
 {
   console.log("\n" + "═".repeat(100));
-  console.log("CAS 5 — LES DEUX REFUS ATTENDUS");
+  console.log("CAS 5 — L'ARC QUI SE CALCULE, ET LES REFUS QUI TIENNENT");
   console.log("═".repeat(100));
 
   const arc = combattant({ niveau: 120, classe: "RANGER_HERO", force: 100, endurance: 150, dexterite: 800, intelligence: 60, arme: "II_WEA_BOW_ANCIENT" });
   const r1 = coupOrdinaire(arc, cible("MI_AIBATT1")!);
-  console.log("\n  5a. ATTAQUE ORDINAIRE À L'ARC");
+  console.log("\n  5a. ATTAQUE ORDINAIRE À L'ARC — ce qui était refusé");
   console.log(`      ${r1.quoi}`);
-  console.log(`      dégâts rendus : ${r1.degatsMin} — le moteur refuse plutôt que d'inventer le coefficient.`);
+  console.log(`      dégâts rendus : ${fmt(r1.degatsMin)} à ${fmt(r1.degatsMax)}`);
+  for (const t of r1.termes.filter((x) => x.cle === "arme.stat" || x.cle === "arme.appointArc")) {
+    console.log(`      ➜ ${t.libelle} = ${fmt(t.valeur)}`);
+    console.log(`        source : ${t.source}`);
+  }
+
+  console.log("\n  5b. LE MÊME ARC DANS LES MAINS D'UN SPADASSIN — refus, et il est juste");
+  const horsVoie = combattant({ niveau: 120, classe: "BLADE_HERO", force: 500, endurance: 150, dexterite: 300, intelligence: 60, arme: "II_WEA_BOW_ANCIENT" });
+  const r2 = coupOrdinaire(horsVoie, cible("MI_AIBATT1")!);
+  console.log(`      ${r2.quoi}`);
+  console.log(`      dégâts rendus : ${r2.degatsMin} — une ligne d'équilibrage ne nomme QUE les armes de sa voie,`);
+  console.log(`      et propJob.inc n'a aucune colonne d'arc : il n'existe donc aucun facteur pour ce couple.`);
 
   const decale = cibleParNom("Rizontie")!;
   const c = combattant({ niveau: 129, classe: "BLADE_HERO", force: 500, endurance: 200, dexterite: 200, intelligence: 60, arme: "II_WEA_AXE_RODNEY", element: "eau" });
-  const r2 = coupOrdinaire(c, decale);
-  console.log("\n  5b. RÉSISTANCE DÉCALÉE DANS LE RELEVÉ (Rizontie, colonne eau = 100)");
-  console.log(`      ${r2.quoi}`);
-  for (const x of r2.reserves.filter((s) => s.includes("décalée"))) console.log(`      ➜ ${x}`);
-  console.log(`      dégâts rendus : ${fmt(r2.degatsMin)} à ${fmt(r2.degatsMax)} — la colonne est écartée, le reste du calcul tient.`);
+  const r3 = coupOrdinaire(c, decale);
+  console.log("\n  5c. RÉSISTANCE DÉCALÉE DANS LE RELEVÉ (Rizontie, colonne eau = 100)");
+  console.log(`      ${r3.quoi}`);
+  for (const x of r3.reserves.filter((s) => s.includes("décalée"))) console.log(`      ➜ ${x}`);
+  console.log(`      dégâts rendus : ${fmt(r3.degatsMin)} à ${fmt(r3.degatsMax)} — la colonne est écartée, le reste du calcul tient.`);
   console.log(`      Sans ce garde-fou, le facteur aurait été 1 − 100 = −99 : le coup aurait SOIGNÉ la cible.`);
+}
+
+// ── CAS 6 ───────────────────────────────────────────────────────────────────
+// LES DEUX TABLES, CÔTE À CÔTE. Le facteur d'arme sort maintenant de
+// `propBalance.xml` quand la ligne du métier le nomme, et de `propJob.inc`
+// sinon. On imprime les deux lectures sur les métiers qui comptent : c'est
+// exactement ce qu'un écran doit montrer, et ce que le lot précédent avait le
+// tort de trancher en silence.
+{
+  console.log("\n" + "═".repeat(100));
+  console.log("CAS 6 — LE FACTEUR D'ARME DANS LES DEUX TABLES");
+  console.log("═".repeat(100));
+  const couples: [string, FamilleArme][] = [
+    ["VAGRANT", "SWD"], ["KNIGHT", "SWD"], ["LORDTEMPLER_HERO", "SWD"],
+    ["ACROBAT", "BOW"], ["RANGER", "BOW"], ["CRACKSHOOTER_HERO", "BOW"],
+    ["ACROBAT", "YOYO"], ["JESTER", "YOYO"], ["WINDLURKER_HERO", "YOYO"],
+    ["MAGICIAN", "WAND"], ["ASSIST", "KNUCKLE"], ["BILLPOSTER", "KNUCKLE"],
+    ["VAGRANT", "WAND"],
+  ];
+  console.log(`  ${"métier".padEnd(20)}${"arme".padEnd(9)}${"employé".padStart(9)}  table employée        autre table`);
+  for (const [classe, famille] of couples) {
+    const l = lectureDuFacteurDArme(classe, famille);
+    if (!l) { console.log(`  ${classe.padEnd(20)}${famille.padEnd(9)}${"—".padStart(9)}  AUCUN FACTEUR : le moteur refuse de calculer`); continue; }
+    const autre = l.autre ? `${l.autre.table} ${fmt(l.autre.valeur)}` : "—";
+    console.log(`  ${classe.padEnd(20)}${famille.padEnd(9)}${fmt(l.valeur).padStart(9)}  ${l.table.padEnd(22)}${autre}${l.accord ? "  (d'accord)" : ""}`);
+  }
+  const vides = famillesSansFacteurDArme();
+  console.log(`\n  Familles d'arme sans AUCUN facteur, les deux tables réunies : ${vides.length ? vides.join(", ") : "aucune"}`);
 }
 
 // ── CONTRÔLE D'ENSEMBLE ─────────────────────────────────────────────────────

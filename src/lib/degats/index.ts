@@ -19,6 +19,8 @@
 //    · public/wiki/competences.json   — 197 compétences : coefficients, niveaux
 //    · public/wiki/monstres.json      — 1 124 monstres : défense, esquive, résistances
 //    · public/wiki/bonus-sources.json — propJob.inc : facteurs d'arme, critique, vitesse
+//    · public/wiki/balance.json       — propBalance.xml : l'ÉQUILIBRAGE du serveur,
+//      45 métiers x 2 situations (PvE / PvP), le facteur d'ARC compris
 //    · src/data/statistiques-objets.json — les codes DST_* en français
 //
 //  ATTENTION : `donnees.ts` lit le disque. N'importez pas ce module depuis un
@@ -49,11 +51,26 @@ export { coupDeCompetence, coupOrdinaire, type Options } from "./moteur";
 export {
   apportDeStat,
   facteurDArme,
+  famillesSansFacteurDArme,
   familleDe,
-  SANS_FACTEUR,
+  lectureDuFacteurDArme,
   vitesseDAttaque,
   type FamilleArme,
 } from "./armes";
+
+export {
+  facteurDeCompetence,
+  facteursDeCompetence,
+  famillesSansFacteur,
+  lireFacteurDArme,
+  proprieteEquilibree,
+  SITUATION_PAR_DEFAUT,
+  vitesseDeBaseEquilibree,
+  type FacteurDeCompetence,
+  type LectureDeFacteur,
+  type Situation,
+  type TableDeFacteur,
+} from "./balance";
 
 export {
   cadenceDe,
@@ -94,10 +111,12 @@ export {
   cible,
   cibleParNom,
   competences,
+  equilibrage,
   facteursDeClasse,
   inventaire,
   libelleStat,
   type CompetenceBrute,
   type Consommable,
   type FacteursClasse,
+  type LigneDEquilibrage,
 } from "./donnees";

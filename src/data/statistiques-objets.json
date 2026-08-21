@@ -1,5 +1,43 @@
 {
- "genere": "2026-08-12",
+ "genere": "2026-08-21",
+ "client": {
+  "dossier": "Airborn Client",
+  "archives": 6,
+  "octets": 32553849,
+  "laPlusRecente": "2026-08-21",
+  "detail": [
+   {
+    "nom": "data-00.air",
+    "octets": 1735808,
+    "date": "2026-08-20"
+   },
+   {
+    "nom": "data-01.air",
+    "octets": 6544331,
+    "date": "2026-08-21"
+   },
+   {
+    "nom": "data-02.air",
+    "octets": 4156980,
+    "date": "2026-08-21"
+   },
+   {
+    "nom": "data-03.air",
+    "octets": 5586256,
+    "date": "2026-08-19"
+   },
+   {
+    "nom": "data-04.air",
+    "octets": 4604670,
+    "date": "2026-08-18"
+   },
+   {
+    "nom": "data-05.air",
+    "octets": 9925804,
+    "date": "2026-08-20"
+   }
+  ]
+ },
  "source": "data-00.air → defineattribute.h (codes) · data-02.air → textClient.inc + data-01.air → textclient.txt.txt (libellés du client) · public/wiki/objets-fiches.json (libellés du relevé, réalignés)",
  "definis": 155,
  "employes": 74,
@@ -1463,7 +1501,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 10284
+     "objets": 10557
     },
     {
      "v": "60",
@@ -1501,7 +1539,7 @@
    "valeurs": [
     {
      "v": "300",
-     "objets": 13050
+     "objets": 13323
     },
     {
      "v": "20",
@@ -1535,7 +1573,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 12943
+     "objets": 13216
     },
     {
      "v": "4",
@@ -1573,7 +1611,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 12948
+     "objets": 13221
     },
     {
      "v": "2",
@@ -1611,7 +1649,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 13035
+     "objets": 13308
     },
     {
      "v": "5",
@@ -1633,7 +1671,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 12964
+     "objets": 13237
     },
     {
      "v": "50",
@@ -1671,7 +1709,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 13067
+     "objets": 13340
     },
     {
      "v": "3",
@@ -1697,7 +1735,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 13059
+     "objets": 13332
     },
     {
      "v": "6",
@@ -1727,7 +1765,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 7925
+     "objets": 8198
     },
     {
      "v": "0",
@@ -1741,7 +1779,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 10340
+     "objets": 10613
     },
     {
      "v": "1",
@@ -1759,7 +1797,7 @@
    "valeurs": [
     {
      "v": "2",
-     "objets": 12998
+     "objets": 13271
     },
     {
      "v": "0",
@@ -1777,7 +1815,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13064
+     "objets": 13337
     },
     {
      "v": "SI_SKILL_BARUNA_WEA_DEATHRUNE",
@@ -1811,7 +1849,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13064
+     "objets": 13337
     },
     {
      "v": "1",
@@ -1825,7 +1863,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13064
+     "objets": 13337
     },
     {
      "v": "300",
@@ -1851,7 +1889,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13064
+     "objets": 13337
     },
     {
      "v": "IST_ANOTHER",
@@ -1869,7 +1907,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13070
+     "objets": 13343
     },
     {
      "v": "SI_RIN_SUP_PROTECT",
@@ -1883,7 +1921,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13070
+     "objets": 13343
     },
     {
      "v": "1",
@@ -1897,7 +1935,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13070
+     "objets": 13343
     },
     {
      "v": "5000",
@@ -1911,7 +1949,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13070
+     "objets": 13343
     },
     {
      "v": "IST_SELF",
@@ -1925,7 +1963,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13071
+     "objets": 13344
     }
    ]
   },
@@ -1935,7 +1973,7 @@
    "valeurs": [
     {
      "v": "=",
-     "objets": 13071
+     "objets": 13344
     }
    ]
   },
@@ -1945,7 +1983,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 12532
+     "objets": 12805
     },
     {
      "v": "0",
@@ -1959,7 +1997,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 12566
+     "objets": 12839
     },
     {
      "v": "0",
@@ -1973,7 +2011,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 12566
+     "objets": 12839
     },
     {
      "v": "0",
@@ -1987,7 +2025,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 12566
+     "objets": 12839
     },
     {
      "v": "0",
@@ -2001,7 +2039,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 12535
+     "objets": 12808
     },
     {
      "v": "0",
@@ -2015,7 +2053,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 12999
+     "objets": 13272
     },
     {
      "v": "1",
@@ -2029,7 +2067,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 13069
+     "objets": 13342
     },
     {
      "v": "0",
@@ -2043,7 +2081,7 @@
    "valeurs": [
     {
      "v": "1",
-     "objets": 13069
+     "objets": 13342
     },
     {
      "v": "0",
@@ -2057,7 +2095,7 @@
    "valeurs": [
     {
      "v": "0",
-     "objets": 12980
+     "objets": 13253
     },
     {
      "v": "1",
@@ -2070,12 +2108,12 @@
    "distinctes": 2,
    "valeurs": [
     {
-     "v": "0",
-     "objets": 6548
+     "v": "1",
+     "objets": 6718
     },
     {
-     "v": "1",
-     "objets": 6523
+     "v": "0",
+     "objets": 6626
     }
    ]
   },
@@ -2084,12 +2122,12 @@
    "distinctes": 2,
    "valeurs": [
     {
-     "v": "0",
-     "objets": 6548
+     "v": "1",
+     "objets": 6718
     },
     {
-     "v": "1",
-     "objets": 6523
+     "v": "0",
+     "objets": 6626
     }
    ]
   }
@@ -2100,164 +2138,9 @@
    "temoins": 70,
    "absents": 0,
    "lignesComparees": 257,
-   "identiques": 235,
-   "taux": 91.4,
-   "divergences": [
-    {
-     "i": 20154,
-     "n": "Baguette de Luzaka oubliée (DPS)",
-     "rang": 0,
-     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
-     "client": "DST_SPELL_RATE = 40"
-    },
-    {
-     "i": 20154,
-     "n": "Baguette de Luzaka oubliée (DPS)",
-     "rang": 1,
-     "main": null,
-     "client": "DST_ATKPOWER_RATE = 15"
-    },
-    {
-     "i": 20154,
-     "n": "Baguette de Luzaka oubliée (DPS)",
-     "rang": 2,
-     "main": null,
-     "client": "DST_ADDMAGIC_RATE = 10"
-    },
-    {
-     "i": 20154,
-     "n": "Baguette de Luzaka oubliée (DPS)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_INT = 40"
-    },
-    {
-     "i": 20154,
-     "n": "Baguette de Luzaka oubliée (DPS)",
-     "rang": 4,
-     "main": null,
-     "client": "DST_ADDMAGIC = 300"
-    },
-    {
-     "i": 58488,
-     "n": "Baguette de Luzaka oubliée (TANK)",
-     "rang": 0,
-     "main": "Block Melee = 6",
-     "client": "DST_HP_MAX_RATE = 36"
-    },
-    {
-     "i": 58488,
-     "n": "Baguette de Luzaka oubliée (TANK)",
-     "rang": 2,
-     "main": null,
-     "client": "DST_BLOCK_RANGE = 6"
-    },
-    {
-     "i": 58488,
-     "n": "Baguette de Luzaka oubliée (TANK)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_STA = 40"
-    },
-    {
-     "i": 20155,
-     "n": "Bâton de Luzaka oublié (DPS)",
-     "rang": 0,
-     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
-     "client": "DST_SPELL_RATE = 40"
-    },
-    {
-     "i": 20155,
-     "n": "Bâton de Luzaka oublié (DPS)",
-     "rang": 1,
-     "main": null,
-     "client": "DST_ATKPOWER_RATE = 15"
-    },
-    {
-     "i": 20155,
-     "n": "Bâton de Luzaka oublié (DPS)",
-     "rang": 2,
-     "main": null,
-     "client": "DST_ADDMAGIC_RATE = 10"
-    },
-    {
-     "i": 20155,
-     "n": "Bâton de Luzaka oublié (DPS)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_INT = 40"
-    },
-    {
-     "i": 20155,
-     "n": "Bâton de Luzaka oublié (DPS)",
-     "rang": 4,
-     "main": null,
-     "client": "DST_ADDMAGIC = 300"
-    },
-    {
-     "i": 58489,
-     "n": "Bâton de Luzaka oublié (TANK)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_STA = 40"
-    },
-    {
-     "i": 58484,
-     "n": "Epée de Luzaka oubliée (TANK)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_STA = 20"
-    },
-    {
-     "i": 58486,
-     "n": "Poing de Luzaka oublié (TANK)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_STA = 40"
-    },
-    {
-     "i": 20153,
-     "n": "Sceptre de Luzaka oublié (DPS)",
-     "rang": 0,
-     "main": "Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic = 300",
-     "client": "DST_SPELL_RATE = 40"
-    },
-    {
-     "i": 20153,
-     "n": "Sceptre de Luzaka oublié (DPS)",
-     "rang": 1,
-     "main": null,
-     "client": "DST_ATKPOWER_RATE = 15"
-    },
-    {
-     "i": 20153,
-     "n": "Sceptre de Luzaka oublié (DPS)",
-     "rang": 2,
-     "main": null,
-     "client": "DST_ADDMAGIC_RATE = 10"
-    },
-    {
-     "i": 20153,
-     "n": "Sceptre de Luzaka oublié (DPS)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_INT = 40"
-    },
-    {
-     "i": 20153,
-     "n": "Sceptre de Luzaka oublié (DPS)",
-     "rang": 4,
-     "main": null,
-     "client": "DST_ADDMAGIC = 300"
-    },
-    {
-     "i": 58491,
-     "n": "Yo-yo de Luzaka oublié (TANK)",
-     "rang": 3,
-     "main": null,
-     "client": "DST_STA = 40"
-    }
-   ]
+   "identiques": 257,
+   "taux": 100,
+   "divergences": []
   },
   "releveFrancais": {
    "quoi": "public/wiki/objets-fiches.json → objets[*].b, relevé précédent du même fichier client",

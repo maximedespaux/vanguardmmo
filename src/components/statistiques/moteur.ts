@@ -176,28 +176,46 @@ export const laStat = (stat: string) =>
 /* ── Les familles d'arme ────────────────────────────────────────────────────── */
 
 /**
- * LE NOM D'UNE FAMILLE D'ARME N'EST PAS LE MÊME DANS LES DEUX RELEVÉS, et c'est un
- * piège silencieux : une correspondance manquée rend un facteur `undefined`, donc un
- * dégât de zéro, sans erreur visible.
+ * LE NOM D'UNE FAMILLE D'ARME N'EST LE MÊME DANS AUCUN DES TROIS RELEVÉS, et c'est
+ * un piège silencieux : une correspondance manquée rend un facteur `undefined`, donc
+ * un dégât de zéro, sans erreur visible.
  *
- *   objets-stats.json ▸ `k3`          bonus-sources.json ▸ colonnes de classe
- *   SWD                                SWD
- *   AXE                                AXE
- *   STAFF                              STAFF
- *   CHEERSTICK                         STICK
- *   KNUCKLEHAMMER                      KNUCKLE
- *   WAND                               WAND
- *   YOYO                               YOYO
- *   BOW                                — AUCUNE COLONNE
+ *   objets-stats.json ▸ `k3`   propJob.inc ▸ colonne   propBalance.xml ▸ attribut
+ *   SWD                         SWD                     Sword
+ *   AXE                         AXE                     Axe
+ *   STAFF                       STAFF                   Staff
+ *   CHEERSTICK                  STICK                   Stick
+ *   KNUCKLEHAMMER               KNUCKLE                 Knuckle
+ *   WAND                        WAND                    Wand
+ *   YOYO                        YOYO                    Yoyo
+ *   BOW                         — aucune colonne        Bow
+ *   CROSSBOW                    — aucune colonne        Bow
  *
- * L'ARC N'A PAS DE COLONNE. Les dix-huit colonnes du tableau de classe ne comptent
- * que sept familles d'arme, et l'arc n'en fait pas partie. Son apport de statistique
- * ne se calcule donc pas sur ce relevé : `facteurDeFamille` rend `null`, et le terme
- * part en `absent` plutôt qu'en zéro.
+ * L'ARC AVAIT ICI SON TROU, ET IL EST COMBLÉ. Ce fichier a affirmé pendant des mois
+ * que « les dix-huit colonnes du tableau de classe ne comptent que sept familles
+ * d'arme, l'arc n'en fait pas partie ». C'était vrai de `propJob.inc` et faux du
+ * client : `defineBalance.h` numérote `JOB_PROP_BOW 9`, et `propBalance.xml` écrit
+ * un `Bow` par métier d'archer. L'Arbalétrier et la Sylphide, les deux classes
+ * entièrement hors calcul, rentrent dans le tableau.
+ *
+ * L'ARBALÈTE N'A PAS DE PROPRIÉTÉ À ELLE. Le chargeur du client ne connaît que
+ * `Bow` — vérifié sur les dix-neuf noms d'attribut lus dans Neuz.exe — et la ligne
+ * de l'Arbalétrier (`JOB_CRACKSHOOTER_HERO`) porte bien un `Bow`. Une seule arme du
+ * relevé porte `k3 = CROSSBOW`, et le client la déclare `WEAPON_BOW` : les deux
+ * familles partagent donc le même coefficient, ce n'est pas un raccourci de notre part.
+ *
+ * `FAMILLE_COLONNE` reste la correspondance vers propJob.inc — elle sert encore de
+ * REPLI, parce qu'une ligne d'équilibrage ne nomme que les armes de sa propre voie.
  */
 export const FAMILLE_COLONNE: Record<string, string | null> = {
   SWD: "SWD", AXE: "AXE", STAFF: "STAFF", CHEERSTICK: "STICK",
   KNUCKLEHAMMER: "KNUCKLE", WAND: "WAND", YOYO: "YOYO", BOW: null, CROSSBOW: null,
+};
+
+/** La même famille, vue par `propBalance.xml`. C'est la table lue EN PREMIER. */
+export const FAMILLE_ATTRIBUT: Record<string, string> = {
+  SWD: "Sword", AXE: "Axe", STAFF: "Staff", CHEERSTICK: "Stick",
+  KNUCKLEHAMMER: "Knuckle", WAND: "Wand", YOYO: "Yoyo", BOW: "Bow", CROSSBOW: "Bow",
 };
 
 /** Le nom français d'une famille, pour l'écran. */
@@ -220,8 +238,8 @@ export const FAMILLE_FR: Record<string, string> = {
  * a un seul endroit à corriger — et un seul degré de certitude à relever.
  */
 export const CONSTANTES_HYPOTHESE = {
-  retrait: { SWD: 12, AXE: 12, YOYO: 12, STAFF: 10, CHEERSTICK: 10, KNUCKLEHAMMER: 10, WAND: 10 } as Record<string, number>,
-  facteurDeNiveau: { SWD: 1.1, YOYO: 1.1, STAFF: 1.1, AXE: 1.2, KNUCKLEHAMMER: 1.2, WAND: 1.2, CHEERSTICK: 1.3 } as Record<string, number>,
+  retrait: { SWD: 12, AXE: 12, YOYO: 12, STAFF: 10, CHEERSTICK: 10, KNUCKLEHAMMER: 10, WAND: 10, BOW: 14, CROSSBOW: 14 } as Record<string, number>,
+  facteurDeNiveau: { SWD: 1.1, YOYO: 1.1, STAFF: 1.1, AXE: 1.2, KNUCKLEHAMMER: 1.2, WAND: 1.2, CHEERSTICK: 1.3, BOW: 0.91, CROSSBOW: 0.91 } as Record<string, number>,
   /** Le socle d'une arme compte DOUBLE dans l'attaque automatique. */
   doublementDuSocle: 2,
   /**
@@ -260,8 +278,17 @@ export type Porteur = {
   niveau: number;
   /** Les quatre statistiques attribuées, telles que le joueur les a réparties. */
   force: number; endurance: number; dexterite: number; intelligence: number;
-  /** Le facteur de famille d'arme lu dans le tableau des classes du client. */
+  /** Le facteur de famille d'arme EMPLOYÉ dans le calcul. */
   facteurDeFamille: number | null;
+  /**
+   * LES DEUX TABLES, PARCE QUE LE CLIENT EN PORTE DEUX ET QU'ELLES SE CONTREDISENT.
+   * `tableDuFacteur` dit d'où sort `facteurDeFamille` ; `facteurDeLAutreTable` porte
+   * ce que l'autre dit du même coefficient, quand elle en dit quelque chose et que ce
+   * n'est pas la même chose. L'écran doit montrer les deux : rien, dans le client,
+   * n'écrit laquelle fait foi.
+   */
+  tableDuFacteur?: "propBalance.xml" | "propJob.inc" | null;
+  facteurDeLAutreTable?: number | null;
 };
 
 /**
@@ -294,6 +321,11 @@ export function puissanceDArme(
   const apportStat = porteur.facteurDeFamille != null && retrait != null
     ? Math.floor((statVal - retrait) * porteur.facteurDeFamille)
     : null;
+  /* L'AUTRE TABLE, quand elle dit autre chose. Elle ne change pas le nombre : elle
+     s'affiche à côté, parce que le choix entre les deux n'est écrit nulle part. */
+  const autreTable = retrait != null && porteur.facteurDeLAutreTable != null && porteur.facteurDeLAutreTable !== porteur.facteurDeFamille
+    ? porteur.facteurDeLAutreTable
+    : null;
   const apportNiveau = facteurNiveau != null ? Math.floor(porteur.niveau * facteurNiveau) : null;
   const plat = opts.bonusAttaquePlat ?? 0;
 
@@ -309,11 +341,14 @@ export function puissanceDArme(
       quoi: `Apport de ${laStat(statNom)} (${statVal} − ${retrait ?? "?"}) × ${porteur.facteurDeFamille != null ? nb(porteur.facteurDeFamille) : "?"}`,
       valeur: apportStat,
       detail: apportStat != null
-        ? `(${statVal} − ${retrait}) × ${nb(porteur.facteurDeFamille!)} = ${nb(apportStat)}`
-        : `Le tableau des classes du client ne porte AUCUNE colonne pour l'${FAMILLE_FR[fam] ?? fam} : le facteur n'existe pas dans le relevé.`,
+        ? `(${statVal} − ${retrait}) × ${nb(porteur.facteurDeFamille!)} = ${nb(apportStat)}` +
+          (autreTable != null ? ` — l'autre table du client donne ${nb(autreTable)}, ce qui ferait ${nb(Math.floor((statVal - retrait!) * autreTable))}.` : "")
+        : `Aucune des deux tables de métier du client ne donne de coefficient à l'${FAMILLE_FR[fam] ?? fam} pour ${porteur.classeFr ?? porteur.classe} : le facteur n'existe pas dans le relevé.`,
       source: porteur.facteurDeFamille != null
-        ? `bonus-sources.json ▸ facteursDeClasse, colonne ${FAMILLE_COLONNE[fam]} de ${porteur.classe} (propJob.inc). Le retrait de ${retrait} vient de la mécanique officielle.`
-        : "bonus-sources.json ▸ facteursDeClasse : les 18 colonnes ne couvrent que 7 familles d'arme, l'arc n'en fait pas partie.",
+        ? (porteur.tableDuFacteur === "propBalance.xml"
+            ? `balance.json ▸ PVE_BALANCE ▸ JOB_${porteur.classe}, attribut ${FAMILLE_ATTRIBUT[fam]} (propBalance.xml). Le retrait de ${retrait} vient de la mécanique officielle.`
+            : `bonus-sources.json ▸ facteursDeClasse, colonne ${FAMILLE_COLONNE[fam]} de ${porteur.classe} (propJob.inc) — l'équilibrage ne nomme pas cette arme pour ce métier. Le retrait de ${retrait} vient de la mécanique officielle.`)
+        : "propBalance.xml ne nomme cette arme sur aucune ligne de ce métier, et propJob.inc n'a pas de colonne pour elle.",
       certitude: apportStat != null ? "hypothese" : "absent",
     },
     {
@@ -422,7 +457,12 @@ export function puissanceDArme(
     "L'ordre des opérations vient de la mécanique du Flyff officiel : Airborn a pu la changer sans que le client l'écrive.",
   ];
   if (up > 0) reserves.push(`Le palier +${up} est annoncé, pas compté.`);
-  if (apportStat == null) reserves.push(`Le facteur de famille de l'${FAMILLE_FR[fam] ?? fam} n'est pas dans le tableau des classes.`);
+  if (apportStat == null) reserves.push(`Aucune des deux tables de métier du client ne donne de coefficient à l'${FAMILLE_FR[fam] ?? fam} pour cette classe.`);
+  if (autreTable != null) {
+    reserves.push(
+      `Facteur d'arme : les deux tables du client divergent — ${porteur.tableDuFacteur} donne ${nb(porteur.facteurDeFamille!)}, l'autre ${nb(autreTable)}. Le calcul emploie l'équilibrage du serveur (propBalance.xml) ; rien dans le client n'écrit lequel fait foi.`,
+    );
+  }
 
   return {
     titre: "La puissance d'un coup à l'arme",

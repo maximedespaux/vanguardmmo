@@ -6,21 +6,43 @@
 //
 //  · `dwAbilityMin` / `dwAbilityMax` — les deux bornes de l'arme. Dans le client.
 //  · `dwAttackSpeed` (0,025 à 0,085) — le coefficient de vitesse. Dans le client.
-//  · Le facteur d'arme (épée 4,5 · hache 5,5 · bâton 0,8 · sceptre 3 · poing 5 ·
-//    baguette 6 · yo-yo 4,2) — dans `propJob.inc`.
+//  · Le facteur d'arme — dans DEUX fichiers du client qui ne disent pas la même
+//    chose : `propJob.inc` (épée 4,5 · hache 5,5 · bâton 0,8 · sceptre 3 ·
+//    poing 5 · baguette 6 · yo-yo 4,2, les mêmes pour les quarante classes) et
+//    `propBalance.xml` (par métier, et il nomme l'ARC). Voir `balance.ts`.
 //  · Le SEUIL retiré à la statistique (12 ou 10 ou 14) et le facteur de niveau
 //    (1,1 · 1,2 · 1,3 · 0,91) — DANS AUCUN FICHIER. Ce sont des constantes du
-//    Flyff officiel, reprises telles quelles et marquées comme telles.
+//    Flyff officiel, reprises telles quelles et marquées comme telles. RIEN dans
+//    l'équilibrage n'y change quoi que ce soit : il donne le COEFFICIENT, jamais
+//    le seuil. Une réserve tombée n'en fait pas tomber une autre.
 //
-//  UNE DIVERGENCE À CONNAÎTRE. Chez le Flyff officiel, le facteur d'arme varie
-//  d'une classe à l'autre. Dans `propJob.inc` d'Airborn, les sept colonnes
-//  d'arme portent la MÊME valeur sur les quarante lignes de classe : ce sont des
-//  constantes d'arme recopiées. On ne les indexe donc pas par classe.
+//  ════════ CE QUI A CHANGÉ, ET POURQUOI C'EST ÉCRIT ICI ════════
 //
-//  ET UN TROU. `propJob.inc` n'a PAS de colonne pour l'arc. L'attaque ordinaire
-//  d'un arc ou d'une arbalète n'est donc pas calculable : voir `SANS_FACTEUR`.
+//  Ce fichier a porté pendant des mois deux affirmations fausses, tirées d'une
+//  lecture complète de `propJob.inc` — et d'une seule table :
+//
+//    « les sept colonnes d'arme portent la même valeur sur les quarante lignes
+//      de classe : on ne les indexe donc pas par classe »
+//    « propJob.inc n'a PAS de colonne pour l'arc : l'attaque ordinaire d'un arc
+//      ou d'une arbalète n'est donc pas calculable »
+//
+//  Les deux étaient exactes SUR propJob.inc, et fausses sur le client. Le client
+//  porte `propBalance.xml`, qui nomme l'arc (`JOB_PROP_BOW 9` dans
+//  `defineBalance.h`) et dont les facteurs varient par métier — `JOB_RANGER`
+//  Bow 11,8 contre `JOB_ACROBAT` Bow 4,0. L'Arbalétrier et la Sylphide, les deux
+//  classes entièrement hors calcul, y entrent.
+//
+//  LA LEÇON, et elle vaut plus que le correctif : « ce n'est pas dans le client »
+//  ne se conclut pas d'un fichier lu, mais des fichiers PAS ENCORE lus. Il en
+//  restait cent trente-trois.
+//
+//  LES DEUX TABLES SE CONTREDISENT et rien, dans le client, n'écrit laquelle
+//  l'emporte. `balance.ts` porte l'arbitrage, ses preuves et ses limites ; ce
+//  fichier se contente d'écrire LES DEUX VALEURS dans le terme quand elles
+//  divergent, et de joindre une réserve.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { famillesSansFacteur, lireFacteurDArme, SITUATION_PAR_DEFAUT, vitesseDeBaseEquilibree, type LectureDeFacteur, type Situation } from "./balance";
 import { RESERVE_STATS_PLATES, statPourEchelle, type ArmeEquipee, type Combattant, type Terme } from "./contrat";
 import { facteursDeClasse } from "./donnees";
 
@@ -59,20 +81,26 @@ const FAMILLE_PAR_T2: Record<string, FamilleArme> = {
  */
 const aLaStat = (nom: string) => (/^[AEIOUYÉÈÊaeiouyéèê]/.test(nom) ? `l'${nom}` : `la ${nom}`);
 
+/** Une virgule décimale : ces nombres s'affichent en français, pas en JavaScript. */
+const fr = (n: number) => n.toString().replace(".", ",");
+
 export function familleDe(arme: ArmeEquipee): FamilleArme | null {
   return FAMILLE_PAR_WT[arme.typeArme] ?? FAMILLE_PAR_T2[arme.categorie] ?? null;
 }
 
 /**
- * LES FAMILLES SANS FACTEUR DANS LE CLIENT.
+ * LES FAMILLES SANS FACTEUR DANS LE CLIENT — CALCULÉ SUR LES DEUX TABLES.
  *
- * `propJob.inc` a dix-huit colonnes : 공속, MaxHP, MaxMP, MaxFP, 물리방어력,
- * trois taux de récupération, SWD, AXE, STAFF, STICK, KNUCKLE, WAND, BLOCKING,
- * YOYO, CRITICAL, ICON. Aucune ne nomme l'arc. Le coefficient qui met la
- * Dextérité à l'échelle pour un arc vit donc dans l'exécutable, pas dans un
- * fichier lisible — et sans lui, l'attaque ordinaire d'un arc ne se calcule pas.
+ * C'était une liste écrite à la main, `["BOW"]`, tirée de `propJob.inc` seul.
+ * Elle se mesure maintenant sur les deux tables réunies : une famille n'est sans
+ * facteur que si NI l'équilibrage NI propJob ne lui en donnent un, sur aucun
+ * métier. Sur ce client, la liste est vide — mais la fonction reste, et le
+ * moteur continue de savoir refuser : c'est elle qui a dit « l'arc ne se calcule
+ * pas » pendant des mois, et c'était juste tant que la seconde table dormait.
  */
-export const SANS_FACTEUR: FamilleArme[] = ["BOW"];
+export function famillesSansFacteurDArme(): FamilleArme[] {
+  return famillesSansFacteur([...facteursDeClasse().values()] as unknown as Record<string, unknown>[]) as FamilleArme[];
+}
 
 /**
  * LA STATISTIQUE DE RÉFÉRENCE de chaque famille, et le seuil qu'on lui retire.
@@ -89,13 +117,26 @@ const REFERENCE: Record<FamilleArme, { stat: "force" | "dexterite" | "intelligen
   BOW: { stat: "dexterite", seuil: 14, facteurNiveau: 0.91 },
 };
 
-/** Le facteur d'arme lu dans `propJob.inc`. Il ne dépend pas de la classe :
- *  on lit quand même la ligne de la classe portée, pour que la source citée
- *  soit exactement celle qu'on a lue. */
-export function facteurDArme(classe: string, famille: FamilleArme): number | null {
+/**
+ * LE FACTEUR D'ARME, LES DEUX TABLES RENDUES ENSEMBLE.
+ *
+ * L'équilibrage du métier d'abord (`propBalance.xml`, situation demandée), puis
+ * `propJob.inc` quand la ligne d'équilibrage ne nomme pas cette arme — ce qui
+ * arrive SEPT FOIS SUR NEUF, chaque ligne ne nommant que les armes de sa voie.
+ * La lecture rendue porte l'autre valeur : elle n'est jamais perdue en route.
+ */
+export function lectureDuFacteurDArme(
+  classe: string,
+  famille: FamilleArme,
+  situation: Situation = SITUATION_PAR_DEFAUT,
+): LectureDeFacteur | null {
   const ligne = facteursDeClasse().get(classe) ?? facteursDeClasse().get("VAGRANT");
-  const v = ligne?.[famille];
-  return typeof v === "number" ? v : null;
+  return lireFacteurDArme(classe, famille, situation, (ligne ?? null) as Record<string, unknown> | null);
+}
+
+/** Le seul chiffre, quand l'appelant n'a pas besoin de l'arbitrage. */
+export function facteurDArme(classe: string, famille: FamilleArme, situation: Situation = SITUATION_PAR_DEFAUT): number | null {
+  return lectureDuFacteurDArme(classe, famille, situation)?.valeur ?? null;
 }
 
 /** Le code `DST_*` qui ajoute des dégâts plats à une famille précise. */
@@ -113,23 +154,26 @@ export type ApportDeStat = { valeur: number; termes: Terme[]; reserves: string[]
  *            [ + 0,14 × Force pour un arc ]  + dégâts plats de la famille
  *
  * Chaque morceau est rendu comme un terme séparé, avec sa source : c'est la
- * seule façon de voir, à l'écran, que le 4,5 vient du client et que le 12 non.
+ * seule façon de voir, à l'écran, que le COEFFICIENT vient du client et que le
+ * SEUIL non — et, depuis que le client s'est révélé porter deux tables de métier,
+ * de laquelle des deux le coefficient est sorti.
  */
-export function apportDeStat(c: Combattant, arme: ArmeEquipee): ApportDeStat {
+export function apportDeStat(c: Combattant, arme: ArmeEquipee, situation: Situation = SITUATION_PAR_DEFAUT): ApportDeStat {
   const famille = familleDe(arme);
   const termes: Terme[] = [];
   const reserves: string[] = [];
   if (!famille) return { valeur: 0, termes, reserves, bloque: `Famille d'arme inconnue pour ${arme.nom} (${arme.categorie}).` };
 
-  const facteur = facteurDArme(c.classe, famille);
-  if (facteur == null) {
+  const lecture = lectureDuFacteurDArme(c.classe, famille, situation);
+  if (lecture == null) {
     return {
       valeur: 0,
       termes,
       reserves,
-      bloque: `Aucun facteur d'arme pour la famille ${famille} dans propJob.inc : l'attaque ordinaire de cette arme ne se calcule pas.`,
+      bloque: `Aucun facteur d'arme pour la famille ${famille}, ni dans propBalance.xml ni dans propJob.inc : l'attaque ordinaire de cette arme ne se calcule pas.`,
     };
   }
+  const facteur = lecture.valeur;
 
   const ref = REFERENCE[famille];
   const lu = statPourEchelle(c, ref.stat);
@@ -137,20 +181,36 @@ export function apportDeStat(c: Combattant, arme: ArmeEquipee): ApportDeStat {
   if (!lu.plate) reserves.push(RESERVE_STATS_PLATES);
   const partStat = (stat - ref.seuil) * facteur;
   const partNiveau = c.niveau * ref.facteurNiveau;
+  /* L'APPOINT D'ARC RESTE UNE CONSTANTE EMPRUNTÉE. propBalance.xml donne le
+     coefficient de l'arc, pas ce 0,14 : la réserve sur les constantes du Flyff
+     officiel n'est pas levée par la découverte de la table d'équilibrage. */
   const appoint = famille === "BOW" ? 0.14 * statPourEchelle(c, "force").valeur : 0;
   const codeFamille = CODE_DEGATS_FAMILLE[famille];
   const platFamille = codeFamille ? (c.bonus[codeFamille] ?? 0) : 0;
 
   const nomStat = { force: "Force", dexterite: "Dextérité", intelligence: "Intelligence" }[ref.stat];
 
+  /* LES DEUX TABLES DANS LA MÊME LIGNE. Quand l'équilibrage et propJob.inc ne
+     donnent pas le même chiffre, le terme écrit les deux et une réserve part
+     avec le résultat : le choix est visible, jamais silencieux. */
+  const divergence = lecture.autre && !lecture.accord ? lecture.autre : null;
+  if (divergence) {
+    reserves.push(
+      `Facteur d'arme ${famille} : les deux tables du client ne s'accordent pas — ${lecture.table} donne ${fr(lecture.valeur)}, ${divergence.table} donne ${fr(divergence.valeur)}. Le calcul emploie l'équilibrage du serveur ; rien dans le client n'écrit lequel fait foi.`,
+    );
+  }
+
   termes.push({
     cle: "arme.stat",
-    libelle: `(${nomStat} ${stat} − ${ref.seuil}) × ${facteur.toString().replace(".", ",")}`,
+    libelle: `(${nomStat} ${stat} − ${ref.seuil}) × ${fr(facteur)}`,
     valeur: partStat,
     unite: "points",
-    source: `facteur ${facteur} : Client/data-02.air ▸ propJob.inc, colonne ${famille} — seuil ${ref.seuil} : constante du Flyff officiel`,
+    source: `facteur ${fr(facteur)} : ${lecture.source} — seuil ${ref.seuil} : constante du Flyff officiel`,
     certitude: "flyff-officiel",
-    note: `Le facteur ${facteur} est bien celui du client, mais le seuil de ${ref.seuil} points retiré à ${aLaStat(nomStat)} n'est écrit dans aucun fichier.${lu.plate ? "" : " Et la valeur lue est le TOTAL : la forme du Flyff officiel prend ici un total SANS les pourcentages de statistique."}`,
+    note:
+      `Le facteur ${fr(facteur)} est bien celui du client, mais le seuil de ${ref.seuil} points retiré à ${aLaStat(nomStat)} n'est écrit dans aucun fichier.` +
+      (divergence ? ` Et les deux tables du client divergent : ${divergence.table} donne ${fr(divergence.valeur)} pour la même famille.` : "") +
+      (lu.plate ? "" : " Et la valeur lue est le TOTAL : la forme du Flyff officiel prend ici un total SANS les pourcentages de statistique."),
   });
   termes.push({
     cle: "arme.niveau",
@@ -201,7 +261,7 @@ const PALIERS_VITESSE = [
 const borne = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 /** Le libellé français suivi du code du client : l'écran doit pouvoir vérifier. */
-const libelleAvecCode = (fr: string, code: string) => `${fr} (${code})`;
+const libelleAvecCode = (nomFr: string, code: string) => `${nomFr} (${code})`;
 
 export type Vitesse = {
   /** Le multiplicateur, entre 0,1 et 2. C'est la grandeur que le jeu manipule. */
@@ -223,18 +283,33 @@ export type Vitesse = {
  * 75 pour un Vagabond, 90 pour un Spadassin) et `dwAttackSpeed` de l'arme. Le
  * reste — le 4, le /8, le 200, le 25, la table de paliers — est du Flyff officiel.
  *
+ * ET ICI, CONTRAIREMENT AU FACTEUR D'ARME, ON GARDE `propJob.inc`. `propBalance.xml`
+ * donne une autre base — `AtkSpeed="250"` pour un Rôdeur — qui dépasse le plafond
+ * de 187,5 employé juste en dessous. Or ce plafond est lui-même une constante du
+ * Flyff officiel : si Airborn écrit 250, ou bien il a relevé le plafond et la
+ * formule est fausse de bout en bout pour cette classe, ou bien le Rôdeur est
+ * saturé en permanence. Le client ne tranche pas. On calcule donc avec la base de
+ * propJob.inc, et le terme AFFICHE celle de l'équilibrage à côté — c'est la seule
+ * façon de ne pas cacher un écart qu'on ne sait pas lire.
+ *
  * CE QUE ÇA NE DONNE PAS : un nombre de coups par seconde. La grandeur obtenue
  * est un MULTIPLICATEUR ; la durée d'une animation d'attaque, qui seule permet
  * de passer à des coups par seconde, n'est dans aucun relevé. Le moteur affiche
  * donc la vitesse, et refuse de la convertir en dégâts par seconde.
  */
-export function vitesseDAttaque(c: Combattant, arme: ArmeEquipee): Vitesse {
+export function vitesseDAttaque(c: Combattant, arme: ArmeEquipee, situation: Situation = SITUATION_PAR_DEFAUT): Vitesse {
   const ligne = facteursDeClasse().get(c.classe);
   const baseClasse = typeof ligne?.colonne1 === "number" ? ligne.colonne1 : 75;
+  const baseEquilibree = vitesseDeBaseEquilibree(c.classe, situation);
   const dex = statPourEchelle(c, "dexterite");
   const reserves: string[] = dex.plate ? [] : [RESERVE_STATS_PLATES];
   const echelle = 4 * dex.valeur + c.niveau / 8;
   const plafondBase = 200 - (200 * 0.125) / 2; // 187,5
+  if (baseEquilibree != null && baseEquilibree !== baseClasse) {
+    reserves.push(
+      `Vitesse d'attaque : les deux tables du client donnent une base différente pour ${c.classe} — propJob.inc ${fr(baseClasse)}, propBalance.xml ${fr(baseEquilibree)}. Le calcul emploie propJob.inc, parce que le plafond de ${fr(plafondBase)} qui suit vient du Flyff officiel et non du client.`,
+    );
+  }
   const base = Math.floor(Math.min(baseClasse + arme.vitesse * echelle, plafondBase));
 
   let v = (200 * 0.125) / (200 - base);
@@ -254,6 +329,10 @@ export function vitesseDAttaque(c: Combattant, arme: ArmeEquipee): Vitesse {
       unite: "points",
       source: "Client/data-02.air ▸ propJob.inc, colonne 공속",
       certitude: "client",
+      note:
+        baseEquilibree != null && baseEquilibree !== baseClasse
+          ? `L'équilibrage du serveur (propBalance.xml, ${situation}) donne ${baseEquilibree.toString().replace(".", ",")} pour ce métier. Ce chiffre n'est PAS employé ici : le plafond de ${plafondBase.toString().replace(".", ",")} qui suit est une constante du Flyff officiel, et ${baseEquilibree > plafondBase ? "cette valeur le dépasse" : "on ne sait pas si Airborn l'a conservé"}. Les deux lectures sont affichées, aucune n'est cachée.`
+          : undefined,
     },
     {
       cle: "vitesse.arme",

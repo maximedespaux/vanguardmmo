@@ -1,5 +1,43 @@
 {
- "genere": "2026-08-12",
+ "genere": "2026-08-21",
+ "client": {
+  "dossier": "Airborn Client",
+  "archives": 6,
+  "octets": 32553849,
+  "laPlusRecente": "2026-08-21",
+  "detail": [
+   {
+    "nom": "data-00.air",
+    "octets": 1735808,
+    "date": "2026-08-20"
+   },
+   {
+    "nom": "data-01.air",
+    "octets": 6544331,
+    "date": "2026-08-21"
+   },
+   {
+    "nom": "data-02.air",
+    "octets": 4156980,
+    "date": "2026-08-21"
+   },
+   {
+    "nom": "data-03.air",
+    "octets": 5586256,
+    "date": "2026-08-19"
+   },
+   {
+    "nom": "data-04.air",
+    "octets": 4604670,
+    "date": "2026-08-18"
+   },
+   {
+    "nom": "data-05.air",
+    "octets": 9925804,
+    "date": "2026-08-20"
+   }
+  ]
+ },
  "source": "Client/data-05.air (Ultimate_GemAbility.txt, Costume_GemAbility.txt) · Client/FSDATA/COMMON/Systems/data.air (propweaponleveling.inc, rarity.json, artefact.json, angels.json) · Client/FSDATA/CLIENT/data.air (maxawakes.json) · Client/data-02.air (propItemEtc.inc) · Client/data-00.air + data-01.air (identifiants et noms)",
  "sertissage": {
   "ultimes": [

@@ -515,7 +515,8 @@ export function calculer(personnage: Personnage, tables: Tables): Resultat {
       palier: Math.max(0, Math.round(e.piece.palier ?? 0)),
     }));
   const derivees = deriver({
-    niveau, facteurs, attributs, absoluDe, pourcentDe,
+    niveau, facteurs, equilibrage: classeClient ? tables.equilibrage.get("JOB_" + classeClient) ?? null : null,
+    attributs, absoluDe, pourcentDe,
     arme: arme?.objet ?? null,
     armures,
   });
@@ -528,7 +529,7 @@ export function calculer(personnage: Personnage, tables: Tables): Resultat {
     socle: {
       depart: 15, alloues, budget, depenses, restants: budget - depenses,
       facteurs: facteurs ? { ...facteurs } as Record<string, number | string> : null,
-      source: "public/wiki/bonus-sources.json ▸ facteursDeClasse (propJob.inc) · src/data/classes.ts pour le nom français",
+      source: "public/wiki/bonus-sources.json ▸ facteursDeClasse (propJob.inc) · public/wiki/balance.json ▸ PVE_BALANCE (propBalance.xml) pour les facteurs d'arme, de blocage et de critique · src/data/classes.ts pour le nom français",
       reserve:
         "Les 15 de départ par attribut et le budget « niveau × 2 − 2 » ne sont écrits dans AUCUN fichier du client que nous détenons : ce sont les valeurs du Flyff officiel. Un budget différent sur Airborn décalerait tous les attributs.",
     },
@@ -920,14 +921,26 @@ function rarete(
  * `colonne1` sert de plancher à la vitesse d'attaque, `colonne5` multiplie
  * l'endurance dans la défense.
  *
- * LES SEPT FACTEURS D'ARME (SWD, AXE, STAFF, STICK, KNUCKLE, WAND, YOYO) NE
- * VARIENT PAS D'UNE CLASSE À L'AUTRE dans Airborn : les quarante lignes de
- * propJob.inc recopient les mêmes sept nombres. Les indexer par classe donnerait
- * l'illusion d'une spécialisation qui n'existe pas.
+ * LES FACTEURS D'ARME VIENNENT DE DEUX TABLES, ET C'EST LA CORRECTION LA PLUS
+ * IMPORTANTE DE CE FICHIER. Il était écrit ici que « les sept facteurs d'arme ne
+ * varient pas d'une classe à l'autre dans Airborn, les indexer par classe donnerait
+ * l'illusion d'une spécialisation qui n'existe pas ». C'était exact de propJob.inc
+ * — ses quarante lignes recopient bien les mêmes sept nombres — et faux du client :
+ * `propBalance.xml` porte les mêmes propriétés PAR MÉTIER, et elles varient (épée
+ * 3,5 chez un Vagabond, 13 chez un Templier). Il nomme en plus l'ARC, que propJob
+ * ignore. La spécialisation existe ; c'est propJob.inc qui ne la voit pas.
+ *
+ * L'ORDRE DE LECTURE : l'équilibrage d'abord, propJob en repli — obligatoire, une
+ * ligne d'équilibrage ne nomme que les armes de sa propre voie. Et quand les deux
+ * divergent, LES DEUX SONT ÉCRITES dans le détail du terme : rien, dans le client,
+ * ne dit laquelle fait foi.
  */
 function deriver(ctx: {
   niveau: number;
   facteurs: import("./tables").FacteurClasse | null;
+  /** La ligne de `propBalance.xml` du métier, situation PvE. `null` : trois métiers
+   *  de propJob.inc n'ont aucune ligne d'équilibrage (Marionnettiste, Gardien, Doppler). */
+  equilibrage: import("./tables").LigneEquilibrage | null;
   attributs: Resultat["attributs"];
   absoluDe: (code: string) => number;
   pourcentDe: (code: string) => number;
@@ -935,14 +948,18 @@ function deriver(ctx: {
   /** Les pièces d'ARMURE portées, avec leur défense propre telle qu'écrite. */
   armures: { nom: string; min: number; max: number; palier: number }[];
 }): Derivee[] {
-  const { niveau, facteurs, attributs, absoluDe, pourcentDe, arme, armures } = ctx;
+  const { niveau, facteurs, equilibrage, attributs, absoluDe, pourcentDe, arme, armures } = ctx;
+  /* Une virgule décimale. Ces détails sont LUS par un joueur français : « 0.91 »
+     et « 0.5 » y passaient pour des coquilles, et un détail qu'on croit fautif
+     décrédibilise le nombre qu'il explique. */
+  const vg = (n: number) => String(n).replace(".", ",");
   const out: Derivee[] = [];
   // ┌─── CE QUI VIENT DU CLIENT, ET CE QUI VIENT D'AILLEURS ─────────────────┐
   // │ Il faut le dire précisément, sinon la réserve laisse croire que seuls   │
   // │ l'ORDRE des opérations est emprunté et que les nombres, eux, sont dans  │
   // │ le client. C'est faux. Viennent du client d'Airborn : les facteurs de  │
-  // │ classe de propJob.inc (MaxHP, MaxMP, MaxFP, colonne5, BLOCKING,        │
-  // │ CRITICAL, les sept familles d'arme) et les dn/dx des objets. Ne         │
+  // │ métier — propJob.inc (MaxHP, MaxMP, MaxFP, colonne5) ET propBalance.xml │
+  // │ (les familles d'arme, le blocage, le critique) — et les dn/dx. Ne       │
   // │ viennent d'AUCUN fichier détenu : le 150 des PV, le 22 des PM, les      │
   // │ multiplicateurs 20 (PV), 9 (PM), 7 (PC), le 0,01 de l'endurance, le     │
   // │ 0,75, le 2÷2,8, le 0,5÷2,8 et le −4 de la défense, le quart de la       │
@@ -951,7 +968,7 @@ function deriver(ctx: {
   // │ Ces quatorze-là sont les constantes du calculateur du Flyff OFFICIEL.   │
   // └────────────────────────────────────────────────────────────────────────┘
   const reserveFormule =
-    "Ce qui vient du client d'Airborn : les facteurs de classe de propJob.inc et les dn/dx du relevé d'objets. Ce qui NE vient d'aucun fichier détenu : l'ordre des opérations ET les constantes numériques de la formule (150, 22, ×20, ×9, ×7, 0,01, 0,75, 2÷2,8, 0,5÷2,8, −4, le quart de la défense d'équipement, 0,5, ÷10, ÷8) — ce sont celles du calculateur du Flyff officiel, réécrites, jamais mesurées sur Airborn.";
+    "Ce qui vient du client d'Airborn : les facteurs de métier de propBalance.xml et de propJob.inc, et les dn/dx du relevé d'objets. Ce qui NE vient d'aucun fichier détenu : l'ordre des opérations ET les constantes numériques de la formule (150, 22, ×20, ×9, ×7, 0,01, 0,75, 2÷2,8, 0,5÷2,8, −4, le quart de la défense d'équipement, 0,5, ÷10, ÷8) — ce sont celles du calculateur du Flyff officiel, réécrites, jamais mesurées sur Airborn.";
 
   if (!facteurs) {
     out.push({
@@ -967,18 +984,43 @@ function deriver(ctx: {
   const dex = attributs.Dextérité.total;
   const force = attributs.Force.total;
 
+  /* ┌─── LA DIVERGENCE SE DIT AUSSI QUAND C'EST propJob QUI GAGNE ───────────┐
+     │ Le critique et le blocage écrivent leurs deux chiffres parce que        │
+     │ l'équilibrage l'emporte sur eux. Les PV et la défense font l'INVERSE —  │
+     │ propJob.inc est retenu, pour une raison mesurée (balance.json ▸         │
+     │ arbitrage.attributsNonAppliques) — et il serait malhonnête que le sens  │
+     │ du choix décide de sa visibilité. C'est même ici qu'il faut le plus le  │
+     │ dire : l'équilibrage diverge de propJob sur 33 des 37 métiers pour les  │
+     │ PV et sur 24 pour la défense, et l'écart y pèse plus lourd que sur le   │
+     │ critique — un facteur quatre sur le Chevalier.                          │
+     │ Les deux compteurs ci-dessus ne sont PAS écrits ici : la phrase servie  │
+     │ ne cite que les deux facteurs du métier affiché et le nombre qu'ils     │
+     │ donnent, tous deux relus dans les relevés à chaque appel.               │
+     └────────────────────────────────────────────────────────────────────────┘ */
+  const facteurEcarteDeLEquilibrage = (attribut: "HP" | "Def", retenu: number) => {
+    const b = equilibrage?.attributs[attribut];
+    return typeof b === "number" && b !== retenu ? b : null;
+  };
+
   // PV = (150 + (1 + END × 0,01) × facteurHP × niveau × 20 + PV absolus) × (1 + PV %)
-  const pvBase = Math.floor(150 + (1 + end * 0.01) * (facteurs.MaxHP * niveau) * 20);
+  const pvDe = (f: number) => Math.floor(150 + (1 + end * 0.01) * (f * niveau) * 20);
+  const pvBase = pvDe(facteurs.MaxHP);
   const pvAbs = Math.max(0, absoluDe("DST_HP_MAX"));
   const pvPct = pourcentDe("DST_HP_MAX_RATE");
+  const pvTotal = (base: number) => Math.floor((base + pvAbs) * (1 + pvPct / 100));
+  const hpEcarte = facteurEcarteDeLEquilibrage("HP", facteurs.MaxHP);
   out.push({
     nom: "PV max",
-    valeur: Math.floor((pvBase + pvAbs) * (1 + pvPct / 100)),
+    valeur: pvTotal(pvBase),
     detail:
       `base = plancher(150 + (1 + ${end} × 0,01) × (${facteurs.MaxHP} × ${niveau}) × 20) = ${pvBase} · `
       + `+ ${pvAbs} PV absolus (DST_HP_MAX) = ${pvBase + pvAbs} · `
-      + `× (1 + ${pvPct} / 100) (DST_HP_MAX_RATE) = ${Math.floor((pvBase + pvAbs) * (1 + pvPct / 100))}`,
-    source: `facteursDeClasse.MaxHP = ${facteurs.MaxHP} · Endurance totale hors pourcentage`,
+      + `× (1 + ${pvPct} / 100) (DST_HP_MAX_RATE) = ${pvTotal(pvBase)}`
+      + (hpEcarte != null
+        ? ` LES DEUX TABLES DU CLIENT DIVERGENT : propJob.inc donne ${vg(facteurs.MaxHP)}, propBalance.xml donne ${vg(hpEcarte)}, ce qui ferait ${pvTotal(pvDe(hpEcarte))}. Le calcul emploie propJob.inc, parce que dans l'équilibrage une promotion fait BAISSER ce facteur — ce qu'un facteur de PV max ne fait pas. Rien dans le client n'écrit lequel fait foi.`
+        : ""),
+    source: `facteursDeClasse.MaxHP = ${facteurs.MaxHP} · Endurance totale hors pourcentage`
+      + (hpEcarte != null ? ` · balance.json ▸ PVE_BALANCE ▸ ${equilibrage?.id ?? "?"}, attribut HP = ${vg(hpEcarte)} — lu, non appliqué` : ""),
     reserve: reserveFormule,
   });
 
@@ -1025,12 +1067,15 @@ function deriver(ctx: {
   // └────────────────────────────────────────────────────────────────────────┘
   const defAbs = absoluDe("DST_ADJDEF");
   const defPct = pourcentDe("DST_ADJDEF_RATE");
-  const defStat = Math.floor(niveau * (2 / 2.8) + (end * (0.5 / 2.8) + (end - 14) * facteurs.colonne5) * 0.75 - 4);
+  const defStatDe = (f: number) => Math.floor(niveau * (2 / 2.8) + (end * (0.5 / 2.8) + (end - 14) * f) * 0.75 - 4);
+  const defStat = defStatDe(facteurs.colonne5);
   const equipMin = armures.reduce((s, a) => s + a.min, 0);
   const equipMax = armures.reduce((s, a) => s + a.max, 0);
-  const total = (equip: number) => Math.floor((defStat + Math.floor(equip / 4) + defAbs) * (1 + defPct / 100));
+  const totalDe = (part: number, equip: number) => Math.floor((part + Math.floor(equip / 4) + defAbs) * (1 + defPct / 100));
+  const total = (equip: number) => totalDe(defStat, equip);
   const defBas = total(equipMin);
   const defHaut = total(equipMax);
+  const defEcarte = facteurEcarteDeLEquilibrage("Def", facteurs.colonne5);
   const ameliorees = armures.filter((a) => a.palier > 0);
   out.push({
     nom: "Défense (attaque physique)",
@@ -1048,26 +1093,42 @@ function deriver(ctx: {
       + ". Le relevé écrit la défense d'une pièce comme un intervalle (dn–dx) : les deux bornes sont données, aucune n'est tirée au sort ici."
       + (ameliorees.length
         ? ` LE +N N'EST PAS COMPTÉ sur ${ameliorees.map((a) => `${a.nom} +${a.palier}`).join(", ")} : le gain par palier d'une armure n'existe dans aucun fichier du client.`
+        : "")
+      + (defEcarte != null
+        ? ` LES DEUX TABLES DU CLIENT DIVERGENT : propJob.inc donne ${vg(facteurs.colonne5)}, propBalance.xml donne ${vg(defEcarte)}, ce qui ferait ${totalDe(defStatDe(defEcarte), equipMin)}. Le calcul emploie propJob.inc, parce que la FORME de cette formule vient déjà du Flyff officiel et n'est pas confirmée sur Airborn : y ajouter un second choix incertain empilerait deux inconnues. Rien dans le client n'écrit lequel fait foi.`
         : ""),
     source:
       `facteursDeClasse.colonne5 (물리방어력관련) = ${facteurs.colonne5} · `
+      + (defEcarte != null ? `balance.json ▸ PVE_BALANCE ▸ ${equilibrage?.id ?? "?"}, attribut Def = ${vg(defEcarte)} — lu, non appliqué · ` : "")
       + "public/wiki/objets-stats.json ▸ dn / dx des pièces dont t1 = ARMOR",
     reserve: reserveFormule,
   });
 
   // Attaque : le pourcentage s'applique AVANT l'absolu. Voir l'en-tête.
   const famille = arme ? familleArme(arme) : null;
-  if (arme && famille && !famille.cle) {
+  /* ── LE FACTEUR D'ARME, LES DEUX TABLES ────────────────────────────────────
+     L'équilibrage du métier d'abord ; propJob.inc en repli quand la ligne du
+     métier ne nomme pas cette arme. Les deux valeurs sont gardées : celle qui
+     n'est pas employée s'affiche dans le détail. */
+  const brutEquilibrage = famille ? equilibrage?.attributs[famille.attribut] : undefined;
+  const facteurEquilibrage = typeof brutEquilibrage === "number" ? brutEquilibrage : null;
+  const brutPropJob = famille?.cle ? facteurs[famille.cle] : undefined;
+  const facteurPropJob = typeof brutPropJob === "number" ? brutPropJob : null;
+  const facteurRetenu = facteurEquilibrage ?? facteurPropJob;
+  const tableRetenue = facteurEquilibrage != null ? "propBalance.xml" : "propJob.inc";
+  const facteurEcarte = facteurEquilibrage != null && facteurPropJob != null && facteurPropJob !== facteurEquilibrage ? facteurPropJob : null;
+
+  if (arme && famille && facteurRetenu == null) {
     out.push({
       nom: "Attaque affichée", valeur: null,
       detail:
-        `${arme.n} est un arc. propJob.inc nomme sept familles d'arme (SWD, AXE, STAFF, STICK, KNUCKLE, WAND, YOYO) et l'ARC n'en fait pas partie : `
-        + `le facteur qui multiplie la dextérité (${dex} − 14) n'est écrit dans aucun fichier détenu. `
-        + `Tout le reste est là — ${arme.dn}–${arme.dx} doublés, niveau × 0,91, appoint 0,14 × ${force} de force — mais il manque le multiplicateur central. Aucun nombre n'est produit.`,
-      source: "public/wiki/bonus-sources.json ▸ facteursDeClasse.colonnes (propJob.inc) — sept familles nommées, l'arc absent",
+        `${arme.n} est ${famille.attribut === "Bow" ? "un arc" : "une arme"} que ce métier ne porte pas : sa ligne d'équilibrage (propBalance.xml) ne nomme que les armes de sa propre voie, `
+        + `et propJob.inc n'a aucune colonne pour cette famille. Le facteur qui multiplie ${famille.stat === "Dextérité" ? `la dextérité (${dex} − ${famille.decalage})` : famille.stat === "Intelligence" ? `l'intelligence (${int} − ${famille.decalage})` : `la force (${force} − ${famille.decalage})`} n'existe donc dans AUCUNE des deux tables. `
+        + `Tout le reste est là — ${arme.dn}–${arme.dx} doublés, niveau × ${vg(famille.niveau)}${famille.appointForce ? `, appoint 0,14 × ${force} de force` : ""} — mais il manque le multiplicateur central. Aucun nombre n'est produit.`,
+      source: "public/wiki/balance.json ▸ PVE_BALANCE (propBalance.xml) et public/wiki/bonus-sources.json ▸ facteursDeClasse (propJob.inc) — les deux consultées, aucune ne répond",
     });
-  } else if (arme && famille?.cle && typeof arme.dn === "number" && typeof arme.dx === "number") {
-    const facteurArme = facteurs[famille.cle] as number;
+  } else if (arme && famille && facteurRetenu != null && typeof arme.dn === "number" && typeof arme.dx === "number") {
+    const facteurArme = facteurRetenu;
     const statArme = famille.stat === "Intelligence" ? int : famille.stat === "Dextérité" ? dex : force;
     const decalage = famille.decalage;
     const bonusForce = famille.appointForce ? 0.14 * force : 0;
@@ -1097,14 +1158,20 @@ function deriver(ctx: {
       valeur: Math.floor(Math.max(0, apresPct + atkAbs)),
       detail:
         `arme ${arme.n} : ${arme.dn}–${arme.dx} doublés = ${arme.dn * 2}–${arme.dx * 2} · `
-        + `+ attaque de famille = plancher((${statArme} − ${decalage}) × ${facteurArme} + ${niveau} × ${famille?.niveau ?? 0}${bonusForce ? ` + 0,14 × ${force}` : ""}) = ${attaqueArme} · `
+        + `+ attaque de famille = plancher((${statArme} − ${decalage}) × ${vg(facteurArme)} + ${niveau} × ${vg(famille?.niveau ?? 0)}${bonusForce ? ` + 0,14 × ${force}` : ""}) = ${attaqueArme} · `
+        + (facteurEcarte != null
+          ? `LES DEUX TABLES DU CLIENT DIVERGENT SUR CE FACTEUR : propBalance.xml donne ${vg(facteurArme)}, propJob.inc donne ${vg(facteurEcarte)}, et rien dans le client n'écrit laquelle fait foi. Avec ${vg(facteurEcarte)}, l'attaque de famille vaudrait ${Math.floor((statArme - decalage) * facteurEcarte + niveau * (famille?.niveau ?? 0) + bonusForce)} au lieu de ${attaqueArme}. Le calcul emploie l'équilibrage du serveur. · `
+          : "")
         + `moyenne = ${moyenne} · × (1 + ${atkPct} / 100) (DST_ATKPOWER_RATE) = ${Math.floor(apresPct)} · `
         + `+ ${atkAbs} d'attaque absolue (DST_ATKPOWER) = ${Math.floor(apresPct + atkAbs)}. `
         + "Le pourcentage s'applique AVANT l'absolu — l'inverse de la défense."
         + (siAttaque != null
           ? ` DST_CHR_DMG VAUT ${chrDmg} ET N'EST PAS COMPTÉ ICI : le relevé l'appelle « Dégâts subis réduits », la description du Grenat d'Amour et le calculateur de référence en font de l'ATTAQUE ajoutée au minimum et au maximum de l'arme. Sous cette seconde lecture, l'attaque affichée vaudrait ${siAttaque} au lieu de ${Math.floor(apresPct + atkAbs)}. Le libellé du dictionnaire doit être tranché avant qu'un des deux nombres soit retenu.`
           : ""),
-      source: `facteursDeClasse.${famille?.cle ?? "?"} = ${facteurArme} (constante d'ARME, identique sur les 40 classes) · objets-stats.json ▸ dn / dx`,
+      source: (tableRetenue === "propBalance.xml"
+        ? `balance.json ▸ PVE_BALANCE ▸ ${equilibrage?.id ?? "?"}, attribut ${famille?.attribut ?? "?"} = ${vg(facteurArme)} (propBalance.xml)${facteurEcarte == null && facteurPropJob != null ? " — propJob.inc donne le même chiffre" : ""}`
+        : `facteursDeClasse.${famille?.cle ?? "?"} = ${vg(facteurArme)} (propJob.inc — l'équilibrage ne nomme pas cette arme pour ce métier ; cette colonne est identique sur les 40 classes)`)
+        + " · objets-stats.json ▸ dn / dx",
       reserve:
         reserveFormule + " Le +N de l'arme n'entre PAS dans ce nombre : son gain par palier n'existe dans aucun fichier.",
     });
@@ -1143,27 +1210,55 @@ function deriver(ctx: {
   // │ classe dont le critique fait la réputation. Les trente-six autres       │
   // │ classes portent 1 : sur elles, la correction ne change rien.            │
   // └────────────────────────────────────────────────────────────────────────┘
+  /* CRITIQUE ET BLOCAGE SORTENT DE LA MÊME ÉNUMÉRATION QUE LES FACTEURS D'ARME.
+     `defineBalance.h` numérote JOB_PROP_BLOCKING 6 et JOB_PROP_CRITICAL 8, au même
+     titre que JOB_PROP_SWD 0 : les deux tables les portent toutes les deux, et elles
+     ne s'accordent pas. On applique donc EXACTEMENT la même règle qu'à l'arme —
+     l'équilibrage d'abord, propJob en repli, et les deux chiffres écrits quand ils
+     divergent. Employer l'équilibrage pour l'épée et propJob pour le critique aurait
+     fabriqué un personnage qui n'existe dans aucun des deux clients. */
+  const deuxTables = (attribut: "Critical" | "Block", colonne: "CRITICAL" | "BLOCKING") => {
+    const b = equilibrage?.attributs[attribut];
+    const j = facteurs[colonne];
+    const balance = typeof b === "number" ? b : null;
+    const job = typeof j === "number" ? j : null;
+    const retenu = balance ?? job ?? 1;
+    return {
+      retenu,
+      ecarte: balance != null && job != null && job !== balance ? job : null,
+      table: balance != null ? "propBalance.xml" : "propJob.inc",
+      ou: balance != null ? `balance.json ▸ PVE_BALANCE ▸ ${equilibrage?.id ?? "?"}, attribut ${attribut}` : `facteursDeClasse.${colonne}`,
+    };
+  };
+  const diver = (x: { ecarte: number | null; retenu: number }) =>
+    x.ecarte != null
+      ? ` LES DEUX TABLES DU CLIENT DIVERGENT : l'équilibrage donne ${vg(x.retenu)}, propJob.inc donne ${vg(x.ecarte)}. Le calcul emploie l'équilibrage ; rien dans le client n'écrit lequel fait foi.`
+      : "";
+
+  const crit = deuxTables("Critical", "CRITICAL");
   const critPoints = pourcentDe("DST_CHR_CHANCECRITICAL");
-  const critClasse = Math.floor(dex / 10 * facteurs.CRITICAL);
+  const critClasse = Math.floor(dex / 10 * crit.retenu);
   const critique = critClasse + critPoints;
   out.push({
     nom: "Taux critique",
     valeur: Math.round(critique * 100) / 100,
     detail:
-      `part de classe = plancher(${dex} ÷ 10 × ${facteurs.CRITICAL}) = ${critClasse} · `
-      + `+ ${critPoints} (DST_CHR_CHANCECRITICAL) — en points de pourcentage · = ${critique}. `
-      + `Le facteur CRITICAL de propJob.inc ne prend que deux valeurs sur les quarante classes : 1 pour trente-six d'entre elles, 4 pour les quatre marches de la lignée du Bouffon (JESTER, JESTER_MASTER, JESTER_HERO, WINDLURKER_HERO / Sylphide). `
-      + "Sa PLACE dans le calcul n'est pas écrite dans le client : elle vient du calculateur du Flyff officiel, comme tout le reste de cet ordre.",
-    source: `Dextérité totale hors pourcentage · facteursDeClasse.CRITICAL = ${facteurs.CRITICAL}`,
+      `part de classe = plancher(${dex} ÷ 10 × ${vg(crit.retenu)}) = ${critClasse} · `
+      + `+ ${critPoints} (DST_CHR_CHANCECRITICAL) — en points de pourcentage · = ${critique}.`
+      + diver(crit)
+      + " Sa PLACE dans le calcul n'est pas écrite dans le client : elle vient du calculateur du Flyff officiel, comme tout le reste de cet ordre.",
+    source: `Dextérité totale hors pourcentage · ${crit.ou} = ${vg(crit.retenu)}`,
     reserve: reserveFormule,
   });
 
-  const blocage = Math.floor(dex / 8 * facteurs.BLOCKING);
+  const bloc = deuxTables("Block", "BLOCKING");
+  const blocage = Math.floor(dex / 8 * bloc.retenu);
   out.push({
     nom: "Blocage (part de classe)",
     valeur: blocage + pourcentDe("DST_BLOCK_MELEE"),
-    detail: `plancher(${dex} ÷ 8 × ${facteurs.BLOCKING}) = ${blocage} · + ${pourcentDe("DST_BLOCK_MELEE")} (DST_BLOCK_MELEE) · + ${pourcentDe("DST_BLOCK_RANGE")} à distance (DST_BLOCK_RANGE)`,
-    source: `facteursDeClasse.BLOCKING = ${facteurs.BLOCKING}`,
+    detail: `plancher(${dex} ÷ 8 × ${vg(bloc.retenu)}) = ${blocage} · + ${pourcentDe("DST_BLOCK_MELEE")} (DST_BLOCK_MELEE) · + ${pourcentDe("DST_BLOCK_RANGE")} à distance (DST_BLOCK_RANGE)`
+      + diver(bloc),
+    source: `${bloc.ou} = ${vg(bloc.retenu)}`,
     reserve: reserveFormule + " La part qui dépend de l'écart de dextérité avec l'attaquant n'est pas ici : elle ne se calcule qu'en face d'une cible.",
   });
 
@@ -1185,20 +1280,27 @@ function deriver(ctx: {
  * └────────────────────────────────────────────────────────────────────────┘
  */
 function familleArme(arme: NonNullable<ReturnType<typeof trouverObjet>>): {
+  /** La colonne de `propJob.inc`. `null` pour l'arc : propJob ne le nomme pas. */
   cle: "SWD" | "AXE" | "STAFF" | "STICK" | "KNUCKLE" | "WAND" | "YOYO" | null;
+  /** L'attribut de `propBalance.xml`. C'est la table lue EN PREMIER, et la seule
+   *  qui nomme l'arc — `defineBalance.h` le numérote `JOB_PROP_BOW 9`. */
+  attribut: "Sword" | "Axe" | "Staff" | "Stick" | "Knuckle" | "Wand" | "Yoyo" | "Bow";
   stat: "Force" | "Dextérité" | "Intelligence";
   decalage: number; niveau: number; appointForce?: true;
 } | null {
   const t2 = (arme.t2 ?? "").replace(/^WEAPON_/, "");
   switch (t2) {
-    case "ONESWORD": case "TWOSWORD": return { cle: "SWD", stat: "Force", decalage: 12, niveau: 1.1 };
-    case "YOYO": return { cle: "YOYO", stat: "Force", decalage: 12, niveau: 1.1 };
-    case "ONEAXE": case "TWOAXE": return { cle: "AXE", stat: "Force", decalage: 12, niveau: 1.2 };
-    case "STAFF": return { cle: "STAFF", stat: "Force", decalage: 10, niveau: 1.1 };
-    case "STICK": return { cle: "STICK", stat: "Force", decalage: 10, niveau: 1.3 };
-    case "KNUCKLE": return { cle: "KNUCKLE", stat: "Force", decalage: 10, niveau: 1.2 };
-    case "WAND": return { cle: "WAND", stat: "Intelligence", decalage: 10, niveau: 1.2 };
-    case "BOW": return { cle: null, stat: "Dextérité", decalage: 14, niveau: 0.91, appointForce: true };
+    case "ONESWORD": case "TWOSWORD": return { cle: "SWD", attribut: "Sword", stat: "Force", decalage: 12, niveau: 1.1 };
+    case "YOYO": return { cle: "YOYO", attribut: "Yoyo", stat: "Force", decalage: 12, niveau: 1.1 };
+    case "ONEAXE": case "TWOAXE": return { cle: "AXE", attribut: "Axe", stat: "Force", decalage: 12, niveau: 1.2 };
+    case "STAFF": return { cle: "STAFF", attribut: "Staff", stat: "Force", decalage: 10, niveau: 1.1 };
+    case "STICK": return { cle: "STICK", attribut: "Stick", stat: "Force", decalage: 10, niveau: 1.3 };
+    case "KNUCKLE": return { cle: "KNUCKLE", attribut: "Knuckle", stat: "Force", decalage: 10, niveau: 1.2 };
+    case "WAND": return { cle: "WAND", attribut: "Wand", stat: "Intelligence", decalage: 10, niveau: 1.2 };
+    /* L'ARBALÈTE PASSE ICI AUSSI : le client la déclare `WEAPON_BOW`, et son
+       chargeur d'équilibrage ne connaît pas d'attribut « Crossbow ». Ce n'est
+       donc pas un raccourci de notre part — les deux armes partagent la propriété. */
+    case "BOW": return { cle: null, attribut: "Bow", stat: "Dextérité", decalage: 14, niveau: 0.91, appointForce: true };
     default: return null;
   }
 }

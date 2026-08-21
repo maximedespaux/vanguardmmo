@@ -24,7 +24,7 @@ import path from "node:path";
  * └────────────────────────────────────────────────────────────┘
  *
  * Ce module touche au disque : il ne doit JAMAIS être importé par un composant
- * client. Le relevé pèse 512 Ko, le dictionnaire 36 Ko : ils sont lus au rendu et
+ * client. Le relevé pèse 510 Ko, le dictionnaire 33 Ko : ils sont lus au rendu et
  * gardés en mémoire, pas un octet ne part au navigateur. Même modèle que
  * `releves.ts`.
  *

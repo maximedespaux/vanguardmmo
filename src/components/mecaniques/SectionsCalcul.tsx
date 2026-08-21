@@ -55,8 +55,11 @@ export function Calcul() {
           ["Classes au tableau de facteurs du client", `${c.classes}`],
           /* LE DÉNOMINATEUR ÉTAIT ÉCRIT À LA MAIN (« sur 8 ») et il était faux : le
              relevé porte une famille de plus que le compte de mémoire. Il se compte
-             maintenant sur les armes qu'une classe peut porter. */
-          ["Familles d'arme que ce tableau couvre", `${c.famillesDArme} sur ${c.famillesDArmeTotal} — l'arc n'y est pas`],
+             maintenant sur les armes qu'une classe peut porter.
+             ET LA PHRASE QUI SUIVAIT — « l'arc n'y est pas » — était vraie de
+             propJob.inc et fausse du client : propBalance.xml nomme l'arc. Elle est
+             retirée plutôt que réécrite, parce que le numérateur la dit déjà. */
+          ["Familles d'arme que les tables de métier couvrent", `${c.famillesDArme} sur ${c.famillesDArmeTotal}`],
           ["Compétences relevées", `${c.competences}, dont ${c.competencesDAttaque} d'attaque`],
           ["Monstres avec défense et résistances", c.monstres.toLocaleString("fr-FR")],
         ]} />

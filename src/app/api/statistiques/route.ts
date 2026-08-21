@@ -105,9 +105,20 @@ export async function GET(requete: Request) {
       (mechArme.nonCalculable as string) ?? "",
       ((mechArmure.upgrade as Record<string, string> | undefined)?.nonCalculable) ?? "",
       ((mechMode.upgrade as Record<string, string> | undefined)?.nonCalculable) ?? "",
-      "Le facteur d'arme de l'ARC : propJob.inc nomme sept familles (SWD, AXE, STAFF, STICK, KNUCKLE, WAND, YOYO) et l'arc n'en fait pas partie. L'attaque d'un arc n'est donc pas chiffrable.",
+      /* CETTE LIGNE ANNONÇAIT UN TROU QUI N'EN EST PLUS UN. Elle disait « l'attaque
+         d'un arc n'est pas chiffrable » parce que propJob.inc ne nomme pas l'arc.
+         propBalance.xml le nomme (defineBalance.h : JOB_PROP_BOW 9) : l'arc et
+         l'arbalète se calculent. Ce qui RESTE non calculable, c'est le couple
+         métier-arme hors voie — un Spadassin qui tient un arc n'a de coefficient
+         dans aucune des deux tables. */
+      "Le facteur d'arme d'un métier qui porte une arme HORS DE SA VOIE : une ligne de propBalance.xml ne nomme que les armes de son métier, et propJob.inc n'a pas de colonne pour l'arc. Un Spadassin muni d'un arc n'a donc de coefficient nulle part, et son attaque n'est pas chiffrable.",
+      "Laquelle des deux tables de métier fait foi : propJob.inc et propBalance.xml donnent des coefficients différents pour le même métier, et rien dans le client n'écrit laquelle l'emporte. Le calcul emploie l'équilibrage du serveur et affiche l'autre valeur à côté.",
       "Les 15 de départ par attribut et le budget « niveau × 2 − 2 » ne sont écrits dans aucun fichier détenu : ce sont les valeurs du Flyff officiel.",
-    ].filter(Boolean),
+      /* DÉDOUBLONNÉ, ET PAS SEULEMENT FILTRÉ : `mechArme.nonCalculable` et
+         `mechArmure.upgrade.nonCalculable` de mecaniques.json portent le MÊME
+         texte sur le +N, si bien que la route servait deux fois la même phrase.
+         Un renseignement répété se lit comme deux trous distincts. */
+    ].filter((t, i, tout) => Boolean(t) && tout.indexOf(t) === i),
     sources: tables.sources,
     epreuves: EPREUVES.map((p, i) => ({ numero: i + 1, nom: p.nom })),
   });

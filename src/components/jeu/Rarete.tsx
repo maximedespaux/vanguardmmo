@@ -44,17 +44,21 @@ import React from "react";
 /**
  * Les quatre raretés QUI ONT DES IMAGES, dans l'ordre où le jeu les classe.
  *
- * ┌──── QUATRE ICI, SIX DANS LE CALCUL — ET CE N'EST PAS UN OUBLI ────┐
- * │ `src/lib/statistiques/moteur.ts` déclare SIX niveaux : NONE, RARE, │
- * │ EPIC, LEGENDARY, PREMYTHIC, MYTHIC. Ils viennent d'`AddRarityStat` │
- * │ dans les scripts du client et servent au calcul de la maîtrise     │
- * │ d'arme, où chaque niveau porte sa propre valeur.                    │
+ * ┌──── QUATRE ICI, SIX DANS L'ÉCHELLE — ET CE N'EST PAS UN OUBLI ────┐
+ * │ `src/lib/specsFlyff.ts ▸ RARETES` déclare SIX niveaux : Commun,    │
+ * │ Rare, Épique, Légendaire, Pré-Mythique, Mythique. Ils viennent      │
+ * │ d'`AddRarityStat` dans les scripts du client, et le builder les     │
+ * │ propose tous les six sur une arme.                                  │
+ * │                                                                     │
+ * │ (Cette note citait `src/lib/statistiques/moteur.ts`, qui est parti  │
+ * │ avec le moteur de dégâts. L'échelle, elle, est un fait du client :  │
+ * │ elle a simplement changé de domicile.)                              │
  * │                                                                     │
  * │ CE FICHIER-CI PARLE D'IMAGES, et le client n'en a extrait que pour  │
  * │ quatre. Vérifié en HTTP, pas supposé :                              │
  * │   bordure_premythic.webp → 404   bordure_mythic.webp → 404          │
  * │ Ajouter ces deux noms ici fabriquerait des images cassées. Les deux │
- * │ échelles sont donc distinctes exprès : le MOTEUR compte sur six     │
+ * │ échelles sont donc distinctes exprès : le CLIENT compte six         │
  * │ niveaux, l'ÉCRAN n'en encadre que quatre.                            │
  * └─────────────────────────────────────────────────────────────────────┘
  */

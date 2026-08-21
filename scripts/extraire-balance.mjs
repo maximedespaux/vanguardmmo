@@ -14,7 +14,14 @@
 // (PvE ou PvP), les coefficients d'arme, de blocage, de critique, de défense et
 // de vitesse, plus un facteur par COMPÉTENCE nommée.
 //
-// ─────────────── POURQUOI ÇA CHANGE LE MOTEUR DE DÉGÂTS ───────────────
+// ─────────────── CE QUE CE RELEVÉ A CORRIGÉ ───────────────
+//
+// LE MOTEUR DE DÉGÂTS N'EXISTE PLUS — `src/lib/degats/**`, `src/lib/statistiques/**`
+// et `/api/statistiques` ont été retirés : vingt-deux de leurs quarante-neuf termes
+// reposaient sur des constantes du Flyff officiel qu'aucun fichier d'Airborn
+// n'écrit. CE SCRIPT, LUI, RESTE : il ne calcule aucun dégât, il relève ce que le
+// client écrit. Son relevé est lu par `src/components/mecaniques/releves.ts`
+// (`chiffresDEquilibrage`) et montré sur /builder/mecaniques.
 //
 // Le dépôt affirmait, dans `src/lib/degats/armes.ts` et dans la réponse de
 // `/api/statistiques`, que l'attaque ordinaire d'un ARC n'était pas calculable :

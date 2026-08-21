@@ -1431,3 +1431,105 @@ export function chiffresAnges() {
     poudre: c.poudre?.n ?? "",
   };
 }
+
+/* ── L'ÉQUILIBRAGE DU SERVEUR : CE QUI RESTE QUAND LE MOTEUR DE DÉGÂTS PART ───
+ *
+ * `public/wiki/balance.json` (97 Ko, produit par `scripts/extraire-balance.mjs`)
+ * relève `propBalance.xml` et `defineBalance.h` du client d'août 2026. Il a été
+ * extrait POUR le moteur de dégâts, qui vient d'être retiré — et il aurait
+ * disparu de l'écran avec lui, alors que ce sont des FAITS DU CLIENT, pas des
+ * constantes empruntées à un autre jeu. C'est exactement ainsi que le
+ * coefficient de l'arc s'était perdu la première fois : le fichier était dans
+ * le client, personne ne l'avait ouvert.
+ *
+ * ┌──── CE QUI MONTE À L'ÉCRAN, ET CE QUI RESTE DANS LE RELEVÉ ────┐
+ * │ MONTE : ce qui change un geste. L'arc est nommé et son          │
+ * │   coefficient varie d'un facteur quatre selon la lignée — savoir│
+ * │   sur quelle classe un arc rend quelque chose est une décision  │
+ * │   de build. Et les deux tables se contredisent, ce qui interdit │
+ * │   de citer un coefficient sans dire de laquelle il sort.        │
+ * │                                                                 │
+ * │ RESTE DANS `balance.json` : les 65 facteurs de compétence.      │
+ * │   `propBalance.xml` écrit `Factor="2.0"` et n'écrit JAMAIS ce   │
+ * │   que ce facteur multiplie. Un nombre dont on ignore l'opérande │
+ * │   ne change aucun geste : il tombe sous la règle du             │
+ * │   renseignement incomplet. Il est relevé, daté, sourcé — il     │
+ * │   n'est pas affiché. Le jour où l'opérande est établi, il monte.│
+ * └─────────────────────────────────────────────────────────────────┘
+ */
+type ReleveBalance = {
+  proprietes?: { declarees?: { cle: string; nom: string; rang: number; colonnePropJob: string | null; familleDArme?: boolean; employeeDansLeXml?: boolean }[] };
+  metiers?: { dansLEquilibrage?: number; declaresDansDefineJob?: number };
+  competences?: { facteurs?: number; identifiants?: number };
+  equilibrages?: Record<string, {
+    confrontationAPropJob?: { comparees?: number; identiques?: number; divergentes?: number };
+    metiers?: { id: string; attributs: Record<string, number> }[];
+  }>;
+};
+let BALANCE: ReleveBalance | null = null;
+function balance(): ReleveBalance {
+  if (BALANCE) return BALANCE;
+  try {
+    BALANCE = JSON.parse(fs.readFileSync(path.join(process.cwd(), "public", "wiki", "balance.json"), "utf8")) as ReleveBalance;
+  } catch {
+    BALANCE = {};
+  }
+  return BALANCE;
+}
+
+/** Le nom lisible d'un métier d'équilibrage : `JOB_RANGER_HERO` → « Ranger Hero ».
+ *  Les identifiants bruts sont ceux de `defineJob.h` ; le relevé n'en donne pas de
+ *  traduction, et inventer un nom français pour un palier que le serveur n'a pas
+ *  ouvert serait pire que de montrer l'identifiant tel quel. */
+const metierLisible = (id: string) =>
+  id.replace(/^JOB_/, "").split("_").map((m) => m[0] + m.slice(1).toLowerCase()).join(" ");
+
+/**
+ * L'ÉQUILIBRAGE, RÉDUIT À CE QUI SE MONTRE. `null` = relevé absent.
+ *
+ * Tous les comptes sont RECALCULÉS sur le relevé, y compris l'écart de l'arc :
+ * un « facteur quatre » écrit à la main devient faux au prochain versement du
+ * client, et c'est le genre de phrase que personne ne relit.
+ */
+export function chiffresDEquilibrage() {
+  const b = balance();
+  const pve = b.equilibrages?.PVE_BALANCE;
+  const lignes = pve?.metiers ?? [];
+  if (!lignes.length) return null;
+
+  const bow = lignes
+    .filter((m) => typeof m.attributs?.Bow === "number")
+    .map((m) => ({ nom: metierLisible(m.id), v: m.attributs.Bow }))
+    .sort((a, c) => c.v - a.v);
+
+  const decl = b.proprietes?.declarees ?? [];
+  const propArc = decl.find((p) => p.cle === "BOW");
+  /* LES FAMILLES QUE `propJob.inc` NE NOMME PAS : `colonnePropJob: null`. C'est
+     le fait qui rendait l'arc incalculable — on le compte, on ne le suppose pas.
+     ET ON NE COMPTE QUE CE QUE LE CLIENT EMPLOIE : `JOB_PROP_FAUX` est déclaré
+     lui aussi sans colonne propJob, mais AUCUNE ligne de propBalance.xml ne lui
+     donne de valeur. Une famille d'arme que ni l'une ni l'autre table ne chiffre
+     décrit du contenu que le serveur n'a pas ouvert : la compter ici ferait dire
+     « deux familles » là où une seule se joue. */
+  const familles = decl.filter((p) => p.familleDArme && p.employeeDansLeXml);
+  const sansColonnePropJob = familles.filter((p) => p.colonnePropJob === null);
+
+  const conf = pve?.confrontationAPropJob;
+  return {
+    metiers: b.metiers?.dansLEquilibrage ?? lignes.length,
+    declaresDansDefineJob: b.metiers?.declaresDansDefineJob ?? 0,
+    situations: Object.keys(b.equilibrages ?? {}).length,
+    /** Les facteurs de compétence : COMPTÉS pour dire qu'ils existent, jamais affichés. */
+    facteursDeCompetence: b.competences?.facteurs ?? 0,
+    identifiantsDeCompetence: b.competences?.identifiants ?? 0,
+    arc: propArc ? { nom: propArc.nom, rang: propArc.rang } : null,
+    /** Les familles d'arme que le client emploie vraiment. */
+    familles: familles.length,
+    famillesSansPropJob: sansColonnePropJob.map((p) => p.cle),
+    bow,
+    /** L'écart mesuré entre la meilleure et la pire lignée, en facteur. */
+    ecartArc: bow.length > 1 && bow[bow.length - 1].v > 0 ? bow[0].v / bow[bow.length - 1].v : null,
+    comparees: conf?.comparees ?? 0,
+    divergentes: conf?.divergentes ?? 0,
+  };
+}

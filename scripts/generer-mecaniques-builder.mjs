@@ -708,9 +708,11 @@ const rareteSansParchemin = TIERS.filter((t) => !atteintsParLaChaine.has(t));
    `cfg.tier` du builder porte « Rare » ; la maîtrise d'arme range ses valeurs
    sous « RARE ». Sans ce pont, l'écran écrirait la correspondance à la main.
    Elle se pose ici parce que les deux listes ont la même longueur et le même
-   ordre — c'est le constat que `src/lib/statistiques/moteur.ts` fait déjà. Si
-   l'une des deux change de longueur, le pont ne se construit pas et l'écart le
-   dit, plutôt que de décaler six paliers en silence. */
+   ordre. Si l'une des deux change de longueur, le pont ne se construit pas et
+   l'écart le dit, plutôt que de décaler six paliers en silence.
+   (Ce constat était attribué à `src/lib/statistiques/moteur.ts`, parti avec le
+   moteur de dégâts. Il ne dépendait pas de lui : il se REFAIT ici à chaque
+   génération, sur les deux listes elles-mêmes.) */
 let codesDeRarete = null;
 if (TIERS.length === ORDRE_RARETE.length) {
   codesDeRarete = Object.fromEntries(TIERS.map((t, i) => [t, ORDRE_RARETE[i]]));

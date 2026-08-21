@@ -10,7 +10,7 @@ import ICONES_OBJETS from "@/data/icones-objets.json";
 import { donjonClient, pvCourt, PLANS, TOUR_OUBLIEE } from "@/components/donjons/donneesClient";
 import { EcartPrestige, KalgasEnPlus, Peuplement, PlanDonjon, Situation, SousTitre } from "@/components/donjons/FicheClient";
 import { TourOubliee } from "@/components/donjons/TourOubliee";
-import { BlocOasis } from "@/components/donjons/BlocOasis";
+import { AVANT_D_ENTRER as PLANK_OASIS, BlocOasis } from "@/components/donjons/BlocOasis";
 import { CommentOnEntre, type Porte } from "@/components/donjons/CommentOnEntre";
 import { IdsMonstres } from "@/components/donjons/LienMonstre";
 import { HorsTeleporteur, GROUPES_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
@@ -268,8 +268,14 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
     ...(Boolean(valeurs.tour)
       ? [{ icon: "user" as const, par: <>Le <b style={{ fontWeight: 600 }}>Gardien de la Tour Oubliée</b>, à Flarine</>, quoi: `${TOUR_OUBLIEE.length} étages`, ancre: "tour-oubliee" }]
       : []),
+    /* LA PORTE DE L'OASIS NOMME SON PNJ, COMME CELLE DE LA TOUR OUBLIÉE. Elle
+       disait « Un événement, sur son arène » : vrai, mais c'est une catégorie, pas
+       une porte — et ce schéma répond à « par où ». Les quatre autres lignes
+       nomment un ticket, un téléporteur, un gardien ; celle-ci ne nommait rien, et
+       le bloc plus bas ne le disait pas non plus. `PLANK_OASIS` est exporté par le
+       bloc pour que le schéma et le bloc ne puissent pas se contredire. */
     ...(Boolean(valeurs.oasis) && vagues.length
-      ? [{ icon: "shield" as const, par: "Un événement, sur son arène", quoi: `${vagues.length} vagues`, ancre: "oasis" }]
+      ? [{ icon: "shield" as const, par: <><b style={{ fontWeight: 600 }}>{PLANK_OASIS.pnj}</b>, {PLANK_OASIS.ou}</>, quoi: `${vagues.length} vagues`, ancre: "oasis" }]
       : []),
   ];
 

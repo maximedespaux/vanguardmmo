@@ -6,7 +6,7 @@ import { Deroule } from "@/components/oasis/Deroule";
 import { Emblemes } from "@/components/oasis/Emblemes";
 import { Reserves } from "@/components/oasis/Reserves";
 import { Vagues } from "@/components/oasis/Vagues";
-import { bilan, frappeVague, nb, pvCourt, pvVague, type Vague } from "@/components/oasis/modele";
+import { bilan, frappeVague, nb, pvCourt, pvVague, type Bilan, type Vague } from "@/components/oasis/modele";
 
 /**
  * LA PROTECTION DE L'OASIS — le troisième bloc de « dans quoi on entre ».
@@ -126,6 +126,109 @@ function MonteeDesVagues({ premiere, derniere, pireVague, pireFrappe }: {
     </figure>
   );
 }
+
+/**
+ * CE QUE LE WIKI OFFICIEL DIT DE LA PROTECTION, ET QUE LE CLIENT NE DIT NULLE PART.
+ *
+ * ┌──────── LE TROU QU'ON VIENT DE TROUVER ────────┐
+ * │ Ce bloc savait tout du TOUR — cinquante-deux    │
+ * │ vagues, ce qu'elles pèsent, ce qu'elles paient, │
+ * │ jusqu'à la vague qui frappe le plus fort — et   │
+ * │ rien de ce qu'il faut savoir AVANT de lancer :  │
+ * │ où est l'entrée, chez qui, et avec quoi. Les    │
+ * │ deux pages du wiki officiel le disent, et rien  │
+ * │ dans le client ne le porte : la carte du mode   │
+ * │ est une arène vide.                             │
+ * └─────────────────────────────────────────────────┘
+ *
+ * CE SONT DES CITATIONS, PAS DES MESURES, et c'est pour ça qu'elles vivent dans
+ * une table nommée avec leur source au lieu d'être noyées dans une phrase. La
+ * règle de la maison veut que les chiffres se calculent ; ceux-là ne se calculent
+ * pas, ils se CITENT — alors ils portent leur provenance à l'écran, et l'écran ne
+ * les affiche que si le relevé les rend possibles : un palier annoncé à la vague
+ * 36 disparaît le jour où le tour n'en compte plus que trente.
+ *
+ * CE QUI N'EST PAS REPRIS, ET POURQUOI : la page `fonctionnalites/loasis` du même
+ * wiki annonce « 25 étages » et « 100 emblèmes ». C'est l'ancienne version du mode
+ * — la page `activites/pve/…` du même wiki dit elle-même que la deuxième extension
+ * a poussé jusqu'à l'étage 52, ce que notre relevé confirme. Une source qui se
+ * contredit ne fait pas disparaître le fait : elle désigne laquelle de ses deux
+ * pages est périmée.
+ */
+export const AVANT_D_ENTRER = {
+  ou: "à l'Oasis, tout en haut des marches",
+  pnj: "Plank",
+  /** Les points de vie qu'il faut, d'après le wiki, pour tenir jusqu'au bout. */
+  pvDuJoueur: 200000,
+  /** Les crans de difficulté, à la vague près, avec ce qu'ils réclament. */
+  paliers: [
+    { vague: 26, quoi: "il faut un gros DPS en dryades" },
+    { vague: 36, quoi: "niveau 180 et l'équipement de la deuxième extension" },
+  ],
+  source: "wiki officiel Airborn — [PvE] Protection de l'Oasis (Solo) et L'Oasis",
+};
+
+/**
+ * AVANT D'ENTRER — l'entrée, le PNJ, et de quoi il faut être fait.
+ *
+ * ┌──── LA CONFRONTATION QUI SORT DE CE BLOC, ET ELLE VAUT LE DÉTOUR ────┐
+ * │ Le wiki annonce qu'il faut « environ 200k HP pour tout tank jusqu'à  │
+ * │ la fin ». Notre relevé, lui, mesure une frappe brute de 990 101 à la │
+ * │ vague 47. Les deux ne peuvent pas être vrais en même temps SI les    │
+ * │ dégâts bruts sont ceux qui tombent — un tank à 200 000 PV part en un │
+ * │ coup. Ils le sont si les dégâts sont corrigés en jeu, ce qui est     │
+ * │ exactement l'hypothèse que la section « À prendre avec des           │
+ * │ pincettes » défend depuis le début à propos du multiplicateur.       │
+ * │ Deux sources qui ne se sont pas parlé et qui pointent au même        │
+ * │ endroit, ça ne prouve rien, mais ça se dit : le lecteur qui voit     │
+ * │ 990 101 dans le tableau doit savoir qu'un joueur, lui, a fini le     │
+ * │ tour avec deux cent mille points de vie.                             │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * Le rapport entre les deux nombres est CALCULÉ, pas écrit : il suit le relevé.
+ */
+function AvantDEntrer({ b }: { b: Bilan }) {
+  /* Un palier qui tombe au-delà du dernier étage relevé ne s'affiche pas : il
+     parlerait d'une vague qui n'existe pas dans nos données. */
+  const paliers = AVANT_D_ENTRER.paliers.filter((p) => p.vague <= b.vagues);
+  const facteur = Math.round(b.pireFrappe / AVANT_D_ENTRER.pvDuJoueur);
+  return (
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 12, fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", display: "grid", gap: 7 }}>
+      <div>
+        <Icon name="map-pin" size={13} style={{ marginRight: 6, color: "var(--orange)" }} />
+        L&apos;entrée est <b style={{ color: "var(--text)" }}>{AVANT_D_ENTRER.ou}</b>,
+        chez <b style={{ color: "var(--text)" }}>{AVANT_D_ENTRER.pnj}</b> — c&apos;est lui qui lance
+        la session et qui reprend les emblèmes.
+      </div>
+      <div>
+        <Icon name="heart" size={13} style={{ marginRight: 6, color: "var(--red)" }} />
+        Il faut environ <b style={{ color: "var(--text)", ...NUM2 }}>{nb(AVANT_D_ENTRER.pvDuJoueur)} PV</b> pour
+        tenir jusqu&apos;au bout.
+        {paliers.length > 0 && (
+          <> La difficulté prend un cran{paliers.length > 1 ? " puis un autre" : ""} à la
+          {" "}{paliers.map((p, i) => (
+            <span key={p.vague}>
+              {i > 0 ? " et à la " : " "}<b style={{ color: "var(--text)" }}>{p.vague}<sup>e</sup></b> ({p.quoi})
+            </span>
+          ))}.</>
+        )}
+      </div>
+      {/* LA CONFRONTATION, ET ELLE NE TRANCHE PAS : elle met les deux nombres côte
+          à côte et renvoie à la réserve qui en discute. */}
+      <div>
+        <Icon name="alert" size={13} style={{ marginRight: 6, color: "var(--gold)" }} />
+        Ce conseil et le tableau ne se rejoignent qu&apos;à une condition : la plus forte frappe
+        relevée est de <b style={{ color: "var(--red)", ...NUM2 }}>{nb(b.pireFrappe)}</b> par coup
+        (vague {b.pireVague}), soit <b style={{ color: "var(--text)" }}>{facteur} fois</b> ces points de
+        vie. Les deux ne tiennent ensemble que si les dégâts sont corrigés en combat — c&apos;est
+        l&apos;hypothèse discutée dans «&nbsp;À prendre avec des pincettes&nbsp;».
+      </div>
+      <div style={{ fontSize: 11 }}>{AVANT_D_ENTRER.source}</div>
+    </div>
+  );
+}
+
+const NUM2 = { fontVariantNumeric: "tabular-nums" } as const;
 
 export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
@@ -264,6 +367,12 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
           </div>
         </div>
       </div>
+
+      {/* CE QU'IL FAUT SAVOIR AVANT DE LANCER, et il vient APRÈS le bilan pour une
+          raison : on décide d'y aller en voyant ce que ça pèse et ce que ça paie,
+          puis on regarde ce qu'il faut pour y survivre. L'inverse ferait fuir avant
+          d'avoir montré l'intérêt. */}
+      <AvantDEntrer b={b} />
 
       {/* Le contrôle copie la forme du bouton « Fermer » des fiches de donjon —
           même famille de page, même bouton pleine largeur. Il annonce ce qu'il

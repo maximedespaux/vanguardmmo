@@ -2,12 +2,14 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "@/components/Icon";
+import { Invisible } from "@/components/Bulle";
 import { Faiblesses } from "@/components/monstres/Graphiques";
 import {
   cadence, cadenceCourte, coupMax, coupMin, ELEMENT_FR, entier, iconeElement, parSeconde,
 } from "@/components/monstres/vocabulaire";
 import { NomObjet } from "@/components/objets/NomObjet";
 import { pvCourt, TON_RANG } from "./donneesClient";
+import { ConseilInstance, type PeuplementElementaire } from "./elements";
 import { LienMonstre } from "./LienMonstre";
 import type { Lieu } from "./HorsTeleporteur";
 import COMBATS from "@/data/lieux-monstres.json";
@@ -17,20 +19,24 @@ import COMBATS from "@/data/lieux-monstres.json";
  *
  * Demande de Maxime, mot pour mot : « Sur la map donjons sur la partie "Fly Coins"
  * prévoir une zone cliquable pour voir le plan et les monstres et les informations
- * dégâts des monstres etc… ». Les huit tuiles portaient la carte au format vignette,
+ * dégâts des monstres etc… ». Les tuiles portaient la carte au format vignette,
  * un compte d'espèces et le nom du plus coriace : de quoi RECONNAÎTRE un lieu, pas
  * de quoi décider d'y entrer. Ce panneau porte les trois choses demandées, dans
  * l'ordre où elles ont été demandées.
  *
+ * LE PLAN EST LA SEULE DES TROIS QUI PUISSE MANQUER. Deux des dix lieux n'ont pas
+ * de parchemin dans le client : leur section « Le plan » ne se rend pas du tout,
+ * plutôt qu'un cadre vide sous un titre qui promet une image.
+ *
  * ┌──── POURQUOI CE FICHIER EST À PART, ET CHARGÉ À LA DEMANDE ─────┐
  * │ /donjons est la page la plus lourde du site. Le relevé de       │
- * │ combat des 102 créatures de ces huit lieux pèse 20,7 Ko, et il  │
+ * │ combat des 120 créatures de ces dix lieux pèse 25,0 Ko, et il   │
  * │ ne sert QU'ICI. Ce module est donc importé par `next/dynamic`   │
  * │ (`ssr: false`) : ni le HTML du serveur ni le paquet de départ   │
  * │ ne le portent, le navigateur ne le télécharge qu'au premier     │
  * │ panneau ouvert, et jamais si personne n'en ouvre.               │
  * │ Corollaire : ne JAMAIS importer ce fichier autrement que par    │
- * │ `dynamic()`, sinon les 20,7 Ko repartent dans le paquet commun. │
+ * │ `dynamic()`, sinon les 25,0 Ko repartent dans le paquet commun. │
  * └─────────────────────────────────────────────────────────────────┘
  *
  * AUCUN CHIFFRE EN DUR, y compris dans les phrases : les comptes, les extrêmes et
@@ -44,6 +50,9 @@ import COMBATS from "@/data/lieux-monstres.json";
 
 type Fiche = {
   nom: string; niv: number; rang: string; pv: number; vies?: number;
+  /** Ce que la BARRE DE VIE DU JEU annonce : les PV d'une seule vie. Écrit
+   *  seulement quand il diffère de `pv`, c'est-à-dire quand la créature se relève. */
+  pv1?: number;
   atkMin: number | null; atkMax: number | null; delai: number | null;
   elem: string | null; res: Record<string, number>; poses: number;
   /* Les deux mécaniques de fin de combat, absentes quand la créature n'en a pas.
@@ -56,6 +65,9 @@ type Fiche = {
    *  séparées auraient obligé à les recoller pour comparer d'un bout à l'autre de
    *  la carte, ce que les barres de ce panneau font justement. */
   bande?: number;
+  /** À quel MODE elle appartient — même convention, autre découpage. Une bande dit
+   *  d'où vient le peuplement, un mode dit comment on y joue. */
+  mode?: number;
 };
 type Releve = { especes: Fiche[] };
 
@@ -92,6 +104,54 @@ const TITRE_ORIGINE: Record<string, string> = {
   airborn: "Ce qu'Airborn a posé sur la même carte",
 };
 
+/**
+ * LES DEUX BOUTS D'UNE TABLE DE RÉSISTANCES — celui qui ouvre, celui qui bloque.
+ *
+ * ┌──── POURQUOI ON NE PREND QU'UN SEUL ÉLÉMENT DE CHAQUE CÔTÉ ────┐
+ * │ `donjons-client.json` porte, par créature posée, UN `faible` et │
+ * │ UN `resiste` — et c'est sur ces deux champs que le conseil      │
+ * │ élémentaire compte. Les dix lieux hors téléporteur, eux, ont    │
+ * │ les CINQ COLONNES brutes. Il faut donc les réduire de la même   │
+ * │ façon, sinon les deux écrans compteraient deux choses           │
+ * │ différentes sous le même mot.                                    │
+ * │ La réduction retenue : l'extremum STRICT. Un élément n'est « le │
+ * │ » point faible que si aucun autre ne descend aussi bas — sinon  │
+ * │ la clé n'est pas écrite et la créature ne vote pas. Deux        │
+ * │ colonnes à −30 % ne désignent pas un vainqueur, et en désigner  │
+ * │ un par l'ordre du tableau, c'est le défaut déjà corrigé dans    │
+ * │ `enTete` : un départage d'affichage ne doit jamais devenir un   │
+ * │ conseil.                                                          │
+ * │ Le détail des cinq colonnes reste visible ligne par ligne, dans │
+ * │ la colonne « Élément » du tableau : rien n'est perdu, c'est le  │
+ * │ RÉSUMÉ qui refuse de trancher, pas la donnée.                    │
+ * └──────────────────────────────────────────────────────────────────┘
+ */
+function extremesRes(res: Record<string, number>) {
+  const cols = Object.entries(res ?? {}).filter(([, v]) => typeof v === "number");
+  if (!cols.length) return {};
+  const seul = (garder: (v: number) => boolean, mieux: (a: number, b: number) => boolean) => {
+    const cands = cols.filter(([, v]) => garder(v));
+    if (!cands.length) return undefined;
+    const val = cands.reduce((a, c) => (mieux(c[1], a) ? c[1] : a), cands[0][1]);
+    const gagnants = cands.filter(([, v]) => v === val);
+    return gagnants.length === 1 ? ELEMENT_FR[gagnants[0][0]] ?? gagnants[0][0] : undefined;
+  };
+  return {
+    faible: seul((v) => v < 0, (v, a) => v < a),
+    resiste: seul((v) => v > 0, (v, a) => v > a),
+  };
+}
+
+/** Le peuplement d'un lieu, dans la forme que le conseil élémentaire attend. */
+const pourConseil = (lignes: Fiche[]): PeuplementElementaire => ({
+  monstres: lignes.map((m) => ({
+    // Le conseil écrit les éléments en français capitalisé (« Terre »), comme
+    // `donjons-client.json` ; le relevé des lieux les écrit en minuscules.
+    elem: m.elem ? ELEMENT_FR[m.elem] ?? m.elem : null,
+    ...extremesRes(m.res),
+  })),
+});
+
 export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
   lieu: Lieu;
   /** Sur combien de zones du relevé un rang de densité se compte. Passé en
@@ -119,13 +179,43 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
      frappent plusieurs fois plus fort que les huit du bas, et deux échelles
      séparées auraient dessiné deux fois la même barre pleine. */
   const maxSeconde = Math.max(1, ...toutes.map(parSeconde));
-  /* UN TABLEAU PAR PEUPLEMENT, dans l'ordre où le relevé les a rangés — et l'ordre
-     interne de chaque tableau reste celui des dégâts, fixé à l'extraction. */
-  const parBande = lieu.bandes.map((b, i) => ({ b, lignes: toutes.filter((m) => (m.bande ?? 0) === i) }));
+  /* ┌──── UN TABLEAU PAR DÉCOUPAGE, ET IL Y EN A DEUX SORTES ────┐
+     │ Le relevé peut découper un lieu de deux façons, jamais les  │
+     │ deux à la fois : par BANDE (d'où vient le peuplement — huit  │
+     │ espèces du Flyff d'origine puis trois posées par Airborn sur │
+     │ Azria) ou par MODE (comment on y joue — « 1v1 » et « AoE »   │
+     │ au Royaume de Kaelis et au Parc prestigieux).                │
+     │ Le titre de section change avec, parce que la question       │
+     │ change : « Ce qu'Airborn a posé sur la même carte » ne veut  │
+     │ rien dire au-dessus d'un mode de jeu, et « En 1v1 » ne veut  │
+     │ rien dire au-dessus d'une bande de niveaux.                  │
+     │ L'ordre interne de chaque tableau reste celui des dégâts,    │
+     │ fixé à l'extraction.                                          │
+     └──────────────────────────────────────────────────────────────┘ */
+  const parModes = (lieu.modes ?? []).map((m, i) => ({
+    clef: m.nom,
+    titre: `En ${m.nom}`,
+    apres: `${m.especes} espèce${m.especes > 1 ? "s" : ""} · ${fr(m.poses)} emplacement${m.poses > 1 ? "s" : ""} · niv. ${m.nivMin === m.nivMax ? m.nivMin : `${m.nivMin}–${m.nivMax}`}`,
+    lignes: toutes.filter((x) => (x.mode ?? 0) === i),
+  }));
+  const parBandes = lieu.bandes.map((b, i) => ({
+    clef: `b${b.nivMin}`,
+    titre: lieu.bandes.length === 1
+      ? "Ce qui vit ici, et ce que ça frappe"
+      : (b.origine && TITRE_ORIGINE[b.origine]) ?? "Ce qui vit ici",
+    apres: `${b.especes} espèce${b.especes > 1 ? "s" : ""} · niv. ${b.nivMin === b.nivMax ? b.nivMin : `${b.nivMin}–${b.nivMax}`}`,
+    lignes: toutes.filter((x) => (x.bande ?? 0) === i),
+  }));
+  const sections = parModes.length > 1 ? parModes : parBandes;
   /* Comptés sur TOUS les tableaux du panneau, parce que la légende les couvre tous
      — et recomptés à chaque lieu, jamais écrits. */
   const nbRage = toutes.filter((m) => m.rage?.length).length;
   const nbSoin = toutes.filter((m) => m.soigne?.length).length;
+  /* LES CRÉATURES QUI SE RELÈVENT — la clause qui dormait depuis huit lieux. Aucune
+     n'en avait ; les seize du Royaume de Kaelis en ont toutes, deux pour la
+     piétaille et six pour les boss. C'est l'erreur la plus chère de ce panneau si
+     on la tait : la barre de vie du jeu n'annonce QU'UNE vie. */
+  const seRelevent = toutes.filter((m) => (m.vies ?? 1) > 1);
 
   /**
    * ┌──── LE VOILE SORT DE LA PAGE, ET C'EST UNE CORRECTION MESURÉE ────┐
@@ -164,7 +254,9 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={`${lieu.nom} : le plan, les créatures et leurs dégâts`}
+        aria-label={lieu.carte
+          ? `${lieu.nom} : le plan, les créatures et leurs dégâts`
+          : `${lieu.nom} : les créatures et leurs dégâts — ce lieu n'a pas de plan dans le client`}
         style={{
           background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14,
           padding: 20, maxWidth: 860, width: "100%", maxHeight: "calc(100vh - 108px)",
@@ -201,7 +293,13 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
           </button>
         </div>
 
-        {/* ─── 1. LE PLAN ─── */}
+        {/* ─── 1. LE PLAN, QUAND IL Y EN A UN ───
+            Deux lieux du relevé n'ont pas de parchemin dans le client : la section
+            entière disparaît plutôt que de montrer un cadre vide sous un titre qui
+            promet un plan. Ce qui reste — les créatures, leurs dégâts, les modes —
+            est justement ce que ce panneau a de plus utile. */}
+        {lieu.carte && (
+          <>
         <Titre icon="map">Le plan</Titre>
         {/* LA HAUTEUR DU PLAN EST BRIDÉE, ET C'EST CE QUI REND LE PANNEAU LISIBLE.
             Ces cartes sont en 4/3 : à 820 px de large, le plan faisait 615 px de haut
@@ -228,29 +326,47 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
             Le plan tel qu&apos;il sort du client. Le cartouche imprimé dessus dit «&nbsp;{lieu.cartouche}&nbsp;».
           </figcaption>
         </figure>
+          </>
+        )}
 
         {/* ─── LES DEUX PEUPLEMENTS D'UNE MÊME CARTE, QUAND IL Y EN A DEUX ─── */}
         {lieu.bandes.length > 1 && <DeuxPeuplements lieu={lieu} zonesDuReleve={zonesDuReleve} />}
 
+        {/* ─── LE MÊME ENDROIT, DEUX FAÇONS D'Y JOUER ─── */}
+        {lieu.modes && lieu.modes.length > 1 && <DeuxModes lieu={lieu} ticket={lieu.ticket ?? null} />}
+
+        {/* ─── QUEL ÉLÉMENT EMPORTER, ET LEQUEL EST PERDU ICI ───
+            Le même bloc que les fiches de donjon, et c'est tout l'intérêt : la
+            question ne change pas d'un écran à l'autre, donc la réponse ne doit pas
+            changer de forme. Il ne servait qu'aux 23 instances du téléporteur parce
+            qu'il exigeait un donjon entier ; il ne demande plus que trois champs par
+            créature (voir `PeuplementElementaire`), et ces dix lieux les ont.
+            LES CINQ COLONNES TRANCHENT, PAS LA ROUE ÉLÉMENTAIRE — voir `extremesRes`. */}
+        {toutes.length > 0 && (
+          <ConseilInstance
+            d={pourConseil(toutes)}
+            provenance={
+              <>
+                Élément de <b>l&apos;arme</b>. Compté sur les {toutes.length} espèces posées ici,
+                dans leurs cinq colonnes de résistance — pas dans la roue élémentaire :
+                plusieurs monstres de ce jeu résistent à trois éléments à la fois.
+              </>
+            }
+          />
+        )}
+
         {/* ─── 2 et 3. QUI VIT LÀ, ET CE QUE ÇA FRAPPE ─── */}
         {toutes.length > 0 ? (
-          parBande.map(({ b, lignes }, i) => (
-            <div key={b.nivMin} style={i ? { marginTop: 18 } : undefined}>
-              {/* LE TITRE NOMME LE PEUPLEMENT, ET SES NIVEAUX SONT DANS `apres`.
-                  Sur une carte à deux bandes, « Ce qui vit ici » deux fois de suite
-                  n'aurait distingué que par l'ordre — or c'est la PROVENANCE qui
-                  explique le trou de niveaux, et c'est elle qu'on lit dans le
-                  relevé. Une bande sans provenance retombe sur le titre d'origine. */}
-              <Titre
-                icon="skull"
-                apres={`${b.especes} espèce${b.especes > 1 ? "s" : ""} · niv. ${b.nivMin === b.nivMax ? b.nivMin : `${b.nivMin}–${b.nivMax}`}`}
-              >
-                {parBande.length === 1
-                  ? "Ce qui vit ici, et ce que ça frappe"
-                  : (b.origine && TITRE_ORIGINE[b.origine]) ?? "Ce qui vit ici"}
-              </Titre>
-              <PlusGrosPlusFort lignes={lignes} />
-              <Tableau lignes={lignes} maxSeconde={maxSeconde} />
+          sections.map((s, i) => (
+            <div key={s.clef} style={i ? { marginTop: 18 } : undefined}>
+              {/* LE TITRE NOMME LE DÉCOUPAGE, ET SES COMPTES SONT DANS `apres`.
+                  Sur un lieu à deux sections, « Ce qui vit ici » deux fois de suite
+                  n'aurait distingué que par l'ordre — or c'est la PROVENANCE (pour
+                  une bande) ou le MODE (pour un mode) qui explique la différence,
+                  et c'est elle qu'on lit dans le relevé. */}
+              <Titre icon="skull" apres={s.apres}>{s.titre}</Titre>
+              <PlusGrosPlusFort lignes={s.lignes} />
+              <Tableau lignes={s.lignes} maxSeconde={maxSeconde} />
             </div>
           ))
         ) : (
@@ -298,6 +414,30 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
             fois pour tout le tableau, au lieu de vingt-deux fois dedans. Quatre des
             huit lieux n'ont ni rage ni soin — la ligne y disparaît d'elle-même
             plutôt que d'annoncer une mécanique absente. */}
+        {/* ┌──── LA BARRE DE VIE DU JEU MENT D'UN FACTEUR SIX, ET ON LE DIT ────┐
+            Les seize créatures du Royaume de Kaelis se relèvent : deux fois pour la
+            piétaille, SIX pour les boss. Le jeu affiche une barre de 1,5 Md ; il
+            faut en sortir 9. Un groupe qui dimensionne son run sur le chiffre
+            affiché se trompe d'un facteur six — c'est la définition même de
+            l'erreur coûteuse, donc la mise en garde reste, et elle est portée par
+            la brique `Invisible` que /monstres emploie déjà pour le même fait.
+            La ligne ne s'écrit que si des créatures se relèvent, et le facteur est
+            COMPTÉ sur celles-ci : elle disparaît toute seule là où elle serait
+            fausse.
+            └────────────────────────────────────────────────────────────────────┘ */}
+        {seRelevent.length > 0 && (
+          <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.7, margin: "12px 0 0" }}>
+            <Invisible enJeu={`La barre de vie du jeu n'annonce que les PV d'une vie. La colonne PV ci-dessus les multiplie déjà par le nombre de vies : c'est ce qu'il faut réellement sortir.`}>
+              <span>
+                <Icon name="rotate-ccw" size={11} style={{ color: "var(--red)", marginRight: 4 }} />
+                <b style={{ color: "var(--text)", ...NUM }}>{seRelevent.length}</b> se relève{seRelevent.length > 1 ? "nt" : ""}{" "}
+                — jusqu&apos;à <b style={{ color: "var(--red)", ...NUM }}>{Math.max(...seRelevent.map((m) => m.vies ?? 1))} vies</b>,
+                et la barre du jeu n&apos;en annonce qu&apos;une.
+              </span>
+            </Invisible>
+          </p>
+        )}
+
         {(nbRage > 0 || nbSoin > 0) && (
           <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.7, margin: "12px 0 0", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "3px 10px" }}>
             {nbRage > 0 && (
@@ -315,11 +455,16 @@ export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
           </p>
         )}
 
+        {/* LA PHRASE SUR LES CINQ COLONNES A DÉMÉNAGÉ, ELLE N'A PAS DISPARU. Elle
+            vivait ici, tout en bas, à vingt lignes de tableau de la seule chose
+            qu'elle explique ; elle est maintenant SOUS le conseil élémentaire, qui
+            est justement ce qu'elle justifie. La laisser aux deux endroits la
+            faisait lire deux fois sur le même panneau. Reste ici ce que ce bas de
+            page est seul à couvrir : d'où viennent les dégâts, et ce qui n'y est
+            pas. */}
         <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.6, margin: "16px 0 0" }}>
-          Dégâts et cadence <b>lus</b> dans la table des monstres du client, jamais déduits. Les
-          faiblesses se lisent dans les cinq colonnes de résistance, pas dans la roue élémentaire —
-          plusieurs monstres de ce jeu résistent à trois éléments à la fois. Ce que le serveur ajoute
-          en combat, lui, n&apos;est dans aucun fichier.
+          Dégâts et cadence <b>lus</b> dans la table des monstres du client, jamais déduits. Ce que le
+          serveur ajoute en combat, lui, n&apos;est dans aucun fichier.
         </p>
 
         <button
@@ -386,6 +531,64 @@ function DeuxPeuplements({ lieu, zonesDuReleve }: { lieu: Lieu; zonesDuReleve: n
         </>
       )}
     </p>
+  );
+}
+
+/**
+ * LE MÊME ENDROIT, DEUX FAÇONS D'Y JOUER — et ce que le client en dit.
+ *
+ * ┌──────── CE QUE CE PARAGRAPHE EST LE SEUL À POUVOIR DIRE ────────┐
+ * │ Le relevé donne deux zones qui ne diffèrent que par un suffixe.  │
+ * │ Rien, ni dans une carte ni dans un tableau de créatures, ne dit  │
+ * │ que ce sont DEUX FAÇONS DE JOUER LE MÊME TERRAIN plutôt que deux │
+ * │ endroits — et pour Kaelis, le client tranche : il vend un ticket │
+ * │ par mode, « Rêve de Kaelis 1v1 (2h) » et « Rêve de Kaelis AoE    │
+ * │ (2h) ». Deux papiers, une destination.                           │
+ * │ La conséquence est un geste : on choisit son mode AVANT d'entrer,│
+ * │ à l'achat, et pour deux heures. Se tromper de billet, c'est deux │
+ * │ heures dans le mauvais mode.                                     │
+ * └──────────────────────────────────────────────────────────────────┘
+ *
+ * LA CITATION DU CLIENT EST RECOPIÉE MOT POUR MOT, avec le fichier d'où elle
+ * sort : c'est elle qui dit à quoi sert la zone, et c'est la seule source qui le
+ * dise. La résumer la rendrait invérifiable.
+ */
+function DeuxModes({ lieu, ticket }: { lieu: Lieu; ticket: Lieu["ticket"] }) {
+  const modes = lieu.modes!;
+  return (
+    <div style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", marginBottom: 14, fontSize: 12.5, lineHeight: 1.6, display: "grid", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", color: "var(--text-muted)" }}>
+        <Icon name="swords" size={13} style={{ flexShrink: 0, color: "var(--orange)" }} />
+        <span>Un seul endroit,</span>
+        {modes.map((m, i) => (
+          <span key={m.nom} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            {i > 0 && <span>ou</span>}
+            <b style={{ color: "var(--text)" }}>{m.nom}</b>
+          </span>
+        ))}
+        <span style={{ ...NUM }}>
+          — {modes[0].especes} espèce{modes[0].especes > 1 ? "s" : ""} et {fr(modes[0].poses)} emplacements
+          de chaque côté, aux mêmes niveaux.
+        </span>
+      </div>
+      {ticket?.billets?.length ? (
+        <div style={{ color: "var(--text-muted)" }}>
+          <Icon name="clock" size={12} style={{ marginRight: 5, color: "var(--gold)" }} />
+          Le client vend <b style={{ color: "var(--text)" }}>{ticket.billets.length} billets</b>, un par mode
+          {ticket.heures?.length ? <>, <b style={{ color: "var(--text)" }}>{ticket.heures.join(" ou ")}&nbsp;h</b> chacun</> : null}
+          {ticket.ou ? <> — {ticket.ou}</> : null}. Le mode se choisit donc à l&apos;achat, pas sur place.
+        </div>
+      ) : null}
+      {ticket?.dit ? (
+        <div style={{ color: "var(--text-muted)", fontSize: 11.5, borderLeft: "2px solid var(--border)", paddingLeft: 9 }}>
+          {/* La phrase du client, entière. Elle dit à quoi sert la zone — aucune autre
+              source ne le dit — et c'est elle qui autorise le bloc « ce qu'on en
+              rapporte » de la tuile. */}
+          «&nbsp;{ticket.dit}&nbsp;»
+          {ticket.source ? <span style={{ display: "block", marginTop: 2 }}>{ticket.source}</span> : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -497,7 +700,17 @@ function Tableau({ lignes, maxSeconde }: { lignes: Fiche[]; maxSeconde: number }
                   <Seuils m={m} />
                 </td>
                 <td style={{ ...td, color: "var(--text-muted)" }}>{m.niv}</td>
-                <td style={{ ...td, fontWeight: 700, color: "var(--orange)" }}>{pvCourt(m.pv)}</td>
+                {/* LES PV EFFECTIFS, ET LE CALCUL DANS L'INFOBULLE QUAND IL Y EN A UN.
+                    Cette colonne a toujours affiché ce qu'il faut RÉELLEMENT sortir ;
+                    tant qu'aucune créature ne se relevait, c'était aussi ce que la
+                    barre du jeu annonce. Ce n'est plus vrai : au Royaume de Kaelis,
+                    9,0 Md à sortir pour une barre qui en affiche 1,5. L'infobulle
+                    écrit donc l'opération, `55,0 M × 2 vies`, pour qu'on reconnaisse
+                    le chiffre de l'écran de jeu au lieu de croire à une erreur. */}
+                <td style={{ ...td, fontWeight: 700, color: "var(--orange)" }}
+                  title={m.pv1 ? `${entier(m.pv1)} PV par vie × ${m.vies} vies = ${entier(m.pv)} à sortir. La barre du jeu n'affiche que ${entier(m.pv1)}.` : undefined}>
+                  {pvCourt(m.pv)}
+                </td>
                 {aVies && (
                   <td style={{ ...td, color: (m.vies ?? 1) > 1 ? "var(--red)" : "var(--text-muted)", fontWeight: (m.vies ?? 1) > 1 ? 700 : 400 }}>
                     {m.vies ?? 1}

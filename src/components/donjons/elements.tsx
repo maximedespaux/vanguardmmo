@@ -84,10 +84,29 @@ export function IconeElementDonjon({ elem, taille = 15 }: { elem?: string | null
    jamais « le donjon ».
    ════════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * TOUT CE DONT LE CONSEIL ÉLÉMENTAIRE A BESOIN, ET RIEN DE PLUS.
+ *
+ * ┌──── POURQUOI CE TYPE EXISTE PLUTÔT QUE `DonjonClient` ────┐
+ * │ Ces fonctions ne lisaient que trois champs par créature,   │
+ * │ mais elles réclamaient un donjon ENTIER — monde, dossier,  │
+ * │ blocs, coordonnée d'entrée, prestige… Résultat : le conseil │
+ * │ ne pouvait servir QUE sur les 23 instances du téléporteur,  │
+ * │ alors que les dix lieux hors téléporteur ont exactement les │
+ * │ mêmes colonnes de résistance et posent la même question au  │
+ * │ joueur — le Royaume de Kaelis aligne seize espèces de terre.│
+ * │ `DonjonClient` reste assignable à ce type : aucun appel     │
+ * │ existant ne change, et le conseil devient portable.         │
+ * └────────────────────────────────────────────────────────────┘
+ */
+export type PeuplementElementaire = {
+  monstres: { elem: string | null; faible?: string; resiste?: string }[];
+};
+
 /** Combien de créatures posées portent chaque valeur d'un champ élémentaire.
  *  Trié du plus fréquent au moins, à égalité par ordre alphabétique — sans quoi
  *  deux éléments à égalité changeaient de place d'un rendu à l'autre. */
-function comptePar(d: DonjonClient, champ: "elem" | "faible" | "resiste") {
+function comptePar(d: PeuplementElementaire, champ: "elem" | "faible" | "resiste") {
   const c = new Map<string, number>();
   for (const m of d.monstres) {
     const v = m[champ];
@@ -110,7 +129,7 @@ const enTete = (rangs: { e: string; n: number }[]) =>
  *  ou qu'aucune créature ne porte d'élément. `tetes` porte les ex æquo : une
  *  instance dont les espèces sont d'éléments tous différents n'a PAS de dominante,
  *  et le dire est plus utile que d'en désigner une au hasard de l'alphabet. */
-export function dominantInstance(d: DonjonClient) {
+export function dominantInstance(d: PeuplementElementaire) {
   const rangs = comptePar(d, "elem");
   const poses = d.monstres.length;
   if (!rangs.length || !poses) return null;
@@ -155,7 +174,7 @@ const nu = (el: string) => article(el).replace(/^(le |la |l')/, "");
  * │ côté seulement. Les deux passent maintenant par `enTete`.     │
  * └──────────────────────────────────────────────────────────────┘
  */
-export function conseilDe(d: DonjonClient) {
+export function conseilDe(d: PeuplementElementaire) {
   const dom = dominantInstance(d);
   const faibles = comptePar(d, "faible");
   const resistes = comptePar(d, "resiste");
@@ -189,7 +208,7 @@ export function conseilDe(d: DonjonClient) {
 
 /** La phrase entière du conseil, pour un `title` ou un lecteur d'écran : la tuile
  *  n'en montre que la moitié, et un survol ne se fait pas sur un téléphone. */
-export function phraseConseil(d: DonjonClient): string {
+export function phraseConseil(d: PeuplementElementaire): string {
   const { emporter, eviter, tete, bloc, poses } = conseilDe(d);
   if (!tete) return "";
   const un = emporter.map((x) => x.e).join(" ou ");
@@ -205,8 +224,18 @@ export function phraseConseil(d: DonjonClient): string {
  *
  * Rend `null` quand aucune créature n'est posée : le Temple aérien n'a rien dans
  * son fichier de carte, et un cadre vide se lit comme un site cassé.
+ *
+ * `provenance` DIT OÙ ONT ÉTÉ COMPTÉS CES NOMBRES, et c'est une propriété parce
+ * que le bloc ne sert plus dans un seul endroit. Sur une instance du téléporteur
+ * les créatures sont posées dans un FICHIER DE CARTE, et la phrase doit prévenir
+ * que les boss d'ambiance n'y sont pas. Sur une zone de farm, elles viennent de la
+ * table des monstres du client, où il n'y a pas de boss d'ambiance à manquer :
+ * répéter la mise en garde de l'un chez l'autre l'aurait rendue fausse.
  */
-export function ConseilInstance({ d }: { d: DonjonClient }) {
+export function ConseilInstance({ d, provenance }: {
+  d: PeuplementElementaire;
+  provenance?: React.ReactNode;
+}) {
   const { dom, faibles, emporter, eviter, tete, bloc, poses, laisseMaisOuvre, contreLaRegle } = conseilDe(d);
   if (!dom && !faibles.length) return null;
 
@@ -332,10 +361,14 @@ export function ConseilInstance({ d }: { d: DonjonClient }) {
              ne viennent pas du même champ du relevé. On le dit, plutôt que de
              laisser le joueur arbitrer. */}
       <div style={{ color: "var(--text-muted)", fontSize: 11.5 }}>
-        Élément de <b>l&apos;arme</b> — l&apos;armure conseillée est un autre champ du relevé.
-        Compté sur les créatures posées dans le fichier de carte, dans leur table de
-        résistances : les boss que le serveur fait apparaître en cours de progression
-        n&apos;y sont pas.
+        {provenance ?? (
+          <>
+            Élément de <b>l&apos;arme</b> — l&apos;armure conseillée est un autre champ du relevé.
+            Compté sur les créatures posées dans le fichier de carte, dans leur table de
+            résistances : les boss que le serveur fait apparaître en cours de progression
+            n&apos;y sont pas.
+          </>
+        )}
       </div>
     </div>
   );
@@ -376,7 +409,7 @@ export function ConseilInstance({ d }: { d: DonjonClient }) {
  * `null` quand rien n'est posé sur la carte : le Temple aérien n'a aucune
  * créature dans son fichier, et une pastille vide se lit comme un site cassé.
  */
-export function PastilleElement({ d }: { d: DonjonClient }) {
+export function PastilleElement({ d }: { d: PeuplementElementaire }) {
   const { emporter, eviter, tete, bloc } = conseilDe(d);
   if (!tete) return null;
   /* LE « LAISSE » NE SORT QUE S'IL DÉSIGNE QUELQU'UN. Au Sentier de Rhisis, les

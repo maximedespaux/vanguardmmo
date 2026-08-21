@@ -10,7 +10,7 @@ import { LienMonstre } from "./LienMonstre";
 import TABLE from "@/data/lieux-hors-teleporteur.json";
 
 /**
- * HORS DU TÉLÉPORTEUR — huit lieux que la grille des 23 donjons ne montre pas.
+ * HORS DU TÉLÉPORTEUR — dix lieux que la grille des 23 donjons ne montre pas.
  *
  * Ce bloc existe pour une raison mesurable : le client porte 51 cartes sur
  * parchemin et douze n'étaient branchées nulle part. En les ouvrant une par une,
@@ -19,15 +19,26 @@ import TABLE from "@/data/lieux-hors-teleporteur.json";
  * téléporteur ne propose pas. Le reste a été écarté, et le script d'extraction dit
  * lequel et pourquoi (scripts/extraire-lieux.mjs).
  *
+ * ┌──── PUIS DEUX LIEUX SONT ENTRÉS SANS CARTE, ET ILS PÈSENT PLUS QUE LES HUIT ────┐
+ * │ Le Parc prestigieux (6 400 emplacements de réapparition) et le Royaume de       │
+ * │ Kaelis (6 072) sont les DEUX PREMIÈRES zones du relevé, devant Azria. Ils       │
+ * │ n'apparaissaient nulle part sur le site parce que ce bloc exigeait une carte,   │
+ * │ et que le client n'en a pas dessiné pour ses propres mondes. Exiger le dessin   │
+ * │ revenait à cacher le contenu le plus fourni du serveur parce qu'il est trop     │
+ * │ récent pour en avoir un. La carte est donc devenue facultative — le PEUPLEMENT, │
+ * │ lui, reste obligatoire, et c'est lui qui dit ce qu'est un lieu.                 │
+ * └─────────────────────────────────────────────────────────────────────────────────┘
+ *
  * ┌────────── CE QUI EST MONTRÉ, ET CE QUI EST TAIRE ──────────┐
- * │ MONTRÉ : la carte du client, le nom qui y est imprimé, le   │
- * │ peuplement compté, les bornes de niveau, le prix du ticket   │
- * │ — un coût d'opération, donc il reste — et ce que le client   │
- * │ envoie farmer là-bas.                                        │
- * │ TAIRE : COMMENT on entre dans les quatre donjons du bas.     │
- * │ Aucun fichier ne le dit, et l'écrire « à confirmer en jeu »  │
- * │ serait un demi-renseignement. La carte et le peuplement, eux,│
- * │ sont complets : ils disent ce que c'est et pour quel niveau.  │
+ * │ MONTRÉ : la carte du client quand il y en a une, le nom qui  │
+ * │ y est imprimé, le peuplement compté, les bornes de niveau,   │
+ * │ le prix du ticket — un coût d'opération, donc il reste —, ce │
+ * │ que le client envoie farmer là-bas, et les MODES quand un    │
+ * │ lieu se joue de deux façons.                                 │
+ * │ TAIRE : COMMENT on entre dans les cinq lieux du bas. Aucun   │
+ * │ fichier ne le dit, et l'écrire « à confirmer en jeu » serait │
+ * │ un demi-renseignement. Le peuplement, lui, est complet sur   │
+ * │ les dix : il dit ce que c'est et pour quel niveau.           │
  * └─────────────────────────────────────────────────────────────┘
  *
  * AUCUN CHIFFRE EN DUR, y compris dans les phrases : le nombre de lieux, les
@@ -68,12 +79,58 @@ type Bande = {
    *  donc comparable à aucun total de zone (c'est le cas de Volcane). */
   rangPoses?: number;
 };
-type Ticket = { nom: string; icone: string | null; durees: number[]; flycoin: number | null; pnj: string | null };
+/**
+ * UN MODE, C'EST LE MÊME ENDROIT JOUÉ AUTREMENT — et ce n'est pas une bande.
+ *
+ * ┌──────── LA DIFFÉRENCE, ET POURQUOI ELLE MÉRITE SON PROPRE CHAMP ────────┐
+ * │ Une BANDE répond à « d'où vient ce peuplement » : sur Azria, huit       │
+ * │ espèces du Flyff d'origine puis trois posées par Airborn, séparées de   │
+ * │ soixante-quinze niveaux. Un MODE répond à « comment on y joue » : le    │
+ * │ Royaume de Kaelis et le Parc prestigieux se jouent chacun en « 1v1 » ou │
+ * │ en « AoE », aux MÊMES niveaux, sur le MÊME terrain. Le client vend même │
+ * │ un ticket par mode pour Kaelis — deux papiers différents, une seule     │
+ * │ destination.                                                            │
+ * │ Les traiter comme deux bandes aurait fait écrire « 2 peuplements sur la │
+ * │ même carte, 0 niveau de vide entre eux », ce qui ne veut rien dire ; les │
+ * │ fondre en un seul total aurait effacé le seul renseignement qu'une      │
+ * │ carte ne donne jamais — ce qui change quand on change de mode.          │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ */
+type Mode = {
+  nom: string; especes: number; poses: number; nivMin: number; nivMax: number;
+  gros: Gros;
+  /** LE PLUS PETIT SAC DE PV DU MODE, et il n'est écrit que s'il désigne une autre
+   *  créature que `gros`. Sans lui, comparer les deux modes du Royaume de Kaelis
+   *  ne montrait RIEN : ses quatre boss pèsent 9 Md des deux côtés. Ce qui change,
+   *  c'est la piétaille — 110 M en 1v1, 78 M en AoE. */
+  petit?: { nom: string; niv: number; pv: number; rang: string };
+};
+type Ticket = {
+  nom: string; icone: string | null; durees: number[];
+  flycoin: number | null; pnj: string | null;
+  /** Les billets que le client nomme un par un, quand il y en a un par mode. */
+  billets?: { nom: string; mode: string | null }[];
+  /** La durée en HEURES, quand le nom du billet la compte ainsi. Le Rêve de
+   *  Kaelis dure deux heures là où les quatre autres tickets durent des jours :
+   *  mélanger les deux unités dans un même champ aurait produit « 2 jours ». */
+  heures?: number[];
+  /** Où l'obtenir, quand ce n'est pas un étal du relevé. Recopié du client. */
+  ou?: string | null;
+  /** Ce que le client écrit du ticket, mot pour mot. */
+  dit?: string | null;
+  source?: string | null;
+};
 /** Exporté pour le panneau de détail, qui reçoit un lieu entier. `import type` :
  *  le type disparaît à la compilation, donc pas de cycle entre les deux modules
  *  ni de dépendance qui ramènerait le panneau dans le paquet de départ. */
 export type Lieu = {
-  groupe: string; clef: string; nom: string; cartouche: string; carte: string;
+  groupe: string; clef: string; nom: string;
+  /** Le nom IMPRIMÉ sur la carte, et la carte. Absents ensemble : deux lieux du
+   *  relevé n'ont pas de parchemin dans le client — voir `carte()` dans
+   *  scripts/extraire-lieux.mjs. Une carte approchante mentirait, alors il n'y en
+   *  a aucune, et l'écran montre le lieu quand même : c'est le peuplement qui dit
+   *  ce que c'est, pas le dessin. */
+  cartouche?: string; carte?: string;
   /** Les totaux de la CARTE ENTIÈRE, toutes bandes confondues. */
   especes: number; poses: number; nivMin: number; nivMax: number;
   /** Le plus coriace de toute la carte. L'écran ne le montre PAS tel quel dès
@@ -82,7 +139,14 @@ export type Lieu = {
    *  src/app/(public)/donjons/donnees.ts, qui l'apparie pour lier vers /monstres. */
   gros: Gros;
   bandes: Bande[];
+  /** Les deux façons de jouer le même endroit, quand le relevé les sépare. */
+  modes?: Mode[];
   objets: { nom: string; icone: string | null }[];
+  /** Ce que la zone ALIMENTE : des objets qu'on ne ramasse pas au sol mais qu'on
+   *  fabrique avec ce qu'on y ramasse. Voir `alimenteLe()` dans le script. */
+  alimente?: { nom: string; icone: string | null; pnj: string | null }[];
+  /** Le hall d'entrée que le client NOMME, sans dire comment on y arrive. */
+  hall?: { nom: string; source: string | null };
   ticket?: Ticket | null;
 };
 
@@ -142,7 +206,7 @@ const de = (nom: string) => (/^[aeiouyàâäéèêëîïôöûüh]/i.test(nom) ?
  *
  * ┌──────────── POURQUOI `dynamic` ET PAS UN IMPORT ORDINAIRE ────────────┐
  * │ /donjons est la page la plus lourde du site. Le panneau porte le      │
- * │ relevé de combat des 102 créatures de ces huit lieux — 20,7 Ko de     │
+ * │ relevé de combat des 120 créatures de ces dix lieux — 25,0 Ko de      │
  * │ données, plus la brique des faiblesses et le vocabulaire des          │
  * │ monstres. Un import ordinaire aurait mis tout ça dans le paquet de    │
  * │ départ, pour TOUT LE MONDE, y compris pour qui n'ouvre jamais un      │
@@ -166,7 +230,7 @@ const PanneauLieu = dynamic(() => import("./PanneauLieu"), {
       ? null
       : createPortal(
           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: "88px 20px 20px" }}>
-            <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Le plan arrive…</div>
+            <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Le relevé arrive…</div>
           </div>,
           document.body
         ),
@@ -184,20 +248,29 @@ const PanneauLieu = dynamic(() => import("./PanneauLieu"), {
  * `quoi` se compte à la construction — le jour où un lieu s'ajoute au relevé, le
  * schéma d'entrée l'annonce sans qu'on y touche.
  */
-const GROUPES: { clef: string; titre: string; par: string; icon: IconName; ancre: string }[] = [
-  { clef: "ticket", titre: "Les zones à ticket", par: "Un ticket, au FLY SHOP", icon: "clock", ancre: "zones-ticket" },
+const GROUPES: { clef: string; titre: string; par: string; unite: [string, string]; icon: IconName; ancre: string }[] = [
+  /* « Un ticket » ET PLUS « Un ticket, au FLY SHOP » : le Rêve de Kaelis est un
+     ticket que le client relie à ses deux mondes dans le même fichier que les
+     quatre autres, mais il ne s'achète PAS au même endroit — il s'obtient chez
+     Rukas, à l'Oasis. Le nom de l'étal descend donc sur les tuiles, où chacune
+     dit le sien, et la phrase du bas compte combien partagent le FLY SHOP au lieu
+     d'écrire « tous ». Un schéma d'entrée qui généralise se met à mentir dès que
+     le relevé s'allonge. */
+  { clef: "ticket", titre: "Les zones à ticket", par: "Un ticket", unite: ["zone", "zones"], icon: "clock", ancre: "zones-ticket" },
   /* « Entrée non documentée » et pas « on ne sait pas » : c'est un fait vérifiable —
-     aucun fichier du dépôt ne dit comment on entre sur ces quatre cartes — et il
-     change le geste, parce qu'on les cherche sinon au téléporteur, qui ne les propose
-     pas. La carte et le peuplement, eux, sont complets. */
-  { clef: "client", titre: "Les cartes que le téléporteur ne propose pas", par: "Entrée non documentée", icon: "map", ancre: "cartes-client" },
+     aucun fichier du dépôt ne dit comment on entre sur ces cinq-là — et il change
+     le geste, parce qu'on les cherche sinon au téléporteur, qui ne les propose pas.
+     Le titre ne parle plus de CARTES : quatre de ces lieux en ont une, le Parc
+     prestigieux n'en a pas, et ce qui les réunit n'a jamais été le dessin — c'est
+     la porte. Le peuplement, lui, est complet sur les cinq. */
+  { clef: "client", titre: "Ce que le téléporteur ne propose pas", par: "Entrée non documentée", unite: ["lieu", "lieux"], icon: "map", ancre: "cartes-client" },
 ];
 
 /** Ce que le schéma d'entrée de la page affiche pour ces deux groupes, compté ici. */
 export const GROUPES_HORS_TELEPORTEUR = GROUPES
   .map((g) => {
     const n = LIEUX.filter((l) => l.groupe === g.clef).length;
-    return { icon: g.icon, par: g.par, quoi: `${n} ${g.clef === "ticket" ? "zones" : "cartes"}`, ancre: g.ancre, n };
+    return { icon: g.icon, par: g.par, quoi: `${n} ${g.unite[n > 1 ? 1 : 0]}`, ancre: g.ancre, n };
   })
   .filter((g) => g.n > 0);
 
@@ -288,7 +361,17 @@ export function HorsTeleporteur() {
               clip`, donc rien ne le signale : la tuile est simplement coupée à
               droite. Le `min()` laisse la piste se réduire sous son minimum quand la
               place manque, et ne change RIEN au-delà de 270 px. */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(270px,100%),1fr))", gap: 12 }}>
+          {/* ┌──── `alignItems: start`, ET C'EST UNE MESURE, PAS UN GOÛT ────┐
+              Une grille étire ses tuiles à la hauteur de la plus haute de leur
+              rangée. Relevé à 1 280 px AVANT toute retouche : l'Île Corail
+              traînait 157 px de vide sous son dernier élément, la Mine de Mas
+              261. L'arrivée d'un lieu SANS CARTE l'a rendu intenable — le Parc
+              prestigieux se retrouvait avec 556 px de cadre vide, plus de la
+              moitié de sa tuile, ce qui se lit comme un bloc qui n'a pas fini de
+              charger. Chaque tuile prend maintenant sa hauteur, et les bas de
+              rangée sont irréguliers : c'est ce que fait une grille de cartes de
+              contenus inégaux, et c'est plus honnête qu'un vide calibré. */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(min(270px,100%),1fr))", gap: 12, alignItems: "start" }}>
             {g.lieux.map((l) => <CarteLieu key={l.clef} l={l} etalDitEnBas={etalDitEnBas} onOuvrir={() => setSel(l)} />)}
           </div>
         </div>
@@ -304,7 +387,12 @@ export function HorsTeleporteur() {
           <Icon name="info" size={13} style={{ marginRight: 6, color: "var(--gold)" }} />
           Le prix ne suit pas le niveau : <b style={{ color: "var(--text)" }}>{moinsCher!.nom}</b> est
           le moins cher, <b style={{ color: "var(--text)" }}>{plusBas!.nom}</b> le plus bas.
-          {memeEtal ? <> Tous au {memeEtal}.</> : null}
+          {/* « LES QUATRE » ET PLUS « TOUS », ET LE NOMBRE SE COMPTE. Depuis que le
+              Rêve de Kaelis est entré dans le groupe des zones à ticket, « tous » ne
+              serait plus vrai : ce ticket-là ne s'achète pas au FLY SHOP et n'a pas
+              de prix en FlyCoins. La phrase ne parle que des tickets TARIFÉS — c'est
+              son sujet — alors elle le dit et les compte. */}
+          {memeEtal ? <> Les {tickets.length} au {memeEtal}.</> : null}
         </p>
       )}
 
@@ -404,7 +492,22 @@ function EchelleNiveaux() {
   );
 }
 
-/** La tuile d'un lieu : sa carte d'abord — c'est elle qui le fait reconnaître. */
+/**
+ * La tuile d'un lieu : sa carte d'abord — c'est elle qui le fait reconnaître.
+ *
+ * ┌──── ET QUAND IL N'Y A PAS DE CARTE ────┐
+ * │ Deux lieux du relevé n'ont pas de       │
+ * │ parchemin dans le client. Le bouton     │
+ * │ reste — il ouvre les créatures, qui     │
+ * │ sont là — mais il ne montre pas un      │
+ * │ cadre vide à la place de l'image : il   │
+ * │ DIT qu'il n'y en a pas, et pourquoi.    │
+ * │ Une absence expliquée se lit ; un       │
+ * │ rectangle gris se lit comme un site     │
+ * │ cassé, et une carte de voisin se lit    │
+ * │ comme un mensonge.                       │
+ * └──────────────────────────────────────────┘
+ */
 function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boolean; onOuvrir: () => void }) {
   return (
     <div className="fx-card" style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 12, overflow: "hidden" }}>
@@ -424,7 +527,9 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
         type="button"
         className="ht-plan"
         onClick={onOuvrir}
-        aria-label={`Ouvrir le plan ${de(l.nom)} en grand, avec ses ${l.especes} espèces et leurs dégâts`}
+        aria-label={l.carte
+          ? `Ouvrir le plan ${de(l.nom)} en grand, avec ses ${l.especes} espèces et leurs dégâts`
+          : `Ouvrir le détail ${de(l.nom)} : ses ${l.especes} espèces et leurs dégâts — ce lieu n'a pas de plan dans le client`}
         style={{ display: "block", width: "100%", padding: 0, margin: 0, border: "none", borderBottom: "1px solid var(--border)", background: "transparent", color: "inherit", font: "inherit", textAlign: "left", cursor: "pointer" }}
       >
         {/* La carte est montrée ENTIÈRE, pas recadrée : son cartouche est en bas à
@@ -439,18 +544,33 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
             Rien ne se perd : cette image n'a pas de légende dans la tuile, le
             `<figure>` n'emballait donc rien. Celui du panneau, lui, en a une et
             reste un vrai `<figure>`. */}
-        <span style={{ display: "block", lineHeight: 0 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={l.carte} alt={`La carte ${de(l.nom)}, telle qu'elle sort du client — le cartouche imprimé dit « ${l.cartouche} »`}
-            loading="lazy" style={{ width: "100%", display: "block" }} />
-        </span>
+        {l.carte ? (
+          <span style={{ display: "block", lineHeight: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={l.carte} alt={`La carte ${de(l.nom)}, telle qu'elle sort du client — le cartouche imprimé dit « ${l.cartouche} »`}
+              loading="lazy" style={{ width: "100%", display: "block" }} />
+          </span>
+        ) : (
+          /* LA PLACE DE LA CARTE, ET CE QU'ON Y MET À SA PLACE. Pas un cadre vide :
+             une phrase courte qui dit le fait — le client n'a pas dessiné de
+             parchemin pour ce monde — et le mot du client, qui est la preuve de nom
+             quand le cartouche manque. La hauteur n'est PAS calée sur le 4/3 des
+             autres tuiles : aligner un vide sur la taille d'une image reviendrait à
+             réserver la place d'une chose qui n'existe pas. */
+          <span style={{ display: "block", padding: "16px 13px 14px", background: "var(--bg-2)" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
+              <Icon name="map" size={13} style={{ flexShrink: 0 }} />
+              Le client n&apos;a pas dessiné de plan pour ce monde.
+            </span>
+          </span>
+        )}
         {/* Cinq mots, et ils disent le geste ET ce qu'on y gagne. La phrase
             complète est dans l'`aria-label` : elle nomme le lieu et compte ses
             espèces, ce qu'un lecteur d'écran a besoin d'entendre et qu'un œil lit
             déjà deux lignes plus bas. */}
         <span className="ht-appel" style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px 6px", fontSize: 11.5, color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
           <Icon name="eye" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
-          Le plan et les créatures
+          {l.carte ? "Le plan et les créatures" : "Les créatures et leurs dégâts"}
           <Icon name="chevron-right" size={12} style={{ marginLeft: "auto", flexShrink: 0 }} />
         </span>
       </button>
@@ -470,11 +590,30 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
             de 90 que la carte accueille pourtant. Deux, un par bande, disent le vrai.
             └─────────────────────────────────────────────────────────────────────────┘ */}
         {l.bandes.length > 1 && <DeuxPeuplements l={l} />}
-        <div style={{ display: "grid", gap: 7, marginBottom: l.ticket || l.objets.length ? 9 : 0 }}>
+        <div style={{ display: "grid", gap: 7, marginBottom: l.modes || l.ticket || l.objets.length || l.alimente?.length || l.hall ? 9 : 0 }}>
           {l.bandes.map((b) => <RangeeBande key={b.nivMin} b={b} seule={l.bandes.length === 1} />)}
         </div>
 
+        {/* LES DEUX FAÇONS DE JOUER, ET CE QUI CHANGE ENTRE ELLES. Elle vient APRÈS
+            le peuplement, parce qu'elle le découpe : on lit d'abord ce qu'il y a, et
+            ensuite qu'on peut l'aborder de deux manières. */}
+        {l.modes && l.modes.length > 1 && <DeuxModes l={l} />}
+
         {l.ticket && <LigneTicket t={l.ticket} sansEtal={etalDitEnBas} />}
+
+        {/* LE HALL D'ENTRÉE QUE LE CLIENT NOMME. Il ne dit pas comment on y arrive —
+            aucun fichier ne le dit — mais il dit qu'il y a un sas et comment il
+            s'appelle, ce qui change où l'on cherche : pas au téléporteur. */}
+        {l.hall && (
+          <div title={l.hall.source ?? undefined}
+            style={{ display: "flex", alignItems: "flex-start", gap: 7, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", fontSize: 11.5, lineHeight: 1.5, color: "var(--text-muted)" }}>
+            <Icon name="map" size={12} style={{ flexShrink: 0, marginTop: 3, color: "var(--orange)" }} />
+            <span>
+              Le client nomme un monde <b style={{ color: "var(--text)" }}>«&nbsp;{l.hall.nom}&nbsp;»</b>,
+              mais aucun fichier ne dit comment on y arrive.
+            </span>
+          </div>
+        )}
 
         {l.objets.length > 0 && (
           <div style={{ marginTop: 9 }}>
@@ -495,7 +634,117 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
             </div>
           </div>
         )}
+
+        {/* ┌──── « ALIMENTE » N'EST PAS « À CHERCHER ICI », ET LA NUANCE EST LE GESTE ────┐
+            Les quatre gemmes de sertissage et la Pierre Jupiter ne tombent pas au sol :
+            elles se FABRIQUENT, dix morceaux pour une, chez le PNJ dont l'enseigne nomme
+            le lieu. Les ranger sous « à chercher ici » ferait fouiller le sol pour un
+            objet qui n'y est pas ; les taire ferait disparaître la seule raison d'acheter
+            le ticket. Le nom du PNJ est dans le `title`, et chaque objet mène à sa fiche,
+            où l'échange est déjà écrit en entier.
+            └────────────────────────────────────────────────────────────────────────────┘ */}
+        {l.alimente && l.alimente.length > 0 && (
+          <div style={{ marginTop: 9 }}>
+            <div title={`Ces objets se fabriquent avec ce qu'on ramasse ici${l.alimente[0].pnj ? `, chez ${l.alimente[0].pnj}` : ""}`}
+              style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".6px", color: "var(--text-muted)", marginBottom: 6 }}>
+              Ce qu&apos;on en rapporte · {l.alimente.length}
+            </div>
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+              {l.alimente.map((o) => (
+                <span key={o.nom} style={{ fontSize: 11.5, padding: "3px 8px", borderRadius: 7, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
+                  <NomObjet nom={o.nom} icone={o.icone} taille={16} />
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * DEUX FAÇONS DE JOUER LE MÊME ENDROIT — et ce qui change entre elles, compté.
+ *
+ * ┌────────── POURQUOI CETTE LIGNE NE PEUT PAS ÊTRE DEVINÉE ──────────┐
+ * │ Ni la carte — il n'y en a pas — ni le peuplement ne disent qu'un   │
+ * │ lieu se joue de deux manières. Le relevé, lui, sépare les deux :   │
+ * │ deux zones qui ne diffèrent que par un suffixe, et pour Kaelis     │
+ * │ deux TICKETS différents. La ligne dit donc les deux noms, et       │
+ * │ surtout l'ÉCART, qui est ce qui fait choisir :                     │
+ * │   Kaelis  — la piétaille passe de 55 M à 39 M de PV,               │
+ * │   Parc    — la Fleur de nucléus passe de 2,5 M à 2 M.              │
+ * │ L'écart est CALCULÉ sur le plus gros sac de PV de chaque mode, et  │
+ * │ la phrase ne s'écrit que s'il y en a un : le jour où les deux modes │
+ * │ porteront les mêmes nombres, il ne restera que les deux noms — ce  │
+ * │ qui sera exactement le renseignement du jour.                       │
+ * └────────────────────────────────────────────────────────────────────┘
+ *
+ * ELLE COMPARE LES DEUX BOUTS DU PEUPLEMENT, ET C'EST CE QUI LA REND JUSTE. Le
+ * premier essai ne comparait que le plus coriace de chaque mode : au Royaume de
+ * Kaelis, les quatre boss pèsent 9 Md des deux côtés, la ligne annonçait donc
+ * « aucun écart » — alors que la piétaille passe de 110 M à 78 M. Un écart nul sur
+ * un bout ne dit pas que les deux modes se valent, il dit qu'on regarde le mauvais
+ * bout. Le bout QUI NE BOUGE PAS s'écrit aussi, quand l'autre bouge : c'est lui qui
+ * empêche de croire que tout est allégé.
+ * Les bouts sont comparés et non les espèces une à une : les noms diffèrent d'un
+ * mode à l'autre (« Papillon Grenat 1v1 » contre « … AoE »), donc rien ne s'apparie.
+ */
+function ecartDesModes(modes: Mode[], bout: (m: Mode) => { pv: number } | undefined) {
+  const pvs = modes.map((m) => bout(m)?.pv).filter((v): v is number => typeof v === "number");
+  if (pvs.length !== modes.length) return null;
+  const haut = Math.max(...pvs);
+  const bas = Math.min(...pvs);
+  /* L'écart en pour-cent, arrondi UNE seule fois : arrondir les PV puis leur
+     rapport fabrique des « 0 % » qui n'en sont pas. */
+  return { haut, bas, part: haut > bas ? Math.round(((haut - bas) / haut) * 100) : 0,
+    ou: modes.find((m) => bout(m)?.pv === haut)!.nom };
+}
+
+function DeuxModes({ l }: { l: Lieu }) {
+  const modes = l.modes!;
+  const gros = ecartDesModes(modes, (m) => m.gros);
+  const petit = ecartDesModes(modes, (m) => m.petit);
+  /* Les bouts qui BOUGENT, du plus gros au plus petit — et seulement eux dans la
+     phrase principale. Un bout immobile n'est pas une comparaison, c'est une
+     précision, et elle vient après. */
+  const bouge = ([["Le plus coriace", gros], ["La piétaille", petit]] as const)
+    .filter(([, e]) => e && e.part > 0) as [string, NonNullable<ReturnType<typeof ecartDesModes>>][];
+  /* LES MÊMES DEUX NOMS QUE CI-DESSUS, EN MINUSCULES. Le premier essai écrivait
+     « les boss » pour le bout haut — c'était vrai au Royaume de Kaelis et faux
+     ailleurs (au Parc prestigieux, le plus coriace est une fleur de rang normal),
+     et ça produisait en prime « les boss ne bouge pas ». Un nom qui décrit le BOUT
+     du peuplement, et non le rôle qu'on lui suppose, reste juste partout et reste
+     au singulier. */
+  const fige = ([["le plus coriace", gros], ["la piétaille", petit]] as const)
+    .filter(([, e]) => e && e.part === 0) as [string, NonNullable<ReturnType<typeof ecartDesModes>>][];
+  return (
+    <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", marginBottom: 9, fontSize: 11.5, lineHeight: 1.55, color: "var(--text-muted)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+        <Icon name="swords" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+        <span>Un seul endroit,</span>
+        {modes.map((m, i) => (
+          <span key={m.nom} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+            {i > 0 && <span>ou</span>}
+            <b style={{ color: "var(--text)" }}>{m.nom}</b>
+          </span>
+        ))}
+      </div>
+      {bouge.map(([quoi, e]) => (
+        <div key={quoi} style={{ marginTop: 3, ...NUM }}>
+          {quoi} pèse <b style={{ color: "var(--orange)" }}>{pvCourt(e.haut)}</b> en{" "}
+          <b style={{ color: "var(--text)" }}>{e.ou}</b>, <b style={{ color: "var(--orange)" }}>{pvCourt(e.bas)}</b> dans
+          l&apos;autre — <b style={{ color: "var(--text)" }}>{e.part}&nbsp;%</b> de moins.
+        </div>
+      ))}
+      {/* LE BOUT QUI NE BOUGE PAS NE SE DIT QUE SI L'AUTRE BOUGE. Seul, il
+          n'apprendrait rien ; à côté d'un allègement, il empêche de croire que le
+          mode le plus doux l'est de bout en bout. */}
+      {bouge.length > 0 && fige.map(([quoi, e]) => (
+        <div key={quoi} style={{ marginTop: 2, ...NUM }}>
+          En revanche {quoi} ne bouge pas : <b style={{ color: "var(--orange)" }}>{pvCourt(e.haut)}</b> des deux côtés.
+        </div>
+      ))}
     </div>
   );
 }
@@ -617,15 +866,51 @@ function LigneTicket({ t, sansEtal }: {
           style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0 }} />
       ) : null}
       <span style={{ minWidth: 0, flex: 1, lineHeight: 1.45 }}>
-        {/* Le nom EXACT du relevé, suffixe compris : c'est la clé qui retrouve la
-            fiche et la provenance. Les autres durées sont listées à côté, et on
-            retire celle du jour — elle est déjà dans le nom, et « (1 jour) · 1 j »
-            se lisait comme un bégaiement. */}
-        <NomObjet nom={`${t.nom} (1 jour)`} />
-        {t.durees.filter((d) => d !== 1).length > 0 && (
-          <span style={{ color: "var(--text-muted)" }}>
-            {" "}· aussi en {t.durees.filter((d) => d !== 1).map((d) => `${d} jours`).join(" et ")}
-          </span>
+        {/* ┌──── UN BILLET PAR MODE, QUAND LE CLIENT EN VEND DEUX ────┐
+            Le Rêve de Kaelis n'est pas un ticket avec deux durées : ce
+            sont DEUX OBJETS, « Rêve de Kaelis 1v1 (2h) » et « … AoE
+            (2h) ». C'est la preuve la plus nette que les deux modes ne
+            sont pas deux endroits — on n'achète pas le même papier — et
+            c'est aussi le piège à éviter en jeu : prendre le mauvais
+            billet, c'est deux heures dans le mauvais mode. Les noms sont
+            écrits ENTIERS, suffixe et durée compris, parce qu'ils sont ce
+            qu'on cherche dans son inventaire.
+            └──────────────────────────────────────────────────────────┘ */}
+        {t.billets?.length ? (
+          <>
+            {/* UN BILLET PAR LIGNE, ET PAS SÉPARÉS PAR UN POINT MÉDIAN. Mesuré à
+                375 px : les deux noms ne tiennent pas côte à côte, la ligne se
+                replie et le séparateur reste pendu au bout de la première. Deux
+                lignes disent d'ailleurs mieux ce que c'est — deux objets distincts,
+                pas deux variantes d'un même. */}
+            {t.billets.map((b) => (
+              <span key={b.nom} style={{ display: "block" }}>
+                <NomObjet nom={b.nom} />
+              </span>
+            ))}
+            {/* LA DURÉE EST RÉÉCRITE EN FRANÇAIS, ET CE N'EST PAS UN DOUBLON UTILE
+                POUR RIEN : les quatre autres tickets de ce bloc se comptent en JOURS
+                — 1, 7, 15 — et celui-ci en HEURES. Laissée dans la parenthèse d'un
+                nom d'objet, la différence d'unité se lit à peine ; posée en clair
+                sous les deux billets, elle dit ce qu'elle coûte vraiment. */}
+            <span style={{ display: "block", color: "var(--text-muted)" }}>
+              Un billet par mode{t.heures?.length ? `, ${t.heures.join(" ou ")} h chacun` : ""}
+              {t.ou ? ` — ${t.ou}` : ""}.
+            </span>
+          </>
+        ) : (
+          <>
+            {/* Le nom EXACT du relevé, suffixe compris : c'est la clé qui retrouve la
+                fiche et la provenance. Les autres durées sont listées à côté, et on
+                retire celle du jour — elle est déjà dans le nom, et « (1 jour) · 1 j »
+                se lisait comme un bégaiement. */}
+            <NomObjet nom={`${t.nom} (1 jour)`} />
+            {t.durees.filter((d) => d !== 1).length > 0 && (
+              <span style={{ color: "var(--text-muted)" }}>
+                {" "}· aussi en {t.durees.filter((d) => d !== 1).map((d) => `${d} jours`).join(" et ")}
+              </span>
+            )}
+          </>
         )}
         {t.flycoin != null && (
           <span style={{ display: "block", ...NUM }}>
@@ -649,7 +934,18 @@ function Puce({ ic, titre, children }: { ic: IconName; titre?: string; children:
 /** Les mots par lesquels une recherche doit atteindre ce bloc : ses noms de lieu,
  *  plus les deux façons d'y entrer. Recomposé depuis la table — un lieu ajouté
  *  demain devient cherchable sans qu'on y pense. */
-export const MOTS_HORS_TELEPORTEUR = ["ticket", "flycoin", ...LIEUX.map((l) => l.nom)]
+export const MOTS_HORS_TELEPORTEUR = [
+  "ticket", "flycoin",
+  ...LIEUX.map((l) => l.nom),
+  /* LES MODES ET LES NOMS DE BILLET AUSSI, et ils se récoltent sur la table plutôt
+     que d'être saisis. Quelqu'un qui cherche « kaelis aoe » ou « rêve de kaelis »
+     tape ce que le jeu lui a montré, pas le nom de zone du relevé. Les noms des
+     objets ALIMENTÉS entrent pour la même raison : on cherche « grenat » ou
+     « améthyste » bien avant de savoir où ça se ramasse. */
+  ...LIEUX.flatMap((l) => (l.modes ?? []).map((m) => `${l.nom} ${m.nom}`)),
+  ...LIEUX.flatMap((l) => (l.ticket?.billets ?? []).map((b) => b.nom)),
+  ...LIEUX.flatMap((l) => (l.alimente ?? []).map((o) => o.nom)),
+]
   .join(" ")
   .normalize("NFD")
   .replace(/[̀-ͯ]/g, "")

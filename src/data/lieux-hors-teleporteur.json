@@ -222,6 +222,198 @@
    }
   },
   {
+   "groupe": "ticket",
+   "clef": "kaelis",
+   "nom": "Royaume de Kaelis",
+   "especes": 16,
+   "poses": 6072,
+   "nivMin": 200,
+   "nivMax": 200,
+   "gros": {
+    "nom": "Faucheur de Grenat",
+    "niv": 200,
+    "pv": 9000000000,
+    "rang": "super",
+    "poses": 4
+   },
+   "bandes": [
+    {
+     "especes": 16,
+     "poses": 6072,
+     "nivMin": 200,
+     "nivMax": 200,
+     "gros": {
+      "nom": "Faucheur de Grenat",
+      "niv": 200,
+      "pv": 9000000000,
+      "rang": "super",
+      "poses": 4
+     },
+     "rangPoses": 2
+    }
+   ],
+   "modes": [
+    {
+     "nom": "1v1",
+     "especes": 8,
+     "poses": 3036,
+     "nivMin": 200,
+     "nivMax": 200,
+     "gros": {
+      "nom": "Faucheur de Grenat",
+      "niv": 200,
+      "pv": 9000000000,
+      "rang": "super",
+      "poses": 4
+     },
+     "petit": {
+      "nom": "Papillon Grenat 1v1",
+      "niv": 200,
+      "pv": 110000000,
+      "rang": "super"
+     }
+    },
+    {
+     "nom": "AoE",
+     "especes": 8,
+     "poses": 3036,
+     "nivMin": 200,
+     "nivMax": 200,
+     "gros": {
+      "nom": "Faucheur de Grenat AoE",
+      "niv": 200,
+      "pv": 9000000000,
+      "rang": "super",
+      "poses": 4
+     },
+     "petit": {
+      "nom": "Papillon Grenat AoE",
+      "niv": 200,
+      "pv": 78000000,
+      "rang": "super"
+     }
+    }
+   ],
+   "objets": [],
+   "alimente": [
+    {
+     "nom": "Aigue-Marine",
+     "icone": "itm_syssysscrscrapaquamarine.webp",
+     "pnj": "[Souvenir de Kaelis] Apprenti Rukas"
+    },
+    {
+     "nom": "Améthyste",
+     "icone": "itm_syssysscrscrapamethyst.webp",
+     "pnj": "[Souvenir de Kaelis] Apprenti Rukas"
+    },
+    {
+     "nom": "Grenat",
+     "icone": "itm_syssysscrscrapgarnet.webp",
+     "pnj": "[Souvenir de Kaelis] Apprenti Rukas"
+    },
+    {
+     "nom": "Pierre Jupiter",
+     "icone": "itm_syssysscrscraplightningstone.webp",
+     "pnj": "[Souvenir de Kaelis] Apprenti Rukas"
+    },
+    {
+     "nom": "Turquoise",
+     "icone": "itm_syssysscrscrapturquoise.webp",
+     "pnj": "[Souvenir de Kaelis] Apprenti Rukas"
+    }
+   ],
+   "ticket": {
+    "nom": "Rêve de Kaelis",
+    "icone": "itm_ticketkaelis.webp",
+    "durees": [],
+    "heures": [
+     2
+    ],
+    "billets": [
+     {
+      "nom": "Rêve de Kaelis 1v1 (2h)",
+      "mode": "1v1"
+     },
+     {
+      "nom": "Rêve de Kaelis AoE (2h)",
+      "mode": "AoE"
+     }
+    ],
+    "flycoin": null,
+    "pnj": null,
+    "ou": "chez Rukas, à l'Oasis",
+    "dit": "Ticket vous permettant de plonger dans le rêve de Kaelis pendant 2h. (Zone d'obtention des Gemmes rares, Pierre Jupiter et parchemins destinés au sertissage des tenues fashion)",
+    "source": "PaidWorldTicket.txt et propitem.txt.txt, client d'août 2026"
+   }
+  },
+  {
+   "groupe": "client",
+   "clef": "parc-prestigieux",
+   "nom": "Parc prestigieux",
+   "especes": 2,
+   "poses": 6400,
+   "nivMin": 198,
+   "nivMax": 199,
+   "gros": {
+    "nom": "Fleur de nucléus 1v1",
+    "niv": 199,
+    "pv": 2500000,
+    "rang": "normal",
+    "poses": 3200
+   },
+   "bandes": [
+    {
+     "especes": 2,
+     "poses": 6400,
+     "nivMin": 198,
+     "nivMax": 199,
+     "gros": {
+      "nom": "Fleur de nucléus 1v1",
+      "niv": 199,
+      "pv": 2500000,
+      "rang": "normal",
+      "poses": 3200
+     },
+     "rangPoses": 1
+    }
+   ],
+   "modes": [
+    {
+     "nom": "1v1",
+     "especes": 1,
+     "poses": 3200,
+     "nivMin": 199,
+     "nivMax": 199,
+     "gros": {
+      "nom": "Fleur de nucléus 1v1",
+      "niv": 199,
+      "pv": 2500000,
+      "rang": "normal",
+      "poses": 3200
+     }
+    },
+    {
+     "nom": "AoE",
+     "especes": 1,
+     "poses": 3200,
+     "nivMin": 198,
+     "nivMax": 198,
+     "gros": {
+      "nom": "Fleur de nucléus AoE",
+      "niv": 198,
+      "pv": 2000000,
+      "rang": "normal",
+      "poses": 3200
+     }
+    }
+   ],
+   "objets": [],
+   "hall": {
+    "nom": "Entrée des parcs prestigieux",
+    "source": "World.inc, client d'août 2026"
+   }
+  },
+  {
    "groupe": "client",
    "clef": "mas",
    "nom": "Mine de Mas",

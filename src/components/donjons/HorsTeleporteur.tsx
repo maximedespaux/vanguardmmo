@@ -118,6 +118,10 @@ type Ticket = {
   ou?: string | null;
   /** Ce que le client écrit du ticket, mot pour mot. */
   dit?: string | null;
+  /** CE QU'IL FAUT AVOIR AVANT DE POUVOIR PRENDRE LE BILLET — absent quand rien
+   *  ne barre la porte. Le nom d'un étal ne dit pas s'il sert tout le monde :
+   *  les quatre tickets du FLY SHOP s'achètent, celui de Kaelis se mérite. */
+  avant?: { quoi: string; depuis: string; source?: string | null };
   source?: string | null;
 };
 /** Exporté pour le panneau de détail, qui reçoit un lieu entier. `import type` :
@@ -859,7 +863,12 @@ function LigneTicket({ t, sansEtal }: {
   sansEtal?: boolean;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", fontSize: 11.5 }}>
+    /* L'ICÔNE SE POSE SUR LA PREMIÈRE LIGNE, PAS AU MILIEU DU PAVÉ. Centrée, elle
+       tenait encore debout tant qu'un ticket faisait deux lignes ; la mise en garde
+       d'entrée en ajoute trois, et à 375 px le dessin se retrouvait à mi-hauteur,
+       accroché à rien. C'est la forme du bloc voisin sur la même tuile — celui du
+       hall — qui est reprise : icône en haut, texte qui coule à côté. */
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 8, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", fontSize: 11.5 }}>
       {t.icone ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={`/jeu/icones/${t.icone}`} alt="" width={22} height={22}
@@ -918,6 +927,25 @@ function LigneTicket({ t, sansEtal }: {
             <span style={{ color: "var(--text-muted)" }}> la journée{t.pnj && !sansEtal ? `, au ${t.pnj}` : ""}</span>
           </span>
         )}
+        {/* ┌──── L'ÉTAL N'EST PAS UNE PORTE OUVERTE ────┐
+            Nommer le vendeur et s'arrêter là, c'est promettre qu'on peut aller
+            l'acheter. Quand le client dit qu'il faut d'abord AVOIR quelque chose,
+            le taire fait monter un personnage au niveau 200 pour la zone la plus
+            dense du jeu avant de découvrir la porte fermée. Le pictogramme est
+            celui de la mise en garde, pas celui du ticket : les deux lignes ne
+            disent pas la même sorte de chose. La provenance reste dans le `title`,
+            comme partout ailleurs sur cette tuile.
+            └────────────────────────────────────────────┘ */}
+        {t.avant && (
+          <span title={t.avant.source ?? undefined}
+            style={{ display: "flex", alignItems: "flex-start", gap: 5, marginTop: 4, color: "var(--text-muted)", lineHeight: 1.45 }}>
+            <Icon name="alert" size={12} style={{ flexShrink: 0, marginTop: 2, color: "var(--gold)" }} />
+            <span>
+              Il faut d&apos;abord <b style={{ color: "var(--text)" }}>{t.avant.quoi}</b>, fabriqué
+              là-bas à partir d&apos;{t.avant.depuis}.
+            </span>
+          </span>
+        )}
       </span>
     </div>
   );
@@ -945,6 +973,10 @@ export const MOTS_HORS_TELEPORTEUR = [
   ...LIEUX.flatMap((l) => (l.modes ?? []).map((m) => `${l.nom} ${m.nom}`)),
   ...LIEUX.flatMap((l) => (l.ticket?.billets ?? []).map((b) => b.nom)),
   ...LIEUX.flatMap((l) => (l.alimente ?? []).map((o) => o.nom)),
+  /* CE QUI BARRE LA PORTE SE CHERCHE PAR SON NOM. Qui tient un « Insigne d'Entrée »
+     dans son inventaire cherche à quoi il sert, pas où est Kaelis — et sans ce mot
+     la recherche ne ramène rien alors que la réponse est sur la tuile. */
+  ...LIEUX.map((l) => l.ticket?.avant?.quoi ?? ""),
 ]
   .join(" ")
   .normalize("NFD")

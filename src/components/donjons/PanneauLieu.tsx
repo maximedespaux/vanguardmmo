@@ -579,6 +579,19 @@ function DeuxModes({ lieu, ticket }: { lieu: Lieu; ticket: Lieu["ticket"] }) {
           {ticket.ou ? <> — {ticket.ou}</> : null}. Le mode se choisit donc à l&apos;achat, pas sur place.
         </div>
       ) : null}
+      {/* CE QUI BARRE LA PORTE, DIT AVANT LA CITATION QUI VANTE LA ZONE. La phrase
+          du client juste dessous énumère ce qu'on vient y chercher ; la lire sans
+          savoir que l'entrée se mérite, c'est préparer un achat impossible. Même
+          fait que la tuile, même source — le panneau ne le redit pas plus court,
+          il le redit là où on décide d'y aller. */}
+      {ticket?.avant ? (
+        <div title={ticket.avant.source ?? undefined} style={{ color: "var(--text-muted)" }}>
+          <Icon name="alert" size={12} style={{ marginRight: 5, color: "var(--gold)" }} />
+          Mais le billet ne se prend pas d&apos;entrée&nbsp;: il faut{" "}
+          <b style={{ color: "var(--text)" }}>{ticket.avant.quoi}</b>, fabriqué au même endroit à partir
+          d&apos;{ticket.avant.depuis}.
+        </div>
+      ) : null}
       {ticket?.dit ? (
         <div style={{ color: "var(--text-muted)", fontSize: 11.5, borderLeft: "2px solid var(--border)", paddingLeft: 9 }}>
           {/* La phrase du client, entière. Elle dit à quoi sert la zone — aucune autre

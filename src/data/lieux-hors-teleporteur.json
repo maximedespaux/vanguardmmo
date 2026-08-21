@@ -343,6 +343,11 @@
     "pnj": null,
     "ou": "chez Rukas, à l'Oasis",
     "dit": "Ticket vous permettant de plonger dans le rêve de Kaelis pendant 2h. (Zone d'obtention des Gemmes rares, Pierre Jupiter et parchemins destinés au sertissage des tenues fashion)",
+    "avant": {
+     "quoi": "un Insigne d'Entrée",
+     "depuis": "un Éclat de l'Héroïsme, lâché par les monstres des donjons de groupe prestige 8 à 10",
+     "source": "propitem.txt.txt, client d'août 2026 — descriptions de l'Insigne d'Entrée, de l'Éclat de l'Héroïsme et du Pass pour Ticket Kaelis"
+    },
     "source": "PaidWorldTicket.txt et propitem.txt.txt, client d'août 2026"
    }
   },

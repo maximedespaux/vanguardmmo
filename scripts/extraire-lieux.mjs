@@ -230,6 +230,31 @@ const LIEUX = [
       /* Ce que le client écrit du ticket, mot pour mot. Il dit à quoi sert la zone,
          et c'est lui qui autorise le bloc « ce qu'on en rapporte » plus bas. */
       dit: "Ticket vous permettant de plonger dans le rêve de Kaelis pendant 2h. (Zone d'obtention des Gemmes rares, Pierre Jupiter et parchemins destinés au sertissage des tenues fashion)",
+      /* ┌──── LE BILLET NE S'ACHÈTE PAS, IL SE MÉRITE — ET SANS ÇA LA TUILE MENT ────┐
+         │ « Chez Rukas, à l'Oasis » se lit comme un étal : on y va, on paie, on   │
+         │ entre. Le client dit autre chose, en toutes lettres, dans trois         │
+         │ descriptions d'objets voisines des deux billets :                        │
+         │   · « Insigne d'Entrée » — « Insigne nécessaire pour accéder à Kaelis.   │
+         │     À fabriquer auprès du PNJ Apprenti Rukas à l'Oasis. »                │
+         │   · « Eclat de l'Héroïsme » — « Objet de quête obtenu en éliminant les   │
+         │     monstres des donjons de groupe prestige 8 à 10. Permet de fabriquer  │
+         │     un insigne d'entrée de Kaelis auprès du PNJ Rukas, à l'Oasis. »      │
+         │   · « Pass pour Ticket Kaelis » — « Pass permettant d'obtenir un ticket  │
+         │     Kaelis (1v1 ou AOE) auprès de Rukas à l'Oasis. »                     │
+         │                                                                          │
+         │ C'EST LA MISE EN GARDE QUI CHANGE LE GESTE, et elle protège de l'erreur  │
+         │ la plus coûteuse de ce bloc : monter un personnage jusqu'au niveau 200   │
+         │ pour la zone la plus dense du jeu, puis découvrir à l'Oasis que la porte │
+         │ demande d'abord des donjons de groupe de prestige 8 à 10. La règle de la │
+         │ maison écarte les renseignements incomplets, sauf quand ils épargnent    │
+         │ une erreur coûteuse — c'est exactement ce cas.                            │
+         │ Le PNJ n'est pas ressaisi : `ou` le nomme déjà, deux lignes plus haut.   │
+         └──────────────────────────────────────────────────────────────────────────┘ */
+      avant: {
+        quoi: "un Insigne d'Entrée",
+        depuis: "un Éclat de l'Héroïsme, lâché par les monstres des donjons de groupe prestige 8 à 10",
+        source: "propitem.txt.txt, client d'août 2026 — descriptions de l'Insigne d'Entrée, de l'Éclat de l'Héroïsme et du Pass pour Ticket Kaelis",
+      },
       source: "PaidWorldTicket.txt et propitem.txt.txt, client d'août 2026",
     },
   },
@@ -813,6 +838,10 @@ function ticketDuClient(acces) {
     pnj: null,
     ou: acces.ou ?? null,
     dit: acces.dit ?? null,
+    /* CE QU'IL FAUT AVOIR AVANT DE POUVOIR PRENDRE LE BILLET. Absent quand rien
+       ne barre la porte — les quatre tickets du FLY SHOP s'achètent et c'est
+       tout —, et une clé absente veut dire « rien à montrer » partout ici. */
+    ...(acces.avant ? { avant: acces.avant } : {}),
     source: acces.source ?? null,
   };
 }

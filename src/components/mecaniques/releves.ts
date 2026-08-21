@@ -1463,7 +1463,7 @@ type ReleveBalance = {
   competences?: { facteurs?: number; identifiants?: number };
   equilibrages?: Record<string, {
     confrontationAPropJob?: { comparees?: number; identiques?: number; divergentes?: number };
-    metiers?: { id: string; attributs: Record<string, number> }[];
+    metiers?: { id: string; declareDansDefineJob?: boolean; attributs: Record<string, number> }[];
   }>;
 };
 let BALANCE: ReleveBalance | null = null;
@@ -1515,9 +1515,18 @@ export function chiffresDEquilibrage() {
   const sansColonnePropJob = familles.filter((p) => p.colonnePropJob === null);
 
   const conf = pve?.confrontationAPropJob;
+  /* DEUX NOMBRES QU'ON NE CONFOND PAS. `declaresDansDefineJob` compte les MÉTIERS
+     que `defineJob.h` déclare (MAX_JOB = 40) ; il ne dit PAS combien des lignes
+     d'équilibrage retombent sur l'un d'eux. Ces lignes se comptent sur la table
+     elle-même — trois métiers déclarés n'ont aucune ligne, et huit lignes n'ont
+     aucun métier, donc les deux nombres ne peuvent pas être égaux. Une phrase qui
+     dit « 45 lignes, dont 40 tombent sur un métier » laisse 5 orphelines là où le
+     client en porte 8. */
   return {
     metiers: b.metiers?.dansLEquilibrage ?? lignes.length,
     declaresDansDefineJob: b.metiers?.declaresDansDefineJob ?? 0,
+    /** Les lignes d'équilibrage qui retombent vraiment sur un métier déclaré. */
+    lignesAvecMetierDeclare: lignes.filter((m) => m.declareDansDefineJob).length,
     situations: Object.keys(b.equilibrages ?? {}).length,
     /** Les facteurs de compétence : COMPTÉS pour dire qu'ils existent, jamais affichés. */
     facteursDeCompetence: b.competences?.facteurs ?? 0,

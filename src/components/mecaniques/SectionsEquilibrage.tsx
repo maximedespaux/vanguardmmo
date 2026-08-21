@@ -69,9 +69,10 @@ export function Equilibrage() {
           }))}
         />
         <p>
-          {e.metiers} lignes d&apos;équilibrage, dont {e.declaresDansDefineJob} correspondent à un
-          métier réellement déclaré par le client : les autres sont des paliers préparés que
-          le serveur n&apos;a pas ouverts. Et ces chiffres sont ceux du <b>PvE</b> —
+          {e.metiers} lignes d&apos;équilibrage, dont {e.lignesAvecMetierDeclare} retombent sur un
+          métier réellement déclaré par le client : les{" "}
+          {e.metiers - e.lignesAvecMetierDeclare} autres sont des paliers préparés que le
+          serveur n&apos;a pas ouverts. Et ces chiffres sont ceux du <b>PvE</b> —
           {" "}<code>propBalance.xml</code> range {e.situations} situations séparément, le jeu
           n&apos;applique pas les mêmes valeurs contre un monstre et contre un joueur.
         </p>

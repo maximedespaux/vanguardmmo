@@ -36,26 +36,100 @@ import TABLE from "@/data/lieux-hors-teleporteur.json";
  * prochain relevé sans que personne ne s'en aperçoive.
  */
 
-type Palier = { zone: string; especes: number; nivMin: number; nivMax: number };
+type Gros = { nom: string; niv: number; pv: number; rang: string; poses: number };
+/**
+ * UNE BANDE DE PEUPLEMENT — et une carte peut en porter plusieurs.
+ *
+ * ┌──────────────── CE QUE CE TYPE EMPÊCHE DE REDIRE ─────────────────┐
+ * │ La carte d'Azria porte huit espèces de 73 à 115 ET trois de 190 à │
+ * │ 210. On en a d'abord fait un seul intervalle « 73 à 210 » — qui   │
+ * │ fait croire à une progression continue là où il y a soixante-     │
+ * │ quinze niveaux de vide. Puis on a rangé la bande haute en note de │
+ * │ bas de page — alors qu'elle porte plus d'emplacements de          │
+ * │ réapparition qu'aucune autre zone du jeu. Ni un palier, ni une    │
+ * │ curiosité : DEUX PEUPLEMENTS sur une même carte, qui servent à    │
+ * │ deux moments très éloignés de la partie.                          │
+ * └───────────────────────────────────────────────────────────────────┘
+ *
+ * `bandes` est TOUJOURS là, avec une entrée au moins : un seul chemin de dessin,
+ * donc un seul comportement à vérifier. Sept lieux sur huit n'en ont qu'une, et
+ * l'écran s'y comporte exactement comme avant.
+ */
+type Bande = {
+  /** D'où vient ce peuplement, quand la carte en porte plusieurs à comparer :
+   *  `flyff` pour le jeu d'origine, `airborn` pour ce que le serveur a posé.
+   *  Absente sur une carte à peuplement unique — une étiquette sans rien à quoi
+   *  l'opposer n'apprend rien. */
+  origine?: "flyff" | "airborn";
+  especes: number; poses: number; nivMin: number; nivMax: number;
+  gros: Gros;
+  /** Le rang de ses emplacements parmi TOUTES les zones du relevé : 1 = aucune
+   *  n'en porte plus. Absent quand la bande s'étale sur plusieurs zones et n'est
+   *  donc comparable à aucun total de zone (c'est le cas de Volcane). */
+  rangPoses?: number;
+};
 type Ticket = { nom: string; icone: string | null; durees: number[]; flycoin: number | null; pnj: string | null };
 /** Exporté pour le panneau de détail, qui reçoit un lieu entier. `import type` :
  *  le type disparaît à la compilation, donc pas de cycle entre les deux modules
  *  ni de dépendance qui ramènerait le panneau dans le paquet de départ. */
 export type Lieu = {
   groupe: string; clef: string; nom: string; cartouche: string; carte: string;
+  /** Les totaux de la CARTE ENTIÈRE, toutes bandes confondues. */
   especes: number; poses: number; nivMin: number; nivMax: number;
-  gros: { nom: string; niv: number; pv: number; rang: string; poses: number };
-  paliers?: Palier[];
-  /** Les monstres d'EXPÉRIENCE posés par le serveur sur la carte : ils ne
-   *  comptent pas dans les niveaux de la zone (cf. `extraire-lieux.mjs`), mais
-   *  ils sont là, et c'est ce qu'un joueur de leur niveau vient chercher.
-   *  Absent quand il n'y en a pas — sept lieux sur huit. */
-  monstresDExperience?: { nom: string; niv: number; pv: number; poses: number }[];
+  /** Le plus coriace de toute la carte. L'écran ne le montre PAS tel quel dès
+   *  qu'il y a deux bandes — un seul « plus coriace » y est trompeur quel que
+   *  soit celui qu'on choisit, il s'en montre donc un par bande. Il sert à
+   *  src/app/(public)/donjons/donnees.ts, qui l'apparie pour lier vers /monstres. */
+  gros: Gros;
+  bandes: Bande[];
   objets: { nom: string; icone: string | null }[];
   ticket?: Ticket | null;
 };
 
 const LIEUX = (TABLE as { lieux: Lieu[] }).lieux;
+/** Sur combien de zones du relevé un rang de densité a été compté. L'écran écrit
+ *  « du jeu » : il doit pouvoir dire sur quoi ce « du jeu » a été mesuré. */
+const ZONES_DU_RELEVE = (TABLE as { zonesDuReleve: number }).zonesDuReleve;
+/** Comment se nomme une provenance à l'écran. « Airborn » et sa teinte violette
+ *  sont ceux de la fiche d'objet (src/components/objets/Fiche.tsx), qui marque
+ *  déjà de cette façon ce que le serveur a ajouté : un même fait, un même signe. */
+const ORIGINE: Record<string, { mot: string; couleur: string; quoi: string; titre: string }> = {
+  flyff: {
+    mot: "Flyff d'origine", couleur: "var(--text-muted)",
+    quoi: "le peuplement du jeu d'origine",
+    titre: "Ces espèces sont celles du Flyff d'origine, sur lequel le serveur est bâti",
+  },
+  airborn: {
+    mot: "Airborn", couleur: "var(--purple)",
+    quoi: "ce que le serveur a posé sur la même carte",
+    titre: "Ces espèces ont été posées par Airborn sur la même carte",
+  },
+};
+
+/**
+ * LES NIVEAUX DE VIDE ENTRE DEUX BANDES VOISINES — un nombre par intervalle.
+ *
+ * C'est LE fait de la carte d'Azria, et il ne s'écrit nulle part à la main : les
+ * deux peuplements se touchent ou ne se touchent pas, et l'écart se lit. Le jour
+ * où le relevé les rapproche, la phrase le dit sans qu'on y revienne.
+ */
+const ecartsDesBandes = (bandes: Bande[]) => bandes.slice(1).map((b, i) => b.nivMin - bandes[i].nivMax);
+
+/** Ce qu'une bande dit d'elle-même en toutes lettres — pour un lecteur d'écran,
+ *  qui n'a ni le dessin ni les pastilles. */
+const phraseBande = (b: Bande, seule: boolean) =>
+  seule
+    ? `du niveau ${b.nivMin} au niveau ${b.nivMax}`
+    : `${b.especes} espèce${b.especes > 1 ? "s" : ""} de ${b.nivMin} à ${b.nivMax}${b.origine ? `, ${ORIGINE[b.origine].quoi}` : ""}`;
+
+/** La ligne d'échelle d'un lieu, dite : ses bandes, puis le vide entre elles. */
+const phraseLieu = (l: Lieu) => {
+  const corps = l.bandes.map((b) => phraseBande(b, l.bandes.length === 1)).join(", puis ");
+  const trous = ecartsDesBandes(l.bandes);
+  return trous.length
+    ? `${l.nom} : ${corps} — ${trous.map((t) => `${t} niveaux`).join(" et ")} de vide entre les peuplements`
+    : `${l.nom} : ${corps}`;
+};
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 const fr = (n: number) => n.toLocaleString("fr-FR");
 /** « le plan d'Île Corail », pas « le plan de Île Corail ». Deux des huit noms
@@ -68,7 +142,7 @@ const de = (nom: string) => (/^[aeiouyàâäéèêëîïôöûüh]/i.test(nom) ?
  *
  * ┌──────────── POURQUOI `dynamic` ET PAS UN IMPORT ORDINAIRE ────────────┐
  * │ /donjons est la page la plus lourde du site. Le panneau porte le      │
- * │ relevé de combat des 102 créatures de ces huit lieux — 19,6 Ko de     │
+ * │ relevé de combat des 102 créatures de ces huit lieux — 20,7 Ko de     │
  * │ données, plus la brique des faiblesses et le vocabulaire des          │
  * │ monstres. Un import ordinaire aurait mis tout ça dans le paquet de    │
  * │ départ, pour TOUT LE MONDE, y compris pour qui n'ouvre jamais un      │
@@ -253,7 +327,7 @@ export function HorsTeleporteur() {
           pose en `position: fixed` : le mettre dans la carte le ferait enfermer par
           le premier ancêtre qui porte un `transform` — piège déjà payé sur ce site,
           une modale s'était retrouvée coincée dans sa carte. */}
-      {sel && <PanneauLieu lieu={sel} onFermer={() => setSel(null)} />}
+      {sel && <PanneauLieu lieu={sel} zonesDuReleve={ZONES_DU_RELEVE} onFermer={() => setSel(null)} />}
     </div>
   );
 }
@@ -271,24 +345,18 @@ export function HorsTeleporteur() {
  * qu'un lieu à niveau unique (Mine de Dekanes, tout entière au niveau 30) garde
  * un repère visible au lieu de disparaître.
  *
- * ┌──── UN SEGMENT PAR PALIER — ET AZRIA N'EN A PLUS QU'UN ────┐
- * │ Ce bloc dessinait Azria en DEUX segments disjoints, 73–115  │
- * │ puis 190–210, en présentant le trou entre les deux comme un │
- * │ renseignement. Le second palier n'existe pas : ses trois     │
- * │ créatures portent les identifiants MI_EXP_190/200/210 — des │
- * │ monstres d'EXPÉRIENCE posés par le serveur sur la carte      │
- * │ enneigée, pas une tranche de progression. Maxime, qui y      │
- * │ joue, l'a dit ; le relevé disait autre chose, et c'est sa    │
- * │ LECTURE qui était fausse.                                    │
- * │                                                              │
- * │ `extraire-lieux.mjs` les écarte désormais des niveaux de la  │
- * │ zone et les range dans `monstresDExperience`. Azria redevient│
- * │ un segment unique, 73–115, et son plus gros monstre cesse    │
- * │ d'être un mob d'XP à 2 036 000 PV.                           │
- * │                                                              │
- * │ Le mécanisme des paliers multiples RESTE : il servira au     │
- * │ prochain lieu qui en aura de vrais.                          │
- * └──────────────────────────────────────────────────────────────┘
+ * ┌──── UN SEGMENT PAR BANDE, ET LE TROU EST LE RENSEIGNEMENT ────┐
+ * │ Azria a été dessinée successivement en un segment 73–210      │
+ * │ (une progression continue qui n'existe pas : soixante-quinze  │
+ * │ niveaux de vide au milieu), puis en un segment 73–115 (la     │
+ * │ moitié de la carte effacée, dont la zone la plus fournie du   │
+ * │ jeu). Ni l'un ni l'autre. Deux segments, et le blanc entre    │
+ * │ eux dit exactement ce qu'il faut savoir : on revient sur      │
+ * │ cette carte soixante-quinze niveaux plus tard.                │
+ * │ Le bout de ligne écrit alors les DEUX intervalles au lieu     │
+ * │ d'un seul — « 73–210 » se lirait comme un continuum, ce que   │
+ * │ le dessin dément juste à côté.                                │
+ * └───────────────────────────────────────────────────────────────┘
  */
 function EchelleNiveaux() {
   const max = Math.ceil(Math.max(...LIEUX.map((l) => l.nivMax)) / 10) * 10;
@@ -300,34 +368,31 @@ function EchelleNiveaux() {
         À quel niveau chacun sert
       </figcaption>
       <div style={{ display: "grid", gap: 5 }}>
-        {ordonnes.map((l) => {
-          /* Les paliers quand la table en donne, sinon l'intervalle entier comme un
-             palier unique : un seul chemin de dessin, donc un seul comportement. */
-          const bandes = l.paliers?.length
-            ? l.paliers.map((p) => ({ min: p.nivMin, max: p.nivMax, quoi: `${p.especes} espèce${p.especes > 1 ? "s" : ""} de ${p.nivMin} à ${p.nivMax}` }))
-            : [{ min: l.nivMin, max: l.nivMax, quoi: `du niveau ${l.nivMin} au niveau ${l.nivMax}` }];
-          return (
+        {ordonnes.map((l) => (
             <div key={l.clef} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 11.5 }}>
               <span className="ht-nom" style={{ width: 116, flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nom}</span>
               <span style={{ flex: 1, minWidth: 0, height: 9, borderRadius: 3, background: "color-mix(in srgb, var(--border) 70%, transparent)", position: "relative" }}
-                role="img" aria-label={`${l.nom} : ${bandes.map((b) => b.quoi).join(", puis ")}`}>
-                {bandes.map((b) => (
-                  <span key={b.min} style={{ position: "absolute", top: 0, bottom: 0,
-                    left: `${((b.min - 1) / max) * 100}%`,
-                    width: `${Math.max(1.5, ((b.max - b.min) / max) * 100)}%`,
+                role="img" aria-label={phraseLieu(l)}>
+                {l.bandes.map((b) => (
+                  <span key={b.nivMin} style={{ position: "absolute", top: 0, bottom: 0,
+                    left: `${((b.nivMin - 1) / max) * 100}%`,
+                    width: `${Math.max(1.5, ((b.nivMax - b.nivMin) / max) * 100)}%`,
                     borderRadius: 3, background: "var(--orange)" }} />
                 ))}
               </span>
-              {/* Le nombre de paliers se lit au bout de la ligne quand il y en a
-                  plusieurs : sur un écran étroit les jalons s'effacent, et deux
-                  segments proches redeviendraient indiscernables. */}
-              <span className="ht-valeur" style={{ width: 62, textAlign: "right", flexShrink: 0, color: "var(--text-muted)", ...NUM }}>
-                {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}
-                {bandes.length > 1 && <span title={`${bandes.length} paliers séparés`} style={{ color: "var(--orange)" }}> ×{bandes.length}</span>}
+              {/* UN INTERVALLE PAR BANDE, EMPILÉS. Écrire « 73–210 » au bout d'une
+                  ligne qui dessine deux segments séparés donnerait le continuum que
+                  le dessin dément ; et sur un écran étroit les jalons s'effacent,
+                  donc le bout de ligne est le seul endroit où les bornes se lisent. */}
+              <span className="ht-valeur" style={{ width: 62, textAlign: "right", flexShrink: 0, color: "var(--text-muted)", lineHeight: 1.35, ...NUM }}>
+                {l.bandes.map((b) => (
+                  <span key={b.nivMin} style={{ display: "block" }}>
+                    {b.nivMin === b.nivMax ? b.nivMin : `${b.nivMin}–${b.nivMax}`}
+                  </span>
+                ))}
               </span>
             </div>
-          );
-        })}
+        ))}
       </div>
       {/* La règle des jalons s'aligne sur la colonne de noms (116 px + 9 de gouttière)
           et sur celle des valeurs (62 + 9) : sans ces marges, le « 1 » se posait sous
@@ -393,51 +458,21 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
       <div style={{ padding: "12px 13px 13px" }}>
         <div className="font-heading" style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 6 }}>{l.nom}</div>
 
-        {/* ┌──── QUATORZE MOTS DE PHRASE SONT DEVENUS UNE PASTILLE ────┐
-            La tuile écrivait « Le plus coriace : Tortue Tyran (super) — niv. 121,
-            10,9 M PV — un seul emplacement sur la carte », en dessous d'une rangée
-            de pastilles qui disait déjà les espèces, les emplacements et les niveaux.
-            Les trois mots d'étiquette (« Le plus coriace : ») deviennent un
-            pictogramme de crâne, le reste rentre dans la rangée, et le nom mène
-            maintenant à la fiche du monstre — c'est /monstres qui les possède.
-            La phrase entière reste dans le `title`, pour qui la survole.
-            └──────────────────────────────────────────────────────────┘ */}
-        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", fontSize: 11.5, marginBottom: l.ticket || l.objets.length ? 9 : 0 }}>
-          <Puce ic="skull" titre={`Le plus coriace de la zone : ${l.gros.nom} (${l.gros.rang}), niveau ${l.gros.niv}, ${pvCourt(l.gros.pv)} PV${l.gros.poses === 1 ? " — un seul emplacement sur la carte" : ""}`}>
-            <LienMonstre nom={l.gros.nom} niv={l.gros.niv} pv={l.gros.pv} couleur={TON_RANG[l.gros.rang] ?? "var(--text)"} />
-            {" "}<span style={{ color: "var(--orange)" }}>{pvCourt(l.gros.pv)}</span>
-            {l.gros.poses === 1 && <> · seul</>}
-          </Puce>
-          {/* Le mot « espèces » reste écrit, le mot « emplacements » non : le premier
-              se compte en dizaines et se lit comme un nombre d'ennemis différents, le
-              second se compte en milliers et n'a de sens qu'à côté. Un pictogramme de
-              grille suffit à le dire, le `title` fait le reste. */}
-          <Puce ic="paw" titre="Espèces différentes posées sur la carte">{l.especes} espèces</Puce>
-          <Puce ic="grid" titre={`${fr(l.poses)} emplacements de réapparition sur la carte`}>{fr(l.poses)}</Puce>
-          <Puce ic="star" titre="Les niveaux rencontrés ici">niv. {l.nivMin === l.nivMax ? l.nivMin : `${l.nivMin}–${l.nivMax}`}</Puce>
-          {/* LES MONSTRES D'XP, À PART DES NIVEAUX DE LA ZONE ET C'EST VOULU. Les
-              compter dedans faisait annoncer Azria « jusqu'au niveau 210 » alors
-              qu'elle s'arrête à 115 — trois mobs d'expérience posés sur la carte
-              ne sont pas une tranche de progression. Mais ils existent, et un
-              joueur de 190 vient précisément pour eux : la pastille les nomme,
-              le survol donne leurs niveaux et leurs PV. */}
-          {l.monstresDExperience?.length ? (
-            <Puce
-              ic="flame"
-              titre={`Monstres d'expérience posés par Airborn sur cette carte, hors progression de la zone — ${l.monstresDExperience
-                .map((m) => `${m.nom} (niv. ${m.niv}, ${pvCourt(m.pv)} PV)`)
-                .join(" · ")}`}
-            >
-              {l.monstresDExperience.length} monstres d&apos;XP · niv.{" "}
-              {l.monstresDExperience[0].niv}–{l.monstresDExperience[l.monstresDExperience.length - 1].niv}
-            </Puce>
-          ) : null}
+        {/* ┌──── UNE RANGÉE DE PASTILLES PAR PEUPLEMENT, ET C'EST LE MÊME DESSIN ────┐
+            Sept lieux sur huit n'ont qu'une bande : leur tuile est celle d'avant,
+            au pixel près. Azria en a deux, et les deux rangées disent alors ce
+            qu'une seule ne pouvait pas — huit espèces jusqu'à 115, puis trois de
+            190 à 210 sur la même carte.
+            LE « PLUS CORIACE » EST DANS LA RANGÉE, DONC IL Y EN A UN PAR BANDE.
+            Sur une carte à deux peuplements, un seul est trompeur quel qu'il soit :
+            annoncer le Mammouth Cannibale (115) cache un adversaire vingt fois plus
+            gros posé au même endroit ; annoncer le Hyoubi (210) fait fuir un joueur
+            de 90 que la carte accueille pourtant. Deux, un par bande, disent le vrai.
+            └─────────────────────────────────────────────────────────────────────────┘ */}
+        {l.bandes.length > 1 && <DeuxPeuplements l={l} />}
+        <div style={{ display: "grid", gap: 7, marginBottom: l.ticket || l.objets.length ? 9 : 0 }}>
+          {l.bandes.map((b) => <RangeeBande key={b.nivMin} b={b} seule={l.bandes.length === 1} />)}
         </div>
-
-        {/* LA LIGNE DES PALIERS EST PARTIE DANS LE SCHÉMA. Elle disait « 2 paliers
-            séparés : 8 espèces de 73 à 115, puis 3 espèces de 190 à 210 » — dix-huit
-            mots pour un TROU, que l'échelle des niveaux dessine maintenant en laissant
-            un blanc entre deux segments. Voir EchelleNiveaux. */}
 
         {l.ticket && <LigneTicket t={l.ticket} sansEtal={etalDitEnBas} />}
 
@@ -460,6 +495,102 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/** « 1re », « 9e » — l'ordinal français, pour situer un rang sans le paraphraser. */
+const ordinal = (n: number) => (n === 1 ? "1re" : `${n}e`);
+
+/**
+ * CE QUE DEUX PEUPLEMENTS SUR UNE MÊME CARTE VEULENT DIRE, EN UNE LIGNE.
+ *
+ * Cette phrase ne s'affiche que là où elle est vraie, et TOUS ses nombres se
+ * comptent : le nombre de bandes, les niveaux de vide entre elles, le rang de la
+ * plus fournie et sur combien de zones ce rang a été mesuré. Le jour où le relevé
+ * rapproche les deux peuplements ou en pose un troisième, la phrase suit.
+ *
+ * CE QU'ELLE DOIT FAIRE COMPRENDRE, et que ni la carte ni les niveaux ne disent
+ * seuls : on vient ici DEUX FOIS, à soixante-quinze niveaux d'écart, et la seconde
+ * visite n'est pas une visite de curiosité — c'est le terrain de farm le plus
+ * fourni du serveur. Aucun chiffre d'expérience n'est nécessaire pour le dire :
+ * ce sont des emplacements de monstres, comptés.
+ */
+function DeuxPeuplements({ l }: { l: Lieu }) {
+  const trous = ecartsDesBandes(l.bandes);
+  /* La bande que rien ne dépasse dans tout le relevé, s'il y en a une ici. */
+  const tete = l.bandes.find((b) => b.rangPoses === 1);
+  return (
+    <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 8px" }}>
+      <Icon name="layers" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
+      <b style={{ color: "var(--text)" }}>{l.bandes.length} peuplements</b> sur la même carte,{" "}
+      {trous.map((t) => `${t}`).join(" et ")} niveaux de vide entre eux.
+      {tete && (
+        <>
+          {" "}Celui de {tete.nivMin} à {tete.nivMax} porte{" "}
+          <b style={{ color: "var(--text)", ...NUM }}>{fr(tete.poses)} emplacements</b> — plus qu&apos;aucune
+          autre des {ZONES_DU_RELEVE} zones du relevé.
+        </>
+      )}
+    </p>
+  );
+}
+
+/**
+ * UNE RANGÉE DE PASTILLES PAR PEUPLEMENT.
+ *
+ * ┌─────────── QUATORZE MOTS DE PHRASE SONT DEVENUS UNE PASTILLE ───────────┐
+ * │ La tuile écrivait « Le plus coriace : Tortue Tyran (super) — niv. 121,  │
+ * │ 10,9 M PV — un seul emplacement sur la carte », en dessous d'une rangée │
+ * │ qui disait déjà les espèces, les emplacements et les niveaux. Les trois │
+ * │ mots d'étiquette deviennent un pictogramme de crâne, le reste rentre    │
+ * │ dans la rangée, et le nom mène à la fiche du monstre — c'est /monstres  │
+ * │ qui les possède. La phrase entière reste dans le `title`.               │
+ * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * L'ÉTIQUETTE DE PROVENANCE NE PARAÎT QUE QUAND IL Y A DE QUOI COMPARER. Sur une
+ * carte à peuplement unique, « Flyff d'origine » posé tout seul n'oppose rien à
+ * rien et ne change aucun geste ; le relevé ne l'écrit d'ailleurs pas.
+ */
+function RangeeBande({ b, seule }: { b: Bande; seule: boolean }) {
+  const o = b.origine ? ORIGINE[b.origine] : null;
+  /* « sur la carte » ne se dit que s'il n'y a qu'un peuplement : sinon ce compte
+     est celui de la BANDE, pas de la carte, et les deux se lisent l'un sous
+     l'autre à trois lignes d'écart. */
+  const empl = `${fr(b.poses)} emplacements de réapparition${seule ? " sur la carte" : " dans ce peuplement"}`;
+  return (
+    <div>
+      {!seule && o && (
+        <div
+          title={o.titre}
+          style={{ fontSize: 10.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".6px", color: o.couleur, marginBottom: 4 }}
+        >
+          {o.mot}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", fontSize: 11.5 }}>
+        <Puce ic="skull" titre={`Le plus coriace ${seule ? "de la zone" : "de ce peuplement"} : ${b.gros.nom} (${b.gros.rang}), niveau ${b.gros.niv}, ${pvCourt(b.gros.pv)} PV${b.gros.poses === 1 ? " — un seul emplacement sur la carte" : ""}`}>
+          <LienMonstre nom={b.gros.nom} niv={b.gros.niv} pv={b.gros.pv} couleur={TON_RANG[b.gros.rang] ?? "var(--text)"} />
+          {" "}<span style={{ color: "var(--orange)" }}>{pvCourt(b.gros.pv)}</span>
+          {b.gros.poses === 1 && <> · seul</>}
+        </Puce>
+        {/* Le mot « espèces » reste écrit, le mot « emplacements » non : le premier
+            se compte en dizaines et se lit comme un nombre d'ennemis différents, le
+            second se compte en milliers et n'a de sens qu'à côté. Un pictogramme de
+            grille suffit à le dire, le `title` fait le reste. */}
+        <Puce ic="paw" titre="Espèces différentes posées sur la carte">{b.especes} espèce{b.especes > 1 ? "s" : ""}</Puce>
+        <Puce ic="grid" titre={b.rangPoses ? `${empl} — ${ordinal(b.rangPoses)} zone du relevé sur ${ZONES_DU_RELEVE}` : empl}>{fr(b.poses)}</Puce>
+        {/* LE SUPERLATIF SEUL S'AFFICHE, ET C'EST LA DIFFÉRENCE AVEC UN RANG. « 9e
+            sur 65 » n'apprend rien à qui cherche où farmer ; « aucune zone du jeu
+            n'en porte plus » change la destination. Le rang complet reste dans le
+            `title` de la pastille voisine, pour toutes les bandes. */}
+        {b.rangPoses === 1 && (
+          <Puce ic="trophy" titre={`Aucune des ${ZONES_DU_RELEVE} zones du relevé ne porte plus d'emplacements de réapparition que ce peuplement : ${fr(b.poses)}.`}>
+            la plus fournie du jeu
+          </Puce>
+        )}
+        <Puce ic="star" titre="Les niveaux rencontrés ici">niv. {b.nivMin === b.nivMax ? b.nivMin : `${b.nivMin}–${b.nivMax}`}</Puce>
       </div>
     </div>
   );

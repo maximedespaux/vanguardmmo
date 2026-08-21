@@ -1,6 +1,7 @@
 {
  "genere": "2026-08-21",
  "source": "public/wiki/monstres.json + public/wiki/ou-trouver.json + cartouches lus sur public/jeu/cartes-monde/",
+ "zonesDuReleve": 65,
  "lieux": [
   {
    "groupe": "ticket",
@@ -19,6 +20,22 @@
     "rang": "normal",
     "poses": 158
    },
+   "bandes": [
+    {
+     "especes": 27,
+     "poses": 3057,
+     "nivMin": 43,
+     "nivMax": 69,
+     "gros": {
+      "nom": "Capitaine Merel",
+      "niv": 69,
+      "pv": 14300,
+      "rang": "normal",
+      "poses": 158
+     },
+     "rangPoses": 5
+    }
+   ],
    "objets": [],
    "ticket": {
     "nom": "Ticket Ile Corail",
@@ -37,35 +54,47 @@
    "nom": "Azria",
    "cartouche": "Azria",
    "carte": "/jeu/cartes-monde/world_azria.webp",
-   "especes": 8,
-   "poses": 2375,
+   "especes": 11,
+   "poses": 6505,
    "nivMin": 73,
-   "nivMax": 115,
+   "nivMax": 210,
    "gros": {
-    "nom": "Mammouth Cannibale",
-    "niv": 115,
-    "pv": 96403,
-    "rang": "normal",
-    "poses": 335
+    "nom": "Hyoubi renard hivernal",
+    "niv": 210,
+    "pv": 2036000,
+    "rang": "capitaine",
+    "poses": 2030
    },
-   "monstresDExperience": [
+   "bandes": [
     {
-     "nom": "Kerobero ensorceleur glacial",
-     "niv": 190,
-     "pv": 936000,
-     "poses": 1150
+     "origine": "flyff",
+     "especes": 8,
+     "poses": 2375,
+     "nivMin": 73,
+     "nivMax": 115,
+     "gros": {
+      "nom": "Mammouth Cannibale",
+      "niv": 115,
+      "pv": 96403,
+      "rang": "normal",
+      "poses": 335
+     },
+     "rangPoses": 9
     },
     {
-     "nom": "Wampa des neiges",
-     "niv": 200,
-     "pv": 1436000,
-     "poses": 950
-    },
-    {
-     "nom": "Hyoubi renard hivernal",
-     "niv": 210,
-     "pv": 2036000,
-     "poses": 2030
+     "origine": "airborn",
+     "especes": 3,
+     "poses": 4130,
+     "nivMin": 190,
+     "nivMax": 210,
+     "gros": {
+      "nom": "Hyoubi renard hivernal",
+      "niv": 210,
+      "pv": 2036000,
+      "rang": "capitaine",
+      "poses": 2030
+     },
+     "rangPoses": 1
     }
    ],
    "objets": [],
@@ -98,6 +127,22 @@
     "rang": "super",
     "poses": 1
    },
+   "bandes": [
+    {
+     "especes": 7,
+     "poses": 1013,
+     "nivMin": 116,
+     "nivMax": 126,
+     "gros": {
+      "nom": "Tortue Tyran",
+      "niv": 121,
+      "pv": 10890024,
+      "rang": "super",
+      "poses": 1
+     },
+     "rangPoses": 17
+    }
+   ],
    "objets": [
     {
      "nom": "Carapace de la tortue Tyran",
@@ -149,6 +194,22 @@
     "rang": "super",
     "poses": 1
    },
+   "bandes": [
+    {
+     "especes": 7,
+     "poses": 710,
+     "nivMin": 129,
+     "nivMax": 165,
+     "gros": {
+      "nom": "Serviteur d'Ivillis",
+      "niv": 161,
+      "pv": 120000000,
+      "rang": "super",
+      "poses": 1
+     },
+     "rangPoses": 20
+    }
+   ],
    "objets": [],
    "ticket": {
     "nom": "Ticket Sombrésia",
@@ -177,6 +238,22 @@
     "rang": "boss",
     "poses": 2
    },
+   "bandes": [
+    {
+     "especes": 14,
+     "poses": 710,
+     "nivMin": 5,
+     "nivMax": 35,
+     "gros": {
+      "nom": "Géant Bang Mutant",
+      "niv": 29,
+      "pv": 88035,
+      "rang": "boss",
+      "poses": 2
+     },
+     "rangPoses": 20
+    }
+   ],
    "objets": [
     {
      "nom": "Aile dorée de Mas",
@@ -253,6 +330,22 @@
     "rang": "boss",
     "poses": 3
    },
+   "bandes": [
+    {
+     "especes": 22,
+     "poses": 1225,
+     "nivMin": 30,
+     "nivMax": 30,
+     "gros": {
+      "nom": "Trillipy Sanguin Perfide",
+      "niv": 30,
+      "pv": 7144500,
+      "rang": "boss",
+      "poses": 3
+     },
+     "rangPoses": 14
+    }
+   ],
    "objets": [
     {
      "nom": "Ame d'insect géants Dekanes",
@@ -353,6 +446,22 @@
     "rang": "demi-boss",
     "poses": 1
    },
+   "bandes": [
+    {
+     "especes": 12,
+     "poses": 305,
+     "nivMin": 45,
+     "nivMax": 70,
+     "gros": {
+      "nom": "Ivillis Mushellizer",
+      "niv": 65,
+      "pv": 300000,
+      "rang": "demi-boss",
+      "poses": 1
+     },
+     "rangPoses": 35
+    }
+   ],
    "objets": [
     {
      "nom": "Ame de monstre Ivillis",
@@ -401,6 +510,21 @@
     "rang": "capitaine",
     "poses": 185
    },
+   "bandes": [
+    {
+     "especes": 2,
+     "poses": 298,
+     "nivMin": 118,
+     "nivMax": 120,
+     "gros": {
+      "nom": "Psyclope X",
+      "niv": 120,
+      "pv": 140000,
+      "rang": "capitaine",
+      "poses": 185
+     }
+    }
+   ],
    "objets": []
   }
  ]

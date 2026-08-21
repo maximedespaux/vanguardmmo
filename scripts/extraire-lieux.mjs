@@ -85,10 +85,17 @@ function carte(fichier) {
  * LES HUIT LIEUX, avec pour chacun le nom IMPRIMÉ sur sa carte et les zones de
  * la table des monstres qui portent ce nom.
  *
- * `zones` est un tableau parce qu'un lieu peut en compter deux : Azria porte
- * « Azria » (trois capitaines de niveau 190 à 210) ET « Azria 2 » (huit espèces
- * de 73 à 115) — la même île, deux paliers. Les fondre donnerait un intervalle
- * de niveaux trompeur, donc on garde le détail par zone à côté du total.
+ * `zones` est un tableau parce qu'un lieu peut en compter deux. Deux cas, et ils
+ * ne veulent PAS dire la même chose :
+ *   · Volcane est posée sous « Ile Volcanique - Volcane » ET « DuVolcaneRed » —
+ *     les deux mêmes espèces des deux côtés. Deux noms internes, un peuplement.
+ *   · Azria porte « Azria 2 » (huit espèces de 73 à 115) ET « Azria » (trois de
+ *     190 à 210). Une carte, DEUX PEUPLEMENTS, séparés de soixante-quinze
+ *     niveaux — voir `peuplementsDe()`, qui les distingue sur la PROVENANCE et
+ *     non sur ces noms de zone.
+ * Les fondre en un seul intervalle donnerait « du niveau 73 au 210 » et ferait
+ * croire à une progression continue ; n'en garder qu'un ferait disparaître la
+ * zone la plus fournie du jeu.
  */
 const LIEUX = [
   {
@@ -173,81 +180,154 @@ const LIEUX = [
   },
 ];
 
-/** Le peuplement d'une zone : ce qui décide si le lieu vaut d'être montré. */
 /**
- * LES MONSTRES D'EXPÉRIENCE NE SONT PAS UN PALIER DE LA ZONE.
+ * LES EMPLACEMENTS DE RÉAPPARITION, ZONE PAR ZONE, SUR TOUT LE RELEVÉ.
  *
- * ┌──────────── LE DÉFAUT QUE CETTE RÈGLE CORRIGE ────────────┐
- * │ La fiche d'Azria annonçait « du niveau 73 au 210 », en    │
- * │ deux paliers disjoints : 8 espèces de 73 à 115, puis      │
- * │ 3 de 190 à 210. Le second n'existe pas comme zone. Ses    │
- * │ trois créatures portent les identifiants MI_EXP_190,      │
- * │ MI_EXP_200 et MI_EXP_210 — ce sont des monstres           │
- * │ D'EXPÉRIENCE qu'Airborn a posés sur la carte enneigée,    │
- * │ pas une tranche de progression. Maxime, qui y joue, l'a   │
- * │ dit : « Azria c'est la dernière zone, 73-114, y'a pas ».  │
- * │ Le relevé lui donnait tort ; c'est la LECTURE du relevé   │
- * │ qui était fausse.                                          │
- * └────────────────────────────────────────────────────────────┘
- *
- * La règle se lit dans la donnée, elle n'est pas écrite pour Azria : le préfixe
- * `MI_EXP_` désigne la famille. Vérifié — il n'en existe QUE TROIS dans tout le
- * jeu, les trois sur Azria, les trois marqués contenu du serveur. Le jour où le
- * serveur en pose ailleurs, ils seront traités pareil sans qu'on y touche.
- *
- * ILS NE DISPARAISSENT PAS POUR AUTANT : ils sortent des niveaux DE LA ZONE et
- * reviennent dans leur propre champ. Trois monstres à 190, 200 et 210 posés pour
- * farmer l'expérience, c'est exactement ce qu'un joueur de ce niveau cherche —
- * et ça ne se devine pas en regardant une carte de zone 73-115.
+ * « 4 130 emplacements » ne dit rien tant qu'on ne sait pas si c'est beaucoup.
+ * Le rang se compte donc sur TOUTES les zones que le relevé porte, pas sur les
+ * huit lieux de cette page : un superlatif calculé sur huit lignes ne vaudrait
+ * que pour ces huit lignes, et l'écran dirait « du jeu ».
  */
-const estMonstreDExperience = (m) => /^MI_EXP_/i.test(m.id ?? "");
+const POSES_PAR_ZONE = (() => {
+  const t = new Map();
+  for (const m of MONSTRES) for (const l of m.lieux ?? []) t.set(l.z, (t.get(l.z) ?? 0) + (l.n ?? 0));
+  return t;
+})();
+const TOTAUX_TRIES = [...POSES_PAR_ZONE.values()].sort((a, b) => b - a);
+/** 1 = aucune zone du relevé ne porte plus d'emplacements que ce total. */
+const rangDesPoses = (n) => TOTAUX_TRIES.filter((v) => v > n).length + 1;
 
-function peuplement(zones) {
-  const dansLaZone = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
-  const especes = dansLaZone.filter((m) => !estMonstreDExperience(m));
-  const experience = dansLaZone.filter(estMonstreDExperience);
-  if (!especes.length) return null;
-  const poses = especes.reduce(
-    (t, m) => t + (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0),
-    0
-  );
+/**
+ * UNE CARTE PEUT PORTER DEUX PEUPLEMENTS, ET LES DEUX COMPTENT.
+ *
+ * ┌─────────── CE QUE CETTE FONCTION RÉPARE ────────────┐
+ * │ La carte d'Azria porte huit espèces de 73 à 115 ET  │
+ * │ trois de 190 à 210. On en a d'abord fait un seul    │
+ * │ intervalle « 73 à 210 », qui fait croire à une      │
+ * │ progression continue là où il y a soixante-quinze   │
+ * │ niveaux de vide. Puis, en corrigeant, on a rangé la │
+ * │ bande haute en note de bas de page — alors qu'elle  │
+ * │ porte 4 130 emplacements de réapparition, PLUS QUE  │
+ * │ TOUTE AUTRE ZONE DU JEU. Les deux lectures étaient  │
+ * │ fausses : ce ne sont ni un palier ni une curiosité, │
+ * │ ce sont DEUX PEUPLEMENTS sur une même carte, et ils │
+ * │ servent à deux moments très éloignés de la partie.  │
+ * └─────────────────────────────────────────────────────┘
+ *
+ * ┌───────── POURQUOI `maison` ET PLUS `MI_EXP_` ─────────┐
+ * │ Le premier tri lisait le préfixe `MI_EXP_` de         │
+ * │ l'identifiant. Il tranche juste, mais il ne tranche   │
+ * │ QUE TROIS LIGNES sur 1 124, les trois sur Azria :     │
+ * │ une règle qui ne s'exerce qu'une fois n'est pas une   │
+ * │ règle, c'est Azria écrite en code. Et `id` manque sur │
+ * │ une ligne du relevé, donc le test porte sur un champ  │
+ * │ qui peut être absent.                                 │
+ * │ `maison` dit la même chose et dit POURQUOI : c'est le │
+ * │ marqueur « posé par Airborn » du relevé. Il est       │
+ * │ présent sur les 1 124 lignes, il en marque 256, et    │
+ * │ c'est lui qui permet de NOMMER les deux bandes au     │
+ * │ lieu de les numéroter.                                │
+ * │ Mesuré sur les 65 zones du relevé : une seule mêle    │
+ * │ les deux provenances (Fôret de Faelea), et ses deux   │
+ * │ groupes s'y CHEVAUCHENT en niveau — le garde ci-      │
+ * │ dessous les refond alors en un seul peuplement, parce │
+ * │ que deux bandes qui se recouvrent ne disent rien.     │
+ * └───────────────────────────────────────────────────────┘
+ */
+const ORIGINES = [
+  { clef: "flyff", test: (m) => !m.maison },
+  { clef: "airborn", test: (m) => m.maison === true },
+];
+
+/** Les bornes de niveau d'un groupe d'espèces. */
+const bornes = (liste) => [Math.min(...liste.map((m) => m.niv)), Math.max(...liste.map((m) => m.niv))];
+
+function peuplementsDe(zones) {
+  const surLaCarte = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
+  if (!surLaCarte.length) return [];
+  const groupes = ORIGINES.map((o) => ({ origine: o.clef, liste: surLaCarte.filter(o.test) }))
+    .filter((g) => g.liste.length)
+    .sort((a, b) => bornes(a.liste)[0] - bornes(b.liste)[0]);
+  /* Une seule provenance : une seule bande, et elle ne porte PAS d'étiquette
+     d'origine — « Flyff d'origine » tout seul, sans rien à quoi l'opposer,
+     n'apprend rien et ne change aucun geste. Sept lieux sur huit sont ici. */
+  if (groupes.length < 2) return [{ liste: surLaCarte }];
+  const [aMin, aMax] = bornes(groupes[0].liste);
+  const [bMin, bMax] = bornes(groupes[1].liste);
+  const chevauchent = aMin <= bMax && bMin <= aMax;
+  return chevauchent ? [{ liste: surLaCarte }] : groupes;
+}
+
+/** Ce qu'on montre d'une bande : son compte, sa densité, ses niveaux, sa tête. */
+function detailBande(g, zones) {
+  const nb = (m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0);
+  const poses = g.liste.reduce((t, m) => t + nb(m), 0);
   // Le plus gros sac de points de vie, en PV EFFECTIFS : un adversaire à
   // plusieurs vies ne meurt pas quand sa barre atteint zéro.
-  const gros = especes.reduce((a, m) => ((m.pvEff ?? m.pv) > (a.pvEff ?? a.pv) ? m : a), especes[0]);
-  const nb = (m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0);
+  const gros = g.liste.reduce((a, m) => ((m.pvEff ?? m.pv) > (a.pvEff ?? a.pv) ? m : a), g.liste[0]);
+  /* LE RANG N'EST ÉCRIT QUE S'IL EST COMPARABLE. Il se compare à des TOTAUX DE
+     ZONE ; une bande étalée sur deux zones du relevé (Volcane, posée sous deux
+     noms internes) n'est donc pas une zone et n'a pas de rang. Clé absente =
+     rien à compter, l'écran n'affiche alors rien. */
+  const sesZones = new Set(
+    g.liste.flatMap((m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).map((l) => l.z))
+  );
+  const [nivMin, nivMax] = bornes(g.liste);
   return {
-    especes: especes.length,
+    ...(g.origine ? { origine: g.origine } : {}),
+    especes: g.liste.length,
     poses,
-    nivMin: Math.min(...especes.map((m) => m.niv)),
-    nivMax: Math.max(...especes.map((m) => m.niv)),
+    nivMin,
+    nivMax,
     gros: { nom: reparer(gros.nom), niv: gros.niv, pv: gros.pvEff ?? gros.pv, rang: gros.rang, poses: nb(gros) },
-    paliers: paliersDe(zones),
-    /* Absent quand il n'y en a pas — un champ vide sur sept lieux sur huit
-       ferait croire à un renseignement manquant plutôt qu'à une absence. */
-    ...(experience.length
-      ? {
-          monstresDExperience: experience
-            .sort((a, b) => (a.niv ?? 0) - (b.niv ?? 0))
-            .map((m) => ({ nom: reparer(m.nom), niv: m.niv, pv: m.pvEff ?? m.pv, poses: nb(m) })),
-        }
-      : {}),
+    ...(sesZones.size === 1 ? { rangPoses: rangDesPoses(poses) } : {}),
+  };
+}
+
+/**
+ * LE PEUPLEMENT D'UN LIEU : ce qui décide s'il vaut d'être montré, et ses bandes.
+ *
+ * `bandes` est TOUJOURS écrit, même quand il n'y en a qu'une : l'écran a alors un
+ * seul chemin de dessin, donc un seul comportement à vérifier. Les totaux du
+ * dessus (espèces, emplacements, bornes) couvrent la carte ENTIÈRE — ils se
+ * rendent tels quels dans l'en-tête du panneau et dans le tri de l'échelle.
+ */
+function peuplement(zones) {
+  const groupes = peuplementsDe(zones);
+  if (!groupes.length) return null;
+  const bandes = groupes.map((g) => detailBande(g, zones));
+  const toutes = groupes.flatMap((g) => g.liste);
+  const nb = (m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0);
+  /* Le plus coriace de TOUTE la carte. Il n'est plus affiché tel quel dès qu'il y
+     a deux bandes — un seul « plus coriace » y est trompeur quel que soit celui
+     qu'on choisit, l'écran en montre donc un PAR BANDE. Il reste ici parce que
+     src/app/(public)/donjons/donnees.ts l'apparie pour faire un lien vers
+     /monstres. */
+  const gros = toutes.reduce((a, m) => ((m.pvEff ?? m.pv) > (a.pvEff ?? a.pv) ? m : a), toutes[0]);
+  return {
+    especes: toutes.length,
+    poses: bandes.reduce((t, b) => t + b.poses, 0),
+    nivMin: Math.min(...bandes.map((b) => b.nivMin)),
+    nivMax: Math.max(...bandes.map((b) => b.nivMax)),
+    gros: { nom: reparer(gros.nom), niv: gros.niv, pv: gros.pvEff ?? gros.pv, rang: gros.rang, poses: nb(gros) },
+    bandes,
   };
 }
 
 /**
  * LE RELEVÉ DE COMBAT — ce que chaque créature du lieu fait comme dégâts.
  *
- * ┌──── POURQUOI UN SECOND FICHIER, ET PAS TROIS CLÉS DE PLUS ────┐
- * │ La tuile d'un lieu tient dans 7 Ko pour les huit. Le relevé de │
- * │ combat, lui, pèse 102 créatures × (bornes du coup, délai,      │
- * │ cinq résistances) : mesuré, 27 Ko. Or `lieux-hors-teleporteur` │
- * │ est importé par un composant CLIENT — le fondre dedans aurait  │
- * │ ajouté ces 27 Ko au paquet de /donjons pour tout le monde, y   │
- * │ compris pour qui n'ouvre jamais un panneau. Dans son propre    │
- * │ fichier, il n'est chargé qu'à l'ouverture du premier panneau.  │
- * │ C'est la même raison qui a sorti les 12 Ko de vagues de l'Oasis│
- * │ du paquet (cf. app/(public)/donjons/donnees.ts).               │
- * └────────────────────────────────────────────────────────────────┘
+ * ┌───── POURQUOI UN SECOND FICHIER, ET PAS TROIS CLÉS DE PLUS ─────┐
+ * │ La tuile d'un lieu tient dans 7 Ko pour les huit. Le relevé de  │
+ * │ combat, lui, pèse 102 créatures × (bornes du coup, délai,       │
+ * │ cinq résistances) : mesuré, 21 Ko. Or `lieux-hors-teleporteur`  │
+ * │ est importé par un composant CLIENT — le fondre dedans aurait   │
+ * │ ajouté ces 21 Ko au paquet de /donjons pour tout le monde, y    │
+ * │ compris pour qui n'ouvre jamais un panneau. Dans son propre     │
+ * │ fichier, il n'est chargé qu'à l'ouverture du premier panneau.   │
+ * │ C'est la même raison qui a sorti les 12 Ko de vagues de l'Oasis │
+ * │ du paquet (cf. app/(public)/donjons/donnees.ts).                │
+ * └─────────────────────────────────────────────────────────────────┘
  *
  * CE QUI N'Y EST PAS, ET POURQUOI :
  *   · `vitAtk` — le client le porte (950, 1 000, 1 050, 1 200 ici ; 100 à 10 000
@@ -265,7 +345,7 @@ function peuplement(zones) {
  * gagne une, l'écran le dira sans qu'on y touche.
  */
 function releveDeCombat(zones) {
-  const dansLaZone = MONSTRES.filter((m) => (m.lieux ?? []).some((l) => zones.includes(l.z)));
+  const groupes = peuplementsDe(zones);
   const nb = (m) => (m.lieux ?? []).filter((l) => zones.includes(l.z)).reduce((s, l) => s + (l.n ?? 0), 0);
   const fiche = (m) => ({
     nom: reparer(m.nom),
@@ -307,45 +387,16 @@ function releveDeCombat(zones) {
   const parMenace = (a, b) =>
     (b.delai ? Math.max(b.atkMin ?? 0, b.atkMax ?? 0) / b.delai : 0) -
     (a.delai ? Math.max(a.atkMin ?? 0, a.atkMax ?? 0) / a.delai : 0);
-  const especes = dansLaZone.filter((m) => !estMonstreDExperience(m)).map(fiche).sort(parMenace);
-  const experience = dansLaZone.filter(estMonstreDExperience).map(fiche).sort((a, b) => a.niv - b.niv);
-  return { especes, ...(experience.length ? { experience } : {}) };
-}
-
-/**
- * LE DÉTAIL PAR ZONE, quand il dit quelque chose de plus.
- *
- * Deux conditions, et la seconde a été apprise à l'usage : il faut plusieurs
- * zones, et il faut qu'elles ne partagent AUCUNE espèce. Volcane est posée dans
- * « Ile Volcanique - Volcane » ET dans « DuVolcaneRed » — les deux mêmes
- * créatures des deux côtés. Le détail y affichait deux lignes identiques, dont
- * une portant un nom interne de carte qui n'a rien à faire à l'écran. Azria, à
- * l'inverse, a deux paliers vraiment distincts (73–115, puis 190–210) et c'est
- * l'information la plus utile de sa fiche.
- */
-function paliersDe(zones) {
-  if (zones.length < 2) return undefined;
-  /* Les monstres d'expérience sont écartés ICI AUSSI, et c'est le point : c'est
-     ce découpage qui fabriquait le faux palier « Azria 190–210 ». Sans ce
-     filtre, la zone « Azria » ne contient plus qu'eux, et un lieu se retrouve
-     annoncé jusqu'au niveau 210 alors qu'il s'arrête à 115. */
-  const parZone = zones.map((z) => ({
-    zone: z,
-    especes: MONSTRES.filter((m) => !estMonstreDExperience(m) && (m.lieux ?? []).some((l) => l.z === z)),
-  }));
-  /* Une zone vidée par ce filtre ne produit plus de palier du tout — c'est le
-     cas d'Azria, dont la seconde zone ne portait que les trois MI_EXP_. La fiche
-     retombe donc sur son intervalle unique, 73–115, qui est le vrai. */
-  if (parZone.some((p) => !p.especes.length)) return undefined;
-  const ids = parZone.map((p) => new Set(p.especes.map((m) => m.id)));
-  const partage = ids.some((a, i) => ids.some((b, j) => i !== j && [...a].some((x) => b.has(x))));
-  if (partage) return undefined;
-  return parZone.map((p) => ({
-    zone: p.zone,
-    especes: p.especes.length,
-    nivMin: Math.min(...p.especes.map((m) => m.niv)),
-    nivMax: Math.max(...p.especes.map((m) => m.niv)),
-  }));
+  /* CHAQUE CRÉATURE SAIT DE QUELLE BANDE ELLE EST, et le relevé reste UNE SEULE
+     LISTE. Deux listes séparées auraient obligé chaque lecteur à les recoller
+     pour comparer les dégâts d'un bout à l'autre de la carte — or c'est
+     exactement ce que le panneau fait, ses barres se mesurent sur le maximum de
+     TOUT le lieu. Le rang de la bande n'est écrit que s'il y en a plusieurs :
+     clé absente = première bande, comme partout ici. */
+  const especes = groupes
+    .flatMap((g, i) => g.liste.map((m) => ({ ...fiche(m), ...(groupes.length > 1 ? { bande: i } : {}) })))
+    .sort(parMenace);
+  return { especes };
 }
 
 /**
@@ -433,6 +484,11 @@ for (const l of LIEUX) {
 const sortie = {
   genere: new Date().toISOString().slice(0, 10),
   source: "public/wiki/monstres.json + public/wiki/ou-trouver.json + cartouches lus sur public/jeu/cartes-monde/",
+  /* SUR COMBIEN DE ZONES SE COMPTE UN RANG. L'écran écrit « la plus fournie du
+     jeu » : il doit pouvoir dire sur combien de zones ce « du jeu » a été compté,
+     sinon c'est un superlatif sans dénominateur. Il est ici et pas répété sur
+     chaque bande — c'est le même nombre pour toutes. */
+  zonesDuReleve: POSES_PAR_ZONE.size,
   lieux,
 };
 
@@ -452,9 +508,20 @@ fs.writeFileSync(
   }) + "\n"
 );
 
-const totalCombat = Object.values(combats).reduce((t, c) => t + c.especes.length + (c.experience?.length ?? 0), 0);
+const totalCombat = Object.values(combats).reduce((t, c) => t + c.especes.length, 0);
+/* Les bandes s'écrivent SÉPARÉMENT dans la trace, avec leur rang : c'est là qu'on
+   voit d'un coup d'œil qu'un lieu porte deux peuplements et lequel est le plus
+   fourni du jeu, sans ouvrir le JSON. */
+const bandeCourte = (b) =>
+  `${b.nivMin}–${b.nivMax}${b.origine ? ` ${b.origine}` : ""} : ${b.especes} esp., ${b.poses} empl.` +
+  `${b.rangPoses ? ` (${b.rangPoses}${b.rangPoses === 1 ? "re" : "e"}/${sortie.zonesDuReleve} zones)` : ""}` +
+  ` · ${b.gros.nom} ${b.gros.pv}`;
 console.log(
   `${cible}\n  ${lieux.length} lieux · ` +
     lieux.map((l) => `${l.nom} (${l.especes} esp., niv ${l.nivMin}–${l.nivMax}, ${l.objets.length} objet(s))`).join(" · ") +
+    lieux
+      .filter((l) => l.bandes.length > 1)
+      .map((l) => `\n  ${l.nom} — ${l.bandes.length} peuplements · ${l.bandes.map(bandeCourte).join(" | ")}`)
+      .join("") +
     `\n${cibleCombat}\n  ${totalCombat} créatures relevées · ${(fs.statSync(cibleCombat).size / 1024).toFixed(1)} Ko`
 );

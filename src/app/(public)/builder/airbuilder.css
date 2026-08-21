@@ -581,6 +581,28 @@
 .wp .palbloc .pall{font-size:12px;line-height:1.6;color:var(--text)}
 .wp .palbloc .pall b{color:var(--gold);font-family:Rubik,sans-serif;font-weight:700}
 .wp .palbloc .mini{margin-top:4px;line-height:1.55}
+/* ═══ LE MÊME CADRE POUR LES DEUX AUTRES RÉGLAGES QUI SE CHIFFRENT ══════════
+   `.palbloc` veut dire une seule chose depuis le bijou et la fée : « voici, en
+   nombres, ce que ce réglage donne ». L'éveil et le sertissage disent exactement
+   ça et n'avaient aucun cadre — leurs nombres ne vivaient que dans la bulle.
+   Ils reprennent donc le cadre existant plutôt qu'une seconde forme pour le même
+   propos ; seule la COULEUR du nombre change, et elle reprend celle que la bulle
+   donne déjà à chaque mécanique (`--c-eveil`, `--c-diamant`, `--c-holo`), pour
+   que les deux écrans se lisent pareil. Aucune variable nouvelle. */
+.wp .palbloc.ev .pall b{color:var(--c-eveil)}
+/* LA LIGNE QU'ON N'A PAS CHOISIE RESTE LISIBLE MAIS S'EFFACE : les deux nombres
+   ne sont côte à côte que pour être comparés, et rien ne doit laisser croire
+   qu'ils s'additionnent ou qu'on a réglé les deux. */
+.wp .palbloc.ev .pall b.off{color:var(--mut);font-weight:600}
+.wp .palbloc .sertl{font-size:12px;line-height:1.6;font-weight:600}
+.wp .palbloc .sertl+.sertl{margin-top:3px}
+.wp .palbloc .sertl b{font-family:Rubik,sans-serif;font-weight:700}
+.wp .palbloc .sertl.dia{color:var(--c-diamant)}
+.wp .palbloc .sertl.holo{color:var(--c-holo)}
+/* « fixe, s'ajoute » qualifie la ligne, il ne doit pas se lire comme une valeur :
+   même traitement discret que dans la bulle. */
+.wp .palbloc .sertn{font-family:inherit;font-weight:500;font-size:10px;color:var(--mut);
+  text-transform:none;letter-spacing:0}
 /* LA MISE EN GARDE « CE CRAN NE RAPPORTE RIEN » N'EST PLUS RÉSERVÉE AU BIJOU :
    la fée a exactement le même plateau — un palier tous les dix niveaux, et rien
    entre les deux. La règle est donc décrochée de `.palbloc` pour que les deux
@@ -820,7 +842,13 @@
    de cette bulle). L'éveil garde son bleu : ce n'est pas la même mécanique et
    `.evs b` ne devait pas se mettre à parler de fées.
    ══════════════════════════════════════════════════════════════════════════════ */
-.itip .evs.fee b{color:var(--green)}
+/* ET ELLE ÉCRIT UNE PHRASE, PAS UN NOMBRE. `.evs b` interdit le retour à la
+   ligne parce qu'il porte D'ABORD une valeur d'éveil — « +30 » coupé en deux ne
+   se lit pas. Le palier d'un esprit, lui, est une prose entière : depuis que ses
+   segments d'effet sont tous rendus, « Exp +125% / PvE +7% / Dépla +30% /
+   All Stat +35 » débordait de 5 px de la bulle (mesuré à 1280 px). Il se replie
+   donc, aligné à droite comme le nombre qu'il remplace. */
+.itip .evs.fee b{color:var(--green);white-space:normal;text-align:right;min-width:0}
 /* LE PALIER QU'ON N'A PAS ENCORE N'EST PAS BLEU. `.evs b` est bleu parce que
    `.evs` sert d'abord à l'ÉVEIL : sans cette règle, l'effet du palier suivant
    d'une fée arrivait dans la teinte d'une autre mécanique, à deux lignes de

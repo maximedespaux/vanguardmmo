@@ -22,16 +22,16 @@ import COMBATS from "@/data/lieux-monstres.json";
  * de quoi décider d'y entrer. Ce panneau porte les trois choses demandées, dans
  * l'ordre où elles ont été demandées.
  *
- * ┌──── POURQUOI CE FICHIER EST À PART, ET CHARGÉ À LA DEMANDE ────┐
+ * ┌──── POURQUOI CE FICHIER EST À PART, ET CHARGÉ À LA DEMANDE ─────┐
  * │ /donjons est la page la plus lourde du site. Le relevé de       │
- * │ combat des 102 créatures de ces huit lieux pèse 19,6 Ko, et il  │
+ * │ combat des 102 créatures de ces huit lieux pèse 20,7 Ko, et il  │
  * │ ne sert QU'ICI. Ce module est donc importé par `next/dynamic`   │
  * │ (`ssr: false`) : ni le HTML du serveur ni le paquet de départ   │
  * │ ne le portent, le navigateur ne le télécharge qu'au premier     │
  * │ panneau ouvert, et jamais si personne n'en ouvre.               │
  * │ Corollaire : ne JAMAIS importer ce fichier autrement que par    │
- * │ `dynamic()`, sinon les 19,6 Ko repartent dans le paquet commun. │
- * └────────────────────────────────────────────────────────────────┘
+ * │ `dynamic()`, sinon les 20,7 Ko repartent dans le paquet commun. │
+ * └─────────────────────────────────────────────────────────────────┘
  *
  * AUCUN CHIFFRE EN DUR, y compris dans les phrases : les comptes, les extrêmes et
  * jusqu'à « le plus gros n'est pas le plus dangereux » se recalculent sur le
@@ -50,8 +50,14 @@ type Fiche = {
      Un tableau et non un seuil unique : une créature d'ici en porte DEUX. */
   rage?: { pv: number; x: number }[];
   soigne?: { pv: number; rend: number }[];
+  /** À quel peuplement de la carte cette créature appartient. Absente quand la
+   *  carte n'en porte qu'un — clé absente = première bande, comme partout dans
+   *  ces relevés. Le relevé reste UNE SEULE LISTE, triée par dégâts : deux listes
+   *  séparées auraient obligé à les recoller pour comparer d'un bout à l'autre de
+   *  la carte, ce que les barres de ce panneau font justement. */
+  bande?: number;
 };
-type Releve = { especes: Fiche[]; experience?: Fiche[] };
+type Releve = { especes: Fiche[] };
 
 const TABLE = (COMBATS as { lieux: Record<string, Releve> }).lieux;
 const NUM = { fontVariantNumeric: "tabular-nums" } as const;
@@ -69,7 +75,30 @@ const td: React.CSSProperties = {
   textAlign: "right", padding: "7px 9px", fontSize: 12, whiteSpace: "nowrap", ...NUM,
 };
 
-export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: () => void }) {
+/**
+ * COMMENT SE NOMME UN PEUPLEMENT DANS UN TITRE DE SECTION.
+ *
+ * La tuile écrit la forme courte (« Airborn », en violet) ; ici il y a la place
+ * d'une phrase, et un titre de section doit dire ce qu'on va lire. Les deux
+ * tables sont donc séparées EXPRÈS — même fait, deux longueurs — et le violet
+ * d'« Airborn » vient de la fiche d'objet, qui marque déjà de cette teinte ce que
+ * le serveur a ajouté.
+ * Elles ne sont pas partagées entre les deux fichiers : `HorsTeleporteur` ne
+ * connaît ce panneau que par `dynamic()`, et n'en importe QUE le type — un import
+ * de valeur dans l'autre sens ramènerait un cycle entre les deux modules.
+ */
+const TITRE_ORIGINE: Record<string, string> = {
+  flyff: "Le peuplement du Flyff d'origine",
+  airborn: "Ce qu'Airborn a posé sur la même carte",
+};
+
+export default function PanneauLieu({ lieu, zonesDuReleve, onFermer }: {
+  lieu: Lieu;
+  /** Sur combien de zones du relevé un rang de densité se compte. Passé en
+   *  propriété et non importé : voir le commentaire de `TITRE_ORIGINE`. */
+  zonesDuReleve: number;
+  onFermer: () => void;
+}) {
   const releve: Releve | undefined = TABLE[lieu.clef];
   const fermer = useRef<HTMLButtonElement>(null);
 
@@ -84,19 +113,17 @@ export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: 
     return () => window.removeEventListener("keydown", surTouche);
   }, [onFermer]);
 
-  const especes = releve?.especes ?? [];
-  const experience = releve?.experience ?? [];
-  const maxSeconde = Math.max(1, ...especes.map(parSeconde), ...experience.map(parSeconde));
-  /* Le plus gros sac de points de vie et le plus fort cogneur ne sont pas toujours
-     le même : quand ils diffèrent, ça se dit — c'est la phrase qui empêche de
-     préparer un run sur la mauvaise barre. Quand ils coïncident, elle disparaît
-     d'elle-même au lieu d'énoncer une évidence. */
-  const cogneur = especes.length ? especes.reduce((a, m) => (parSeconde(m) > parSeconde(a) ? m : a)) : null;
-  const plusGros = especes.length ? especes.reduce((a, m) => (m.pv > a.pv ? m : a)) : null;
-  const menaceAilleurs = Boolean(cogneur && plusGros && cogneur.nom !== plusGros.nom);
-  /* Comptés sur les DEUX tableaux du panneau, parce que la légende les couvre tous
-     les deux — et recomptés à chaque lieu, jamais écrits. */
-  const toutes = [...especes, ...experience];
+  const toutes = releve?.especes ?? [];
+  /* LES BARRES SE MESURENT SUR TOUTE LA CARTE, PAS SUR CHAQUE TABLEAU. C'est le
+     point d'avoir gardé un relevé unique : sur Azria, les trois créatures du haut
+     frappent plusieurs fois plus fort que les huit du bas, et deux échelles
+     séparées auraient dessiné deux fois la même barre pleine. */
+  const maxSeconde = Math.max(1, ...toutes.map(parSeconde));
+  /* UN TABLEAU PAR PEUPLEMENT, dans l'ordre où le relevé les a rangés — et l'ordre
+     interne de chaque tableau reste celui des dégâts, fixé à l'extraction. */
+  const parBande = lieu.bandes.map((b, i) => ({ b, lignes: toutes.filter((m) => (m.bande ?? 0) === i) }));
+  /* Comptés sur TOUS les tableaux du panneau, parce que la légende les couvre tous
+     — et recomptés à chaque lieu, jamais écrits. */
   const nbRage = toutes.filter((m) => m.rage?.length).length;
   const nbSoin = toutes.filter((m) => m.soigne?.length).length;
 
@@ -147,9 +174,16 @@ export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: 
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <h2 className="font-heading" style={{ fontSize: 20, margin: 0 }}>{lieu.nom}</h2>
+            {/* LES BORNES SE LISENT BANDE PAR BANDE. « niveau 73 à 210 » pour
+                Azria décrirait une progression continue là où il y a soixante-
+                quinze niveaux de vide ; les deux intervalles côte à côte le
+                démentent en trois caractères de plus. */}
             <div style={{ fontSize: 12.5, color: "var(--text-muted)", ...NUM }}>
               {lieu.especes} espèce{lieu.especes > 1 ? "s" : ""} · {fr(lieu.poses)} emplacement{lieu.poses > 1 ? "s" : ""}
-              {" · "}niveau {lieu.nivMin === lieu.nivMax ? lieu.nivMin : `${lieu.nivMin} à ${lieu.nivMax}`}
+              {" · "}niveau{lieu.bandes.length > 1 ? "x" : ""}{" "}
+              {lieu.bandes
+                .map((b) => (b.nivMin === b.nivMax ? `${b.nivMin}` : `${b.nivMin} à ${b.nivMax}`))
+                .join(", puis ")}
             </div>
           </div>
           <button
@@ -195,31 +229,30 @@ export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: 
           </figcaption>
         </figure>
 
+        {/* ─── LES DEUX PEUPLEMENTS D'UNE MÊME CARTE, QUAND IL Y EN A DEUX ─── */}
+        {lieu.bandes.length > 1 && <DeuxPeuplements lieu={lieu} zonesDuReleve={zonesDuReleve} />}
+
         {/* ─── 2 et 3. QUI VIT LÀ, ET CE QUE ÇA FRAPPE ─── */}
-        {especes.length > 0 ? (
-          <>
-            <Titre icon="skull" apres={`${especes.length} espèce${especes.length > 1 ? "s" : ""}`}>
-              Ce qui vit ici, et ce que ça frappe
-            </Titre>
-            {menaceAilleurs && (
-              <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", margin: "0 0 10px" }}>
-                <Icon name="info" size={13} style={{ marginRight: 6, color: "var(--gold)" }} />
-                Le plus gros n&apos;est pas le plus dangereux : <b style={{ color: "var(--text)" }}>{plusGros!.nom}</b>{" "}
-                porte {pvCourt(plusGros!.pv)} PV, mais c&apos;est <b style={{ color: "var(--text)" }}>{cogneur!.nom}</b>{" "}
-                {/* LA CADENCE SE DIT EN FRANÇAIS, PAS EN MILLISECONDES. La phrase
-                    écrivait « toutes les 3 000 ms » à dix centimètres d'une colonne
-                    qui écrit « 3 s » pour le même monstre : deux unités pour un seul
-                    fait, et la brute du client en prime. `cadence()` existe pour ça
-                    et sert déjà dans l'infobulle de cette colonne — elle bascule
-                    seule en coups par seconde quand le monstre frappe plus d'une
-                    fois par seconde, ce qu'aucune de ces cent deux créatures ne fait
-                    aujourd'hui mais que le relevé peut apporter demain. */}
-                qui sort le plus de dégâts — {entier(coupMax(cogneur!))} par coup,{" "}
-                {cadence(cogneur!.delai)}, soit {entier(parSeconde(cogneur!))} par seconde.
-              </p>
-            )}
-            <Tableau lignes={especes} maxSeconde={maxSeconde} />
-          </>
+        {toutes.length > 0 ? (
+          parBande.map(({ b, lignes }, i) => (
+            <div key={b.nivMin} style={i ? { marginTop: 18 } : undefined}>
+              {/* LE TITRE NOMME LE PEUPLEMENT, ET SES NIVEAUX SONT DANS `apres`.
+                  Sur une carte à deux bandes, « Ce qui vit ici » deux fois de suite
+                  n'aurait distingué que par l'ordre — or c'est la PROVENANCE qui
+                  explique le trou de niveaux, et c'est elle qu'on lit dans le
+                  relevé. Une bande sans provenance retombe sur le titre d'origine. */}
+              <Titre
+                icon="skull"
+                apres={`${b.especes} espèce${b.especes > 1 ? "s" : ""} · niv. ${b.nivMin === b.nivMax ? b.nivMin : `${b.nivMin}–${b.nivMax}`}`}
+              >
+                {parBande.length === 1
+                  ? "Ce qui vit ici, et ce que ça frappe"
+                  : (b.origine && TITRE_ORIGINE[b.origine]) ?? "Ce qui vit ici"}
+              </Titre>
+              <PlusGrosPlusFort lignes={lignes} />
+              <Tableau lignes={lignes} maxSeconde={maxSeconde} />
+            </div>
+          ))
         ) : (
           /* Un lieu sans relevé de combat ne doit pas afficher un tableau vide : le
              panneau garde alors son plan et le dit en une ligne. Le cas n'existe
@@ -229,21 +262,6 @@ export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: 
           <p style={{ fontSize: 12.5, color: "var(--text-muted)", margin: "0 0 16px" }}>
             Le relevé de combat de ce lieu n&apos;a pas été extrait.
           </p>
-        )}
-
-        {/* LES MONSTRES D'EXPÉRIENCE, NOMMÉS POUR CE QU'ILS SONT. Ils ne comptent
-            pas dans les niveaux de la zone — Azria s'arrête à 115, ces trois-là
-            sont à 190, 200 et 210 — mais ils sont posés sur cette carte et un
-            joueur de leur niveau vient précisément pour eux. Les fondre dans le
-            tableau du dessus ferait croire à une tranche de progression ; les
-            taire ferait manquer la seule raison d'y monter à 190. */}
-        {experience.length > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <Titre icon="flame" apres={`${experience.length}`}>
-              Posés là pour l&apos;expérience, hors progression de la zone
-            </Titre>
-            <Tableau lignes={experience} maxSeconde={maxSeconde} />
-          </div>
         )}
 
         {/* ─── CE QUE LES QUÊTES ENVOIENT CHERCHER ICI ─── */}
@@ -318,6 +336,92 @@ export default function PanneauLieu({ lieu, onFermer }: { lieu: Lieu; onFermer: 
       </div>
     </div>,
     document.body
+  );
+}
+
+/**
+ * DEUX PEUPLEMENTS SUR UNE MÊME CARTE — la phrase qui répare deux erreurs.
+ *
+ * ┌───────────────── CE QU'ON A ÉCRIT DE FAUX, DEUX FOIS ──────────────────┐
+ * │ Azria a d'abord été annoncée « du niveau 73 au 210 » : une progression │
+ * │ continue qui n'existe pas, il y a soixante-quinze niveaux de vide au   │
+ * │ milieu. Puis « 73 à 115 », la bande haute rangée en note de bas de     │
+ * │ page — alors qu'elle porte plus d'emplacements de réapparition         │
+ * │ qu'aucune autre zone du jeu. Les deux phrases de Maxime étaient vraies │
+ * │ en même temps : « Azria c'est la dernière zone (73-114) » ET « Azria   │
+ * │ c'est la zone la plus haut niveau ». C'est la carte qui porte deux     │
+ * │ peuplements, pas lui qui se contredit.                                 │
+ * └────────────────────────────────────────────────────────────────────────┘
+ *
+ * TOUT S'Y COMPTE : le nombre de peuplements, les niveaux de vide entre eux, les
+ * emplacements, le rang de la bande la plus fournie et le nombre de zones sur
+ * lequel ce rang est mesuré. Aucun chiffre d'expérience n'est nécessaire pour
+ * dire à quoi sert une zone : des emplacements de monstres, comptés, suffisent.
+ */
+const PROVENANCE: Record<string, string> = {
+  flyff: "le Flyff d'origine",
+  airborn: "le contenu d'Airborn",
+};
+
+function DeuxPeuplements({ lieu, zonesDuReleve }: { lieu: Lieu; zonesDuReleve: number }) {
+  const trous = lieu.bandes.slice(1).map((b, i) => b.nivMin - lieu.bandes[i].nivMax);
+  /* La bande que rien ne dépasse dans tout le relevé, s'il y en a une ici. */
+  const tete = lieu.bandes.find((b) => b.rangPoses === 1);
+  return (
+    <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--text-muted)", margin: "0 0 14px" }}>
+      <Icon name="layers" size={13} style={{ marginRight: 6, color: "var(--orange)" }} />
+      Une carte, <b style={{ color: "var(--text)" }}>{lieu.bandes.length} peuplements</b> séparés
+      de <b style={{ color: "var(--text)", ...NUM }}>{trous.join(" et ")} niveaux</b>.{" "}
+      {lieu.bandes.map((b) => (
+        <span key={b.nivMin}>
+          {b.especes} espèce{b.especes > 1 ? "s" : ""} de {b.nivMin} à {b.nivMax}
+          {b.origine && PROVENANCE[b.origine] ? ` — ${PROVENANCE[b.origine]}` : ""}.{" "}
+        </span>
+      ))}
+      {tete && (
+        <>
+          Les <b style={{ color: "var(--text)", ...NUM }}>{fr(tete.poses)} emplacements</b> de
+          réapparition de la bande {tete.nivMin}–{tete.nivMax} sont le plus grand nombre
+          des {zonesDuReleve} zones du relevé : c&apos;est le terrain de farm le plus fourni du serveur.
+        </>
+      )}
+    </p>
+  );
+}
+
+/**
+ * « LE PLUS GROS N'EST PAS LE PLUS DANGEREUX » — et seulement quand c'est vrai.
+ *
+ * La phrase empêche de préparer un run sur la mauvaise barre. Elle se calcule par
+ * PEUPLEMENT : sur une carte à deux bandes, comparer le plus gros de l'une au
+ * cogneur de l'autre ne compare rien.
+ *
+ * ELLE EXIGE UNE INÉGALITÉ STRICTE, et pas seulement deux noms différents. Les
+ * trois créatures de la bande haute d'Azria sortent EXACTEMENT les mêmes dégâts
+ * par seconde : le départage par nom seul y désignait un « plus dangereux » qui
+ * ne l'est pas, et la phrase affirmait le contraire de ce que le tableau montre
+ * juste en dessous.
+ */
+function PlusGrosPlusFort({ lignes }: { lignes: Fiche[] }) {
+  if (!lignes.length) return null;
+  const cogneur = lignes.reduce((a, m) => (parSeconde(m) > parSeconde(a) ? m : a));
+  const plusGros = lignes.reduce((a, m) => (m.pv > a.pv ? m : a));
+  if (parSeconde(cogneur) <= parSeconde(plusGros)) return null;
+  return (
+    <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", margin: "0 0 10px" }}>
+      <Icon name="info" size={13} style={{ marginRight: 6, color: "var(--gold)" }} />
+      Le plus gros n&apos;est pas le plus dangereux : <b style={{ color: "var(--text)" }}>{plusGros.nom}</b>{" "}
+      porte {pvCourt(plusGros.pv)} PV, mais c&apos;est <b style={{ color: "var(--text)" }}>{cogneur.nom}</b>{" "}
+      {/* LA CADENCE SE DIT EN FRANÇAIS, PAS EN MILLISECONDES. La phrase écrivait
+          « toutes les 3 000 ms » à dix centimètres d'une colonne qui écrit « 3 s »
+          pour le même monstre : deux unités pour un seul fait, et la brute du
+          client en prime. `cadence()` existe pour ça et sert déjà dans l'infobulle
+          de cette colonne — elle bascule seule en coups par seconde quand le
+          monstre frappe plus d'une fois par seconde, ce qu'aucune de ces cent deux
+          créatures ne fait aujourd'hui mais que le relevé peut apporter demain. */}
+      qui sort le plus de dégâts — {entier(coupMax(cogneur))} par coup,{" "}
+      {cadence(cogneur.delai)}, soit {entier(parSeconde(cogneur))} par seconde.
+    </p>
   );
 }
 

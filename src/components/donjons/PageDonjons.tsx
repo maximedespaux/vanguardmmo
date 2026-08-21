@@ -14,7 +14,7 @@ import { BlocOasis } from "@/components/donjons/BlocOasis";
 import { CommentOnEntre, type Porte } from "@/components/donjons/CommentOnEntre";
 import { IdsMonstres } from "@/components/donjons/LienMonstre";
 import { HorsTeleporteur, GROUPES_HORS_TELEPORTEUR, MOTS_HORS_TELEPORTEUR } from "@/components/donjons/HorsTeleporteur";
-import { aDesFaiblesses, ConseilInstance, dominantInstance, FaiblessesDonjon } from "@/components/donjons/elements";
+import { ConseilDesInstances, ConseilInstance, dominantInstance, PastilleElement } from "@/components/donjons/elements";
 import { useReglages } from "@/components/reglages/PanneauReglages";
 import type { SchemaPage } from "@/lib/reglages";
 import type { Vague } from "@/components/oasis/modele";
@@ -305,14 +305,25 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
           ))}
         </div>
       </div>
-      {/* La phrase qui remplace dix-neuf pastilles bavardes. Elle compte les tuiles
-          concernées au lieu de les annoncer : « 19 » vient des données. */}
-      {memeArmure && (
-        <div style={{ fontSize: 12, color: "var(--text-muted)", margin: "-4px 0 12px", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-          <Icon name="shield" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
-          Le bouclier sur une tuile veut dire <b style={{ color: "var(--text)" }}>{memeArmure}</b> :
-          c&apos;est la même sur les {dungeons.filter((d) => d.armor).length} instances qui en demandent une.
-        </div>
+      {/* ┌──── LE CONSEIL ÉLÉMENTAIRE ENTRE DANS LA PAGE ────┐
+             Maxime l'a demandé deux fois : « la plupart des monstres sont de l'élément
+             terre et on doit utiliser le vent pour le contrer, faut l'indiquer ». Il
+             ÉTAIT indiqué — dans `ConseilInstance`, qui ne se monte qu'au clic sur une
+             tuile. Ici il se lit sans cliquer, et il dit aussi sa LIMITE, comptée
+             instance par instance : la règle vaut sur le catalogue entier, pas sur
+             chaque carte, et deux instances la retournent complètement.
+
+             La ligne de légende de l'armure a été absorbée par ce cadre au lieu de
+             vivre juste au-dessus : les deux expliquent comment lire une tuile, et le
+             bouclier n'avait pas besoin d'une ligne à lui. La hauteur ajoutée à la
+             page est donc celle du bloc moins celle de cette ligne.
+             └──────────────────────────────────────────────────┘ */}
+      {wikiList.length > 0 && (
+        <ConseilDesInstances
+          instances={wikiList.flatMap((d) => { const c = donjonClient(d.id); return c ? [{ nom: d.name, d: c }] : []; })}
+          armure={memeArmure}
+          nbArmures={dungeons.filter((d) => d.armor).length}
+        />
       )}
       {/* « Aucun donjon » ne veut plus dire « rien sur cette page » : la recherche
           peut ne rien trouver dans la grille et désigner un des deux blocs du bas. */}
@@ -452,7 +463,16 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                   <Icon name="skull" size={11} style={{ marginRight: 3 }} />{cl!.monstres.length} · {pvCourt(grosPV)}
                 </span>
               )}
-              {cl && aDesFaiblesses(cl) && <span title="Ce à quoi les créatures posées sont faibles" style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name="target" size={11} style={{ color: "var(--green)" }} /><FaiblessesDonjon d={cl} bulle={false} /></span>}
+              {/* ┌──── LA PASTILLE PORTAIT LE RENSEIGNEMENT DANS UN `title` ────┐
+                     Elle alignait un viseur et une ou deux icônes de 13 px, sans un
+                     mot ; la phrase qui les nommait vivait dans l'attribut `title`,
+                     c'est-à-dire NULLE PART sur un téléphone, où le survol n'existe
+                     pas. Mesuré sur le HTML servi : ni « Emporte » ni « Laisse » n'y
+                     apparaissaient une seule fois, sur la page entière.
+                     `PastilleElement` écrit le NOM de l'élément — un mot par tuile —
+                     et ajoute celui qu'on LAISSE, qui n'était nulle part dans la
+                     grille alors que c'est lui qui coûte un run. */}
+              {cl && <PastilleElement d={cl} />}
               {d.armor && (
                 <span title={`Armure conseillée : ${d.armor}`} style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 3, color: "var(--orange)" }}>
                   <Icon name="shield" size={11} />{memeArmure ? null : d.armor}

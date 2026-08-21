@@ -17,10 +17,10 @@ import {
   Point, Vignettes, ligneDe, type Vue,
 } from "./Blocs";
 import {
-  ECHELLE, PARCHEMINS_ABSOLUS, PARCHEMINS_EVEIL, RAMASSEUR, RUNE_TANK,
+  ECHELLE, PARCHEMINS_EVEIL, RAMASSEUR, RUNE_TANK,
   cartesDElement, cartesDePercage, comptoirDeLuca, eveilFixe, famillesDeJoyau, iconeDe, iconePercage,
   mantras, nombreDeGemmesMenteuses, objet, objets, ordresDeSertissage,
-  panneau, parcheminsClasses, plafondDeStat, plafondsDeSertissage, rareteChiffree, runes, tableauDesGemmes,
+  panneau, plafondDeStat, plafondsDeSertissage, rareteChiffree, runes, tableauDesGemmes,
 } from "./releves";
 import { bonusDesCartes, courbeArtefact, libelleDe, ordreDuClient, paliersDeGemme } from "./sources";
 
@@ -418,19 +418,8 @@ export function Percage() {
 
 export function Amelioration() {
   const luca = comptoirDeLuca();
-  const taux = parcheminsClasses();
-  const absolus = objets(PARCHEMINS_ABSOLUS);
   const courbe = courbeArtefact();
   const bas = courbe.length ? courbe[courbe.length - 1] : null;
-  /** Les marches de l'escalier des parchemins qui REMPLACENT le taux : la tranche
-   *  de paliers est relue sur le libellé déjà calculé, jamais écrite ici. */
-  const marches = taux.remplacent
-    .map((x) => {
-      const n = (x.plage.match(/\d+/g) ?? []).map(Number);
-      return n.length ? { de: n[0], a: n[n.length - 1], v: x.pct, nom: x.fiche.n } : null;
-    })
-    .filter((m): m is { de: number; a: number; v: number; nom: string } => !!m)
-    .sort((a, b) => a.de - b.de);
 
   return (
     <>
@@ -454,53 +443,25 @@ export function Amelioration() {
         </Point>
       )}
 
-      <Point titre={`${taux.remplacent.length} parchemins REMPLACENT ce taux, ils ne s'y ajoutent pas`} marque="piege">
-        <p>
-          Glisser deux parchemins ne fait pas 200 % : <b>{taux.ajoutent.length}</b> s&apos;ajoutent
-          ou garantissent, <b>{taux.remplacent.length}</b> remplacent — chacun sur sa tranche.
-        </p>
-        {marches.length > 0 && (
-          <>
-            <Escalier
-              marches={marches}
-              titre={`Taux garanti par tranche, en pourcentage : ${marches.map((m) => `${m.de === m.a ? `+${m.de}` : `+${m.de} à +${m.a}`} ${m.v}`).join(", ")}`}
-            />
-            <p className="mc-src">
-              {marches.map((m, i) => (
-                <span key={m.nom}>
-                  {i > 0 ? " · " : ""}<b>{m.nom}</b> {m.de === m.a ? `+${m.de}` : `+${m.de} → +${m.a}`}
-                </span>
-              ))}
-              {taux.remplacent.some((x) => x.pasArmure) && <> — l&apos;un ne vaut <b>que sur les armes</b>.</>}
-            </p>
-          </>
-        )}
-        {taux.ajoutent.length > 0 && (
-          <Bareme lignes={taux.ajoutent.map((x) => [
-            x.fiche.n,
-            `${x.genre === "garantit" ? "réussite" : "taux"} ${x.pct} %`,
-          ] as [string, string])} />
-        )}
-        {taux.unTir > 0 && (
-          <p className="mc-src">
-            <b>{taux.unTir}</b> l&apos;écrivent, aucune interface ne le rappelle : le parchemin ne
-            vaut que pour <b>une seule tentative</b>.
-          </p>
-        )}
-      </Point>
+      {/* ┌──── LES DEUX BLOCS DE PARCHEMINS SONT PARTIS, ET C'EST MESURÉ ────┐
+             Ils expliquaient en détail deux mécaniques d'amélioration : trois
+             parchemins qui REMPLACENT le taux garanti (100 % de +3 à +6, 50 %
+             de +7 à +8, 30 % à +9), et cinq Parchemins d'Enchantement Absolu.
 
-      {absolus.length > 0 && (
-        <Point titre={`${absolus.length} Parchemins d'Enchantement Absolu : le palier à coup sûr`} marque="profit">
-          <Grille cases={absolus.map((o): Vue => ({
-            cle: o.cle, src: iconeDe(o), cherche: o.n,
-            nom: o.n.replace(/^Parchemin d.Enchantement Absolu\s*/i, ""),
-          }))} />
-          <p className="mc-src">
-            Un par palier, sans protection — mais <b>pas sur une arme Ultime</b>. On garde le sien
-            pour le palier qui casse.
-          </p>
-        </Point>
-      )}
+             ONZE OBJETS Y ÉTAIENT DÉCRITS, UN SEUL A UNE PROVENANCE. Compté sur
+             `ou-trouver.json` : les trois « Parchemin d'amélioration (S)/(V)/(P) »
+             — ceux-là mêmes que les barres 100/50/30 chiffrent — ont ZÉRO source,
+             comme les sept d'Enchantement Absolu, comme le Sfusion X et l'Efusion.
+             Seul le « Parchemin Sfusion » en a (7).
+
+             Aucune boutique ne les vend, aucun craft ne les fait, aucune boîte ne
+             les contient. Le site avertissait donc longuement d'un « piège coûteux »
+             où l'on ne peut pas tomber, et vantait un « à notre avantage » qu'on ne
+             peut pas se procurer.
+
+             Ce n'est pas une perte de renseignement : c'est la règle 2 appliquée à
+             la lettre. Le jour où le serveur les distribue, ils reviendront avec
+             leur provenance — le relevé le dira tout seul.                       */}
 
       <Point titre={`L'échelle monte jusqu'à +${BIJOU.upMax}, et pas sur toutes les pièces`}>
         <Bareme lignes={[

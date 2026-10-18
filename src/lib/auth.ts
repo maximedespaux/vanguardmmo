@@ -13,6 +13,13 @@ export const authOptions: NextAuthOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      // Discord renvoie désormais `iss=https://discord.com` au retour de la
+      // connexion (RFC 9207, annoncé par son /.well-known/openid-configuration).
+      // openid-client compare ce paramètre à l'émetteur déclaré, et le provider
+      // Discord de next-auth v4 n'en déclare aucun : chaque connexion échouait
+      // sur « issuer must be configured on the issuer ». Constaté en prod le
+      // 2026-10-18, sans qu'aucune ligne de notre code ait changé.
+      issuer: "https://discord.com",
       authorization: { params: { scope: "identify guilds guilds.members.read" } },
     }),
   ],

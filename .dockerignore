@@ -8,3 +8,7 @@ npm-debug.log*
 .DS_Store
 .vscode
 *.log
+
+# Worktrees et réglages de Claude Code : 539 Mo en local (dont un node_modules
+# complet), jamais utiles à l’image. Absents d’un clone git, donc sans effet sur le VPS.
+.claude

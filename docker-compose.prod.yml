@@ -43,6 +43,10 @@ services:
     networks:
       - default
       - npm
+    # Les vidéos de débrief des Chambres (SPEC-CHAMBRES-RECENSEMENT §10.2) : un volume nommé, jamais
+    # dans public/ (servi à tous sans garde). Le site les écrit et les sert (routes /api/videos/*).
+    volumes:
+      - vanguard_videos:/app/data/videos
     restart: unless-stopped
 
   bot:
@@ -52,10 +56,15 @@ services:
       migrate:
         condition: service_completed_successfully
     command: npx tsx bot/index.ts
+    # Le même volume : le bot le purge chaque nuit à 4 h 30 (fichiers trop anciens, envois abandonnés).
+    volumes:
+      - vanguard_videos:/app/data/videos
     restart: unless-stopped
 
 volumes:
   vanguard_db:
+  # Hors de la sauvegarde de la base : à sauvegarder à part si on y tient (DEPLOY.md).
+  vanguard_videos:
 
 # Réseau du Nginx Proxy Manager (déjà présent sur le VPS) : permet à NPM de
 # router vanguardhub.fr → conteneur "vanguard-web" (port 3000) en interne.

@@ -83,7 +83,7 @@ export function signature(cle: string | undefined | null): string | null {
 
 /**
  * Le relevé pèse 4,4 Mo : on le lit avec `fs` au premier appel et on garde les deux
- * index en mémoire — même modèle que `lib/ouFarmer.ts` et
+ * index en mémoire — même modèle que
  * `components/objets/catalogue.ts`. Ce fichier touche au disque : il ne doit JAMAIS
  * être importé par un composant client.
  */

@@ -30,7 +30,7 @@ import { compacter, TYPES, type Entree, type Provenance, type Reponse, type Type
  * │ navigateur ferait la même bêtise en différé. On les lit donc avec   │
  * │ `fs`, UNE fois, au premier appel, et on ne garde EN MÉMOIRE que     │
  * │ l'index réduit — le JSON parsé part au ramasse-miettes. C'est le    │
- * │ modèle exact de `src/lib/ouFarmer.ts`, `src/app/api/ou-trouver/`    │
+ * │ modèle exact de `src/app/api/ou-trouver/`                           │
  * │ et `src/components/monstres/catalogue.ts`.                          │
  * └─────────────────────────────────────────────────────────────────────┘
  *

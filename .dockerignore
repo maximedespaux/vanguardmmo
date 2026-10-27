@@ -12,3 +12,12 @@ npm-debug.log*
 # Worktrees et réglages de Claude Code : 539 Mo en local (dont un node_modules
 # complet), jamais utiles à l’image. Absents d’un clone git, donc sans effet sur le VPS.
 .claude
+
+# Les vidéos de débrief d'un poste de dev (./data/videos) : en production, elles vivent sur le
+# volume vanguard_videos. Ici le motif part de la racine du contexte : il ne vise que ./data,
+# jamais src/data.
+data
+
+# Les docs et les sources de la refonte GENESIS : utiles au dépôt, jamais à l'image. Le débrief du
+# 18/10 qu'importe scripts/importer-debrief.ts en est une copie embarquée, dans src/data.
+assets

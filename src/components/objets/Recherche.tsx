@@ -61,14 +61,14 @@ const champ: React.CSSProperties = {
 };
 
 /** Une pastille de filtre. La même forme partout : c'est ce qui la rend lisible. */
-function Pastille({ on, onClick, children, couleur = "var(--orange)" }: { on: boolean; onClick: () => void; children: React.ReactNode; couleur?: string }) {
+function Pastille({ on, onClick, children, couleur }: { on: boolean; onClick: () => void; children: React.ReactNode; couleur?: string }) {
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: "inherit",
       fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: 20,
-      color: on ? "#0A0A0C" : "var(--text)",
-      background: on ? couleur : "var(--bg-3)",
-      border: `1px solid ${on ? couleur : "var(--border)"}`,
+      color: on ? (couleur ? "#0A0A0C" : "var(--gn-sur-action)") : "var(--text)",
+      background: on ? (couleur ?? "var(--gn-plein)") : "var(--bg-3)",
+      border: `1px solid ${on ? (couleur ?? "rgba(var(--gn-or-rgb),.55)") : "var(--border)"}`,
     }}>{children}</button>
   );
 }
@@ -154,7 +154,7 @@ export function RechercheObjets({ depart = "", departStat = "", stats = [] }: {
         {stats.length > 0 && (
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-muted)", flex: "1 1 300px", minWidth: 0 }}>
-              <Icon name="zap" size={14} style={{ color: "var(--orange)", flexShrink: 0 }} />
+              <Icon name="zap" size={14} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
               Qui donne
               <select value={stat} onChange={(e) => setStat(e.target.value)} aria-label="Chercher par statistique"
                 style={{ ...champ, flex: 1, minWidth: 0, padding: "9px 10px", cursor: "pointer" }}>
@@ -399,7 +399,7 @@ function Carte({ o }: { o: ObjetFiche }) {
         <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5, color: "var(--text-muted)", marginTop: 2, flexWrap: "wrap" }}>
           {o.t ?? "—"}
           {o.nr ? <b style={{ ...NUM, color: "var(--text)", fontWeight: 600 }}>niv. {o.nr}</b> : null}
-          {o.af === 1 && <Icon name="sparkles" size={11} style={{ color: "var(--orange)" }} />}
+          {o.af === 1 && <Icon name="sparkles" size={11} style={{ color: "var(--gn-accent)" }} />}
           {emb && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={emb} alt={classeFr(o.cl) ?? ""} title={classeFr(o.cl) ?? ""} width={15} height={15} style={{ objectFit: "contain" }} />

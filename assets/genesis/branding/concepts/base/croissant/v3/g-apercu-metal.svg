@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+Aperçu métal — mêmes chemins que g-geometrie.svg.
+v3
+-->
+<defs>
+  <linearGradient id="or" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#F2E2BE"/>
+    <stop offset="0.28" stop-color="#E6C48A"/>
+    <stop offset="0.55" stop-color="#C69A55"/>
+    <stop offset="0.78" stop-color="#8E6A35"/>
+    <stop offset="1" stop-color="#5A4222"/>
+  </linearGradient>
+  <linearGradient id="or2" x1="1" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E6C48A"/>
+    <stop offset="0.5" stop-color="#B88C4C"/>
+    <stop offset="1" stop-color="#6E5129"/>
+  </linearGradient>
+  <filter id="biseau" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+    <feMorphology in="SourceAlpha" operator="erode" radius="7" result="ero"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="flou"/>
+    <feGaussianBlur in="ero" stdDeviation="2" result="ero2"/>
+    <feComposite in="flou" in2="ero2" operator="arithmetic" k2="0.55" k3="0.45" result="relief"/>
+    <feSpecularLighting in="relief" surfaceScale="9" specularConstant="1.05" specularExponent="22" lighting-color="#FFF4DC" result="spec">
+      <feDistantLight azimuth="225" elevation="42"/>
+    </feSpecularLighting>
+    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+    <feDiffuseLighting in="relief" surfaceScale="9" diffuseConstant="1" lighting-color="#ffffff" result="diff">
+      <feDistantLight azimuth="225" elevation="48"/>
+    </feDiffuseLighting>
+    <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.15" k2="0" k3="0" k4="0" result="ombre"/>
+    <feComposite in="specIn" in2="ombre" operator="arithmetic" k2="0.55" k3="1" result="metal"/>
+    <feComposite in="metal" in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="14"/>
+  </filter>
+</defs>
+<rect width="1024" height="1024" fill="#08080C"/>
+<g id="genesis-g">
+  <path d="M 728 454 L 768 528 L 728 602 L 688 528 Z" fill="#A6192E" opacity="0.55" filter="url(#halo)"/>
+  <g id="g-corps" fill="url(#or)" filter="url(#biseau)">
+    <path d="M 804 220 Q 756.5 212.5 700 200 A 450.5 450.5 0 0 0 170 524 A 421 421 0 0 0 766 791 L 690 719 A 212 264 -12 1 1 650 304 L 708 372 Q 735 296 804 220 Z"/>
+  </g>
+  <g id="g-barre" fill="url(#or)" filter="url(#biseau)">
+    <path d="M 518 500 L 689.5 500 L 674.5 528 L 689.5 556 L 628 556 Q 572 552 518 500 Z"/>
+    <path d="M 766.5 500 L 850 500 Q 808 548 772 556 L 766.5 556 L 781.5 528 Z"/>
+  </g>
+  <g id="g-eperon" fill="url(#or)" filter="url(#biseau)">
+    <path d="M 728 627 L 766.5 556 L 772 556 L 762 790 L 728 884 L 694 790 L 684 556 L 689.5 556 Z"/>
+  </g>
+  <g id="g-cristal">
+    <path d="M 728 454 L 768 528 L 728 602 L 688 528 Z" fill="#60152D"/>
+    <path d="M 728 454 L 728 497 L 711 528 L 688 528 Z" fill="#C93447"/>
+    <path d="M 728 454 L 768 528 L 745 528 L 728 497 Z" fill="#A6192E"/>
+    <path d="M 768 528 L 728 602 L 728 559 L 745 528 Z" fill="#4A1023"/>
+    <path d="M 728 602 L 688 528 L 711 528 L 728 559 Z" fill="#7A1830"/>
+    <path d="M 728 497 L 745 528 L 728 559 L 711 528 Z" fill="#B32236"/>
+    <path d="M 728 497 L 711 528 L 728 528 Z" fill="#F08A92"/>
+    <path d="M 728 454 L 768 528 L 728 602 L 688 528 Z" fill="none" stroke="#E6C48A" stroke-width="3" stroke-linejoin="miter"/>
+  </g>
+</g>
+</svg>

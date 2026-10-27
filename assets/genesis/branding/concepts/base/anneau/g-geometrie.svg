@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+GENESIS - monogramme G, geometrie de base « anneau facette » (version retenue = v8)
+Repere SVG : x vers la droite, y vers le bas ; angles comptes depuis +x, positifs dans le sens horaire.
+Toutes les coordonnees sont arrondies au demi-pixel.
+
+CENTRE ET CERCLES DE CONSTRUCTION
+  C = (512, 512), centre du disque de l'avatar.
+  R  = 368 : bord exterieur de l'anneau.
+  r  = 254 : contre-forme (bord interieur). Epaisseur constante : 114.
+  rm = 311 : arete mediane (ligne de facette des finitions, et bord bas cache de l'eperon).
+  Enveloppe : toutes les pointes tiennent dans un rayon de 448 autour de C
+  (pointe nord 448, pointe sud 442, pointe de la barre 438, flanc gauche 368).
+
+g-corps (l'anneau)
+  Arc R de theta = -40 deg (PF = 794, 275.5), sens anti-horaire par le haut, la gauche et le bas,
+  jusqu'a theta = +1.6 deg (880, 521). Coupe horizontale y = 521, cachee sous la barre, jusqu'au
+  cercle r (766, 521). Arc r en sens horaire jusqu'a Ti = (577.5, 266.5), theta = -75 deg.
+  Terminal : deux coupes droites qui se rencontrent en T = (847, 339) :
+   - coupe interieure = tangente au cercle r en Ti, pente 15 deg (descend vers la droite) ;
+     elle prolonge la contre-forme sans cassure et ouvre le G ;
+   - facette exterieure = tangente au cercle R en PF, a 50 deg sous l'horizontale.
+  Angle de la pointe : 35 deg. T sort de 9 px du cercle R (rayon 377).
+
+g-barre (la lame)
+  Bande horizontale y = 476 a 572 (hauteur 96, axe y = 524, 12 px sous le centre).
+  Pointes a 60 deg (chanfreins a 30 deg de l'horizontale, 83 px de course) :
+  pointe interieure A = (548, 524), presque sur l'axe vertical ; pointe exterieure E = (950, 524).
+  Elle passe PAR-DESSUS l'anneau ; sa facette basse sort du cercle R en (876, 567).
+  Hauteur de la barre : le haut de la barre (476) est a 45 % de la hauteur de l'anneau (144 a 880).
+
+g-eperon (l'equerre)
+  Flanc vertical x = 700, de la barre (572) jusqu'au cercle r (700, 683) : il rend carre le coin
+  bas droit de la contre-forme. Haut y = 548 (cache sous la barre), bas = arc rm de (821, 548)
+  a (700, 759.5) (cache dans l'anneau). Dans la silhouette, seul le flanc se voit.
+
+g-etoile-nord et g-cristal (au zenith)
+  Etoile a 4 branches, centre (512, 134), 10 px au-dessus du bord de l'anneau :
+  branche haute 70 (pointe y = 64), basse 100 (y = 234, plantee dans l'anneau),
+  laterales 80 (x = 432 / 592), taille 20 (points 492/532, 114/154).
+  Cristal : losange (512, 88) (527, 134) (512, 196) (497, 134), serti dans la branche verticale
+  avec au moins 7 px de metal autour. En aplat ivoire il se confond avec l'etoile : c'est voulu,
+  la silhouette ne doit pas en dependre.
+
+g-etoile-sud (au nadir)
+  Meme etoile, plus petite, centre (512, 890) : branches 64 (y = 826 et 954), laterales 58, taille 14.
+  Elle tient l'axe vertical : sans elle, l'etoile nord ferait une queue de pomme ; plus fine, elle
+  ferait une cedille.
+
+ORDRE DES CALQUES (de dessous a dessus) : corps, eperon, barre, etoile-sud, etoile-nord, cristal.
+-->
+  <g fill="#F2EDE5">
+    <g id="g-corps">
+      <path d="M 847 339 L 794 275.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z"/>
+    </g>
+    <g id="g-eperon">
+      <path d="M 700 548 L 821 548 A 311 311 0 0 1 700 759.5 Z"/>
+    </g>
+    <g id="g-barre">
+      <path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z"/>
+    </g>
+    <g id="g-etoile-sud">
+      <path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z"/>
+    </g>
+    <g id="g-etoile-nord">
+      <path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z"/>
+    </g>
+    <g id="g-cristal">
+      <path d="M 512 88 L 527 134 L 512 196 L 497 134 Z"/>
+    </g>
+  </g>
+</svg>

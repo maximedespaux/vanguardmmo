@@ -1,0 +1,157 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENESIS — piste « Sanctuaire » — jetons de design
+   Trois couches : 1. primitives (la palette et ses dérivées)
+                   2. rôles sémantiques (ce que le site consomme)
+                   3. compatibilité (les anciens noms de globals.css → nouveaux rôles)
+   Contrastes calculés (WCAG 2.1, script python) — voir charte.md.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. PRIMITIVES ─────────────────────────────────────────────────────────
+   Les sept couleurs imposées sont marquées ★. Toute autre valeur est une
+   dérivée, documentée par son usage. Aucune n'est orange : l'orange #FF8C1A
+   appartient désormais au JEU (palier Éternel, rareté Légendaire).          */
+:root{
+  /* Noirs et anthracites — 70 % de la surface */
+  --noir-950:#08080C;        /* ★ noir profond : fond de page dominant */
+  --noir-900:#0D0D12;        /* dérivée : puits (champs, infobulles, cases d'objet) */
+  --anthracite-800:#15151D;  /* ★ anthracite : surface des panneaux */
+  --anthracite-700:#1C1C26;  /* dérivée +4 % : surface élevée (modale, menu, carte survolée) */
+  --anthracite-600:#24242F;  /* dérivée +8 % : survol de ligne, piste de jauge, champ survolé */
+  --anthracite-500:#2E2E3A;  /* dérivée : bordure neutre au repos */
+  --anthracite-400:#3A3A48;  /* dérivée : bordure forte, cadre de case vide */
+  --filet-neutre:#23232D;    /* dérivée : séparateur de lignes de table */
+
+  /* Crimson et pourpre — 20 % : la matière (plaques, cristaux, profondeur) */
+  --crimson-500:#C42A40;     /* dérivée claire : arête haute d'une plaque (ivoire dessus 4,80:1) */
+  --crimson-600:#A6192E;     /* ★ crimson : plaque d'action, cristal, onglet actif */
+  --crimson-700:#84142A;     /* dérivée sombre : bas de plaque, état pressé */
+  --pourpre-800:#60152D;     /* ★ pourpre : ombres teintées, fond de tag de rang */
+  --pourpre-900:#3A1220;     /* dérivée : fond teinté (ligne survolée, zone danger) */
+  --pourpre-950:#22101A;     /* dérivée : fond de bouton danger, voile du hero */
+
+  /* Or — 10 % au plus : contours, arêtes, ornements. Jamais un aplat. */
+  --or-800:#5A4526;          /* dérivée : filet très discret (bord de cadre au repos) */
+  --or-700:#8C6A36;          /* dérivée : or éteint (sertissage au repos, ornement lointain) */
+  --or-500:#C69A55;          /* ★ or métallique : arête, étoile d'angle, filigrane */
+  --or-300:#E6C48A;          /* ★ or clair : reflet, focus clavier, texte d'accent rare */
+
+  /* Ivoires — la typographie */
+  --ivoire-50:#F2EDE5;       /* ★ ivoire : texte courant et titres (15,6:1 sur anthracite) */
+  --ivoire-300:#CFC8BE;      /* dérivée : texte secondaire fort (libellés de table) */
+  --ivoire-500:#A8A199;      /* dérivée : texte atténué (7,1:1 sur anthracite) */
+  --ivoire-700:#958F88;      /* dérivée : texte faible, indices (5,7:1 sur anthracite, 4,8:1 sur un panneau verre posé sur l'art — plancher) */
+  --ivoire-900:#5E5A55;      /* dérivée : texte désactivé (non soumis au contraste) */
+
+  /* États d'interface — dérivées hors palette, désaturées pour ne pas
+     rivaliser avec les couleurs du jeu */
+  --vert-400:#74C995;        /* succès / actif — sauge, distinct du Lusaka #33D6A6 */
+  --rose-300:#E89AA3;        /* texte d'erreur (8,3:1) — PAS un crimson : un rose poudré */
+  --lilas-400:#B4A6CF;       /* absence — gris-lilas, distinct de l'Yggdrasil #C77DFF */
+
+  /* Couleurs du JEU — DONNÉES, jamais restylées, jamais utilisées pour la marque */
+  --jeu-eternel:#FF8C1A; --jeu-yggdrasil:#C77DFF; --jeu-ancestral:#FF5C8A;
+  --jeu-lusaka:#33D6A6;  --jeu-dryades:#4EA8FF;   --jeu-shaitan:#9CA3AF; --jeu-cape:#FFD24A;
+  --jeu-mythique:#C92A2A;
+  --jeu-commun:#9CA3AF; --jeu-rare:#4EA8FF; --jeu-epique:#C77DFF; --jeu-legendaire:#FF8C1A; --jeu-premythique:#FF5C8A;
+  --c-eveil:#5aa0ff; --c-diamant:#7fd0ff; --c-holo:#ff6b6b; --c-percage:#e879f9;
+
+  /* Canaux RGB (pour les rgba) */
+  --noir-rgb:8,8,12; --crimson-rgb:166,25,46; --pourpre-rgb:96,21,45; --or-rgb:198,154,85; --ivoire-rgb:242,237,229;
+
+  /* Typographie */
+  --font-titre:'Cinzel',Georgia,serif;          /* marque, h1-h3 — jamais sous 14 px */
+  --font-texte:'Athiti',system-ui,sans-serif;   /* texte courant, 500 par défaut */
+  --font-chiffre:'Rubik',system-ui,sans-serif;  /* chiffres de table, petits libellés denses */
+
+  --fs-display:44px; --fs-h1:32px; --fs-h2:21px; --fs-h3:17px;
+  --fs-corps:15px; --fs-petit:13.5px; --fs-label:11.5px; --fs-table:14.5px;
+
+  /* Espacement, rayons, mouvement (échelle dense reprise de globals.css) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --r-xs:2px; --r-sm:3px; --r-md:5px; --r-full:999px;
+  --chanfrein:9px;                               /* coupe des plaques et cadres */
+  --lift-1:-1px; --lift-2:-3px;                  /* « touche » et « levée » — les deux seuls crans */
+  --ease:cubic-bezier(.22,.61,.36,1); --t-fast:.14s; --t-mid:.22s;
+}
+
+/* ── 2. RÔLES SÉMANTIQUES ──────────────────────────────────────────────────*/
+:root{
+  --surface-page:var(--noir-950);
+  --surface:rgba(21,21,29,.90);                 /* panneau posé sur l'art (anthracite à 90 %) */
+  --surface-pleine:var(--anthracite-800);
+  --surface-elevee:var(--anthracite-700);
+  --surface-survol:var(--anthracite-600);
+  --surface-puits:var(--noir-900);
+  --surface-teintee:var(--pourpre-900);
+
+  --bordure:var(--anthracite-500);
+  --bordure-forte:var(--anthracite-400);
+  --bordure-ornement:var(--or-700);             /* sertissage au repos */
+  --bordure-ornement-vive:var(--or-500);        /* sertissage au survol / actif */
+  --filet:var(--filet-neutre);
+
+  --texte:var(--ivoire-50);
+  --texte-secondaire:var(--ivoire-300);
+  --texte-attenue:var(--ivoire-500);
+  --texte-faible:var(--ivoire-700);
+  --texte-desactive:var(--ivoire-900);
+  --texte-accent:var(--or-300);                 /* le seul texte « coloré » de la marque */
+  --texte-sur-action:var(--ivoire-50);          /* sur plaque crimson : 6,44:1 */
+
+  --accent-action:var(--crimson-600);           /* plaques, onglet actif, jauges */
+  --accent-action-haut:var(--crimson-500);
+  --accent-action-bas:var(--crimson-700);
+  --accent-ornement:var(--or-500);
+  --accent-reflet:var(--or-300);
+
+  --focus:var(--or-300);                        /* 12:1 sur noir, 4,5:1 sur crimson */
+  --focus-anneau:0 0 0 2px var(--noir-950),0 0 0 4px var(--or-300);
+
+  --succes:var(--vert-400);
+  --attention:var(--or-300);
+  --danger:var(--crimson-600);                  /* bord et icône — jamais le texte */
+  --danger-texte:var(--rose-300);
+  --absence:var(--lilas-400);
+
+  --lueur-1:rgba(var(--crimson-rgb),.16);
+  --lueur-2:rgba(var(--crimson-rgb),.32);
+  --lueur-3:rgba(var(--crimson-rgb),.55);
+  --ombre-1:0 2px 8px rgba(0,0,0,.40);
+  --ombre-2:0 8px 22px rgba(0,0,0,.50);
+  --ombre-3:0 18px 44px rgba(0,0,0,.60);
+  --filigrane:linear-gradient(90deg,transparent,var(--or-700) 22%,var(--or-500) 50%,var(--or-700) 78%,transparent);
+}
+
+/* ── 3. COMPATIBILITÉ — les noms de globals.css ────────────────────────────
+   Échanger le :root de globals.css contre ce bloc fait basculer l'essentiel
+   du site sans toucher une page. Le principe : l'ancien orange servait à la
+   fois de TEXTE, de FOND et de LUEUR. Un seul nom ne peut pas devenir crimson
+   (illisible en texte : 2,4:1) — il devient donc l'OR, lisible partout
+   (7,05:1 en texte, 7,55:1 sous texte sombre), et les composants-phares
+   (.vg-btn, .vg-subtab.active, .vg-top-link.active) sont réécrits en crimson
+   dans la passe suivante. Les LUEURS, elles, passent au crimson : une lueur
+   dorée fait toc, une lueur rouge fait cristal.                             */
+:root{
+  --orange:var(--or-500);                 /* texte d'accent, bordure, fond+texte sombre : lisible */
+  --orange-dark:var(--or-700);
+  --orange-rgb:var(--or-rgb);             /* rgba(var(--orange-rgb),.32) → bordures dorées douces */
+  --gold:var(--or-300);                   /* l'ancien #FFD24A était la couleur des Capes : rendu au jeu */
+  --gold-rgb:230,196,138;
+  --bg:var(--noir-950);
+  --bg-2:var(--anthracite-800);
+  --bg-3:var(--anthracite-700);
+  --bg-4:var(--anthracite-600);
+  --border:var(--anthracite-500);
+  --text:var(--ivoire-50);
+  --text-muted:var(--ivoire-500);
+  --green:var(--vert-400);
+  --red:var(--rose-300);                  /* utilisé en TEXTE dans le site : doit rester lisible */
+  --blue:var(--jeu-dryades);              /* inchangé : c'est surtout une donnée */
+  --purple:var(--jeu-yggdrasil);          /* inchangé : idem */
+  --glow-1:var(--lueur-1);
+  --glow-2:var(--lueur-2);
+  --glow-3:var(--lueur-3);
+  --el-1:var(--ombre-1); --el-2:var(--ombre-2); --el-3:var(--ombre-3); --el-4:0 26px 64px rgba(0,0,0,.66);
+  --el-glow:0 6px 22px var(--lueur-2);
+  --r-lg:var(--r-md); --r-xl:var(--r-md);  /* les 14-18 px arrondis deviennent des arêtes */
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v4
+-->
+<g id="genesis-g" fill="#F2EDE5" fill-rule="nonzero">
+  <g id="g-corps">
+    <path d="M 806 214 Q 754.5 216.5 700 203 A 435.5 435.5 0 0 0 172 520 A 414 414 0 0 0 739.5 795.5 L 705.5 721 A 226 262 -14 1 1 652 290 L 712 370 Q 738 292 806 214 Z"/>
+  </g>
+  <g id="g-barre">
+    <path d="M 520 500 L 689.5 500 L 674.5 528 L 690.5 558 L 640 558 Z"/>
+    <path d="M 766.5 500 L 848 500 L 774 558 L 765.5 558 L 781.5 528 Z"/>
+  </g>
+  <g id="g-eperon">
+    <path d="M 728 627 L 765.5 558 L 774 558 L 728 892 L 682 558 L 690.5 558 Z"/>
+  </g>
+  <g id="g-cristal">
+    <path d="M 728 454 L 768 528 L 728 602 L 688 528 Z"/>
+  </g>
+</g>
+</svg>

@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { demanderPermission, jouerCarillon, notifierNavigateur, permissionNotif, reglerSon, sonActif, type EtatPermission } from "@/lib/alerte";
 import { familleNotif, LIMITE_APERCU } from "@/lib/typesNotif";
@@ -8,12 +7,11 @@ import { familleNotif, LIMITE_APERCU } from "@/lib/typesNotif";
 type Notif = { id: string; type: string; title: string; body: string | null; link: string | null; read: boolean; createdAt: string };
 
 /**
- * Ce qui réclame l'attention dans le bandeau : la messagerie et la cloche.
+ * Ce qui réclame l'attention dans le bandeau : la cloche.
  *
- * Les deux sont dans le même composant parce qu'ils tiennent au même appel :
- * depuis que Discord ne relaie plus rien, le site est le seul canal d'alerte, et
- * un second va-et-vient permanent pour afficher un simple compteur serait payé
- * sur toutes les pages.
+ * L'enveloppe ✉ qui l'accompagnait menait aux conversations de commande de la
+ * Boutique ; elle est partie avec elle, le 2026-10-21. Les notifications déjà en
+ * base qui y pointent passent par les redirections de next.config.js.
  */
 
 /** Cadence du guet. On interroge aussi onglet caché : c'est précisément là que
@@ -23,7 +21,6 @@ const PAS_GUET = 20000;
 export function Alertes() {
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
-  const [fils, setFils] = useState(0);
   const [open, setOpen] = useState(false);
   /** La notification dont on a déroulé le texte long. */
   const [deplie, setDeplie] = useState<string | null>(null);
@@ -42,7 +39,7 @@ export function Alertes() {
       if (!r.ok) return;
       const d = await r.json();
       const liste: Notif[] = d.items ?? [];
-      setItems(liste); setUnread(d.unread ?? 0); setFils(d.fils ?? 0);
+      setItems(liste); setUnread(d.unread ?? 0);
 
       if (connues.current === null) {
         connues.current = new Set(liste.map((n) => n.id));
@@ -54,12 +51,13 @@ export function Alertes() {
 
       jouerCarillon();
       // Une seule notification même à trois arrivées d'un coup : trois pop-ups
-      // empilées se ferment sans être lues.
+      // empilées se ferment sans être lues. Groupées, elles n'ont pas de lien
+      // commun : le clic ramène sur l'onglet, la cloche montre le reste.
       const n = nouvelles[0];
       notifierNavigateur(
         nouvelles.length > 1 ? `${nouvelles.length} nouvelles alertes` : n.title,
         nouvelles.length > 1 ? `Dont « ${n.title} »` : (n.body ?? ""),
-        nouvelles.length > 1 ? "/messages" : n.link
+        nouvelles.length > 1 ? null : n.link
       );
     } catch { /* silencieux */ }
   }, []);
@@ -82,7 +80,7 @@ export function Alertes() {
   const activerNavigateur = async () => {
     const p = await demanderPermission();
     setPerm(p);
-    if (p === "granted") notifierNavigateur("Alertes activées", "Vanguard te préviendra ici, même sur un autre onglet.", "/messages");
+    if (p === "granted") notifierNavigateur("Alertes activées", "GENESIS te préviendra ici, même sur un autre onglet.");
   };
   const basculerSon = () => { const v = !son; setSon(v); reglerSon(v); if (v) jouerCarillon(); };
 
@@ -96,21 +94,13 @@ export function Alertes() {
 
   return (
     <div ref={ref} style={{ position: "relative", display: "flex", alignItems: "center" }}>
-      {/* Enveloppe : les conversations en cours. Une notification s'efface quand
-          on l'a lue, une conversation reste — c'est elle qu'on vient rouvrir. */}
-      <Link href="/messages" aria-label="Messages" title="Messages"
-        style={{ position: "relative", color: fils > 0 ? "var(--orange)" : "var(--text-muted)", padding: 6, display: "flex", alignItems: "center" }}>
-        <Icon name="message" size={19} />
-        {fils > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{fils > 9 ? "9+" : fils}</span>}
-      </Link>
-
       <button onClick={toggle} aria-label="Notifications" title="Notifications" style={{ position: "relative", background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer", padding: 6, display: "flex", alignItems: "center" }}>
         <Icon name="bell" size={19} />
-        {unread > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--orange)", color: "#0a0a0c", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{unread > 9 ? "9+" : unread}</span>}
+        {unread > 0 && <span style={{ position: "absolute", top: 1, right: 1, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 8, background: "var(--gn-plein)", color: "var(--gn-sur-action)", fontSize: 11, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}>{unread > 9 ? "9+" : unread}</span>}
       </button>
       {open && (
         <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 320, maxWidth: "90vw", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,.5)", zIndex: 200, overflow: "hidden" }}>
-          <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)", fontFamily: "'Rubik',sans-serif" }}>Notifications</div>
+          <div style={{ padding: "11px 14px", borderBottom: "1px solid var(--border)", fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--gn-accent)", fontFamily: "'Rubik',sans-serif" }}>Notifications</div>
 
           {/* Réglages des alertes, ici plutôt que dans une page de paramètres :
               c'est en voyant la cloche qu'on se demande pourquoi on n'a rien su. */}
@@ -125,13 +115,13 @@ export function Alertes() {
               </span>
             ) : perm === "default" ? (
               <button onClick={activerNavigateur}
-                style={{ fontSize: 11.5, fontWeight: 600, fontFamily: "inherit", padding: "5px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--orange)", background: "rgba(255,140,26,.12)", color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                style={{ fontSize: 11.5, fontWeight: 600, fontFamily: "inherit", padding: "5px 10px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gn-accent)", background: "rgba(var(--gn-lueur-rgb),.12)", color: "var(--gn-accent)", display: "inline-flex", alignItems: "center", gap: 5 }}>
                 <Icon name="bell" size={12} />Être prévenu même sur un autre onglet
               </button>
             ) : null}
 
             <button onClick={basculerSon} title={son ? "Couper le son" : "Remettre le son"}
-              style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: son ? "var(--orange)" : "var(--text-muted)", padding: 2, display: "flex" }}>
+              style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: son ? "var(--gn-accent)" : "var(--text-muted)", padding: 2, display: "flex" }}>
               <Icon name={son ? "megaphone" : "ban"} size={14} />
             </button>
           </div>
@@ -147,7 +137,7 @@ export function Alertes() {
               const long = !!n.body && n.body.length > LIMITE_APERCU;
               const ouvert = deplie === n.id;
               const inner = (
-                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", gap: 10, background: n.read ? "transparent" : "rgba(255,140,26,.06)" }}>
+                <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", gap: 10, background: n.read ? "transparent" : "rgba(var(--gn-lueur-rgb),.06)" }}>
                   <Icon name={f.icone} size={16} style={{ color: f.couleur, flexShrink: 0, marginTop: 2 }} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
@@ -163,7 +153,7 @@ export function Alertes() {
                           // Le lien ouvre la page ; ce bouton ne fait que dérouler
                           // le texte — deux gestes différents, deux commandes.
                           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeplie(ouvert ? null : n.id); }}
-                            style={{ marginLeft: 6, background: "none", border: "none", padding: 0, color: "var(--orange)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
+                            style={{ marginLeft: 6, background: "none", border: "none", padding: 0, color: "var(--gn-accent)", cursor: "pointer", fontSize: 11.5, fontWeight: 600, fontFamily: "inherit" }}>
                             {ouvert ? "réduire" : "en savoir plus"}
                           </button>
                         )}

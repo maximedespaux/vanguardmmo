@@ -96,7 +96,7 @@ export default function WorldBossPage() {
                   </span>
                 ) : null}
                 {e.status === "ONGOING" && <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 20, border: "1px solid var(--green)", color: "var(--green)" }}>en cours</span>}
-                <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--orange)" }}>{fmt(e.startAt)}</span>
+                <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--gn-accent)" }}>{fmt(e.startAt)}</span>
               </div>
               {e.boss.zone && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 6 }}><Icon name="map-pin" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.boss.zone}</div>}
               {e.boss.strategy && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}><Icon name="target" size={14} style={{ display: "inline-block", marginRight: 5 }} />{e.boss.strategy}</div>}

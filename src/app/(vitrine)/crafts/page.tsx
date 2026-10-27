@@ -43,7 +43,7 @@ import { etatVisiteur } from "@/lib/vitrine";
  * des crafts vit dans `public/wiki/crafts.json` — 283 Ko, statique, servi par Next à
  * qui connaît l'adresse, ses 130 lignes « éteintes » comprises. Exactement comme
  * `public/wiki/collections.json`. Les DEUX moitiés de cette page sont donc
- * téléchargeables sans compte depuis toujours, et ni le garde de page ni l'apiGuild
+ * téléchargeables sans compte depuis toujours, et ni le garde de page ni celui
  * de /api/crafts n'y ont jamais rien changé : le commentaire de tête de
  * src/app/api/crafts/route.ts le dit déjà en toutes lettres. Ce que le verrou fait
  * vraiment, c'est empêcher qu'on serve la donnée en clair DANS L'INTERFACE, sans plus.
@@ -66,24 +66,26 @@ import { etatVisiteur } from "@/lib/vitrine";
  * les six volets de crafts pour qui n'est pas membre. Le visiteur voit qu'il y a
  * quelque chose, et pourquoi il ne l'a pas.
  *
- * AUCUNE ROUTE /api N'A ÉTÉ OUVERTE. /api/crafts garde son apiGuild() : le refus
- * n'est pas décoratif, c'est le serveur qui le prononce. La page se contente de ne
+ * AUCUNE ROUTE /api N'A ÉTÉ OUVERTE À UN VISITEUR. /api/crafts se garde par
+ * apiEspace("astuces") depuis le 2026-10-21 — la guilde, et les amis à qui le rôle
+ * Friend ouvre Astuces (SPEC-INFORMATION-GUILDE §9) : le refus n'est pas décoratif,
+ * c'est le serveur qui le prononce. La page se contente de ne
  * plus DEMANDER quand elle sait que la réponse sera non — un 403 par volet dans la
  * console d'un visiteur n'informe personne et ressemble à une panne.
  *
  * La page est un composant serveur ; tout l'écran vit dans <Etabli />.
  */
 export const metadata: Metadata = {
-  title: "Crafts et collections — Vanguard",
+  title: "Crafts et collections — GENESIS",
   /* La description mène par ce qui est OUVERT. Elle promettait « les recettes
      d'échange » en premier : sur un aperçu de lien collé dans un Discord public,
      c'était appâter avec la moitié fermée. Les collections sont nommées — comme le
      faisait /collections avant la fusion — et les recettes sont annoncées pour ce
      qu'elles sont.
      ELLES ÉTAIENT SIX, ELLES SONT QUATRE : la maîtrise d'arme et les anges sont
-     partis sur /builder/mecaniques, ce sont des mécaniques de build. Les promettre
+     partis sur /mecaniques, ce sont des mécaniques de build. Les promettre
      ici enverrait chercher sur cette page ce qui n'y est plus. */
-  description: "Ce qu’on collectionne dans Airborn, relevé dans le client : les titres d’honneur, les succès, les carnets de cartes et le karma PK. Les recettes d’échange et l’arbre du farm sont réservés aux membres de Vanguard.",
+  description: "Ce qu’on collectionne dans Airborn, relevé dans le client : les titres d’honneur, les succès, les carnets de cartes et le karma PK. Les recettes d’échange et l’arbre du farm sont réservés aux membres de GENESIS.",
   /* LE noindex EST TOMBÉ, et c'est réfléchi. Il protégeait deux choses : le
      référencement d'une page réservée, et l'aperçu d'un lien collé en public. Les
      deux motifs ont disparu avec le mur — et surtout, la moitié réservée n'est PAS
@@ -123,7 +125,7 @@ function chiffres(): Chiffres | null {
 
     const c = lire<{ recettes: unknown[]; arbres: unknown[] }>("crafts.json");
     /* Ni `anges` ni `maitrise` ne sont lus ici : ces deux mécaniques ont quitté la
-       page pour /builder/mecaniques. Les compter encore ferait annoncer par
+       page pour /mecaniques. Les compter encore ferait annoncer par
        l'en-tête un contenu que le rail ne porte plus. */
     const k = lire<{
       titres: unknown[]; nbSucces: number;
@@ -149,7 +151,9 @@ const fr = (n: number) => n.toLocaleString("fr-FR");
 export default async function CraftsPage() {
   /* L'état SANS rediriger — c'est toute la différence avec requireGuild(), que le
      layout de (guild) appelait quand la page y vivait. Voir src/lib/vitrine.ts. */
-  const etat = await etatVisiteur();
+  /* L'espace de la page : un ami à qui le rôle Friend ouvre Astuces y agit comme un membre
+     (SPEC-INFORMATION-GUILDE §9) — /api/crafts le lui sert par la même décision. */
+  const etat = await etatVisiteur("astuces");
   const n = chiffres();
   // La provenance est DANS le sous-titre, pas dans la colonne de droite du
   // PageHeader : cette colonne partage la largeur avec le sous-titre, et sur un

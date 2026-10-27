@@ -55,7 +55,7 @@ export function Succes({ familles, nbSucces, source }: {
     <div>
       <Chiffres>
         <Chiffre valeur={nb(nbSucces)} quoi="succès nommés par le client" icon="trophy" />
-        <Chiffre valeur={familles.length} quoi="familles pour s'y retrouver" icon="layers" couleur="var(--orange)" />
+        <Chiffre valeur={familles.length} quoi="familles pour s'y retrouver" icon="layers" couleur="var(--gn-accent)" />
         <Chiffre valeur="0" quoi="seuil connu — ils sont côté serveur" icon="lock" couleur="var(--text-muted)" />
       </Chiffres>
 
@@ -98,7 +98,7 @@ function CarteFamille({ f }: { f: FamilleSucces }) {
   return (
     <div className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: 13 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 9 }}>
-        <span style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)" }}>
+        <span style={{ width: 30, height: 30, flexShrink: 0, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--gn-accent)" }}>
           <Icon name={f.icon as IconName} size={15} />
         </span>
         <span className="font-heading" style={{ flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 700 }}>{f.nom}</span>
@@ -133,7 +133,7 @@ function CarteFamille({ f }: { f: FamilleSucces }) {
         <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 5 }}>
           {f.marches.map((m) => (
             <li key={m} style={{ display: "flex", gap: 7, alignItems: "flex-start", fontSize: 12, lineHeight: 1.4 }}>
-              <Icon name="chevron-right" size={12} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 3 }} />
+              <Icon name="chevron-right" size={12} style={{ color: "var(--gn-accent)", flexShrink: 0, marginTop: 3 }} />
               <span>{m}</span>
             </li>
           ))}

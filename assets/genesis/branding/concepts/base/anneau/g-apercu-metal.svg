@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+GENESIS - monogramme G, geometrie de base « anneau facette » (version retenue = v8)
+Repere SVG : x vers la droite, y vers le bas ; angles comptes depuis +x, positifs dans le sens horaire.
+Toutes les coordonnees sont arrondies au demi-pixel.
+
+CENTRE ET CERCLES DE CONSTRUCTION
+  C = (512, 512), centre du disque de l'avatar.
+  R  = 368 : bord exterieur de l'anneau.
+  r  = 254 : contre-forme (bord interieur). Epaisseur constante : 114.
+  rm = 311 : arete mediane (ligne de facette des finitions, et bord bas cache de l'eperon).
+  Enveloppe : toutes les pointes tiennent dans un rayon de 448 autour de C
+  (pointe nord 448, pointe sud 442, pointe de la barre 438, flanc gauche 368).
+
+g-corps (l'anneau)
+  Arc R de theta = -40 deg (PF = 794, 275.5), sens anti-horaire par le haut, la gauche et le bas,
+  jusqu'a theta = +1.6 deg (880, 521). Coupe horizontale y = 521, cachee sous la barre, jusqu'au
+  cercle r (766, 521). Arc r en sens horaire jusqu'a Ti = (577.5, 266.5), theta = -75 deg.
+  Terminal : deux coupes droites qui se rencontrent en T = (847, 339) :
+   - coupe interieure = tangente au cercle r en Ti, pente 15 deg (descend vers la droite) ;
+     elle prolonge la contre-forme sans cassure et ouvre le G ;
+   - facette exterieure = tangente au cercle R en PF, a 50 deg sous l'horizontale.
+  Angle de la pointe : 35 deg. T sort de 9 px du cercle R (rayon 377).
+
+g-barre (la lame)
+  Bande horizontale y = 476 a 572 (hauteur 96, axe y = 524, 12 px sous le centre).
+  Pointes a 60 deg (chanfreins a 30 deg de l'horizontale, 83 px de course) :
+  pointe interieure A = (548, 524), presque sur l'axe vertical ; pointe exterieure E = (950, 524).
+  Elle passe PAR-DESSUS l'anneau ; sa facette basse sort du cercle R en (876, 567).
+  Hauteur de la barre : le haut de la barre (476) est a 45 % de la hauteur de l'anneau (144 a 880).
+
+g-eperon (l'equerre)
+  Flanc vertical x = 700, de la barre (572) jusqu'au cercle r (700, 683) : il rend carre le coin
+  bas droit de la contre-forme. Haut y = 548 (cache sous la barre), bas = arc rm de (821, 548)
+  a (700, 759.5) (cache dans l'anneau). Dans la silhouette, seul le flanc se voit.
+
+g-etoile-nord et g-cristal (au zenith)
+  Etoile a 4 branches, centre (512, 134), 10 px au-dessus du bord de l'anneau :
+  branche haute 70 (pointe y = 64), basse 100 (y = 234, plantee dans l'anneau),
+  laterales 80 (x = 432 / 592), taille 20 (points 492/532, 114/154).
+  Cristal : losange (512, 88) (527, 134) (512, 196) (497, 134), serti dans la branche verticale
+  avec au moins 7 px de metal autour. En aplat ivoire il se confond avec l'etoile : c'est voulu,
+  la silhouette ne doit pas en dependre.
+
+g-etoile-sud (au nadir)
+  Meme etoile, plus petite, centre (512, 890) : branches 64 (y = 826 et 954), laterales 58, taille 14.
+  Elle tient l'axe vertical : sans elle, l'etoile nord ferait une queue de pomme ; plus fine, elle
+  ferait une cedille.
+
+ORDRE DES CALQUES (de dessous a dessus) : corps, eperon, barre, etoile-sud, etoile-nord, cristal.
+-->
+  <defs>
+
+    <linearGradient id="or-face" x1="160" y1="140" x2="880" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E6C48A"/>
+      <stop offset="0.22" stop-color="#EAD2A4"/>
+      <stop offset="0.42" stop-color="#C69A55"/>
+      <stop offset="0.75" stop-color="#6E5432"/>
+      <stop offset="1" stop-color="#2A221C"/>
+    </linearGradient>
+    <linearGradient id="or-ombre" x1="880" y1="900" x2="160" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9C7742"/>
+      <stop offset="0.4" stop-color="#4A3A26"/>
+      <stop offset="0.75" stop-color="#25201F"/>
+      <stop offset="1" stop-color="#15151D"/>
+    </linearGradient>
+    <linearGradient id="or-arete" x1="180" y1="120" x2="860" y2="920" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F2EDE5"/>
+      <stop offset="0.3" stop-color="#E6C48A"/>
+      <stop offset="0.7" stop-color="#C69A55"/>
+      <stop offset="1" stop-color="#6E5430"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#15151D"/>
+      <stop offset="0.75" stop-color="#0E0E14"/>
+      <stop offset="1" stop-color="#08080C"/>
+    </radialGradient>
+
+    <clipPath id="clip-g-corps"><path d="M 847 339 L 794 275.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z"/></clipPath>
+    <clipPath id="clip-g-eperon"><path d="M 700 548 L 821 548 A 311 311 0 0 1 700 759.5 Z"/></clipPath>
+    <clipPath id="clip-g-barre"><path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z"/></clipPath>
+    <clipPath id="clip-g-etoile-sud"><path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z"/></clipPath>
+    <clipPath id="clip-g-etoile-nord"><path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z"/></clipPath>
+    <clipPath id="clip-g-cristal"><path d="M 512 88 L 527 134 L 512 196 L 497 134 Z"/></clipPath>
+  </defs>
+  <rect width="1024" height="1024" fill="#08080C"/>
+
+    <g id="g-corps">
+      <path d="M 847 339 L 794 275.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z" fill="url(#or-ombre)"/>
+      <g clip-path="url(#clip-g-corps)">
+        <path d="M 512 142 A 370 370 0 1 0 512 882 A 370 370 0 1 0 512 142 Z M 512 201 A 311 311 0 1 1 512 823 A 311 311 0 1 1 512 201 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 142 A 370 370 0 1 0 512 882 A 370 370 0 1 0 512 142 Z M 512 201 A 311 311 0 1 1 512 823 A 311 311 0 1 1 512 201 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 847 339 L 794 275.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z" fill="none" stroke="url(#or-arete)" stroke-width="9"/>
+      </g>
+
+      <path d="M 847 339 L 794 275.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z" fill="none" stroke="#08080C" stroke-width="2.5" stroke-linejoin="miter"/>
+    </g>
+    <g id="g-eperon">
+      <path d="M 700 548 L 821 548 A 311 311 0 0 1 700 759.5 Z" fill="url(#or-ombre)"/>
+      <g clip-path="url(#clip-g-eperon)">
+
+
+
+      </g>
+      <path d="M 700 572 L 700 683" fill="none" stroke="url(#or-arete)" stroke-width="6" stroke-linecap="butt"/>
+
+    </g>
+    <g id="g-barre">
+      <path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z" fill="url(#or-ombre)"/>
+      <g clip-path="url(#clip-g-barre)">
+        <path d="M 0 474 L 1024 474 L 1024 524 L 0 524 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 0 474 L 1024 474 L 1024 524 L 0 524 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z" fill="none" stroke="url(#or-arete)" stroke-width="9"/>
+      </g>
+
+      <path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z" fill="none" stroke="#08080C" stroke-width="2.5" stroke-linejoin="miter"/>
+    </g>
+    <g id="g-etoile-sud">
+      <path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z" fill="url(#or-ombre)"/>
+      <g clip-path="url(#clip-g-etoile-sud)">
+        <path d="M 512 890 L 512 826 L 498 876 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 890 L 454 890 L 498 876 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 890 L 570 890 L 526 876 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 890 L 512 954 L 498 904 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 890 L 512 826 L 498 876 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 890 L 454 890 L 498 876 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 890 L 570 890 L 526 876 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 890 L 512 954 L 498 904 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z" fill="none" stroke="url(#or-arete)" stroke-width="9"/>
+      </g>
+
+      <path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z" fill="none" stroke="#08080C" stroke-width="2.5" stroke-linejoin="miter"/>
+    </g>
+    <g id="g-etoile-nord">
+      <path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z" fill="url(#or-ombre)"/>
+      <g clip-path="url(#clip-g-etoile-nord)">
+        <path d="M 512 134 L 512 64 L 492 114 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 134 L 432 134 L 492 114 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 134 L 592 134 L 532 114 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 134 L 512 234 L 492 154 Z" fill-rule="evenodd" fill="url(#or-face)"/>
+        <path d="M 512 134 L 512 64 L 492 114 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 134 L 432 134 L 492 114 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 134 L 592 134 L 532 114 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 134 L 512 234 L 492 154 Z" fill="none" stroke="#E6C48A" stroke-opacity="0.55" stroke-width="2"/>
+        <path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z" fill="none" stroke="url(#or-arete)" stroke-width="9"/>
+      </g>
+
+      <path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z" fill="none" stroke="#08080C" stroke-width="2.5" stroke-linejoin="miter"/>
+    </g>
+    <g id="g-cristal">
+      <path d="M 512 88 L 527 134 L 512 196 L 497 134 Z" fill="#A6192E" stroke="#08080C" stroke-width="7" stroke-linejoin="miter"/>
+      <g clip-path="url(#clip-g-cristal)">
+        <path d="M 512 88 L 512 128 L 497 134 Z" fill="#BD5965"/>
+        <path d="M 512 88 L 527 134 L 512 128 Z" fill="#A6192E"/>
+        <path d="M 497 134 L 512 128 L 512 196 Z" fill="#7E1630"/>
+        <path d="M 512 128 L 527 134 L 512 196 Z" fill="#60152D"/>
+      </g>
+    </g>
+</svg>

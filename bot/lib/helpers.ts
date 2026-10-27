@@ -3,25 +3,6 @@ import { TIMEZONE } from "../config.js";
 
 export const ORANGE = 0xff8c1a;
 
-// Emoji de statut de stock du coffre (vert / orange / rouge) selon la cible.
-export function stockEmoji(stock: number, target: number): string {
-  if (stock >= target) return "🟢";
-  if (stock >= Math.ceil(target * 0.6)) return "🟡";
-  return "🔴";
-}
-
-// Libellés FR des catégories du coffre.
-export const COFFRE_LABELS: Record<string, string> = {
-  STUFF_YGGDRASIL: "Stuff Yggdrasil",
-  ARMES_YGGDRASIL: "Armes Yggdrasil",
-  STUFF_ETERNEL: "Stuff Éternel",
-  ARMES_ETERNEL: "Armes Éternel",
-  BIJOUX: "Bijoux",
-  EVEIL_R1: "Éveil R1",
-  EVEIL_R2: "Éveil R2",
-  RESSOURCE: "Ressources",
-};
-
 // ─── Conversion "jour + heure" → expression cron (node-cron) ──
 const DOW: Record<string, string> = {
   dimanche: "0", lundi: "1", mardi: "2", mercredi: "3",

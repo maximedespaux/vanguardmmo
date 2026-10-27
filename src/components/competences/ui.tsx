@@ -14,7 +14,7 @@ import { Icon, type IconName } from "@/components/Icon";
 /** Le titre d'un bloc à l'intérieur d'une section. */
 export function SousTitre({ icon, children, apres }: { icon: IconName; children: React.ReactNode; apres?: React.ReactNode }) {
   return (
-    <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)", margin: "0 0 10px" }}>
+    <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--gn-accent)", margin: "0 0 10px" }}>
       <Icon name={icon} size={13} />
       {children}
       {apres != null && (
@@ -64,9 +64,11 @@ export const TD: React.CSSProperties = {
 export function Encart({ icon, ton = "orange", titre, children }: {
   icon: IconName; ton?: "orange" | "gold" | "red" | "blue"; titre: string; children: React.ReactNode;
 }) {
-  const c = `var(--${ton})`;
+  const marque = ton === "orange";
+  const c = marque ? "var(--gn-accent)" : `var(--${ton})`;
   return (
-    <div style={{ background: `color-mix(in srgb, ${c} 7%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 32%, transparent)`,
+    <div style={{ background: marque ? "rgba(var(--gn-lueur-rgb),.07)" : `color-mix(in srgb, ${c} 7%, transparent)`,
+      border: marque ? "1px solid rgba(var(--gn-or-rgb),.32)" : `1px solid color-mix(in srgb, ${c} 32%, transparent)`,
       borderRadius: 11, padding: "13px 15px", marginBottom: 14 }}>
       <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 700, color: c, marginBottom: 5 }}>
         <Icon name={icon} size={14} />{titre}

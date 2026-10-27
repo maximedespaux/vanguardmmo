@@ -124,7 +124,7 @@ export function BarresBudget({ vue }: { vue: LigneeVue }) {
         <b style={{ color: "var(--gold)", ...NUM }}>{fmt(vue.points)} points</b> pour monter les {vue.nb} compétences
         au maximum, dont{" "}
         <Invisible enJeu="Ce sont les compétences de Métier 1 qui coûtent, parce qu'elles seules plafonnent au niveau 20 : les paliers de fin s'arrêtent à 5 ou 10 et ne pèsent presque rien. La fenêtre de compétences ne montre jamais ce déséquilibre.">
-          <b style={{ color: "var(--orange)", ...NUM }}>{part} % chez {gros.nom}</b>
+          <b style={{ color: "var(--gn-accent)", ...NUM }}>{part} % chez {gros.nom}</b>
         </Invisible>
       </p>
       <div style={{ display: "grid", gap: 7, marginBottom: 18 }}>
@@ -135,7 +135,7 @@ export function BarresBudget({ vue }: { vue: LigneeVue }) {
               <span style={{ fontSize: 11.5, fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={e.nom}>{e.nom}</span>
               <span role="img" aria-label={`${Math.round(pct)} % du budget`}
                 style={{ height: 9, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden" }}>
-                <span style={{ display: "block", height: "100%", width: `${Math.max(pct, 1.5)}%`, background: "var(--orange)", borderRadius: 5 }} />
+                <span style={{ display: "block", height: "100%", width: `${Math.max(pct, 1.5)}%`, background: "var(--gn-jauge)", borderRadius: 5 }} />
               </span>
               <span style={{ fontSize: 11, color: "var(--text-muted)", minWidth: 84, textAlign: "right", ...NUM }}>
                 {pct < 1 ? "<1" : Math.round(pct)} % · {e.nb} comp.
@@ -157,7 +157,7 @@ export function CartePalier({ c, titre, couleur, mur }: {
     <div style={{ padding: "13px 15px", borderRadius: 12, background: "var(--bg-2)", border: `1px solid color-mix(in srgb, ${couleur} 30%, var(--border))` }}>
       <div style={{ fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".6px", color: couleur, fontWeight: 700, marginBottom: 4 }}>{titre}</div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap", marginBottom: 9 }}>
-        <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700, color: "var(--orange)" }}>{c.nom}</span>
+        <span className="font-heading" style={{ fontSize: 15.5, fontWeight: 700, color: "var(--gn-accent)" }}>{c.nom}</span>
         <Pastille texte={`niveau ${c.niveauRequis}`} couleur="var(--text-muted)" />
         {mur && (
           <Invisible enJeu="Aux niveaux 1 à 4, la compétence coûte 9 999 999 PM : personne n'a ça, donc elle ne sert à rien avant le niveau 5. Et ce niveau ne se choisit pas — il se tire au hasard en dépensant un joyau de chaque type (topaze, rubis, saphir, émeraude, diamant), plafonné à 5. Tant que le tirage n'a pas donné 5, les joyaux sont dépensés pour rien.">
@@ -252,7 +252,7 @@ export function PaliersDeLaClasse({ vue }: { vue: LigneeVue }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(290px,1fr))", gap: 12, marginBottom: 12, alignItems: "start" }}>
         <CartePalier c={l.maitre} titre="Palier Maître" couleur="var(--gold)" mur={l.maitre.coutPM.includes(PM_MUR)} />
-        <CartePalier c={l.heros} titre="Palier Héros" couleur="var(--orange)" mur={l.heros.coutPM.includes(PM_MUR)} />
+        <CartePalier c={l.heros} titre="Palier Héros" couleur="var(--gn-accent)" mur={l.heros.coutPM.includes(PM_MUR)} />
       </div>
     </>
   );

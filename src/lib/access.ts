@@ -7,6 +7,8 @@ import { canAccessGuild, canAccessAdmin, canAccessVerified, rankValue, ROLE_VERI
 import { estMembreDuServeur, attribuerRole } from "@/lib/discord";
 import type { Role, User } from "@prisma/client";
 import { DEV_ALL } from "@/lib/devAccess";
+import { peutOuvrir, type CleEspace } from "@/config/nav";
+import { espacesAmisDuCompte } from "@/lib/amis";
 
 // Mode dev local (DEV_ALL) : crée/utilise un vrai User « dev » (rôle DIRECTION) pour
 //    simuler la prod sans Discord. Source unique : src/lib/devAccess.ts (fail-closed en prod).
@@ -113,6 +115,23 @@ export async function requireVerified(): Promise<User> {
   return requireAuth();
 }
 
+/**
+ * UNE PAGE D'UN ESPACE QUE LE RÔLE FRIEND PEUT OUVRIR (SPEC-INFORMATION-GUILDE §9) : la
+ * guilde, ou un ami à qui son réglage ouvre cet espace. La décision est `peutOuvrir`
+ * (config/nav.ts), la même que le middleware et la barre ; les espaces de l'ami sont
+ * recalculés ici sur ses rôles Discord EN BASE (lib/amis.ts), pas lus dans le jeton —
+ * une page refuse donc un rôle retiré dès que la synchro du bot l'a vu, sans attendre
+ * la relecture du jeton.
+ */
+async function ouvreEspace(user: User, espace: CleEspace): Promise<boolean> {
+  return peutOuvrir("guild", { role: user.role, amis: await espacesAmisDuCompte(user) }, espace);
+}
+export async function requireEspace(espace: CleEspace): Promise<User> {
+  const user = await requireAuth();
+  if (!(await ouvreEspace(user, espace))) redirect("/login?error=guild");
+  return user;
+}
+
 export async function requireAdmin(): Promise<User> {
   const user = await requireAuth();
   if (!canAccessAdmin(user.role)) redirect("/login?error=admin");
@@ -152,6 +171,18 @@ export async function apiGuild(): Promise<ApiAuth> {
   if ("error" in r) return r;
   if (!canAccessGuild(r.user.role))
     return { error: NextResponse.json({ error: "Réservé aux membres de la guilde." }, { status: 403 }) };
+  return r;
+}
+/**
+ * LE PENDANT API DE requireEspace : une route d'un espace que le rôle Friend peut ouvrir
+ * (/api/objets, /api/ou-trouver, /api/crafts — Astuces). Pour un compte de la guilde, rien
+ * ne change ; un candidat ou un visiteur connecté sans le rôle reste refusé.
+ */
+export async function apiEspace(espace: CleEspace): Promise<ApiAuth> {
+  const r = await apiAuth();
+  if ("error" in r) return r;
+  if (!(await ouvreEspace(r.user, espace)))
+    return { error: NextResponse.json({ error: "Réservé aux membres de la guilde et aux amis invités." }, { status: 403 }) };
   return r;
 }
 export const isOfficer = (role: Role) => canAccessAdmin(role); // Officier+ = bras droits

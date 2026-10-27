@@ -19,9 +19,24 @@ const EMBERS = [
   { l: 93, d: 6.6, dur: 9.2, dx: 14, rise: 76, s: 0.85 },
 ];
 
-const TITRE = "VANGUARD";
+const TITRE = "GENESIS";
 
-export function HeroFlyff() {
+/**
+ * Le hero de l'accueil — le même pour tous depuis que l'accueil est neutre
+ * (2026-10-21).
+ *
+ * `connecte` : une session existe déjà. Le bouton de connexion disparaît — il
+ * proposait de se connecter à quelqu'un qui l'était, sur l'écran où l'on atterrit
+ * après la connexion — et « Postuler » devient l'action principale.
+ * `membre` : déjà de la guilde. « Postuler » disparaît aussi (la règle de `appel`,
+ * config/nav.ts) : il ne reste que le titre et « Découvrir la guilde ».
+ *
+ * LE HERO N'EST PLUS FORCÉMENT EN HAUT DE PAGE : « Mes personnages » peut le précéder.
+ * La parallaxe, le fondu du titre et « Découvrir la guilde » se mesurent donc depuis
+ * la position du hero, plus depuis le haut de la page — sinon son titre arrivait déjà
+ * à moitié effacé sous les yeux de qui venait de faire défiler ses persos.
+ */
+export function HeroFlyff({ connecte = false, membre = false }: { connecte?: boolean; membre?: boolean }) {
   const [scroll, setScroll] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,7 +46,11 @@ export function HeroFlyff() {
   useEffect(() => {
     const scroller: HTMLElement | null = document.querySelector(".vg-main");
     const read = () => {
-      const y = scroller ? scroller.scrollTop : window.scrollY;
+      // Ce qui est passé du hero sous le haut de la zone qui défile : 0 tant qu'il est
+      // dessous, la distance défilée une fois qu'il est en haut — comme avant quand
+      // rien ne le précède.
+      const haut = scroller ? scroller.getBoundingClientRect().top : 0;
+      const y = ref.current ? Math.max(0, haut - ref.current.getBoundingClientRect().top) : 0;
       setScroll(Math.min(1, y / 600));
     };
     const target: HTMLElement | Window = scroller ?? window;
@@ -40,9 +59,10 @@ export function HeroFlyff() {
     return () => target.removeEventListener("scroll", read);
   }, []);
 
-  // Même convention que la marque et AirGuild : la première syllabe en blanc,
-  // la seconde en orange. « VAN » | « GUARD ».
-  const COUPURE = 3;
+  // Plus de traitement bicolore : GENESIS s'écrit d'un seul métal (dégradé posé
+  // lettre par lettre dans genesis.css). La coupure reste à 0 plutôt que de
+  // retirer les deux classes, que genesis.css habille de la même façon.
+  const COUPURE = 0;
   const lettres = useMemo(
     () => TITRE.split("").map((c, i) => (
       <span
@@ -56,14 +76,19 @@ export function HeroFlyff() {
 
   const versLaSuite = () => {
     const scroller = document.querySelector(".vg-main");
-    const cible = ref.current?.getBoundingClientRect().height ?? 600;
+    // Le bas du hero, dans la page qui défile — et non sa seule hauteur, qui ne valait
+    // que pour un hero posé tout en haut.
+    const r = ref.current?.getBoundingClientRect();
+    const haut = scroller ? scroller.getBoundingClientRect().top : 0;
+    const deja = scroller ? scroller.scrollTop : window.scrollY;
+    const cible = r ? deja + r.bottom - haut : 600;
     if (scroller) scroller.scrollTo({ top: cible - 70, behavior: "smooth" });
     else window.scrollTo({ top: cible - 70, behavior: "smooth" });
   };
 
   return (
     <div className="hero-flyff" ref={ref}>
-      {/* Fond : illustration Vanguard, zoom lent + parallaxe au scroll */}
+      {/* Fond : la salle du trône GENESIS, zoom lent + parallaxe au scroll */}
       <div className="hf-bgwrap" style={{ transform: `translateY(${scroll * 70}px) scale(${1 + scroll * 0.06})` }}>
         <div className="hf-bg" />
       </div>
@@ -87,11 +112,16 @@ export function HeroFlyff() {
         ))}
       </div>
 
-      {/* Titre + connexion (accueil = login Discord + histoire en dessous) */}
+      {/* Titre, connexion et candidature : les deux gestes d'un visiteur. */}
       <div className="hf-title" style={{ transform: `translateY(${-scroll * 40}px)`, opacity: 1 - scroll }}>
         <h1 className="font-heading hf-h1" aria-label={TITRE}>{lettres}</h1>
         <p>Peu de membres, mais présents. Discord et vocal obligatoires — c&apos;est là qu&apos;on joue vraiment ensemble.</p>
-        <a href="/login" className="hf-login"><Icon name="discord" size={19} /> Se connecter avec Discord</a>
+        {!membre && (
+          <div className="gn-hero-actions">
+            {!connecte && <a href="/login" className="hf-login"><Icon name="discord" size={19} /> Se connecter avec Discord</a>}
+            <a href="/candidature" className={connecte ? "hf-login" : "gn-hero-postuler"}><Icon name="clipboard" size={19} /> Postuler</a>
+          </div>
+        )}
       </div>
 
       {/* 70 % du contenu est sous la ligne de flottaison : on le signale, et le
@@ -105,32 +135,32 @@ export function HeroFlyff() {
         /* Le hero vit DANS .vg-main, qui commence sous la barre de nav fixe (68px).
            À 100dvh il dépassait donc de 68px sous la fenêtre, ce qui coupait
            l'indice de défilement placé en bas. */
-        .hero-flyff{position:relative;width:100%;height:calc(100vh - 68px);min-height:520px;overflow:hidden;background:#050200;margin:0}
+        .hero-flyff{position:relative;width:100%;height:calc(100vh - 68px);min-height:520px;overflow:hidden;background:var(--gn-noir);margin:0}
         @supports (height:100dvh){.hero-flyff{height:calc(100dvh - 68px)}}
         .hf-bgwrap{position:absolute;inset:-6%;z-index:1;will-change:transform;transition:transform .12s linear}
-        .hf-bg{position:absolute;inset:0;background:url('/assets/site/new/accueil.webp') center 28% / cover no-repeat;animation:hfken 26s ease-in-out infinite alternate}
+        .hf-bg{position:absolute;inset:0;background:url('/assets/genesis/bg/salle-du-trone.webp') center 46% / cover no-repeat;animation:hfken 26s ease-in-out infinite alternate}
         .hf-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:
-          radial-gradient(ellipse 85% 75% at 50% 38%, transparent 32%, rgba(5,2,0,.5) 100%),
-          linear-gradient(to bottom, rgba(5,2,0,.55) 0%, transparent 22%, transparent 50%, rgba(10,10,12,.85) 88%, #0A0A0C 100%)}
+          radial-gradient(ellipse 85% 75% at 50% 38%, transparent 32%, rgba(8,6,10,.5) 100%),
+          linear-gradient(to bottom, rgba(8,6,10,.55) 0%, transparent 22%, transparent 50%, rgba(8,8,12,.85) 88%, var(--gn-noir) 100%)}
         .hf-glow{position:absolute;inset:0;z-index:3;pointer-events:none;mix-blend-mode:screen;
-          background:radial-gradient(circle 40% at 50% 42%, rgba(255,140,26,.28), transparent 60%);animation:hfglow 5s ease-in-out infinite}
+          background:radial-gradient(circle 40% at 50% 42%, rgba(var(--gn-lueur-rgb),.28), transparent 60%);animation:hfglow 5s ease-in-out infinite}
         .hf-title{position:absolute;top:20%;left:0;right:0;text-align:center;z-index:6;transition:transform .2s,opacity .2s}
         /* Le CTA est l'action principale du site : il doit être l'élément le plus
            fort de l'écran, pas un simple contour. */
         .hf-login{display:inline-flex;align-items:center;gap:10px;margin-top:30px;padding:16px 40px;border-radius:14px;
-          background:linear-gradient(180deg,#FFC061,#FF8C1A);color:#2a1400;border:0;
+          background:var(--gn-action);color:var(--gn-sur-action);border:0;
           font-family:Rubik,sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:1.6px;text-decoration:none;
-          box-shadow:0 10px 30px rgba(255,140,26,.46),0 2px 0 rgba(255,255,255,.28) inset;
+          box-shadow:0 10px 30px rgba(var(--gn-lueur-rgb),.46),0 2px 0 rgba(255,255,255,.28) inset;
           position:relative;overflow:hidden;transition:transform .16s,box-shadow .22s,filter .16s}
         .hf-login::after{content:"";position:absolute;inset:0;pointer-events:none;
           background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.42) 50%,transparent 62%);
           transform:translateX(-120%);transition:transform .6s cubic-bezier(.16,1,.3,1)}
         .hf-login:hover::after{transform:translateX(120%)}
-        .hf-login:hover{transform:translateY(-3px);box-shadow:0 16px 42px rgba(255,140,26,.62);filter:brightness(1.05)}
+        .hf-login:hover{transform:translateY(-3px);box-shadow:0 16px 42px rgba(var(--gn-lueur-rgb),.62);filter:brightness(1.05)}
         .hf-login:active{transform:translateY(-1px) scale(.985)}
         .hf-login:focus-visible{outline:3px solid #fff;outline-offset:3px}
-        .hf-title h1{font-family:'Rubik',Rubik,sans-serif;font-weight:400;font-size:clamp(54px,10vw,132px);letter-spacing:4px;margin:0}
-        .hf-title p{color:#f7d8b4;max-width:580px;margin:12px auto 0;font-size:16px;line-height:1.6;text-shadow:0 2px 12px rgba(0,0,0,.9);padding:0 18px}
+        .hf-title h1{font-family:var(--gn-titre);font-weight:400;font-size:clamp(54px,10vw,132px);letter-spacing:4px;margin:0}
+        .hf-title p{color:var(--gn-texte);max-width:580px;margin:12px auto 0;font-size:16px;line-height:1.6;text-shadow:0 2px 12px rgba(0,0,0,.9);padding:0 18px}
         @keyframes hfken{from{transform:scale(1)}to{transform:scale(1.09)}}
         @keyframes hfglow{0%,100%{opacity:.45}50%{opacity:.72}}
         @media(max-width:760px){.hf-title{top:15%}.hf-bg{background-position:center 32%}.hf-login{font-size:15px;padding:14px 30px}}

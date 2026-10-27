@@ -5,12 +5,19 @@
 //  motif) et une BotCommand, et c'est ici que ça se produit vraiment. Le
 //  retour repart dans la sanction — statut FAITE ou ÉCHOUÉE, et pourquoi.
 //
-//  Quatre gestes, du plus doux au plus définitif :
+//  Cinq gestes, du plus doux au plus définitif :
+//    rang   — promouvoir ou rétrograder (2026-10-21) : retirer l'ancien rôle
+//             de rang, poser le nouveau. C'est ICI que le rang change, pas en
+//             base : syncMemberRanks relit les rôles toutes les 10 minutes et
+//             déferait un rang écrit seulement sur le site.
 //    role   — retirer UN rôle. Le membre reste, il perd une casquette.
 //    guilde — retirer tous les rôles de rang. Il reste sur le Discord mais
 //             n'est plus de la guilde : c'est le départ à l'amiable.
 //    kick   — sortir du serveur. Il peut revenir avec une invitation.
 //    ban    — sortir et interdire le retour.
+//
+//  (« Cacher » et « montrer » ne passent pas par ici : ils ne touchent pas à
+//  Discord, le site les fait lui-même.)
 //
 //  Deux garde-fous que Discord n'impose pas et qu'on s'impose :
 //   · on ne touche jamais un membre dont le plus haut rôle est au-dessus (ou
@@ -20,8 +27,11 @@
 //     ouvrira les logs du serveur dans six mois y trouvera la raison écrite.
 // ════════════════════════════════════════════════════════════
 import { Client, Guild, GuildMember } from "discord.js";
+import type { Role } from "@prisma/client";
 import { prisma } from "./prisma.js";
-import { GUILD_ID, RANK_ROLES } from "../config.js";
+import { GUILD_ID, RANK_ROLES, highestRankFromRoles } from "../config.js";
+import { modifierCompo } from "@/lib/compositions-serveur";
+import { rangRelu, retirerDeLaCompo } from "@/lib/gestes";
 
 /** Met à jour le cache GuildRole (lu par le site pour proposer les rôles par leur nom). */
 export async function syncGuildRoles(client: Client) {
@@ -66,11 +76,15 @@ async function trouveMembre(guild: Guild, discordId: string): Promise<GuildMembe
 
 const motifPour = (auteur: string, motif: string) => `${motif} — décidé par ${auteur} depuis le GuildViewer`.slice(0, 500);
 
+/** Ce que le site dépose dans la file (`BotCommand.payload`, /api/admin/moderation). */
+export type GesteModeration = { action: string; discordId: string; roleId?: string | null; rang?: string | null; motif: string; auteur: string; actionId?: string };
+
+const NOM_RANG: Record<string, string> = {
+  DIRECTION: "Direction", VANGUARD: "Vanguard", GENERAL: "Général", OFFICIER: "Officier", VETERAN: "Vétéran", GUARD: "Guard",
+};
+
 /** Exécute un geste de modération. Renvoie la phrase à afficher dans le dossier. */
-export async function executeModeration(
-  client: Client,
-  p: { action: string; discordId: string; roleId?: string; motif: string; auteur: string },
-): Promise<string> {
+export async function executeModeration(client: Client, p: GesteModeration): Promise<string> {
   const guild = await laGuilde(client);
   const raison = motifPour(p.auteur, p.motif);
 
@@ -102,6 +116,31 @@ export async function executeModeration(
     return `Rôle « ${role.name} » retiré à ${membre.user.username}.`;
   }
 
+  if (p.action === "rang") {
+    // Le site a déjà vérifié qui peut nommer qui (lib/gestes.ts) ; ici, c'est Discord
+    // qu'il faut convaincre : le rôle à POSER doit être sous celui du bot, comme pour
+    // /boutonrole. (Les rôles à retirer le sont forcément : verifieHierarchie vient de
+    // vérifier que le plus haut rôle du membre est sous celui du bot.)
+    const rang = String(p.rang ?? "");
+    const roleId = RANK_ROLES[rang];
+    if (!roleId) throw new Error(`Aucun rôle Discord n'est associé au rang ${NOM_RANG[rang] ?? rang} (ROLE_${rang} dans .env).`);
+    const role = guild.roles.cache.get(roleId) ?? (await guild.roles.fetch(roleId).catch(() => null));
+    if (!role) throw new Error(`Le rôle du rang ${NOM_RANG[rang] ?? rang} n'existe plus sur le serveur (ROLE_${rang}).`);
+    if (role.managed) throw new Error(`« ${role.name} » est géré par une intégration : Discord interdit de le poser à la main.`);
+    const moi = await guild.members.fetchMe();
+    if (moi.roles.highest.comparePositionTo(role) <= 0)
+      throw new Error(`Le rôle du bot (${moi.roles.highest.name}) doit être au-dessus de « ${role.name} » pour le poser. Remonte-le dans Paramètres du serveur → Rôles.`);
+
+    const rangs = Object.values(RANK_ROLES).filter(Boolean);
+    const anciens = membre.roles.cache.filter((r) => rangs.includes(r.id) && r.id !== role.id && !r.managed);
+    // Le nouveau d'abord : retiré puis posé, le membre passerait un instant hors de la
+    // guilde, et un tour de syncMemberRanks tombant entre les deux le noterait Recrue.
+    if (!membre.roles.cache.has(role.id)) await membre.roles.add(role, raison);
+    if (anciens.size) await membre.roles.remove([...anciens.keys()], raison);
+    const avant = anciens.size ? anciens.map((r) => r.name).join(", ") : "aucun rang";
+    return `${membre.user.username} : ${avant} → ${role.name}.`;
+  }
+
   if (p.action === "guilde") {
     // Tous les rangs d'un coup : garder un seul rang au passage laisserait la
     // personne « à moitié dans la guilde », ce qui rouvre des pages entières.
@@ -116,15 +155,46 @@ export async function executeModeration(
   throw new Error("Geste de modération inconnu : " + p.action);
 }
 
-/** Applique côté BASE ce que le geste implique, une fois Discord d'accord. */
-export async function repercuteEnBase(action: string, discordId: string) {
-  const u = await prisma.user.findUnique({ where: { discordId } }).catch(() => null);
+/**
+ * Applique côté BASE ce que le geste implique, une fois Discord d'accord.
+ *
+ * Pour un changement de rang, le rang se recalcule des rôles RÉELS du membre, relus chez
+ * Discord après le geste — la règle de syncMemberRanks, appliquée tout de suite plutôt
+ * qu'au tour suivant, pour que le dossier et les listes le disent dans la minute.
+ */
+export async function repercuteEnBase(client: Client, p: GesteModeration) {
+  const u = await prisma.user.findUnique({ where: { discordId: p.discordId }, include: { characters: { select: { name: true } } } }).catch(() => null);
   if (!u) return;
-  if (action === "kick" || action === "ban") {
-    // On ne supprime pas la ligne : ses ventes, ses quêtes et ses dettes y
-    // pendent. On la sort des vivants, elle cesse d'apparaître comme membre.
+  if (p.action === "kick" || p.action === "ban") {
+    // On ne supprime pas la ligne : ses anciennes ventes, quêtes et dettes y pendent
+    // (gardées en base après le départ de la Boutique et de Quête Guilde). On la sort
+    // des vivants, elle cesse d'apparaître comme membre.
     await prisma.user.update({ where: { id: u.id }, data: { role: "RECRUE", discordRoles: [], isActive: false, verifiedAt: null } });
-  } else if (action === "guilde") {
+  } else if (p.action === "guilde") {
     await prisma.user.update({ where: { id: u.id }, data: { role: "RECRUE", isActive: false } });
+  } else if (p.action === "rang") {
+    const guild = await laGuilde(client).catch(() => null);
+    const m = guild ? await guild.members.fetch({ user: p.discordId, force: true }).catch(() => null) : null;
+    if (m) {
+      const roleIds = [...m.roles.cache.keys()];
+      // Promu depuis Recrue (un ancien membre qui revient) : il redevient actif — la règle
+      // de syncMemberRanks (lib/gestes, `rangRelu`).
+      await prisma.user.update({ where: { id: u.id }, data: { ...rangRelu(highestRankFromRoles(roleIds) as Role), discordRoles: roleIds } });
+    }
+  }
+
+  /* SORTI DE LA GUILDE, il n'y figure plus nulle part (SPEC-INFORMATION-GUILDE §4) : ses
+     inscriptions et ses « je serai là » des Chambres Secrètes partent avec lui. Les
+     pages lisent le rang pour tout le reste. L'écriture passe par `modifierCompo` (lot 3 des
+     Chambres) : sous verrou, elle n'efface pas un « Je viens » cliqué au même moment sur
+     Discord, et l'état d'avant est gardé sous « main:precedent », comme à chaque écriture. */
+  if (p.action === "guilde" || p.action === "kick" || p.action === "ban") {
+    const res = await modifierCompo(prisma, (e) => {
+      const { etat, retires } = retirerDeLaCompo(e, { pseudo: u.username, persos: u.characters.map((c) => c.name) });
+      if (!retires) return { ok: false, status: 204, message: "rien à retirer" };
+      Object.assign(e, etat);
+      return { ok: true, valeur: retires };
+    }).catch((e) => { console.error("[moderation] composition :", e); return null; });
+    if (res && !res.ok && res.status === 409) console.error("[moderation] composition :", res.message);
   }
 }

@@ -82,8 +82,8 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
         background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 11 }}>
         <label htmlFor="vise" style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Tu veux la monter au niveau</label>
         <input id="vise" type="range" min={2} max={20} value={vise} onChange={(e) => setVise(Number(e.target.value))}
-          style={{ flex: "1 1 150px", minWidth: 120, accentColor: "var(--orange)" }} />
-        <span className="font-heading" style={{ ...NUM, fontSize: 17, fontWeight: 700, color: "var(--orange)", minWidth: 26, textAlign: "center" }}>{vise}</span>
+          style={{ flex: "1 1 150px", minWidth: 120, accentColor: "var(--gn-accent)" }} />
+        <span className="font-heading" style={{ ...NUM, fontSize: 17, fontWeight: 700, color: "var(--gn-accent)", minWidth: 26, textAlign: "center" }}>{vise}</span>
         <span style={{ ...NUM, fontSize: 13 }}>
           <b className="font-heading" style={{ fontSize: 16 }}>{fmt(cumul)}</b> points
           {equivalent >= 2 && <span style={{ color: "var(--text-muted)" }}> — soit {equivalent} compétences montées à 10</span>}
@@ -120,7 +120,7 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
                 const dur = durs.some((m) => m.niveau === x.niveau);
                 return (
                   <tr key={x.niveau} style={dur ? { background: "rgba(255,210,74,.07)" } : undefined}>
-                    <td style={{ ...TD, color: x.niveau === vise ? "var(--orange)" : "var(--text)", fontWeight: x.niveau === vise ? 700 : 400 }}>{x.niveau}</td>
+                    <td style={{ ...TD, color: x.niveau === vise ? "var(--gn-accent)" : "var(--text)", fontWeight: x.niveau === vise ? 700 : 400 }}>{x.niveau}</td>
                     <td style={{ ...TD, color: dur ? "var(--gold)" : "var(--text)", fontWeight: dur ? 700 : 400 }}>{x.xp === 0 ? "—" : fmt(x.xp)}</td>
                     <td style={{ ...TD, color: "var(--text-muted)" }}>{fmt(coutCumule(table, x.niveau))}</td>
                   </tr>
@@ -149,7 +149,7 @@ export function Budget({ table, lignees }: { table: { niveau: number; xp: number
                     </span>
                   </td>
                   <td style={TD}>{l.nbCompetences}</td>
-                  <td style={{ ...TD, color: "var(--orange)", fontWeight: 600 }}>{fmt(l.coutPoints)}</td>
+                  <td style={{ ...TD, color: "var(--gn-accent)", fontWeight: 600 }}>{fmt(l.coutPoints)}</td>
                 </tr>
               ))}
             </tbody>

@@ -18,11 +18,10 @@ export const BUILDER_MARKUP = `<div class="wrap">
          planche qui les montre était à deux clics de nav. Elle est ici.
          ATTENTION : tout ce fichier est UN SEUL LITTÉRAL DE GABARIT. Pas un
          accent grave dans les commentaires — il fermerait le littéral et
-         mettrait la page en 500. La classe vg-meca (sans accent grave, donc)
-         sert au masquage pour un visiteur non connecté : /builder/mecaniques vit
-         dans le groupe (verified), son layout appelle requireVerified, et un
-         lien qui rebondit sur /login vaut moins que pas de lien du tout. -->
-    <a class="btn ghost vg-meca" href="/builder/mecaniques" title="Ce que « R1 », « Fulgur 10 % » ou « ★★ » veulent dire, avec les images du jeu">${ico("gem", { size: 16 })} Les mécaniques</a>
+         mettrait la page en 500. La classe vg-meca servait à masquer le lien
+         au visiteur tant que la planche était réservée aux connectés ; elle est
+         publique désormais, le lien se montre à tous. -->
+    <a class="btn ghost vg-meca" href="/mecaniques" title="Ce que « R1 », « Fulgur 10 % » ou « ★★ » veulent dire, avec les images du jeu">${ico("gem", { size: 16 })} Les mécaniques</a>
     <button class="btn ghost btn-aide" onclick="vgSaveHelp()" title="Comment marchent la sauvegarde, les versions et la publication ?" aria-label="Comment ça marche ?">${ico("info", { size: 17 })}</button>
   </div>
 
@@ -35,8 +34,6 @@ export const BUILDER_MARKUP = `<div class="wrap">
 
   <div class="doll">
     <div class="dollttl" id="dollttl">Équipement</div>
-    <!-- Acheter part des pièces qu'on a sous les yeux, pas d'un menu. -->
-    <button type="button" class="dollbuy" onclick="vgAcheterPiece()">${ico("cart", { size: 14 })} Acheter un objet</button>
     <div class="rowT" id="rowT"></div>
     <div class="colL" id="colL"></div>
     <div class="center"><div class="silwrap"><div class="silhead"><div class="cn" id="cn"></div><div class="cc" id="cc"></div></div><img class="charimg" id="charimg" alt=""></div></div>

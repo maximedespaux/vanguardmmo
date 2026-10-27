@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
 import { VgSelect } from "@/components/VgSelect";
@@ -9,7 +10,23 @@ import { useCardFx } from "@/components/VgFx";
 type Channel = { id: string; name: string; type: string };
 type Cmd = { id: string; type: string; status: string; result: string | null; createdBy: string; createdAt: string; payload: any };
 
-const TYPE_LABEL: Record<string, string> = { post_embed: "Embed", create_giveaway: "Giveaway", post_class_panel: "Panneau classes" };
+/* Les commandes des Chambres (SPEC-CHAMBRES §6) sont mises en file par leurs routes, jamais
+   d'ici ; elles passent pourtant dans l'historique ci-dessous, sous un nom lisible plutôt que
+   « seance_publier » en clair. */
+const TYPE_LABEL: Record<string, string> = {
+  post_embed: "Embed", create_giveaway: "Giveaway", post_class_panel: "Panneau classes", moderation: "Modération",
+  seance_publier: "Panneau CS", seance_fermer: "Fermeture CS", seance_annulation: "Annulation CS",
+  seance_debrief: "Débrief", evenement_essai: "Essai",
+  // Lot 10 : le message privé d'un échange de place (la demande, ou sa réponse).
+  seance_echange: "Échange CS",
+};
+/** `seance_publier` publie quatre messages depuis le lot 5 : le nom suit sa charge (`quoi`). */
+const PUBLIE: Record<string, string> = { panneau: "Panneau CS", recap: "Récap CS", repartition: "Répartition CS", chrono: "Chrono CS" };
+/** Lot 9 : une commande du Guild Siege porte `evenement: "gs"` dans sa charge ; le suivi le dit,
+ *  plutôt que d'afficher « Panneau CS » pour le panneau du siège. */
+const GS: Record<string, string> = { seance_publier: "Panneau GS", seance_fermer: "Fermeture GS", seance_annulation: "Annulation GS", seance_debrief: "Débrief GS" };
+const libelleCommande = (c: Cmd) => (c.payload?.evenement === "gs" && GS[c.type] ? GS[c.type]
+  : c.type === "seance_publier" ? PUBLIE[String(c.payload?.quoi ?? "panneau")] ?? TYPE_LABEL[c.type] : TYPE_LABEL[c.type] ?? c.type);
 const STATUS_META: Record<string, { c: string; l: React.ReactNode }> = {
   PENDING: { c: "var(--gold)", l: <><Icon name="clock" size={14} style={{ display: "inline-block", marginRight: 5 }} />en attente</> },
   DONE: { c: "var(--green)", l: <><Icon name="check" size={14} style={{ display: "inline-block", marginRight: 5 }} />envoyé</> },
@@ -48,7 +65,9 @@ export default function DiscordPage() {
   /** Un creneau recurrent : rappel @everyone la veille puis le jour meme. */
   const CRENEAUX = [
     { cle: "cs" as const, icone: "key" as const, titre: "Chambres Secrètes", quand: "Mercredi et dimanche à 21h" },
-    { cle: "gs" as const, icone: "swords" as const, titre: "Guild Siege", quand: "Horaire à définir" },
+    // Depuis le lot 3, ses rappels ne partent que si le Guild Siege est ACTIVÉ dans le paramétrage
+    // (décision du 2026-10-21 : codé mais inactif) — cet interrupteur seul n'envoie plus rien.
+    { cle: "gs" as const, icone: "swords" as const, titre: "Guild Siege", quand: "Inactif tant que le paramétrage des événements ne l'active pas (créneaux à définir)" },
   ];
 
   // Halo curseur + leger relief sur les cartes (.fx-card), cf. VgFx.
@@ -71,7 +90,10 @@ export default function DiscordPage() {
 
   const loadCmds = async () => { try { const r = await fetch("/api/admin/bot-command"); if (r.ok) setCmds(await r.json()); } catch {} };
   useEffect(() => {
-    (async () => { try { const r = await fetch("/api/admin/channels"); if (r.ok) { const ch: Channel[] = await r.json(); setChannels(ch); const first = ch.find((c) => c.type === "text" || c.type === "announcement")?.id ?? ""; setECh(first); setGCh(first); setCCh(first); } } catch {} })();
+    (async () => { try { const r = await fetch("/api/admin/channels"); if (r.ok) { const ch: Channel[] = await r.json(); setChannels(ch); const post = ch.filter((c) => c.type === "text" || c.type === "announcement"); const first = post[0]?.id ?? "";
+      // Repris de /annonce, qui redirige ici : un embed part d'abord dans le salon
+      // d'annonces, pas dans le premier salon de la liste.
+      setECh(post.find((c) => /annonce/i.test(c.name))?.id ?? first); setGCh(first); setCCh(first); } } catch {} })();
     loadCmds(); const t = setInterval(loadCmds, 5000); return () => clearInterval(t);
   }, []);
 
@@ -97,7 +119,7 @@ export default function DiscordPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 980, margin: "0 auto" }}>
       <PageHeader banner="/assets/site/banners/banner-discord.webp" title="Discord" subtitle="Pilote le bot sans ouvrir Discord : embeds, giveaways, panneau de classes." />
-      <SectionTabs section="discord" />
+      <SectionTabs rubrique="Outils" />
 
       {toast && <div className="fx-card" style={{ ...card, padding: "10px 14px", color: ok ? "var(--green)" : "var(--red)", fontSize: 14, display: "flex", alignItems: "center", gap: 8 }}>{ok && <Icon name="check" size={16} />}{toast}</div>}
 
@@ -106,11 +128,18 @@ export default function DiscordPage() {
           indisponible, et deux @everyone par semaine dans le vide apprennent surtout
           aux membres à ignorer le salon. */}
       <div id="creneaux" className="fx-card" style={card}>
-        <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="font-heading" style={{ fontSize: 13, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
           <Icon name="calendar" size={16} />Créneaux récurrents
         </div>
         <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.55 }}>
           Le bot annonce <b>@everyone</b> dans le salon de la guilde : la veille à 20h pour préparer, puis le jour même à 20h pour se connecter.
+          {/* Le reste — salons, horaires des rappels, textes, étapes, postes — se règle sur la page
+              voisine (SPEC-CHAMBRES-RECENSEMENT §9.1 : « un lien depuis la carte Chambres
+              Secrètes de /discord »). Ces interrupteurs y sont repris. */}
+          {" "}Salons, horaires, textes, étapes et postes :{" "}
+          <Link href="/discord/evenements" style={{ color: "var(--gn-accent)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <Icon name="settings" size={13} />Paramétrage des événements
+          </Link>.
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {CRENEAUX.map((c) => {
@@ -132,8 +161,8 @@ export default function DiscordPage() {
                     {[false, true].map((v) => (
                       <button key={String(v)} onClick={() => basculer(c.cle, v)}
                         style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 15px", border: 0, cursor: "pointer", fontSize: 12.5, fontWeight: 700,
-                          background: actif === v ? (v ? "linear-gradient(180deg,#FFC061,#FF8C1A)" : "var(--bg-4)") : "rgba(0,0,0,.25)",
-                          color: actif === v ? (v ? "#2a1400" : "var(--text)") : "var(--text-muted)" }}>
+                          background: actif === v ? (v ? "var(--gn-action)" : "var(--bg-4)") : "rgba(0,0,0,.25)",
+                          color: actif === v ? (v ? "var(--gn-sur-action)" : "var(--text)") : "var(--text-muted)" }}>
                         <Icon name={v ? "bell" : "ban"} size={13} />{v ? "Activés" : "Coupés"}
                       </button>
                     ))}
@@ -176,12 +205,12 @@ export default function DiscordPage() {
               {gPrizes.length > 1 && <button onClick={() => setGPrizes(gPrizes.filter((_, j) => j !== i))} title="Retirer ce lot" style={{ ...inp, width: 44, cursor: "pointer", color: "var(--red)", flex: "none", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={15} /></button>}
             </div>
           ))}
-          <button onClick={() => setGPrizes([...gPrizes, ""])} style={{ ...inp, width: "auto", cursor: "pointer", fontSize: 13, color: "var(--orange)", borderColor: "var(--orange)", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="plus" size={15} />Ajouter un lot</button>
+          <button onClick={() => setGPrizes([...gPrizes, ""])} style={{ ...inp, width: "auto", cursor: "pointer", fontSize: 13, color: "var(--gn-accent)", borderColor: "var(--gn-accent)", padding: "6px 12px", display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="plus" size={15} />Ajouter un lot</button>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 4 }}>
             <div style={{ flex: 1, minWidth: 120 }}><label style={lab}>Durée (30m, 2h, 1d)</label><input style={inp} value={gDur} onChange={(e) => setGDur(e.target.value)} /></div>
             <div style={{ width: 110 }}><label style={lab}>Gagnants</label><input type="number" min={1} style={inp} value={gWin} onChange={(e) => setGWin(Math.max(1, +e.target.value || 1))} /></div>
           </div>
-          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 12, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
+          <div style={{ borderTop: "1px dashed var(--border)", marginTop: 12, paddingTop: 4 }}><span style={{ fontSize: 12, color: "var(--gn-accent)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <label style={lab}>Titre</label><input style={inp} value={gTitle} onChange={(e) => setGTitle(e.target.value)} placeholder="vide = GIVEAWAY — (1er lot)" />
           <label style={lab}>Description</label><input style={inp} value={gDesc} onChange={(e) => setGDesc(e.target.value)} placeholder="Texte de l'embed (optionnel)" />
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -211,7 +240,7 @@ export default function DiscordPage() {
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 8 }}>
             {cmds.map((c) => { const s = STATUS_META[c.status] ?? { c: "var(--text-muted)", l: c.status }; return (
               <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 12px", background: "var(--bg-3)", borderRadius: 8, fontSize: 13, flexWrap: "wrap", minWidth: 0 }}>
-                <span style={{ minWidth: 92, color: "var(--text)" }}>{TYPE_LABEL[c.type] ?? c.type}</span>
+                <span style={{ minWidth: 92, color: "var(--text)" }}>{libelleCommande(c)}</span>
                 <span style={{ color: s.c, minWidth: 92 }}>{s.l}</span>
                 <span style={{ color: "var(--text-muted)", flex: "1 1 140px", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.result ?? ""}</span>
                 <span style={{ color: "var(--text-muted)", fontSize: 12, flexShrink: 0 }}>par {c.createdBy}</span>

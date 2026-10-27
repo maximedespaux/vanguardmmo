@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiAuth } from "@/lib/access";
-import { canAccessGuild } from "@/config/roles";
+import { GUILD_ROLES, canAccessGuild } from "@/config/roles";
 import { normaliserCompo } from "@/lib/compositions";
+import { chiffresParRole, departager } from "@/lib/recensement";
 import { CS_SLOTS } from "@/app/(guild)/compositions/slots";
 import { comparer, completude, stuffsParMode, statsDuStuff, equipementDuStuff, aDesStats, modeDuStuff, progression, type Stats } from "@/lib/comparatif";
 
@@ -29,14 +30,39 @@ export async function GET() {
   ]);
   const etat = normaliserCompo(etatRow?.data);
   const signups = Array.isArray(etat.signups) ? etat.signups : [];
+  const maintenant = Date.now();
+  /* Les annonces des huit derniers jours : la fenêtre d'une séance n'en dure jamais plus
+     de quatre, et la calculer ici (heure du serveur, UTC) la décalerait de celle de la
+     page (heure de Paris). Un pseudo de trop ne coûte qu'une ligne ; un pseudo manquant
+     laisserait un annoncé sans son chiffre. */
+  const annonces = etat.presences.filter((p) => p.ts >= maintenant - 8 * 86_400_000);
 
-  // Les personnages réellement inscrits, avec leurs stuffs. Un seul aller-retour,
-  // et on ne remonte que les inscrits : pas tous les builds de la guilde.
-  const charIds = [...new Set(signups.map((s) => (s as { charId?: string }).charId).filter((x): x is string => !!x))];
-  const persos = charIds.length
-    ? await prisma.character.findMany({ where: { id: { in: charIds } }, include: { gearProfiles: true } })
+  /* LES PERSONNAGES, RETROUVÉS PAR LEUR NOM — jamais par `charId`. La synchro de
+     l'AirBuilder efface et recrée les persos d'un compte (/api/characters/sync) : leurs
+     ids changent à chaque enregistrement, et les écarts au build de référence
+     disparaissaient alors sans un bruit. Le nom, lui, est celui du jeu. Un seul
+     aller-retour pour les inscrits ET les annoncés. */
+  const noms = [...new Set([...signups, ...annonces].map((x) => x.pseudo.toLowerCase()).filter(Boolean))];
+  const persos = noms.length
+    ? await prisma.character.findMany({
+        where: { OR: noms.map((n) => ({ name: { equals: n, mode: "insensitive" as const } })) },
+        include: { gearProfiles: true, user: { select: { username: true, role: true, isActive: true } } },
+      })
     : [];
-  const parChar = new Map(persos.map((c) => [c.id, c]));
+  const parNom = new Map<string, typeof persos>();
+  for (const c of persos) parNom.set(c.name.toLowerCase(), [...(parNom.get(c.name.toLowerCase()) ?? []), c]);
+  /** Le perso d'un pseudo, homonymes départagés (spec §12.3) : jamais un compte RECRUE. */
+  const persoDe = (pseudo: string, player: string) => departager(parNom.get(pseudo.toLowerCase()) ?? [], player, GUILD_ROLES);
+
+  /* LES CHIFFRES DÉCLARÉS de chaque pseudo, rôle par rôle : la page choisit lequel
+     montrer selon le poste (slots.ts, `cs`). Rien d'autre du stuff ne part. */
+  const mesures: Record<string, ReturnType<typeof chiffresParRole>> = {};
+  for (const x of [...signups, ...annonces]) {
+    const cle = x.pseudo.toLowerCase();
+    if (cle in mesures) continue;
+    const perso = persoDe(x.pseudo, x.player);
+    if (perso) mesures[cle] = chiffresParRole(perso.gearProfiles, perso.class, maintenant);
+  }
 
   const refParSlot = new Map(refs.map((r) => [r.id, r.blob as unknown]));
 
@@ -64,10 +90,9 @@ export async function GET() {
     };
     if (!modes) continue;
 
-    for (const su of signups) {
-      const s = su as { id?: string; slotId?: string; charId?: string };
-      if (s.slotId !== slot.id || !s.charId || !s.id) continue;
-      const perso = parChar.get(s.charId);
+    for (const s of signups) {
+      if (s.slotId !== slot.id || !s.id) continue;
+      const perso = persoDe(s.pseudo, s.player);
       if (!perso) continue;
 
       // Un score par mode attendu par la référence, puis la moyenne : un poste qui
@@ -88,7 +113,7 @@ export async function GET() {
       }
       const scores = Object.values(parMode).map((x) => x.score);
       resultats[s.id] = {
-        charId: s.charId,
+        charId: perso.id,
         slotId: slot.id,
         score: scores.length ? Math.round(scores.reduce((x, y) => x + y, 0) / scores.length) : 0,
         parMode,
@@ -99,5 +124,5 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json({ spec: SPEC, references: etatDesReferences, scores: resultats });
+  return NextResponse.json({ spec: SPEC, references: etatDesReferences, scores: resultats, mesures });
 }

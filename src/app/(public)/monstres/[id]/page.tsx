@@ -28,10 +28,10 @@ export default async function FicheMonstrePage({ params }: { params: Promise<{ i
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const m = monstreParId(decodeURIComponent(id));
-  if (!m) return { title: "Monstre introuvable · Vanguard" };
+  if (!m) return { title: "Monstre introuvable · GENESIS" };
   const vies = (m.vies ?? 0) > 1 ? ` — ${m.vies} vies, ${court(m.pvEff)} PV à sortir` : "";
   return {
-    title: `${m.nom} · Monstres · Vanguard`,
+    title: `${m.nom} · Monstres · GENESIS`,
     description: `${m.nom}, niveau ${m.niv ?? "?"} · ${court(m.pv)} PV${vies}. Dégâts, cadence, élément, résistances et mécaniques de combat.`,
   };
 }

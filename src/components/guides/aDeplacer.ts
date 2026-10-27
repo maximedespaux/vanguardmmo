@@ -12,7 +12,7 @@
  *
  * Ce qui a été retiré sans être gardé, parce que la page propriétaire le porte DÉJÀ :
  *  · perçage (cartes d'attaque et de défense), élément d'une pièce, fashion, gemmes de
- *    costume, runes, éveil → /builder/mecaniques a une section pour chacun ;
+ *    costume, runes, éveil → /mecaniques a une section pour chacun ;
  *  · provenance des runes, parchemins d'éveil, étuis et coffrets de cartes →
  *    public/wiki/ou-trouver.json les porte, et /objets les affiche ;
  *  · les totaux de ressources du P1 au P10 → /prestige les calcule.

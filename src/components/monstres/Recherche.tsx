@@ -68,14 +68,14 @@ const champ: React.CSSProperties = {
 };
 
 /** Une pastille de filtre. La même forme partout : c'est ce qui la rend lisible. */
-function Pastille({ on, onClick, children, couleur = "var(--orange)" }: {
+function Pastille({ on, onClick, children, couleur = "var(--gn-plein)" }: {
   on: boolean; onClick: () => void; children: React.ReactNode; couleur?: string;
 }) {
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: "inherit",
       fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: 20,
-      color: on ? "#0A0A0C" : "var(--text)",
+      color: on ? (couleur === "var(--gn-plein)" ? "var(--gn-sur-action)" : "#0A0A0C") : "var(--text)",
       background: on ? couleur : "var(--bg-3)",
       border: `1px solid ${on ? couleur : "var(--border)"}`,
     }}>{children}</button>
@@ -167,7 +167,7 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Branche on={!provenance} onClick={() => setProvenance("")} icon="paw"
-            label="Tout le catalogue" compte={r?.provenances.tout} couleur="var(--orange)" />
+            label="Tout le catalogue" compte={r?.provenances.tout} couleur="var(--gn-accent)" />
           <Branche on={provenance === "maison"} onClick={() => setProvenance("maison")} icon="sparkles"
             label="Ajoutés par Airborn" compte={r?.provenances.maison} couleur="var(--purple)" />
           <Branche on={provenance === "base"} onClick={() => setProvenance("base")} icon="book"
@@ -292,7 +292,7 @@ export function RechercheMonstres({ depart = "", departObjet = "", departProvena
                un lien, la règle « un sujet, une page » tenue jusqu'au bout. */
             <p style={{ margin: "6px 0 0", fontSize: 12.5 }}>
               Ce catalogue ne porte que ce qui se combat : ni{" "}
-              <Link href="/pnj" style={{ color: "var(--orange)" }}>PNJ</Link>, ni familiers, ni œufs.
+              <Link href="/pnj" style={{ color: "var(--gn-accent)" }}>PNJ</Link>, ni familiers, ni œufs.
             </p>
           )}
         </div>

@@ -69,7 +69,7 @@ export function Situation({ d, nomAffiche }: { d: DonjonClient; nomAffiche: stri
             <span style={cle}>Taille de la carte</span>
             <span style={val}>
               {d.unites[0].toLocaleString("fr-FR")} × {d.unites[1].toLocaleString("fr-FR")}
-              {d.unites[0] !== d.unites[1] && <span style={{ color: "var(--orange)" }}> · un couloir, pas un carré</span>}
+              {d.unites[0] !== d.unites[1] && <span style={{ color: "var(--gn-accent)" }}> · un couloir, pas un carré</span>}
             </span>
           </div>
         )}
@@ -122,9 +122,9 @@ export function PlanDonjon({ d }: { d: DonjonClient }) {
           {noms.map((n, k) => (
             <button key={n.cartouche} onClick={() => setI(k)} aria-pressed={k === i}
               style={{ cursor: "pointer", fontFamily: "inherit", fontSize: 11.5, padding: "3px 9px", borderRadius: 20,
-                background: k === i ? "rgba(255,140,26,.12)" : "var(--bg-3)",
-                border: `1px solid ${k === i ? "var(--orange)" : "var(--border)"}`,
-                color: k === i ? "var(--orange)" : "var(--text-muted)" }}>
+                background: k === i ? "rgba(var(--gn-lueur-rgb),.12)" : "var(--bg-3)",
+                border: `1px solid ${k === i ? "var(--gn-accent)" : "var(--border)"}`,
+                color: k === i ? "var(--gn-accent)" : "var(--text-muted)" }}>
               {n.cartouche}
             </button>
           ))}
@@ -205,7 +205,7 @@ export function Peuplement({ d }: { d: DonjonClient }) {
               <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 0.6, color: TON_RANG[m.rang] ?? "var(--text-muted)" }}>{m.rang}</span>
               <span style={{ flex: 1 }} />
               <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
-                niv. {m.niv} · <b style={{ color: "var(--orange)" }}>{pvCourt(m.pv)} PV</b>
+                niv. {m.niv} · <b style={{ color: "var(--gn-accent)" }}>{pvCourt(m.pv)} PV</b>
               </span>
             </div>
             <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 6, fontSize: 11.5 }}>
@@ -308,15 +308,15 @@ export function KalgasEnPlus({ d }: { d: DonjonClient }) {
                   <b><LienMonstre nom={m.nom} niv={m.niv} pv={m.pv} /></b>
                   <span style={{ display: "block", color: "var(--text-muted)", fontSize: 11.5 }}>{m.role}</span>
                 </span>
-                <span style={{ ...val, color: "var(--orange)", whiteSpace: "nowrap" }}>{pvCourt(m.pv)} PV</span>
+                <span style={{ ...val, color: "var(--gn-accent)", whiteSpace: "nowrap" }}>{pvCourt(m.pv)} PV</span>
               </div>
             ))}
           </div>
         </div>
       )}
       {d.noteButin && (
-        <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 12.5, color: "var(--text-muted)" }}>
-          <Icon name="info" size={13} style={{ marginRight: 5, color: "var(--orange)" }} />{d.noteButin}
+        <div style={{ background: "rgba(var(--gn-lueur-rgb),.06)", border: "1px solid var(--gn-or-sombre)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 12.5, color: "var(--text-muted)" }}>
+          <Icon name="info" size={13} style={{ marginRight: 5, color: "var(--gn-accent)" }} />{d.noteButin}
         </div>
       )}
     </>

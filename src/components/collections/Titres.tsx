@@ -59,7 +59,7 @@ export function Titres({ titres, source }: { titres: Titre[]; source: string }) 
         <Chercher valeur={q} sur={setQ} invite="Un titre, un objet, une espèce, un lieu" />
         <button onClick={() => setAlpha(!alpha)} className="vg-select"
           style={{ backgroundImage: "none", paddingRight: 12, display: "inline-flex", alignItems: "center", gap: 7 }}>
-          <Icon name="sort" size={14} style={{ color: "var(--orange)" }} />
+          <Icon name="sort" size={14} style={{ color: "var(--gn-accent)" }} />
           {alpha ? "Par ordre alphabétique" : "Du plus accessible"}
         </button>
       </div>

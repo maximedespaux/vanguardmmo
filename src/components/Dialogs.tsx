@@ -50,7 +50,7 @@ export function DialogHost() {
         </div>
       )}
       {toast && (
-        <div style={{ position: "fixed", left: "50%", bottom: 26, transform: "translateX(-50%)", zIndex: 9999, background: "#16161c", color: "var(--text)", border: `1px solid ${toast.ok ? "var(--orange)" : "var(--red)"}`, borderRadius: 10, padding: "11px 18px", fontWeight: 600, fontSize: 13, maxWidth: "90vw", boxShadow: "0 10px 30px rgba(0,0,0,.55)", animation: "vgswap .25s ease" }}>{toast.msg}</div>
+        <div style={{ position: "fixed", left: "50%", bottom: 26, transform: "translateX(-50%)", zIndex: 9999, background: "#16161c", color: "var(--text)", border: `1px solid ${toast.ok ? "var(--gn-accent)" : "var(--red)"}`, borderRadius: 10, padding: "11px 18px", fontWeight: 600, fontSize: 13, maxWidth: "90vw", boxShadow: "0 10px 30px rgba(0,0,0,.55)", animation: "vgswap .25s ease" }}>{toast.msg}</div>
       )}
     </>
   );

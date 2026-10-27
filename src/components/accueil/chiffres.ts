@@ -7,7 +7,7 @@ import { nombreDObjets } from "@/components/objets/catalogue";
 /**
  * LES QUATRE CHIFFRES DE L'ACCUEIL — comptés, jamais écrits.
  *
- * Ils étaient en dur dans `PageAccueil.tsx` : « 8 », « 23 », « 4 970 », « 52 ».
+ * Ils étaient en dur dans l'accueil public (aujourd'hui `AccueilVisiteur.tsx`) : « 8 », « 23 », « 4 970 », « 52 ».
  * Les quatre étaient justes le jour où on les a tapés, et c'est exactement le
  * problème : le premier versement de données qui ajoute une instance ou un objet
  * les rend faux, sans que rien ne le signale. Le site a déjà payé ça deux fois —
@@ -16,7 +16,7 @@ import { nombreDObjets } from "@/components/objets/catalogue";
  *
  * Pourquoi ce fichier est à part, et pourquoi il lit avec `fs` : deux des quatre
  * comptes vivent dans `public/wiki/` (3 Mo et 60 Ko). Les importer dans
- * `PageAccueil` — un composant CLIENT — enverrait tout dans le paquet JS de la
+ * `AccueilVisiteur` — un composant CLIENT — enverrait tout dans le paquet JS de la
  * page d'accueil. On les lit donc côté serveur, une fois, et on ne fait passer
  * que les quatre nombres. Même modèle que `components/objets/catalogue.ts`.
  *
@@ -37,12 +37,24 @@ function compteur(fichier: string, lire: (d: unknown) => number | null): number 
 
 export type ChiffreAccueil = { n: number; libelle: string };
 
+/* ── LE CACHE DU MODULE ──
+   L'accueil était prérendu une fois pour toutes. Il lit maintenant la session à
+   chaque requête (`etatVisiteur()` : « Se connecter » et « Postuler » ne s'offrent
+   pas à qui l'est déjà), donc il est rendu à chaque passage — et ces deux fonctions relisaient alors à
+   chaque visite monstres.json, pnj.json, ou-trouver.json et le catalogue, plusieurs
+   mégaoctets de JSON. Ces relevés ne changent qu'avec un déploiement, qui relance le
+   processus : on les lit une fois par processus. Un relevé illisible n'est pas mis
+   en cache, pour qu'un fichier réparé soit relu sans redémarrer. */
+let chiffresEnCache: ChiffreAccueil[] | null = null;
+let comptesEnCache: Record<string, string> | null = null;
+
 /**
  * Les quatre comptes, dans l'ordre d'affichage. Un compte qui ne se lit pas est
  * ABSENT de la liste plutôt qu'affiché à zéro : « 0 objet dont on sait la
  * provenance » serait un mensonge sur nos données, pas une information.
  */
 export function chiffresAccueil(): ChiffreAccueil[] {
+  if (chiffresEnCache) return chiffresEnCache;
   /* ┌──── ON NE LIT PLUS `compteurs.objets`, ET C'EST UNE CORRECTION ────┐
        Ce compteur vaut 4 970 : c'est le nombre d'ENREGISTREMENTS de la
        table de provenance, pas le nombre d'objets. Vérifié en comptant
@@ -74,7 +86,7 @@ export function chiffresAccueil(): ChiffreAccueil[] {
   });
   const vagues = compteur("oasis-vagues.json", (d) => (d as { vagues?: unknown[] }).vagues?.length ?? null);
 
-  return [
+  const liste = [
     { n: CLASS_NAMES.length, libelle: "spécialisations de fin de partie" },
     { n: (dungeons as unknown[]).length, libelle: "instances documentées" },
     ...(objets ? [{ n: objets, libelle: "objets dont on sait la provenance" }] : []),
@@ -84,6 +96,8 @@ export function chiffresAccueil(): ChiffreAccueil[] {
     // prestige et prêtait à confusion à deux lignes d'écart.
     ...(vagues ? [{ n: vagues, libelle: "vagues de la Protection de l'Oasis" }] : []),
   ];
+  if (objets && vagues) chiffresEnCache = liste;
+  return liste;
 }
 
 /**
@@ -105,12 +119,13 @@ export function chiffresAccueil(): ChiffreAccueil[] {
  * La clé est le `href` de la porte. Un relevé illisible n'ajoute simplement pas
  * sa ligne — la porte s'affiche sans mesure, ce qui est prévu.
  *
- * ET CES MESURES NE CHASSENT JAMAIS UNE LIGNE DÉJÀ ÉCRITE : /boutique et /crafts
- * emploient la leur pour dire ce qu'on peut en faire sans compte, et pour un
- * visiteur ce renseignement vaut plus qu'un total. Le remplissage est donc fait
+ * ET CES MESURES NE CHASSENT JAMAIS UNE LIGNE DÉJÀ ÉCRITE : /crafts emploie la
+ * sienne pour dire ce qu'on peut en faire sans compte, et pour un visiteur ce
+ * renseignement vaut plus qu'un total. Le remplissage est donc fait
  * « seulement si c'est vide », côté accueil.
  */
 export function comptesPortes(): Record<string, string> {
+  if (comptesEnCache) return comptesEnCache;
   const fr = (n: number) => n.toLocaleString("fr-FR");
   const out: Record<string, string> = {};
 
@@ -130,6 +145,7 @@ export function comptesPortes(): Record<string, string> {
     // pas parce qu'un fichier du wiki manque.
   }
 
+  if (out["/monstres"] && out["/pnj"] && out["/objets"]) comptesEnCache = out;
   return out;
 }
 
@@ -143,7 +159,7 @@ export function phraseAccueil(): string {
     // LE NOM COMPLET DU SERVEUR PORTE DÉJÀ UN DEUX-POINTS. La phrase enchaînait
     // sur « : les N instances… » — deux deux-points dans la même ligne, illisible.
     // Le tiret cadratin prend le relais de l'énumération.
-    "La guilde Vanguard sur Airborn : Winds of Rhisis, serveur privé Flyff — " +
+    "La guilde GENESIS sur Airborn : Winds of Rhisis, serveur privé Flyff — " +
     (instances ? `les ${instances} instances et leurs butins, ` : "les instances et leurs butins, ") +
     (objets ? `la provenance de ${objets.toLocaleString("fr-FR")} objets, ` : "la provenance des objets, ") +
     "les paliers de prestige et l'AirBuilder. Consultable sans compte."

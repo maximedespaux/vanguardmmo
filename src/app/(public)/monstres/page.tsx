@@ -71,7 +71,7 @@ export default function MonstresPage() {
    que la page. */
 const socle = metaCatalogue();
 export const metadata = {
-  title: "Les monstres et les boss · Vanguard",
+  title: "Les monstres et les boss · GENESIS",
   description:
     `Les ${socle.total.toLocaleString("fr-FR")} monstres d'Airborn, dont ${socle.compteurs.maison.toLocaleString("fr-FR")} ajoutés par le serveur : PV à sortir vies comprises, dégâts par coup, cadence, élément et résistances, rage et invocations.`,
 };

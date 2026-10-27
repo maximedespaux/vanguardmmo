@@ -77,7 +77,7 @@ export function CarteVille({ ville, largeur = 320 }: { ville?: string | null; la
         style={{ width: "100%", display: "block", borderRadius: 10, border: "1px solid var(--border)" }}
       />
       <figcaption style={{ fontSize: 10.5, color: "var(--text-muted)", marginTop: 5, display: "flex", alignItems: "center", gap: 5 }}>
-        <Icon name="map-pin" size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />
+        <Icon name="map-pin" size={11} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
         {e.genre === "ville"
           ? "Le plan du client — les pictogrammes sont ses marchands"
           : "La carte de la région, telle qu'elle sort du client"}

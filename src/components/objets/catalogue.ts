@@ -18,7 +18,7 @@ import { objetsLaches } from "@/components/monstres/catalogue";
  * dans le paquet JS de la page (3 Mo à télécharger pour afficher dix lignes) et
  * un fetch depuis le navigateur ferait la même bêtise en différé. On le lit donc
  * ici avec `fs`, au premier appel, et on garde l'index : c'est exactement le
- * modèle de `src/app/api/ou-trouver/route.ts` et de `src/lib/ouFarmer.ts`.
+ * modèle de `src/app/api/ou-trouver/route.ts`.
  *
  * Ce fichier touche au disque : il ne doit JAMAIS être importé par un composant
  * client. Les libellés partagés avec l'écran vivent dans `vocabulaire.ts`.

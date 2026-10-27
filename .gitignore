@@ -7,3 +7,6 @@ node_modules/
 .DS_Store
 out/
 *.tsbuildinfo
+# Les vidéos de débrief en local (VIDEOS_DIR par défaut : ./data/videos). AVEC la barre : sans
+# elle, le motif ignorerait aussi src/data/, les données du jeu suivies par git (spec, piège n° 20).
+/data/

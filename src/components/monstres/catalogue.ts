@@ -18,8 +18,8 @@ import BUTIN from "@/data/monstres-butin.json";
  * `public/wiki/monstres.json` pèse 612 Ko. Un import statique le poserait dans le
  * paquet JS de la page : 612 Ko à télécharger pour afficher une fiche. Un fetch
  * depuis le navigateur ferait la même bêtise en différé. On le lit donc ici avec
- * `fs`, au premier appel — même modèle que `components/objets/catalogue.ts`,
- * `api/ou-trouver/route.ts` et `lib/ouFarmer.ts`.
+ * `fs`, au premier appel — même modèle que `components/objets/catalogue.ts` et
+ * `api/ou-trouver/route.ts`.
  *
  * Ce fichier touche au disque : il ne doit JAMAIS être importé par un composant
  * client. Les libellés partagés avec l'écran vivent dans `vocabulaire.ts`.

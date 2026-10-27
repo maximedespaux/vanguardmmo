@@ -12,16 +12,16 @@ import { Icon, type IconName } from "@/components/Icon";
  */
 
 /** Une pastille de filtre. Même forme partout : c'est ce qui la rend lisible. */
-export function Pastille({ on, onClick, children, couleur = "var(--orange)" }: {
+export function Pastille({ on, onClick, children, couleur }: {
   on: boolean; onClick: () => void; children: React.ReactNode; couleur?: string;
 }) {
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: "inherit",
       fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: 20,
-      color: on ? "#0A0A0C" : "var(--text)",
-      background: on ? couleur : "var(--bg-3)",
-      border: `1px solid ${on ? couleur : "var(--border)"}`,
+      color: on ? (couleur ? "#0A0A0C" : "var(--gn-sur-action)") : "var(--text)",
+      background: on ? (couleur ?? "var(--gn-action)") : "var(--bg-3)",
+      border: `1px solid ${on ? (couleur ?? "rgba(var(--gn-or-rgb),.55)") : "var(--border)"}`,
     }}>{children}</button>
   );
 }
@@ -95,7 +95,7 @@ export function Bloc({ titre, sous, icon, children }: {
   return (
     <section style={{ marginTop: 20 }}>
       <h3 className="font-heading" style={{ margin: "0 0 3px", fontSize: 14.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-        {icon && <Icon name={icon} size={16} style={{ color: "var(--orange)" }} />}
+        {icon && <Icon name={icon} size={16} style={{ color: "var(--gn-accent)" }} />}
         {titre}
       </h3>
       {sous && <p style={{ margin: "0 0 11px", fontSize: 12.5, color: "var(--text-muted)" }}>{sous}</p>}

@@ -219,7 +219,7 @@ export function BeteEnBref({ m }: { m: Bete }) {
       <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
         <span style={{ fontSize: 11.5, color: tonRang(m.rang) }}>{m.rang} · niveau {m.niv}</span>
         <span style={tuile}>
-          <Icon name="heart" size={11} style={{ color: "var(--orange)" }} />
+          <Icon name="heart" size={11} style={{ color: "var(--gn-accent)" }} />
           <b>{court(m.pvEff)}</b> PV à sortir
         </span>
         <span style={tuile}>
@@ -244,7 +244,7 @@ export function BeteEnBref({ m }: { m: Bete }) {
           infobulle et non une ligne de plus : le rapprochement est juste dans le cas
           normal, et l'écrire à l'écran répéterait le nom déjà affiché au-dessus. */}
       <Link href={`/monstres/${m.id}`} title={`${m.nom} — sa fiche complète`}
-        style={{ fontSize: 11.5, color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+        style={{ fontSize: 11.5, color: "var(--gn-accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
         <Icon name="arrow-right" size={12} /> Sa fiche complète
       </Link>
     </div>
@@ -314,9 +314,9 @@ function Tableau({ lignes }: { lignes: { m: Bete; marque: string; variante: bool
                   ) : marque}
                 </td>
                 <td style={{ ...td, color: "var(--text-muted)" }}>{m.niv}</td>
-                <td style={{ ...td, fontWeight: 700, color: "var(--orange)", minWidth: 92 }}>
+                <td style={{ ...td, fontWeight: 700, color: "var(--gn-accent)", minWidth: 92 }}>
                   {court(m.pvEff)}
-                  <Barre part={m.pvEff / maxVie} teinte="var(--orange)" />
+                  <Barre part={m.pvEff / maxVie} teinte="var(--gn-accent)" />
                 </td>
                 <td style={{ ...td, color: m.vies > 1 ? "var(--red)" : "var(--text-muted)", fontWeight: m.vies > 1 ? 700 : 400 }}>{m.vies}</td>
                 <td style={td}>
@@ -379,7 +379,7 @@ export function BestiaireWorldBoss() {
       contenu: (
         <div style={{ display: "grid", gap: 13 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(132px,1fr))", gap: 8 }}>
-            <Chiffre valeur={String(compteMarque("wb"))} quoi={<Bulle quoi={wb.critere}><span>marqués « WB »</span></Bulle>} ton="var(--orange)" />
+            <Chiffre valeur={String(compteMarque("wb"))} quoi={<Bulle quoi={wb.critere}><span>marqués « WB »</span></Bulle>} ton="var(--gn-accent)" />
             {/* Le compte inclut les variantes, et la bulle dit combien : sans ça, deux
                 compteurs à 6 coiffaient un tableau de treize lignes. */}
             <Chiffre valeur={String(compteMarque("bigboss"))} ton="var(--purple)"
@@ -465,7 +465,7 @@ export function BestiaireWorldBoss() {
                   </span>
                 ))}
               </span>
-              <Link href="/prestige" style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <Link href="/prestige" style={{ marginLeft: "auto", fontSize: 11.5, color: "var(--gn-accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
                 <Icon name="arrow-right" size={12} /> Les coûts
               </Link>
             </div>
@@ -497,7 +497,7 @@ export function BestiaireWorldBoss() {
             {guilde.monstres.map((m) => (
               <Link key={m.id} href={`/monstres/${m.id}`} style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 20, padding: "5px 12px", fontSize: 12.5, color: "var(--text)", textDecoration: "none" }}>
                 {m.nom}
-                <b style={{ color: "var(--orange)", fontVariantNumeric: "tabular-nums" }}>{court(m.pvEff)}</b>
+                <b style={{ color: "var(--gn-accent)", fontVariantNumeric: "tabular-nums" }}>{court(m.pvEff)}</b>
                 {m.zones.length > 0 && (
                   <span title={`Posé dans : ${m.zones.join(", ")}`} style={{ display: "inline-flex", alignItems: "center", gap: 3, color: "var(--text-muted)", fontSize: 11 }}>
                     <Icon name="map-pin" size={11} />{m.zones.join(", ")}

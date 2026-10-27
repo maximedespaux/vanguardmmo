@@ -163,7 +163,7 @@ export function AdversairesChambres() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(128px,1fr))", gap: 8 }}>
             <Chiffre valeur={fr(ADV.length)} quoi="adversaires relevés" />
             <Chiffre valeur={fr(aVies.length)} quoi="se relèvent" ton="var(--red)" />
-            <Chiffre valeur={court(plusGros.pvEff)} quoi="le plus gros, PV à sortir" ton="var(--orange)" />
+            <Chiffre valeur={court(plusGros.pvEff)} quoi="le plus gros, PV à sortir" ton="var(--gn-accent)" />
             <Chiffre valeur={court(cogneur.atkMax)} quoi="le coup le plus fort" ton="var(--red)" />
           </div>
 
@@ -255,9 +255,9 @@ export function AdversairesChambres() {
                     )}
                   </td>
                   <td style={{ ...td, color: "var(--text-muted)" }}>{m.niv}</td>
-                  <td style={{ ...td, fontWeight: 700, color: "var(--orange)", minWidth: 92 }}>
+                  <td style={{ ...td, fontWeight: 700, color: "var(--gn-accent)", minWidth: 92 }}>
                     {court(m.pvEff)}
-                    <Barre part={m.pvEff / maxVie} teinte="var(--orange)" />
+                    <Barre part={m.pvEff / maxVie} teinte="var(--gn-jauge)" />
                   </td>
                   <td style={{ ...td, color: m.vies > 1 ? "var(--red)" : "var(--text-muted)", fontWeight: m.vies > 1 ? 700 : 400 }}>{m.vies}</td>
                   <td style={td}>{court(m.atkMax)}</td>

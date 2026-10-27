@@ -14,7 +14,7 @@ import type { Ange, Collections } from "@/components/collections/donnees";
  * concentrer sur une page pour comprendre en réalisant le build ». Et il est
  * juste : on ne DÉCROCHE pas une maîtrise d'arme, on la MONTE sur l'arme qu'on
  * est en train de composer — au même titre qu'un perçage ou un éveil. Elles
- * appartiennent à /builder/mecaniques.
+ * appartiennent à /mecaniques.
  *
  * LES DEUX ÉCRANS SONT REPRIS TELS QUELS (`collections/Maitrise.tsx` et
  * `collections/Anges.tsx`). Les redessiner aurait donné deux calculateurs sur

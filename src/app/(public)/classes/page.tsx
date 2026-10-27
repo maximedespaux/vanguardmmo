@@ -194,10 +194,10 @@ export default function ClassesPage() {
                 const meta = CLASSES[l.cle];
                 return (
                   <button key={l.cle} onClick={() => setCle(l.cle)} className="cl-carte fx-card" aria-pressed={on}
-                    style={{ borderColor: on ? "var(--orange)" : "var(--border)", background: on ? "rgba(255,140,26,.09)" : "var(--bg-2)" }}>
+                    style={{ borderColor: on ? "var(--gn-accent)" : "var(--border)", background: on ? "rgba(var(--gn-lueur-rgb),.09)" : "var(--bg-2)" }}>
                     <ClassBouton name={l.cle} etat={on ? "choisi" : "repos"} size={38} />
                     <span style={{ minWidth: 0, textAlign: "left" }}>
-                      <b style={{ display: "block", fontSize: 12.5, color: on ? "var(--orange)" : "var(--text)" }}>{l.nom}</b>
+                      <b style={{ display: "block", fontSize: 12.5, color: on ? "var(--gn-accent)" : "var(--text)" }}>{l.nom}</b>
                       <span style={{ display: "block", fontSize: 10, color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px" }}>
                         {meta?.role === "tank" ? "Tank" : meta?.role === "support" ? "Soutien" : "Dégâts"} · via {l.etapes[1].nom}
                       </span>
@@ -234,7 +234,7 @@ export default function ClassesPage() {
       <style>{`
         .cl-choix{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:8px}
         .cl-carte{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:11px;border:1px solid var(--border);cursor:pointer;font-family:inherit;color:var(--text);transition:border-color .15s,background .15s}
-        .cl-carte:hover{border-color:var(--orange)}
+        .cl-carte:hover{border-color:var(--gn-accent)}
         .cl-chaine{display:flex;flex-wrap:wrap;gap:3px;align-items:stretch}
         .cl-maille{display:flex;align-items:center;gap:3px}
         .cl-fleche{color:var(--text-muted);font-size:16px;padding:0 1px}
@@ -246,7 +246,7 @@ export default function ClassesPage() {
            d'apres, puisque la colonne 1 est deja occupee. */
         .cl-arbre{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
         .cl-case-btn{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:9px;border:1px solid var(--border);cursor:pointer;font-family:inherit;color:var(--text);text-align:left;transition:border-color .15s,background .15s}
-        .cl-case-btn:hover{border-color:var(--orange)}
+        .cl-case-btn:hover{border-color:var(--gn-accent)}
         /* Le tableau de la lignee debordait la page sur telephone, MALGRE son
            enveloppe en overflow-x:auto. La cause n'est pas le tableau : les deux
            enfants de .vg-volet sont des elements de grille, et un element de
@@ -256,7 +256,7 @@ export default function ClassesPage() {
            tant que cette page est montee. */
         .vg-volet>div{min-width:0}
         .cl-lien{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;text-align:left;padding:7px 10px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text);font-family:inherit;cursor:pointer;transition:border-color .15s}
-        .cl-lien:hover{border-color:var(--orange)}
+        .cl-lien:hover{border-color:var(--gn-accent)}
         /* Sous 560 px la chaine devient une colonne : six tuiles de 104 px et
            cinq fleches ne rentrent pas, et les rogner rendait les emblemes
            illisibles. */
@@ -295,7 +295,7 @@ function ChiffresReleve({ cat }: { cat: Cat | null }) {
       paddingBottom: 11, marginBottom: 11, borderBottom: "1px solid var(--border)" }}>
       {chiffres.map((c) => (
         <div key={c.quoi} style={{ minWidth: 0 }}>
-          <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: "var(--orange)", ...NUM }}>{c.valeur}</div>
+          <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: "var(--gn-accent-clair)", ...NUM }}>{c.valeur}</div>
           <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{c.quoi}</div>
         </div>
       ))}

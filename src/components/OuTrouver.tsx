@@ -53,7 +53,7 @@ export function OuTrouver({ nom, compact = false }: { nom: string | null | undef
 
   return (
     <div style={{ border: "1px solid var(--border)", borderRadius: 10, background: "var(--bg-3)", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 11px", borderBottom: "1px solid var(--border)", fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--orange)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 11px", borderBottom: "1px solid var(--border)", fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--gn-accent)" }}>
         <Icon name="search" size={13} /> Où le trouver
         {r.total && r.total > (r.sources?.length ?? 0) ? (
           <span style={{ marginLeft: "auto", fontWeight: 400, textTransform: "none", letterSpacing: 0, color: "var(--text-muted)" }}>

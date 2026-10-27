@@ -4,14 +4,30 @@ import { ClassLogo } from "@/components/ClassLogo";
 import { useSession } from "next-auth/react";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon, type IconName } from "@/components/Icon";
-import { CS_SLOTS, GROUP_META, GROUPS, type Slot } from "./slots";
+import { GROUP_META, GROUPS, type RolesCS, type Slot } from "./slots";
 import { useCardFx } from "@/components/VgFx";
 import { StrategieCS } from "@/components/StrategieCS";
 import { AdversairesChambres, AlerteVies } from "@/components/chambres/Adversaires";
 import { classeAffichee, ecartsClasse, nbPlaces, normaliserCompo, presencesSeance, prochaineSeance, type CompoState, type Creneau, type Presence, type Seance } from "@/lib/compositions";
+import { chiffresDuPoste, enLigne, rolesDuPoste, survol, type Chiffre } from "@/lib/recensement";
+import type { RoleMesure } from "@/lib/mesures";
+import Link from "next/link";
+import { ADMIN_ROLES } from "@/config/roles";
+import { PARAMETRES_CS_DEFAUT, cleDeSeance, libellePoste, postesEffectifs, type Poste } from "@/lib/evenements";
+import { Cloture } from "@/components/chambres/Cloture";
+import { Bilans } from "@/components/chambres/Bilans";
+import { LignePanneau, type EtatDiscord } from "@/components/chambres/PanneauDiscord";
+import { Repartition } from "@/components/chambres/Repartition";
+import { Chrono } from "@/components/chambres/Chrono";
+import { GuildSiege } from "@/components/chambres/GuildSiege";
 
 import type { Signup } from "@/lib/compositions";
-const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
+
+/** Les onglets (spec §7.1), lus dans l'adresse (`?onglet=`) : un message du bot ou un lien de
+ *  Discord mène ainsi au bon endroit (le récap et 📍 Mes positions mènent à `?onglet=repartition`,
+ *  le chrono à `?onglet=chrono`). Les anciens noms (« cs », « strat ») restent compris. */
+type Onglet = "inscription" | "repartition" | "chrono" | "bilans" | "strategie" | "gvg";
+const ONGLETS: Record<string, Onglet> = { inscription: "inscription", cs: "inscription", repartition: "repartition", chrono: "chrono", bilans: "bilans", strategie: "strategie", strat: "strategie", gvg: "gvg" };
 
 export default function CompositionsPage() {
   // Halo curseur + relief sur les cartes de poste (.fx-card), cf. VgFx.
@@ -19,8 +35,63 @@ export default function CompositionsPage() {
   const { data: session } = useSession();
   const su = session?.user as { discordName?: string; username?: string; name?: string; role?: string } | undefined;
   const meName = su?.discordName ?? su?.username ?? session?.user?.name ?? "Moi";
-  const isAdmin = (su?.role ? ADMIN_ROLES.includes(su.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
-  const [tab, setTab] = useState<"cs" | "strat" | "gvg">("cs");
+  // La liste des rangs vient de la config (spec §7.1) : la copie en dur qui vivait ici aurait
+  // dérivé au premier rang ajouté.
+  const isAdmin = (su?.role ? (ADMIN_ROLES as readonly string[]).includes(su.role) : false) || process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  const [tab, setTabEtat] = useState<Onglet>("inscription");
+  const [seanceBilan, setSeanceBilan] = useState<string | null>(null);
+  /** `&video={id}` : le lien d'une vidéo dans le débrief Discord (M7) ouvre son lecteur (lot 8). */
+  const [videoBilan, setVideoBilan] = useState<string | null>(null);
+  useEffect(() => {
+    // Lue après le montage : le rendu serveur ne connaît pas l'adresse complète d'un composant client.
+    const q = new URLSearchParams(window.location.search);
+    const o = ONGLETS[q.get("onglet") ?? ""];
+    if (o) setTabEtat(o);
+    setSeanceBilan(q.get("seance"));
+    setVideoBilan(q.get("video"));
+    // `/chambre cloturer` (Discord) mène ici avec `?cloture=1` (la dernière séance commencée) ou
+    // `?cloture=<clé>` (la séance ouverte dans Discord) : la clôture s'ouvre d'elle-même pour le
+    // staff, une fois la session connue.
+    const c = q.get("cloture");
+    if (c === "1") clotureDemandee.current = true;
+    // Une Chambre, ou un Guild Siege (lot 9 : « gs_derniere », ou la clé d'une séance du siège).
+    else if (c && /^(cs_\d{4}-\d{2}-\d{2}_(mer|dim)|gs_derniere|gs_\d{4}-\d{2}-\d{2}_[a-z]{3}\d{4})$/.test(c)) clotureDemandee.current = c;
+  }, []);
+  const setTab = (o: Onglet) => {
+    setTabEtat(o);
+    const q = new URLSearchParams(window.location.search);
+    q.set("onglet", o);
+    if (o !== "bilans") { q.delete("seance"); q.delete("video"); }
+    window.history.replaceState(null, "", `${window.location.pathname}?${q}`);
+  };
+  /** « Ils étaient là » : la clôture de la dernière séance commencée (Cloture.tsx) — ou, depuis
+   *  le débrief d'une séance (Bilans), de celle-là. */
+  const [cloture, setCloture] = useState<boolean | string>(false);
+  /** Après une clôture, le débrief s'ouvre directement sur son parcours (§4.8 : « Faire le
+   *  débrief maintenant ? »). */
+  const [parcoursBilan, setParcoursBilan] = useState(false);
+  const clotureDemandee = useRef<boolean | string>(false);
+  useEffect(() => {
+    if (!isAdmin || !clotureDemandee.current) return;
+    const c = clotureDemandee.current;
+    clotureDemandee.current = false;
+    setCloture(c);
+  }, [isAdmin]);
+  const [nBilans, setNBilans] = useState(0);
+  /**
+   * LES POSTES ET L'AFFICHAGE DES DÉGÂTS, TELS QUE LES BRAS DROITS LES ONT RÉGLÉS (paramétrage,
+   * /discord/evenements) : titre, classe, rôle à chaque phase, chiffre montré, et s'il compte
+   * dans les 10 places. Avant la réponse, les valeurs du code — les mêmes que la route rend
+   * quand personne n'a rien changé.
+   */
+  const [postes, setPostes] = useState<Poste[]>(() => postesEffectifs(PARAMETRES_CS_DEFAUT));
+  const [degatsCompo, setDegatsCompo] = useState(true);
+  useEffect(() => {
+    fetch("/api/evenements/lecture?evenement=cs").then(r => (r.ok ? r.json() : null)).then(j => {
+      if (Array.isArray(j?.postes)) setPostes(j.postes);
+      if (j?.degats) setDegatsCompo(j.degats.composition !== false);
+    }).catch(() => {});
+  }, []);
   const [signups, setSignups] = useState<Signup[]>([]);
   const [myChars, setMyChars] = useState<{ id: string; name: string; class: string }[]>([]);
   const [info, setInfo] = useState<Slot | null>(null);
@@ -35,6 +106,12 @@ export default function CompositionsPage() {
    */
   const [ecartsRef, setEcartsRef] = useState<Record<string, { score: number; sansBuild?: boolean; parMode?: Record<string, { score: number; completude: number; manques: string[] }> }>>({});
   const [refsDispo, setRefsDispo] = useState<Record<string, { dispo: boolean; sansStats: boolean }>>({});
+  /**
+   * Les chiffres DÉCLARÉS dans l'AirBuilder (le recensement), par pseudo en minuscules
+   * puis par rôle — lus par le même appel que les écarts. Le poste choisit lequel montrer
+   * (slots.ts, `cs`) : des PV sur un poste de tank, des dégâts sinon.
+   */
+  const [mesures, setMesures] = useState<Record<string, Partial<Record<RoleMesure, Chiffre>>>>({});
   /**
    * Vrai une fois la composition partagée lue au moins une fois.
    * L'état est un blob remplacé EN BLOC : écrire avant de l'avoir lu revient à
@@ -61,17 +138,24 @@ export default function CompositionsPage() {
     return () => clearInterval(t);
   }, []);
 
+  /**
+   * L'instant de la dernière lecture de la composition (spec §5.4, lot 3), renvoyé avec chaque
+   * enregistrement : ce qui a été posé depuis — un « Je viens » cliqué sur Discord, l'annonce
+   * d'un autre membre — n'est plus effacé par l'état que cette page a lu jusqu'à 15 s plus tôt.
+   */
+  const luRef = useRef<number | null>(null);
   // Inscriptions + renommage des postes partagés (backend commun) + actualisation auto 15 s.
   const load = useCallback(() => {
     fetch("/api/compositions").then(r => (r.ok ? r.json() : null)).then(d => {
       if (!d) return;
+      luRef.current = typeof d.lu === "number" ? d.lu : null;
       const e = normaliserCompo(d);
       setSignups(e.signups); setSlotMeta(e.slotMeta); setPresences(e.presences);
       // Les écarts se lisent après la composition et n'en bloquent pas l'affichage :
       // un comparatif indisponible ne doit pas empêcher de s'inscrire.
       fetch("/api/compositions/comparatif").then(r => (r.ok ? r.json() : null)).then(c => {
         if (!c) return;
-        setEcartsRef(c.scores ?? {}); setRefsDispo(c.references ?? {});
+        setEcartsRef(c.scores ?? {}); setRefsDispo(c.references ?? {}); setMesures(c.mesures ?? {});
       }).catch(() => {});
       setCharge(true);
       // Le texte des anciennes consignes n'est plus edite ici, mais il reste
@@ -98,20 +182,56 @@ export default function CompositionsPage() {
     if (patch.slotMeta) setSlotMeta(patch.slotMeta);
     if (patch.presences) setPresences(patch.presences);
     if (patch.instructions !== undefined) setInstructions(patch.instructions);
-    fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(etat) })
-      .then(r => { if (!r.ok) load(); })  // refus cote serveur : on reprend l'etat reel plutot que de garder un affichage faux
+    fetch("/api/compositions", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...etat, lu: luRef.current }) })
+      // Relu après CHAQUE écriture, pas seulement après un refus : le serveur a pu y remettre ce
+      // qu'un autre venait de poser (correctif `lu`), et la lecture suivante doit le connaître.
+      .then(() => load())
       .catch(() => {});
   };
   const persist = (next: Signup[], meta: Record<string, { label?: string; note?: string }> = slotMeta) => sauver({ signups: next, slotMeta: meta });
 
-  /** Le staff atteste de la venue : c'est ce constat, et lui seul, qui compte. */
-  const confirmerPresences = async (creneau: Creneau, label: string, combien: number) => {
-    if (!window.confirm(`Confirmer que les ${combien} membre(s) encore listés étaient présents (${label}) ?\nRetire d'abord les absents avec la croix.`)) return;
-    const r = await fetch("/api/compositions/presences", {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creneau }),
-    });
-    const j = await r.json().catch(() => ({}));
-    window.alert(r.ok ? `${j.credites ?? 0} membre(s) crédités.` : (j.error ?? "Confirmation refusée."));
+  /* « Le staff atteste de la venue » passait par POST /api/compositions/presences, qui comptait
+     les annonces du créneau SANS RIEN ÉCRIRE (piège n° 6 de la spec). La clôture la remplace :
+     elle vise la dernière séance commencée et enregistre qui y était (Cloture.tsx). */
+
+  /** L'état de la séance préparée côté serveur : annulée ou non, et — pour le staff — son
+   *  panneau Discord (route 4, sans la créer). */
+  const [etatSeance, setEtatSeance] = useState<{ annulee: boolean; motif: string | null; discord: EtatDiscord | null } | null>(null);
+  const lireEtatSeance = useCallback((s: Seance) => {
+    fetch(`/api/seances/${cleDeSeance(s)}`).then(r => (r.ok ? r.json() : null))
+      .then(j => setEtatSeance(j ? { annulee: !!j.annulee, motif: j.motif ?? null, discord: j.discord ?? null } : null)).catch(() => {});
+  }, []);
+  /** « Republier » (route 11) : le bot publie un nouveau panneau, sans mention, et ferme
+   *  l'ancien. La demande part dans sa file : on relit l'état quelques fois pour voir le verdict. */
+  const [publication, setPublication] = useState<string | null>(null);
+  const republier = async () => {
+    if (!seance) return;
+    setPublication("Demande envoyée au bot…");
+    const r = await fetch(`/api/seances/${cleDeSeance(seance)}/discord`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ quoi: "panneau" }),
+    }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) { setPublication(null); window.alert(j.error ?? "Le serveur a refusé."); return; }
+    lireEtatSeance(seance);
+    for (const ms of [4000, 9000, 15000, 25000]) setTimeout(() => lireEtatSeance(seance), ms);
+    setTimeout(() => setPublication(null), 26000);
+  };
+  const cleSeance = seance ? cleDeSeance(seance) : null;
+  useEffect(() => { if (seance) lireEtatSeance(seance); }, [cleSeance]); // eslint-disable-line react-hooks/exhaustive-deps
+  const annulerSeance = async (annulee: boolean) => {
+    if (!seance) return;
+    let motif = "";
+    if (annulee) {
+      const m = window.prompt(`Annuler la séance du ${dateSeance(seance.debut)} ?\nUn motif pour les membres (facultatif, 200 signes) :`, "");
+      if (m === null) return;
+      motif = m.trim();
+    } else if (!window.confirm("Rétablir cette séance ?")) return;
+    const r = await fetch(`/api/seances/${cleDeSeance(seance)}/annuler`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ annulee, motif }),
+    }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) window.alert(j.error ?? "Le serveur a refusé.");
+    lireEtatSeance(seance);
   };
 
   /** « Je serai la » : une bascule par personnage, sur la seance preparee. */
@@ -136,7 +256,11 @@ export default function CompositionsPage() {
   const basculerRetenu = (creneau: Creneau, pseudo: string) => {
     sauver({ presences: presences.map(p => (p.creneau === creneau && p.pseudo === pseudo ? { ...p, retenu: !p.retenu } : p)) });
   };
-  const lbl = (s: Slot) => slotMeta[s.id]?.label || s.label;
+  // Le titre fixé par le paramétrage l'emporte ; sinon celui renommé ici, sinon celui du code.
+  const lbl = (s: Slot) => libellePoste(s as Poste, slotMeta);
+  /** Les chiffres d'un pseudo pour CE poste ; vide = « sans mesure ». */
+  const chiffresPour = (pseudo: string, slot: Slot) => chiffresDuPoste(mesures[pseudo.toLowerCase()] ?? {}, rolesDuPoste(slot));
+  const estAMoi = (pseudo: string) => myChars.some(c => c.name.toLowerCase() === pseudo.toLowerCase());
   const nt = (s: Slot) => slotMeta[s.id]?.note ?? s.note;
   const renameSlot = (slot: Slot, label: string, note: string) => { persist(signups, { ...slotMeta, [slot.id]: { label: label || slot.label, note } }); setEditSlot(null); };
   const norm = (s: string) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -150,7 +274,9 @@ export default function CompositionsPage() {
    */
   const registerToSlot = (slot: Slot, char: { id: string; name: string; class: string }) => {
     // Un perso ne peut être que sur UN poste : on retire son éventuelle inscription ailleurs avant d'ajouter.
-    const prochains = [...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id }];
+    // Datée (`ts`) : c'est ce qui la protège, sur le serveur, d'un enregistrement plus ancien
+    // envoyé par un autre membre (correctif `lu`, spec §5.3).
+    const prochains = [...signups.filter(s => s.charId !== char.id), { id: Math.random().toString(36).slice(2), player: meName, pseudo: char.name, classe: slot.classe, slotId: slot.id, charId: char.id, ts: Date.now() }];
     const nom = char.name.toLowerCase();
     const dejaLa = annonces.some(p => p.pseudo.toLowerCase() === nom);
     if (!seance || dejaLa) { persist(prochains); return; }
@@ -188,9 +314,9 @@ export default function CompositionsPage() {
   const selectedSlots = new Set(signups.filter(s => s.selected && s.slotId).map(s => s.slotId));
   const playersCount = new Set(signups.map(s => s.player.toLowerCase())).size;
   const byClass: Record<string, number> = {}; signups.forEach(s => { byClass[s.classe] = (byClass[s.classe] || 0) + 1; });
-  const fillPct = Math.round((selectedSlots.size / CS_SLOTS.length) * 100);
+  const fillPct = Math.round((selectedSlots.size / postes.length) * 100);
 
-  const PLACES_CS = nbPlaces(CS_SLOTS);
+  const PLACES_CS = nbPlaces(postes);
 
   /** « mercredi 12 août · 21 h » — la date, pas seulement le jour de la semaine. */
   const dateSeance = (d: Date) => `${d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · 21 h`;
@@ -208,7 +334,7 @@ export default function CompositionsPage() {
   const etatCourant: CompoState = { signups, slotMeta, presences, instructions };
   const annonces = seance ? presencesSeance(etatCourant, seance) : [];
   const retenus = annonces.filter(p => p.retenu);
-  const ecarts = ecartsClasse(annonces);
+  const ecarts = ecartsClasse(annonces, postes);
   const manques = ecarts.filter(e => e.manque > 0);
   const surplus = ecarts.filter(e => e.enPlus > 0);
   const jySuis = annonces.some(p => p.player === meName);
@@ -222,13 +348,15 @@ export default function CompositionsPage() {
    */
   const dejaDemande = useRef(false);
   useEffect(() => {
-    if (!seance || !charge || dejaDemande.current) return;
+    // Arrivé par l'onglet Guild Siege (lot 9 : « Je viens » libre, son propre geste), la question
+    // de la Chambre attendrait mal son tour : elle se pose si l'on passe sur une autre page.
+    if (!seance || !charge || dejaDemande.current || tab === "gvg") return;
     dejaDemande.current = true;
     let repondu = true;
     try { repondu = localStorage.getItem(cleReponse(seance)) === "1"; } catch { /* navigation privée : on ne harcèle pas */ }
     if (!repondu && !annonces.some(p => p.player === meName)) setPopupPresence(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seance, charge]);
+  }, [seance, charge, tab]);
 
   const card: React.CSSProperties = { background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 };
 
@@ -240,11 +368,18 @@ export default function CompositionsPage() {
           annonçait donc une page, le menu une autre.
           Le titre compte même sous une bannière : c'est lui qui devient le h1 pour
           les moteurs et les lecteurs d'écran, et il contredisait l'image. */}
-      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Chambres Secrètes" subtitle="Qui vient, à quel poste — et comment on joue chaque salle. Le Guild Siege reste libre." />
-      <div className="vg-subtabs">
-        <button onClick={() => setTab("cs")} className={`vg-subtab ${tab === "cs" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="key" size={15} /> Chambre Secrète</button>
-        <button onClick={() => setTab("strat")} className={`vg-subtab ${tab === "strat" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="book" size={15} /> Stratégie</button>
-        <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="sword" size={15} /> Guild Siege</button>
+      <PageHeader banner="/assets/site/banners/banner-chambres.webp" icon="puzzle" title="Chambres Secrètes" subtitle="Qui vient, à quel poste, qui tient quoi à chaque phase, le chrono en direct — et comment on joue chaque salle. Le Guild Siege reste libre." />
+      {/* « Inscription » est l'ancien onglet « Chambre Secrète » : il ne fait plus que ça.
+          « Bilans » réunit les séances passées (spec §7.1). « Paramétrer » mène les bras droits
+          au paramétrage des événements, rubrique Outils. */}
+      <div className="vg-subtabs gn-cs-onglets">
+        <button onClick={() => setTab("inscription")} className={`vg-subtab ${tab === "inscription" ? "active" : ""}`}><Icon name="key" size={15} />Inscription</button>
+        <button onClick={() => setTab("repartition")} className={`vg-subtab ${tab === "repartition" ? "active" : ""}`}><Icon name="grid" size={15} />Répartition</button>
+        <button onClick={() => setTab("chrono")} className={`vg-subtab ${tab === "chrono" ? "active" : ""}`}><Icon name="clock" size={15} />Chrono</button>
+        <button onClick={() => setTab("bilans")} className={`vg-subtab ${tab === "bilans" ? "active" : ""}`}><Icon name="trophy" size={15} />Bilans</button>
+        <button onClick={() => setTab("strategie")} className={`vg-subtab ${tab === "strategie" ? "active" : ""}`}><Icon name="book" size={15} />Stratégie</button>
+        <button onClick={() => setTab("gvg")} className={`vg-subtab ${tab === "gvg" ? "active" : ""}`}><Icon name="sword" size={15} />Guild Siege</button>
+        {isAdmin && <Link href="/discord/evenements" className="vg-subtab gn-cs-parametrer" title="Étapes, monstres, postes, textes et rappels"><Icon name="settings" size={15} />Paramétrer</Link>}
       </div>
 
       {/* LA MISE EN GARDE EST HORS DES ONGLETS, ET C'EST LE POINT.
@@ -253,22 +388,23 @@ export default function CompositionsPage() {
           Secrète, et celui qui vient s'inscrire pour ce soir ne la voyait jamais.
           Elle est ici : une ligne, les deux nombres comptés sur le relevé, et un
           bouton qui mène au tableau des PV à sortir. Posée après les onglets pour
-          qu'elle ne s'insère pas entre le titre et la navigation de la page. */}
-      <AlerteVies onVoir={() => setTab("strat")} />
+          qu'elle ne s'insère pas entre le titre et la navigation de la page.
+          Elle parle des Chambres : l'onglet Guild Siege ne la montre pas. */}
+      {tab !== "gvg" && <AlerteVies onVoir={() => setTab("strategie")} />}
 
       <div key={tab} className="vg-swap">
-      {tab === "cs" ? (<>
+      {tab === "inscription" ? (<>
         {/* Bandeau de progression */}
-        <div style={{ ...card, background: "linear-gradient(135deg, rgba(255,140,26,0.08), rgba(199,125,255,0.05))", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
+        <div style={{ ...card, background: "linear-gradient(135deg, rgba(var(--gn-lueur-rgb),0.08), rgba(199,125,255,0.05))", display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
           <div style={{ position: "relative", width: 84, height: 84 }}>
             <svg width="84" height="84" style={{ transform: "rotate(-90deg)" }}>
               <circle cx="42" cy="42" r="36" fill="none" stroke="var(--bg-3)" strokeWidth="8" />
-              <circle cx="42" cy="42" r="36" fill="none" stroke="var(--orange)" strokeWidth="8" strokeDasharray={`${2 * Math.PI * 36}`} strokeDashoffset={`${2 * Math.PI * 36 * (1 - fillPct / 100)}`} strokeLinecap="round" />
+              <circle cx="42" cy="42" r="36" fill="none" stroke="var(--gn-accent)" strokeWidth="8" strokeDasharray={`${2 * Math.PI * 36}`} strokeDashoffset={`${2 * Math.PI * 36 * (1 - fillPct / 100)}`} strokeLinecap="round" />
             </svg>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span className="font-heading" style={{ fontWeight: 700, fontSize: 20, color: "var(--orange)" }}>{fillPct}%</span></div>
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><span className="font-heading" style={{ fontWeight: 700, fontSize: 20, color: "var(--gn-accent)" }}>{fillPct}%</span></div>
           </div>
           <div style={{ display: "flex", gap: 28, flexWrap: "wrap" }}>
-            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{selectedSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{CS_SLOTS.length}</span></div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes validés</div></div>
+            <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22 }}>{selectedSlots.size}<span style={{ color: "var(--text-muted)", fontSize: 14 }}>/{postes.length}</span></div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Postes validés</div></div>
             <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--blue)" }}>{playersCount}</div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Joueurs</div></div>
             <div><div className="font-heading" style={{ fontWeight: 700, fontSize: 22, color: "var(--purple)" }}>{signups.length}</div><div style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase" }}>Candidatures</div></div>
           </div>
@@ -282,8 +418,8 @@ export default function CompositionsPage() {
             enregistrée (voir `charge`). On le dit, plutôt que de laisser croire
             qu'un clic a été pris en compte. */}
         {!charge && (
-          <div style={{ ...card, display: "flex", alignItems: "center", gap: 10, borderColor: "rgba(255,140,26,.35)", background: "rgba(255,140,26,.06)" }}>
-            <Icon name="clock" size={16} style={{ color: "var(--orange)" }} />
+          <div style={{ ...card, display: "flex", alignItems: "center", gap: 10, borderColor: "rgba(var(--gn-or-rgb),.35)", background: "rgba(var(--gn-lueur-rgb),.06)" }}>
+            <Icon name="clock" size={16} style={{ color: "var(--gn-accent)" }} />
             <span style={{ fontSize: 13, color: "var(--text-muted)" }}>Chargement de la composition partagée… les inscriptions et présences sont en lecture seule le temps de la récupérer.</span>
           </div>
         )}
@@ -295,9 +431,9 @@ export default function CompositionsPage() {
             séance — la prochaine — et tout la vise : le compte, ce qui manque,
             et la question posée en arrivant. */}
         {seance && (
-          <div className="fx-card" style={{ ...card, borderColor: "rgba(255,140,26,.32)" }}>
+          <div className="fx-card" style={{ ...card, borderColor: "rgba(var(--gn-or-rgb),.32)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
-              <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
+              <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
                 <Icon name="calendar" size={17} />Prochaine séance
               </h2>
               <span className="font-heading" style={{ fontWeight: 700, fontSize: 15 }}>{dateSeance(seance.debut)}</span>
@@ -305,14 +441,32 @@ export default function CompositionsPage() {
               <button className="vg-btn" onClick={() => setPopupPresence(true)} style={{ marginLeft: "auto", padding: "8px 15px", fontSize: 12.5 }}>
                 <Icon name={jySuis ? "check" : "plus"} size={14} />{jySuis ? "Je suis annoncé·e" : "Je serai là"}
               </button>
-              {isAdmin && annonces.length > 0 && (
-                <button onClick={() => confirmerPresences(seance.creneau, seance.label, annonces.length)}
-                  title="Enregistre la présence des membres encore listés"
+              {/* La clôture vise la DERNIÈRE séance commencée, pas celle qu'on prépare : le
+                  bouton est donc là même quand personne ne s'est encore annoncé ici. */}
+              {isAdmin && (
+                <button onClick={() => setCloture(true)}
+                  title="Clôturer la dernière séance : qui était vraiment là"
                   style={{ fontSize: 11.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--gold)", background: "transparent", color: "var(--gold)", display: "inline-flex", alignItems: "center", gap: 5 }}>
                   <Icon name="medal" size={12} />Ils étaient là
                 </button>
               )}
+              {isAdmin && etatSeance && (
+                <button onClick={() => annulerSeance(!etatSeance.annulee)}
+                  title={etatSeance.annulee ? "Rétablir cette séance" : "Le jeu est indisponible ce soir-là : annuler la séance"}
+                  style={{ fontSize: 11.5, fontWeight: 600, padding: "7px 12px", borderRadius: 8, cursor: "pointer", border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <Icon name={etatSeance.annulee ? "rotate-ccw" : "ban"} size={12} />{etatSeance.annulee ? "Rétablir" : "Annuler"}
+                </button>
+              )}
             </div>
+            {/* ANNULÉE (route 10) : on le dit en tête, avec le motif. Le bot la lit (lot 3) : plus
+                aucun rappel pour elle, et son panneau Discord passe en « annulée ». */}
+            {etatSeance?.annulee && (
+              <div className="gn-panne" style={{ marginBottom: 10, flexWrap: "wrap" }}>
+                <Icon name="ban" size={14} style={{ flexShrink: 0 }} />
+                <b>Séance annulée</b>{etatSeance.motif ? ` — ${etatSeance.motif}` : ""}
+                {isAdmin && <span style={{ color: "var(--text-muted)" }}>· Le bot n&apos;envoie plus aucun rappel pour elle.</span>}
+              </div>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", fontSize: 11.5 }}>
               <span style={{ fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 9px" }}>
                 {annonces.length} annoncé{annonces.length > 1 ? "s" : ""}
@@ -322,7 +476,7 @@ export default function CompositionsPage() {
               </span>
               {manques.length === 0
                 ? <span style={{ fontWeight: 700, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12} />Effectif au complet</span>
-                : <span style={{ color: "var(--orange)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
+                : <span style={{ color: "var(--gn-accent)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="alert" size={12} />Manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}</span>}
               {/* Le surplus n'est pas un problème : c'est la réserve du soir. */}
               {surplus.length > 0 && (
                 <span title="Plus d'annoncés que de places sur ces classes — le staff départage" style={{ color: "var(--blue)", display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -333,11 +487,13 @@ export default function CompositionsPage() {
                 Les annonces se font entre {seance.creneau === "mer" ? "dimanche 21 h et mercredi" : "mercredi 21 h 30 et dimanche"} 21 h.
               </span>
             </div>
+            {/* LE PANNEAU DISCORD, pour le staff (spec §7.2), au pied de la carte : où il en est, et « Republier ». */}
+            {isAdmin && etatSeance?.discord && <LignePanneau d={etatSeance.discord} annulee={etatSeance.annulee} enCours={publication} onPublier={republier} />}
           </div>
         )}
 
         {/* Zones de composition */}
-        {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = CS_SLOTS.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
+        {GROUPS.map(g => { const meta = GROUP_META[g]; const slots = postes.filter(s => s.group === g); const done = slots.filter(s => selectedSlots.has(s.id)).length; return (
           <div key={g} className="fx-card" style={{ ...card, padding: 0, overflow: "hidden" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 20px", background: `linear-gradient(90deg, ${meta.color}22, transparent)`, borderLeft: `4px solid ${meta.color}` }}>
               <Icon name={meta.icon as IconName} framed frameSize={30} tone="orange" />
@@ -366,13 +522,14 @@ export default function CompositionsPage() {
                       {presentsClasse.map(pr => {
                         const dedans = !!pr.retenu;
                         return (
-                          <span key={pr.pseudo} title={`${pr.pseudo} · annoncé par ${pr.player}${dedans ? " · retenu" : ""}`}
+                          <span key={pr.pseudo} title={[`${pr.pseudo} · annoncé par ${pr.player}${dedans ? " · retenu" : ""}`, ...(degatsCompo ? chiffresPour(pr.pseudo, slot).map(survol) : [])].join("\n")}
                             onClick={isAdmin && seance ? () => basculerRetenu(seance.creneau, pr.pseudo) : undefined}
                             style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, cursor: isAdmin ? "pointer" : "default",
                               color: dedans ? "var(--gold)" : "var(--text)", fontWeight: dedans ? 700 : 400,
                               background: dedans ? "rgba(255,210,74,.12)" : "var(--bg-2)",
                               border: `1px solid ${dedans ? "var(--gold)" : "var(--border)"}`, borderRadius: 20, padding: "2px 8px" }}>
                             {dedans && <Icon name="star" size={10} />}{pr.pseudo}
+                            {degatsCompo && <ChiffresPoste chiffres={chiffresPour(pr.pseudo, slot)} cs={rolesDuPoste(slot)} moi={estAMoi(pr.pseudo)} compact />}
                             {(isAdmin || pr.player === meName) && (
                               <button onClick={e => { e.stopPropagation(); sauver({ presences: presences.filter(x => !(x.creneau === pr.creneau && x.pseudo === pr.pseudo)) }); }}
                                 title="Retirer l'annonce" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex" }}><Icon name="x" size={10} /></button>
@@ -386,14 +543,20 @@ export default function CompositionsPage() {
                     {taken.map(t => <div key={t.id} style={{ fontSize: 11.5, color: t.selected ? meta.color : "var(--text)", display: "flex", alignItems: "center", gap: 5, fontWeight: t.selected ? 700 : 400 }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.selected ? meta.color : "var(--text-muted)", flexShrink: 0 }} />
                       {t.selected && <span title="Sélectionné" style={{ color: meta.color, display: "inline-flex", alignItems: "center" }}><Icon name="check" size={12} /></span>}
-                      {isAdmin ? (
-                        <a href={`/builder/${encodeURIComponent(t.player)}`} title={`Voir le build de ${t.player} (lecture seule)`} style={{ color: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "baseline", gap: 4, overflow: "hidden", minWidth: 0 }}>
-                          <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", borderBottom: "1px dotted currentColor" }}>{t.pseudo}</b>
-                          <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span>
-                        </a>
-                      ) : (
-                        <><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span></>
-                      )}
+                      {/* Le nom, et sous lui son chiffre pour CE poste : une ligne de plus
+                          plutôt qu'une pastille de plus, la rangée porte déjà l'écart, l'annonce
+                          et les gestes du staff. */}
+                      <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: "1 1 auto" }}>
+                        {isAdmin ? (
+                          <a href={`/builder/${encodeURIComponent(t.player)}`} title={`Voir le build de ${t.player} (lecture seule)`} style={{ color: "inherit", textDecoration: "none", display: "inline-flex", alignItems: "baseline", gap: 4, overflow: "hidden", minWidth: 0 }}>
+                            <b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", borderBottom: "1px dotted currentColor" }}>{t.pseudo}</b>
+                            <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span>
+                          </a>
+                        ) : (
+                          <span style={{ display: "inline-flex", alignItems: "baseline", gap: 4, overflow: "hidden", minWidth: 0 }}><b style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.pseudo}</b> <span style={{ color: "var(--text-muted)", fontSize: 11 }}>· {t.player}</span></span>
+                        )}
+                        {degatsCompo && <ChiffresPoste chiffres={chiffresPour(t.pseudo, slot)} cs={rolesDuPoste(slot)} moi={estAMoi(t.pseudo)} />}
+                      </span>
                       {(() => {
                         const ec = ecartsRef[t.id];
                         // Trois états distincts, à ne pas confondre : pas de référence pour
@@ -408,9 +571,9 @@ export default function CompositionsPage() {
                           lisent maintenant sur la meme ligne. */}
                       {annonces.some(p => p.pseudo.toLowerCase() === t.pseudo.toLowerCase())
                         ? <span title="Annoncé pour la prochaine séance" style={{ color: "var(--green)", display: "inline-flex" }}><Icon name="check" size={11} /></span>
-                        : <span title="Ne s'est pas encore annoncé pour la prochaine séance" style={{ color: "var(--text-muted)", fontSize: 11 }}>pas annoncé</span>}
+                        : <span title="Ne s'est pas encore annoncé pour la prochaine séance" style={{ color: "var(--text-muted)", fontSize: 11, whiteSpace: "nowrap" }}>pas annoncé</span>}
                       <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
-                        {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? "var(--orange)" : "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="star" size={14} /></button>}
+                        {isAdmin && <button onClick={() => selectSignup(slot.id, t.id)} title={t.selected ? "Désélectionner" : "Sélectionner ce candidat"} style={{ background: "none", border: "none", color: t.selected ? "var(--gn-accent)" : "var(--text-muted)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="star" size={14} /></button>}
                         {(isAdmin || t.player === meName) && <button onClick={() => removeSignup(t.id)} title="Retirer" style={{ background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="x" size={13} /></button>}
                       </span>
                     </div>)}
@@ -438,18 +601,30 @@ export default function CompositionsPage() {
           <dl className="cs-legende">
             <dt><span className="cs-lg-btn">+ ton perso</span></dt>
             <dd>se porter candidat·e — plusieurs par poste</dd>
-            <dt><Icon name="star" size={14} style={{ color: "var(--orange)" }} /></dt>
+            <dt><Icon name="star" size={14} style={{ color: "var(--gn-accent)" }} /></dt>
             <dd>le titulaire, choisi par un responsable</dd>
             <dt><Icon name="eye" size={14} /></dt>
             <dd>le build conseillé, et celui de référence</dd>
           </dl>
           {signups.length > 0 && (<>
-            <div className="font-heading" style={{ color: "var(--orange)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
+            <div className="font-heading" style={{ color: "var(--gn-accent)", textTransform: "uppercase", fontSize: 13, margin: "14px 0 8px" }}>Classes engagées</div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>{Object.entries(byClass).map(([c, n]) => <span key={c} style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "var(--bg-3)", borderRadius: 7, padding: "4px 9px", fontSize: 12 }}><ClassLogo name={c} size={20} /> ×{n}</span>)}</div>
           </>)}
         </div>
       </>
-      ) : tab === "strat" ? (
+      ) : tab === "repartition" ? (
+        /* Les salles des Asuras, les équipes des Jumeaux, les golems, l'araignée et le récap
+           tel qu'il partira (§7.3, lot 4). Sur ses propres routes : il n'appelle jamais
+           `sauver()`, qui renvoie toute la composition (§5.2). */
+        <Repartition isAdmin={isAdmin} onInscription={() => setTab("inscription")} onCloturer={() => setCloture(true)} />
+      ) : tab === "chrono" ? (
+        /* Le chrono en direct (§4.9, §7.4, lot 5) : le staff valide chaque étape, ici ou dans
+           Discord ; tout le monde voit le temps défiler et les monstres de l'étape en cours. Sur
+           ses propres routes, comme la Répartition. */
+        <Chrono isAdmin={isAdmin} />
+      ) : tab === "bilans" ? (
+        <Bilans isAdmin={isAdmin} seanceOuverte={seanceBilan} videoOuverte={videoBilan} parcours={parcoursBilan} onCloturer={(c) => setCloture(c ?? true)} rafraichir={nBilans} />
+      ) : tab === "strategie" ? (
         /* Le déroulé et les placements, à côté de la composition qu'ils
            expliquent — mais pas dans la même page : on vient ici pour lire,
            on allait là-bas pour s'inscrire, et les deux se gênaient.
@@ -465,20 +640,20 @@ export default function CompositionsPage() {
           <StrategieCS isAdmin={isAdmin} texteExistant={instructions} />
         </>
       ) : (
-        <div style={{ ...card, textAlign: "center", padding: 40 }}>
-          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center", color: "var(--text-muted)" }}><Icon name="sword" size={44} /></div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--text-muted)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>
-            <Icon name="clock" size={12} />En standby
-          </div>
-          <h2 className="font-heading" style={{ fontSize: 22, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Guild Siege</h2>
-          {/* Rien a organiser ici pour l'instant : le dire franchement vaut mieux
-              qu'une page qui ressemble a une page active. */}
-          <p style={{ color: "var(--text-muted)", lineHeight: 1.7, maxWidth: 560, margin: "0 auto" }}>
-            Aucune séance n&apos;est organisée pour le moment. Quand ça reprendra, ce sera <b style={{ color: "var(--text)" }}>libre</b> : pas de composition stricte, ramène ton meilleur perso, peu importe la classe. L&apos;essentiel c&apos;est d&apos;être présent et de jouer ensemble. <Icon name="zap" size={16} style={{ display: "inline-block", color: "var(--orange)" }} />
-          </p>
-        </div>
+        /* Le Guild Siege (lot 9, §11.3) : « En standby » tant que le staff ne l'allume pas
+           (décision 2) ; allumé, « Je viens » libre, qui vient, la clôture et les derniers
+           sièges. Sur ses propres routes, comme la Répartition. */
+        <GuildSiege isAdmin={isAdmin} rafraichir={nBilans}
+          onCloturer={(c) => setCloture(c)}
+          onVoirBilan={(c) => { setSeanceBilan(c); setParcoursBilan(false); setTab("bilans"); }} />
       )}
       </div>
+
+      {cloture && (
+        <Cloture initiale={typeof cloture === "string" ? cloture : undefined} onFermer={() => setCloture(false)}
+          onEcrite={() => setNBilans((n) => n + 1)}
+          onFaite={(cle) => { setCloture(false); setSeanceBilan(cle); setParcoursBilan(true); setNBilans((n) => n + 1); setTab("bilans"); }} />
+      )}
 
       {/* Bulle d'info : build conseillé + accès au build de référence */}
       {info && <div onClick={() => setInfo(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -490,7 +665,7 @@ export default function CompositionsPage() {
           </div>
           <div style={{ fontSize: 13.5, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-line" }}>{info.build || "Build conseillé à venir."}</div>
           <div style={{ marginTop: 16 }}>
-            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid var(--orange)", background: "var(--orange)", color: "#0a0a0c", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="eye" size={14} /> Voir le build de référence ↗</a>
+            <a href={`/compositions/build/${info.id}`} style={{ fontSize: 13, fontWeight: 600, padding: "9px 16px", borderRadius: 8, border: "1px solid rgba(var(--gn-or-rgb),.55)", background: "var(--gn-action)", color: "var(--gn-sur-action)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="eye" size={14} /> Voir le build de référence ↗</a>
           </div>
         </div>
       </div>}
@@ -505,7 +680,7 @@ export default function CompositionsPage() {
           <textarea id="es-note" defaultValue={nt(editSlot)} rows={2} style={{ width: "100%", margin: "6px 0 14px", background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "9px 12px", color: "var(--text)", resize: "vertical", fontFamily: "inherit" }} />
           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
             <button onClick={() => setEditSlot(null)} style={{ padding: "8px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text)", cursor: "pointer" }}>Annuler</button>
-            <button onClick={() => { const l = (document.getElementById("es-label") as HTMLInputElement | null)?.value.trim() ?? ""; const n = (document.getElementById("es-note") as HTMLTextAreaElement | null)?.value.trim() ?? ""; renameSlot(editSlot, l, n); }} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--orange)", color: "#0a0a0c", fontWeight: 700, cursor: "pointer" }}>Enregistrer</button>
+            <button onClick={() => { const l = (document.getElementById("es-label") as HTMLInputElement | null)?.value.trim() ?? ""; const n = (document.getElementById("es-note") as HTMLTextAreaElement | null)?.value.trim() ?? ""; renameSlot(editSlot, l, n); }} style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--gn-action)", color: "var(--gn-sur-action)", fontWeight: 700, cursor: "pointer" }}>Enregistrer</button>
           </div>
         </div>
       </div>}
@@ -520,13 +695,13 @@ export default function CompositionsPage() {
         <div onClick={fermerPopup} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, maxWidth: 460, width: "100%" }}>
             <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 17, fontWeight: 700 }}>
-              <Icon name="key" size={17} style={{ color: "var(--orange)" }} />Chambre secrète — {dateSeance(seance.debut)}
+              <Icon name="key" size={17} style={{ color: "var(--gn-accent)" }} />Chambre secrète — {dateSeance(seance.debut)}
             </div>
             <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "9px 0 4px" }}>
               Tu seras là ? Coche les personnages que tu comptes jouer {delai(seance.debut)}.
             </p>
             {manques.length > 0 && (
-              <p style={{ fontSize: 12, color: "var(--orange)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
+              <p style={{ fontSize: 12, color: "var(--gn-accent)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 6 }}>
                 <Icon name="alert" size={12} />Il manque {manques.map(m => `${m.manque} ${m.classe}`).join(", ")}
               </p>
             )}
@@ -591,8 +766,50 @@ export default function CompositionsPage() {
         .cs-legende dt{display:flex;align-items:center;justify-content:center;min-width:0}
         .cs-legende dd{margin:0;min-width:0}
         .cs-lg-btn{white-space:nowrap;font-size:11.5px;font-weight:600;padding:4px 9px;
-          border-radius:6px;border:1px solid var(--orange);color:var(--orange)}
+          border-radius:6px;border:1px solid var(--gn-accent);color:var(--gn-accent)}
       `}</style>
     </div>
+  );
+}
+
+/**
+ * LE CHIFFRE À CÔTÉ DU NOM (spec §7.2) : des PV sur un poste de tank, des dégâts sinon —
+ * ceux que le joueur a DÉCLARÉS dans l'AirBuilder, jamais vérifiés. Le survol en dit la
+ * date et les conditions ; « à remesurer » au-delà de 30 jours, « sans mesure » quand rien
+ * n'est déclaré pour ce poste. C'est une information, pas un ordre : le tri des candidats
+ * reste l'écart au build de référence.
+ *
+ * Les pastilles copient leurs voisines : « à remesurer » la forme de « sans build »
+ * (9,5 px, rayon 99), en or ; dans la puce d'un annoncé, l'horloge seule.
+ */
+function ChiffresPoste({ chiffres, cs, moi, compact = false }: { chiffres: Chiffre[]; cs: RolesCS; moi: boolean; compact?: boolean }) {
+  const taille = compact ? 10.5 : 11;
+  if (!chiffres.length) {
+    /* Dans la puce d'un annoncé, « sans mesure » devient lui-même le lien quand c'est mon
+       perso : la phrase entière ne tient pas dans une puce. Le clic ne remonte pas à la
+       puce, qui, pour le staff, retient ou relâche l'annoncé. */
+    if (compact && moi) {
+      return (
+        <a href="/builder" onClick={(e) => e.stopPropagation()} title="Aucun chiffre déclaré pour ce poste — mettre à jour dans l'AirBuilder"
+          style={{ fontSize: taille, color: "var(--text-muted)", fontWeight: 400, whiteSpace: "nowrap", textDecoration: "none", borderBottom: "1px dotted var(--gn-accent)" }}>
+          sans mesure
+        </a>
+      );
+    }
+    return (
+      <span title="Aucun chiffre déclaré dans l'AirBuilder pour ce poste" style={{ fontSize: taille, color: "var(--text-muted)", fontWeight: 400, whiteSpace: "nowrap" }}>
+        sans mesure
+        {moi && <> · <a href="/builder" style={{ color: "var(--gn-accent)", textDecoration: "none" }}>Mettre à jour dans l&apos;AirBuilder</a></>}
+      </span>
+    );
+  }
+  const vieux = chiffres.some((c) => c.aRemesurer);
+  return (
+    <span title={compact ? undefined : chiffres.map(survol).join("\n")} style={{ display: "inline-flex", alignItems: "center", gap: 5, flexWrap: "wrap", fontSize: taille, fontWeight: 400, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
+      <span style={{ color: "var(--text)", fontWeight: 600, whiteSpace: "nowrap" }}>{enLigne(chiffres, cs)}</span>
+      {vieux && (compact
+        ? <span style={{ color: "var(--gold)", display: "inline-flex" }}><Icon name="clock" size={10} /></span>
+        : <span style={{ fontSize: 9.5, color: "var(--gold)", border: "1px solid var(--gold)", borderRadius: 99, padding: "1px 7px", display: "inline-flex", alignItems: "center", gap: 3, whiteSpace: "nowrap" }}><Icon name="clock" size={9} />à remesurer</span>)}
+    </span>
   );
 }

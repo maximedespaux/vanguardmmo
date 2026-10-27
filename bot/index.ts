@@ -1,21 +1,21 @@
 // ════════════════════════════════════════════════════════════
 //  POINT D'ENTRÉE DU BOT VANGUARD
-//  Commandes slash + boutons (dettes, décisions, rôles, giveaways)
-//  + rôle-réaction + planificateur.
+//  Commandes slash (et leur autocomplétion) + boutons (décisions, rôles, giveaways, Chambres)
+//  + menus déroulants et fenêtres de saisie (Chambres) + rôle-réaction + planificateur.
 //  Commande : npm run bot
 // ════════════════════════════════════════════════════════════
-import { Client, GatewayIntentBits, Partials, Collection, ChatInputCommandInteraction, GuildMember, Events, ModalBuilder, ActionRowBuilder, TextInputBuilder, TextInputStyle } from "discord.js";
+import { Client, GatewayIntentBits, Partials, Collection, ChatInputCommandInteraction, GuildMember, Events, MessageFlags, type AutocompleteInteraction } from "discord.js";
 import { TOKEN } from "./config.js";
 import { commands } from "./commands/index.js";
 import { startScheduler } from "./scheduler.js";
 import { registerReactionRoles } from "./lib/reactionroles.js";
 import { prisma } from "./lib/prisma.js";
-import { applyApplicationDecision, applyBankRefuse, applyBankAccept } from "./lib/decisions.js";
+import { applyApplicationDecision } from "./lib/decisions.js";
 import { dm } from "./lib/mp.js";
-import { applyExchangeDecision, applyHolderDecision } from "./lib/exchange.js";
 import { toggleRole } from "./lib/buttonroles.js";
 import { refreshGiveaway } from "./lib/giveaways.js";
 import { isStaff } from "./lib/permissions.js";
+import { gererBoutonSeance, gererFenetreSeance, gererMenuSeance } from "./lib/seances.js";
 
 if (!TOKEN) { console.error("❌ DISCORD_BOT_TOKEN manquant dans .env"); process.exit(1); }
 
@@ -24,7 +24,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,        // attribuer des rôles
     GatewayIntentBits.GuildMessageReactions, // rôle-réaction
-    GatewayIntentBits.DirectMessages,      // MP dettes
+    GatewayIntentBits.DirectMessages,      // MP (décisions de candidature)
   ],
   partials: [Partials.Message, Partials.Channel, Partials.Reaction, Partials.User],
 });
@@ -52,37 +52,77 @@ client.on(Events.InteractionCreate, async (interaction) => {
     return;
   }
 
+  // ─── Autocomplétion ───
+  // Le choix de la séance de /chambre cloturer et /chambre debrief (les dernières séances
+  // commencées, comme `autocomplete_chambres_ouvertes` du modèle). Discord n'attend pas : en cas
+  // d'erreur, une liste vide plutôt que rien.
+  if (interaction.isAutocomplete()) {
+    const cmd = registry.get(interaction.commandName) as { autocomplete?: (i: AutocompleteInteraction) => Promise<void> } | undefined;
+    try { if (cmd?.autocomplete) await cmd.autocomplete(interaction); else await interaction.respond([]); }
+    catch (e) {
+      console.error(`Erreur autocomplétion /${interaction.commandName} :`, e);
+      try { if (!interaction.responded) await interaction.respond([]); } catch { /* ignore */ }
+    }
+    return;
+  }
+
   // ─── Boutons ───
   if (interaction.isButton()) {
     const id = interaction.customId;
     try {
       if (id.startsWith("app:")) await handleAppDecision(interaction);
-      else if (id.startsWith("bank:")) await handleBankDecision(interaction);
-      else if (id.startsWith("exch:")) await handleExchangeDecision(interaction);
-      else if (id.startsWith("hold:")) await handleHolderDecision(interaction);
+      // Les boutons de la Boutique (requête, détenteur, salon d'échange) restent sur
+      // d'anciens messages : une réponse claire plutôt que « l'interaction a échoué ».
+      else if (/^(bank|exch|hold):/.test(id)) await interaction.reply({ content: "Ce bouton ne sert plus : la boutique a quitté le site.", ephemeral: true });
       else if (id.startsWith("role:")) await toggleRole(interaction, id.slice("role:".length));
       else if (id.startsWith("gw:join:")) await handleGiveawayJoin(interaction);
+      // Chambres Secrètes et Guild Siege : boutons SANS ÉTAT, tout est relu en base
+      // (« Je viens », « Pas cette fois » ; SPEC-CHAMBRES §8.1).
+      else if (id.startsWith("cs:") || id.startsWith("gs:")) await gererBoutonSeance(interaction);
     } catch (e) {
       console.error("Erreur bouton", id, e);
-      try { if (!interaction.replied && !interaction.deferred) await interaction.reply({ content: "Une erreur est survenue 😬", ephemeral: true }); } catch { /* ignore */ }
+      await repondreErreur(interaction);
     }
     return;
   }
 
-  // ─── Soumission de modal (horaire d'échange proposé) ───
+  // ─── Fenêtres de saisie ───
+  // Le débrief des Chambres dans Discord (lot 6 bis) : « chrono et remarque » d'une étape, et
+  // « à retenir » — `EtapeModal` et `ARetenirModal` du modèle.
   if (interaction.isModalSubmit()) {
+    const id = interaction.customId;
     try {
-      if (interaction.customId.startsWith("exchtime:")) {
-        const time = interaction.fields.getTextInputValue("time").slice(0, 100);
-        await interaction.reply({ content: `🗓️ **${interaction.user.username}** propose un horaire : **${time}**` });
-      }
+      if (id.startsWith("cs:")) await gererFenetreSeance(interaction);
     } catch (e) {
-      console.error("Erreur modal", interaction.customId, e);
-      try { if (!interaction.replied) await interaction.reply({ content: "Une erreur est survenue 😬", ephemeral: true }); } catch { /* ignore */ }
+      console.error("Erreur fenêtre", id, e);
+      await repondreErreur(interaction);
+    }
+    return;
+  }
+
+  // ─── Menus déroulants ───
+  // « Quels persos ? » et « Quel poste ? », sous le « Je viens » des Chambres. Le bot n'en
+  // traitait aucun jusqu'au lot 3 (piège n° 17 de la spec).
+  if (interaction.isStringSelectMenu()) {
+    const id = interaction.customId;
+    try {
+      if (id.startsWith("cs:") || id.startsWith("gs:")) await gererMenuSeance(interaction);
+    } catch (e) {
+      console.error("Erreur menu", id, e);
+      await repondreErreur(interaction);
     }
     return;
   }
 });
+
+/** Une erreur, dite à l'auteur du clic seul — que le geste ait déjà répondu « en attente » ou non. */
+async function repondreErreur(interaction: any) {
+  const msg = { content: "⚠️ Je n'ai pas pu enregistrer, réessaie dans un instant.", flags: MessageFlags.Ephemeral, allowedMentions: { parse: [] } } as const;
+  try {
+    if (interaction.deferred || interaction.replied) await interaction.followUp(msg);
+    else await interaction.reply(msg);
+  } catch { /* ignore */ }
+}
 
 // ─── Boutons de décision (candidatures) — staff uniquement ───
 async function handleAppDecision(interaction: any) {
@@ -104,63 +144,6 @@ async function handleAppDecision(interaction: any) {
   };
   await dm(interaction.client, app.discordId, { content: NOTE[updated.status] ?? "Le statut de ta candidature a été mis à jour." });
   await interaction.reply({ content: `✅ Candidature de **${app.username}** → **${updated.status}**.`, ephemeral: true });
-}
-
-// ─── Bouton « Refuser » d'une requête Banque — staff uniquement ───
-async function handleBankDecision(interaction: any) {
-  const [, action, id] = interaction.customId.split(":");
-  const member = interaction.member as GuildMember | null;
-  if (!isStaff(member)) { await interaction.reply({ content: "⛔ Réservé au staff (bras droits / owners).", ephemeral: true }); return; }
-  const r = await prisma.bankRequest.findFirst({ where: { OR: [{ id }, { batchId: id }] } });
-  if (!r) { await interaction.reply({ content: "Cette requête n'existe plus.", ephemeral: true }); return; }
-  if (r.status !== "PENDING") { await interaction.reply({ content: "Requête déjà traitée.", ephemeral: true }); return; }
-  if (action === "refuse") {
-    const updated = await applyBankRefuse(interaction.client, id, interaction.user.username);
-    if (updated) await dm(interaction.client, updated.discordId, { content: `❌ Ta requête boutique à **Vanguard** a été refusée.` });
-    await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** refusée.`, ephemeral: true });
-    return;
-  }
-  if (action === "achat" || action === "dette") {
-    const updated = await applyBankAccept(interaction.client, id, action, interaction.user.username);
-    if (updated) await dm(interaction.client, updated.discordId, { content: action === "dette" ? "📝 Ta requête boutique a été **acceptée en dette**. Un salon d'échange va s'ouvrir." : "🛒 Ta requête boutique a été **acceptée (achat)**. Un salon d'échange va s'ouvrir." });
-    await interaction.reply({ content: `✅ Requête de **${updated?.username ?? "membre"}** acceptée (${action}, prix auto). L'embed et le salon d'échange se mettent à jour sous peu.`, ephemeral: true });
-    return;
-  }
-  await interaction.reply({ content: "Action inconnue.", ephemeral: true });
-}
-
-// ─── Boutons « J'accepte / Je refuse mes objets » — détenteur (ou Vanguard en secours) ───
-async function handleHolderDecision(interaction: any) {
-  const [, action, key] = interaction.customId.split(":");
-  if (action !== "accept" && action !== "refuse") { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
-  const member = interaction.member as GuildMember | null;
-  const res = await applyHolderDecision(interaction.client, key, action as "accept" | "refuse", interaction.user.id, interaction.user.username, isStaff(member));
-  if (res.mine === 0) { await interaction.reply({ content: "Tu n'as aucun objet à décider dans cette requête.", ephemeral: true }); return; }
-  await interaction.reply({
-    content: action === "accept"
-      ? `✅ Tu as **accepté** ${res.mine} objet(s).${res.done ? " Tous les détenteurs ont répondu — vous pouvez coordonner l'échange puis cliquer **Remis**." : ""}`
-      : `❌ Tu as **refusé** ${res.mine} objet(s).`,
-    ephemeral: true,
-  });
-}
-
-// ─── Boutons du salon d'échange (Remis / Refusé) — participants du salon privé ───
-async function handleExchangeDecision(interaction: any) {
-  const [, action, key] = interaction.customId.split(":");
-  if (action === "time") { // proposer un horaire in-game → modal
-    const modal = new ModalBuilder().setCustomId(`exchtime:${key}`).setTitle("Proposer un horaire d'échange");
-    modal.addComponents(new ActionRowBuilder<TextInputBuilder>().addComponents(
-      new TextInputBuilder().setCustomId("time").setLabel("Quand es-tu dispo in-game ?").setStyle(TextInputStyle.Short).setPlaceholder("ex. ce soir 21h · maintenant · demain midi").setRequired(true).setMaxLength(100)));
-    await interaction.showModal(modal);
-    return;
-  }
-  if (action === "ready") { // signale être connecté in-game (visible par tous dans le salon)
-    await interaction.reply({ content: `🟢 **${interaction.user.username}** est connecté·e in-game et prêt·e pour l'échange.` });
-    return;
-  }
-  if (action !== "remis" && action !== "refuse") { await interaction.reply({ content: "Action inconnue.", ephemeral: true }); return; }
-  await applyExchangeDecision(interaction.client, key, action as "remis" | "refuse", interaction.user.username);
-  await interaction.reply({ content: action === "remis" ? "✅ Échange marqué **remis**." : "❌ Échange **refusé / annulé**.", ephemeral: true });
 }
 
 // ─── Bouton « Participer » d'un giveaway (toggle) ───

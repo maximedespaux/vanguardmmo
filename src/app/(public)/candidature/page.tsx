@@ -8,13 +8,16 @@ import { useSession } from "next-auth/react";
 import { canAccessGuild } from "@/config/roles";
 import { useCardFx } from "@/components/VgFx";
 import { renduPerso, type Sexe } from "@/data/charRenders";
+import { lienBuilder } from "@/lib/mesPersos";
 
 const CLASSES = ["Spadassin","Templier","Arcaniste","Envouteur","Arbalétrier","Sylphide","Primat","Chanoine"];
 const SPECS: { k: string; ic: IconName; l: string }[] = [{k:"PVE",ic:"sprout",l:"PvE / Farm"},{k:"PVP",ic:"trophy",l:"PvP & Boss"},{k:"CS",ic:"key",l:"Chambres Secrètes"}];
 const STEP_NAMES = ["Profil","Spés","Stuff","Récap"];
 
-// `id` présent = personnage qui existe DÉJÀ sur le compte (repris, pas ressaisi,
-// et surtout pas recréé à l'envoi). Absent = nouveau, il sera créé en base.
+// `id` présent = personnage qui existe DÉJÀ sur le compte (repris, pas ressaisi).
+// Absent = déclaré ici. Il n'est plus créé en base à l'envoi (2026-10-21) : c'est
+// l'AirBuilder qui publie les persos du compte, et le build de la candidature devient
+// celui du compte (/api/application, « reprise du build »).
 type Char = { name: string; cls: string; prestige: number; id?: string; sex?: Sexe };
 
 /** Libellé affiché -> valeur de l'enum Prisma (majuscules, sans accent). */
@@ -52,8 +55,6 @@ export default function CandidaturePage() {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
-  /** Nombre de personnages repris du compte (0 = le candidat n'en avait aucun). */
-  const [persosReprisDuCompte, setPersosReprisDuCompte] = useState(0);
   /** Noms (minuscules) des personnages qui ont au moins une pièce équipée. */
   const [nomsAvecBuild, setNomsAvecBuild] = useState<Set<string>>(new Set());
   /**
@@ -76,7 +77,6 @@ export default function CandidaturePage() {
           id: p.id, name: p.name, cls: depuisEnumClasse(p.class), prestige: p.prestige ?? 3,
           sex: p.sex === "F" ? "F" : "G",
         })));
-        setPersosReprisDuCompte(list.length);
       })
       .catch(() => setAuthed(false));
   }, []);
@@ -180,33 +180,13 @@ export default function CandidaturePage() {
   async function submit() {
     setError(""); setSending(true);
     try {
-      // Les personnages déclarés qui n'existent pas encore sont réellement créés sur
-      // le compte : ils resteront acquis (Dashboard, AirBuilder, Compositions) même
-      // si la candidature n'aboutit pas, et le candidat n'aura pas à les ressaisir.
-      const aCreer = chars.filter((c) => !c.id && c.name.trim());
-      if (aCreer.length) {
-        const faits = await Promise.all(aCreer.map((c, i) =>
-          fetch("/api/characters", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: c.name.trim(), class: versEnumClasse(c.cls), prestige: c.prestige, level: 200, sex: c.sex ?? "G",
-              // Le premier personnage déclaré devient le principal s'il n'y en avait aucun.
-              isMain: persosReprisDuCompte === 0 && i === 0,
-            }),
-          }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
-        ));
-        // On note les identifiants obtenus pour ne pas recréer en cas de nouvel envoi.
-        setChars((prev) => {
-          const copie = [...prev];
-          aCreer.forEach((c, i) => {
-            const cree = faits[i];
-            if (!cree?.id) return;
-            const j = copie.findIndex((x) => !x.id && x.name === c.name && x.cls === c.cls);
-            if (j >= 0) copie[j] = { ...copie[j], id: cree.id };
-          });
-          return copie;
-        });
-      }
+      /* LES PERSOS NE SONT PLUS CRÉÉS ICI (2026-10-21). Les nouveaux persos déclarés
+         partaient dans `Character` par POST /api/characters ; or l'AirBuilder est la
+         seule source des persos d'un compte, et sa synchro efface puis recrée tout le
+         compte depuis son propre état. Chaque perso déclaré a forcément son build dans
+         l'AirBuilder (`persosSansBuild` bloque l'envoi sinon), et ce build devient
+         celui du compte (/api/application, « reprise du build ») : les persos y sont,
+         et la première ouverture de l'AirBuilder les publie à la guilde. */
       const r = await fetch("/api/application", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chars, specs, csChars, favClasses, classesAConstruire, detailBuilds, interests, motivation, experience, stuffMode: "build", build: buildExport, fullBuild: (() => { try { return JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { return null; } })() }) });
       if (!r.ok) {
         setError(r.status === 401 ? "Tu dois être connecté avec Discord pour postuler." : "Échec de l'envoi — réessaie dans un instant.");
@@ -244,8 +224,8 @@ export default function CandidaturePage() {
       <PageHeader banner="/assets/site/banners/banner-candidature.webp" icon="clipboard" title="Candidature" subtitle="" />
       <div className="glass-card fx-card" style={{ padding: 32, marginTop: 20 }}>
         <div style={{ marginBottom: 10, display: "flex", justifyContent: "center" }}><Icon name="shield" size={46} /></div>
-        <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--orange)", marginBottom: 10 }}>Tu es déjà des nôtres</h2>
-        <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>Vanguard</b> ! File plutôt mettre ton stuff à jour.</p>
+        <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 700, color: "var(--gn-accent)", marginBottom: 10 }}>Tu es déjà des nôtres</h2>
+        <p style={{ color: "var(--text-muted)", lineHeight: 1.6, marginBottom: 20 }}>Inutile de candidater — tu fais déjà partie de <b style={{ color: "var(--text)" }}>GENESIS</b> ! File plutôt mettre ton stuff à jour.</p>
         <a href="/personnages" className="vg-btn" style={{ textDecoration: "none" }}>→ Mes personnages</a>
       </div>
     </div>
@@ -261,11 +241,11 @@ export default function CandidaturePage() {
             <div key={n} style={{ flex: 1, display: "flex", alignItems: "center" }}>
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 7, flexShrink: 0, minWidth: 56 }}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 15, fontFamily: "'Rubik',sans-serif", transition: "all .22s",
-                  background: done ? "var(--green)" : cur ? "linear-gradient(180deg,#FFB552,#FF8C1A)" : "var(--bg-3)",
-                  color: done || cur ? "#0A0A0C" : "var(--text-muted)",
-                  border: `2px solid ${done ? "var(--green)" : cur ? "var(--orange)" : "var(--border)"}`,
-                  boxShadow: cur ? "0 0 16px rgba(255,140,26,.55)" : done ? "0 0 10px rgba(74,222,128,.35)" : "none" }}>{done ? <Icon name="check" size={18} /> : num}</div>
-                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", fontFamily: "'Rubik',sans-serif", color: cur ? "var(--orange)" : done ? "var(--green)" : "var(--text-muted)", textAlign: "center" }}>{n}</span>
+                  background: done ? "var(--green)" : cur ? "var(--gn-action)" : "var(--bg-3)",
+                  color: done ? "#0A0A0C" : cur ? "var(--gn-sur-action)" : "var(--text-muted)",
+                  border: `2px solid ${done ? "var(--green)" : cur ? "rgba(var(--gn-or-rgb),.55)" : "var(--border)"}`,
+                  boxShadow: cur ? "0 0 16px rgba(var(--gn-lueur-rgb),.55)" : done ? "0 0 10px rgba(74,222,128,.35)" : "none" }}>{done ? <Icon name="check" size={18} /> : num}</div>
+                <span style={{ fontSize: 11.5, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", fontFamily: "'Rubik',sans-serif", color: cur ? "var(--gn-accent)" : done ? "var(--green)" : "var(--text-muted)", textAlign: "center" }}>{n}</span>
               </div>
               {i < STEP_NAMES.length - 1 && <div style={{ flex: 1, height: 3, borderRadius: 2, margin: "0 6px", marginBottom: 20, background: done ? "var(--green)" : "var(--border)", boxShadow: done ? "0 0 8px rgba(74,222,128,.4)" : "none", transition: "background .35s, box-shadow .35s" }} />}
             </div>
@@ -275,11 +255,11 @@ export default function CandidaturePage() {
 
       {step === 1 && (
         <div className="fx-card" style={card}>
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="users" size={18} />Tes personnages</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="users" size={18} />Tes personnages</h2>
           {chars.map((c, i) => (
             <div key={i} style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 10, padding: 14, marginBottom: 10 }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--orange)" }}> · {c.cls}</span> : null}
+                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: ".5px" }}>Personnage {i + 1}{c.cls ? <span style={{ color: "var(--gn-accent)" }}> · {c.cls}</span> : null}
                   {/* Repère : ce perso vient du compte, il n'est ni ressaisi ni recréé. */}
                   {c.id && <span title="Repris de ton compte — pas besoin de le ressaisir" style={{ marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4, textTransform: "none", letterSpacing: 0, fontSize: 11.5, fontWeight: 700, color: "var(--green)", background: "rgba(74,222,128,.11)", border: "1px solid rgba(74,222,128,.3)", borderRadius: 20, padding: "2px 8px" }}><Icon name="check" size={11} />de ton compte</span>}</span>
                 {chars.length > 1 && <button onClick={() => setChars(chars.filter((_, j) => j !== i))} title="Retirer ce perso" style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", color: "var(--red)", cursor: "pointer", padding: 0 }}><Icon name="x" size={15} /></button>}
@@ -288,12 +268,12 @@ export default function CandidaturePage() {
                   meme visuel que l'AirBuilder, pour qu'on reconnaisse son perso d'un coup d'oeil. */}
               <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
                 <div style={{ flexShrink: 0, width: 96, height: 132, borderRadius: 12, overflow: "hidden", position: "relative",
-                  background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.14), rgba(10,10,12,.9) 72%)",
-                  border: "1px solid rgba(255,140,26,.28)", boxShadow: "inset 0 0 22px rgba(0,0,0,.6)" }}>
+                  background: "radial-gradient(circle at 50% 26%, rgba(var(--gn-lueur-rgb),.14), rgba(10,10,12,.9) 72%)",
+                  border: "1px solid rgba(var(--gn-or-rgb),.28)", boxShadow: "inset 0 0 22px rgba(0,0,0,.6)" }}>
                   {renduPerso(c.cls, c.sex) ? (
                     <img src={renduPerso(c.cls, c.sex)!} alt={`${c.cls} ${c.sex === "F" ? "Fille" : "Garçon"}`}
                       style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center",
-                        filter: "drop-shadow(0 5px 12px rgba(255,140,26,.25))" }} />
+                        filter: "drop-shadow(0 5px 12px rgba(var(--gn-lueur-rgb),.25))" }} />
                   ) : (
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-muted)" }}><Icon name="user" size={30} /></div>
                   )}
@@ -307,7 +287,7 @@ export default function CandidaturePage() {
                   {c.id ? (
                     <>
                       <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 8 }}>
-                        <span style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--orange)", background: "rgba(255,140,26,.14)", boxShadow: "0 0 10px rgba(255,140,26,.3)" }}>
+                        <span style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid var(--gn-accent)", background: "rgba(var(--gn-lueur-rgb),.14)", boxShadow: "0 0 10px rgba(var(--gn-lueur-rgb),.3)" }}>
                           <ClassLogo name={c.cls} size={28} />
                         </span>
                         <div style={{ minWidth: 0 }}>
@@ -319,21 +299,21 @@ export default function CandidaturePage() {
                       </div>
                       <div style={{ fontSize: 11.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <Icon name="lock" size={12} />
-                        Personnage déjà enregistré — modifiable dans <a href="/personnages" style={{ color: "var(--orange)", fontWeight: 600 }}>Mes personnages</a>.
+                        Personnage déjà enregistré — modifiable dans <a href={lienBuilder(c.name)} style={{ color: "var(--gn-accent)", fontWeight: 600 }}>l&apos;AirBuilder</a>.
                         Pour une autre classe, ajoute un personnage.
                       </div>
                     </>
                   ) : (
                     <>
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                        {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(255,140,26,.3)" : "none" }}><ClassLogo name={cl} size={28} /></button>; })}
+                        {CLASSES.map(cl => { const sel = c.cls === cl; return <button key={cl} onClick={() => { const n = [...chars]; n[i].cls = cl; setChars(n); }} title={cl} style={{ width: 40, height: 40, borderRadius: 9, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", border: `2px solid ${sel ? "var(--gn-accent)" : "var(--border)"}`, background: sel ? "rgba(var(--gn-lueur-rgb),0.14)" : "var(--bg-2)", padding: 0, boxShadow: sel ? "0 0 10px rgba(var(--gn-lueur-rgb),.3)" : "none" }}><ClassLogo name={cl} size={28} /></button>; })}
                       </div>
                       {/* Le sexe change l'illustration : on le choisit ici, comme dans l'AirBuilder. */}
                       <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
                         {(["G", "F"] as const).map(sx => { const sel = (c.sex ?? "G") === sx; return (
                           <button key={sx} onClick={() => { const n = [...chars]; n[i].sex = sx; setChars(n); }}
                             style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, fontWeight: 700, padding: "5px 11px", borderRadius: 8, cursor: "pointer",
-                              border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,.14)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text-muted)" }}>
+                              border: `1px solid ${sel ? "var(--gn-accent)" : "var(--border)"}`, background: sel ? "rgba(var(--gn-lueur-rgb),.14)" : "var(--bg-2)", color: sel ? "var(--gn-accent)" : "var(--text-muted)" }}>
                             <Icon name={sx === "G" ? "male" : "female"} size={12} />{sx === "G" ? "Garçon" : "Fille"}
                           </button>
                         ); })}
@@ -355,32 +335,32 @@ export default function CandidaturePage() {
 
       {step === 2 && (
         <div className="fx-card" style={card}>
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="zap" size={18} />Spécialisations</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="zap" size={18} />Spécialisations</h2>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
-            {SPECS.map(s => { const sel = specs.includes(s.k); return <button key={s.k} onClick={() => toggleSpec(s.k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-3)", color: sel ? "var(--orange)" : "var(--text)" }}><Icon name={s.ic} size={14} />{s.l}</button>; })}
+            {SPECS.map(s => { const sel = specs.includes(s.k); return <button key={s.k} onClick={() => toggleSpec(s.k)} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, border: `1px solid ${sel ? "var(--gn-accent)" : "var(--border)"}`, background: sel ? "rgba(var(--gn-lueur-rgb),0.12)" : "var(--bg-3)", color: sel ? "var(--gn-accent)" : "var(--text)" }}><Icon name={s.ic} size={14} />{s.l}</button>; })}
           </div>
           {specs.includes("CS") && (
-            <div style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, marginBottom: 18, borderLeft: "3px solid var(--orange)" }}>
+            <div style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, marginBottom: 18, borderLeft: "3px solid var(--gn-accent)" }}>
               <div style={{ marginBottom: 14 }}>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Combien de personnages souhaites-tu jouer en Chambre Secrète ?</label>
                 <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                  {[1, 2].map(n => { const trop = n > chars.length; return <button key={n} disabled={trop} title={trop ? `Déclare ${n} personnages à l'étape précédente pour choisir cette option.` : undefined} onClick={() => { setCsChars(n); setFavClasses(f => f.slice(0, n)); }} style={{ padding: "8px 20px", borderRadius: 8, cursor: trop ? "not-allowed" : "pointer", opacity: trop ? 0.4 : 1, border: `1px solid ${csChars === n ? "var(--orange)" : "var(--border)"}`, background: csChars === n ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: csChars === n ? "var(--orange)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>; })}
+                  {[1, 2].map(n => { const trop = n > chars.length; return <button key={n} disabled={trop} title={trop ? `Déclare ${n} personnages à l'étape précédente pour choisir cette option.` : undefined} onClick={() => { setCsChars(n); setFavClasses(f => f.slice(0, n)); }} style={{ padding: "8px 20px", borderRadius: 8, cursor: trop ? "not-allowed" : "pointer", opacity: trop ? 0.4 : 1, border: `1px solid ${csChars === n ? "var(--gn-accent)" : "var(--border)"}`, background: csChars === n ? "rgba(var(--gn-lueur-rgb),0.12)" : "var(--bg-2)", color: csChars === n ? "var(--gn-accent)" : "var(--text)", fontWeight: 600 }}>{n} perso{n > 1 ? "s" : ""}</button>; })}
                 </div>
               </div>
               <div>
                 <label style={{ fontSize: 13, fontWeight: 600 }}>Quelle(s) classe(s) veux-tu jouer en Chambre Secrète ? <span style={{ color: "var(--text-muted)", fontWeight: 400, fontSize: 12 }}>({favClasses.length}/{csChars})</span></label>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; const aUnPerso = classesJouables.includes(c); return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={aUnPerso ? c : `${c} — tu n'as pas encore de personnage de cette classe, tu pourras le construire ensuite`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--orange)" : "var(--border)"}`, background: sel ? "rgba(255,140,26,0.12)" : "var(--bg-2)", color: sel ? "var(--orange)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}{!aUnPerso && <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", color: "var(--gold)", background: "rgba(255,210,74,.12)", border: "1px solid rgba(255,210,74,.3)", borderRadius: 20, padding: "1px 6px", marginLeft: 3 }}>à construire</span>}</button>; })}
+                  {CLASSES.map(c => { const sel = favClasses.includes(c); const atLimit = !sel && favClasses.length >= csChars; const aUnPerso = classesJouables.includes(c); return <button key={c} onClick={() => toggleFav(c)} disabled={atLimit} title={aUnPerso ? c : `${c} — tu n'as pas encore de personnage de cette classe, tu pourras le construire ensuite`} style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 12px 6px 7px", borderRadius: 9, cursor: atLimit ? "not-allowed" : "pointer", fontSize: 12.5, fontWeight: 600, opacity: atLimit ? 0.4 : 1, border: `1px solid ${sel ? "var(--gn-accent)" : "var(--border)"}`, background: sel ? "rgba(var(--gn-lueur-rgb),0.12)" : "var(--bg-2)", color: sel ? "var(--gn-accent)" : "var(--text)" }}><ClassLogo name={c} size={24} />{c}{!aUnPerso && <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px", color: "var(--gold)", background: "rgba(255,210,74,.12)", border: "1px solid rgba(255,210,74,.3)", borderRadius: 20, padding: "1px 6px", marginLeft: 3 }}>à construire</span>}</button>; })}
                 </div>
                 <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 8, fontStyle: "italic" }}><Icon name="info" size={11} style={{ display: "inline-block", marginRight: 4 }} />Selon les besoins de la guilde, on pourra te demander une autre classe pour compléter/compenser la composition.</div>
               </div>
             </div>
           )}
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 8 }}><Icon name="target" size={18} />Intérêts & objectifs</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", marginBottom: 8 }}><Icon name="target" size={18} />Intérêts & objectifs</h2>
           <textarea rows={2} value={interests} onChange={e => setInterests(e.target.value)} style={inp} placeholder="Ce que tu cherches dans la guilde..." />
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="flame" size={18} />Motivation</h2>
-          <textarea rows={2} value={motivation} onChange={e => setMotivation(e.target.value)} style={inp} placeholder="Pourquoi rejoindre Vanguard ?" />
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="book" size={18} />Expérience</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="flame" size={18} />Motivation</h2>
+          <textarea rows={2} value={motivation} onChange={e => setMotivation(e.target.value)} style={inp} placeholder="Pourquoi rejoindre GENESIS ?" />
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", margin: "16px 0 8px" }}><Icon name="book" size={18} />Expérience</h2>
           <textarea rows={2} value={experience} onChange={e => setExperience(e.target.value)} style={inp} placeholder="Ton parcours sur Airborn..." />
           <div style={{ marginTop: 18, display: "flex", justifyContent: "space-between" }}><button onClick={() => setStep(1)} style={btnG}>← Retour</button><button onClick={() => setStep(3)} disabled={!canNext(2)} className="vg-btn" style={{ opacity: canNext(2) ? 1 : 0.4 }}>Suivant →</button></div>
         </div>
@@ -388,7 +368,7 @@ export default function CandidaturePage() {
 
       {step === 3 && (
         <div className="fx-card" style={card}>
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="sword" size={18} />Construis ton build</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="sword" size={18} />Construis ton build</h2>
           <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 18, lineHeight: 1.6 }}>Ouvre le Stuff Builder, configure ton équipement (arme, armures, bijoux, éveil, cartes…), puis clique « Exporter » dans le builder — ton build sera repris ici automatiquement.</p>
           <div style={{ textAlign: "center", padding: "10px 0 20px" }}>
             <button onClick={() => { try { localStorage.setItem("vg_air_seed", JSON.stringify(chars.map((c) => ({ name: c.name, cls: c.cls, prestige: c.prestige })))); } catch {} setShowBuilder(true); }} className="vg-btn" style={{ display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="sword" size={15} />Ouvrir le Stuff Builder</button>
@@ -449,7 +429,7 @@ export default function CandidaturePage() {
 
       {step === 4 && (
         <div className="fx-card" style={card}>
-          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="clipboard" size={18} />Récapitulatif</h2>
+          <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", marginBottom: 12 }}><Icon name="clipboard" size={18} />Récapitulatif</h2>
           <div style={{ background: "var(--bg-3)", borderRadius: 10, padding: 16, fontSize: 13, lineHeight: 1.9 }}>
             <div><b><Icon name="users" size={14} style={ico} />Personnages :</b> {chars.map(c => `${c.name || "(sans nom)"} — ${c.cls} P${c.prestige}`).join(", ")}</div>
             <div><b><Icon name="zap" size={14} style={ico} />Spés :</b> {specs.join(", ") || "—"}{specs.includes("CS") ? ` · ${csChars} perso(s) CS · classes : ${favClasses.join(", ") || "—"}` : ""}</div>
@@ -473,8 +453,8 @@ export default function CandidaturePage() {
           {/* Incohérences bloquantes : on dit précisément quoi corriger, plutôt que
               de désactiver le bouton d'envoi sans explication. */}
           {problemes.length > 0 && (
-            <div style={{ marginTop: 16, background: "rgba(255,140,26,.09)", border: "1px solid rgba(255,140,26,.4)", borderRadius: 10, padding: "13px 15px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--orange)", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
+            <div style={{ marginTop: 16, background: "rgba(var(--gn-lueur-rgb),.09)", border: "1px solid rgba(var(--gn-or-rgb),.4)", borderRadius: 10, padding: "13px 15px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--gn-accent)", fontWeight: 700, fontSize: 13, marginBottom: 7 }}>
                 <Icon name="alert" size={15} />À corriger avant d&apos;envoyer
               </div>
               <ul style={{ margin: 0, paddingLeft: 20, color: "var(--text-muted)", fontSize: 13, lineHeight: 1.65 }}>
@@ -494,9 +474,9 @@ export default function CandidaturePage() {
       {/* MODAL BUILDER */}
       {showBuilder && (
         <div onClick={() => setShowBuilder(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 100, display: "flex", flexDirection: "column", padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ flex: 1, background: "var(--bg-2)", border: "1px solid var(--orange)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
+          <div onClick={e => e.stopPropagation()} style={{ flex: 1, background: "var(--bg-2)", border: "1px solid var(--gn-accent)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", maxWidth: 1300, margin: "0 auto", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", padding: "12px 18px", borderBottom: "1px solid var(--border)" }}>
-              <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--orange)" }}><Icon name="sword" size={16} />Stuff Builder</span>
+              <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, color: "var(--gn-accent)" }}><Icon name="sword" size={16} />Stuff Builder</span>
               <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>Configure ton build, puis clique <b style={{ color: "var(--green)" }}>« Valider ce build »</b> en bas ↓ (ça se ferme tout seul)</span>
               <button onClick={() => setShowBuilder(false)} style={{ display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 12, background: "none", border: "none", color: "var(--text-muted)", cursor: "pointer" }}><Icon name="x" size={16} /></button>
             </div>

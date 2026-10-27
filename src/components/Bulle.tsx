@@ -10,9 +10,9 @@ import { useId, useRef, useState } from "react";
  * son contenu à portée de curseur. Le texte ne disparaît pas, il cesse d'occuper la
  * place que méritent les chiffres et les images.
  *
- * Ce n'est PAS `BulleObjet`, qui redessine la fiche d'une pièce d'équipement telle que
- * le jeu la montre. Celle-ci est générique : un mot, un chiffre, une icône, et ce
- * qu'on n'aurait pas devinée derrière.
+ * Elle est générique : un mot, un chiffre, une icône, et ce qu'on n'aurait pas
+ * deviné derrière. (`BulleObjet`, qui redessinait la fiche d'une pièce telle que le
+ * jeu la montre, est partie avec la Boutique le 2026-10-21.)
  *
  * ┌──────────────── POURQUOI PAS `title=""` ────────────────┐
  * │ L'attribut `title` du navigateur existe et serait plus   │
@@ -85,7 +85,7 @@ export function Bulle({ children, quoi, cote = "haut", largeur = 260 }: {
              derrière. Sans lui, la bulle n'est découverte que par hasard, et le
              paragraphe qu'elle remplace est perdu pour de bon. */
           background: "none", border: "none", padding: 0, font: "inherit", color: "inherit",
-          cursor: "help", borderBottom: "1px dotted var(--orange)", lineHeight: "inherit",
+          cursor: "help", borderBottom: "1px dotted var(--gn-accent)", lineHeight: "inherit",
           display: "inline-flex", alignItems: "center", gap: 4,
         }}
       >
@@ -99,7 +99,7 @@ export function Bulle({ children, quoi, cote = "haut", largeur = 260 }: {
             position: "absolute", left: "50%", transform: "translateX(-50%)",
             [cote === "haut" ? "bottom" : "top"]: "calc(100% + 8px)",
             width: largeur, maxWidth: "min(88vw, 340px)", zIndex: 60,
-            background: "var(--bg-2)", border: "1px solid var(--orange)", borderRadius: 10,
+            background: "var(--bg-2)", border: "1px solid var(--gn-accent)", borderRadius: 10,
             padding: "10px 12px", fontSize: 12, lineHeight: 1.55, color: "var(--text)",
             boxShadow: "0 8px 26px rgba(0,0,0,.55)", textAlign: "left",
             /* `normal` explicitement : la bulle est souvent posée dans une cellule de

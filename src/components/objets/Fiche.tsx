@@ -68,7 +68,7 @@ const NUM = { fontVariantNumeric: "tabular-nums" } as const;
 const carte: React.CSSProperties = { padding: 16 };
 const titreBloc: React.CSSProperties = {
   display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, fontWeight: 700,
-  textTransform: "uppercase", letterSpacing: ".5px", color: "var(--orange)", marginBottom: 12,
+  textTransform: "uppercase", letterSpacing: ".5px", color: "var(--gn-accent)", marginBottom: 12,
 };
 
 /** Une ligne « libellé … valeur ». Les chiffres sont alignés : on compare deux fiches
@@ -128,7 +128,7 @@ function LigneBonus({ libelle, valeur, code }: { libelle: string; valeur: number
         <img src={de} alt={mot} title={mot} height={15}
           style={{ objectFit: "contain", imageRendering: "pixelated", flexShrink: 0, borderRadius: 3 }} />
       ) : (
-        <Icon name="zap" size={11} style={{ color: "var(--orange)", opacity: 0.7, flexShrink: 0 }} />
+        <Icon name="zap" size={11} style={{ color: "var(--gn-accent)", opacity: 0.7, flexShrink: 0 }} />
       )}
       <span style={{ color: "var(--text-muted)" }}>{de ? (pct ? "%" : "") : mot}</span>
       <b style={{ marginLeft: "auto", color: valeur < 0 ? "var(--red)" : "var(--green)", ...NUM }}>
@@ -237,7 +237,7 @@ function LachePar({ lacheurs, total }: { lacheurs: Lacheur[]; total: number }) {
               {m.niv != null && (
                 <span style={{ color: tonRang(m.rang), flexShrink: 0, ...NUM }}>niv. {m.niv}</span>
               )}
-              <span style={{ color: "var(--orange)", fontWeight: 700, flexShrink: 0, ...NUM }}>{court(m.pvEff)}</span>
+              <span style={{ color: "var(--gn-accent)", fontWeight: 700, flexShrink: 0, ...NUM }}>{court(m.pvEff)}</span>
             </Link>
           );
         })}
@@ -268,7 +268,7 @@ function ModeSituee({ o }: { o: ObjetFiche }) {
         <span style={{ color: "var(--text-muted)" }}>/{e.pieces} {nom.toLowerCase()}s à bonus</span>
       </Bulle>
       {" "}
-      <Link href="/builder/mecaniques" style={{ color: "var(--orange)", textDecoration: "none", fontWeight: 600, borderBottom: "1px dotted currentColor" }}>
+      <Link href="/mecaniques" style={{ color: "var(--gn-accent)", textDecoration: "none", fontWeight: 600, borderBottom: "1px dotted currentColor" }}>
         les plafonds
       </Link>
     </div>
@@ -353,7 +353,7 @@ export function Fiche({ o, voisins, bonus, lacheurs = [], lacheursTotal = 0, mar
               <img src={BADGE_ULTIME} alt="Ultime" title="Grade Ultime" height={14} style={{ objectFit: "contain", imageRendering: "pixelated" }} />
             )}
             {o.g === "Unique" && <Etiquette grade="unique" />}
-            {o.af === 1 && <Marque texte="Ajout Airborn" couleur="var(--orange)" icon="sparkles" />}
+            {o.af === 1 && <Marque texte="Ajout Airborn" couleur="var(--gn-accent)" icon="sparkles" />}
             {o.ne === 1 && <Marque texte="Non échangeable" couleur="var(--red)" image={CADENAS} />}
             {o.li === 1 && <Marque texte="Lié au personnage" couleur="var(--red)" image={CADENAS} />}
             {o.li === 2 && <Marque texte="Lié à l’équipement" couleur="var(--gold)" image={CADENAS} />}
@@ -546,7 +546,7 @@ function Vitesse({ v }: { v: number }) {
       </div>
       <div role="img" aria-label={`Vitesse ${v}, soit ${Math.round(part * 100)} % de l'échelle des armes`}
         style={{ height: 5, borderRadius: 3, background: "var(--bg-4)", marginTop: 6, overflow: "hidden" }}>
-        <div style={{ width: `${part * 100}%`, height: "100%", borderRadius: 3, background: "var(--orange)" }} />
+        <div style={{ width: `${part * 100}%`, height: "100%", borderRadius: 3, background: "var(--gn-jauge)" }} />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "var(--text-muted)", marginTop: 3 }}>
         <span>lente (baguette)</span><span>rapide (épée)</span>

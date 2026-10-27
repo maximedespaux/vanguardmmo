@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Les PNJ d'Airborn — qui vend quoi, et où le trouver",
   description:
-    "L'annuaire des PNJ d'Airborn : les métiers de craft (Sage des Mantras, Angie, Pépito, Karlagarfeld), les boutiques et leurs prix, la ville de chacun, et les portraits de dialogue tirés du client. Guide de la guilde Vanguard.",
+    "L'annuaire des PNJ d'Airborn : les métiers de craft (Sage des Mantras, Angie, Pépito, Karlagarfeld), les boutiques et leurs prix, la ville de chacun, et les portraits de dialogue tirés du client. Guide de la guilde GENESIS.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

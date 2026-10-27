@@ -18,6 +18,17 @@
         "cd /private/tmp/claude-501/-Users-maximedespaux-Documents-GitHub-vanguardmmo/61782b12-b27e-44d6-b800-64e2b7e25e77/scratchpad/build && exec npx next dev -p 3010"
       ],
       "port": 3010
+    },
+    {
+      "name": "genesis-dev",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "dev",
+        "-p",
+        "3040"
+      ],
+      "port": 3040
     }
   ]
 }

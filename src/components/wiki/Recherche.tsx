@@ -48,16 +48,16 @@ const champ: React.CSSProperties = {
 
 /** Une pastille de filtre — la même forme que sur /objets et /monstres : c'est ce qui
  *  la rend lisible d'une page à l'autre. */
-function Pastille({ on, onClick, children, couleur = "var(--orange)" }: {
+function Pastille({ on, onClick, children, couleur }: {
   on: boolean; onClick: () => void; children: React.ReactNode; couleur?: string;
 }) {
   return (
     <button onClick={onClick} style={{
       display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: "inherit",
       fontSize: 12.5, fontWeight: 600, padding: "6px 12px", borderRadius: 20,
-      color: on ? "#0A0A0C" : "var(--text)",
-      background: on ? couleur : "var(--bg-3)",
-      border: `1px solid ${on ? couleur : "var(--border)"}`,
+      color: on ? (couleur ? "#0A0A0C" : "var(--gn-sur-action)") : "var(--text)",
+      background: on ? (couleur ?? "var(--gn-plein)") : "var(--bg-3)",
+      border: `1px solid ${on ? (couleur ?? "rgba(var(--gn-or-rgb),.55)") : "var(--border)"}`,
     }}>{children}</button>
   );
 }
@@ -238,7 +238,7 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
             const n = parType[t.clef] ?? 0;
             return (
               <Pastille key={t.clef} on={on} onClick={() => setType(on ? "" : t.clef)}>
-                <Icon name={t.icon} size={13} style={{ color: on ? "#0A0A0C" : t.couleur }} />
+                <Icon name={t.icon} size={13} style={{ color: on ? "var(--gn-sur-action)" : t.couleur }} />
                 {t.label}
                 {n > 0 && <span style={{ ...NUM, opacity: on ? .7 : .55 }}>{fr(n)}</span>}
               </Pastille>
@@ -252,7 +252,7 @@ export function RechercheWiki({ depart = "", faits, premiere }: {
               `Invisible` rend un bouton, et un bouton dans un bouton n'est pas du HTML
               valide : le clic du filtre se perdrait. */}
           <Pastille on={maison} onClick={() => setMaison(!maison)}>
-            <Icon name="sparkles" size={13} style={{ color: maison ? "#0A0A0C" : "var(--orange)" }} />
+            <Icon name="sparkles" size={13} style={{ color: maison ? "var(--gn-sur-action)" : "var(--gn-accent)" }} />
             Ajouts Airborn
             {nMaison > 0 && <span style={{ ...NUM, opacity: maison ? .7 : .55 }}>{fr(nMaison)}</span>}
           </Pastille>

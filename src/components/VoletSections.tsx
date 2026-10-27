@@ -58,15 +58,15 @@ export function VoletSections({ sections, defaut, entete }: {
               <button key={s.clef} onClick={() => setOuvert(s.clef)} className="fx-card"
                 style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", textAlign: "left", cursor: "pointer", fontFamily: "inherit",
                   padding: "13px 14px", borderRadius: 12,
-                  background: on ? "rgba(255,140,26,.09)" : "var(--bg-2)",
-                  border: `1px solid ${on ? "var(--orange)" : "var(--border)"}` }}>
+                  background: on ? "rgba(var(--gn-lueur-rgb),.09)" : "var(--bg-2)",
+                  border: `1px solid ${on ? "var(--gn-accent)" : "var(--border)"}` }}>
                 <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: on ? "var(--orange)" : "var(--bg-3)", border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
-                  color: on ? "#0A0A0C" : "var(--orange)" }}>
+                  background: on ? "var(--gn-action)" : "var(--bg-3)", border: `1px solid ${on ? "rgba(var(--gn-or-rgb),.55)" : "var(--border)"}`,
+                  color: on ? "var(--gn-sur-action)" : "var(--gn-accent)" }}>
                   <Icon name={s.icon} size={17} />
                 </span>
                 <span style={{ minWidth: 0, flex: 1 }}>
-                  <span className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 700, color: on ? "var(--orange)" : "var(--text)" }}>
+                  <span className="font-heading" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13.5, fontWeight: 700, color: on ? "var(--gn-accent)" : "var(--text)" }}>
                     {s.titre}
                     {s.compte != null && (
                       <span style={{ fontSize: 11, fontWeight: 700, minWidth: 20, textAlign: "center", padding: "1px 7px", borderRadius: 20,
@@ -77,7 +77,7 @@ export function VoletSections({ sections, defaut, entete }: {
                   </span>
                   <span style={{ display: "block", fontSize: 11.5, color: "var(--text-muted)", marginTop: 1 }}>{s.sous}</span>
                 </span>
-                <Icon name="chevron-right" size={15} style={{ color: on ? "var(--orange)" : "var(--text-muted)", flexShrink: 0 }} />
+                <Icon name="chevron-right" size={15} style={{ color: on ? "var(--gn-accent)" : "var(--text-muted)", flexShrink: 0 }} />
               </button>
             );
           })}
@@ -85,7 +85,7 @@ export function VoletSections({ sections, defaut, entete }: {
 
         <div className="glass-card fx-card" style={{ padding: 18, minHeight: 260 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 11, paddingBottom: 13, marginBottom: 14, borderBottom: "1px solid var(--border)" }}>
-            <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)" }}>
+            <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--gn-accent)" }}>
               <Icon name={active.icon} size={17} />
             </span>
             <span>
@@ -116,7 +116,7 @@ export function EnteteVolet({ icon, titre, sous, marque, action }: {
   return (
     <div className="glass-card fx-card" style={{ padding: "18px 20px", marginBottom: 16, display: "flex", alignItems: "center", gap: 15, flexWrap: "wrap" }}>
       <span style={{ width: 54, height: 54, borderRadius: 15, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-        background: "linear-gradient(180deg, rgba(255,210,74,.18), rgba(255,140,26,.1))", border: "1px solid rgba(255,210,74,.35)", color: "var(--gold)" }}>
+        background: "linear-gradient(180deg, rgba(255,210,74,.18), rgba(var(--gn-lueur-rgb),.1))", border: "1px solid rgba(255,210,74,.35)", color: "var(--gold)" }}>
         <Icon name={icon} size={26} />
       </span>
       <div style={{ flex: "1 1 220px", minWidth: 0 }}>

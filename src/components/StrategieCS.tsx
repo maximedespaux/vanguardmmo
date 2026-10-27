@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { normaliserStrategie, type BlocStrategie } from "@/lib/strategie";
+import { Deroule } from "@/components/chambres/Deroule";
 
 /**
  * La stratégie des Chambres Secrètes, écrite par le staff.
@@ -131,10 +132,14 @@ export function StrategieCS({ isAdmin, texteExistant = "" }: { isAdmin: boolean;
   const liste = brouillon ?? blocs;
   const vide = !liste.length && !texteExistant.trim();
 
-  return (
+  /* LE DÉROULÉ VIENT D'ABORD (décision 8 de Maxime, 2026-10-21) : les étapes du chrono et du
+     débrief, et les MONSTRES de chacune, réglés dans le paramétrage des bras droits. Puis la
+     page libre du staff, qui dit COMMENT on les joue. */
+  return (<>
+    <Deroule isAdmin={isAdmin} />
     <div className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4, flexWrap: "wrap" }}>
-        <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--orange)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
+        <h2 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 10, color: "var(--gn-accent)", textTransform: "uppercase", fontSize: 15, letterSpacing: 1, margin: 0 }}>
           <Icon name="book" size={17} />Stratégie — Chambre Secrète
         </h2>
         {isAdmin && mode === "lecture" && charge && (
@@ -253,5 +258,5 @@ export function StrategieCS({ isAdmin, texteExistant = "" }: { isAdmin: boolean;
         </>
       )}
     </div>
-  );
+  </>);
 }

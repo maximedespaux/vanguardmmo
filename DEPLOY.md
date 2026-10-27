@@ -50,6 +50,9 @@ docker compose -f docker-compose.prod.yml run --rm bot npx tsx bot/deploy-comman
    - Domain : `LE-DOMAINE`
    - Forward Hostname/IP : l'IP du VPS (ou la passerelle Docker `172.17.0.1`) · Port : `3000` · Scheme : `http`
    - Onglet **SSL** : *Request a new certificate* (Let's Encrypt) + *Force SSL*.
+   - Onglet **Advanced** : `client_max_body_size 110m;` — les vidéos de débrief des Chambres
+     (100 Mo au plus) partent en un seul envoi ; sans cette ligne, NPM peut les refuser (413)
+     avant qu'elles n'atteignent le site.
 
 ## 6) Discord (portail développeur)
 Dans l'app Discord ▸ OAuth2 ▸ *Redirects*, ajouter :
@@ -77,7 +80,11 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 # Sauvegarde de la base
 docker compose -f docker-compose.prod.yml exec db pg_dump -U vanguard vanguard > backup_$(date +%F).sql
+
+# Sauvegarde des vidéos de débrief (le volume vanguard_videos n'est PAS dans celle de la base)
+docker run --rm -v vanguard_videos:/v -v $PWD:/b alpine tar czf /b/videos_$(date +%F).tgz -C /v .
 ```
+Le nom réel du volume porte le préfixe du projet Compose (`docker volume ls | grep videos`).
 
 ## Sécurité
 - Le `.env` reste sur le serveur uniquement (jamais committé).

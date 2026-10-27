@@ -16,7 +16,7 @@ import { Icon } from "@/components/Icon";
  * page est publique.
  */
 const MOTS: Record<string, string> = {
-  guild: "Cette page est réservée aux membres de Vanguard. Connecte-toi avec Discord — si tu es dans la guilde, elle s'ouvrira.",
+  guild: "Cette page est réservée aux membres de GENESIS. Connecte-toi avec Discord — si tu es dans la guilde, elle s'ouvrira.",
   admin: "Cette page est réservée au staff de la guilde. Rien à faire de ton côté.",
 };
 

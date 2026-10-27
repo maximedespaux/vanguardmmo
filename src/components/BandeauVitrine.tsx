@@ -37,14 +37,14 @@ export function BandeauVitrine({ etat, quoi, action }: {
   return (
     <div style={{
       display: "flex", alignItems: "flex-start", gap: 12, flexWrap: "wrap",
-      background: "linear-gradient(100deg, color-mix(in srgb, var(--orange) 13%, transparent), var(--bg-2) 60%)",
-      border: "1px solid color-mix(in srgb, var(--orange) 42%, transparent)",
+      background: "linear-gradient(100deg, rgba(var(--gn-lueur-rgb),.13), var(--bg-2) 60%)",
+      border: "1px solid rgba(var(--gn-or-rgb),.42)",
       borderRadius: 14, padding: "14px 16px", marginBottom: 18,
     }}>
       <span style={{
         width: 38, height: 38, borderRadius: 11, flexShrink: 0, display: "flex",
         alignItems: "center", justifyContent: "center",
-        background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)",
+        background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--gn-accent)",
       }}>
         <Icon name="eye" size={18} />
       </span>
@@ -56,7 +56,7 @@ export function BandeauVitrine({ etat, quoi, action }: {
         {connecteMaisPasMembre ? (
           <>
             Ce ne sont pas des données d&apos;exemple : c&apos;est ce que la guilde a réellement.
-            Pour <b style={{ color: "var(--text)" }}>{action}</b>, il faut être <b style={{ color: "var(--text)" }}>membre de Vanguard</b> —
+            Pour <b style={{ color: "var(--text)" }}>{action}</b>, il faut être <b style={{ color: "var(--text)" }}>membre de GENESIS</b> —
             tu es bien sur le serveur, il n&apos;y a rien de plus à faire de ton côté.
           </>
         ) : (
@@ -115,10 +115,10 @@ export function GesteReserve({ etat, pourquoi, children }: {
       }}>
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 7, fontSize: 12.5, fontWeight: 600,
-          background: "var(--bg-2)", border: "1px solid var(--orange)", borderRadius: 20,
+          background: "var(--bg-2)", border: "1px solid var(--gn-accent)", borderRadius: 20,
           padding: "7px 14px", color: "var(--text)", boxShadow: "0 4px 16px rgba(0,0,0,.5)",
         }}>
-          <Icon name="lock" size={13} style={{ color: "var(--orange)" }} />{pourquoi}
+          <Icon name="lock" size={13} style={{ color: "var(--gn-accent)" }} />{pourquoi}
         </span>
       </div>
     </div>

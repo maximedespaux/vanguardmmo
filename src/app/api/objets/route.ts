@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiAuth } from "@/lib/access";
-import { canAccessGuild } from "@/config/roles";
+import { apiEspace } from "@/lib/access";
 import { chercher, comptesGlobaux, comptesParFamille, dateDuCatalogue, nombreDObjets } from "@/components/objets/catalogue";
 import type { Critere } from "@/components/objets/catalogue";
 import type { Famille } from "@/components/objets/vocabulaire";
@@ -21,8 +20,9 @@ import type { Famille } from "@/components/objets/vocabulaire";
 const FAMILLES_VALIDES = ["arme", "armure", "bijou", "mode", "consommable", "materiau", "familier", "divers"];
 
 export async function GET(req: Request) {
-  const a = await apiAuth(); if ("error" in a) return a.error;
-  if (!canAccessGuild(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  /* La guilde, ou un ami à qui le rôle Friend ouvre Astuces (SPEC-INFORMATION-GUILDE §9,
+     lib/access.ts `apiEspace`) : la page /objets est dans cet espace. */
+  const a = await apiEspace("astuces"); if ("error" in a) return a.error;
 
   const p = new URL(req.url).searchParams;
   const famille = p.get("famille") ?? "";

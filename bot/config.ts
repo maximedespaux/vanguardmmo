@@ -17,13 +17,21 @@ export const CHANNELS = {
   events:       process.env.CHANNEL_EVENTS ?? "",       // rappels d'événements
   staff:        process.env.CHANNEL_STAFF ?? "",        // salon officiers (optionnel)
   decision:     process.env.CHANNEL_DECISION ?? "",     // salon « Décision » (embeds à boutons)
-  // Catégorie où créer les salons d'échange temporaires (acheteur ↔ détenteur).
-  // ⚠️ Laisse vide pour DÉSACTIVER la création de salons (sécurité : rien n'est créé tant que ce n'est pas configuré).
-  exchangeCategory: process.env.CHANNEL_EXCHANGE_CATEGORY ?? "",
+  // Les Chambres Secrètes et le Guild Siege (SPEC-CHAMBRES-RECENSEMENT §8.8). Trois variables
+  // FACULTATIVES : le paramétrage des bras droits (/discord/evenements) passe avant elles, et
+  // elles passent avant le défaut.
+  cs:           process.env.CHANNEL_CS ?? "",           // panneau, rappels, récap, chrono ; vide = SALON_CS_DEFAUT
+  csDebrief:    process.env.CHANNEL_CS_DEBRIEF ?? "",   // débriefs (texte ou forum) ; vide = salon des Chambres
+  gs:           process.env.CHANNEL_GS ?? "",           // Guild Siege ; vide = salon des Chambres
 };
 
-// Rôle Vanguard qui suit tous les salons d'échange (repli : ROLE_STAFF_VIEW puis ROLE_VANGUARD).
-export const ROLE_STAFF_VIEW = process.env.ROLE_STAFF_VIEW ?? process.env.ROLE_VANGUARD ?? "";
+/** Le salon où partaient les rappels des Chambres avant le paramétrage : le défaut. */
+export const SALON_CS_DEFAUT = "1498696982229811352";
+
+/** L'adresse du site, pour les boutons « 🌐 Ouvrir sur le site » et les liens des réponses.
+ *  Le bot partage le .env du site : NEXTAUTH_URL y est déjà. Vide, les boutons lien
+ *  disparaissent (Discord refuse un lien vide) et les réponses disent « le site ». */
+export const SITE_URL = (process.env.SITE_URL || process.env.NEXTAUTH_URL || "").replace(/\/+$/, "");
 
 // ─── Rôles Discord à pinguer dans les relances staff ────────
 export const ROLE_OFFICIER = process.env.ROLE_OFFICIER ?? "";

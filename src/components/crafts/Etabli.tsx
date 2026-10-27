@@ -26,7 +26,7 @@ import { cssCrafts, useSectionsCrafts } from "./Atelier";
  * toujours son compte.
  *
  * LES DEUX RELEVÉS NE SE CHARGENT PAS ENSEMBLE. Les crafts passent par
- * /api/crafts (gardée par apiGuild), les collections par un fichier de 43 Ko.
+ * /api/crafts (gardée par apiEspace("astuces") : la guilde et les amis), les collections par un fichier de 43 Ko.
  * Celui qui vient chercher une recette ne télécharge donc pas les collections —
  * le survol du bouton suffit à lancer la lecture, si bien qu'au clic le panneau
  * est déjà rempli.
@@ -105,7 +105,7 @@ export function Etabli({ etat }: { etat: EtatVisiteur }) {
             : !etat.peutAgir ? (
               <>
                 Les recettes d&apos;échange, leurs quantités et leur{" "}
-                <b>statut chez le PNJ</b> sont réservées aux membres de Vanguard : c&apos;est ce relevé
+                <b>statut chez le PNJ</b> sont réservées aux membres de GENESIS : c&apos;est ce relevé
                 qui dit lesquelles ne sont plus jouables du tout.{" "}
                 <b style={{ color: "var(--green)" }}>Les collections, à côté, sont ouvertes à tout le monde.</b>
               </>
@@ -139,18 +139,18 @@ export function Etabli({ etat }: { etat: EtatVisiteur }) {
                   style={{
                     display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontFamily: "inherit",
                     textAlign: "left", padding: "9px 12px", borderRadius: 12,
-                    background: on ? "rgba(255,140,26,.09)" : "var(--bg-2)",
-                    border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
+                    background: on ? "rgba(var(--gn-lueur-rgb),.09)" : "var(--bg-2)",
+                    border: `1px solid ${on ? "var(--gn-accent)" : "var(--border)"}`,
                   }}>
                   <span style={{
                     width: 28, height: 28, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
-                    background: on ? "var(--orange)" : "var(--bg-3)", border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
-                    color: on ? "#0A0A0C" : "var(--orange)",
+                    background: on ? "var(--gn-plein)" : "var(--bg-3)", border: `1px solid ${on ? "var(--gn-accent)" : "var(--border)"}`,
+                    color: on ? "var(--gn-sur-action)" : "var(--gn-accent)",
                   }}>
                     <Icon name={f.icon} size={15} />
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <span className="font-heading" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: on ? "var(--orange)" : "var(--text)" }}>
+                    <span className="font-heading" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, color: on ? "var(--gn-accent)" : "var(--text)" }}>
                       {f.label}
                       <span style={{
                         fontSize: 10.5, fontWeight: 700, padding: "1px 7px", borderRadius: 20,

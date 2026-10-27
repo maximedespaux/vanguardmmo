@@ -24,7 +24,7 @@ export const PALIERS: { cle: Palier; nom: string; couleur: string }[] = [
   { cle: "metier1", nom: "Métier 1", couleur: "var(--blue)" },
   { cle: "metier2", nom: "Métier 2", couleur: "var(--green)" },
   { cle: "maitre", nom: "Maître", couleur: "var(--gold)" },
-  { cle: "heros", nom: "Héros", couleur: "var(--orange)" },
+  { cle: "heros", nom: "Héros", couleur: "var(--gn-accent)" },
   { cle: "legendaire", nom: "Légendaire", couleur: "var(--purple)" },
 ];
 

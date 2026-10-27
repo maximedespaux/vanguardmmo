@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import type { Role } from "@prisma/client";
 import { DEV_ALL } from "@/lib/devAccess";
+// Les listes de rôles viennent de la config, plus d'une copie tenue à la main.
+import { GUILD_ROLES } from "@/config/roles";
+/* LA décision du site (config/nav.ts) : la même que la barre et les gardes des pages et des
+   routes. Le middleware n'en est qu'un lecteur — il ne lit pas la base, et le jeton lui
+   apporte le rang ET les espaces que le rôle Friend ouvre (`token.amis`, lib/auth.ts). */
+import { espaceDe, peutOuvrir, type Qui } from "@/config/nav";
 
-// Routes par niveau d'accès (doivent rester alignées avec la nav de Shell.tsx).
+// Routes par niveau d'accès (doivent rester alignées avec les `acces` de config/nav.ts).
 // Niveau d'entrée : être membre du serveur Discord — ce qui est vrai de toute
 // session depuis que la connexion d'un non-membre est refusée (lib/auth.ts).
 // N'y reste que ce dont un CANDIDAT a besoin : son build. Rien de la vie
@@ -18,25 +25,31 @@ const VERIFIED_PREFIXES = ["/build"];
    guilde — un candidat doit pouvoir le faire, sa candidature l'exige. La page
    invite a se connecter quand personne ne l'est, et l'API refuse d'elle-meme.
 
-   L'ECONOMIE EST MONTEE ICI. La boutique etait ouverte hors guilde ; un Recrue
-   est un visiteur, pas un membre — il n'a rien a voir du stock commun ni des
-   conversations de commande. `/dettes` et `/requetes` suivent : ce sont des
-   adresses de la meme boutique, laissees vivantes parce qu'elles ont circule
-   dans des notifications. */
-/* `/boutique` N'Y EST PLUS, et c'est le mode vitrine : demande de Maxime, « avoir
-   l'espace boutique en visualisation publique pour attirer et donner envie [...] mais
-   inutilisable sans connexion ». Un visiteur voit donc le vrai stock et les vrais prix,
-   et ne peut RIEN commander — c'est /api/bank-request qui refuse, gardee par apiGuild.
+   /profil reste ferme par le layout de (shop), qui appelle requireGuild().
 
-   CE QUI RESTE FERME, et doit le rester : /messages, /demandes, /dettes et /requetes
-   sont les conversations et les affaires personnelles de chacun. La boutique a demenage
-   dans son propre groupe de routes pour cette raison precise — ouvrir le groupe (shop)
-   entier les aurait exposees avec elle. */
-const GUILD_PREFIXES = ["/dashboard", "/compositions", "/worldboss", "/quetes", "/absences",
-                        "/messages", "/sommaire", "/demandes", "/dettes", "/requetes"];
-const ADMIN_PREFIXES = ["/guildviewer", "/discord", "/annonce", "/candidatures", "/journal", "/statistiques", "/gestion-worldboss", "/coffre", "/events", "/plan-farm", "/mes-ventes"];
-const GUILD_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER", "VETERAN", "GUARD"];
-const ADMIN_ROLES = ["DIRECTION", "VANGUARD", "GENERAL", "OFFICIER"];
+   LA BOUTIQUE ET LES PAGES STAFF RETIREES le 2026-10-21 (/boutique, /requetes,
+   /journal, /statistiques, /coffre, /plan-farm, /mes-ventes) n'y sont plus, pas plus
+   que /messages, /demandes, /dettes et /sommaire : ce ne sont plus des pages mais
+   des redirections de next.config.js, qui passent AVANT ce middleware. Leur
+   destination garde sa propre garde. */
+/* /dashboard n'y est plus : elle redirige vers l'accueil unique (next.config.js), qui
+   choisit lui-même le visage du visiteur. */
+/* /guilde : Information Guilde, la page des membres (2026-10-21) — rien pour un visiteur,
+   un candidat ni un Friend. Son gabarit (guild) appelle déjà requireGuild ; on l'aligne
+   ici sur ses voisines. /quetes (Quête Guilde, retirée) et /recensement (devenu la
+   section #recensement de /guilde) n'y sont plus : ce sont des redirections de
+   next.config.js, qui passent AVANT ce middleware, vers /guilde et sa garde. */
+/* /objets y entre le 2026-10-21 : elle n'était gardée que par le layout de son groupe.
+   C'est une page d'Astuces, que le rôle Friend peut ouvrir (SPEC-INFORMATION-GUILDE §9) —
+   la décision le lit dans l'espace de l'adresse (`espaceDe`) ; les quatre autres sont de
+   l'espace Guilde, qu'aucun ami n'ouvre. */
+const GUILD_PREFIXES = ["/guilde", "/compositions", "/worldboss", "/absences", "/objets"];
+/* /annonce n'y est plus : elle redirige vers /discord (next.config.js), dont l'onglet
+   Embed envoyait déjà la même commande. /suivi, /guildviewer et /candidatures non plus :
+   ce sont des sections de /staff depuis le 2026-10-21 (le tableau de bord tout-en-un), et
+   leurs adresses des redirections de next.config.js, qui passent AVANT ce middleware. */
+/* /acces-amis : le réglage du rôle Friend, rubrique Outils des bras droits (2026-10-21). */
+const ADMIN_PREFIXES = ["/staff", "/discord", "/gestion-worldboss", "/events", "/acces-amis"];
 
 export async function middleware(req: NextRequest) {
   if (DEV_ALL) return NextResponse.next(); // dev local uniquement (jamais en prod)
@@ -48,9 +61,11 @@ export async function middleware(req: NextRequest) {
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   if (!token) return NextResponse.redirect(new URL("/login", req.url));
-  const role = (token.role as string) ?? "RECRUE";
-  if (needsAdmin && !ADMIN_ROLES.includes(role)) return NextResponse.redirect(new URL("/?error=admin", req.url));
-  if (needsGuild && !GUILD_ROLES.includes(role)) return NextResponse.redirect(new URL("/?error=guild", req.url));
+  const role = (token.role as Role | undefined) ?? "RECRUE";
+  // Un jeton d'avant le rôle Friend n'a pas `amis` : rien d'ouvert jusqu'à sa relecture.
+  const qui: Qui = { role, amis: Array.isArray(token.amis) ? token.amis : [] };
+  if (needsAdmin && !peutOuvrir("admin", qui)) return NextResponse.redirect(new URL("/?error=admin", req.url));
+  if (needsGuild && !peutOuvrir("guild", qui, espaceDe(pathname))) return NextResponse.redirect(new URL("/?error=guild", req.url));
   // Le flag vient du callback JWT : il vaut true si l'API Discord a confirmé
   // l'appartenance au serveur lors d'une connexion (voir lib/auth.ts).
   // undefined = jeton emis avant l'arrivee de ce verrou : on laisse passer et
@@ -66,10 +81,9 @@ export async function middleware(req: NextRequest) {
 export const config = {
   // Protège les pages des espaces Guilde et Admin.
   matcher: [
-    "/dashboard/:path*",
-    "/compositions/:path*", "/worldboss/:path*",
-    "/quetes/:path*", "/absences/:path*", "/build/:path*",
-    "/messages/:path*", "/sommaire/:path*", "/demandes/:path*", "/dettes/:path*", "/requetes/:path*",
-    "/guildviewer/:path*", "/discord/:path*", "/annonce/:path*", "/candidatures/:path*", "/journal/:path*", "/statistiques/:path*", "/gestion-worldboss/:path*", "/coffre/:path*", "/events/:path*", "/plan-farm/:path*", "/mes-ventes/:path*",
+    "/guilde/:path*", "/compositions/:path*", "/worldboss/:path*",
+    "/absences/:path*", "/objets/:path*", "/build/:path*",
+    "/staff/:path*",
+    "/discord/:path*", "/gestion-worldboss/:path*", "/events/:path*", "/acces-amis/:path*",
   ],
 };

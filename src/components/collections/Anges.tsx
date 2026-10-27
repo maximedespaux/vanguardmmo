@@ -58,14 +58,14 @@ export function Anges({ anges, poudre, source }: {
             pluriel ni en minuscules à la main, « Poudre féerique » ne se
             pluralise pas en collant un s. */}
         <Chiffre valeur={nb(ange.cumul)} quoi={`${poudre.n} — pour monter un ange au bout`} icon="fairy" />
-        <Chiffre valeur={max} quoi="niveaux par ange qui se monte" icon="upgrade" couleur="var(--orange)" />
+        <Chiffre valeur={max} quoi="niveaux par ange qui se monte" icon="upgrade" couleur="var(--gn-accent)" />
         <Chiffre valeur={`${montables.length} / ${anges.length}`} quoi="anges qui se montent réellement" icon="wings" couleur="var(--blue)" />
       </Chiffres>
 
       {/* ── LE CALCULATEUR ─────────────────────────────────────────────── */}
       <div className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: 15 }}>
         <h3 className="font-heading" style={{ margin: "0 0 3px", fontSize: 14.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-          <Icon name="gauge" size={16} style={{ color: "var(--orange)" }} />
+          <Icon name="gauge" size={16} style={{ color: "var(--gn-accent)" }} />
           Ce qu&apos;il te reste à payer
         </h3>
         <p style={{ margin: "0 0 13px", fontSize: 12.5, color: "var(--text-muted)" }}>
@@ -140,7 +140,7 @@ export function Anges({ anges, poudre, source }: {
           <tbody>
             {ange.paliers.map((p) => (
               <tr key={p.niv}>
-                <td style={{ ...td, fontVariantNumeric: "tabular-nums", fontWeight: 700, color: "var(--orange)", whiteSpace: "nowrap" }}>{p.niv}</td>
+                <td style={{ ...td, fontVariantNumeric: "tabular-nums", fontWeight: 700, color: "var(--gn-accent)", whiteSpace: "nowrap" }}>{p.niv}</td>
                 <td style={td}>{p.buff}</td>
                 <td style={tdNum}>{nb(ange.couts.slice(0, Math.max(0, p.niv - 1)).reduce((s, x) => s + x, 0))}</td>
               </tr>

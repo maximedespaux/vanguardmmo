@@ -95,13 +95,13 @@ export function RefBuilderRunner({ slotId, edit }: { slotId: string; edit: boole
     return () => { cancelled = true; };
   }, [ready]);
 
-  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}><Icon name="edit" size={15} /> Créer la référence</a>}<a href="/compositions" style={{ color: "var(--orange)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
-  if (err) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>{err}<div style={{ marginTop: 12 }}><a href="/compositions" style={{ color: "var(--orange)" }}>← Retour aux compositions</a></div></div>;
+  if (noRef) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Aucun build de référence défini pour ce poste pour l&apos;instant.<div style={{ marginTop: 16, display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>{canEditRef && <a href={`/compositions/build/${slotId}?edit=1`} style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#0a0a0c", background: "var(--green)", padding: "9px 16px", borderRadius: 8, textDecoration: "none", fontWeight: 600 }}><Icon name="edit" size={15} /> Créer la référence</a>}<a href="/compositions" style={{ color: "var(--gn-accent)", padding: "9px 16px" }}>← Retour aux compositions</a></div></div>;
+  if (err) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>{err}<div style={{ marginTop: 12 }}><a href="/compositions" style={{ color: "var(--gn-accent)" }}>← Retour aux compositions</a></div></div>;
   if (!ready) return <div style={{ padding: "48px 24px", textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>Chargement…</div>;
   return (
     <>
       {!editMode && <style>{`.builder-readonly .actions{display:none}`}</style>}
-      <div style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 14px", borderRadius: 10, background: editMode ? "rgba(74,222,128,.10)" : "rgba(255,140,26,.10)", border: `1px solid ${editMode ? "rgba(74,222,128,.35)" : "rgba(255,140,26,.35)"}`, color: editMode ? "var(--green)" : "var(--orange)", fontSize: 13, fontWeight: 600 }}>
+      <div style={{ margin: "0 0 12px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "9px 14px", borderRadius: 10, background: editMode ? "rgba(74,222,128,.10)" : "rgba(var(--gn-lueur-rgb),.10)", border: `1px solid ${editMode ? "rgba(74,222,128,.35)" : "rgba(var(--gn-or-rgb),.35)"}`, color: editMode ? "var(--green)" : "var(--gn-accent)", fontSize: 13, fontWeight: 600 }}>
         <a href="/compositions" style={{ color: "inherit", textDecoration: "none", opacity: 0.85 }}>← Compositions</a>
         <span style={{ opacity: 0.5 }}>·</span>
         {editMode

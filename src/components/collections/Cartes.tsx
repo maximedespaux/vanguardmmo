@@ -40,7 +40,7 @@ export function Cartes({ decks, definies, placees, source }: {
     <div>
       <Chiffres>
         <Chiffre valeur={decks.length} quoi="carnets, chacun avec son bonus" icon="card" />
-        <Chiffre valeur={`${placees} / ${definies}`} quoi="cartes rangées dans un carnet" icon="grid" couleur="var(--orange)" />
+        <Chiffre valeur={`${placees} / ${definies}`} quoi="cartes rangées dans un carnet" icon="grid" couleur="var(--gn-accent)" />
         <Chiffre valeur={definies - placees} quoi="cartes définies hors carnet" icon="help" couleur="var(--text-muted)" />
       </Chiffres>
 

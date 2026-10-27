@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v6 - essai
+-->
+  <defs>
+    <mask id="m-lance" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <use href="#p-cristal" fill="#000" stroke="#000" stroke-width="18" stroke-linejoin="miter" stroke-miterlimit="8"/>
+      <g clip-path="url(#zone-lance-2)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-lance-2"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-pointe" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-pointe-1)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-pointe-1"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-corps" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-corps-1)"><use href="#p-lance" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+      <use href="#p-etoile" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/>
+    </mask>
+    <clipPath id="zone-corps-1"><rect x="0" y="0" width="1024" height="512"/></clipPath>
+  </defs>
+  <g id="g-lance" fill="#F2EDE5" mask="url(#m-lance)">
+    <path id="p-lance" d="M 500 164 L 524 164 L 524 868 L 500 868 Z"/>
+  </g>
+  <g id="g-pointe" fill="#F2EDE5" mask="url(#m-pointe)">
+    <path id="p-pointe" d="M 512 828 Q 522 874 548 884 Q 522 894 512 958 Q 502 894 476 884 Q 502 874 512 828 Z"/>
+  </g>
+  <g id="g-corps" fill="#F2EDE5" mask="url(#m-corps)">
+    <path id="p-corps" d="M 785.5 315.5 L 737 270.5 A 330 330 0 0 0 291 267 A 500 500 0 0 0 151 482 Q 141 512 90 512 Q 141 512 151 542 A 500 500 0 0 0 291 757 A 330 330 0 0 0 840.5 544 L 770 544 L 770 641 A 258 258 0 0 1 386 718.5 A 400 400 0 0 1 248.5 515 A 400 400 0 0 1 386 311.5 A 258 258 0 0 1 616.5 267 Z"/>
+  </g>
+  <g id="g-barre" fill="#F2EDE5">
+    <path id="p-barre" d="M 547 500 L 902 500 L 839.5 552 L 770 552 L 547 552 L 561.5 526 Z"/>
+  </g>
+  <g id="g-etoile" fill="#F2EDE5">
+    <path id="p-etoile" d="M 512 64 Q 525 127 578 140 Q 525 153 512 224 Q 499 153 446 140 Q 499 127 512 64 Z"/>
+  </g>
+  <g id="g-cristal" fill="#F2EDE5">
+    <path id="p-cristal" d="M 512 458 L 550 526 L 512 594 L 474 526 Z"/>
+  </g>
+</svg>

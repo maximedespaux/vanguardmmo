@@ -121,7 +121,7 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
                       <a key={d.name + (note ?? "")} className="fr-i" href={`/donjons?instance=${encodeURIComponent(d.name)}`}>
                         <Icon name={d.icon as IconName} size={14} />
                         <span className="fr-in">{d.name}{note ? <i> · {note}</i> : null}</span>
-                        <span className="fr-ib"><Barre part={d.hp / MUR_MAX} teinte="var(--orange)" hauteur={5} /></span>
+                        <span className="fr-ib"><Barre part={d.hp / MUR_MAX} teinte="var(--gn-jauge)" hauteur={5} /></span>
                         <span className="fr-iv">{court(d.hp)}</span>
                       </a>
                     ))}
@@ -196,7 +196,7 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         .fr{display:grid;gap:7px}
         .fr-l{display:grid;grid-template-columns:44px minmax(0,1fr);gap:11px;align-items:start;
           background:var(--bg-3);border:1px solid var(--border);border-radius:11px;padding:9px 12px}
-        .fr-l.on{border-color:var(--orange);background:rgba(255,140,26,.07)}
+        .fr-l.on{border-color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.07)}
         .fr-badge{display:flex;align-items:center;justify-content:center;height:26px;border-radius:7px;
           background:var(--bg-4);border:1px solid var(--gold);color:var(--gold);
           font-family:'Rubik',sans-serif;font-weight:700;font-size:12.5px}
@@ -204,8 +204,8 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         .fr-inst{display:grid;gap:4px}
         .fr-i{display:grid;grid-template-columns:16px minmax(0,1fr) 88px 52px;align-items:center;gap:9px;
           text-decoration:none;color:var(--text);border-radius:7px;padding:2px 4px;margin:0 -4px}
-        .fr-i:hover{background:rgba(255,140,26,.09)}
-        .fr-i>svg{color:var(--orange);flex-shrink:0}
+        .fr-i:hover{background:rgba(var(--gn-lueur-rgb),.09)}
+        .fr-i>svg{color:var(--gn-accent);flex-shrink:0}
         .fr-in{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .fr-in i{font-style:normal;color:var(--text-muted);font-size:11.5px}
         .fr-ib{min-width:0}
@@ -213,7 +213,7 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
           font-family:'Rubik',sans-serif}
         .fr-rien{font-size:11.5px;color:var(--text-muted)}
         .fr-cout{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-        .fr-fl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--orange);
+        .fr-fl{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--gn-accent);
           font-family:'Rubik',sans-serif;font-weight:700}
         .fr-fl::before{content:"→ ";}
         .fr-fl.fin{color:var(--text-muted)}
@@ -221,8 +221,8 @@ export function FrisePaliers({ avecInstances = false, de, a }: {
         .fr-chip{display:inline-flex;align-items:center;gap:5px;
           border:1px solid var(--border);border-radius:20px;padding:2px 9px 2px 6px;
           background:linear-gradient(90deg,
-            color-mix(in srgb, var(--orange) 26%, transparent) 0,
-            color-mix(in srgb, var(--orange) 26%, transparent) var(--part,0%),
+            rgba(var(--gn-lueur-rgb),.26) 0,
+            rgba(var(--gn-lueur-rgb),.26) var(--part,0%),
             var(--bg-2) var(--part,0%), var(--bg-2) 100%)}
         .fr-chip b{font-size:11.5px;font-variant-numeric:tabular-nums;font-family:'Rubik',sans-serif;color:var(--text)}
         @media(max-width:560px){

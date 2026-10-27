@@ -536,7 +536,7 @@ export function ConseilDesInstances({ instances, armure, nbArmures }: {
       padding: "12px 14px", marginBottom: 14, display: "grid", gap: 9, fontSize: 12.5, lineHeight: 1.6,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-        <span className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--orange)" }}>
+        <span className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--gn-accent)" }}>
           Quel élément emporter
         </span>
         {/* LA RÉPARTITION EST LA RÉPONSE : un dessin et un nombre par élément
@@ -602,7 +602,7 @@ export function ConseilDesInstances({ instances, armure, nbArmures }: {
         <Icon name="ban" size={12} style={{ color: "var(--red)", verticalAlign: "-2px" }} /> celui qu&apos;on laisse.
         {armure && (
           <>
-            {" "}<Icon name="shield" size={12} style={{ color: "var(--orange)", verticalAlign: "-2px" }} />{" "}
+            {" "}<Icon name="shield" size={12} style={{ color: "var(--gn-accent)", verticalAlign: "-2px" }} />{" "}
             <b style={{ color: "var(--text)" }}>{armure}</b>, la même sur les {nbArmures} qui en demandent une.
           </>
         )}
@@ -616,7 +616,7 @@ export function ConseilDesInstances({ instances, armure, nbArmures }: {
       <div style={{ color: "var(--text-muted)", fontSize: 11.5 }}>
         Compté sur les créatures posées dans le fichier de carte : les boss que le serveur
         ajoute en cours de progression n&apos;y sont pas.{" "}
-        <a href="/monstres" style={{ color: "var(--orange)", textDecoration: "none" }}>
+        <a href="/monstres" style={{ color: "var(--gn-accent)", textDecoration: "none" }}>
           La règle sur tout le catalogue
         </a>
       </div>

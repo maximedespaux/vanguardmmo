@@ -1,0 +1,34 @@
+{
+  "_source": "Retranscription fidèle de l'image « Retour Chambre — 18/10/2026 » produite par le bot de l'ami (modèle Dracarys), fournie par Maxime le 2026-10-21. Les remarques sont recopiées mot pour mot. Aucun chrono n'avait été pris (« — » partout, temps total 0:00). À importer comme PREMIÈRE séance de l'historique quand les débriefs existeront (lot 6 de SPEC-CHAMBRES-RECENSEMENT.md).",
+  "evenement": "cs",
+  "date": "2026-10-18",
+  "jour": "dimanche",
+  "creneau": "dim",
+  "titre": "Retour Chambre — 18/10/2026",
+  "joueurs": 10,
+  "resultat": "gagne",
+  "tempsTotalSecondes": null,
+  "phases": {
+    "1": "Phase 1 — Chambres",
+    "2": "Phase 2 — Couloir",
+    "3": "Phase 3 — Araignée",
+    "4": "Phase 4 — Escalier",
+    "5": "Phase 5 — Boss final"
+  },
+  "etapes": [
+    { "code": "1.1", "label": "480 monstres", "phase": "1", "statut": "bien", "chrono": null, "remarque": "" },
+    { "code": "1.2", "label": "12 Asuras", "phase": "1", "statut": "bien", "chrono": null, "remarque": "" },
+    { "code": "1.3", "label": "3 Malphas", "phase": "1", "statut": "bien", "chrono": null, "remarque": "" },
+    { "code": "2.1", "label": "100 soldats", "phase": "2", "statut": "moyen", "chrono": null, "remarque": "" },
+    { "code": "2.2", "label": "Jumeaux", "phase": "2", "statut": "bien", "chrono": null, "remarque": "2 personnes vont call ( les tank) Ils vont dire à quel vie est leurs boss et le % Exemple: Vert 2eme vie 50%" },
+    { "code": "3.1", "label": "100 araignées", "phase": "3", "statut": "bien", "chrono": null, "remarque": "" },
+    { "code": "3.2", "label": "Troll 1 (Dra'Zhul gauche)", "phase": "3", "statut": "mal", "chrono": null, "remarque": "Ener n'a pas fait attention aux changement d'arme pour avoir les bon hp," },
+    { "code": "3.3", "label": "Troll 2 (Dra'Zhul droite)", "phase": "3", "statut": "mal", "chrono": null, "remarque": "" },
+    { "code": "3.4", "label": "Araignée (Nyzarra)", "phase": "3", "statut": "moyen", "chrono": null, "remarque": "" },
+    { "code": "4.1", "label": "100 araignées", "phase": "4", "statut": "bien", "chrono": null, "remarque": "" },
+    { "code": "4.2", "label": "Mini-soldats (escalier)", "phase": "4", "statut": "mal", "chrono": null, "remarque": "" },
+    { "code": "4.3", "label": "Double boss Gor'Thar", "phase": "4", "statut": "moyen", "chrono": null, "remarque": "Mauvais placement sur la phase d'aggro, veuillez à ne pas dépasser la fin du couleur pour ne pas vous faire aggro" },
+    { "code": "5", "label": "Boss final : Aatrox", "phase": "5", "statut": "moyen", "chrono": null, "remarque": "Trop de personnes continue à taper et régénérer le boss.. Ener s'est encore fait tuer.." }
+  ],
+  "aRetenir": ""
+}

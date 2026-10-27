@@ -27,7 +27,7 @@ export const PALIERS: Record<Palier, { nom: string; couleur: string; icon: IconN
   metier1:    { nom: "Métier 1",   couleur: "var(--blue)",       icon: "sword" },
   metier2:    { nom: "Métier 2",   couleur: "var(--green)",      icon: "swords" },
   maitre:     { nom: "Maître",     couleur: "var(--gold)",       icon: "medal" },
-  heros:      { nom: "Héros",      couleur: "var(--orange)",     icon: "trophy" },
+  heros:      { nom: "Héros",      couleur: "var(--gn-accent)",  icon: "trophy" },
   legendaire: { nom: "Légendaire", couleur: "var(--purple)",     icon: "crown" },
 };
 

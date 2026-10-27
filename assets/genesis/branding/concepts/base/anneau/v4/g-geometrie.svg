@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v4 — essai
+-->
+  <g fill="#F2EDE5">
+    <g id="g-corps">
+      <path d="M 835 335.5 A 368 368 0 1 0 879.5 493 L 712 493 L 712 668.5 A 254 254 0 1 1 577.5 266.5 Z"/>
+    </g>
+    <g id="g-barre">
+      <path d="M 552 476 L 940 476 L 773.5 572 L 718.5 572 Z"/>
+    </g>
+    <g id="g-etoile-nord">
+      <path d="M 512 48 L 524 118 L 576 130 L 524 142 L 512 226 L 500 142 L 448 130 L 500 118 Z"/>
+    </g>
+    <g id="g-etoile-sud">
+      <path d="M 512 802 L 522 884 L 562 894 L 522 904 L 512 964 L 502 904 L 462 894 L 502 884 Z"/>
+    </g>
+    <g id="g-cristal">
+      <path d="M 512 84 L 530 140 L 512 196 L 494 140 Z"/>
+    </g>
+  </g>
+</svg>

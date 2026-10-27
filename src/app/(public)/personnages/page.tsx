@@ -1,372 +1,184 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import { ClassLogo } from "@/components/ClassLogo";
-import { renduPerso, type Sexe } from "@/data/charRenders";
+import { renduPerso } from "@/data/charRenders";
 import { PageHeader } from "@/components/PageHeader";
 import { Icon } from "@/components/Icon";
 import { useCardFx } from "@/components/VgFx";
-import { FichePerso, Confirmation, type Fiche } from "@/components/FichePerso";
+import { EtatMesures, chiffresEnClair } from "@/components/staff/MesuresStuff";
+import { regardDe } from "@/config/nav";
+import { ROLE_LIBELLE, nomClasse } from "@/lib/mesures";
+import { aMesurer, apresPublication, lienBuilder, versVue, type PersoBrut, type PersoVue, type StuffVue } from "@/lib/mesPersos";
 
 /**
- * Mes personnages — qui je joue, et avec quoi.
+ * Mes personnages — LE REFLET DE L'AIRBUILDER, rien d'autre (Maxime, 2026-10-21 :
+ * « les modifications se feront uniquement via l'AirBuilder (suppression etc… tout
+ * passe par l'AirBuilder) »).
  *
- * La page mêlait trois choses sans les distinguer : un formulaire de création
- * en haut, des cartes en dessous, et sur chaque carte des boutons qui
- * AJOUTAIENT ou SUPPRIMAIENT des stuffs. Or un stuff ne se crée pas ici — il se
- * monte dans l'AirBuilder, et c'est lui qui décide s'il existe. Les boutons
- * fabriquaient donc des profils vides que la page cachait ensuite, faute d'y
- * trouver la moindre pièce.
+ * LE DÉFAUT QUI A FAIT CHANGER LA PAGE. Elle créait, modifiait, rendait principal et
+ * supprimait des persos directement dans la table `Character` (POST /api/characters,
+ * PATCH et DELETE /api/characters/[id]). Or l'AirBuilder publie ses persos par
+ * /api/characters/sync, qui EFFACE puis recrée tout le compte à chaque changement :
+ * tout ce que faisait la page était défait au changement suivant du builder, et un
+ * perso créé ici n'existait pas dans le builder. Ces trois routes sont parties.
  *
- * Trois gestes désormais, et trois seulement :
- *   · LIRE ses stuffs — ce qui est monté, sans pouvoir y toucher d'ici ;
- *   · MODIFIER la fiche — nom, sexe, classe, niveau, prestige ;
- *   · DÉSIGNER le principal — avec confirmation, parce que ça déplace ce que
- *     la guilde voit de nous partout ailleurs.
+ * La page ne fait donc plus que LIRE (GET /api/characters, la personne connectée) :
+ * chaque perso — classe, niveau, prestige, principal — et chacun de ses stuffs — rôle,
+ * chiffres déclarés, état des mesures —, chacun avec « Ouvrir dans l'AirBuilder », le
+ * lien profond vers CE perso et CE stuff (lib/mesPersos, `lienBuilder`). Créer,
+ * renommer, rendre principal, supprimer : dans l'AirBuilder, bouton « Mes
+ * personnages ».
  *
- * La page est ouverte à tous : déclarer ses persos ne demande pas d'être DE la
- * guilde, un candidat doit pouvoir le faire.
+ * Les stuffs vides sont montrés, en retrait : chaque perso naît avec trois stuffs dans
+ * le builder, et c'est ce que le builder contient. Un stuff vide n'exige aucune mesure.
+ *
+ * La page est ouverte à tous : un candidat a ses persos, un visiteur est invité à se
+ * connecter.
  */
-type Gear = { id: string; name: string; mode: string };
-type Char = {
-  id: string; name: string; class: string; level: number; prestige: number;
-  isMain: boolean; sex?: string | null; gearProfiles: Gear[];
-};
-
-const MODE_COULEUR = (m: string) => (m === "TANK" ? "var(--blue)" : m === "HYBRIDE" ? "var(--purple)" : "var(--orange)");
-
-const carte: React.CSSProperties = {
-  background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 20, marginBottom: 14,
-};
-
 export default function PersonnagesPage() {
   useCardFx();
-  const { status } = useSession();
-  const anonyme = status === "unauthenticated" && process.env.NEXT_PUBLIC_DEV_ALL_ACCESS !== "1";
+  const { data: session, status } = useSession();
+  const { connecte } = regardDe(session);
+  const anonyme = status !== "loading" && !connecte;
 
-  const [chars, setChars] = useState<Char[]>([]);
-  const [pret, setPret] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [envoi, setEnvoi] = useState(false);
+  const [persos, setPersos] = useState<PersoVue[] | null>(null);
+  const [panne, setPanne] = useState(false);
 
-  /** Ce qu'on est en train d'éditer, de créer, de promouvoir ou de supprimer. */
-  const [edite, setEdite] = useState<string | null>(null);
-  const [fiche, setFiche] = useState<Fiche | null>(null);
-  const [creation, setCreation] = useState<Fiche | null>(null);
-  const [promouvoir, setPromouvoir] = useState<Char | null>(null);
-  /** Le stuff qu'on est en train de regarder, dans le cadre de l'AirBuilder. */
-  const [volet, setVolet] = useState<{ perso: string; stuff: string } | null>(null);
-  const [supprimer, setSupprimer] = useState<Char | null>(null);
-
-  const flash = (msg: string, ok = false) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2800); };
-
-  const charger = useCallback(async () => {
-    try { const r = await fetch("/api/characters"); if (r.ok) setChars(await r.json()); } catch { /* hors ligne */ }
-    setPret(true);
-  }, []);
-  useEffect(() => { charger(); }, [charger]);
-
-  /**
-   * Quels stuffs sont RÉELLEMENT montés ?
-   *
-   * Les profils DPS / Tank / Hybride existent par défaut mais restent souvent
-   * vides : afficher une pastille pour un stuff vide laisse croire qu'un build
-   * existe. On lit donc l'état de l'AirBuilder — la même source que la
-   * candidature — et on ne garde que ceux qui portent au moins une pièce.
-   */
-  const [remplis, setRemplis] = useState<Record<string, Set<string>>>({});
   useEffect(() => {
-    type Stuff = { name?: string; eq?: Record<string, unknown> };
-    type Blob = { chars?: { name?: string; stuffs?: Stuff[] }[] };
-    const equipe = (st: Stuff) => Object.values(st?.eq ?? {}).some((e) => e && (e as { item?: unknown }).item);
-    const lire = (b: Blob | null) => {
-      const out: Record<string, Set<string>> = {};
-      for (const pc of b?.chars ?? []) {
-        if (!pc?.name) continue;
-        const noms = (pc.stuffs ?? []).filter(equipe).map((st, i) => (st.name?.trim() || `Stuff ${i + 1}`).toLowerCase());
-        if (noms.length) out[String(pc.name).trim().toLowerCase()] = new Set(noms);
-      }
-      return out;
-    };
+    if (!connecte || status === "loading") return;
     let vivant = true;
-    (async () => {
-      let local: Blob | null = null;
-      try { local = JSON.parse(localStorage.getItem("vg_air_e1") || "null"); } catch { /* rien en local */ }
-      let distant: Blob | null = null;
-      try { const r = await fetch("/api/builder-state"); if (r.ok) distant = (await r.json())?.blob ?? null; } catch { /* hors ligne */ }
-      if (!vivant) return;
-      // Le local prime : il reflète ce que le joueur vient de faire dans le builder.
-      setRemplis({ ...lire(distant), ...lire(local) });
-    })();
+    /* On arrive souvent DU builder (« Voir sur le site », la barre) : sa dernière
+       publication peut être encore en vol, et la page la montrerait sinon d'avant. */
+    apresPublication()
+      .then(() => fetch("/api/characters"))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: PersoBrut[]) => { if (vivant) setPersos(versVue(Array.isArray(j) ? j : [])); })
+      .catch(() => { if (vivant) setPanne(true); });
     return () => { vivant = false; };
-  }, [chars]);
+  }, [connecte, status]);
 
-  const enregistrer = async () => {
-    if (!edite || !fiche) return;
-    if (!fiche.name.trim()) { flash("Donne un pseudo à ce personnage."); return; }
-    setEnvoi(true);
-    const r = await fetch(`/api/characters/${edite}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: fiche.name.trim(), class: fiche.class, sex: fiche.sex, level: fiche.level, prestige: fiche.prestige }),
-    }).catch(() => null);
-    setEnvoi(false);
-    if (!r?.ok) { flash("Enregistrement impossible."); return; }
-    setEdite(null); setFiche(null); await charger(); flash("Fiche mise à jour.", true);
-  };
-
-  const creer = async () => {
-    if (!creation) return;
-    if (!creation.name.trim()) { flash("Donne un pseudo à ce personnage."); return; }
-    setEnvoi(true);
-    const r = await fetch("/api/characters", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: creation.name.trim(), class: creation.class, sex: creation.sex, level: creation.level, prestige: creation.prestige, isMain: chars.length === 0 }),
-    }).catch(() => null);
-    setEnvoi(false);
-    if (!r?.ok) { flash("Création impossible."); return; }
-    setCreation(null); await charger(); flash("Personnage créé.", true);
-  };
-
-  const designerPrincipal = async () => {
-    if (!promouvoir) return;
-    setEnvoi(true);
-    const r = await fetch(`/api/characters/${promouvoir.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isMain: true }),
-    }).catch(() => null);
-    setEnvoi(false);
-    setPromouvoir(null);
-    if (!r?.ok) { flash("Changement impossible."); return; }
-    await charger(); flash("Personnage principal changé.", true);
-  };
-
-  const doSupprimer = async () => {
-    if (!supprimer) return;
-    setEnvoi(true);
-    await fetch(`/api/characters/${supprimer.id}`, { method: "DELETE" }).catch(() => null);
-    setEnvoi(false); setSupprimer(null); await charger(); flash("Personnage supprimé.");
-  };
+  const manque = persos ? aMesurer(persos) : 0;
 
   return (
     <div style={{ padding: "24px 22px 60px", maxWidth: 940, margin: "0 auto" }}>
       <PageHeader icon="users" title="Mes Personnages"
-        subtitle="Tes persos et leurs stuffs — ce sont eux qu'on retrouve dans les compositions et les demandes." />
+        subtitle="Tes persos et leurs stuffs, tels que l'AirBuilder les publie à la guilde." />
 
-      {anonyme && (
+      {/* Rien tant que la session se lit : le rendu serveur ne la connaît pas, et un
+          visiteur voyait passer « Cette page se lit » avant son invitation. */}
+      {status === "loading" ? null : anonyme ? (
         <div className="glass-card" style={{ padding: 18, marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <span style={{ flex: "1 1 260px", fontSize: 13.5, lineHeight: 1.55 }}>
-            Tes personnages sont rattachés à ton compte. <b>Connecte-toi</b> pour les déclarer — c&apos;est ce
-            qui permet aux demandes de savoir à qui envoyer un objet, et à ta candidature d&apos;être complète.
+            Tes personnages sont rattachés à ton compte. <b>Connecte-toi</b>, puis monte-les dans
+            l&apos;AirBuilder : ils apparaîtront ici, et ta candidature les reprendra.
           </span>
           <a href="/login" className="vg-btn" style={{ flexShrink: 0 }}>Se connecter</a>
         </div>
-      )}
-
-      {toast && (
-        <div style={{ marginBottom: 14, padding: "10px 13px", borderRadius: 9, background: "var(--bg-2)", border: "1px solid var(--border)",
-          color: toast.ok ? "var(--green)" : "var(--text)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-          {toast.ok && <Icon name="check" size={15} />}{toast.msg}
+      ) : (
+        /* Ce que la page ne fait plus, dit une fois en tête : sans cette ligne, on
+           cherche le bouton « Modifier » qui était là hier. */
+        <div className="glass-card" style={{ padding: 18, marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <Icon name="shirt" size={18} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
+          <span style={{ flex: "1 1 260px", fontSize: 13.5, lineHeight: 1.55 }}>
+            Cette page se lit. <b>Créer</b> un perso, le <b>renommer</b>, le rendre <b>principal</b> ou
+            le <b>supprimer</b> : tout se fait dans l&apos;AirBuilder (bouton « Mes personnages »), et
+            la page suit toute seule.
+          </span>
+          <Link href="/builder" className="vg-btn" style={{ flexShrink: 0, fontSize: 12.5, padding: "9px 16px" }}>
+            <Icon name="shirt" size={15} />Ouvrir l&apos;AirBuilder
+          </Link>
         </div>
       )}
 
-      {!anonyme && (
-        <button onClick={() => setCreation({ name: "", class: "SPADASSIN", sex: "G", level: 200, prestige: 3 })}
-          className="vg-btn" style={{ marginBottom: 16 }}>
-          <Icon name="user-plus" size={16} />Nouveau personnage
-        </button>
+      {!anonyme && manque > 0 && (
+        <div className="gn-panne" role="status" style={{ marginBottom: 14 }}>
+          <Icon name="alert" size={14} style={{ flexShrink: 0 }} />
+          {manque} stuff{manque > 1 ? "s" : ""} à mesurer ou à remesurer : les dégâts et les PV se déclarent dans
+          l&apos;AirBuilder, sous le personnage. Un clic sur le stuff l&apos;y ouvre.
+        </div>
       )}
 
-      {!pret ? (
+      {anonyme ? null : panne ? (
+        <div className="gn-panne"><Icon name="alert" size={14} style={{ flexShrink: 0 }} />Tes personnages n&apos;ont pas pu être lus. Réessaie dans un instant.</div>
+      ) : !persos ? (
         <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 26, textAlign: "center" }}>Chargement…</div>
-      ) : chars.length === 0 && !anonyme ? (
-        <div className="fx-card" style={{ ...carte, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
-          Aucun personnage déclaré. Commence par le premier — c&apos;est lui qu&apos;on retrouvera partout.
+      ) : persos.length === 0 ? (
+        <div className="gn-pp-carte fx-card" style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, lineHeight: 1.6 }}>
+          Aucun personnage publié pour l&apos;instant. Crée le premier dans l&apos;AirBuilder : il apparaît ici dès
+          qu&apos;il est enregistré, et c&apos;est lui qu&apos;on retrouvera partout.
+          <div style={{ marginTop: 14 }}>
+            <Link href="/builder" className="vg-btn" style={{ fontSize: 12.5 }}><Icon name="user-plus" size={15} />Créer mon perso</Link>
+          </div>
         </div>
-      ) : chars.map((c) => {
-        const stuffs = remplis[c.name.trim().toLowerCase()];
-        const visibles = c.gearProfiles.filter((g) =>
-          stuffs?.has((g.name || "").trim().toLowerCase()) || stuffs?.has((g.mode || "").trim().toLowerCase()));
-        const rendu = renduPerso(c.class, (c.sex === "F" ? "F" : "G") as Sexe);
-        const enEdition = edite === c.id;
-
-        return (
-          <div key={c.id} className="fx-card" style={carte}>
-            {enEdition && fiche ? (
-              <>
-                <FichePerso valeur={fiche} onChange={setFiche} compact />
-                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 15 }}>
-                  <button onClick={() => { setEdite(null); setFiche(null); }} disabled={envoi}
-                    style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-                    Annuler
-                  </button>
-                  <button onClick={enregistrer} disabled={envoi} className="vg-btn" style={{ fontSize: 12.5 }}>
-                    <Icon name="save" size={14} />{envoi ? "Enregistrement…" : "Enregistrer"}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={{ display: "flex", alignItems: "center", gap: 13, flexWrap: "wrap" }}>
-                  <div style={{ width: 68, height: 94, flexShrink: 0, borderRadius: 11, overflow: "hidden", position: "relative",
-                    background: "radial-gradient(circle at 50% 26%, rgba(255,140,26,.15), rgba(10,10,12,.9) 72%)",
-                    border: "1px solid rgba(255,140,26,.28)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {rendu
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={rendu} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }} />
-                      : <ClassLogo name={c.class} size={32} />}
-                  </div>
-
-                  <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-                    <div className="font-heading" style={{ fontWeight: 700, fontSize: 18, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      {c.name}
-                      {c.isMain && (
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--gold)",
-                          border: "1px solid var(--gold)", borderRadius: 6, padding: "1px 7px", textTransform: "uppercase", letterSpacing: .5 }}>
-                          <Icon name="star" size={11} />principal
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                      <ClassLogo name={c.class} size={15} />
-                      {c.class.charAt(0) + c.class.slice(1).toLowerCase()}
-                      <span style={{ opacity: .5 }}>·</span>Niveau {c.level}
-                      <span style={{ opacity: .5 }}>·</span>Prestige {c.prestige}
-                      <span style={{ opacity: .5 }}>·</span>{c.sex === "F" ? "Fille" : "Garçon"}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 7, flexShrink: 0, flexWrap: "wrap" }}>
-                    {!c.isMain && (
-                      <button onClick={() => setPromouvoir(c)} className="vg-touch"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 9,
-                          border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text-muted)", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
-                        <Icon name="star" size={13} />En principal
-                      </button>
-                    )}
-                    <button onClick={() => { setEdite(c.id); setFiche({ name: c.name, class: c.class, sex: (c.sex === "F" ? "F" : "G") as Sexe, level: c.level, prestige: c.prestige }); }}
-                      className="vg-touch"
-                      style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "8px 12px", borderRadius: 9,
-                        border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 12, fontFamily: "inherit" }}>
-                      <Icon name="edit" size={13} />Modifier
-                    </button>
-                    <button onClick={() => setSupprimer(c)} className="vg-touch" aria-label={`Supprimer ${c.name}`} title="Supprimer"
-                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 9,
-                        border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--red)", cursor: "pointer" }}>
-                      <Icon name="trash" size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Les stuffs se LISENT ici. Ils se montent dans l'AirBuilder :
-                    les ajouter d'ici fabriquait des profils vides que la page
-                    masquait ensuite, faute d'y trouver la moindre pièce. */}
-                <div style={{ borderTop: "1px solid var(--border)", marginTop: 14, paddingTop: 12 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 9, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>Stuffs montés</span>
-                    {visibles.length > 0 ? (
-                      <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-                        {visibles.map((g) => (
-                          <button key={g.id} onClick={() => setVolet({ perso: c.name, stuff: g.name || g.mode })}
-                            title={`Ouvrir « ${g.name || g.mode} » dans l'AirBuilder`}
-                            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--bg-3)",
-                              border: `1px solid ${MODE_COULEUR(g.mode)}`, borderRadius: 8, padding: "5px 11px", fontSize: 12,
-                              cursor: "pointer", color: "var(--text)", fontFamily: "inherit" }}>
-                            <b style={{ color: MODE_COULEUR(g.mode) }}>{g.mode}</b>{g.name}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Aucun pour l&apos;instant.</span>
-                    )}
-                    <button onClick={() => setVolet({ perso: c.name, stuff: visibles[0]?.name || visibles[0]?.mode || "" })}
-                      className="vg-btn" style={{ marginLeft: "auto", fontSize: 12, padding: "8px 14px" }}>
-                      <Icon name="sword" size={14} />{visibles.length ? "Voir et modifier" : "Monter un stuff"}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        );
-      })}
-
-      {/* ── Les fenêtres, sur <body> : un parent en `transform` (.fx-card)
-          enfermerait un `position:fixed` à l'intérieur de la carte. ── */}
-      {typeof document !== "undefined" && creation && createPortal(
-        <div onClick={() => !envoi && setCreation(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.62)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60, padding: 18, overflowY: "auto" }}>
-          <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 16, padding: 24, width: "100%", maxWidth: 560, maxHeight: "88vh", overflowY: "auto" }}>
-            <h2 className="font-heading" style={{ margin: "0 0 4px", fontSize: 18, display: "flex", alignItems: "center", gap: 9 }}>
-              <Icon name="user-plus" size={18} style={{ color: "var(--orange)" }} />Nouveau personnage
-            </h2>
-            <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5 }}>
-              Choisis sa classe et son sexe : l&apos;illustration suit, c&apos;est elle qu&apos;on verra partout.
-            </p>
-            <FichePerso valeur={creation} onChange={setCreation} />
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 18 }}>
-              <button onClick={() => setCreation(null)} disabled={envoi}
-                style={{ padding: "9px 14px", borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-                Annuler
-              </button>
-              <button onClick={creer} disabled={envoi} className="vg-btn">
-                {envoi ? "Création…" : "Créer"}
-              </button>
-            </div>
-          </div>
-        </div>, document.body)}
-
-      {/* ── L'AirBuilder, dans la page ──────────────────────────────────────
-          En cadre plutot qu'en lien : on ouvrait le builder, on montait sa
-          piece, et il fallait revenir pour voir si la page avait suivi. Ici on
-          voit les deux a la fois.
-
-          Le cadre pointe sur `?volet=1`, PAS sur `?embed=1` : le second sert la
-          candidature, ou le build est capture par la page hote et ne doit
-          surtout pas s'enregistrer. Ici c'est le build du joueur — il
-          s'enregistre tout seul, comme sur la page pleine, localement puis dans
-          son compte. Rien a valider : fermer le volet ne perd rien.
-
-          Meme origine, donc meme `localStorage` : en refermant, la page relit
-          l'etat et les pastilles de stuff suivent. */}
-      {typeof document !== "undefined" && volet && createPortal(
-        <div style={{ position: "fixed", inset: 0, background: "rgba(6,6,9,.86)", zIndex: 70, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 16px", borderBottom: "1px solid var(--border)", background: "var(--bg-2)", flexWrap: "wrap" }}>
-            <Icon name="sword" size={17} style={{ color: "var(--orange)" }} />
-            <span className="font-heading" style={{ fontSize: 14.5, fontWeight: 700 }}>
-              {volet.perso}{volet.stuff ? <span style={{ color: "var(--text-muted)", fontWeight: 400 }}> · {volet.stuff}</span> : null}
-            </span>
-            <span style={{ fontSize: 11.5, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <Icon name="check" size={12} />Enregistrement automatique
-            </span>
-            <button onClick={() => { setVolet(null); charger(); }}
-              style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9,
-                border: "1px solid var(--border)", background: "var(--bg-3)", color: "var(--text)", cursor: "pointer", fontSize: 12.5, fontFamily: "inherit" }}>
-              <Icon name="x" size={13} />Fermer
-            </button>
-          </div>
-          <iframe
-            title={`AirBuilder — ${volet.perso}`}
-            src={`/builder?volet=1&perso=${encodeURIComponent(volet.perso)}${volet.stuff ? `&stuff=${encodeURIComponent(volet.stuff)}` : ""}`}
-            style={{ flex: 1, width: "100%", border: "none", background: "var(--bg)" }}
-          />
-        </div>, document.body)}
-
-      {typeof document !== "undefined" && promouvoir && createPortal(
-        <Confirmation titre="Changer de personnage principal ?" action="Le désigner" occupe={envoi}
-          onOui={designerPrincipal} onNon={() => setPromouvoir(null)}
-          texte={<><b style={{ color: "var(--text)" }}>{promouvoir.name}</b> deviendra ton personnage principal.
-            C&apos;est lui qui te représente partout — compositions, GuildViewer, demandes à la boutique —
-            et il remplacera {chars.find((x) => x.isMain)?.name ?? "l'actuel"}.</>} />,
-        document.body)}
-
-      {typeof document !== "undefined" && supprimer && createPortal(
-        <Confirmation titre="Supprimer ce personnage ?" action="Supprimer" danger occupe={envoi}
-          onOui={doSupprimer} onNon={() => setSupprimer(null)}
-          texte={<><b style={{ color: "var(--text)" }}>{supprimer.name}</b> et ses stuffs seront retirés de ton compte.
-            Action définitive.</>} />,
-        document.body)}
+      ) : persos.map((p) => <CartePerso key={p.id} p={p} />)}
     </div>
+  );
+}
+
+function CartePerso({ p }: { p: PersoVue }) {
+  const rendu = renduPerso(p.classe, p.sexe);
+  return (
+    <div className="gn-pp-carte fx-card">
+      <div className="gn-pp-tete">
+        <div className="gn-pp-ill">
+          {rendu
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={rendu} alt="" />
+            : <ClassLogo name={p.classe} size={32} />}
+        </div>
+
+        <div className="gn-pp-id">
+          <div className="font-heading gn-pp-nom">
+            {p.nom}
+            {p.principal && <span className="gn-pp-main"><Icon name="star" size={11} />principal</span>}
+          </div>
+          <div className="gn-pp-sous">
+            <ClassLogo name={p.classe} size={15} />
+            {nomClasse(p.classe)}
+            <span style={{ opacity: .5 }}>·</span>Niveau {p.niveau}
+            <span style={{ opacity: .5 }}>·</span>Prestige {p.prestige}
+            <span style={{ opacity: .5 }}>·</span>{p.sexe === "F" ? "Fille" : "Garçon"}
+          </div>
+        </div>
+
+        {/* Le bouton « Voir et modifier » de l'ancienne page, qui mène maintenant au
+            builder plein écran, sur ce perso. */}
+        <Link href={lienBuilder(p.nom)} className="vg-btn" style={{ flexShrink: 0, fontSize: 12, padding: "8px 14px" }}>
+          <Icon name="shirt" size={14} />Ouvrir dans l&apos;AirBuilder
+        </Link>
+      </div>
+
+      <div className="gn-pp-stuffs">
+        <div className="gn-pp-stuffs-t">Ses stuffs</div>
+        {p.stuffs.length === 0
+          ? <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Aucun stuff publié.</span>
+          : p.stuffs.map((s) => <LigneStuff key={s.id} perso={p} s={s} />)}
+      </div>
+    </div>
+  );
+}
+
+/** Un stuff : la ligne de stuff du suivi (/suivi, `LigneStuff`), en lien vers le builder. */
+function LigneStuff({ perso, s }: { perso: PersoVue; s: StuffVue }) {
+  const vide = s.etat === "vide";
+  const role = ROLE_LIBELLE[s.role];
+  const chiffres = vide ? "" : chiffresEnClair(perso.classe, s.role, s.v);
+  return (
+    <Link href={lienBuilder(perso.nom, s.index)} className={`gn-pp-stuff${vide ? " vide" : ""}`}
+      title={`Ouvrir « ${s.nom} » dans l'AirBuilder`}>
+      {/* Un stuff vide n'a pas encore de rôle : celui qu'on lui DÉDUIRAIT (un Arcaniste
+          ne tient que le DPS) se lisait « DPS Tank » sur le stuff « Tank » d'origine. */}
+      {!vide && <span className="gn-pp-role">{role}</span>}
+      {/* Le nom seulement s'il dit autre chose que le rôle (« DPS · DPS »). */}
+      {(vide || s.nom.toLowerCase() !== role.toLowerCase()) && <span className="gn-pp-stuff-nom">{s.nom}</span>}
+      {chiffres && <span className="gn-pp-chiffres">{chiffres}</span>}
+      <span className="gn-pp-stuff-fin">
+        {s.mesureLe && <span className="gn-pp-date">mesuré le {new Date(s.mesureLe).toLocaleDateString("fr-FR")}</span>}
+        <EtatMesures etat={s.etat} />
+        <Icon name="chevron-right" size={13} style={{ color: "var(--text-muted)" }} />
+      </span>
+    </Link>
   );
 }

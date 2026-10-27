@@ -6,24 +6,24 @@
   font-family:Rubik,sans-serif}
 .abx .cc-card,.abx .cb,.abx .lbl{font-family:Rubik,sans-serif}
 
-:root{--bg:#0e0e12;--bg2:#16161d;--bg3:#1e1e27;--border:#2c2c36;--text:#e8e8ee;--mut:#9a9aa8;--orange:#FF8C1A;--gold:#FFD24A;--green:#4ADE80;--blue:#4EA8FF;--purple:#C77DFF;--red:#F87171;}
+:root{--bg:var(--gn-noir);--bg2:#111017;--bg3:var(--gn-anthracite);--border:#2A2632;--text:var(--gn-texte);--mut:var(--gn-texte-doux);--orange:var(--gn-accent);--gold:var(--gn-or-clair);--green:#4ADE80;--blue:#4EA8FF;--purple:#C77DFF;--red:#F87171;}
 .abx *{box-sizing:border-box}
-.abx{margin:0;background-color:#0b0b10;background-image:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(255,140,26,.16),transparent 60%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.08),transparent 46%),linear-gradient(rgba(9,9,13,.8),rgba(9,9,13,.9)),url('/assets/site/bg/sup2.webp');background-size:auto,auto,auto,cover;background-position:center;background-repeat:no-repeat;color:var(--text);font-family:'Athiti',sans-serif;padding-bottom:34px}
+.abx{margin:0;background-color:#0b0b10;background-image:radial-gradient(ellipse 90% 50% at 50% -8%,rgba(var(--gn-lueur-rgb),.16),transparent 60%),radial-gradient(circle at 88% 10%,rgba(199,125,255,.08),transparent 46%),linear-gradient(rgba(9,9,13,.8),rgba(9,9,13,.9)),url('/assets/genesis/bg/salle-du-trone.webp');background-size:auto,auto,auto,cover;background-position:center;background-repeat:no-repeat;color:var(--text);font-family:'Athiti',sans-serif;padding-bottom:34px}
 .wrap{max-width:1280px;margin:0 auto;padding:14px}
 .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
-.brand{font-family:Rubik;font-weight:700;font-size:21px;color:var(--text);letter-spacing:1.6px;text-transform:uppercase}
-.brand span{color:var(--orange);text-shadow:0 0 18px rgba(255,140,26,.4)}.step{font-size:12px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
+.brand{font-family:var(--gn-titre);font-weight:700;font-size:21px;color:var(--text);letter-spacing:1.6px;text-transform:uppercase}
+.brand span{color:var(--gn-accent);text-shadow:0 0 18px rgba(var(--gn-lueur-rgb),.4)}.step{font-size:12px;color:var(--mut);border:1px solid var(--border);border-radius:20px;padding:3px 10px}
 .ptabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ptab{display:flex;align-items:center;gap:7px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:5px 9px;cursor:pointer;font-size:13px}
-.ptab.on{border-color:var(--orange);background:#241a0e}.ptab .x{color:var(--mut);font-size:12px}.ptab .x:hover{color:var(--red)}
+.ptab.on{border-color:var(--gn-accent);background:var(--gn-teinte-pourpre)}.ptab .x{color:var(--mut);font-size:12px}.ptab .x:hover{color:var(--red)}
 .ptab img{width:18px;height:18px;object-fit:contain}
 .addp{background:var(--bg3);border:1px dashed var(--border);border-radius:10px;padding:5px 11px;cursor:pointer;color:var(--mut);font-size:13px}
-.addp:hover{border-color:var(--orange);color:var(--orange)}
+.addp:hover{border-color:var(--gn-accent);color:var(--gn-accent)}
 .setup{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px;align-items:flex-end}
 .stuffbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:-4px 0 14px}
 .stuffbar .slabel{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-right:4px}
 .stab{background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:6px 12px;cursor:pointer;font-family:Rubik;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px}
-.stab.on{border-color:var(--gold);background:#221d0a;color:var(--gold)}
+.stab.on{border-color:var(--gold);background:var(--gn-teinte-or);color:var(--gold)}
 .stab .x{color:var(--mut);font-size:11px}.stab .x:hover{color:var(--red)}
 /* Mêmes police et graisse que les onglets de stuff : ces boutons vivent sur la
    même ligne, une fonte differente les faisait passer pour du texte.        */
@@ -34,36 +34,28 @@
    c'est le seul qui detruit : liseré rouge au survol, pas avant.            */
 .saddp.danger:hover{border-color:var(--red);color:var(--red)}
 /* Le mode d'emploi : des sections, pas un pave. */
-.sheet.aide .aidettl{font-family:Rubik,sans-serif;font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;margin-bottom:2px}
+.sheet.aide .aidettl{font-family:var(--gn-titre);font-weight:700;font-size:16px;display:flex;align-items:center;gap:9px;margin-bottom:2px}
 .sheet.aide .aidesub{font-size:11.5px;color:var(--mut);margin-bottom:8px}
 .sheet.aide .aidesec{display:flex;gap:11px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)}
-.sheet.aide .aidesec>svg{color:var(--orange);flex:none;margin-top:2px}
+.sheet.aide .aidesec>svg{color:var(--gn-accent);flex:none;margin-top:2px}
 .sheet.aide .aidesec h4{font-family:Rubik,sans-serif;font-weight:700;font-size:13.5px;margin:0 0 3px}
 .sheet.aide .aidesec p{font-size:12.5px;line-height:1.55;color:var(--mut);margin:0}
 .sheet.aide .aidesec b{color:var(--text)}
-/* « Acheter un objet » vit sur le pantin, seul : c'est la qu'on regarde ses
-   pieces, et ca n'a rien a voir avec les reglages du build.                 */
-.dollbuy{position:absolute;top:-17px;right:14px;z-index:2;display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(180deg,#FFC061,#FF8C1A);color:#2a1400;border:none;border-radius:16px;
-  padding:8px 20px;font-family:Rubik,sans-serif;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.7px;
-  cursor:pointer;box-shadow:0 6px 18px rgba(255,140,26,.42)}
-.dollbuy:hover{filter:brightness(1.06);box-shadow:0 8px 22px rgba(255,140,26,.52)}
-@media(max-width:640px){ .dollbuy{position:static;margin:0 0 10px auto;display:flex} }
 .setup .f{display:flex;flex-direction:column;gap:3px}.setup label{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding-left:2px}
 /* Les champs natifs n'heritent pas de la police : sexe, niveau et prestige
    s'affichaient dans la fonte par defaut du navigateur, a cote du reste.    */
 .setup select,.setup input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 9px;
   font-size:13px;font-family:Rubik,sans-serif;font-weight:600}
-.clssel{display:flex;gap:3px;flex-wrap:wrap;max-width:340px}.ci{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}.ci img{width:30px;height:30px;object-fit:contain}.ci.on{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
+.clssel{display:flex;gap:3px;flex-wrap:wrap;max-width:340px}.ci{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden}.ci img{width:30px;height:30px;object-fit:contain}.ci.on{border-color:var(--gn-accent);box-shadow:0 0 0 1px var(--gn-accent)}
 /* paperdoll */
 /* La colonne du milieu doit pouvoir descendre sous la largeur de son contenu :
    sans minmax(0,...) elle garde le min-content de la silhouette (212 px), et
    sur mobile la grille reclamait 368 px de pistes dans une boite de 315 — d'ou
    les pieces d'equipement qui sortaient de l'ecran par la droite. */
 .doll{display:grid;grid-template-columns:64px minmax(0,1fr) 64px;grid-template-rows:auto 1fr auto;gap:14px;max-width:760px;margin:0 auto;
-  background:linear-gradient(180deg,#15151c,#0c0c11);border:2px solid #3a2c16;border-radius:16px;padding:16px;
-  box-shadow:inset 0 0 0 1px #FF8C1A22, inset 0 0 40px #0009, 0 12px 40px #0008;position:relative}
-.dollttl{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-family:Rubik;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:#1a1410;border:1px solid #3a2c16;color:var(--gold);padding:3px 16px;border-radius:14px}
+  background:linear-gradient(180deg,#15151c,#0c0c11);border:2px solid rgba(var(--gn-or-rgb),.28);border-radius:16px;padding:16px;
+  box-shadow:inset 0 0 0 1px rgba(var(--gn-lueur-rgb),.13), inset 0 0 40px #0009, 0 12px 40px #0008;position:relative}
+.dollttl{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-family:Rubik;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;background:var(--gn-teinte-or);border:1px solid rgba(var(--gn-or-rgb),.28);color:var(--gold);padding:3px 16px;border-radius:14px}
 /* min-width:0 a chaque niveau : un enfant de grille refuse par defaut de
    passer sous la largeur de son contenu, et c'est ce qui faisait deborder. */
 .colL,.colR{display:flex;flex-direction:column;gap:10px;min-width:0}
@@ -84,13 +76,13 @@
    se resserre au lieu d'elargir la grille. */
 .center .silwrap{width:100%;max-width:212px;min-height:360px;background:radial-gradient(circle at 50% 28%,#23232e,#0d0d12);border:1px solid #2a2a34;border-radius:12px;display:flex;flex-direction:column;align-items:center;position:relative;box-shadow:inset 0 0 24px #000a;padding:12px 8px 8px;overflow:hidden}
 .center .silhead{text-align:center;margin-bottom:8px;z-index:1}
-.center .charimg{flex:1;width:100%;max-height:312px;object-fit:contain;object-position:bottom center;filter:drop-shadow(0 6px 14px rgba(255,140,26,.22))}
+.center .charimg{flex:1;width:100%;max-height:312px;object-fit:contain;object-position:bottom center;filter:drop-shadow(0 6px 14px rgba(var(--gn-lueur-rgb),.22))}
 .center #cn{font-family:Rubik;font-weight:700;font-size:18px;letter-spacing:.6px;line-height:1.2}
 /* La ligne classe / niveau / prestige etait en monospace : elle jurait avec le
    nom juste au-dessus et donnait un air de console a la fiche du perso.     */
-.center #cc{color:var(--orange);font-size:11.5px;font-family:Rubik,sans-serif;font-weight:600;letter-spacing:.5px;margin-top:3px;opacity:.92}
+.center #cc{color:var(--gn-accent);font-size:11.5px;font-family:Rubik,sans-serif;font-weight:600;letter-spacing:.5px;margin-top:3px;opacity:.92}
 .slot{width:56px;height:56px;border-radius:9px;background:linear-gradient(180deg,#20202a,#15151c);border:1px solid #34343f;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:.12s}
-.slot:hover{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
+.slot:hover{border-color:var(--gn-accent);box-shadow:0 0 0 1px var(--gn-accent)}
 .slot img{width:42px;height:42px;object-fit:contain}.slot .ico{font-size:24px;opacity:.5}
 .slot .phimg{opacity:.42;filter:grayscale(1)}.slot:hover .phimg{opacity:.7}
 .slot .pl{position:absolute;top:-6px;right:-6px;background:var(--blue);color:#001;font-size:11px;font-weight:700;border-radius:6px;padding:0 4px;border:1px solid #0006}
@@ -104,11 +96,11 @@
 .rk{position:absolute;top:-6px;left:-6px;font-family:Rubik;font-weight:700;font-size:11px;color:#001;background:var(--gold);border-radius:6px;padding:0 4px}
 .legend{max-width:760px;margin:10px auto 0;font-size:12px;color:var(--mut);text-align:center}
 .panel{background:linear-gradient(180deg,rgba(22,22,29,.93),rgba(13,13,17,.95));border:1px solid var(--border);border-radius:15px;padding:16px;margin:16px auto 0;max-width:1080px;box-shadow:0 12px 38px rgba(0,0,0,.45)}
-.panel h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--orange);margin:0 0 13px}
+.panel h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--gn-accent);margin:0 0 13px}
 .carnets{display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:10px}
 .carn{background:linear-gradient(180deg,#1d1d26,#141419);border:1px solid var(--border);border-radius:12px;padding:11px 13px;font-size:12px;transition:transform .14s,box-shadow .14s,border-color .14s}
 .carn:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.5)}
-.carn.on{background:linear-gradient(180deg,#251e0d,#181308);box-shadow:0 0 0 1px rgba(255,210,74,.25),0 8px 22px rgba(0,0,0,.45)}
+.carn.on{background:linear-gradient(180deg,var(--gn-teinte-or),var(--gn-noir-2));box-shadow:0 0 0 1px rgba(255,210,74,.25),0 8px 22px rgba(0,0,0,.45)}
 .carn .cn{font-family:Rubik;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px}
 /* L'etui du carnet : l'objet du jeu, a la place d'un point de couleur. */
 .carn .etui{width:19px;height:19px;object-fit:contain;flex:none}
@@ -160,95 +152,43 @@
 .seg .sg:hover{color:var(--text)}
 .seg .sg.on{background:linear-gradient(180deg,#FFD86A,var(--gold));color:#1a1205;font-weight:700}
 .fullbtn{font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--border);cursor:pointer;color:var(--mut);float:right}.fullbtn.on{border-color:var(--gold);color:var(--gold)}
-/* ─────────── LE RESUME DU BUILD ───────────────────────────────────────────
-   Le gabarit portait `<div class="stats" id="stats">` depuis le premier jour,
-   et cette feuille ne lui donnait AUCUN style : le panneau n'etait jamais
-   rempli (renderStats() n'avait pas d'appelant), personne ne pouvait le voir.
-   Il a maintenant la meme carcasse que `.panel`, juste au-dessus des carnets.  */
+/* ─────────── LE PANNEAU SOUS LE PANTIN (#stats) ─────────────────────────────
+   Il portait le résumé du build ; il porte désormais les MESURES du stuff.
+   Même carcasse que `.panel`, juste au-dessus des carnets.                    */
 .stats{background:linear-gradient(180deg,rgba(22,22,29,.93),rgba(13,13,17,.95));border:1px solid var(--border);
   border-radius:15px;padding:16px;margin:16px auto 0;max-width:1080px;box-shadow:0 12px 38px rgba(0,0,0,.45)}
 .stats:empty{display:none}
-.stats h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--orange);margin:0 0 13px;display:flex;align-items:center;gap:8px}
-#stats .l{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(44,44,54,.5)}#stats .l b{color:var(--green);flex:none}
-/* Le releve porte des libelles tres longs, non traduits, en un seul bloc :
-   « Spell Rate Atkpower Rate  Addmagic Rate Int  Addmagic » sur trois armes
-   Luzaka. Dans une colonne de 215 px minimum, sans coupe forcee, un libelle de
-   ce gabarit pousse la grille et fait apparaitre une barre horizontale sur toute
-   la page a 375 px de large.                                                   */
-#stats .l>span{min-width:0;overflow-wrap:anywhere}
-/* Les quatre familles cote a cote : un stuff complet donne une quarantaine de
-   lignes, et en une colonne on ne comparait plus rien. */
-.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
-.statcol{min-width:0}
-.statcol .sh{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;
-  display:flex;align-items:center;gap:6px}
-/* Les quatre des du jeu : le libelle (FOR/END/DEX/INT) est INCRUSTE dans
-   l'image, on n'ecrit donc pas le nom a cote — c'est le dessin que le joueur
-   reconnait dans sa fenetre de personnage.
-   MESURE, parce que le cadrage n'est pas cosmetique : l'image du client fait
-   50x50 et son texte n'occupe que les lignes 5 a 21. Affichee entiere dans un
-   carre de 30 px, plus de la moitie de la tuile etait du gris vide et le libelle
-   tombait a 10 px. On CADRE donc sur la bande de texte (cover + position haute)
-   au lieu de la contenir : meme encombrement, libelle plus grand, pas de vide.  */
-.dice{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
-.die{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);
-  border-radius:11px;padding:6px 12px 6px 7px}
-.die img{width:36px;height:18px;object-fit:cover;object-position:top;border-radius:3px;image-rendering:pixelated;flex:none}
-.die b{font-family:Rubik;font-weight:700;font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
-.die.nil{opacity:.5}.die.nil b{color:var(--mut)}
-/* ═══════════ LE PANNEAU QUI MONTRE D'OU VIENT CHAQUE POINT ═══════════════
-   Le resume n'affichait qu'un total par statistique. Un total ne se verifie pas :
-   on ne peut ni le contester, ni retrouver la piece a changer. Trois ajouts, et
-   chacun repond a une question qu'on se posait sans pouvoir y repondre.
-
-   .stbar / .stfill — LA BARRE. Deux regles, les memes que partout sur ce site :
-     une SEULE teinte (celle que la colonne emploie deja) parce que c'est la
-     LONGUEUR qui porte la grandeur — peindre les grandes valeurs en vert et les
-     petites en dore ne se distingue pas pour un daltonien protan, 5,8 de deltaE
-     mesure, sous le seuil de perception ; et un plancher a 1,5 % sans quoi une
-     valeur minuscule perd sa barre, et l'absence de barre se lit comme une
-     donnee manquante. Elle part du MILIEU : une ligne de panoplie peut RETIRER
-     des points, et une barre qui ne saurait aller qu'a droite ferait passer un
-     malus pour un petit bonus.
-   .stneg — la marque « une piece en retire ». Le signe est deja dans le nombre ;
-     cette marque dit que le SIGNE VIENT D'UNE PIECE, pas d'un calcul. Les 64
-     panoplies d'armure du releve portent chacune une ligne negative, et la
-     fenetre de panoplie du jeu n'en affiche aucune.
-   .stn — le nombre de sources. Il dit, sans deplier, qu'une ligne a plusieurs
-     origines : c'est l'invitation a survoler.
-   .stabs — les termes NON COMPTES. Replies par defaut (un stuff maximise en
-     donne une trentaine) mais leur COMPTE est visible, et c'est ce compte qui
-     empeche de prendre le total pour la verite.                                */
-#stats .l.stl{position:relative;flex-wrap:wrap;cursor:help}
-#stats .l.stl>b.moins{color:var(--red,#f87171)}
-.stbar{flex:0 0 100%;position:relative;display:block;height:4px;border-radius:3px;
-  background:rgba(255,255,255,.05);margin-top:3px}
-.stfill{position:absolute;top:0;bottom:0;border-radius:3px;
-  background:color-mix(in srgb, var(--green,#4ade80) 55%, transparent)}
-.stfill.moins{background:color-mix(in srgb, var(--red,#f87171) 55%, transparent)}
-.stneg{font-style:normal;font-weight:700;color:var(--red,#f87171);font-size:13px;line-height:1}
-.stn{font-style:normal;font-size:10px;color:var(--mut,#9a9aa3);background:rgba(255,255,255,.06);
-  border-radius:20px;padding:0 5px;vertical-align:1px}
-.stabs{margin-top:10px;background:rgba(248,113,113,.05);border:1px dashed rgba(248,113,113,.28);
-  border-radius:10px;padding:8px 12px}
-.stabs>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--red,#f87171);
-  display:flex;align-items:center;gap:7px;list-style:none}
-.stabs>summary::-webkit-details-marker{display:none}
-.stabs-l{display:flex;flex-direction:column;gap:1px;font-size:11.5px;padding:5px 0;
-  border-top:1px solid rgba(255,255,255,.06)}
-.stabs-l>span{color:var(--text,#e8e8ee)}
-.stabs-l>i{font-style:normal;color:var(--mut,#9a9aa3);line-height:1.45}
+.stats h3{font-family:Rubik;text-transform:uppercase;letter-spacing:1px;font-size:13.5px;color:var(--gn-accent);margin:0 0 13px;display:flex;align-items:center;gap:8px}
+/* ─────────── LES MESURES DU STUFF — remplacent le résumé (2026-10-20) ───────
+   Aucun style inventé : les champs copient `.setup input`, les libellés
+   `.setup label`, le choix du rôle `.stab`, les cases `.tierbtn` — ce sont les
+   contrôles voisins, sur la même page. Seul ajout : le témoin « à renseigner »,
+   en crimson lisible (--gn-crimson-texte), jamais en crimson de marque. */
+.stats h3 .mes-etat{margin-left:auto;font-size:11.5px;letter-spacing:.4px;display:inline-flex;align-items:center;gap:5px;
+  padding:2px 9px;border-radius:20px;border:1px solid}
+.mes-etat.ko{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.45);background:rgba(var(--gn-lueur-rgb),.10)}
+.mes-etat.ok{color:var(--green);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+.stats h3 .mes-etat:not(.ok):not(.ko){color:var(--mut);border-color:var(--border);text-transform:none;letter-spacing:0}
+.mes-intro{font-size:12.5px;color:var(--mut);line-height:1.55;margin:-4px 0 14px}
+.mes-intro b{color:var(--text)}
+.mes-l{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.mes-lab{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;padding-left:2px}
+.mes-lab i{font-style:normal;text-transform:none;letter-spacing:0;opacity:.75}
+.mes-cases{display:flex;gap:6px;flex-wrap:wrap}
+.mes-c small{font-weight:600;opacity:.75;margin-left:2px}
+.mes-champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:14px}
+.mes-f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mes-f input{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 9px;
+  font-size:13px;font-family:Rubik,sans-serif;font-weight:600;font-variant-numeric:tabular-nums;width:100%;min-width:0}
+.mes-f.ko input{border-color:rgba(var(--gn-lueur-rgb),.55)}
+.mes-f input:disabled{opacity:.85;cursor:default}
+.mes-req{font-style:normal;color:var(--gn-crimson-texte)}
+/* Un stuff dont les mesures manquent se signale depuis la barre des stuffs. */
+.stab.mes-manque::after{content:"";width:7px;height:7px;border-radius:50%;flex:none;
+  background:var(--gn-plein);box-shadow:0 0 6px rgba(var(--gn-lueur-rgb),.8)}
 /* ─────────── LA PANOPLIE ──────────────────────────────────────────────────
    Quatre vignettes, celles qu'on porte allumees. Le compte est ecrit a cote
    pour qui ne distingue pas l'allume de l'eteint.                            */
-.panwrap{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
-.panres{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--bg3);
-  border:1px solid var(--border);border-radius:12px;padding:8px 12px}
-.panres.full{background:linear-gradient(180deg,rgba(74,222,128,.09),rgba(0,0,0,0))}
-.panres .pt{font-family:Rubik;font-weight:700;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
-.panres .pn{font-family:Rubik;font-weight:700;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}
-.panres .pok{font-size:11.5px;font-weight:700;color:var(--green);display:inline-flex;align-items:center;gap:5px}
-.panres .pill{margin-left:auto}
 .panbloc{background:rgba(255,210,74,.05)}
 .pancases{display:flex;gap:7px;flex-wrap:wrap}
 .pancase{display:flex;flex-direction:column;align-items:center;gap:3px;width:52px;
@@ -268,8 +208,6 @@
    dessin qu'un trou : c'est la case qui coute quelque chose. */
 .pancase.occ{border-style:dashed;border-color:rgba(255,210,74,.55)}
 .pancase.occ img{filter:grayscale(.5);opacity:.65}
-.pancases.mini-cases .pancase{width:34px;padding:3px}
-.pancases.mini-cases .pancase img{width:26px;height:26px}
 /* La piece appartient a l'ensemble le plus porte : cerne dore sur la
    silhouette, pour voir la panoplie s'allumer sans lire de compte.
    OUTLINE et pas box-shadow : `slotHTML` pose un box-shadow EN LIGNE pour la
@@ -277,43 +215,18 @@
 .slot.panon{outline:1.5px solid var(--gold);outline-offset:1px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
 .sheet{background:var(--bg2);border:1px solid var(--border);border-radius:14px;width:560px;max-width:100%;max-height:88vh;overflow:auto;padding:16px}
-.sheet h3{font-family:Rubik;margin:0 0 10px;color:var(--orange);text-transform:uppercase;letter-spacing:1px}
+.sheet h3{font-family:var(--gn-titre);margin:0 0 10px;color:var(--gn-accent);text-transform:uppercase;letter-spacing:1px}
 .srch{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px;margin-bottom:8px}
 .itl{display:flex;gap:9px;align-items:center;padding:7px;border:1px solid var(--border);border-radius:9px;margin-bottom:5px;cursor:pointer;background:var(--bg3)}
-.itl:hover{border-color:var(--orange)}.itl img{width:32px;height:32px;object-fit:contain}.itl .n{flex:1;min-width:0;font-size:12.5px}
-/* « Acheter un objet » : on coche les pieces, on demande une fois.
-   Chaque ligne tient sur un rang — case, icone, nom et reglages — et se
-   comporte pareil sur telephone, ou seule l'icone se reduit. Le bouton
-   d'envoi vit dans le pied, plus sur chaque ligne : il n'y a qu'une demande. */
-.buysheet .buyttl{font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px}
-.buysheet .buysub{font-size:11.5px;margin-bottom:12px;line-height:1.5}
-.itl.buyl{align-items:center;gap:10px;padding:9px 11px;transition:border-color .12s,background .12s}
-.itl.buyl .coche{width:17px;height:17px;flex:none;border:1.5px solid var(--border);border-radius:5px;
-  display:inline-flex;align-items:center;justify-content:center;transition:.12s}
-.itl.buyl.sel{border-color:var(--orange);background:rgba(255,140,26,.08)}
-.itl.buyl.sel .coche{background:var(--orange);border-color:var(--orange)}
-.itl.buyl.sel .coche::after{content:"";width:5px;height:9px;border:solid #14100a;border-width:0 2px 2px 0;
-  transform:rotate(45deg) translate(-1px,-1px)}
-.itl.buyl .ic{width:32px;height:32px;flex:none;display:flex;align-items:center;justify-content:center}
-.itl.buyl .ic img{width:32px;height:32px;object-fit:contain}
-.itl.buyl .n{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.itl.buyl .n .sub{font-size:11.5px;color:var(--mut);font-weight:400}
-.buyfoot{margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center}
-.buyfoot .pill.dem.off{opacity:.45;pointer-events:none}
-@media(max-width:560px){
-  .itl.buyl{padding:10px}
-  .itl.buyl .ic,.itl.buyl .ic img{width:26px;height:26px}
-  .buyfoot{flex-direction:column-reverse;align-items:stretch}
-  .buyfoot .pill{justify-content:center;padding:10px 12px}
-}
+.itl:hover{border-color:var(--gn-accent)}.itl img{width:32px;height:32px;object-fit:contain}.itl .n{flex:1;min-width:0;font-size:12.5px}
 .pill{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;display:inline-block}
-.pill.on{background:var(--orange);color:#000;border-color:var(--orange);font-weight:600}
+.pill.on{background:var(--gn-action);color:var(--gn-sur-action);border-color:rgba(var(--gn-or-rgb),.55);font-weight:600}
 .sheet-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);position:sticky;bottom:-16px;background:linear-gradient(180deg,transparent,var(--bg2) 30%)}
 .pill.rm{color:#ff9a9a;border-color:#f8717155;font-weight:600}
 .pill.rm:hover{background:rgba(248,113,113,.12);border-color:var(--red);color:#fff}
 .rankpick{display:flex;gap:6px;margin:8px 0}.rankpick .rp{flex:1;text-align:center;padding:8px 4px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:Rubik;font-weight:700}
-.rankpick .rp.on{border-color:var(--gold);background:#221d0a;color:var(--gold)}
-.btn{background:var(--orange);color:#000;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:Rubik;text-transform:uppercase;letter-spacing:1px}
+.rankpick .rp.on{border-color:var(--gold);background:var(--gn-teinte-or);color:var(--gold)}
+.btn{background:var(--gn-action);color:var(--gn-sur-action);border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-family:Rubik;text-transform:uppercase;letter-spacing:1px}
 .btn.ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
 .actions{display:flex;justify-content:center;gap:12px;margin-top:20px}
 /* En tête : les actions se voient sans faire défiler, et restent discretes —
@@ -321,7 +234,7 @@
 .actions-top{justify-content:flex-start;margin:0 0 12px;flex-wrap:wrap}
 /* « Demander cet objet » : le seul bouton de la fiche qui engage la guilde —
    il ne se confond pas avec « Retirer » ou « Max ».                          */
-.sheet-foot .pill.dem{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400;font-weight:700}
+.sheet-foot .pill.dem{background:var(--gn-action);border-color:transparent;color:var(--gn-sur-action);font-weight:700}
 .sheet-foot .pill.dem:hover{filter:brightness(1.06)}
 .actions-top .btn{padding:9px 16px;font-size:12.5px;border-radius:10px}
 /* « Les mécaniques » est un LIEN, pas un bouton : il doit se ranger dans la
@@ -331,18 +244,18 @@
    contraste du fond et du texte, et l'icone passe en orange pour accrocher
    l'oeil sans transformer chaque bouton en bouton principal.                 */
 .actions-top .btn.ghost{background:#1b1b23;border-color:rgba(255,255,255,.17);color:#eaeaf0;box-shadow:0 2px 10px rgba(0,0,0,.3)}
-.actions-top .btn.ghost svg{color:var(--orange)}
-.actions-top .btn.ghost:hover{background:#22222c;border-color:var(--orange);color:#fff}
+.actions-top .btn.ghost svg{color:var(--gn-accent)}
+.actions-top .btn.ghost:hover{background:#22222c;border-color:var(--gn-accent);color:#fff}
 /* L'aide est une aide : un point d'interrogation en bout de ligne, pas un
-   bouton de la meme importance que « vider » ou « acheter ».                 */
+   bouton de la meme importance que « vider » ou « partager ».                */
 .actions-top .btn-aide{margin-left:auto;padding:9px 12px;border-radius:50%}
 @media(max-width:560px){ .actions-top .btn-aide{margin-left:0;flex:0 0 auto} }
 @media(max-width:560px){ .actions-top .btn{flex:1 1 auto;justify-content:center} }
 .actions .btn{padding:13px 28px;border-radius:12px;font-size:13.5px;transition:transform .13s,box-shadow .13s,filter .13s}
-.actions .btn:not(.ghost){background:linear-gradient(180deg,#FFC061,#FF8C1A);color:#2a1400;box-shadow:0 6px 20px rgba(255,140,26,.42)}
-.actions .btn:not(.ghost):hover{transform:translateY(-2px);box-shadow:0 11px 30px rgba(255,140,26,.62);filter:brightness(1.07)}
+.actions .btn:not(.ghost){background:var(--gn-action);color:var(--gn-sur-action);box-shadow:0 6px 20px rgba(var(--gn-lueur-rgb),.42)}
+.actions .btn:not(.ghost):hover{transform:translateY(-2px);box-shadow:0 11px 30px rgba(var(--gn-lueur-rgb),.62);filter:brightness(1.07)}
 .actions .btn.ghost{box-shadow:0 4px 14px rgba(0,0,0,.35)}
-.actions .btn.ghost:hover{border-color:var(--orange);color:var(--orange);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.5)}
+.actions .btn.ghost:hover{border-color:var(--gn-accent);color:var(--gn-accent);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.5)}
 .actions .btn:active{transform:translateY(0) scale(.95)}
 .wp{margin-top:10px}.wp .grp{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;background:var(--bg3)}
 .wp .gh{font-family:Rubik;font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:7px;display:flex;align-items:center;gap:6px}
@@ -354,7 +267,7 @@
 .cslot{min-width:30px;padding:0 4px;height:34px;border-radius:5px;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:Rubik;font-weight:700;font-size:11px;color:var(--mut)}
 .dslot{display:flex;align-items:center;gap:4px;margin-bottom:3px}.dslot.holo{border-left:2px solid var(--purple);padding-left:5px}
 .tierbtn{padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-family:Rubik;font-weight:700}
-.tierbtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
+.tierbtn.on{background:var(--gn-action);color:var(--gn-sur-action);border-color:rgba(var(--gn-or-rgb),.55)}
 .tierbtn.myth.on{background:linear-gradient(90deg,#ff5c8a,#ffd24a);color:#1a1205}
 /* Choix de l'element : des boutons illustres a la place d'un menu deroulant,
    qui ne sait pas afficher d'image. Ne concerne que l'element de la piece, pas
@@ -365,25 +278,25 @@
    rester nette. L'ecart entre boutons vient de .wp .row, comme partout. */
 .elembtn{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;font-family:Rubik;font-weight:700}
 .elembtn img{width:16px;height:16px;object-fit:contain;flex-shrink:0}
-.elembtn.on{background:var(--orange);color:#000;border-color:var(--orange)}
+.elembtn.on{background:var(--gn-action);color:var(--gn-sur-action);border-color:rgba(var(--gn-or-rgb),.55)}
 .line{display:flex;gap:5px;align-items:center;margin-bottom:4px}
 .seg2{display:flex;gap:0;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-width:260px}
 .seg2 .s2{flex:1;text-align:center;padding:5px 10px;cursor:pointer;color:var(--mut);background:var(--bg2);font-size:12px}
-.seg2 .s2.on{background:var(--orange);color:#000;font-weight:700}
+.seg2 .s2.on{background:var(--gn-action);color:var(--gn-sur-action);font-weight:700}
 .lvl{display:flex;flex-direction:column;gap:3px;flex:1;min-width:160px}.lvl input[type=range]{width:100%}
-.note{max-width:1080px;margin:14px auto 0;background:#1a1410;border:1px solid #3a2c16;border-radius:10px;padding:10px 14px;font-size:12px;color:#d8c5a8}
+.note{max-width:1080px;margin:14px auto 0;background:var(--gn-teinte-or);border:1px solid rgba(var(--gn-or-rgb),.28);border-radius:10px;padding:10px 14px;font-size:12px;color:#d8c5a8}
 /* ── Dropdown maison (vgDD) ── */
 .vgdd{position:relative;display:inline-block;vertical-align:bottom}
 .vgdd-b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 11px;font:600 13px Rubik,sans-serif;cursor:pointer;transition:border-color .14s,box-shadow .14s}
-.vgdd-b:hover{border-color:#FF8C1A88}
-.vgdd.open .vgdd-b{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,140,26,.16)}
-.vgdd-b i{color:var(--orange);font-style:normal;font-size:11px;transition:transform .16s}
+.vgdd-b:hover{border-color:rgba(var(--gn-or-rgb),.53)}
+.vgdd.open .vgdd-b{border-color:var(--gn-accent);box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.16)}
+.vgdd-b i{color:var(--gn-accent);font-style:normal;font-size:11px;transition:transform .16s}
 .vgdd.open .vgdd-b i{transform:rotate(180deg)}
 .vgdd-l{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;z-index:300;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);padding:5px;max-height:240px;overflow-y:auto}
 .vgdd.open .vgdd-l{display:block;animation:vgddin .14s ease}
 .vgdd-o{padding:7px 12px;border-radius:7px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text);transition:background .12s}
 .vgdd-o:hover{background:rgba(255,255,255,.07)}
-.vgdd-o.on{background:rgba(255,140,26,.14);color:var(--orange);font-weight:700}
+.vgdd-o.on{background:rgba(var(--gn-lueur-rgb),.14);color:var(--gn-accent);font-weight:700}
 @keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 .itip{position:fixed;z-index:9999;width:290px;background:linear-gradient(180deg,#17171e,#0d0d12);border:1px solid var(--border);border-radius:11px;padding:13px 15px;box-shadow:0 14px 36px #000d;pointer-events:none;font-size:11.5px;line-height:1.55;display:none}
 .itip .t{font-family:Rubik;font-weight:700;font-size:14.5px;letter-spacing:.4px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
@@ -455,17 +368,29 @@
 .vgperso{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:7px;border-radius:11px;
   background:var(--bg3,#1C1C24);border:1px solid var(--border);cursor:pointer;
   transition:border-color var(--t-mid,.22s),background var(--t-mid,.22s),transform var(--t-mid,.22s)}
-.vgperso:hover{border-color:color-mix(in srgb,var(--orange,#FF8C1A) 45%,var(--border));transform:translateY(-1px)}
-.vgperso.on{border-color:var(--orange,#FF8C1A);background:rgba(255,140,26,.10)}
+.vgperso:hover{border-color:color-mix(in srgb,var(--gn-accent) 45%,var(--border));transform:translateY(-1px)}
+.vgperso.on{border-color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.10)}
 .vgperso .ill{width:46px;height:62px;flex:none;border-radius:9px;overflow:hidden;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 26%,rgba(255,140,26,.15),rgba(10,10,12,.9) 72%);border:1px solid rgba(255,140,26,.26)}
+  background:radial-gradient(circle at 50% 26%,rgba(var(--gn-lueur-rgb),.15),rgba(10,10,12,.9) 72%);border:1px solid rgba(var(--gn-or-rgb),.26)}
 .vgperso .ill img{width:100%;height:100%;object-fit:contain;object-position:bottom center}
 .vgperso .txt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
 .vgperso .nom{font-family:Rubik;font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.vgperso .ici{font-size:11px;font-weight:700;color:var(--orange,#FF8C1A);border:1px solid var(--orange,#FF8C1A);
+.vgperso .ici{font-size:11px;font-weight:700;color:var(--gn-accent);border:1px solid var(--gn-accent);
   border-radius:6px;padding:0 6px;text-transform:uppercase;letter-spacing:.4px}
 .vgperso .sous{font-size:11.5px;color:var(--mut)}
 .vgperso .past{display:flex;gap:5px;flex-wrap:wrap;margin-top:1px}
+/* « principal » : la pastille « ouvert » (.ici) telle quelle, l'etoile devant. Elle
+   passe en flex pour que l'etoile tienne sur la ligne du mot. */
+.vgperso .ici.prin{display:inline-flex;align-items:center;gap:3px}
+.vgperso .ici.prin i,.vgperso .ici.prin svg{width:10px;height:10px}
+/* Les gestes d'une ligne : l'etoile (Rendre principal) a cote de la corbeille, deux
+   .pill de la meme forme, 6 px d'ecart comme les pastilles de stuff. */
+.vgperso .act{display:flex;gap:6px;flex:none}
+/* Le pied de la fenetre : l'icone d'une .pill (un <svg class="vgi"> en display:block)
+   passait AU-DESSUS de son texte — « Nouveau personnage » et « Voir sur le site »
+   s'ecrivaient sur deux lignes. La pastille passe en ligne, l'icone a cote du mot. */
+.vgpersos-foot .pill,.vgshare-foot .pill{display:inline-flex;align-items:center;gap:5px}
+.vgpersos-foot .pill svg,.vgshare-foot .pill svg{margin:0;flex:none}
 @media (prefers-reduced-motion:reduce){.vgperso:hover{transform:none}}
 @media (max-width:560px){.vgperso .ill{width:38px;height:52px}}
 .cardleg{border:1px solid var(--border);border-radius:8px;padding:6px 9px;margin:2px 0 7px;font-size:11.5px;line-height:1.65;background:#ffffff08}
@@ -486,31 +411,33 @@
 .buildhead-main .setup{margin-top:0}
 
 /* Encadré de partage (façon DofusBook) */
-.sharebox{flex:0 0 316px;background:linear-gradient(180deg,rgba(28,22,15,.95),rgba(15,13,11,.96));
-  border:1px solid #3a2c16;border-radius:14px;padding:13px 15px 14px;
+.sharebox{flex:0 0 316px;background:linear-gradient(180deg,var(--gn-teinte-or),var(--gn-noir-2));
+  border:1px solid rgba(var(--gn-or-rgb),.28);border-radius:14px;padding:13px 15px 14px;
   box-shadow:inset 0 1px 0 rgba(255,210,74,.1),0 10px 30px rgba(0,0,0,.45)}
 .sharebox:empty{display:none}
 .sharebox h4{display:flex;align-items:center;gap:8px;margin:0 0 3px;font-family:Rubik;font-weight:700;
   font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold)}
 .sharebox .shmini{font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:11px}
 .sharebox .shrow{display:flex;gap:7px;align-items:center}
-.sharebox .shlink{flex:1;min-width:0;background:#0d0d11;border:1px solid var(--border);border-radius:8px;
+/* La fenêtre « Partager mon build » (.vgshare) reprend le champ et le bouton de
+   l'encadré : ils n'y étaient pas stylés, et le lien s'affichait en champ brut. */
+.sharebox .shlink,.vgshare .shlink{flex:1;min-width:0;background:#0d0d11;border:1px solid var(--border);border-radius:8px;
   color:var(--text);padding:8px 10px;font-size:11.5px;font-family:monospace;text-overflow:ellipsis}
-.sharebox .shlink:focus{outline:2px solid var(--orange);outline-offset:1px;border-color:var(--orange)}
-.sharebox .shbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;
+.sharebox .shlink:focus,.vgshare .shlink:focus{outline:2px solid var(--gn-accent);outline-offset:1px;border-color:var(--gn-accent)}
+.sharebox .shbtn,.vgshare .shbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;
   background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);
   padding:8px 11px;font-size:11.5px;font-weight:600;cursor:pointer;transition:border-color .16s,color .16s,background .16s}
-.sharebox .shbtn:hover{border-color:var(--orange);color:var(--orange)}
-.sharebox .shbtn:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
-.sharebox .shbtn.on{background:linear-gradient(180deg,#FFC061,#FF8C1A);border-color:transparent;color:#2a1400}
+.sharebox .shbtn:hover,.vgshare .shbtn:hover{border-color:var(--gn-accent);color:var(--gn-accent)}
+.sharebox .shbtn:focus-visible,.vgshare .shbtn:focus-visible{outline:2px solid var(--gn-accent);outline-offset:2px}
+.sharebox .shbtn.on{background:var(--gn-action);border-color:transparent;color:var(--gn-sur-action)}
 /* Bascule public / privé : deux segments, l'actif est mis en avant. */
 .sharebox .shseg{display:flex;margin:0 0 11px;border:1px solid var(--border);border-radius:9px;overflow:hidden}
 .sharebox .shseg button{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;
   background:rgba(0,0,0,.28);border:0;color:var(--mut);padding:8px 6px;font-size:11.5px;font-weight:600;
   cursor:pointer;transition:background .16s,color .16s}
 .sharebox .shseg button:hover{color:var(--text)}
-.sharebox .shseg button:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
-.sharebox .shseg button.on{background:linear-gradient(180deg,#2a2013,#1d160c);color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,210,74,.32)}
+.sharebox .shseg button:focus-visible{outline:2px solid var(--gn-accent);outline-offset:-2px}
+.sharebox .shseg button.on{background:linear-gradient(180deg,var(--gn-teinte-or),var(--gn-noir-2));color:var(--gold);box-shadow:inset 0 0 0 1px rgba(255,210,74,.32)}
 .sharebox .shstate{display:flex;align-items:center;gap:7px;font-size:12px;margin-top:10px;color:var(--mut)}
 .sharebox .shstate.pub{color:var(--green)}
 @media(max-width:1000px){
@@ -527,9 +454,9 @@
 .legend.vg-scrollhint{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;
   background:none;border:0;font:inherit;font-size:12px;color:var(--mut);cursor:pointer;
   user-select:none;padding:6px 0;transition:color .16s}
-.legend.vg-scrollhint b{color:var(--orange)}
+.legend.vg-scrollhint b{color:var(--gn-accent)}
 .legend.vg-scrollhint:hover{color:var(--text)}
-.legend.vg-scrollhint:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:8px}
+.legend.vg-scrollhint:focus-visible{outline:2px solid var(--gn-accent);outline-offset:3px;border-radius:8px}
 
 /* Les boutons d'action portent désormais une icône : aligner icône + libellé. */
 .actions .btn{display:inline-flex;align-items:center;gap:8px}
@@ -567,8 +494,7 @@
 .wp .upcost .upl.prot{color:var(--mut);margin-left:auto}
 
 /* CE QUI N'EST PAS COMPTÉ, dit à l'endroit du geste et non seulement dans la
-   liste repliée du résumé. Même dessin que .stabs — c'est la même famille de
-   renseignement, il ne faut pas deux vocabulaires visuels pour un seul fait. */
+   liste repliée du résumé — retiré le 2026-10-20 ; ce rappel au geste reste. */
 .wp .mini.upnc{display:flex;align-items:flex-start;gap:6px;margin-top:7px;padding:6px 8px;
   border-radius:8px;line-height:1.5;background:rgba(248,113,113,.05);
   border:1px dashed rgba(248,113,113,.26);color:var(--mut)}
@@ -608,10 +534,10 @@
    entre les deux. La règle est donc décrochée de `.palbloc` pour que les deux
    plateaux se lisent de la même façon, au lieu d'inventer une seconde forme pour
    le même fait. Personne d'autre ne porte `.palerr`. */
-.wp .mini.palerr{color:var(--text);background:rgba(255,140,26,.08);
-  border:1px solid rgba(255,140,26,.28);border-radius:7px;padding:5px 7px}
-.wp .mini.palerr>i:first-child{color:var(--orange);margin-right:4px}
-.wp .mini.palerr b{color:var(--orange)}
+.wp .mini.palerr{color:var(--text);background:rgba(var(--gn-lueur-rgb),.08);
+  border:1px solid rgba(var(--gn-or-rgb),.28);border-radius:7px;padding:5px 7px}
+.wp .mini.palerr>i:first-child{color:var(--gn-accent);margin-right:4px}
+.wp .mini.palerr b{color:var(--gn-accent)}
 
 /* LA LIGNE NÉGATIVE D'UNE PANOPLIE. Elle se lit sous le bandeau du résumé ET
    dans la fenêtre de choix, juste au-dessus du bouton qui pose l'ensemble. */
@@ -723,8 +649,13 @@
    Le titre « Maîtrise de l'arme » l'a révélé en perdant le `<span>` qui portait
    son « (0 à 100) » — l'en-tête de la fée avait le même défaut depuis toujours.
    On neutralise là où un en-tête est toujours « icône + titre », plutôt que de
-   remettre un élément vide à côté de chaque icône. */
-.wp .gh>[class^="vgi-"],.pent [class^="vgi-"]{margin-left:0;margin-right:0;
+   remettre un élément vide à côté de chaque icône.
+   Une case cochée (.mes-c — les mesures du stuff, et « Visible dans Information
+   Guilde » de la fenêtre Partager) avait le même défaut : la coche passait AU-DESSUS
+   du mot, et la case doublait de hauteur (40 px au lieu de 28, mesuré). Deux classes
+   devant l'icône : la règle fautive (icons/vg-icons.css) est chargée APRÈS cette
+   feuille, et à poids égal c'est elle qui gagnait. */
+.wp .gh>[class^="vgi-"],.pent [class^="vgi-"],.mes-cases .mes-c>[class^="vgi-"]{margin-left:0;margin-right:0;
   display:inline-block;vertical-align:-.14em}
 
 /* ══════════════════════════════════════════════════════════════════════════════

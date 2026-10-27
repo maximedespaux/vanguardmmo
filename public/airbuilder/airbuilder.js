@@ -57,7 +57,7 @@ const FASHION=['fhead','ftop','fhand','ffoot'];
  *
  * Meme mecanique pour le COSTUME, avec sa propre signature : `set` + `sex`, et
  * la un fait s'y ajoute — aucune des pieces ne paie seule, c'est le set qui
- * paie, et il ne paie qu'aux quatre pieces portees (cf. /builder/mecaniques).
+ * paie, et il ne paie qu'aux quatre pieces portees (cf. /mecaniques).
  * D'ou le bonus de set compte dans le resume UNIQUEMENT a 4/4.
  * Cote serveur, `src/lib/panoplie.ts` fait le meme travail sur la CLE du
  * client (II_ARM_M_MER_BOOTS_SET_01 et ses trois soeurs) : deux relevés, deux
@@ -260,7 +260,7 @@ function pool(s){if(s==='weapon2')return 'weapon';if(SLOTS[s]&&SLOTS[s].pool)ret
 function newStuff(n){return {name:n||'Stuff',eq:{}};}
 function newChar(n){return {name:n||'Perso '+(state.chars.length+1),cls:'Arcaniste',sex:'G',lvl:200,prestige:3,carnets:[],carnetsFull:[],stuffs:[newStuff('DPS'),newStuff('Tank'),newStuff('Hybride')],curStuff:0};}
 const state={chars:[],cur:0};
-(function(){try{const s=(window.__VIEW_BLOB&&window.__VIEW_BLOB.chars&&window.__VIEW_BLOB.chars.length)?window.__VIEW_BLOB:JSON.parse(localStorage.getItem('vg_air_e1')||'null');if(s&&s.chars&&s.chars.length)Object.assign(state,s);}catch(e){}try{var _seed=JSON.parse(localStorage.getItem('vg_air_seed')||'null');if(_seed&&_seed.length){localStorage.removeItem('vg_air_seed');var _norm=function(x){return (x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');};var _mcls=function(x){var n=_norm(x);for(var i=0;i<CLASSES.length;i++){if(_norm(CLASSES[i])===n)return CLASSES[i];}return 'Arcaniste';};state.chars=_seed.slice(0,20).map(function(sc){var nc=newChar(sc&&sc.name);nc.name=(sc&&sc.name)||nc.name;nc.cls=_mcls(sc&&sc.cls);if(sc&&sc.prestige!=null)nc.prestige=+sc.prestige;return nc;});state.cur=0;}}catch(e){}if(!state.chars||!state.chars.length)state.chars=[newChar('Daiisuke')];state.chars.forEach(function(c){if(!c||typeof c!=='object')return;if(!c.cls||CLASSES.indexOf(c.cls)<0)c.cls='Arcaniste';if(c.sex!=='F')c.sex='G';if(!c.name)c.name='Perso';if(c.lvl==null)c.lvl=200;if(c.prestige==null)c.prestige=1;});state.chars=state.chars.filter(function(c){return c&&typeof c==='object';});if(!state.chars.length)state.chars=[newChar('Daiisuke')];if(!(state.cur>=0&&state.cur<state.chars.length))state.cur=0;})();
+(function(){try{const s=(window.__VIEW_BLOB&&window.__VIEW_BLOB.chars&&window.__VIEW_BLOB.chars.length)?window.__VIEW_BLOB:JSON.parse(localStorage.getItem('vg_air_e1')||'null');if(s&&s.chars&&s.chars.length)Object.assign(state,s);}catch(e){}try{var _seed=JSON.parse(localStorage.getItem('vg_air_seed')||'null');if(_seed&&_seed.length){localStorage.removeItem('vg_air_seed');var _norm=function(x){return (x||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');};var _mcls=function(x){var n=_norm(x);for(var i=0;i<CLASSES.length;i++){if(_norm(CLASSES[i])===n)return CLASSES[i];}return 'Arcaniste';};state.chars=_seed.slice(0,20).map(function(sc){var nc=newChar(sc&&sc.name);nc.name=(sc&&sc.name)||nc.name;nc.cls=_mcls(sc&&sc.cls);if(sc&&sc.prestige!=null)nc.prestige=+sc.prestige;return nc;});state.cur=0;}}catch(e){}if(!state.chars||!state.chars.length)state.chars=[newChar('Perso 1')];state.chars.forEach(function(c){if(!c||typeof c!=='object')return;if(!c.cls||CLASSES.indexOf(c.cls)<0)c.cls='Arcaniste';if(c.sex!=='F')c.sex='G';if(!c.name)c.name='Perso';if(c.lvl==null)c.lvl=200;if(c.prestige==null)c.prestige=1;});state.chars=state.chars.filter(function(c){return c&&typeof c==='object';});if(!state.chars.length)state.chars=[newChar('Perso 1')];if(!(state.cur>=0&&state.cur<state.chars.length))state.cur=0;})();
 const C=()=>{if(!(state.cur>=0&&state.cur<state.chars.length))state.cur=0;return state.chars[state.cur];};
 function ST(){const c=C();
   if(!c.stuffs){c.carnets=c.carnets||[];c.carnetsFull=c.carnetsFull||[];c.stuffs=[{name:'DPS',eq:c.eq||{}},newStuff('Tank'),newStuff('Hybride')];c.curStuff=0;delete c.eq;}
@@ -283,12 +283,50 @@ function vgAnon(){return !!window.__ANON;}
    pour composer ». */
 if (typeof window !== 'undefined' && window.__ANON) window.__VIEW = true;
 function vgConnexion(quoi){
-  agConfirm('Pour '+quoi+', il faut avoir rejoint le Discord de Vanguard et t\'y être connecté.\n\nTon build reste dans ce navigateur en attendant : tu le retrouveras en revenant.\n\nConfirmer pour aller à la connexion.',
+  agConfirm('Pour '+quoi+', il faut avoir rejoint le Discord de GENESIS et t\'y être connecté.\n\nTon build reste dans ce navigateur en attendant : tu le retrouveras en revenant.\n\nConfirmer pour aller à la connexion.',
     function(){location.href='/login';});
 }
-function vgPushCloud(){if(window.__embed||window.__VIEW||vgAnon())return;if(_vgPushT)clearTimeout(_vgPushT);_vgPushT=setTimeout(function(){try{var snap=(Date.now()-(window.__lastSnap||0)>600000);if(snap)window.__lastSnap=Date.now();fetch('/api/builder-state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({blob:state,snapshot:snap})}).catch(function(){});try{fetch('/api/characters/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chars:vgCollectBuilds()})}).catch(function(){});}catch(e2){}}catch(e){}},1500);}
+/* UN ETAT VIERGE NE PART PAS AU COMPTE (2026-10-21). Le moteur demarre sur un perso
+   d'exemple sans aucune piece, et le premier rendu enregistre : la synchro effacait
+   alors les persos du compte pour publier l'exemple a leur place — c'est ainsi que des
+   comptes se retrouvaient avec un « Daiisuke » qu'ils n'avaient jamais cree, et que
+   « Mes personnages » perdait ses persos. Rien a publier tant que rien n'est fait :
+   `vgPremierPerso` reprend entre-temps les persos du compte, s'il en a. */
+function vgPushCloud(){if(window.__embed||window.__VIEW||vgAnon())return;if(_vgPushT)clearTimeout(_vgPushT);_vgPushT=setTimeout(function(){vgPublierMaintenant(false);},1500);}
+/* PUBLIER TOUT DE SUITE CE QUI ATTEND (2026-10-21). La publication attend 1,5 s qu'on
+   ait fini de cliquer ; mais quitter le builder dans ce delai la PERDAIT : une page
+   qui se recharge (« Voir sur le site », une adresse tapee, le build d'un autre
+   membre) tue le minuteur, et « Mes personnages » montrait l'etat d'avant — un perso
+   rendu principal ou supprime a l'instant n'y etait pas, jusqu'a la prochaine
+   ouverture du builder. En navigation interne, la page d'arrivee lisait
+   /api/characters avant meme que la synchro ne parte.
+   `depart` : la page se ferme. `keepalive` laisse alors la requete partir apres elle,
+   dans une limite de 64 Ko pour toutes a la fois : la synchro, que lit le site, passe
+   la premiere ; l'etat complet, s'il ne tient pas, reste dans ce navigateur, plus
+   recent que celui du compte, et repart a la prochaine ouverture.
+   La promesse reste sur `window.__vgPublication` : « Mes personnages » (la page et le
+   bloc de l'accueil) l'attend avant de lire (src/lib/mesPersos.ts, `apresPublication`). */
+function vgPublierMaintenant(depart){
+  if(!_vgPushT)return window.__vgPublication||Promise.resolve();
+  clearTimeout(_vgPushT);_vgPushT=null;
+  /* Revu au depart, pas seulement a la programmation : entre-temps, le moteur a pu
+     passer en lecture (le build d'un autre membre). */
+  if(window.__embed||window.__VIEW||vgAnon()||vgEtatVierge())return Promise.resolve();
+  try{
+    var snap=(Date.now()-(window.__lastSnap||0)>600000);if(snap)window.__lastSnap=Date.now();
+    var corpsSync=JSON.stringify({chars:vgCollectBuilds()}),corpsEtat=JSON.stringify({blob:state,snapshot:snap});
+    var octets=function(s){try{return new Blob([s]).size;}catch(e){return s.length*3;}};
+    var tSync=octets(corpsSync),tEtat=octets(corpsEtat);
+    var envoi=function(url,corps,ka){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:corps,keepalive:ka}).catch(function(){});};
+    var p=Promise.all([
+      envoi('/api/characters/sync',corpsSync,!!depart&&tSync<60000),
+      envoi('/api/builder-state',corpsEtat,!!depart&&tSync+tEtat<60000)]);
+    window.__vgPublication=p;return p;
+  }catch(e){return Promise.resolve();}
+}
+window.vgPublierMaintenant=vgPublierMaintenant;
 // ── Dropdown maison : remplace les <select> natifs moches par une liste stylée ──
-function vgDD(){if(!document.getElementById('vgdd-css')){var _st=document.createElement('style');_st.id='vgdd-css';_st.textContent='.vgdd{position:relative;display:inline-block;vertical-align:bottom}.vgdd-b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--bg3,#1e1e27);border:1px solid var(--border,#2c2c36);border-radius:8px;color:var(--text,#e8e8ee);padding:7px 11px;font:600 13px Rajdhani,sans-serif;cursor:pointer;transition:border-color .14s,box-shadow .14s}.vgdd-b:hover{border-color:#FF8C1A88}.vgdd.open .vgdd-b{border-color:#FF8C1A;box-shadow:0 0 0 3px rgba(255,140,26,.16)}.vgdd-b i{color:#FF8C1A;font-style:normal;font-size:11px;transition:transform .16s}.vgdd.open .vgdd-b i{transform:rotate(180deg)}.vgdd-l{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;z-index:99999;background:var(--bg2,#16161d);border:1px solid var(--border,#2c2c36);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);padding:5px;max-height:260px;overflow-y:auto}.vgdd.open .vgdd-l{display:block;animation:vgddin .14s ease}.vgdd-o{padding:7px 12px;border-radius:7px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text,#e8e8ee);transition:background .12s}.vgdd-o:hover{background:rgba(255,255,255,.07)}.vgdd-o.on{background:rgba(255,140,26,.14);color:#FF8C1A;font-weight:700}@keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}';document.head.appendChild(_st);}document.querySelectorAll('.abx select:not([data-dd])').forEach(function(sel){sel.setAttribute('data-dd','1');var wrap=document.createElement('span');wrap.className='vgdd';sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);sel.style.display='none';var btn=document.createElement('button');btn.type='button';btn.className='vgdd-b';wrap.appendChild(btn);var list=document.createElement('div');list.className='vgdd-l';wrap.appendChild(list);function sync(){btn.innerHTML='';var o=sel.options[sel.selectedIndex];var t=document.createElement('span');t.textContent=(o&&o.textContent)||'';var a=document.createElement('i');a.className='vgi-chevron-down';a.style.width='13px';a.style.height='13px';btn.appendChild(t);btn.appendChild(a);}function close(){wrap.classList.remove('open');list.style.cssText='';document.removeEventListener('mousedown',onOut);window.removeEventListener('scroll',place,true);window.removeEventListener('resize',place);}function onOut(e){if(!wrap.contains(e.target))close();}function place(){var r=btn.getBoundingClientRect();list.style.position='fixed';list.style.left=r.left+'px';list.style.minWidth=r.width+'px';var below=window.innerHeight-r.bottom,lh=Math.min(list.scrollHeight,260);if(below<lh+14&&r.top>below){list.style.top=(r.top-lh-4)+'px';}else{list.style.top=(r.bottom+4)+'px';}}function openList(){list.innerHTML='';Array.prototype.forEach.call(sel.options,function(o){var d=document.createElement('div');d.className='vgdd-o'+(o.selected?' on':'');d.textContent=o.textContent;d.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();sel.value=o.value;sync();sel.dispatchEvent(new Event('change',{bubbles:true}));close();});list.appendChild(d);});wrap.classList.add('open');place();setTimeout(function(){document.addEventListener('mousedown',onOut);window.addEventListener('scroll',place,true);window.addEventListener('resize',place);},0);}btn.addEventListener('click',function(e){e.stopPropagation();wrap.classList.contains('open')?close():openList();});sync();});}
+function vgDD(){if(!document.getElementById('vgdd-css')){var _st=document.createElement('style');_st.id='vgdd-css';_st.textContent='.vgdd{position:relative;display:inline-block;vertical-align:bottom}.vgdd-b{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:var(--bg3,#1e1e27);border:1px solid var(--border,#2c2c36);border-radius:8px;color:var(--text,#e8e8ee);padding:7px 11px;font:600 13px Rajdhani,sans-serif;cursor:pointer;transition:border-color .14s,box-shadow .14s}.vgdd-b:hover{border-color:rgba(var(--gn-or-rgb),.53)}.vgdd.open .vgdd-b{border-color:var(--gn-accent);box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.16)}.vgdd-b i{color:var(--gn-accent);font-style:normal;font-size:11px;transition:transform .16s}.vgdd.open .vgdd-b i{transform:rotate(180deg)}.vgdd-l{display:none;position:absolute;top:calc(100% + 5px);left:0;min-width:100%;z-index:99999;background:var(--bg2,#16161d);border:1px solid var(--border,#2c2c36);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.6);padding:5px;max-height:260px;overflow-y:auto}.vgdd.open .vgdd-l{display:block;animation:vgddin .14s ease}.vgdd-o{padding:7px 12px;border-radius:7px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--text,#e8e8ee);transition:background .12s}.vgdd-o:hover{background:rgba(255,255,255,.07)}.vgdd-o.on{background:rgba(var(--gn-lueur-rgb),.14);color:var(--gn-accent);font-weight:700}@keyframes vgddin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}';document.head.appendChild(_st);}document.querySelectorAll('.abx select:not([data-dd])').forEach(function(sel){sel.setAttribute('data-dd','1');var wrap=document.createElement('span');wrap.className='vgdd';sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);sel.style.display='none';var btn=document.createElement('button');btn.type='button';btn.className='vgdd-b';wrap.appendChild(btn);var list=document.createElement('div');list.className='vgdd-l';wrap.appendChild(list);function sync(){btn.innerHTML='';var o=sel.options[sel.selectedIndex];var t=document.createElement('span');t.textContent=(o&&o.textContent)||'';var a=document.createElement('i');a.className='vgi-chevron-down';a.style.width='13px';a.style.height='13px';btn.appendChild(t);btn.appendChild(a);}function close(){wrap.classList.remove('open');list.style.cssText='';document.removeEventListener('mousedown',onOut);window.removeEventListener('scroll',place,true);window.removeEventListener('resize',place);}function onOut(e){if(!wrap.contains(e.target))close();}function place(){var r=btn.getBoundingClientRect();list.style.position='fixed';list.style.left=r.left+'px';list.style.minWidth=r.width+'px';var below=window.innerHeight-r.bottom,lh=Math.min(list.scrollHeight,260);if(below<lh+14&&r.top>below){list.style.top=(r.top-lh-4)+'px';}else{list.style.top=(r.bottom+4)+'px';}}function openList(){list.innerHTML='';Array.prototype.forEach.call(sel.options,function(o){var d=document.createElement('div');d.className='vgdd-o'+(o.selected?' on':'');d.textContent=o.textContent;d.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();sel.value=o.value;sync();sel.dispatchEvent(new Event('change',{bubbles:true}));close();});list.appendChild(d);});wrap.classList.add('open');place();setTimeout(function(){document.addEventListener('mousedown',onOut);window.addEventListener('scroll',place,true);window.addEventListener('resize',place);},0);}btn.addEventListener('click',function(e){e.stopPropagation();wrap.classList.contains('open')?close():openList();});sync();});}
 function listFor(slot){const c=C();const ck=CKEY[c.cls];
   if(['fhead','ftop','fhand','ffoot'].includes(slot)){return (ITEMS.fashion||[]).filter(it=>it.piece===slot&&(!it.sex||it.sex===c.sex));}
   if(slot==='mantra')return ITEMS.mantra||[];
@@ -355,10 +393,9 @@ function render(){
   const _ci=CHARIMG[c.cls+'|'+c.sex]||CHARIMG[c.cls+'|G']||'';const _im=document.getElementById('charimg');if(_im){_im.src=_ci;_im.style.display=_ci?'block':'none';}
   document.getElementById('cn').textContent=c.name;document.getElementById('cc').textContent=`${clsFr(c.cls)} · Niv ${c.lvl} · P${c.prestige}`;
   renderFamNote();renderCarnets();
-  /* Le resume se recalcule a CHAQUE rendu, donc a chaque piece posee. Il ne
-     l'etait jamais : `renderStats()` n'avait aucun appelant et le panneau du
-     gabarit restait vide depuis le premier jour. */
-  renderStats();
+  /* Sous le pantin : les MESURES du stuff, obligatoires. Elles remplacent le
+     resume du build, retire a la demande de Maxime. */
+  renderMesures();mesPastilles();
   }catch(err){console.error('[AirBuilder] rendu partiel ignoré (donnée corrompue)',err);}
   save();vgDD();
 }
@@ -453,7 +490,7 @@ function renderCarnets(){const c=C();ST();
         « Clefs de la reussite » — N'ONT QUE ça : ils s'affichaient donc comme ne
         donnant rien, alors que c'est tout leur interet. Ces lignes sont l'EFFET
         du carnet equipe, pas un butin qu'on ramasse : voir la distinction ecrite
-        au-dessus de `statCat`. */
+        dans le bloc « CE QU'ON RAMASSE ≠ CE QUE L'EQUIPEMENT DONNE ». */
      const bonus=(full?cn.complet:cn.base);
      return `<div class="carn ${on?'on':''}" style="border-left:3px solid ${cn.col};box-shadow:inset 14px 0 22px -16px ${cn.col}">
          <div class="cn" onclick="toggleCarnet(${i})">${etuiHtml(cn.etui_couleur,cn.col)}${esc(cn.nom)}</div>
@@ -463,14 +500,13 @@ function renderCarnets(){const c=C();ST();
          ${on&&cn.tier>1?`<div class="seg"><div class="sg ${!full?'on':''}" onclick="setMode(${i},false)"><i class=vgi-star></i> Base</div><div class="sg ${full?'on':''}" onclick="setMode(${i},true)"><i class=vgi-star></i> Complet</div></div>`:''}
          ${bonus.length?`<div class="cb">${bonus.map(b=>esc(b[0])+' +'+b[1]).join(' · ')}</div>`:''}</div>`;}).join('')}</div>`;}
 /**
- * LE RESUME DU BUILD — ce qui s'additionne vraiment.
+ * LE TOTAL DU BUILD — ce qui s'additionne vraiment.
  *
- * Cette fonction appelait `weaponTotals()`, QUI N'A JAMAIS EXISTE dans le
- * moteur : le premier stuff avec une arme la faisait lever une
- * ReferenceError. Personne ne s'en apercevait parce que `renderStats()`, son
- * seul appelant, n'etait jamais appele non plus — le panneau `#stats` du
- * gabarit restait vide en permanence. Les deux sont reparees ensemble :
- * `render()` appelle le resume, et le perçage remplace l'appel fantome.
+ * Il ne s'affiche plus : le resume du build a ete retire le 2026-10-20 (Maxime :
+ * « inutile »), remplace par les MESURES du stuff. Mais il part toujours vers
+ * /api/characters/sync (GuildViewer, Compositions, Dashboard), d'ou le soin
+ * qui suit. Cette fonction appelait `weaponTotals()`, QUI N'A JAMAIS EXISTE
+ * dans le moteur : le perçage a remplace l'appel fantome.
  *
  * CE QUI EST COMPTE, et rien d'autre :
  *   · les bonus propres de chaque piece (`b` du releve) ;
@@ -504,11 +540,11 @@ function paliersBijoux(){
        Mesure : Boucles d'Oreille Harpe +30 seules, 1500 au premier appel contre
        2500 apres. Sans ce rappel, c'est l'amputation qui restait en base jusqu'a
        la prochaine modification du build. */
-    .then(function(d){_pal=d||{bijoux:{}};try{renderStats();}catch(x){}
+    .then(function(d){_pal=d||{bijoux:{}};
       try{if(typeof vgPushCloud==='function')vgPushCloud();}catch(x2){}
       /* LE PANNEAU DU BIJOU AUSSI. Il lit maintenant ce releve pour trois choses
          que rien d'autre ne donne — le plafond de CET objet, ce que le palier
-         atteint rapporte, et les plateaux. `renderStats()` ne touche pas la
+         atteint rapporte, et les plateaux. Rien d'autre ne redessine la
          fenetre de choix : sans ce rappel, le panneau ouvert au moment de la
          requete restait sur le plafond par defaut. Limite aux emplacements de
          bijou pour ne pas redessiner sous les doigts d'une recherche en cours
@@ -952,7 +988,7 @@ function espritPlateau(esp,niv){
    perdaient leur « Exp », et le cinquieme, « Drop +1 / Penyas 35% », se vidait
    ENTIEREMENT. Le seul esprit qu'on monte pour farmer s'affichait comme montant
    vers rien. C'est precisement le geste qu'une omission ne doit pas provoquer.
-   Voir la distinction ecrite au long au-dessus de `statCat`.
+   Voir la distinction ecrite au long dans le bloc « CE QU'ON RAMASSE ≠ CE QUE L'EQUIPEMENT DONNE ».
 
    IL RESTE UN TRAITEMENT, ET IL NE RETIRE RIEN : on normalise les espaces autour
    du separateur du client, pour que « Exp +25%/PvE +1% » et « Exp +25% / PvE
@@ -1131,6 +1167,7 @@ function totals(){
   var d=totalsDetail().acc,out={};
   for(var k in d){var t=0;d[k].forEach(function(a){t+=a.v;});if(t)out[k]=t;}
   return out;}
+
 /* ═══ CE QU'ON RAMASSE ≠ CE QUE L'EQUIPEMENT DONNE ═══════════════════════════
    DEUX CHOSES PORTENT LES MEMES MOTS — « butin », « experience », « penyas » —
    et une seule est interdite d'ecran. Ce fichier a longtemps confondu les deux.
@@ -1158,7 +1195,7 @@ function totals(){
    de la reussite » — N'ONT QUE ces lignes : ils s'affichaient comme ne donnant
    rien du tout. Meme cause en prose sur l'esprit de la fee : voir `espritTexte`.
 
-   IL N'Y A DONC PLUS DE FILTRE ICI, et ce n'est pas un oubli. Le builder ne
+   IL N'Y A DONC AUCUN FILTRE DANS CE FICHIER, et ce n'est pas un oubli. Le builder ne
    connait AUCUNE table de butin, AUCUNE penya gagnee en tuant, AUCUNE experience
    de monstre : tout ce qu'il affiche est un bonus d'equipement. Il n'y a rien a
    retirer. Si une donnee de butin entre un jour dans ce fichier, elle se filtre
@@ -1167,29 +1204,8 @@ function totals(){
    UN COUT en penyas n'a jamais ete concerne : la regle vise les recompenses, pas
    les prix d'operation.
 
-   RIEN N'A CHANGE DANS LE CALCUL. `totals()` et `totalsDetail()` n'ont JAMAIS
-   filtre — le filtre etait a l'affichage seul, pour ne pas amputer ce qui part
-   vers /api/characters/sync. Le total du build est donc le meme qu'avant ; ces
-   lignes cessent simplement d'etre cachees a celui qui le lit. */
-// Catégorie d'une stat pour le résumé groupé.
-function statCat(k){var s=(k||'').toLowerCase();
-  if(s.indexOf("vitesse d'attaque")>=0)return 'off';
-  if(/force|dext|intel|attaque|critiq|magiq|préci|preci|dmg|dégât|degat|toutes stats|jcj|pvp|pve|boss|monstre/.test(s))return 'off';
-  if(/endurance|défense|defense|block/.test(s))return 'def';
-  if(/pv max|mp max|mp_max/.test(s))return 'vit';
-  return 'uti';}
-/**
- * LES QUATRE DES DE STATISTIQUE DU JEU.
- *
- * Ce sont les tuiles que le client dessine dans la fenetre de personnage, et
- * elles portent DEJA leur libelle en francais : « FOR », « END », « DEX »,
- * « INT ». Le site les emploie deja ailleurs (`DE_STAT` de
- * src/components/objets/vocabulaire.ts) ; les chemins sont recopies ici parce
- * que ce moteur est du JS vanilla qui n'importe rien. Si l'un bouge la-bas, il
- * bouge ici.
- */
-var DEIMG={'Force':'/jeu/interface/statdice_str.webp','Endurance':'/jeu/interface/statdice_sta.webp',
-  'Dextérité':'/jeu/interface/statdice_dex.webp','Intelligence':'/jeu/interface/statdice_int.webp'};
+   `totals()` et `totalsDetail()` ne filtrent rien : leur total part tel quel
+   vers /api/characters/sync (GuildViewer, Compositions, Dashboard). */
 
 /**
  * LES LIGNES DE LA PANOPLIE D'ARMURE, TRIEES PAR CE QU'ELLES FONT.
@@ -1250,147 +1266,146 @@ function panMalus(mode,sigVoulue){
       +L.negAVenir.map(dit).join(' · ')+'. '+invisible('pano-neg-'+L.p.sig,detail)+'</span></div>';
   return '';
 }
-/** Le bandeau d'une panoplie dans le resume : ses pieces en image, et le geste
- *  qui pose ce qui manque. Rien du tout quand il n'y a pas d'ensemble a
- *  proposer — un bandeau vide ferait croire a une panoplie ratee. */
-function panResume(mode){
-  const p=panEtat(mode);if(!p)return '';
-  const col=panCouleur(p);
-  const complete=!p.manquantes.length;
-  const reste=p.aPoser.length+p.aRemplacer.length;
-  const cases=p.pieces.map(function(x){
-    const on=p.porte(x.slot);
-    const occ=!on&&p.occupe(x.slot);
-    return '<span class="pancase'+(on?' on':'')+(occ?' occ':'')+'" title="'+esc(x.item.n)
-      +(occ?' — remplacerait la piece portee':'')+'">'
-      +(x.item.ic&&IC[x.item.ic]?'<img src="'+IC[x.item.ic]+'" alt="">':'<i class=vgi-shirt-armor></i>')+'</span>';
-  }).join('');
-  return '<div class="panres'+(complete?' full':'')+'" style="border-color:'+col+'55">'
-    +'<span class="pt" style="color:'+col+'">'+(mode?'<i class=vgi-shirt></i> Costume ':'<i class=vgi-shirt-armor></i> Panoplie ')+esc(p.nom)+'</span>'
-    +'<span class="pancases mini-cases">'+cases+'</span>'
-    +'<span class="pn">'+p.portees+'/'+p.pieces.length+'</span>'
-    +(complete
-      ? '<span class="pok"><i class=vgi-check></i> complete</span>'
-      /* Meme regle que dans la fenetre de choix : le libelle dit s'il y a
-         remplacement, parce qu'un survol ne se lit pas au doigt. */
-      : (reste?'<span class="pill" onclick="panCompleter('+(mode?'true':'false')+')"><i class=vgi-plus></i> '
-        +(p.aRemplacer.length?'Tout poser ('+reste+', dont '+p.aRemplacer.length+' remplacée'+(p.aRemplacer.length>1?'s':'')+')':'Completer')
-        +'</span>':''))
-    +'</div>'
-    +panMalus(mode);
-}
+/* ═════════════ LES MESURES DU STUFF — obligatoires ═════════════════════════
+   Le resume du build additionnait des bonus d'equipement ; il ne disait pas ce
+   que le stuff FAIT. Maxime l'a retire (« inutile ») et demande a la place ce
+   que le staff compare vraiment pour composer : les degats mesures sur le totem
+   de l'Oasis pour un stuff DPS, les PV pour un stuff Tank ou Off tank — avec les
+   conditions de la mesure, sans lesquelles deux chiffres ne se comparent pas.
 
-/* ═════════════ LA BULLE DE PROVENANCE D'UNE STATISTIQUE ═════════════════════
-   Le panneau ne peut pas derouler les apports de quarante statistiques : un stuff
-   complet donnerait cent lignes a faire defiler, et on ne comparerait plus rien.
-   La ligne montre donc le TOTAL, une BARRE, et le nombre de sources ; le detail
-   arrive au SURVOL, dans la meme bulle que celle des pieces (`_itip`), avec le
-   fichier du client sous chaque apport.
+   Ce qui se mesure depend de la CLASSE et du ROLE (noms du site ; Maxime dit
+   « Elementaliste » pour l'Arcaniste et « Jester » pour la Sylphide) :
+     DPS      · Arcaniste : degats par Bulle + DPS par seconde
+              · Envouteur, Primat : degats par Boulette + DPS par seconde
+              · Spadassin, Templier, Chanoine, Sylphide, Arbaletrier :
+                DPS par seconde, minimum ET maximum
+     Off tank · Primat seul : PV en sceptre
+     Tank     · Primat : PV en poing · Templier : PV en doloire
+                Chanoine : PV en poing
+   Poudres facultatives : Orange (FOR %), Bleue (INT %), Rose (DEX %) en DPS —
+   toutes trois avec degats PvE, cumulables ; Verte (END %) en Tank et Off tank.
+   Buffs Ipuli et World Boss. Et la mesure se prend avec perles, consommables et
+   meubles : on le DECLARE, c'est ce qui rend deux stuffs comparables.
 
-   `_statTip` garde les apports du dernier rendu : les passer en attribut HTML
-   aurait echappe des guillemets dans des phrases entieres, cinquante fois. */
-var _statTip={};
-function statTipShow(ev,cle){
-  var l=_statTip[cle];if(!l||!l.length)return;
-  var el=_itip();
-  var tot=0;l.forEach(function(a){tot+=a.v;});
-  el.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:7px">'+esc(cle)
-    +' <span style="color:'+(tot<0?'var(--red,#f87171)':'var(--gold,#ffd24a)')+'">'+(tot>0?'+':'')+tot.toLocaleString('fr-FR')+'</span></div>'
-    +l.map(function(a){
-      return '<div style="display:flex;gap:9px;justify-content:space-between;align-items:baseline;font-size:12px;padding:3px 0;border-top:1px solid rgba(255,255,255,.07)">'
-        +'<span style="min-width:0">'+esc(a.de)+'<br><span style="font-size:10.5px;color:var(--mut,#9a9aa3);line-height:1.4">'+esc(a.src)+'</span></span>'
-        +'<b style="flex:none;color:'+(a.v<0?'var(--red,#f87171)':'var(--gold,#ffd24a)')+'">'+(a.v>0?'+':'')+a.v.toLocaleString('fr-FR')+'</b></div>';
-    }).join('');
-  el.style.display='block';itipMove(ev);
-}
-
-function renderStats(){var n=document.getElementById('stats');if(!n)return;
-  var D=totalsDetail(),t={},G={off:[],def:[],vit:[],uti:[]};
-  _statTip={};
-  /* LE RESUME MONTRE TOUT CE QUE `totalsDetail()` A COMPTE, sans exception. Un
-     filtre pose ici ecartait « Experience % », « Taux de butin % » et « Penyas
-     gagnes % » de la colonne Utilitaire, alors que `totals()` les comptait
-     — et les envoyait a /api/characters/sync. L'ecran mentait donc sur son
-     propre total. Ce sont des bonus d'equipement : ils s'affichent. */
-  Object.keys(D.acc).forEach(function(k){
-    var v=0;D.acc[k].forEach(function(a){v+=a.v;});
-    if(!v&&!D.acc[k].length)return;
-    t[k]=v;_statTip[k]=D.acc[k].slice().sort(function(a,b){return Math.abs(b.v)-Math.abs(a.v);});
-    G[statCat(k)].push([k,v,D.acc[k].length,D.acc[k].some(function(a){return a.v<0;})]);
-  });
-  ['off','def','vit','uti'].forEach(function(g){G[g].sort(function(a,b){return Math.abs(b[1])-Math.abs(a[1]);});});
-  var META={off:['<i class=vgi-sword-cross></i> Offensif','#F87171'],def:['<i class=vgi-shield></i> Défensif','#4EA8FF'],vit:['<i class=vgi-heart></i> Vitalité','#4ADE80'],uti:['<i class=vgi-sparkles></i> Utilitaire','#FFD24A']};
-  var html='<h3><i class=vgi-bar-chart></i> Résumé du build</h3>',any=false;
-  /* Les panoplies EN TETE du resume : c'est le premier geste qui reste a faire
-     sur un stuff a moitie monte, et un bonus de set qui s'allume seul se
-     comprend en voyant les quatre pieces s'allumer. */
-  var pans=panResume(false)+panResume(true);
-  if(pans)html+='<div class="panwrap">'+pans+'</div>';
-  /* Les quatre statistiques de base, dans les tuiles du jeu. Elles restent
-     affichees a zero : ce sont les quatre lignes que tout joueur cherche, et un
-     cadre qui apparait et disparait se lit moins bien qu'un cadre a zero. */
-  html+='<div class="dice">'+['Force','Endurance','Dextérité','Intelligence'].map(function(s){
-    var v=t[s]||0;
-    return '<span class="die'+(v?'':' nil')+'"'+(v?' onmousemove="statTipShow(event,\''+s+'\')" onmouseleave="itipHide()"':'')
-      +'><img src="'+DEIMG[s]+'" alt="'+s+'" title="'+s+'"><b>'
-      +(v?(v>0?'+':'')+v.toLocaleString('fr-FR'):'—')+'</b></span>';}).join('')+'</div>';
-  /* Les quatre familles COTE A COTE. En une seule colonne, un stuff complet
-     donnait quarante lignes a derouler et on ne comparait plus rien.
-
-     LA BARRE, ET SES DEUX REGLES. Une seule teinte — celle que la colonne
-     emploie deja — et c'est la LONGUEUR qui porte la grandeur : peindre les
-     grandes valeurs en vert et les petites en dore ne se distingue pas pour un
-     daltonien protan (5,8 de deltaE mesure, sous le seuil de perception).
-     Plancher a 1,5 %, sans quoi une valeur minuscule perd sa barre et l'absence
-     de barre se lit comme une donnee manquante. Elle part du MILIEU parce
-     qu'une ligne de panoplie peut RETIRER des points : une barre qui ne saurait
-     aller qu'a droite ferait passer un malus pour un petit bonus. */
-  var cols='';
-  ['off','def','vit','uti'].forEach(function(g){if(!G[g].length)return;any=true;
-    var haut=1;G[g].forEach(function(p){if(Math.abs(p[1])>haut)haut=Math.abs(p[1]);});
-    cols+='<div class="statcol"><div class="sh" style="color:'+META[g][1]+'">'+META[g][0]+'</div>'+
-      G[g].map(function(p){
-        var v=p[1],neg=v<0,part=Math.max(1.5,(Math.abs(v)/haut)*50);
-        return '<div class="l stl" onmousemove="statTipShow(event,\''+p[0].replace(/'/g,"\\'")+'\')" onmouseleave="itipHide()">'
-          +'<span>'+esc(p[0])+(p[3]?' <i class="stneg" title="une pièce en retire">−</i>':'')
-          +(p[2]>1?' <i class="stn">'+p[2]+'</i>':'')+'</span>'
-          +'<b'+(neg?' class="moins"':'')+'>'+(v>0?'+':'')+v.toLocaleString('fr-FR')+'</b>'
-          +'<span class="stbar"><span class="stfill'+(neg?' moins':'')+'" style="'+(neg?'right:50%;width:':'left:50%;width:')+part+'%"></span></span>'
-          +'</div>';}).join('')+'</div>';});
-  if(any)html+='<div class="statgrid">'+cols+'</div>'
-    /* La legende du nombre, pas un aveu d'ignorance : elle dit CE QUI est
-       additionne, pour qu'on ne compare pas deux builds sur un total qui ne
-       couvre pas la meme chose. Le compte des apports se calcule — il change a
-       chaque piece posee, et un nombre recopie serait faux au coup suivant. */
-    +'<div class="mini" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(44,44,54,.6)">'
-    +'Survole une ligne : elle dit d\'où vient chaque point. '
-    +'Additionne les bonus des pièces, les cartes de perçage, les paliers de bijou, '
-    +'la maîtrise d\'arme, le bonus de panoplie au seuil de pièces atteint et les carnets.</div>';
-  /* ═══ CE QUI N'EST PAS COMPTE, ET POURQUOI — dit, pas cache ════════════════
-     Le panneau annonçait un total sans dire ce qu'il laissait dehors. Un total
-     ampute en silence se compare entre deux builds comme s'il etait complet :
-     deux stuffs a +10 et +30 affichaient le meme nombre, et rien ne le disait.
-     La liste est REPLIABLE et FERMEE par defaut — elle peut compter trente
-     lignes sur un stuff maximise — mais son COMPTE est visible, lui, et c'est
-     ce compte qui empeche de prendre le total pour la verite. */
-  if(D.absents.length){
-    html+='<details class="stabs"><summary><i class=vgi-alert></i> '+D.absents.length
-      +' terme'+(D.absents.length>1?'s':'')+' non compté'+(D.absents.length>1?'s':'')
-      +' — la valeur n\'est pas dans le client</summary>'
-      +D.absents.map(function(a){
-        return '<div class="stabs-l"><span>'+esc(a.quoi)+'</span><i>'+esc(a.pourquoi)+'</i></div>';}).join('')
-      +'</details>';
-  }
-  /* L'INVITATION NE S'AFFICHE QUE SI RIEN N'EST EQUIPE.
-     Elle disait « Équipe des pièces pour voir le résumé… » des que le total etait
-     vide — et il l'est TRES souvent avec des pieces aux doigts : AUCUNE des 256
-     armures du releve ne porte de bonus propre, leur valeur est dans l'upgrade,
-     le percage et l'eveil. Un stuff a deux pieces d'armure affichait donc, sous
-     un bandeau de panoplie bien visible, une phrase qui demandait d'equiper des
-     pieces. Sans piece du tout la phrase est juste ; avec des pieces on ne dit
-     rien, la rangee de des a zero suffit. */
-  if(!any&&!D.absents.length&&!Object.keys((ST()||{}).eq||{}).length)
-    html+='<div style="color:var(--mut);font-size:12px">Équipe des pièces pour voir le résumé…</div>';
+   Tout vit dans `stuff.mesures` : la sauvegarde du builder l'emporte telle
+   quelle, et `vgCollectBuilds` l'envoie au GuildViewer et aux Compositions. */
+var MES_ROLES={dps:'DPS',offtank:'Off tank',tank:'Tank'};
+function mesRoles(cls){var r=['dps'];
+  if(cls==='Primat')r.push('offtank');
+  if(cls==='Primat'||cls==='Templier'||cls==='Chanoine')r.push('tank');
+  return r;}
+/* Le role se DEDUIT du nom tant qu'on ne l'a pas choisi : les persos existants
+   portent deja des stuffs « DPS », « Tank », « Hybride ». Un role que la classe
+   n'a pas (un Tank Spadassin) retombe sur DPS au lieu d'exiger des PV qu'aucun
+   joueur de cette classe ne mesure. */
+function mesRole(s,cls){var ok=mesRoles(cls),m=(s&&s.mesures)||{};
+  if(m.role&&ok.indexOf(m.role)>=0)return m.role;
+  var n=((s&&s.name)||'').toLowerCase();
+  if((n.indexOf('off')>=0||n.indexOf('hybrid')>=0)&&ok.indexOf('offtank')>=0)return 'offtank';
+  if(n.indexOf('tank')>=0&&ok.indexOf('tank')>=0)return 'tank';
+  return 'dps';}
+/* Les chiffres que la classe et le role demandent : [cle, libelle, exemple, facultatif].
+   LE PRIMAT, CAS A PART (Maxime, 2026-10-21) : trois Primats tiennent la Chambre.
+   Off Tank : ses PV en sceptre, et ses degats S'IL veut aussi frapper (facultatif).
+   Tank : il fait office d'Off Tank PUIS de Tank — ses PV en poing ET en sceptre. */
+function mesChamps(cls,role){
+  if(cls==='Primat'&&role==='offtank')return [['pv','PV en sceptre','95 000'],['boulette','Dégâts par Boulette','45 000',1],['dps','DPS par seconde','180 000',1]];
+  if(cls==='Primat'&&role==='tank')return [['pv','PV en poing','120 000'],['pvSceptre','PV en sceptre','95 000']];
+  if(role==='dps'){
+    if(cls==='Arcaniste')return [['bulle','Dégâts par Bulle','45 000'],['dps','DPS par seconde','180 000']];
+    if(cls==='Envouteur'||cls==='Primat')return [['boulette','Dégâts par Boulette','45 000'],['dps','DPS par seconde','180 000']];
+    return [['dpsMin','DPS par seconde — minimum','150 000'],['dpsMax','DPS par seconde — maximum','210 000']];}
+  if(role==='offtank')return [['pv','PV en sceptre','95 000']];
+  return [['pv',cls==='Templier'?'PV en doloire':'PV en poing','120 000']];}
+var MES_POUDRES={
+  dps:[['orange','Poudre Orange','FOR % · dégâts PvE'],['bleue','Poudre Bleue','INT % · dégâts PvE'],['rose','Poudre Rose','DEX % · dégâts PvE']],
+  tank:[['verte','Poudre Verte','END %']]};
+MES_POUDRES.offtank=MES_POUDRES.tank;
+var MES_BUFFS=[['ipuli','Ipuli',''],['wb','World Boss','']];
+var MES_COND=[['perles','Perles',''],['conso','Consommables',''],['meubles','Meubles','']];
+/* UN STUFF VIDE N'EXIGE RIEN. Chaque perso nait avec trois stuffs (DPS, Tank,
+   Hybride) : un Arcaniste, qui ne tanke pas, se voyait reclamer des mesures pour
+   deux stuffs qu'il n'a jamais montes. L'obligation commence a la premiere piece. */
+function mesVide(s){return !Object.keys((s&&s.eq)||{}).length;}
+/* Ce qui manque pour que la mesure compte : chaque chiffre exige, et un minimum
+   qui ne depasse pas le maximum. */
+function mesManque(s,cls){if(mesVide(s))return [];var role=mesRole(s,cls),v=(((s&&s.mesures)||{}).v)||{},out=[];
+  mesChamps(cls,role).forEach(function(f){if(!f[3]&&!(+v[f[0]]>0))out.push(f[1]);});
+  if(role==='dps'&&+v.dpsMin>0&&+v.dpsMax>0&&+v.dpsMin>+v.dpsMax)out.push('le minimum dépasse le maximum');
+  return out;}
+/* Ce qui part vers /api/characters/sync : la mesure telle que saisie, le role
+   resolu (meme deduit du nom) et le verdict, pour que le staff n'ait pas a le
+   recalculer. */
+function mesExport(s,cls){var m=(s&&s.mesures)||{};
+  return {role:mesRole(s,cls),v:m.v||{},poudres:m.poudres||{},buffs:m.buffs||{},cond:m.cond||{},
+    maj:m.maj||null,mesureLe:m.mesureLe||null,complet:mesVide(s)?null:!mesManque(s,cls).length};}
+/* LES NOMBRES COMME ON LES TAPE SUR DISCORD : « 9,4M », « 1.2 m », « 850k »,
+   « 9 400 000 ». Repris du bot de recensement des Chambres (lire_nombre) : un
+   joueur recopie ce qu'il lit en jeu, et le jeu ecrit les PV en millions. Sans
+   suffixe, points et virgules sont des separateurs de milliers ; avec un
+   suffixe, la virgule est decimale. 0 ou illisible -> 0 (le champ se vide). */
+function mesLire(t){var x=String(t||'').toLowerCase().replace(/[\s\u00a0\u202f]/g,'');var mult=1;
+  if(/m$/.test(x)){x=x.slice(0,-1);mult=1e6;}else if(/k$/.test(x)){x=x.slice(0,-1);mult=1e3;}
+  x=mult===1?x.replace(/[.,]/g,''):x.replace(',','.');
+  var n=Math.round(parseFloat(x)*mult);return isFinite(n)&&n>0?n:0;}
+/* « 9,4 M », « 850 k » : la forme courte, pour les tableaux (recensement, compo). */
+function mesCourt(n){n=+n||0;if(!n)return '—';
+  if(n>=1e6)return (n/1e6).toFixed(2).replace(/\.?0+$/,'').replace('.',',')+' M';
+  if(n>=1e3)return (n/1e3).toFixed(1).replace(/\.?0+$/,'').replace('.',',')+' k';return String(n);}
+/* UNE MESURE VIEILLIT. Au-dela de 30 jours le stuff a bouge (une piece, un +N, un
+   prestige) : la mesure reste affichee mais marquee « a remesurer ». La date est
+   celle des CHIFFRES (`mesureLe`), pas celle d'une case cochee. */
+var MES_VIEILLE=30*864e5;
+function mesVieille(s){var m=(s&&s.mesures)||{};return !mesVide(s)&&!mesManque(s,C().cls).length&&!!m.mesureLe&&(Date.now()-m.mesureLe>MES_VIEILLE);}
+function mesObj(){var s=ST();if(!s.mesures)s.mesures={};var m=s.mesures;
+  m.v=m.v||{};m.poudres=m.poudres||{};m.buffs=m.buffs||{};m.cond=m.cond||{};return m;}
+function mesSetRole(r){if(_ro())return;var m=mesObj();m.role=r;m.maj=Date.now();render();}
+function mesToggle(grp,k){if(_ro())return;var m=mesObj();m[grp][k]=!m[grp][k];m.maj=Date.now();render();}
+/* Un chiffre saisi NE redessine PAS le panneau : on tabule d'un champ au suivant,
+   et un redessin au `change` arracherait le focus du champ ou l'on arrive. On
+   met donc a jour l'etat, la sauvegarde et les seuls temoins. */
+function mesSetVal(k,el){if(_ro())return;var m=mesObj();
+  var n=mesLire(el.value);
+  if(n>0)m.v[k]=n;else delete m.v[k];
+  el.value=n>0?n.toLocaleString('fr-FR'):'';
+  m.maj=m.mesureLe=Date.now();save();mesStatut();mesPastilles();}
+function mesEtat(manque,vide,vieille,le){
+  if(vide)return '<span class="mes-etat">Stuff vide — rien à mesurer</span>';
+  if(!manque.length&&vieille)return '<span class="mes-etat ko" title="Mesuré le '+new Date(le).toLocaleDateString('fr-FR')+'"><i class=vgi-alert></i> À remesurer</span>';
+  return manque.length
+    ?'<span class="mes-etat ko" title="'+esc('Manque : '+manque.join(', '))+'"><i class=vgi-alert></i> À renseigner</span>'
+    :'<span class="mes-etat ok"><i class=vgi-check></i> Complet</span>';}
+function mesStatut(){var n=document.getElementById('stats');if(!n)return;
+  var s=ST(),manque=mesManque(s,C().cls),v=((s.mesures||{}).v)||{};
+  var vide=mesVide(s);
+  n.querySelectorAll('.mes-f').forEach(function(l){l.classList.toggle('ko',!vide&&!l.hasAttribute('data-facultatif')&&!(+v[l.getAttribute('data-k')]>0));});
+  var e=n.querySelector('.mes-etat');if(e)e.outerHTML=mesEtat(manque,mesVide(s),mesVieille(s),(s.mesures||{}).mesureLe);}
+/* Un stuff incomplet se voit depuis la barre des stuffs, sans l'ouvrir. */
+function mesPastilles(){var c=C(),tabs=document.querySelectorAll('#stuffbar .stab');
+  (c.stuffs||[]).forEach(function(s,i){var t=tabs[i];if(!t)return;
+    var ko=mesManque(s,c.cls).length>0||mesVieille(s);t.classList.toggle('mes-manque',ko);
+    if(ko)t.setAttribute('title',(mesManque(s,c.cls).length?'Mesures à renseigner':'Mesures à refaire (plus de 30 jours)')+' · Clic : ouvrir · Double-clic : renommer');});}
+function mesCases(titre,grp,liste,etat,ro){
+  return '<div class="mes-l"><span class="mes-lab">'+titre+'</span><div class="mes-cases">'+liste.map(function(p){
+    return '<span class="tierbtn mes-c'+(etat[p[0]]?' on':'')+'"'+(ro?'':' onclick="mesToggle(\''+grp+'\',\''+p[0]+'\')"')+'>'
+      +(etat[p[0]]?'<i class=vgi-check></i> ':'')+p[1]+(p[2]?' <small>'+p[2]+'</small>':'')+'</span>';}).join('')+'</div></div>';}
+function renderMesures(){var n=document.getElementById('stats');if(!n)return;
+  var c=C(),s=ST();if(!s){n.innerHTML='';return;}
+  var cls=c.cls,role=mesRole(s,cls),m=s.mesures||{},v=m.v||{},ro=!!window.__VIEW; // pas _ro() : il affiche un toast, et on redessine a chaque piece
+  var html='<h3><i class=vgi-target></i> Mesures du stuff '+mesEtat(mesManque(s,cls),mesVide(s),mesVieille(s),m.mesureLe)+'</h3>'
+    +'<p class="mes-intro">Obligatoires pour chaque stuff : c\'est ce que le staff compare pour composer les groupes. '
+    +(role==='dps'?'Mesure tes dégâts sur le <b>totem de l\'Oasis</b>, ':'Relève tes <b>PV</b> dans la fenêtre du personnage, ')
+    +'avec tes perles, tes consommables et tes meubles.</p>';
+  html+='<div class="mes-l"><span class="mes-lab">Rôle du stuff</span><div class="mes-cases">'
+    +mesRoles(cls).map(function(r){return '<span class="stab'+(r===role?' on':'')+'"'+(ro?'':' onclick="mesSetRole(\''+r+'\')"')+'>'+MES_ROLES[r]+'</span>';}).join('')
+    +'</div></div>';
+  html+='<div class="mes-champs">'+mesChamps(cls,role).map(function(f){var val=+v[f[0]]||0;
+    return '<label class="mes-f'+(val||mesVide(s)||f[3]?'':' ko')+'" data-k="'+f[0]+'"'+(f[3]?' data-facultatif="1"':'')+'><span class="mes-lab">'+f[1]+(f[3]?' <i>facultatif</i>':' <i class="mes-req" title="obligatoire">*</i>')+'</span>'
+      +'<input type="text" inputmode="numeric" autocomplete="off" value="'+(val?val.toLocaleString('fr-FR'):'')+'" placeholder="ex. '+f[2]+' ou '+mesCourt(mesLire(f[2])).replace(/\s/g,'')+'"'
+      +(ro?' disabled':' onchange="mesSetVal(\''+f[0]+'\',this)"')+'></label>';}).join('')+'</div>';
+  html+=mesCases('Poudres'+(role==='dps'?' — cumulables':'')+' <i>facultatif</i>','poudres',MES_POUDRES[role],m.poudres||{},ro);
+  html+=mesCases('Buffs pendant la mesure <i>facultatif</i>','buffs',MES_BUFFS,m.buffs||{},ro);
+  html+=mesCases('Mesuré avec','cond',MES_COND,m.cond||{},ro);
   n.innerHTML=html;}
 
 window.C=C;
@@ -1413,10 +1428,10 @@ function applyTemplate(idx){if(_ro())return;var t=templates()[idx];if(!t)return;
   agConfirm('Appliquer le modèle « '+t.name+' » sur « '+(ST().name||'Stuff')+' » ?\nÇa remplace les pièces concernées.'+(skip?'\n\n'+skip+' pièce(s) ignorée(s) (incompatible(s) avec '+(c.cls||'')+' '+(c.sex||'')+').':''),function(){var st=ST();st.eq=st.eq||{};ok.forEach(function(x){st.eq[x.slot]=JSON.parse(JSON.stringify(x.e));});render();if(typeof save==='function')save();agToast('Modèle appliqué '+(skip?' · '+skip+' ignorée(s)':''),true);});}
 function delTemplate(idx){if(_ro())return;var t=templates()[idx];if(!t)return;agConfirm('Supprimer le modèle « '+t.name+' » ?',function(){templates().splice(idx,1);if(typeof save==='function')save();templatesMenu();agToast('Modèle supprimé.',true);});}
 function templatesMenu(){var list=templates();var rows=list.length?list.map(function(t,i){return '<div class="itl" style="cursor:default;gap:8px"><div class="n" style="flex:1">'+esc(t.name)+' <span class="mini">('+Object.keys(t.eq||{}).length+' pièces)</span></div><span class="pill" onclick="applyTemplate('+i+')">Appliquer</span> <span class="pill rm" onclick="delTemplate('+i+')"><i class=vgi-trash></i></span></div>';}).join(''):'<div class="mini" style="padding:12px">Aucun modèle. Construis un stuff puis « Enregistrer » pour le réutiliser sur d\'autres persos.</div>';
-  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3><i class=vgi-puzzle></i> Modèles de stuff</h3><div class="mini" style="margin-bottom:10px">Applique un modèle sur le stuff actuel. Les pièces incompatibles avec ta classe/sexe sont ignorées.</div><div style="max-height:320px;overflow:auto">'+rows+'</div><div class="sheet-foot"><span class="pill" style="background:#FF8C1A;color:#0A0A0C;font-weight:700" onclick="saveTemplate()"><i class=vgi-save></i> Enregistrer le stuff actuel</span><span class="pill" onclick="closePick()">Fermer</span></div></div></div>';}
-function agConfirm(msg,onYes){window.__agYes=onYes;document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:430px;padding:22px"><div style="font-size:14px;line-height:1.55;margin-bottom:20px;white-space:pre-line">'+esc(msg)+'</div><div style="display:flex;gap:10px;justify-content:flex-end"><span class="pill" onclick="agClose(0)">Annuler</span><span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(1)">Confirmer</span></div></div></div>';}
+  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3><i class=vgi-puzzle></i> Modèles de stuff</h3><div class="mini" style="margin-bottom:10px">Applique un modèle sur le stuff actuel. Les pièces incompatibles avec ta classe/sexe sont ignorées.</div><div style="max-height:320px;overflow:auto">'+rows+'</div><div class="sheet-foot"><span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="saveTemplate()"><i class=vgi-save></i> Enregistrer le stuff actuel</span><span class="pill" onclick="closePick()">Fermer</span></div></div></div>';}
+function agConfirm(msg,onYes){window.__agYes=onYes;document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:430px;padding:22px"><div style="font-size:14px;line-height:1.55;margin-bottom:20px;white-space:pre-line">'+esc(msg)+'</div><div style="display:flex;gap:10px;justify-content:flex-end"><span class="pill" onclick="agClose(0)">Annuler</span><span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agClose(1)">Confirmer</span></div></div></div>';}
 function agClose(go){var f=window.__agYes;window.__agYes=null;document.getElementById('modalRoot').innerHTML='';if(go&&f)f();}
-function agInfo(msg){document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:470px;padding:22px"><div style="font-size:13.5px;line-height:1.6;white-space:pre-line;margin-bottom:18px">'+esc(msg)+'</div><div style="display:flex;justify-content:flex-end"><span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Compris <i class=vgi-check></i></span></div></div></div>';}
+function agInfo(msg){document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:470px;padding:22px"><div style="font-size:13.5px;line-height:1.6;white-space:pre-line;margin-bottom:18px">'+esc(msg)+'</div><div style="display:flex;justify-content:flex-end"><span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agClose(0)">Compris <i class=vgi-check></i></span></div></div></div>';}
 function agToast(msg,ok){var t=document.createElement('div');
   // Le statut est porté par une icône + la couleur du liseré (plus par un emoji
   // dans le texte). Le libellé reste en textContent : aucune injection possible.
@@ -1424,8 +1439,8 @@ function agToast(msg,ok){var t=document.createElement('div');
   ic.style.cssText='width:15px;height:15px;flex:none;color:'+(ok===false?'#F87171':'#4ADE80');
   var tx=document.createElement('span');tx.textContent=msg;
   t.appendChild(ic);t.appendChild(tx);
-  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:99999;display:flex;align-items:center;gap:9px;background:#16161c;color:#E8E8EC;border:1px solid '+(ok===false?'#F87171':'#FF8C1A')+';border-radius:10px;padding:11px 18px;font:600 13px/1.4 Rubik,system-ui,sans-serif;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.55);opacity:0;transition:opacity .25s,transform .25s';document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);}
-function agPrompt(msg,def,onOk){window.__agP=onOk;document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agPClose(0)"><div class="sheet" style="max-width:400px;padding:22px"><div style="font-size:14px;margin-bottom:12px">'+esc(msg)+'</div><input id="__agPI" class="srch" style="width:100%" value="'+esc(def||'')+'"><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px"><span class="pill" onclick="agPClose(0)">Annuler</span><span class="pill" style="background:#FF8C1A;color:#0A0A0C;font-weight:700" onclick="agPClose(1)">OK</span></div></div></div>';var i=document.getElementById('__agPI');if(i){i.focus();i.select();i.onkeydown=function(e){if(e.key==="Enter")agPClose(1);else if(e.key==="Escape")agPClose(0);};}}
+  t.style.cssText='position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);z-index:99999;display:flex;align-items:center;gap:9px;background:#16161c;color:#E8E8EC;border:1px solid '+(ok===false?'#F87171':'var(--gn-accent)')+';border-radius:10px;padding:11px 18px;font:600 13px/1.4 Rubik,system-ui,sans-serif;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.55);opacity:0;transition:opacity .25s,transform .25s';document.body.appendChild(t);requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';});setTimeout(function(){t.style.opacity='0';t.style.transform='translateX(-50%) translateY(8px)';setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},300);},2800);}
+function agPrompt(msg,def,onOk){window.__agP=onOk;document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agPClose(0)"><div class="sheet" style="max-width:400px;padding:22px"><div style="font-size:14px;margin-bottom:12px">'+esc(msg)+'</div><input id="__agPI" class="srch" style="width:100%" value="'+esc(def||'')+'"><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px"><span class="pill" onclick="agPClose(0)">Annuler</span><span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agPClose(1)">OK</span></div></div></div>';var i=document.getElementById('__agPI');if(i){i.focus();i.select();i.onkeydown=function(e){if(e.key==="Enter")agPClose(1);else if(e.key==="Escape")agPClose(0);};}}
 function agPClose(go){var f=window.__agP;window.__agP=null;var el=document.getElementById('__agPI');var v=go&&el?el.value:null;document.getElementById('modalRoot').innerHTML='';if(go&&f)f(v);}
 function delStuff(i){if(_ro())return;if(C().stuffs.length<=1)return;agConfirm('Supprimer ce stuff ?',function(){C().stuffs.splice(i,1);if(C().curStuff>=C().stuffs.length)C().curStuff=C().stuffs.length-1;render();});}
 function addChar(){if(_ro())return;charForm();}
@@ -1446,7 +1461,7 @@ function vgRendu(cls,sexe){
   var n=VGRENDUS[cls]; if(n==null)return '';
   return '/airbuilder/icons/emb_0'+(n+(sexe==='F'?1:0))+'.png';
 }
-var VGMODECOL={DPS:'#FF8C1A',Tank:'#4EA8FF',TANK:'#4EA8FF',Hybride:'#C77DFF',HYBRIDE:'#C77DFF'};
+var VGMODECOL={DPS:'var(--gn-accent)',Tank:'#4EA8FF',TANK:'#4EA8FF',Hybride:'#C77DFF',HYBRIDE:'#C77DFF'};
 
 function vgMesPersos(){
   var lignes=state.chars.map(function(c,i){
@@ -1461,34 +1476,71 @@ function vgMesPersos(){
           return '<span style="display:inline-flex;align-items:center;border:1px solid '+col+';color:'+col
             +';border-radius:7px;padding:2px 8px;font-size:11px;font-weight:700">'+esc(s.name)+'</span>';}).join('')
       : '<span style="font-size:11.5px;color:var(--mut)">aucun stuff monte</span>';
+    /* LE PREMIER EST LE PRINCIPAL : la synchro le publie en `isMain`. « Rendre
+       principal » (l'etoile) le fait donc passer en tete ; le site n'a plus de
+       bouton pour ca, tout se regle ici depuis le 2026-10-21. */
+    var prin=(i===0);
     return '<div class="vgperso'+(actif?' on':'')+'" onclick="vgOuvrirPerso('+i+')">'
       +'<span class="ill">'+(img?'<img src="'+img+'" alt="">':'<i class=vgi-user></i>')+'</span>'
       +'<span class="txt">'
-        +'<span class="nom">'+esc(c.name)+(actif?'<span class="ici">ouvert</span>':'')+'</span>'
+        +'<span class="nom">'+esc(c.name)+(prin?'<span class="ici prin" title="Personnage principal : c\'est lui qui te représente dans la guilde"><i class=vgi-star></i> principal</span>':'')+(actif?'<span class="ici">ouvert</span>':'')+'</span>'
         +'<span class="sous">'+esc(c.cls||'')+' &middot; niveau '+(c.lvl||200)+' &middot; prestige '+(c.prestige||0)+'</span>'
         +'<span class="past">'+past+'</span>'
       +'</span>'
-      +(state.chars.length>1?'<span class="pill rm" onclick="event.stopPropagation();vgSupprPerso('+i+')" title="Supprimer" aria-label="Supprimer '+esc(c.name)+'"><i class=vgi-trash></i></span>':'')
+      +'<span class="act">'
+        +(!prin?'<span class="pill" onclick="event.stopPropagation();vgRendrePrincipal('+i+')" title="Rendre principal" aria-label="Rendre '+esc(c.name)+' principal"><i class=vgi-star></i></span>':'')
+        +(state.chars.length>1?'<span class="pill rm" onclick="event.stopPropagation();vgSupprPerso('+i+')" title="Supprimer" aria-label="Supprimer '+esc(c.name)+'"><i class=vgi-trash></i></span>':'')
+      +'</span>'
       +'</div>';
   }).join('');
   document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:560px;padding:22px">'
     +'<div style="font-weight:700;font-size:15px;margin-bottom:4px;display:flex;align-items:center;gap:8px">'+VGI('users',{size:16})+' Mes personnages</div>'
-    +'<div class="mut" style="font-size:12px;margin-bottom:13px">Clique un perso pour l\'ouvrir. Ils partent a la guilde tout seuls.</div>'
+    +'<div class="mut" style="font-size:12px;margin-bottom:13px">Clique un perso pour l\'ouvrir. Ils partent à la guilde tout seuls, le premier en principal (l\'étoile pour en changer).</div>'
     +(lignes||'<div class="mut" style="font-size:13px;padding:8px 0">Aucun personnage pour l\'instant.</div>')
-    +'<div class="sheet-foot" style="margin-top:14px">'
+    +'<div class="sheet-foot vgpersos-foot" style="margin-top:14px">'
     +'<span class="pill" onclick="agClose(0);addChar()">'+VGI('plus',{size:13})+' Nouveau personnage</span>'
-    +'<a class="pill" href="/personnages" style="text-decoration:none">'+VGI('settings',{size:13})+' Gerer sur le site</a>'
-    +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>'
+    /* « Gerer sur le site » est devenu « Voir sur le site » : la page ne fait plus que
+       refleter ce qui se regle ici. */
+    +'<a class="pill" href="/personnages" onclick="return vgVersLeSite(this.href)" style="text-decoration:none">'+VGI('eye',{size:13})+' Voir sur le site</a>'
+    +'<span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agClose(0)">Fermer</span></div>'
     +'</div></div>';
 }
 function vgOuvrirPerso(i){agClose(0);switchChar(i);}
+/* « Voir sur le site » : le geste qu'on vient de faire (rendre principal, supprimer)
+   part D'ABORD, puis on y va — sinon la page s'ouvrait sur l'etat d'avant. Deux
+   secondes au plus : un reseau lent ne retient pas le clic. */
+function vgVersLeSite(url){agClose(0);var fait=false,aller=function(){if(fait)return;fait=true;location.href=url;};
+  vgPublierMaintenant().then(aller,aller);setTimeout(aller,2000);return false;}
 function vgSupprPerso(i){agClose(0);delChar(i);}
-function charForm(){if(_ro())return;window.__cfCls='Arcaniste';window.__cfSex='G';document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" id="cfSheet" style="width:620px;max-width:94vw;padding:22px"><style>#cfSheet input{width:100%;box-sizing:border-box;background:#0f0f15;border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:10px 12px;color:#ece9f1;font-family:inherit;font-size:14px;font-weight:500;outline:none;box-shadow:none;-webkit-appearance:none;-moz-appearance:textfield;appearance:none;transition:border-color .14s,box-shadow .14s}#cfSheet input::placeholder{color:#6f6f78}#cfSheet input:focus{border-color:#FF8C1A;background:#14141b;box-shadow:0 0 0 3px rgba(255,140,26,.15)}#cfSheet input[type=number]::-webkit-inner-spin-button,#cfSheet input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}#cfSheet label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9a9aa3;margin-bottom:6px}#cfSheet .cfsx{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 15px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0f0f15;color:#ededf2;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .14s,background .14s,color .14s;user-select:none}#cfSheet .cfsx:hover{border-color:rgba(255,255,255,.25);color:#fff}#cfSheet .cfsx.on{background:linear-gradient(180deg,#FFB552,#FF8C1A);border-color:#FF8C1A;color:#0A0A0C}#cfSheet .cfsx .sx{display:inline-flex;align-items:center}#cfSheet .cfsx .sx svg{width:17px;height:17px;display:block}#cfSheet .cfsx[data-s="G"] .sx{color:#5fa8ee}#cfSheet .cfsx[data-s="F"] .sx{color:#ef8fc4}#cfSheet .cfsx.on .sx{color:#0A0A0C}#cfSheet .clssel{max-width:none;flex-wrap:nowrap}#cfSheet .ci{width:46px;height:46px;border-radius:9px;box-sizing:border-box;flex:none}#cfSheet .ci img{width:42px;height:42px}#cfSheet .cfbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,box-shadow .15s,transform .12s,filter .15s;user-select:none;font-family:inherit}#cfSheet .cfbtn svg{width:16px;height:16px}#cfSheet .cfbtn.ghost{background:#17171d;border-color:rgba(255,255,255,.14);color:#d2d2d9}#cfSheet .cfbtn.ghost:hover{background:#1e1e26;border-color:rgba(255,255,255,.3);color:#fff}#cfSheet .cfbtn.primary{background:linear-gradient(180deg,#FFB552,#FF8C1A);color:#0A0A0C;box-shadow:0 4px 14px rgba(255,140,26,.30)}#cfSheet .cfbtn.primary:hover{filter:brightness(1.05);box-shadow:0 7px 20px rgba(255,140,26,.45);transform:translateY(-1px)}#cfSheet .cfbtn.primary:active{transform:translateY(0)}</style><div style="font-weight:700;font-size:16px;margin-bottom:14px"><i class=vgi-orb></i> Nouveau personnage</div><div style="display:flex;gap:18px;flex-wrap:wrap"><div style="flex:1;min-width:395px"><div class="f" style="margin-bottom:10px"><label>Classe</label><div class="clssel" id="cfClsSel">${CLASSES.map(x=>`<div class="ci ${x==='Arcaniste'?'on':''}" data-c="${x}" title="${x}" onclick="cfPickCls('${x}')">${IC['class_'+x.toLowerCase()]?`<img src="${IC['class_'+x.toLowerCase()]}">`:x[0]}</div>`).join('')}</div><div id="cfClsRecap" style="font-size:11.5px;color:var(--orange,#ff8c1a);margin-top:7px;font-weight:600"><i class=vgi-check></i> Classe : Arcaniste</div></div><div class="f" style="margin-bottom:12px"><label>Nom du personnage</label><input class="inp" id="cfName" placeholder="ex. Daiisuke" style="width:100%"></div><div class="f" style="margin-bottom:12px"><label>Sexe</label><div style="display:flex;gap:8px"><span class="cfsx on" data-s="G" onclick="cfPickSex('G')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5.5"/><path d="M14 10L20 4M15 4H20V9"/></svg></span> Garçon</span><span class="cfsx" data-s="F" onclick="cfPickSex('F')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5.5"/><path d="M12 13.5V22M8.5 18.5H15.5"/></svg></span> Fille</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><div class="f" style="flex:1;min-width:90px"><label>Niveau</label><input class="inp" id="cfLvl" type="number" value="200" min="1" max="200" style="width:100%"></div><div class="f" style="flex:1;min-width:90px"><label>Prestige</label><input class="inp" id="cfPrest" type="number" value="3" min="0" max="12" style="width:100%"></div></div></div><div style="width:155px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff06;border:1px solid #ffffff10;border-radius:10px;padding:8px;min-height:200px"><img id="cfRender" alt="" style="max-width:100%;max-height:210px;object-fit:contain"><div class="mut" style="font-size:11px;margin-top:4px;text-align:center">aperçu (classe + sexe)</div></div></div><div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)"><span class="cfbtn ghost" onclick="agClose(0)">Annuler</span><span class="cfbtn primary" onclick="doCharForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Créer le perso</span></div></div></div>`;var n=document.getElementById('cfName');if(n)n.focus();cfUpdateRender();}
+/* Rendre principal = passer en tete de liste. Le perso ouvert reste celui qu'on
+   regardait : il change seulement de place. Confirme, parce que ca deplace ce que
+   la guilde voit de nous partout (Chambres Secretes, GuildViewer, recensement). */
+function vgRendrePrincipal(i){
+  if(_ro())return;
+  if(!(i>0&&i<state.chars.length))return;
+  agClose(0);
+  var c=state.chars[i],avant=state.chars[0];
+  agConfirm('Rendre « '+(c.name||'ce perso')+' » principal ?\n\nC\'est lui qui te représentera dans la guilde (Chambres Secrètes, GuildViewer, recensement). Il passe en tête de ta liste, devant « '+(avant.name||'l\'actuel')+' ».',function(){
+    var ouvert=state.chars[state.cur];
+    state.chars.splice(i,1);state.chars.unshift(c);
+    state.cur=Math.max(0,state.chars.indexOf(ouvert));
+    render();
+    agToast('« '+(c.name||'Perso')+' » est ton personnage principal.',true);
+  });
+}
+function charForm(){if(_ro())return;window.__cfCls='Arcaniste';window.__cfSex='G';document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" id="cfSheet" style="width:620px;max-width:94vw;padding:22px"><style>#cfSheet input{width:100%;box-sizing:border-box;background:#0f0f15;border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:10px 12px;color:#ece9f1;font-family:inherit;font-size:14px;font-weight:500;outline:none;box-shadow:none;-webkit-appearance:none;-moz-appearance:textfield;appearance:none;transition:border-color .14s,box-shadow .14s}#cfSheet input::placeholder{color:#6f6f78}#cfSheet input:focus{border-color:var(--gn-accent);background:#14141b;box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.15)}#cfSheet input[type=number]::-webkit-inner-spin-button,#cfSheet input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}#cfSheet label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#9a9aa3;margin-bottom:6px}#cfSheet .cfsx{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 15px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0f0f15;color:#ededf2;font-size:14px;font-weight:700;cursor:pointer;transition:border-color .14s,background .14s,color .14s;user-select:none}#cfSheet .cfsx:hover{border-color:rgba(255,255,255,.25);color:#fff}#cfSheet .cfsx.on{background:var(--gn-action);border-color:rgba(var(--gn-or-rgb),.55);color:var(--gn-sur-action)}#cfSheet .cfsx .sx{display:inline-flex;align-items:center}#cfSheet .cfsx .sx svg{width:17px;height:17px;display:block}#cfSheet .cfsx[data-s="G"] .sx{color:#5fa8ee}#cfSheet .cfsx[data-s="F"] .sx{color:#ef8fc4}#cfSheet .cfsx.on .sx{color:var(--gn-sur-action)}#cfSheet .clssel{max-width:none;flex-wrap:nowrap}#cfSheet .ci{width:46px;height:46px;border-radius:9px;box-sizing:border-box;flex:none}#cfSheet .ci img{width:42px;height:42px}#cfSheet .cfbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 18px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:background .15s,border-color .15s,box-shadow .15s,transform .12s,filter .15s;user-select:none;font-family:inherit}#cfSheet .cfbtn svg{width:16px;height:16px}#cfSheet .cfbtn.ghost{background:#17171d;border-color:rgba(255,255,255,.14);color:#d2d2d9}#cfSheet .cfbtn.ghost:hover{background:#1e1e26;border-color:rgba(255,255,255,.3);color:#fff}#cfSheet .cfbtn.primary{background:var(--gn-action);color:var(--gn-sur-action);box-shadow:0 4px 14px rgba(var(--gn-lueur-rgb),.30)}#cfSheet .cfbtn.primary:hover{filter:brightness(1.05);box-shadow:0 7px 20px rgba(var(--gn-lueur-rgb),.45);transform:translateY(-1px)}#cfSheet .cfbtn.primary:active{transform:translateY(0)}</style><div style="font-weight:700;font-size:16px;margin-bottom:14px"><i class=vgi-orb></i> Nouveau personnage</div><div style="display:flex;gap:18px;flex-wrap:wrap"><div style="flex:1;min-width:395px"><div class="f" style="margin-bottom:10px"><label>Classe</label><div class="clssel" id="cfClsSel">${CLASSES.map(x=>`<div class="ci ${x==='Arcaniste'?'on':''}" data-c="${x}" title="${x}" onclick="cfPickCls('${x}')">${IC['class_'+x.toLowerCase()]?`<img src="${IC['class_'+x.toLowerCase()]}">`:x[0]}</div>`).join('')}</div><div id="cfClsRecap" style="font-size:11.5px;color:var(--gn-accent);margin-top:7px;font-weight:600"><i class=vgi-check></i> Classe : Arcaniste</div></div><div class="f" style="margin-bottom:12px"><label>Nom du personnage</label><input class="inp" id="cfName" placeholder="ex. Daiisuke" style="width:100%"></div><div class="f" style="margin-bottom:12px"><label>Sexe</label><div style="display:flex;gap:8px"><span class="cfsx on" data-s="G" onclick="cfPickSex('G')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14" r="5.5"/><path d="M14 10L20 4M15 4H20V9"/></svg></span> Garçon</span><span class="cfsx" data-s="F" onclick="cfPickSex('F')"><span class="sx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5.5"/><path d="M12 13.5V22M8.5 18.5H15.5"/></svg></span> Fille</span></div></div><div style="display:flex;gap:12px;flex-wrap:wrap"><div class="f" style="flex:1;min-width:90px"><label>Niveau</label><input class="inp" id="cfLvl" type="number" value="200" min="1" max="200" style="width:100%"></div><div class="f" style="flex:1;min-width:90px"><label>Prestige</label><input class="inp" id="cfPrest" type="number" value="3" min="0" max="12" style="width:100%"></div></div></div><div style="width:155px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#ffffff06;border:1px solid #ffffff10;border-radius:10px;padding:8px;min-height:200px"><img id="cfRender" alt="" style="max-width:100%;max-height:210px;object-fit:contain"><div class="mut" style="font-size:11px;margin-top:4px;text-align:center">aperçu (classe + sexe)</div></div></div><div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.07)"><span class="cfbtn ghost" onclick="agClose(0)">Annuler</span><span class="cfbtn primary" onclick="doCharForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Créer le perso</span></div></div></div>`;var n=document.getElementById('cfName');if(n)n.focus();cfUpdateRender();}
 function cfUpdateRender(){var cls=window.__cfCls||'Arcaniste',sex=window.__cfSex||'G';var im=document.getElementById('cfRender');if(im){var src=(typeof CHARIMG!=='undefined'&&(CHARIMG[cls+'|'+sex]||CHARIMG[cls+'|G']))||'';im.src=src;im.style.display=src?'block':'none';}var r=document.getElementById('cfClsRecap');if(r)r.innerHTML='<i class=vgi-check></i> Classe : '+esc(cls)+' '+(sex==='F'?'<i class=vgi-female></i>':'<i class=vgi-male></i>');}
 function cfPickCls(x){window.__cfCls=x;var s=document.getElementById('cfClsSel');if(s)Array.prototype.forEach.call(s.children,function(d){d.classList.toggle('on',d.getAttribute('data-c')===x);});cfUpdateRender();}
 function cfPickSex(x){window.__cfSex=x;Array.prototype.forEach.call(document.querySelectorAll('.cfsx'),function(d){d.classList.toggle('on',d.getAttribute('data-s')===x);});cfUpdateRender();}
-function doCharForm(){var el=document.getElementById('cfName');var nm=((el&&el.value)||'').trim();if(!nm){if(el){el.style.borderColor='#f87171';el.focus();}return;}var c=newChar(nm);c.cls=window.__cfCls||'Arcaniste';c.sex=window.__cfSex||'G';c.lvl=Math.min(200,Math.max(1,parseInt((document.getElementById('cfLvl')||{}).value,10)||200));c.prestige=Math.min(12,Math.max(0,parseInt((document.getElementById('cfPrest')||{}).value,10)||0));state.chars.push(c);state.cur=state.chars.length-1;agClose(0);render();vgPousserPersoCompte(c);}
-function delChar(i){if(_ro())return;if(state.chars.length<=1)return;agConfirm('Supprimer ce personnage ?',function(){state.chars.splice(i,1);state.cur=0;render();});}
+function doCharForm(){var el=document.getElementById('cfName');var nm=((el&&el.value)||'').trim();if(!nm){if(el){el.style.borderColor='#f87171';el.focus();}return;}var c=newChar(nm);c.cls=window.__cfCls||'Arcaniste';c.sex=window.__cfSex||'G';c.lvl=Math.min(200,Math.max(1,parseInt((document.getElementById('cfLvl')||{}).value,10)||200));c.prestige=Math.min(12,Math.max(0,parseInt((document.getElementById('cfPrest')||{}).value,10)||0));/* Le premier vrai perso REMPLACE l'exemple vierge (« Perso 1 », sans piece) : sinon la synchro publiait l'exemple en principal, devant le perso qu'on venait de creer. */if(vgEtatVierge())state.chars=[c];else state.chars.push(c);state.cur=state.chars.length-1;agClose(0);render();}
+/* Supprimer un perso : la confirmation le NOMME et dit ce qui part avec lui. Le site
+   n'a plus de bouton de suppression (2026-10-21) : c'est ici que ca se passe, et la
+   synchro le retire du compte. Le dernier perso ne se supprime pas (la croix et la
+   corbeille ne s'affichent qu'a partir de deux). */
+function delChar(i){if(_ro())return;if(state.chars.length<=1||!state.chars[i])return;
+  var c=state.chars[i],n=(c.stuffs||[]).length;
+  agConfirm('Supprimer « '+(c.name||'ce perso')+' » ?\n\n'+(n?'Ses '+n+' stuff'+(n>1?'s':'')+' partent avec lui. ':'')+'Il disparaît de ton compte et de la guilde (Mes personnages, Chambres Secrètes, GuildViewer). Il n\'y a pas d\'annulation.'+(i===0?'\n\nC\'est ton principal : « '+(state.chars[1].name||'le suivant')+' » le deviendra.':''),
+    function(){var ouvert=state.chars[state.cur];state.chars.splice(i,1);var k=state.chars.indexOf(ouvert);state.cur=k>=0?k:0;render();});}
 function setCls(v){if(_ro())return;if(C().cls===v)return;const hasGear=(C().stuffs||[]).some(s=>s.eq&&Object.keys(s.eq).length);const apply=function(){C().cls=v;(C().stuffs||[]).forEach(s=>s.eq={});render();};if(hasGear)agConfirm('Changer de classe va vider tout l\'équipement de ce personnage (sur tous ses stuffs).\n\nCette action est irréversible. Continuer ?',apply);else apply();}
 function toggleCarnet(i){if(_ro())return;const c=C();c.carnets=c.carnets||[];c.carnetsFull=c.carnetsFull||[];const k=c.carnets.indexOf(i);if(k>=0){c.carnets.splice(k,1);const f=c.carnetsFull.indexOf(i);if(f>=0)c.carnetsFull.splice(f,1);}else c.carnets.push(i);render();}
 function toggleFull(i){const c=C();c.carnetsFull=c.carnetsFull||[];const k=c.carnetsFull.indexOf(i);if(k>=0)c.carnetsFull.splice(k,1);else c.carnetsFull.push(i);render();}
@@ -1662,10 +1714,9 @@ function rareteChance(n){
    et une premiere version de ce chantier l'annonçait sous chacune. Mesure : six
    paragraphes, une trentaine de pixels chacun, sur une bulle qui frolait deja la
    hauteur de l'ecran — pour repeter six fois le meme fait.
-   ET LE RESUME LE DIT DEJA MIEUX : `totalsDetail` rend `absents`, et
-   `renderStats` en fait un depliant « N termes non comptes » qui nomme LA PIECE,
-   LE TERME et LA RAISON, un par un. Un doublon dans la bulle aurait fini par
-   diverger de lui.
+   Le resume du build en faisait un depliant (« N termes non comptes ») ; il a
+   ete retire le 2026-10-20, et avec lui le seul total affiche : il n'y a plus
+   de chiffre a l'ecran que cette absence pourrait fausser.
    IL RESTE DEUX ENDROITS OU LA BULLE LE DIT, et pour la meme raison dans les
    deux cas : c'est l'ABSENCE D'UN NOMBRE qui se lit comme un defaut du site. Le
    « +20 » d'une arme, ecrit en or a cote du nom et suivi de rien ; et le niveau
@@ -1700,8 +1751,8 @@ function rareteChance(n){
 
    LE SENS TIENT AU DESSIN ET AU COMPTE, PAS AU `title`. La bulle porte
    `pointer-events:none` et suit le curseur : aucun `title` pose dedans ne
-   s'ouvre, ni a la souris ni au doigt. Les vignettes en gardent un par coherence
-   avec `panResume`, mais rien de ce qu'il faut lire n'y est enferme. */
+   s'ouvre, ni a la souris ni au doigt. Les vignettes en gardent un quand meme,
+   mais rien de ce qu'il faut lire n'y est enferme. */
 function itipPano(slot,it,quoi){
   if(!slot||(ARMOR.indexOf(slot)<0&&FASHION.indexOf(slot)<0))return '';
   var sig=panSigDe(slot,it);if(!sig)return '';
@@ -1789,7 +1840,7 @@ function itipBuild(it,cfg,slot,e){const col=couleurPiece(it,cfg);const icon=(it.
      pouvait plus voir ce qu'elle apporte sans la desequiper. Ils restent.
      ET ILS RESTENT TOUS : la Cape Farmeur porte « Penyas gagnes % +20 », un
      filtre l'effacait, et c'est pourtant la seule raison de la porter. Un bonus
-     d'equipement n'est pas un butin ramasse — voir au-dessus de `statCat`. */
+     d'equipement n'est pas un butin ramasse — voir dans le bloc « CE QU'ON RAMASSE ≠ CE QUE L'EQUIPEMENT DONNE ». */
   if(bonus.length){h+=`<div class="sec">${setb?'Bonus de set':'Bonus'}</div>`+bonus.map(b=>`<div class="bl"><span>${esc(b[0])}</span><span>${b[1]<0?'':'+'}${b[1]}</span></div>`).join('');}
   /* ═══ UNE ARMURE A ZERO N'EST PAS UN BUG D'AFFICHAGE ═════════════════════════
      Aucune armure du catalogue ne porte de bonus propre — le releve le compte —
@@ -2197,7 +2248,7 @@ function drawPick(q){itipHide();const slot=pickSlot,e=E(slot),cfg=SLOTS[slot]||{
   const grpKey=(slot==='mantra'||slot==='masque')?'cat':(slot==='ramasseur'?null:(['fhead','ftop','fhand','ffoot'].includes(slot)?'cat':'tier'));
   const byTier={};items.forEach(it=>{const g=grpKey?(it[grpKey]||'—'):'';(byTier[g]=byTier[g]||[]).push(it);});
   const pick=`<input class="srch" placeholder="${items.length} objet(s) pour ${esc(C().cls)} ${C().sex}…" oninput="drawPick(this.value)" ${q?`value="${esc(q)}"`:''}>
-    <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--orange);background:rgba(255,140,26,.10);box-shadow:0 0 0 2px rgba(255,140,26,.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${nomPiece(it)}<div style="font-size:11px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:11px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
+    <div style="max-height:300px;overflow:auto">${Object.entries(byTier).map(([t,arr])=>`<div style="font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin:8px 0 4px">${esc(t)}</div>`+arr.slice(0,60).map(it=>{const lock=C().prestige<(it.pr||0);const _id=String(it.id).replace(/&/g,'&amp;').replace(/"/g,'&quot;');return `<div class="itl" onmouseenter="itipShow(event,&quot;${_id}&quot;)" onmousemove="itipMove(event)" onmouseleave="itipHide()" onclick="${lock?'':`equip(&quot;${_id}&quot;)`}" style="${lock?'opacity:.45;':''}${e&&e.item&&String(e.item.id)===String(it.id)?'border:2px solid var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.10);box-shadow:0 0 0 2px rgba(var(--gn-lueur-rgb),.18)':''}">${imgT(it.ic,32)||'<span style=width:32px></span>'}<div class="n" style="color:${it.col||'#cfd2dc'}">${nomPiece(it)}<div style="font-size:11px;color:var(--mut)">${it.setb&&it.setb.length?it.setb.slice(0,2).map(b=>b[0]+'+'+b[1]).join(' · '):(it.b&&it.b.length?it.b.slice(0,3).map(b=>b[0]+'+'+b[1]).join(' · '):(it.atk?'Atk '+it.atk[0]+'~'+it.atk[1]:''))}</div></div>${it.pr?`<span style="font-size:11px;color:${lock?'var(--red)':'var(--gold)'}">${lock?'<i class=vgi-lock></i>':'<i class=vgi-star></i>'}P${it.pr}</span>`:''}</div>`;}).join('')).join('')||'<div style="color:var(--mut);padding:10px">Aucun objet (à venir : ramasseur, masque, fashion en étape 2/3).</div>'}</div>`;
   document.getElementById('modalRoot').innerHTML=`<div class="modal" onclick="if(event.target===this)closePick()"><div class="sheet"><h3>${esc(cfg.lbl)} — ${esc(C().cls)} ${C().sex}</h3>${pieceEntete(slot,e)}${body}${pick}<div class="sheet-foot">${e?'<span class="pill rm" onclick="removeItem()"><i class=vgi-trash></i> Retirer cet objet</span>':'<span></span>'}<span class="pill" onclick="closePick()">Fermer</span></div></div></div>`;vgDD();}
 function equip(id){if(_ro())return;const it=listFor(pickSlot).find(x=>String(x.id)===String(id));if(!it)return;const base={item:it};if(['weapon','weapon2','shield','suit','helmet','gauntlet','boots','ring1','ring2','earring1','earring2','necklace','fhead','ftop','fhand','ffoot','cape','ramasseur','fairy'].includes(pickSlot))base.cfg=defCfg(pickSlot);ST().eq[pickSlot]=base;if(base.cfg)defaultCfg(pickSlot,it.tier,C().cls);render();drawPick('');}
 function defWcfg(){return {rune:{stat:'',val:0},mode:'normal',plus:0,dia:['','','','',''],holo:['','',''],pierce:Array(12).fill(null),tier:'Commun',rlines:[],r1:{stat:'',val:0},r2:{stat:'',val:0},scroll:0,elem:0};}
@@ -2205,119 +2256,10 @@ function equipFam(id,n){if(_ro())return;const e=E('familier');ST().eq.familier={
 function setRank(r){if(_ro())return;const e=E('familier');if(e){e.rank=r;render();drawPick('');}}
 function famRune(v){const e=E('familier');if(e){e.rune=v;render();drawPick('');}}
 function removeItem(){delete ST().eq[pickSlot];render();closePick();}
-/**
- * « Demander cet objet » : la piece equipee part vers la boutique, avec ce
- * qu'on a regle dessus (rarete, +N, percage, eveil, scroll, element).
- *
- * On ne transporte que des DONNEES, jamais du HTML : la bulle est redessinee
- * cote site. Le relais est le localStorage — une URL ne tiendrait pas la
- * configuration complete, et on ne veut pas d'un aller-retour serveur pour un
- * geste qui n'engage encore a rien.
- */
-/**
- * « Acheter un objet » — la liste des pieces montees sur ce stuff.
- *
- * Demander une piece se decidait depuis l'ecran de reglages d'un emplacement :
- * il fallait deja savoir laquelle, et l'ouvrir. On part desormais du build —
- * on voit ses pieces, on choisit celle qu'on veut se faire fournir.
- */
-/* « Acheter un objet » — les pieces montees sur ce stuff.
- *
- * On n'en demandait qu'une a la fois : pour trois pieces il fallait revenir
- * trois fois sur le builder. On coche ce qu'on veut, et tout part ensemble ;
- * la boutique les presente ensuite une par une, chacune avec son prix.
- */
-var VGSEL = {};
-function vgSelPiece(slot, ev){
-  if(ev) ev.stopPropagation();
-  VGSEL[slot] = !VGSEL[slot];
-  var ligne = document.querySelector('.itl[data-slot="' + slot + '"]');
-  if(ligne) ligne.classList.toggle('sel', !!VGSEL[slot]);
-  vgSelMaj();
-}
-function vgSelMaj(){
-  var n = Object.keys(VGSEL).filter(function(k){ return VGSEL[k]; }).length;
-  var b = document.getElementById('vgBuyGo');
-  if(!b) return;
-  b.textContent = n ? ('Demander ' + n + ' pièce' + (n > 1 ? 's' : '')) : 'Choisis au moins une pièce';
-  b.classList.toggle('off', !n);
-}
-function vgAcheterPiece(){
-  if(vgAnon()){vgConnexion('commander une pièce à la boutique');return;}
-  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
-  VGSEL = {};
-  var eq = ST().eq || {};
-  var slots = Object.keys(eq).filter(function(s){ return eq[s] && eq[s].item; });
-  var lignes = slots.map(function(s){
-    var e = eq[s], lbl = (SLOTS[s] && SLOTS[s].lbl) || s;
-    var c = e.cfg || {}, bouts = [];
-    if(c.tier && c.tier !== 'Commun') bouts.push(c.tier);
-    if(c.up) bouts.push('+' + c.up);
-    if(pierceElDe(c,s)) bouts.push(pierceElDe(c,s));
-    if(c.evL) bouts.push('éveil ' + c.evL);
-    var ic = (e.item.ic && IC[e.item.ic]) ? '<img src="' + IC[e.item.ic] + '" alt="">' : '<i class=vgi-package></i>';
-    return '<div class="itl buyl" data-slot="' + s + '" onclick="vgSelPiece(\'' + s + '\',event)"'
-      + ' onmouseenter="itipSlot(event,\'' + s + '\')" onmousemove="itipMove(event)" onmouseleave="itipHide()">'
-      + '<span class="coche" aria-hidden="true"></span>'
-      + '<span class="ic">' + ic + '</span>'
-      + '<span class="n" style="color:' + (e.item.col || '#cfd2dc') + '">' + esc(e.item.n)
-      + '<span class="sub">' + esc(lbl) + (bouts.length ? ' · ' + esc(bouts.join(' · ')) : '') + '</span></span>'
-      + '</div>';
-  }).join('');
-  document.getElementById('modalRoot').innerHTML = '<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet buysheet" style="max-width:560px;padding:22px">'
-    + '<div class="buyttl">' + VGI('cart',{size:16}) + ' Acheter un objet de mon build</div>'
-    + '<div class="mut buysub">Coche les pièces qui t\'intéressent : elles partent vers la boutique avec leurs réglages (rareté, +N, perçage, éveil), et tu ajustes le prix de chacune avant d\'envoyer.</div>'
-    + (lignes || '<div class="mut" style="font-size:13px;padding:8px 0">Ce stuff est vide — équipe au moins une pièce.</div>')
-    + '<div class="sheet-foot buyfoot">'
-    + '<span class="pill" onclick="agClose(0)">Annuler</span>'
-    + '<span class="pill dem off" id="vgBuyGo" onclick="vgDemanderSelection()">Choisis au moins une pièce</span>'
-    + '</div></div></div>';
-}
-/* Envoie la selection vers la boutique. La pile est lue piece par piece. */
-function vgDemanderSelection(){
-  var choisis = Object.keys(VGSEL).filter(function(k){ return VGSEL[k]; });
-  if(!choisis.length){ agToast('Coche au moins une pièce.', false); return; }
-  var pile = choisis.map(vgDepotPiece).filter(Boolean);
-  if(!pile.length) return;
-  try{ localStorage.setItem('vg_demande_pieces', JSON.stringify(pile)); localStorage.removeItem('vg_demande_piece'); }
-  catch(err){ agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.', false); return; }
-  location.href = '/boutique?piece=1';
-}
-/* « Volcano » seul ne dit pas au vendeur s'il faut du 7 % ou du 15 % : on joint
-   le palier le plus haut effectivement pose. */
-function carteDemandee(c,slot){var el=pierceElDe(c,slot);if(!el)return '';
-  var g=pierceGrades(el),haut='';
-  pierceCases(c,slot).slice(0,(c.pn!=null)?c.pn:(c.pierce||[]).length).forEach(function(v){
-    if(g.indexOf(v)>g.indexOf(haut))haut=v;});
-  if(!haut)return el;
-  return el+' '+(PIERCECARD[el].fam==='def'?haut+'\u00a0%':haut);}
-/* Le depot d'UNE piece, tel que la boutique l'attend. Partage entre le bouton
-   d'une seule piece et la selection multiple. */
-function vgDepotPiece(slot){
-  var e=E(slot); if(!e||!e.item) return null;
-  var c=e.cfg||{};
-  var ouverts=(c.pn!=null)?c.pn:((c.pierce||[]).filter(function(x){return x;}).length);
-  return {slot:slot,itemId:String(e.item.id),nom:e.item.n,choix:{
-    rarete:(c.tier&&c.tier!=='Commun')?c.tier:'',
-    up:c.up?String(c.up):'',etoiles:c.stars?String(c.stars):'',
-    percage:ouverts?String(ouverts):'',carte:carteDemandee(c,slot),
-    eveilRang:c.evL||'',eveilStat:c.evS||'',
-    scrollStat:c.scrS||'',scrollNiv:c.scrL?String(c.scrL):'',
-    element:c.elemType||'',elementNiv:c.elemLvl?String(c.elemLvl):''}};
-}
-function vgDemanderPiece(slotDemande){
-  if(window.__VIEW||window.__embed){agToast('Mode lecture seule.',false);return;}
-  var slot=slotDemande||pickSlot;
-  var d=vgDepotPiece(slot);
-  if(!d){agToast('Équipe d\'abord une pièce dans cet emplacement.',false);return;}
-  try{localStorage.setItem('vg_demande_pieces',JSON.stringify([d]));localStorage.removeItem('vg_demande_piece');}
-  catch(err){agToast('Stockage indisponible — ouvre la boutique et compose la pièce à la main.',false);return;}
-  location.href='/boutique?piece=1';
-}
 function exportBuild(){try{const c=C();const st=ST();const data={name:c.name,stuff:st.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,equipped:Object.fromEntries(Object.entries(st.eq||{}).filter(([k,e])=>e&&e.item).map(([k,e])=>[k,{name:e.item.n,id:e.item.id,rank:e.rank}])),carnets:(c.carnets||[]).map(i=>CARNETS[i]&&CARNETS[i].nom).filter(Boolean),stats:(()=>{try{return totals();}catch(e){return {};}})()};
   try{localStorage.setItem('vg_build_export',JSON.stringify(data));}catch(e){}if(window.__embed){try{window.parent&&window.parent.postMessage({type:'vg_build',data:data},'*');}catch(e){}return;}const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(c.name||'build')+'_'+(st.name||'stuff')+'.json';a.click();agToast('Build exporté ',true);}catch(err){try{var cc=C()||{};if(window.__embed&&window.parent)window.parent.postMessage({type:'vg_build',data:{name:cc.name||'Perso',cls:cc.cls||'',prestige:cc.prestige||1,equipped:{},stats:{}}},'*');else agToast('Build validé (données partielles)',true);}catch(e){}}}
 // ── Vanguard : sauvegarde de TOUS les persos du builder vers le site (base) ──
-function vgCollectBuilds(){var oc=state.cur;var out=state.chars.map(function(c,ci){var os=c.curStuff;var stuffs=(c.stuffs||[]).map(function(s,si){state.cur=ci;c.curStuff=si;var stats={};try{stats=totals();}catch(e){}return {name:s.name,equipped:Object.fromEntries(Object.entries(s.eq||{}).map(function(p){var e=p[1];return [p[0],{name:e&&e.item&&e.item.n,id:e&&e.item&&e.item.id,rank:e&&e.rank}];})),stats:stats};});c.curStuff=os;return {name:c.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,carnets:(c.carnets||[]).map(function(i){return CARNETS[i]&&CARNETS[i].nom;}).filter(Boolean),stuffs:stuffs};});state.cur=oc;return out;}
+function vgCollectBuilds(){var oc=state.cur;var out=state.chars.map(function(c,ci){var os=c.curStuff;var stuffs=(c.stuffs||[]).map(function(s,si){state.cur=ci;c.curStuff=si;var stats={};try{stats=totals();}catch(e){}return {name:s.name,mesures:mesExport(s,c.cls),equipped:Object.fromEntries(Object.entries(s.eq||{}).map(function(p){var e=p[1];return [p[0],{name:e&&e.item&&e.item.n,id:e&&e.item&&e.item.id,rank:e&&e.rank}];})),stats:stats};});c.curStuff=os;return {name:c.name,cls:c.cls,sex:c.sex,lvl:c.lvl,prestige:c.prestige,carnets:(c.carnets||[]).map(function(i){return CARNETS[i]&&CARNETS[i].nom;}).filter(Boolean),stuffs:stuffs};});state.cur=oc;return out;}
 function vgSavePersos(){if(vgAnon()){vgConnexion('publier tes persos à la guilde');return;}if(window.__VIEW){agToast('Mode lecture seule — build d\'un autre membre.',false);return;}if(window.__refSave){agToast('Build de référence — enregistré automatiquement dans la composition.',true);return;}agConfirm('Forcer la publication maintenant ?\n\nTes persos sont déjà publiés automatiquement à la guilde (GuildViewer · Compositions · Dashboard) à chaque changement — tu n\'as rien à faire.\n\nCe bouton force juste une mise à jour immédiate + crée un point de restauration.',function(){fetch('/api/builder-state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({blob:state,snapshot:true})}).catch(function(){});fetch('/api/characters/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chars:vgCollectBuilds()})}).then(function(r){return r.ok?r.json():Promise.reject(r);}).then(function(d){agToast(''+((d&&d.count)||'Tes')+' perso(s) publié(s) + version créée — visibles dans le GuildViewer / Compositions / Dashboard.',true);}).catch(function(){agToast('Erreur de publication — es-tu bien connecté au site ?',false);});});}
 /**
  * Le mode d'emploi de l'AirBuilder.
@@ -2331,21 +2273,28 @@ function vgSavePersos(){if(vgAnon()){vgConnexion('publier tes persos à la guild
 function vgSaveHelp(){document.getElementById('modalRoot').innerHTML=
   `<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet aide" style="max-width:600px;padding:22px">`
   +`<div class="aidettl">`+VGI('info',{size:18})+` Comment marche l&apos;AirBuilder ?</div>`
-  +`<div class="aidesub">Sept points, et tu sais tout.</div>`
+  +`<div class="aidesub">Six points, et tu sais tout.</div>`
   +`<div class="aidesec">`+VGI('users',{size:17})+`<div><h4>Mes personnages</h4><p>Chaque perso a sa classe, son niveau et son prestige. Les onglets en haut à droite passent de l'un à l'autre ; <b>Mes personnages</b> les montre en détail. Ils sont publiés à la guilde tout seuls — GuildViewer, Compositions, Tableau de bord.</p></div></div>`
   +`<div class="aidesec">`+VGI('layers',{size:17})+`<div><h4>Les stuffs</h4><p>Un perso porte plusieurs stuffs (DPS, Tank, Hybride…), chacun avec son équipement. <b>+ Stuff</b> en crée un vide, <b>Dupliquer</b> en crée un identique au stuff ouvert — mêmes pièces, mêmes réglages — pour tester une variante sans rien perdre. <b>Vider</b> retire les pièces du stuff ouvert ; les carnets du perso, eux, restent.</p></div></div>`
-  +`<div class="aidesec">`+VGI('sword-cross',{size:17})+`<div><h4>Équiper et régler</h4><p>Clique un emplacement : tu choisis l'objet, puis tu règles ce que le jeu permet dessus — rareté, +N, perçage, éveil, scroll, élément. Le résumé des statistiques se met à jour en bas de page.</p></div></div>`
+  +`<div class="aidesec">`+VGI('sword-cross',{size:17})+`<div><h4>Équiper et régler</h4><p>Clique un emplacement : tu choisis l'objet, puis tu règles ce que le jeu permet dessus — rareté, +N, perçage, éveil, scroll, élément. Sous le pantin, renseigne les <b>mesures</b> du stuff — dégâts ou PV selon son rôle : elles sont obligatoires.</p></div></div>`
   +`<div class="aidesec">`+VGI('book',{size:17})+`<div><h4>Carnets des Arcanes</h4><p>Ils appartiennent au <b>personnage</b>, pas au stuff : ils comptent quel que soit le stuff ouvert. <b>Base</b> = une carte de chaque, <b>Complet</b> = toutes les pages.</p></div></div>`
-  +`<div class="aidesec">`+VGI('cart',{size:17})+`<div><h4>Acheter un objet</h4><p>Sur le cadre de l'équipement. Tu choisis une pièce de ton build, elle part vers la boutique avec ses réglages, et le détenteur la voit exactement comme tu la veux.</p></div></div>`
-  +`<div class="aidesec">`+VGI('link',{size:17})+`<div><h4>Partager le build</h4><p>Le lien n'existe que si tu le demandes, et il ne s'ouvre qu'aux membres du serveur Discord. <b>Rendre privé</b> le désactive quand tu veux.</p></div></div>`
+  +`<div class="aidesec">`+VGI('link',{size:17})+`<div><h4>Partager le build</h4><p>Personne d'autre que le staff ne voit ton build tant que tu ne le partages pas. Dans <b>Partager</b>, coche un perso pour que la guilde voie son build dans Information Guilde — décoche pour le retirer. Le lien, lui, n'existe que si tu le demandes, et ne s'ouvre qu'aux membres du serveur Discord ; <b>Rendre privé</b> le désactive.</p></div></div>`
   +`<div class="aidesec">`+VGI('save',{size:17})+`<div><h4>Sauvegarde</h4><p>Tout est enregistré à chaque changement, sans bouton. Mais chaque changement <b>écrase</b> le précédent : il n'y a pas d'annulation. Un point de restauration est créé de temps en temps, et le staff peut en restaurer un depuis le GuildViewer.</p></div></div>`
-  +`<div class="sheet-foot" style="margin-top:14px"><span></span><span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Compris</span></div>`
+  +`<div class="sheet-foot" style="margin-top:14px"><span></span><span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agClose(0)">Compris</span></div>`
   +`</div></div>`;}
 // ── Partage du build : un lien, créé au clic ──────────────────────────────
 // Avant, l'encadré occupait 316 px en permanence et interrogeait l'API à chaque
 // rendu. Le partage est pourtant un geste rare : on monte un stuff dix fois, on
 // le montre une. Il vit donc dans une fenêtre, et RIEN n'est écrit en base tant
 // que le joueur n'a pas demandé son lien.
+// DEPUIS LE 2026-10-21, LA FENÊTRE PORTE DEUX PARTAGES, indépendants (SPEC-INFORMATION-
+// GUILDE §5 — Maxime : « il est possible de partager le build du membre si le membre le
+// souhaite, intervention par lui-même en partageant depuis l'AirBuilder ») :
+//  · « Visible dans Information Guilde » : une case PAR PERSO. Cochée, la guilde voit
+//    « Voir le build » pour ce perso dans /guilde (src/lib/guilde.ts, `lienBuildPartage`),
+//    et pour lui seul ; décochée, c'est retiré. /api/builder-share, { persos: [...] }.
+//  · le lien : à donner à qui on veut, tout le build, comme avant.
+// La case passe en premier : c'est elle que la guilde verra.
 function vgPartager(){
   if(vgAnon()){vgConnexion('partager ton build');return;}
   if(window.__VIEW||window.__embed){agToast('Mode lecture seule — build d\'un autre membre.',false);return;}
@@ -2353,38 +2302,67 @@ function vgPartager(){
   // Premier appel : on lit l'état (lecture seule, aucune écriture).
   vgPartagerVue(true);
   fetch('/api/builder-share').then(function(r){return r.ok?r.json():null;}).then(function(j){
-    window.__share=j||{shareId:null,public:false};vgPartagerVue();
-  }).catch(function(){window.__share={shareId:null,public:false};vgPartagerVue();});
+    window.__share=j||{shareId:null,public:false,persos:[]};vgPartagerVue();
+  }).catch(function(){window.__share={shareId:null,public:false,persos:[]};vgPartagerVue();});
 }
+// Un nom de perso tel que le site le range (40 signes, /api/characters/sync), comparé
+// sans casse ni accent — la règle du lien profond (vgOuvrirDepuisURL).
+function vgClePartage(x){return String(x==null?'':x).trim().slice(0,40).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function vgEstPartage(nom){var l=(window.__share&&window.__share.persos)||[];return l.some(function(p){return vgClePartage(p)===vgClePartage(nom);});}
 function vgPartagerVue(chargement){
   var s=window.__share||{};var pub=!!s.public&&!!s.shareId;
   var lien=s.shareId?(location.origin+'/build/'+s.shareId):'';
   var corps;
   if(chargement){corps='<div class="mut" style="font-size:13px">Chargement…</div>';}
-  else if(pub){
-    corps='<div class="shmini" style="margin-bottom:11px">Ton build est visible par les membres qui ont ce lien. Il reste en lecture seule.</div>'
-      +'<div class="shrow"><input class="shlink" id="__shlink" readonly value="'+esc(lien)+'" aria-label="Lien de partage">'
-      +'<button type="button" class="shbtn" onclick="vgShareCopy()" aria-label="Copier le lien">'+VGI('clipboard',{size:14})+'</button></div>'
-      +'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'
-      +'<span class="pill" onclick="vgShareSet(0)">'+VGI('lock',{size:13})+' Rendre privé</span>'
-      +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="agClose(0)">Fermer</span></div>';
-  } else {
-    corps='<div class="shmini" style="margin-bottom:14px">Personne ne peut voir ce build. Génère un lien quand tu veux le montrer — rien n\'est enregistré avant ton clic. Le lien reste réservé aux membres du serveur.</div>'
-      +'<div style="display:flex;gap:10px;justify-content:flex-end">'
-      +'<span class="pill" onclick="agClose(0)">Annuler</span>'
-      +'<span class="pill" style="background:var(--orange,#ff8c1a);color:#0A0A0C;font-weight:700" onclick="vgShareSet(1)">'+VGI('link',{size:13})+' Générer le lien</span></div>';
+  else{
+    /* Les cases de perso : celles des mesures du stuff (.tierbtn.mes-c sous un .mes-lab),
+       le contrôle « coché / pas coché » de l'AirBuilder. */
+    var nb=state.chars.filter(function(c){return vgEstPartage(c.name);}).length;
+    corps='<div class="mes-l" style="margin-bottom:6px"><span class="mes-lab">Visible dans Information Guilde'+(nb?' · '+nb+' perso'+(nb>1?'s':''):'')+'</span>'
+      +'<div class="mes-cases">'+state.chars.map(function(c,i){var on=vgEstPartage(c.name);
+        return '<span class="tierbtn mes-c'+(on?' on':'')+'" role="checkbox" aria-checked="'+on+'" tabindex="0" onclick="vgSharePerso('+i+')" onkeydown="if(event.key===\' \'||event.key===\'Enter\'){event.preventDefault();vgSharePerso('+i+');}">'
+          +(on?'<i class=vgi-check></i> ':'')+esc(c.name)+'</span>';}).join('')+'</div></div>'
+      +'<div class="shmini" style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:16px">Coche un perso : toute la guilde voit « Voir le build » pour lui dans Information Guilde — pour lui seul, tes autres persos restent privés. Décoche pour retirer le partage.</div>'
+      +'<div class="mes-l" style="margin-bottom:6px"><span class="mes-lab">Par un lien</span></div>';
+    if(pub){
+      corps+='<div class="shmini" style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:11px">Tout ton build est visible par les membres du serveur qui ont ce lien. Il reste en lecture seule.</div>'
+        +'<div class="shrow" style="display:flex;gap:7px;align-items:center"><input class="shlink" id="__shlink" readonly value="'+esc(lien)+'" aria-label="Lien de partage">'
+        +'<button type="button" class="shbtn" onclick="vgShareCopy()" aria-label="Copier le lien">'+VGI('clipboard',{size:14})+'</button></div>'
+        +'<div class="vgshare-foot" style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">'
+        +'<span class="pill" onclick="vgShareSet(0)">'+VGI('lock',{size:13})+' Rendre privé</span>'
+        +'<span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="agClose(0)">Fermer</span></div>';
+    } else {
+      corps+='<div class="shmini" style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:14px">Aucun lien. Génère-le quand tu veux montrer tout ton build à quelqu\'un — rien n\'est enregistré avant ton clic. Il reste réservé aux membres du serveur.</div>'
+        +'<div class="vgshare-foot" style="display:flex;gap:10px;justify-content:flex-end">'
+        +'<span class="pill" onclick="agClose(0)">Fermer</span>'
+        +'<span class="pill" style="background:var(--gn-action);color:var(--gn-sur-action);font-weight:700" onclick="vgShareSet(1)">'+VGI('link',{size:13})+' Générer le lien</span></div>';
+    }
   }
-  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet" style="max-width:460px;padding:22px">'
-    +'<div style="font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px">'+VGI('link',{size:16})+' Partager mon build</div>'
+  document.getElementById('modalRoot').innerHTML='<div class="modal" onclick="if(event.target===this)agClose(0)"><div class="sheet vgshare" style="max-width:460px;padding:22px">'
+    +'<div style="font-weight:700;font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:8px">'+VGI('link',{size:16})+' Partager mon build</div>'
     +corps+'</div></div>';
 }
+/* Coche ou décoche un perso. On envoie la liste ENTIÈRE de ce qui est coché parmi les
+   persos d'aujourd'hui : un nom resté d'un perso renommé ou supprimé tombe ainsi de
+   lui-même. Rien n'est coché d'office ; le site ne montre que ce qui l'est. */
+function vgSharePerso(i){if(window.__VIEW||vgAnon())return;var c=state.chars[i];if(!c)return;
+  var on=vgEstPartage(c.name);
+  var liste=state.chars.filter(function(x){return x!==c&&vgEstPartage(x.name);}).map(function(x){return x.name;});
+  if(!on)liste.push(c.name);
+  fetch('/api/builder-share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({persos:liste})})
+   .then(function(r){return r.ok?r.json():null;}).then(function(s){
+      if(!s)return agToast('Erreur : partage non modifié.',false);
+      window.__share={shareId:s.shareId,public:!!s.public,persos:s.persos||[]};
+      agToast(on?'« '+c.name+' » n\'est plus visible dans Information Guilde':'« '+c.name+' » est visible dans Information Guilde',true);
+      vgPartagerVue();
+   }).catch(function(){agToast('Erreur réseau : partage non modifié.',false);});}
 // Bascule la visibilité. L'API génère le shareId au premier partage.
 function vgShareSet(pub){if(window.__VIEW)return;pub=!!pub;
   fetch('/api/builder-share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({public:pub})})
    .then(function(r){return r.ok?r.json():null;}).then(function(s){
       if(!s)return agToast('Erreur : partage non modifié.',false);
-      window.__share={shareId:s.shareId,public:pub};
-      agToast(pub?'Lien de partage créé':'Build repassé en privé',true);
+      window.__share={shareId:s.shareId,public:pub,persos:s.persos||((window.__share||{}).persos)||[]};
+      agToast(pub?'Lien de partage créé':'Lien de partage désactivé',true);
       vgPartagerVue();
    }).catch(function(){agToast('Erreur réseau : partage non modifié.',false);});}
 function vgShareCopy(){var i=document.getElementById('__shlink');
@@ -3045,7 +3023,7 @@ function fairyPanel(e){const w=cfgOf('fairy');const niv=w.lvl||0;
       +`</div>`
     /* LE PALIER S'ECRIT ENTIER — « Exp +25% » et « Drop +1 / Penyas 35% »
        compris : c'est l'effet de l'esprit equipe, pas un butin ramasse. Voir
-       `espritTexte`, et la distinction au long au-dessus de `statCat`.
+       `espritTexte`, et la distinction au long dans le bloc « CE QU'ON RAMASSE ≠ CE QUE L'EQUIPEMENT DONNE ».
        LA TROISIEME COLONNE EST LE CUMUL DEPUIS LE 1, comme la colonne du tableau
        de Craft et Collections : elle situe chaque palier dans la depense totale,
        et elle est CALCULEE sur la grille — jamais recopiee palier par palier. */
@@ -3166,16 +3144,10 @@ function vgClsEnum(x){return String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'
 /* Valeur de l'enum -> libelle affiche (celui de CLASSES, accents compris). */
 function vgClsLibelle(v){var t=vgClsEnum(v);for(var i=0;i<CLASSES.length;i++){if(vgClsEnum(CLASSES[i])===t)return CLASSES[i];}return CLASSES[0];}
 
-/* Envoie au compte un perso cree dans le builder. Silencieux : en mode
-   lecture seule / iframe / hors connexion, il n'y a rien a synchroniser. */
-function vgPousserPersoCompte(c){
-  if(window.__VIEW||window.__embed||!c||!c.name)return;
-  try{
-    fetch('/api/characters',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:c.name,class:vgClsEnum(c.cls),level:c.lvl||200,prestige:c.prestige||0,sex:c.sex==='F'?'F':'G',
-        isMain:state.chars.length===1})}).catch(function(){});
-  }catch(e){}
-}
+/* `vgPousserPersoCompte` est parti le 2026-10-21 avec POST /api/characters. Il
+   envoyait au compte chaque perso cree ici, en double de la synchro : le rendu qui
+   suit la creation enregistre, et /api/characters/sync recree tout le compte depuis
+   cet etat. Une seule ecriture, une seule source : l'AirBuilder. */
 
 /* Etat vierge : un seul perso, nom par defaut, aucun equipement pose.
    C'est le seul cas ou on s'autorise a remplacer la liste locale. */
@@ -3183,7 +3155,12 @@ function vgEtatVierge(){
   if(!state.chars||state.chars.length!==1)return false;
   var c=state.chars[0];
   if(!/^Perso\s*1$/i.test(String(c.name||'')))return false;
-  return !(c.stuffs||[]).some(function(s){return s.eq&&Object.keys(s.eq).length;});
+  /* L'EXEMPLE TEL QUE `newChar('Perso 1')` LE POSE, rien de plus. Une classe, un niveau,
+     un prestige, un carnet ou une mesure saisis sur « Perso 1 » sont un vrai travail :
+     sans piece equipee, ils ne partaient jamais au compte (la publication saute un etat
+     vierge), et « Mes personnages » ne les montrait pas. */
+  if(c.cls!=='Arcaniste'||c.sex!=='G'||+c.lvl!==200||+c.prestige!==3||(c.carnets||[]).length)return false;
+  return !(c.stuffs||[]).some(function(s){return (s.eq&&Object.keys(s.eq).length)||Object.keys(((s.mesures||{}).v)||{}).length;});
 }
 
 /* Premier lancement : on reprend les persos du compte, et s'il n'y en a
@@ -3205,34 +3182,49 @@ function vgPremierPerso(){
       });
       state.cur=0;render();
       agToast(list.length+' personnage'+(list.length>1?'s':'')+' repris de ton compte.',true);
+      /* Un lien profond arrive avant cette liste : il n'avait rien trouve a ouvrir. */
+      vgOuvrirDepuisURL();
     }else{
       charForm();                                   /* aucun perso : on le cree d'abord */
     }
   }).catch(function(){});
 }
 
-/* Une adresse peut designer un perso et un stuff precis, et demander l'ouverture
-   directe de « Acheter un objet ». C'est ainsi que « Mes personnages » et la
-   boutique renvoient ici. Le moteur n'avait jamais lu l'URL : ces liens
-   existaient depuis le debut et ne faisaient rien.
-   La comparaison se fait sans accent ni casse — le nom vient d'un formulaire. */
+/* LE LIEN PROFOND — `/builder?perso=<nom>&stuff=<rang>` ouvre ce perso et ce stuff.
+   C'est ainsi que « Mes personnages » (la page et le bloc de l'accueil) renvoie ici,
+   un lien par perso et par stuff (src/lib/mesPersos.ts, `lienBuilder`).
+
+   IL N'ECRIT RIEN. Il ne cree pas un perso qui manque, ne renomme rien, ne touche a
+   aucune piece : il CHOISIT ce qui s'affiche, comme un clic sur l'onglet. Un perso
+   introuvable ne fait rien du tout — surtout pas ouvrir le stuff demande sur le perso
+   d'a cote. Le rendu qui suit retient seulement ce choix, comme tout clic d'onglet.
+
+   `stuff` est un RANG (0 = le premier) : deux stuffs peuvent porter le meme nom
+   (« Dupliquer » en fabrique), un rang n'est pas ambigu. Un `stuff` qui n'est pas un
+   nombre est lu comme un NOM : les liens d'avant le 2026-10-21 le passaient ainsi.
+   Le nom du perso se compare sans accent ni casse.
+
+   PAS DE DRAPEAU « deja fait ». Il y en avait un, et il cassait le second lien d'une
+   meme visite : l'AirBuilder reste charge quand on navigue dans le site, BuilderRunner
+   rappelle cette fonction au retour, et elle ne faisait plus rien. Rejouer un lien est
+   sans effet de bord : on rouvre ce qui est deja ouvert. */
 function vgOuvrirDepuisURL(){
-  if(window.__vgURLFaite)return;
   try{
     var p=new URLSearchParams(location.search);
-    var nom=p.get('perso'),st=p.get('stuff'),ach=p.get('acheter');
-    if(!nom&&!st&&!ach)return;
+    var nom=p.get('perso'),st=p.get('stuff');
+    if(!nom&&(st==null||st===''))return;
     var norm=function(x){return String(x==null?'':x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');};
+    /* Le nom du perso, coupe a 40 signes comme la synchro le range (/api/characters/sync) :
+       le site ne connait que ces 40-la, et son lien ne retrouvait pas un nom plus long. */
+    var cle=function(x){return norm(String(x==null?'':x).slice(0,40));};
     var bouge=false;
-    if(nom){var i=state.chars.findIndex(function(c){return norm(c.name)===norm(nom);});
-      if(i>=0&&i!==state.cur){state.cur=i;bouge=true;}}
-    if(st){ST();var c=C();var j=(c.stuffs||[]).findIndex(function(x){return norm(x.name)===norm(st);});
-      if(j>=0&&j!==c.curStuff){c.curStuff=j;bouge=true;}}
-    if(bouge){render();save();}
-    /* On n'ouvre « Acheter un objet » que s'il y a quelque chose a acheter :
-       sur un stuff vide, la fenetre s'ouvrirait sur une liste vide. */
-    if(ach==='1'&&Object.keys(ST().eq||{}).some(function(k){var e=ST().eq[k];return e&&e.item;}))vgAcheterPiece();
-    window.__vgURLFaite=1;
+    if(nom){var i=state.chars.findIndex(function(c){return cle(c.name)===cle(nom);});
+      if(i<0)return;
+      if(i!==state.cur){state.cur=i;bouge=true;}}
+    if(st!=null&&st!==''){ST();var c=C(),l=c.stuffs||[];
+      var j=/^\d+$/.test(st)?parseInt(st,10):l.findIndex(function(x){return norm(x.name)===norm(st);});
+      if(j>=0&&j<l.length&&j!==c.curStuff){c.curStuff=j;bouge=true;}}
+    if(bouge)render();
   }catch(e){}
 }
 window.vgOuvrirDepuisURL=vgOuvrirDepuisURL;
@@ -3246,7 +3238,11 @@ mecaniques();
 render();
 vgPremierPerso();
 vgOuvrirDepuisURL();
-window.addEventListener('beforeunload',function(){try{save();}catch(e){}});
+/* EN QUITTANT LA PAGE : l'etat local d'abord, puis la publication qui attendait
+   (vgPublierMaintenant). `pagehide` plutot que `beforeunload`, qui ne part pas sur
+   telephone. On ne publie que ce qui ATTENDAIT : `save()` en programme une autre, qui
+   n'a rien de neuf a dire et meurt avec la page. */
+window.addEventListener('pagehide',function(){try{var attendait=!!_vgPushT;save();if(attendait)vgPublierMaintenant(true);}catch(e){}});
 ;
 window.__APP='airbuilder';
 // Auto-réparation : si le conteneur AirBuilder est recréé vide (re-clic sur le lien nav / navigation vers la même route), on relance render() automatiquement.

@@ -91,7 +91,7 @@ export function Echelles({ choisi, onChoix, nbDe }: {
 
       {/* Échelle 3 : les niveaux de perso qui ouvrent les paliers. */}
       <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginTop: 16 }}>
-        <Borne valeur={LIMITES.niveauMaxGeneral} quoi="Héros s'ouvre" couleur="var(--orange)" />
+        <Borne valeur={LIMITES.niveauMaxGeneral} quoi="Héros s'ouvre" couleur="var(--gn-accent)" />
         <Borne valeur={LIMITES.niveauMaxLegendaire} quoi="les légendaires s'ouvrent" couleur="var(--purple)" />
         <Borne valeur={LIMITES.niveauMaxPersonnage} quoi="plafond d'un perso" couleur="var(--text-muted)" />
       </div>

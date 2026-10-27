@@ -146,7 +146,7 @@ export default function PrestigePage() {
           <div className="pr-lb">Prestige actuel</div>
           <VgSelect full value={cur} onChange={(val) => { const v = +val; setCur(v); if (v >= tgt) setTgt(Math.min(10, v + 1)); }} options={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
         </label>
-        <div style={{ display: "flex", alignItems: "center", paddingBottom: 8, color: "var(--orange)", fontSize: 22 }}>→</div>
+        <div style={{ display: "flex", alignItems: "center", paddingBottom: 8, color: "var(--gn-accent)", fontSize: 22 }}>→</div>
         <label style={{ flex: 1, minWidth: 150 }}>
           <div className="pr-lb">Prestige cible</div>
           <VgSelect full value={tgt} onChange={(v) => setTgt(+v)} options={[2, 3, 4, 5, 6, 7, 8, 9, 10].filter((p) => p > cur).map((p) => ({ value: String(p), label: `Prestige ${p}` }))} />
@@ -160,11 +160,11 @@ export default function PrestigePage() {
           {/* Progression globale */}
           <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 9, flexWrap: "wrap", gap: 6 }}>
-              <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1 }}><Icon name="package" size={16} /> P{cur} → P{tgt}</span>
-              <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{done}/{keys.length} ressources · <b style={{ color: globalPct === 100 ? "var(--green)" : "var(--orange)" }}>{globalPct}%</b></span>
+              <span className="font-heading" style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 14, color: "var(--gn-accent)", textTransform: "uppercase", letterSpacing: 1 }}><Icon name="package" size={16} /> P{cur} → P{tgt}</span>
+              <span style={{ fontSize: 13, color: "var(--text-muted)" }}>{done}/{keys.length} ressources · <b style={{ color: globalPct === 100 ? "var(--green)" : "var(--gn-accent-clair)" }}>{globalPct}%</b></span>
             </div>
             <div style={{ height: 12, background: "var(--bg-3)", borderRadius: 6, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${globalPct}%`, background: globalPct === 100 ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .35s ease", boxShadow: "0 0 12px rgba(255,140,26,.4)" }} />
+              <div style={{ height: "100%", width: `${globalPct}%`, background: globalPct === 100 ? "var(--green)" : "var(--gn-jauge)", transition: "width .35s ease", boxShadow: "0 0 12px rgba(var(--gn-lueur-rgb),.4)" }} />
             </div>
           </div>
 
@@ -215,18 +215,18 @@ export default function PrestigePage() {
                     </div>
                   )}
                   <div style={{ height: 9, background: "var(--bg-3)", borderRadius: 5, overflow: "hidden", marginBottom: 10 }}>
-                    <div style={{ height: "100%", width: `${pct}%`, background: ok ? "var(--green)" : "linear-gradient(90deg,#FFB552,#FF8C1A)", transition: "width .3s ease" }} />
+                    <div style={{ height: "100%", width: `${pct}%`, background: ok ? "var(--green)" : "var(--gn-jauge)", transition: "width .3s ease" }} />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <input type="number" min={0} value={owned || ""} onChange={(e) => setHave({ ...have, [k]: Math.max(0, +e.target.value || 0) })} placeholder="J'en ai…" aria-label={`Ce que tu as déjà en ${k}`} />
                     <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>/ {fr(total)}</span>
-                    <span style={{ marginLeft: "auto", fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 13, color: ok ? "var(--green)" : "var(--orange)" }}>{ok ? "Complet" : `reste ${fr(rem)}`}</span>
+                    <span style={{ marginLeft: "auto", fontFamily: "Rubik,sans-serif", fontWeight: 700, fontSize: 13, color: ok ? "var(--green)" : "var(--gn-accent)" }}>{ok ? "Complet" : `reste ${fr(rem)}`}</span>
                   </div>
 
                   {/* La barre reprend la teinte du chiffre de la carte — verte quand la
                       ressource est complète, orange sinon — et jamais deux teintes dans
                       la même série. */}
-                  <ParPalier cle={k} de={cur} a={tgt} teinte={ok ? "var(--green)" : "var(--orange)"} />
+                  <ParPalier cle={k} de={cur} a={tgt} teinte={ok ? "var(--green)" : "var(--gn-accent)"} />
                 </div>
               );
             })}
@@ -267,7 +267,7 @@ export default function PrestigePage() {
           {/* Ces ressources se farment et se craftent : deux pages le disent, aucune
               n'était atteignable d'ici. */}
           <div className="glass-card fx-card" style={{ padding: 15, display: "flex", gap: 11, alignItems: "flex-start", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.65 }}>
-            <Icon name="info" size={15} style={{ color: "var(--orange)", flexShrink: 0, marginTop: 2 }} />
+            <Icon name="info" size={15} style={{ color: "var(--gn-accent)", flexShrink: 0, marginTop: 2 }} />
             <span>
               {/* « en partie » : la page s'ouvre depuis le mode vitrine, mais c'est
                   justement la moitié RECETTES — celle dont il est question ici — qui
@@ -320,13 +320,13 @@ export default function PrestigePage() {
       <style>{`
         .pr-lb{font-size:11.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
         .pr-h2{font-family:'Rubik',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;
-          letter-spacing:1px;color:var(--orange);margin:0 0 13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+          letter-spacing:1px;color:var(--gn-accent);margin:0 0 13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
         .pr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:16px}
         .pr-card{background:linear-gradient(180deg,#191920,#131318);border-radius:13px;padding:13px 15px;transition:transform .15s,box-shadow .15s}
         .pr-card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.32)}
         .pr-card input{width:92px;padding:6px 9px;font-size:12.5px;background:var(--bg-3);
           border:1px solid var(--border);border-radius:7px;color:var(--text)}
-        .pr-card input:focus{outline:none;border-color:var(--orange)}
+        .pr-card input:focus{outline:none;border-color:var(--gn-accent)}
         .pr-nu{display:flex;align-items:center;gap:5px;margin-bottom:9px;font-size:11.5px;
           color:var(--text-muted);flex-wrap:wrap}
         .pr-palier{margin-top:11px;padding-top:10px;border-top:1px solid color-mix(in srgb, var(--border) 60%, transparent)}
@@ -343,12 +343,12 @@ export default function PrestigePage() {
         .pr-palier-b{min-width:0}
         .pr-palier-v{font-size:11px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text)}
         .pr-nom{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--text);
-          text-decoration:none;border-bottom:1px dotted color-mix(in srgb, var(--orange) 55%, transparent);
+          text-decoration:none;border-bottom:1px dotted rgba(var(--gn-or-rgb),.55);
           transition:color .15s,border-color .15s}
-        .pr-nom:hover{color:var(--orange);border-bottom-color:var(--orange)}
+        .pr-nom:hover{color:var(--gn-accent);border-bottom-color:var(--gn-accent)}
         .pr-legende{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-4px 0 16px;
           font-size:11.5px;color:var(--text-muted)}
-        .pr-lien{color:var(--orange);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
+        .pr-lien{color:var(--gn-accent);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
         .pr-lien:hover{color:var(--text)}
         @keyframes prIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
         .pr-grid>*{animation:prIn .4s ease both}

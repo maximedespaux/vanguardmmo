@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+Aperçu métal de la géométrie de base « lance » : MÊMES chemins que g-geometrie.svg,
+copiés à l'identique (mêmes id, mêmes d). Chaque pièce est fendue le long de son arête
+en une face claire (côté lumière, en haut à gauche) et une face sombre. Les zones
+d'ombrage (zone-*) ne dessinent rien : elles ne servent qu'à découper ces faces.
+Rendu d'essai pour juger la forme en situation, pas une finition.
+-->
+  <defs>
+
+    <!-- or : seules teintes dérivées de #C69A55 / #E6C48A / #F2EDE5 / #15151D -->
+    <linearGradient id="face-lum" gradientUnits="userSpaceOnUse" x1="180" y1="160" x2="860" y2="880">
+      <stop offset="0" stop-color="#F2EDE5"/>
+      <stop offset="0.22" stop-color="#E6C48A"/>
+      <stop offset="0.6" stop-color="#C69A55"/>
+      <stop offset="1" stop-color="#6B5030"/>
+    </linearGradient>
+    <linearGradient id="face-ombre" gradientUnits="userSpaceOnUse" x1="180" y1="160" x2="860" y2="880">
+      <stop offset="0" stop-color="#4A3822"/>
+      <stop offset="0.45" stop-color="#7E5E33"/>
+      <stop offset="0.8" stop-color="#C69A55"/>
+      <stop offset="1" stop-color="#E6C48A"/>
+    </linearGradient>
+    <linearGradient id="face-haut" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C69A55"/>
+      <stop offset="0.5" stop-color="#E6C48A"/>
+      <stop offset="1" stop-color="#C69A55"/>
+    </linearGradient>
+    <linearGradient id="face-bas" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5C4428"/>
+      <stop offset="0.6" stop-color="#7E5E33"/>
+      <stop offset="1" stop-color="#4A3822"/>
+    </linearGradient>
+    <linearGradient id="lance-g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2EDE5"/>
+      <stop offset="0.5" stop-color="#E6C48A"/>
+      <stop offset="1" stop-color="#C69A55"/>
+    </linearGradient>
+    <linearGradient id="lance-d" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8A6A3C"/>
+      <stop offset="0.5" stop-color="#6B5030"/>
+      <stop offset="1" stop-color="#4A3822"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="512" cy="520" r="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60152D" stop-opacity="0.5"/>
+      <stop offset="0.5" stop-color="#60152D" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#08080C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="lueur" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="arete" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+      <!-- liseré : un soupçon de lumière spéculaire sur les bords, rien de plus -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.2" result="f"/>
+      <feSpecularLighting in="f" surfaceScale="2.5" specularConstant="0.9" specularExponent="28" lighting-color="#F2EDE5" result="s">
+        <feDistantLight azimuth="225" elevation="42"/>
+      </feSpecularLighting>
+      <feComposite in="s" in2="SourceAlpha" operator="in" result="si"/>
+      <feComposite in="si" in2="SourceGraphic" operator="arithmetic" k1="0" k2="0.55" k3="1" k4="0"/>
+    </filter>
+    <clipPath id="zone-face-ext"><path d="M0 0H1024V1024H0Z M 349.5 287 A 296 296 0 1 1 349.5 740 A 450 450 0 0 1 204.5 513.5 A 450 450 0 0 1 349.5 287 Z" clip-rule="evenodd"/></clipPath>
+    <clipPath id="zone-face-haut"><path d="M0 0H1024V526H0Z" clip-rule="nonzero"/></clipPath>
+    <clipPath id="zone-gauche"><path d="M0 0H512V1024H0Z" clip-rule="nonzero"/></clipPath>
+    <mask id="m-lance" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <use href="#p-cristal" fill="#000" stroke="#000" stroke-width="18" stroke-linejoin="miter" stroke-miterlimit="8"/>
+      <g clip-path="url(#zone-lance-2)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-lance-2"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-pointe" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-pointe-1)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-pointe-1"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-corps" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-corps-1)"><use href="#p-lance" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+      <use href="#p-etoile" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/>
+    </mask>
+    <clipPath id="zone-corps-1"><rect x="0" y="0" width="1024" height="512"/></clipPath>
+  </defs>
+  <rect id="fond" width="1024" height="1024" fill="#08080C"/>
+  <rect id="halo-fond" width="1024" height="1024" fill="url(#halo)"/>
+  <g id="g-lance" mask="url(#m-lance)">
+   <g filter="url(#arete)" fill="url(#lance-d)">
+    <path id="p-lance" d="M 500 164 L 524 164 L 524 868 L 500 868 Z"/>
+    <use href="#p-lance" fill="url(#lance-g)" clip-path="url(#zone-gauche)"/>
+   </g>
+  </g>
+  <g id="g-pointe" mask="url(#m-pointe)">
+   <g filter="url(#arete)" fill="url(#lance-d)">
+    <path id="p-pointe" d="M 512 828 Q 522 874 548 884 Q 522 894 512 958 Q 502 894 476 884 Q 502 874 512 828 Z"/>
+    <use href="#p-pointe" fill="url(#lance-g)" clip-path="url(#zone-gauche)"/>
+   </g>
+  </g>
+  <g id="g-corps" mask="url(#m-corps)">
+   <g filter="url(#arete)" fill="url(#face-ombre)">
+    <path id="p-corps" d="M 798.5 316.5 L 755 274.5 A 330 330 0 0 0 305 267 A 500 500 0 0 0 165 482 Q 155 512 106 512 Q 155 512 165 542 A 500 500 0 0 0 305 757 A 330 330 0 0 0 854.5 544 L 784 544 L 784 640.5 A 262 262 0 0 1 392.5 721.5 A 400 400 0 0 1 254 515 A 400 400 0 0 1 392.5 308.5 A 262 262 0 0 1 631.5 264.5 Z"/>
+    <use href="#p-corps" fill="url(#face-lum)" clip-path="url(#zone-face-ext)"/>
+   </g>
+  </g>
+  <g id="g-barre">
+   <g filter="url(#arete)" fill="url(#face-bas)">
+    <path id="p-barre" d="M 547 500 L 916 500 L 853.5 552 L 784 552 L 547 552 L 561.5 526 Z"/>
+    <use href="#p-barre" fill="url(#face-haut)" clip-path="url(#zone-face-haut)"/>
+   </g>
+  </g>
+  <g id="g-etoile">
+   <g filter="url(#arete)" fill="url(#lance-d)">
+    <path id="p-etoile" d="M 512 64 Q 525 127 578 140 Q 525 153 512 224 Q 499 153 446 140 Q 499 127 512 64 Z"/>
+    <use href="#p-etoile" fill="url(#lance-g)" clip-path="url(#zone-gauche)"/>
+   </g>
+  </g>
+  <g id="lueur-cristal" filter="url(#lueur)" opacity="0.85">
+    <use href="#p-cristal" fill="#A6192E" transform="translate(512 518) scale(1.25) translate(-512 -518)"/>
+  </g>
+  <g id="g-cristal" fill="#A6192E">
+    <path id="p-cristal" d="M 512 458 L 550 526 L 512 594 L 474 526 Z"/>
+    <path d="M 512 458 L 512 518 L 474 526 Z" fill="#C8505F"/>
+    <path d="M 512 458 L 550 526 L 512 518 Z" fill="#A6192E"/>
+    <path d="M 474 526 L 512 518 L 512 594 Z" fill="#7A1530"/>
+    <path d="M 550 526 L 512 594 L 512 518 Z" fill="#60152D"/>
+    <use href="#p-cristal" fill="none" stroke="#E6C48A" stroke-width="2.5" stroke-linejoin="miter"/>
+  </g>
+</svg>

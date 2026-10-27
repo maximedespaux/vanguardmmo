@@ -108,7 +108,7 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
             <span>attaquent à vue</span>
           </Invisible>
         } />
-        <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--orange)" />
+        <Chiffre icon="heart" valeur={entier(compteurs.milliard)} quoi="au-delà du milliard de PV" ton="var(--gn-accent)" />
         <Chiffre icon="flame" valeur={entier(compteurs.rage)} quoi="entrent en rage" ton="var(--red)" />
         {/* ┌──── « OBJETS » DISAIT 106, LE CATALOGUE EN MONTRE 108 ────┐
                Les deux comptes sont JUSTES, et c'est bien le problème :
@@ -177,7 +177,7 @@ export function EcranMonstres({ boss, frappeurs, compteurs, total, agressifs, vi
               comptes du catalogue entier sous un tableau qui n'en montre que 94 :
               « Chambres Secrètes 16 » sous sept lignes de Chambres Secrètes. */}
           <div>
-            <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 9px" }}>
+            <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", margin: "4px 0 9px" }}>
               Les contenus reconstitués
             </div>
             <ContenusBoss lignes={boss} />
@@ -308,9 +308,9 @@ function TableauBoss({ lignes, colonne }: { lignes: LigneClassement[]; colonne: 
                   {m.groupe && <span style={{ display: "block", fontSize: 11, color: "var(--text-muted)" }}>{m.groupe}</span>}
                 </td>
                 <td style={{ ...td, color: tonRang(m.rang) }}>{m.niv ?? "—"}</td>
-                <td style={{ ...td, fontWeight: 700, minWidth: 96, color: colonne === "pvEff" ? "var(--orange)" : "var(--text)" }}>
+                <td style={{ ...td, fontWeight: 700, minWidth: 96, color: colonne === "pvEff" ? "var(--gn-accent)" : "var(--text)" }}>
                   {court(colonne === "pvEff" ? m.pvEff : m.pv)}
-                  {colonne === "pvEff" && <Barre m={m} teinte="var(--orange)" />}
+                  {colonne === "pvEff" && <Barre m={m} teinte="var(--gn-jauge)" />}
                 </td>
                 <td style={{ ...td, color: (m.vies ?? 0) > 1 ? "var(--red)" : "var(--text-muted)", fontWeight: (m.vies ?? 0) > 1 ? 700 : 400 }}>
                   {m.vies ?? "1"}

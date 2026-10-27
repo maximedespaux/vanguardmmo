@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { ESPACES, HORS_ESPACES, type Espace, type Lien } from "@/config/nav";
+import { espacesPour, type Lien, type Qui } from "@/config/nav";
 
 /**
  * « Tout » — chaque page du site, en un panneau.
@@ -15,10 +15,14 @@ import { ESPACES, HORS_ESPACES, type Espace, type Lien } from "@/config/nav";
  * Il vit donc à côté de l'identité, avec les affaires personnelles : c'est là
  * qu'on va quand on ne sait plus où chercher, pas dans le fil des espaces.
  *
- * Le filtrage d'accès reste celui de la barre : on ne montre que ce qui s'ouvre.
- * Annoncer une page pour la refuser ensuite est pire que de la taire.
+ * IL GARDE SA PLACE alors que la barre a maigri — décision de Maxime. Il porte
+ * donc aussi les pages que la barre ne nomme pas (le profil) : il
+ * lit la carte entière par `espacesPour`, la même fonction que la barre et le plan
+ * du site. Il recevait jusqu'ici les listes déjà filtrées de la barre, ce qui
+ * l'aurait amputé de ces pages-là sans un mot.
  */
-export function PanneauTout({ espaces, hors }: { espaces: Espace[]; hors: Lien[] }) {
+export function PanneauTout({ qui }: { qui: Qui }) {
+  const { espaces, hors } = espacesPour(qui, "plan");
   const [ouvert, setOuvert] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -36,10 +40,10 @@ export function PanneauTout({ espaces, hors }: { espaces: Espace[]; hors: Lien[]
   return (
     <div ref={ref} style={{ position: "relative" }}>
       <button onClick={() => setOuvert((o) => !o)} aria-expanded={ouvert} aria-label="Toutes les pages du site"
-        title="Toutes les pages du site"
+        title="Toutes les pages du site" className="vg-top-tout"
         style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px", borderRadius: 10, cursor: "pointer",
-          border: `1px solid ${ouvert ? "rgba(255,140,26,.4)" : "transparent"}`,
-          background: ouvert ? "rgba(255,140,26,.1)" : "none", color: "var(--text-muted)",
+          border: `1px solid ${ouvert ? "rgba(var(--gn-or-rgb),.4)" : "transparent"}`,
+          background: ouvert ? "rgba(var(--gn-lueur-rgb),.1)" : "none", color: "var(--text-muted)",
           fontSize: 12.5, fontWeight: 600, fontFamily: "inherit" }}>
         <Icon name="grid" size={16} /><span className="vg-top-som">Tout</span>
       </button>
@@ -47,7 +51,7 @@ export function PanneauTout({ espaces, hors }: { espaces: Espace[]; hors: Lien[]
       {ouvert && (
         <div style={{ position: "absolute", top: "calc(100% + 9px)", right: 0, width: 340, maxWidth: "calc(100vw - 24px)",
           maxHeight: "min(72vh, 640px)", overflowY: "auto",
-          background: "linear-gradient(180deg,#191920,#121217)", border: "1px solid #2f2f3a", borderTop: "2px solid var(--orange)",
+          background: "linear-gradient(180deg,#191920,#121217)", border: "1px solid #2f2f3a", borderTop: "2px solid var(--gn-accent)",
           borderRadius: "0 0 14px 14px", boxShadow: "0 18px 44px rgba(0,0,0,.6)", zIndex: 50, animation: "vgdrop .16s ease" }}>
 
           <div style={{ padding: "13px 16px 9px", borderBottom: "1px solid var(--border)" }}>
@@ -66,7 +70,7 @@ export function PanneauTout({ espaces, hors }: { espaces: Espace[]; hors: Lien[]
           {espaces.map((e) => (
             <div key={e.label} style={{ padding: "4px 9px 6px" }}>
               <div className="font-heading" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10.5,
-                textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", padding: "7px 6px 5px" }}>
+                textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", padding: "7px 6px 5px" }}>
                 <Icon name={e.icon} size={12} />{e.label}
               </div>
               {e.liens.map((l) => <Ligne key={l.href} l={l} onGo={() => setOuvert(false)} />)}
@@ -84,7 +88,7 @@ function Ligne({ l, onGo }: { l: Lien; onGo: () => void }) {
     <Link href={l.href} onClick={onGo} className="vg-prof-link"
       style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "7px 8px", borderRadius: 9, textDecoration: "none", color: "var(--text)" }}>
       <span style={{ width: 26, height: 26, borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)",
-        display: "flex", alignItems: "center", justifyContent: "center", color: "var(--orange)", flexShrink: 0 }}>
+        display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gn-accent)", flexShrink: 0 }}>
         <Icon name={l.icon} size={14} />
       </span>
       <span style={{ minWidth: 0 }}>

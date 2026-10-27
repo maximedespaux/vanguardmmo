@@ -60,7 +60,7 @@ export function Reserves({ vagues, b }: { vagues: Vague[]; b: Bilan }) {
         </p>
       </Reserve>
 
-      <Reserve icon="camera" tone="var(--orange)" titre="Le tableau des vagues vient de captures d'écran, pas des fichiers du jeu">
+      <Reserve icon="camera" tone="var(--gn-accent)" titre="Le tableau des vagues vient de captures d'écran, pas des fichiers du jeu">
         <p>
           La carte de la Tour Infernale est une arène vide : ni monstre posé, ni zone de
           regénération, ni script de vague. Tout est calculé par le serveur, donc les 52 vagues,

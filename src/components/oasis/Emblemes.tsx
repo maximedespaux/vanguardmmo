@@ -41,7 +41,7 @@ export function Emblemes({ b }: { b: Bilan }) {
         {DEBOUCHES.map((d) => (
           <div key={d.donne} className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px" }}>
             <div className="font-heading" style={{ fontSize: 13.5, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-              <Icon name="swap" size={14} style={{ color: "var(--orange)", flexShrink: 0 }} />{d.donne}
+              <Icon name="swap" size={14} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />{d.donne}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
               {d.cout.map((c) => {
@@ -50,9 +50,9 @@ export function Emblemes({ b }: { b: Bilan }) {
                   <span key={c.quoi} style={{
                     display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, borderRadius: 6, padding: "3px 9px",
                     fontVariantNumeric: "tabular-nums",
-                    background: embleme ? "rgba(255,140,26,0.09)" : "var(--bg-3)",
-                    border: `1px solid ${embleme ? "var(--orange-dark)" : "var(--border)"}`,
-                    color: embleme ? "var(--orange)" : "var(--text-muted)",
+                    background: embleme ? "rgba(var(--gn-lueur-rgb),.09)" : "var(--bg-3)",
+                    border: `1px solid ${embleme ? "var(--gn-or-sombre)" : "var(--border)"}`,
+                    color: embleme ? "var(--gn-accent)" : "var(--text-muted)",
                   }}>
                     {embleme && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -70,7 +70,7 @@ export function Emblemes({ b }: { b: Bilan }) {
 
       <SousTitre>Combien de tours pour un parchemin de prestige</SousTitre>
       <div style={{ background: "var(--bg-3)", borderRadius: 12, padding: 14, fontSize: 13, lineHeight: 1.7 }}>
-        Le parchemin qui fait passer au <Link href="/prestige" style={{ color: "var(--orange)", textDecoration: "none" }}>prestige 6</Link> réclame
+        Le parchemin qui fait passer au <Link href="/prestige" style={{ color: "var(--gn-accent)", textDecoration: "none" }}>prestige 6</Link> réclame
         {" "}<b style={{ fontVariantNumeric: "tabular-nums" }}>{nb(cible)} emblèmes ordinaires</b>. Or un tour complet n&apos;en donne
         que <b style={{ fontVariantNumeric: "tabular-nums" }}>{nb(b.primeSimple)}</b> : à ce rythme,
         il faut <b style={{ color: "var(--red)", fontVariantNumeric: "tabular-nums" }}>{toursSansConvertir} tours complets</b> des
@@ -104,7 +104,7 @@ function Prime({ nom, qte, vagues, tone }: { nom: string; qte: number; vagues: n
 /** Même forme de sous-titre que le panneau voisin : une seule police, une seule casse. */
 function SousTitre({ children }: { children: React.ReactNode }) {
   return (
-    <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--orange)", margin: "0 0 10px" }}>
+    <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--gn-accent)", margin: "0 0 10px" }}>
       {children}
     </div>
   );

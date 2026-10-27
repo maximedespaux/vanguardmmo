@@ -19,7 +19,7 @@ import { IconeRessource, Instance, Objet, ObjetLie, Verrou, Vignette, fr } from 
  *
  * CE QU'ELLE NE POSSÈDE PLUS. Elle portait quatorze cartes et quatre panneaux, dont
  * trois entiers sur des sujets qui ont leur page : perçage, élément d'une pièce,
- * fashion, gemmes de costume, runes, éveil (→ /builder/mecaniques, qui a une section
+ * fashion, gemmes de costume, runes, éveil (→ /mecaniques, qui a une section
  * pour chacun), provenance des runes, parchemins, étuis et coffrets de cartes
  * (→ /objets, qui les lit dans ou-trouver.json), recettes (→ /crafts), phrases de boss
  * (→ /monstres), totaux de ressources (→ /prestige, qui les calcule). Chacun de ces
@@ -95,7 +95,7 @@ type Priorite = {
 };
 
 /** Une icône de la barre d'outils du site, pour les priorités qui n'ont pas d'objet. */
-const ic = (nom: IconName) => <Icon name={nom} size={20} style={{ color: "var(--orange)" }} />;
+const ic = (nom: IconName) => <Icon name={nom} size={20} style={{ color: "var(--gn-accent)" }} />;
 
 export default function GuidePage() {
   // Halo suivant le curseur + leger relief sur les .fx-card (cf. VgFx).
@@ -229,7 +229,7 @@ export default function GuidePage() {
          s'écrit « sa rune » et non « la rune Yggdrasil » : le mot Yggdrasil est déjà dans
          le nom de l'objet, trois mots plus tôt. */
       quoi: <>Le <ObjetLie nom="Marteau Runique Yggdrasil" avecIcone={false} />, pour{" "}
-        <a href="/builder/mecaniques" className="gd-lien">sa rune</a> <Verrou quoi="compte" /> :{" "}
+        <a href="/mecaniques" className="gd-lien">sa rune</a> :{" "}
         <Bulle quoi={<>L&apos;astuce de Sugot : restat full END aux parchemins d&apos;Isruel, stuff DPS, dugkug en continu au Ftool, AoE sur les monstres seulement — jamais le boss.</>}>le farm le plus long</Bulle>, à commencer tôt.</>,
     },
     {
@@ -268,7 +268,7 @@ export default function GuidePage() {
       <Bulle quoi={<>Un délai court sépare deux bascules : dedans, il est trop tard.</>}><i>avant</i> d&apos;entrer</Bulle>.</>,
     <>Deux gestes détruisent sans retour :{" "}
       <Bulle quoi={<>Et au perçage, c&apos;est la <b>dernière</b> carte posée qui part — on sertit donc en dernier ce dont on est sûr.</>}>enchanter sans parchemin de protection, et retirer un perçage</Bulle>.{" "}
-      <a href="/builder/mecaniques" className="gd-lien">Les mécaniques</a> <Verrou quoi="compte" /></>,
+      <a href="/mecaniques" className="gd-lien">Les mécaniques</a></>,
     <>Un seul{" "}
       <Bulle quoi={<>Clic droit sur son icône de buff pour le retirer ; les invendus reviennent par la poste.</>}>marchand hors ligne</Bulle>{" "}
       à la fois.</>,
@@ -293,7 +293,7 @@ export default function GuidePage() {
     { href: "/donjons", icon: "castle", titre: "Les donjons" },
     { href: "/monstres", icon: "paw", titre: "Les monstres" },
     { href: "/prestige", icon: "star", titre: "Le prestige" },
-    { href: "/builder/mecaniques", icon: "gem", titre: "Les mécaniques", verrou: "compte" },
+    { href: "/mecaniques", icon: "gem", titre: "Les mécaniques" },
     /* /pnj MANQUAIT, et c'est ce guide qui en avait le plus besoin : il nomme
        Pépito, le marchand de l'entrée, le téléporteur du Jardin. « Qui vend quoi »
        a une page propriétaire, et elle est PUBLIQUE — src/app/(public)/pnj. */
@@ -326,7 +326,7 @@ export default function GuidePage() {
              l'en-tête, à trois centimètres. Ce qui reste est ce que cette ligne est
              seule à dire : d'où parle Sugot. */
           sous="Niveau 200, prestige 3."
-          marque={{ texte: "Formateur volontaire", couleur: "var(--orange)" }}
+          marque={{ texte: "Formateur volontaire", couleur: "var(--gn-accent)" }}
         />
 
         {/* ── LA FRISE ──
@@ -472,23 +472,23 @@ export default function GuidePage() {
           autour. */}
       <style>{`
         .gd { line-height:1.6; color:var(--text); }
-        .gd h2 { font-family:'Rubik',sans-serif; margin:0; font-weight:700; }
+        .gd h2 { font-family:var(--gn-titre); margin:0; font-weight:700; }
         .gd p { margin:0; }
         .gd b { color:var(--text); }
         .gd-card { background:var(--bg-2); border:1px solid var(--border); border-radius:14px; padding:22px; margin-bottom:16px; }
-        .gd-cardtitle { font-size:18px; text-transform:uppercase; letter-spacing:1px; color:var(--orange);
+        .gd-cardtitle { font-size:18px; text-transform:uppercase; letter-spacing:1px; color:var(--gn-accent);
           margin-bottom:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .gd-lien { display:inline-flex; align-items:center; gap:5px; color:var(--orange); text-decoration:none;
+        .gd-lien { display:inline-flex; align-items:center; gap:5px; color:var(--gn-accent); text-decoration:none;
           border-bottom:1px dotted currentColor; font-weight:600; }
         .gd-lien:hover { color:var(--text); }
 
         .gd-legende { display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:11.5px; color:var(--text-muted); }
         .gd-lg { display:inline-flex; align-items:center; gap:6px; }
-        .gd-lgb { display:inline-block; width:26px; height:5px; border-radius:3px; background:var(--orange); }
+        .gd-lgb { display:inline-block; width:26px; height:5px; border-radius:3px; background:var(--gn-jauge); }
         .gd-lgp { display:inline-block; width:26px; height:13px; border-radius:20px; border:1px solid var(--border);
           background:linear-gradient(90deg,
-            color-mix(in srgb, var(--orange) 26%, transparent) 0,
-            color-mix(in srgb, var(--orange) 26%, transparent) 55%,
+            rgba(var(--gn-lueur-rgb),.26) 0,
+            rgba(var(--gn-lueur-rgb),.26) 55%,
             var(--bg-2) 55%, var(--bg-2) 100%); }
 
         .gd-prio { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr)); gap:9px; }
@@ -512,14 +512,14 @@ export default function GuidePage() {
         .gd-regles { margin:0; padding-left:19px; display:grid; gap:9px; font-size:13.5px; }
         .gd-regles li { line-height:1.6; }
         .gd-regles code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
-          background:var(--bg-4); border:1px solid var(--border); border-radius:5px; padding:1px 5px; color:var(--orange); }
+          background:var(--bg-4); border:1px solid var(--border); border-radius:5px; padding:1px 5px; color:var(--gn-accent); }
 
         .gd-suite { display:flex; flex-wrap:wrap; gap:9px; }
         .gd-s { display:inline-flex; gap:9px; align-items:center; text-decoration:none; color:var(--text);
           background:var(--bg-3); border:1px solid var(--border); border-radius:11px; padding:10px 14px;
           transition:border-color .15s, transform .15s; }
-        .gd-s:hover { border-color:var(--orange); transform:translateY(-2px); }
-        .gd-s > svg { color:var(--orange); flex-shrink:0; }
+        .gd-s:hover { border-color:var(--gn-accent); transform:translateY(-2px); }
+        .gd-s > svg { color:var(--gn-accent); flex-shrink:0; }
         .gd-s b { font-size:13px; }
 
         .gd-foot { text-align:center; color:var(--text-muted); font-size:13px; padding:14px; font-style:italic; }

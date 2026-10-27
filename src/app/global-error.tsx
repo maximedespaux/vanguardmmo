@@ -13,7 +13,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             L&apos;application a rencontré un problème majeur. Recharge la page pour repartir.
             {error?.digest && <span style={{ display: "block", marginTop: 10, fontSize: 12, opacity: 0.6 }}>Réf : {error.digest}</span>}
           </p>
-          <button onClick={() => reset()} style={{ padding: "12px 24px", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#241402", background: "linear-gradient(180deg,#FFB552,#FF8C1A)" }}>↻ Recharger</button>
+          <button onClick={() => reset()} style={{ padding: "12px 24px", border: "none", borderRadius: 10, cursor: "pointer", fontWeight: 700, fontSize: 14, color: "#F2EDE5", background: "linear-gradient(180deg,#B71F36 0%,#94172B 55%,#6E1022 100%)" }}>↻ Recharger</button>
         </div>
       </body>
     </html>

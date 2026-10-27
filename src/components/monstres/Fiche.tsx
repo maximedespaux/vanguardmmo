@@ -80,7 +80,7 @@ function Ligne({ quoi, valeur, ton }: { quoi: React.ReactNode; valeur: React.Rea
 }
 
 /** Une tuile marquante, pour les deux ou trois chiffres qui décident du combat. */
-function Tuile({ titre, valeur, sous, ton = "var(--orange)", icon }: {
+function Tuile({ titre, valeur, sous, ton = "var(--gn-accent)", icon }: {
   titre: React.ReactNode; valeur: React.ReactNode; sous?: string; ton?: string; icon: IconName;
 }) {
   return (
@@ -228,7 +228,7 @@ export function FicheMonstre({ m, voisins, regle = null }: {
           )}
           <div style={{ display: "grid", gap: 14, flex: "1 1 300px", minWidth: 0 }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(148px,1fr))", gap: 9 }}>
-              <Tuile icon="heart" ton={seReleve ? "var(--red)" : "var(--orange)"}
+              <Tuile icon="heart" ton={seReleve ? "var(--red)" : "var(--gn-accent)"}
                 titre={seReleve
                   ? (
                     /* La pastille est POSÉE SUR LE CHIFFRE : c'est ici qu'on lit le
@@ -441,7 +441,7 @@ export function FicheMonstre({ m, voisins, regle = null }: {
         <div style={{ display: "grid", gap: 5 }}>
           {m.lieux.map((l, i) => (
             <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 9, padding: "7px 0", borderTop: i ? "1px solid color-mix(in srgb, var(--border) 55%, transparent)" : "none", fontSize: 13 }}>
-              <Icon name="map-pin" size={13} style={{ color: "var(--orange)", flexShrink: 0, transform: "translateY(2px)" }} />
+              <Icon name="map-pin" size={13} style={{ color: "var(--gn-accent)", flexShrink: 0, transform: "translateY(2px)" }} />
               <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{l.z}</span>
               <span style={{ flexShrink: 0, fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
                 <Bulle quoi="Le nombre de points d'apparition posés dans les fichiers de carte, pas le nombre de monstres vivants à un instant donné.">

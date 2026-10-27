@@ -99,7 +99,7 @@ export function Vagues({ vagues, b }: { vagues: Vague[]; b: Bilan }) {
               const pv = pvVague(v), frappe = frappeVague(v), sup = estSup(v);
               return (
                 <tr key={v.n} style={{ borderTop: "1px solid rgba(46,46,56,0.55)" }}>
-                  <td style={{ ...td, fontWeight: 700, color: v.n === b.vagues ? "var(--gold)" : "var(--orange)" }}>
+                  <td style={{ ...td, fontWeight: 700, color: v.n === b.vagues ? "var(--gold)" : "var(--gn-accent)" }}>
                     {v.n}
                     {v.n === b.vagues && <div style={{ fontSize: 9.5, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: .5 }}>la dernière</div>}
                   </td>
@@ -108,7 +108,7 @@ export function Vagues({ vagues, b }: { vagues: Vague[]; b: Bilan }) {
                     {v.monstres.map((m, i) => (
                       <div key={i} style={{ marginTop: i ? 5 : 0 }}>
                         <span style={{ fontWeight: 600 }}>{m.nom ?? m.interne}</span>
-                        <span style={{ color: "var(--orange)" }}> ×{m.qte}</span>
+                        <span style={{ color: "var(--gn-accent)" }}> ×{m.qte}</span>
                         {m.retrouve && (
                           <span title="Nom absent du relevé, retrouvé dans la table du client — voir les réserves"
                             style={{ marginLeft: 6, fontSize: 9.5, textTransform: "uppercase", letterSpacing: .5, color: "var(--purple)", border: "1px solid var(--purple)", borderRadius: 20, padding: "0 6px" }}>
@@ -127,7 +127,7 @@ export function Vagues({ vagues, b }: { vagues: Vague[]; b: Bilan }) {
                   <td style={td}>
                     <div style={{ fontWeight: 600 }}>{pvCourt(pv)}</div>
                     <div style={{ marginTop: 4, height: 5, background: "var(--bg-3)", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{ width: `${echelle(pv)}%`, height: "100%", borderRadius: 3, background: sup ? "linear-gradient(90deg,var(--gold),var(--orange))" : "var(--orange)" }} />
+                      <div style={{ width: `${echelle(pv)}%`, height: "100%", borderRadius: 3, background: sup ? "linear-gradient(90deg,var(--gold),var(--gn-accent))" : "var(--gn-jauge)" }} />
                     </div>
                   </td>
 
@@ -173,7 +173,7 @@ export function Vagues({ vagues, b }: { vagues: Vague[]; b: Bilan }) {
 }
 
 /** Une tuile de chiffre, à la forme des pastilles de la page des donjons. */
-function Chiffre({ icon, valeur, quoi, tone = "var(--orange)" }: { icon: IconName; valeur: string; quoi: string; tone?: string }) {
+function Chiffre({ icon, valeur, quoi, tone = "var(--gn-accent)" }: { icon: IconName; valeur: string; quoi: string; tone?: string }) {
   return (
     <div className="fx-card" style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 12, padding: "11px 13px" }}>
       <div className="font-heading" style={{ fontSize: 19, fontWeight: 700, color: tone, display: "flex", alignItems: "center", gap: 7, fontVariantNumeric: "tabular-nums" }}>

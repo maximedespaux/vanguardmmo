@@ -60,7 +60,7 @@ export function LienMonstre({ nom, niv, pv, couleur }: {
          cliquer le nom d'un monstre ouvrait la fiche du donjon PAR-DESSUS la
          navigation, et on atterrissait sur /monstres avec une modale ouverte. */
       onClick={(e) => e.stopPropagation()}
-      style={{ color: couleur ?? "inherit", textDecoration: "none", borderBottom: "1px dotted var(--orange)" }}
+      style={{ color: couleur ?? "inherit", textDecoration: "none", borderBottom: "1px dotted var(--gn-accent)" }}
     >
       {nom}
     </Link>

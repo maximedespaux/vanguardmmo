@@ -195,7 +195,7 @@ function AvantDEntrer({ b }: { b: Bilan }) {
   return (
     <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 18, marginBottom: 12, fontSize: 12.5, lineHeight: 1.6, color: "var(--text-muted)", display: "grid", gap: 7 }}>
       <div>
-        <Icon name="map-pin" size={13} style={{ marginRight: 6, color: "var(--orange)" }} />
+        <Icon name="map-pin" size={13} style={{ marginRight: 6, color: "var(--gn-accent)" }} />
         L&apos;entrée est <b style={{ color: "var(--text)" }}>{AVANT_D_ENTRER.ou}</b>,
         chez <b style={{ color: "var(--text)" }}>{AVANT_D_ENTRER.pnj}</b> — c&apos;est lui qui lance
         la session et qui reprend les emblèmes.
@@ -257,7 +257,7 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
    * par defaut : sans lui, changer la balise changeait le dessin.
    */
   const titre = (
-    <h2 className="font-heading" style={{ fontSize: 12.5, fontWeight: 400, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+    <h2 className="font-heading" style={{ fontSize: 12.5, fontWeight: 400, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
       Protection de l&apos;Oasis
       <span style={{ fontSize: 12, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>
         {vagues.length ? `${vagues.length} vagues, une seule arène` : "relevé indisponible"}
@@ -343,7 +343,7 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
             {([
               [nb(b.vagues), "vagues", "var(--text)"],
               [`${nb(b.monstres)}`, `monstres · ${b.especes} espèces`, "var(--text)"],
-              [pvCourt(b.pv), "PV à sortir", "var(--orange)"],
+              [pvCourt(b.pv), "PV à sortir", "var(--gn-accent)"],
               [nb(b.primeSimple + b.primeSup), "emblèmes", "var(--gold)"],
             ] as const).map(([v, quoi, ton]) => (
               <div key={quoi} style={{ minWidth: 0 }}>
@@ -383,9 +383,9 @@ export function BlocOasis({ vagues, ouvrir }: { vagues: Vague[]; ouvrir?: boolea
         aria-expanded={ouvert}
         className="font-heading"
         style={{ width: "100%", padding: 10, borderRadius: 8, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 13,
-          background: ouvert ? "rgba(255,140,26,.09)" : "var(--bg-3)",
-          border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`,
-          color: ouvert ? "var(--orange)" : "var(--text)" }}
+          background: ouvert ? "rgba(var(--gn-lueur-rgb),.09)" : "var(--bg-3)",
+          border: `1px solid ${ouvert ? "var(--gn-accent)" : "var(--border)"}`,
+          color: ouvert ? "var(--gn-accent)" : "var(--text)" }}
       >
         <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={14} />
         {ouvert

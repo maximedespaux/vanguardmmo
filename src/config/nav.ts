@@ -1,4 +1,8 @@
 import type { IconName } from "@/components/Icon";
+import type { Role } from "@prisma/client";
+import { canAccessAdmin, canAccessGuild } from "@/config/roles";
+import { ESPACES_OUVRABLES, REGLAGE_AMIS_DEFAUT } from "@/config/amis";
+import { DEV_ROLE } from "@/lib/devAccess";
 
 /**
  * La navigation, en un seul endroit.
@@ -14,9 +18,23 @@ import type { IconName } from "@/components/Icon";
  * descriptions et sur les pages elles-mêmes. Ce sont les produits d'iBeats, on
  * ne les efface pas — on cesse juste de s'en servir comme panneaux indicateurs.
  *
- * Aucune URL ne change : rien n'a bougé sur le disque, seule la carte change.
+ * CE FICHIER EST AUSSI L'INDEX DU SITE. La barre, le panneau « Tout » et le plan du
+ * site (en bas de l'accueil) se génèrent tous trois d'ici, par `espacesPour`. Une
+ * page vivante absente d'ici n'existe pour personne — et une entrée retirée d'un
+ * espace fait aussi disparaître sa tuile de l'accueil d'un membre (« Mes outils »).
+ */
+/**
+ * `guild` : la guilde — et, dans un espace que le rôle Discord Friend ouvre (config/amis.ts),
+ * les amis de la guilde. C'est `peutOuvrir` qui le dit, avec l'espace de la ligne.
  */
 export type Acces = "public" | "guild" | "admin";
+
+/**
+ * Le nom stable d'un espace, celui que portent le réglage des amis (`Setting` acces_amis)
+ * et le jeton (`token.amis`). Le libellé peut changer ; la clé, non — sinon un réglage
+ * enregistré fermerait en silence l'espace renommé.
+ */
+export type CleEspace = "airbuilder" | "astuces" | "guilde" | "bras-droits";
 
 export type Lien = {
   label: string;
@@ -25,21 +43,43 @@ export type Lien = {
   /** Une ligne, à la deuxième personne : ce qu'on vient y faire. */
   desc: string;
   acces?: Acces;
+  /** Le sous-titre sous lequel le lien se range dans un déroulant à rubriques. */
+  groupe?: string;
+  /**
+   * `false` : la page est déclarée — plan du site, « Tout », droits des onglets —
+   * mais n'a pas de ligne dans la barre. C'est ce qui permet de raccourcir la barre
+   * sans laisser une page vivante hors de la carte.
+   */
+  barre?: false;
+  /**
+   * Un appel à rejoindre : la barre le rend en bouton, à droite, et personne de la
+   * guilde ne le voit, nulle part — on ne propose pas d'entrer à qui est entré.
+   */
+  appel?: true;
+  /**
+   * La face PUBLIQUE d'une page que la guilde a, en mieux, ailleurs : personne de la
+   * guilde ne voit cette ligne, nulle part — la même règle que `appel`, sans le bouton.
+   * C'est « La guilde » (/#la-guilde) : un membre a Information Guilde, qui la contient
+   * en entier ; un visiteur n'a qu'elle, et c'est elle qui garde l'espace Guilde dans sa
+   * barre — un espace vidé par le filtre disparaît (`espacesPour`).
+   */
+  horsGuilde?: true;
 };
 
 export type Espace = {
+  cle: CleEspace;
   label: string;
   icon: IconName;
   /** Page ouverte si on clique sur l'espace lui-même. */
   href: string;
+  /**
+   * Où mène le libellé quand `href` est fermé à celui qui regarde. Sans lui, un
+   * visiteur qui cliquait « Guilde » était renvoyé vers la connexion par une page
+   * qu'on ne lui avait jamais montrée.
+   */
+  hrefVisiteur?: string;
   acces: Acces;
   liens: Lien[];
-  /**
-   * Entrée qui mène DIRECTEMENT à sa page, sans menu déroulant. Réservé à ce
-   * qu'on ouvre tous les jours : un déroulant à une seule ligne ajoute un clic
-   * pour rien, et enterre justement ce qu'on veut mettre en avant.
-   */
-  direct?: boolean;
 };
 
 export const ESPACES: Espace[] = [
@@ -47,29 +87,32 @@ export const ESPACES: Espace[] = [
     // L'espace porte le nom de l'outil, parce que c'est CE qu'on vient y faire :
     // monter son stuff. Les deux pages qui restent sont les deux faces du meme
     // geste — qui je joue, et avec quoi.
+    cle: "airbuilder",
     label: "AirBuilder",
     icon: "shirt",
     href: "/builder",
     /* PUBLIC, comme ses deux pages : elles vivent dans le groupe (public) et le
-       middleware les en a explicitement sorties. Le menu, lui, exigeait encore
+       middleware n'en garde aucune. Le menu, lui, exigeait encore
        la guilde — un visiteur, et surtout un CANDIDAT, ne trouvait donc pas le
        builder alors que sa candidature lui demande un build. On compose sans
        compte ; c'est enregistrer et partager qui exigent la connexion, et les
        routes le verifient d'elles-memes. */
     acces: "public",
     liens: [
-      { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos, et le stuff de chacun." },
+      /* Une VUE, plus un formulaire (2026-10-21) : la page reflète ce que l'AirBuilder
+         a publié, et chaque perso, chaque stuff s'y rouvre dans le builder. Créer,
+         modifier, rendre principal, supprimer : tout se fait dans l'AirBuilder. */
+      { label: "Mes personnages", href: "/personnages", icon: "users", desc: "Tes persos et leurs stuffs, tels que l'AirBuilder les publie." },
       { label: "AirBuilder", href: "/builder", icon: "shirt", desc: "Monte ton stuff, pièce par pièce." },
-      // Le lexique des mécaniques : ce que veut dire « éveil R1 » ou « perçage
-      // Fulgur », avec les icônes du jeu. Rattaché au builder parce que c'est là
-      // qu'on rencontre ces mots.
-      { label: "Les mécaniques", href: "/builder/mecaniques", icon: "info", desc: "Artefact, rareté, gemmes, runes, perçage : ce que chaque mot veut dire." },
+      // « Les mécaniques » est partie dans Astuces le 2026-10-21 (Maxime : « c'est des
+      // astuces en soi »), à l'adresse /mecaniques.
     ],
   },
   {
     // Ouvert à tout le monde, connecté ou non : c'est de la connaissance du
     // JEU, pas de l'activité de la guilde. C'est aussi par là qu'un joueur de
     // passage découvre Vanguard — d'où des pages indexables.
+    cle: "astuces",
     label: "Astuces",
     icon: "compass",
     href: "/donjons",
@@ -103,7 +146,7 @@ export const ESPACES: Espace[] = [
       // Les objets et les classes viennent du client du jeu, pas de la guilde :
       // ils appartiennent donc à cet espace-là. Sans ces deux entrées, les pages
       // n'étaient atteignables qu'en tapant leur adresse — et absentes du
-      // sommaire, qui est généré depuis ce fichier.
+      // plan du site, qui est généré depuis ce fichier.
       /* LE WIKI EN PREMIER, parce que c'est la porte de tout le reste. La page cherche
          d'un seul coup dans les 12 134 objets, les 1 124 monstres, les 834 recettes et
          les 293 PNJ — là où le site portait AU MOINS DIX recherches séparées, chacune
@@ -135,7 +178,18 @@ export const ESPACES: Espace[] = [
 
            `/api/pnj` et `/api/monstres`, eux, n'ont bien aucune garde : c'est
            pourquoi /pnj et /monstres sont publics sans rien casser.          */
+      /* `guild` dit « la guilde », et depuis le 2026-10-21 aussi « les amis » : la page vit
+         dans le groupe (espace-astuces), dont la garde est `requireEspace("astuces")`, et sa
+         route dans `apiEspace("astuces")` — le rôle Friend l'ouvre si son réglage ouvre
+         Astuces (config/amis.ts). Toujours rien pour un visiteur ni un candidat. */
       { label: "Objets", href: "/objets", icon: "package", desc: "Cherche un objet, ses stats et d'où il vient.", acces: "guild" },
+      /* LE LEXIQUE DES MÉCANIQUES, venu de l'espace AirBuilder le 2026-10-21 (Maxime :
+         « c'est des astuces en soi ») : ce que veut dire « éveil R1 » ou « perçage
+         Fulgur », avec les icônes du jeu. Juste sous Objets, parce que ce sont les mots
+         des objets. Publique : un lexique du jeu, qui ne lit aucune route membre.
+         `gem`, comme son bouton dans l'AirBuilder et sa tuile du guide ; aucun voisin
+         ne la porte. L'ancienne adresse /builder/mecaniques redirige ici (308). */
+      { label: "Les mécaniques", href: "/mecaniques", icon: "gem", desc: "Artefact, rareté, gemmes, runes, perçage : ce que chaque mot veut dire." },
       /* QUATRE ENTRÉES ONT DISPARU D'ICI, et ce n'est pas une perte de contenu :
          les pages ont FUSIONNÉ dans le compartiment qui les concernait. Demande de
          Maxime, mot pour mot : « le but est d'avoir le moins de page possible mais
@@ -148,7 +202,7 @@ export const ESPACES: Espace[] = [
            attend.
          · Collections → /crafts. Fabriquer et collectionner sont les deux faces du
            même jeu de longue haleine.
-         · Astuces de guilde → /builder/mecaniques, désigné « pas utile » comme page
+         · Astuces de guilde → /mecaniques, désigné « pas utile » comme page
            par Maxime alors que ses FAITS sont la meilleure matière des mécaniques.
 
          Les quatre adresses restent vivantes en redirection : elles ont pu circuler
@@ -160,109 +214,265 @@ export const ESPACES: Espace[] = [
       // deux voisins de la même liste avec la même icône ne se distinguent plus.
       { label: "Monstres", href: "/monstres", icon: "paw", desc: "PV, dégâts, élément — et les boss à plusieurs vies." },
       { label: "PNJ", href: "/pnj", icon: "users", desc: "Qui vend quoi, et où le trouver." },
-      // Réservée à la guilde : la page dit quelles recettes sont ÉTEINTES, donc où
-      // la concurrence farme dans le vide. Le libellé porte les deux sujets depuis
-      // que les collections l'ont rejointe.
-      { label: "Crafts & collections", href: "/crafts", icon: "hammer", desc: "Les recettes, l'arbre du farm, les titres, succès, anges et maîtrises.", acces: "guild" },
-      // Le World Boss est une connaissance du JEU — quand il passe, ce qu'il
-      // lache — avant d'etre une affaire de guilde. Sa page reste reservee aux
-      // membres : c'est le lien qui porte l'exigence, pas l'espace.
-      { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages, et qui vient.", acces: "guild" },
+      /* PUBLIQUE, et c'était le menu qui mentait. La page vit dans (vitrine), sans
+         garde : un visiteur y lit les collections, les recettes lui restent fermées
+         (/api/crafts est gardée) et un bandeau le lui dit. Le menu la disait
+         « guilde » et la cachait donc à ceux pour qui elle a été refaite. Le libellé
+         porte les deux sujets depuis que les collections l'ont rejointe. */
+      { label: "Crafts & collections", href: "/crafts", icon: "hammer", desc: "Les recettes, l'arbre du farm, les titres, succès, anges et maîtrises." },
+      // Le World Boss est parti dans Guilde : sa page dit qui vient au prochain
+      // passage, c'est un rendez-vous de la guilde, et elle est fermée aux visiteurs.
     ],
   },
   {
-    label: "Quête Guilde",
-    icon: "target",
-    href: "/quetes",
-    acces: "guild",
-    direct: true,
-    liens: [
-      { label: "Quête Guilde", href: "/quetes", icon: "target", desc: "Ce que la guilde cherche, et qui s'en charge." },
-    ],
-  },
-  {
-    /* Elle s'appelait « Économie » : un mot de gestionnaire pour un endroit où
-       l'on vient acheter. Et « Mes demandes & messages » en était une entrée
-       séparée, alors qu'on ne suit pas une commande ailleurs qu'à l'endroit où
-       on l'a passée — le suivi est devenu un onglet DE la Boutique. */
-    label: "Boutique",
-    icon: "cart",
-    href: "/boutique",
-    /* Etait "public" : la boutique s'ouvrait a tout compte connecte, y compris
-       un Recrue. Un Recrue est un visiteur — le stock commun et les commandes
-       ne le regardent pas. L'espace entier descend au niveau guilde. */
-    acces: "guild",
-    liens: [
-      { label: "Boutique", href: "/boutique", icon: "cart", desc: "Le coffre commun, une pièce sur mesure, et le suivi de ta commande." },
-      // « Mon profil » n'est PAS dans la navigation : ses affaires perso ne sont pas
-      // une destination de l'espace Boutique. On y entre par le panneau du
-      // haut-droite, qui affiche déjà l'essentiel et mène au détail — deux portes
-      // pour la même chose auraient fait douter qu'il s'agisse de la même.
-      // La page /profil existe et reste atteignable par ce panneau.
-      { label: "Mes ventes", href: "/mes-ventes", icon: "coins", desc: "Ce que tu as fourni, et ce que ça t'a rapporté.", acces: "admin" },
-      // Coffre, Crafts et Base des objets etaient trois entrees pour UNE page :
-      // ce sont les onglets d'AirGuild, pas des destinations differentes — elles
-      // s'allumaient d'ailleurs toutes les trois ensemble, l'adresse etant la
-      // meme. Une seule entree, dont le libelle dit ce qu'on vient y FAIRE et la
-      // description ce qu'on y trouve : « AirGuild » seul ne l'apprend a personne.
-      { label: "Coffre & crafts", href: "/coffre", icon: "vault", desc: "Le stock, les recettes et la base des objets — l'outil AirGuild.", acces: "admin" },
-      { label: "Plan de farm", href: "/plan-farm", icon: "sprout-farm", desc: "Ce qui manque au seuil, par catégorie.", acces: "admin" },
-    ],
-  },
-  {
-    /* L'espace descend au niveau GUILDE. Il etait reserve au staff : y ranger
-       Compositions et Mes absences les aurait fait disparaitre pour les membres,
-       puisque l'espace entier se serait masque. Ce sont donc les LIENS qui
-       portent l'exigence — ceux du staff restent marques `admin`. */
+    /* LA BARRE EST PASSÉE DE HUIT ENTRÉES À QUATRE, et c'est surtout ici que ça se
+       joue. « Quête Guilde » et « Boutique » étaient deux espaces à elles seules, et
+       les pages du staff s'éparpillaient sous deux menus. Demande de Maxime : « retire
+       boutique et quête guilde, je veux qu'une page accueil mais complète ».
+
+       QUÊTE GUILDE A QUITTÉ LE SITE le 2026-10-21 (Maxime : « Enlever le bouton Quêtes
+       devenu inutile » — « Quêtes » = TOUT Quête Guilde). Sa page, ses routes et l'onglet
+       du dossier sont partis ; ses lignes restent en base, et /quetes mène à Information
+       Guilde (next.config.js). La Boutique était partie le même jour avec le coffre et
+       les ventes : ses adresses redirigent vers l'accueil.
+
+       L'espace est PUBLIC parce qu'un visiteur y trouve « La guilde ». Chaque lien
+       réservé porte donc `acces: "guild"` EN TOUTES LETTRES : un lien sans `acces` hérite
+       de l'espace, et un visiteur verrait alors au menu des pages qui le renvoient vers
+       la connexion. */
+    cle: "guilde",
     label: "Guilde",
     icon: "shield",
-    /* L'ESPACE OUVRE SUR SON ACCUEIL, plus sur les Chambres Secrètes. Demande de
-       Maxime : « faire un même système pour l'accueil guilde (par défaut l'accueil de
-       la guilde) ». /dashboard est devenu cet accueil — le même système de portes que
-       l'accueil public — et il n'était atteignable que par une porte de la page
-       publique, jamais par le menu. Cliquer « Guilde » tombait donc directement sur
-       une composition, ce qui n'est pas ce qu'on cherche en arrivant. */
-    href: "/dashboard",
-    acces: "guild",
+    /* Le libellé mène à Information Guilde, la première ligne du menu et la page où un
+       membre arrive après la connexion (/api/arrivee). Il menait aux Chambres Secrètes,
+       qui restent à une ligne de là. Un visiteur, lui, ne peut pas l'ouvrir : il arrive
+       sur la présentation publique de la guilde, sur l'accueil. */
+    href: "/guilde",
+    hrefVisiteur: "/#la-guilde",
+    acces: "public",
     liens: [
-      { label: "Accueil de la guilde", href: "/dashboard", icon: "home", desc: "Où j'en suis, et tout ce qui est réservé aux membres." },
+      /* INFORMATION GUILDE — « La guilde et ses règles » renommée et devenue une page
+         (SPEC-INFORMATION-GUILDE §2) : le récap, qui est qui (Discord et persos), les
+         classes, le recensement, le suivi des mesures, et « La guilde » en entier. Le
+         RECENSEMENT n'a plus de ligne : c'est une section de cette page, et /recensement
+         y redirige (#recensement). `landmark` : la maison de la guilde ; aucun voisin
+         ne la porte. */
+      { label: "Information Guilde", href: "/guilde", icon: "landmark", desc: "Qui est qui, les classes, le recensement — et les règles de la guilde.", acces: "guild" },
+      /* SA FACE PUBLIQUE : la section « La guilde » de l'accueil, la seule ligne d'un
+         visiteur (et donc ce qui garde l'espace dans sa barre, où il devient un lien
+         direct). Un membre ne la voit pas : Information Guilde la contient en entier. */
+      { label: "La guilde", href: "/#la-guilde", icon: "book", desc: "Son histoire, ce qu'on attend de chacun, et les règles.", acces: "public", horsGuilde: true },
       /* « Chambres Secrètes » et non « Compositions » — demande de Maxime, et la
          bannière de la page portait déjà ce nom : le menu était le seul endroit à
          dire autre chose. L'ADRESSE, elle, reste /compositions : des inscriptions,
          des créneaux et des liens de build en base pointent dessus, et la renommer
          casserait plus que ça n'éclaircit. */
-      { label: "Chambres Secrètes", href: "/compositions", icon: "castle", desc: "Qui vient, à quel poste, et comment on joue chaque salle." },
-      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là." },
-      { label: "Membres & builds", href: "/guildviewer", icon: "users", desc: "Qui est là, avec quel perso et quel stuff.", acces: "admin" },
-      { label: "Candidatures", href: "/candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser." , acces: "admin" },
-      { label: "Statistiques", href: "/statistiques", icon: "bar-chart", desc: "Qui livre, qui demande, et si l'activité tient." , acces: "admin" },
-      { label: "Journal", href: "/journal", icon: "list", desc: "Le détail, événement par événement." , acces: "admin" },
-      { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Programmer les passages, suivre les venues." , acces: "admin" },
-      { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels et interrupteurs du bot." , acces: "admin" },
-      { label: "Annonce", href: "/annonce", icon: "megaphone", desc: "Un message à toute la guilde, sur Discord." , acces: "admin" },
-      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements Airborn annoncés par le bot." , acces: "admin" },
+      { label: "Chambres Secrètes", href: "/compositions", icon: "castle", desc: "Qui vient, à quel poste, qui tient quoi à chaque phase, le chrono en direct, et comment on joue chaque salle.", acces: "guild" },
+      // Venu d'Astuces : un passage de World Boss est un rendez-vous de la guilde.
+      { label: "World Boss", href: "/worldboss", icon: "dragon", desc: "Les prochains passages, et qui vient.", acces: "guild" },
+      { label: "Mes absences", href: "/absences", icon: "moon", desc: "Préviens quand tu ne seras pas là.", acces: "guild" },
+      // « Accueil de la guilde » (/dashboard) est partie : l'accueil est unique et public.
+    ],
+  },
+  {
+    /* LES BRAS DROITS — les quatre rangs du staff, la règle de `canAccessAdmin`.
+       Leurs pages étaient rangées sous DEUX menus, Boutique et Guilde, mêlées aux
+       pages des membres. Elles ont désormais leur espace, et leurs rubriques
+       (`groupe`) : on cherche « les membres » ou « un outil », pas un nom de page.
+
+       Statistiques, Journal, Coffre & crafts, Plan de farm et Mes ventes ont quitté
+       le site le 2026-10-21 (décision de Maxime) ; leurs adresses redirigent vers le
+       tableau de bord. « Suivi » les remplace par ce que Maxime a demandé : « un suivi
+       du stuff, dashboard, les classes de la guilde, dégâts etc… les choses utiles ».
+
+       LE TABLEAU DE BORD EST DEVENU TOUT-EN-UN le 2026-10-21 (SPEC-INFORMATION-GUILDE §3,
+       Maxime : « tout en un pour éviter les multiples pages ») : le GuildViewer, ses
+       absences, le Suivi et les Candidatures sont des SECTIONS de /staff (`?section=`),
+       et leurs anciennes adresses y redirigent avec leur requête (next.config.js). Les
+       lignes de la rubrique « Tableau de bord » sont ces sections : elles donnent aussi
+       les onglets de la page (staff/page.tsx), qui les lit ici. Des vues d'une page, pas
+       des pages — la barre ne les allume donc pas (Shell, `?`) ; l'onglet de la page le
+       fait.
+
+       La rubrique « Outils » garde ses pages, qui ont des formulaires à elles ; leur
+       barre d'onglets (SectionTabs `rubrique`) se lit toujours ici. Cet espace ne donne
+       aucun droit : les mêmes quatre rangs ouvraient déjà tout, et les gardes n'ont pas
+       bougé. */
+    cle: "bras-droits",
+    label: "Bras droits",
+    icon: "crown",
+    href: "/staff",
+    acces: "admin",
+    liens: [
+      { label: "Tableau de bord", href: "/staff", icon: "gauge", desc: "Ce qui attend un geste du staff, le plus urgent d'abord.", groupe: "Tableau de bord" },
+      { label: "Membres & builds", href: "/staff?section=membres", icon: "users", desc: "Qui est là, avec quel perso et quel stuff — et son dossier.", groupe: "Tableau de bord" },
+      { label: "Absences", href: "/staff?section=absences", icon: "moon", desc: "Qui est absent, qui revient, et depuis quand.", groupe: "Tableau de bord" },
+      { label: "Suivi", href: "/staff?section=suivi", icon: "bar-chart", desc: "Le stuff de chacun, les classes, les dégâts et PV mesurés.", groupe: "Tableau de bord" },
+      { label: "Candidatures", href: "/staff?section=candidatures", icon: "user-plus", desc: "Les demandes d'entrée, à accepter ou refuser.", groupe: "Tableau de bord" },
+      { label: "Bot Discord", href: "/discord", icon: "discord", desc: "Créneaux, rappels, embeds et giveaways du bot.", groupe: "Outils" },
+      /* LE PARAMÉTRAGE DES CHAMBRES ET DU GUILD SIEGE (SPEC-CHAMBRES-RECENSEMENT §9, lot 2 ;
+         décisions 5 et 10 de Maxime : « tout paramétrable », dans l'espace Bras droits) :
+         étapes, phases, monstres par étape, postes, consignes, textes, rappels, dégâts.
+         Déclarée dans le même mouvement que sa page. Hors de la barre (`barre: false`), comme
+         le dit la spec : on y vient depuis Bot Discord, la page des Chambres (« Paramétrer »)
+         et les onglets de la rubrique Outils — mais le plan du site et « Tout » la portent.
+         `settings` : aucun voisin ne la porte. L'accès est celui de l'espace (`admin`). */
+      { label: "Paramétrage des événements", href: "/discord/evenements", icon: "settings", desc: "Étapes, monstres, postes, textes et rappels des Chambres et du Guild Siege.", groupe: "Outils", barre: false },
+      { label: "World Boss — gestion", href: "/gestion-worldboss", icon: "dragon", desc: "Programmer les passages, suivre les venues.", groupe: "Outils" },
+      // « Annonce » est partie dans l'onglet Embed du Bot Discord : c'était la même
+      // commande (/annonce y redirige).
+      { label: "Events du jeu", href: "/events", icon: "calendar", desc: "Les événements Airborn annoncés par le bot.", groupe: "Outils" },
+      /* LE RÉGLAGE DES AMIS (SPEC-INFORMATION-GUILDE §9, Maxime : « avoir un espace
+         paramétrable si jamais on souhaite changer ») : quels rôles Discord font un ami, et
+         quels espaces ils lui ouvrent. `key` : une clé qu'on confie ; aucun voisin ne la
+         porte. */
+      { label: "Accès des amis", href: "/acces-amis", icon: "key", desc: "Le rôle Discord Friend : qui le porte, et ce qu'il ouvre.", groupe: "Outils" },
     ],
   },
 ];
 
 /** Entrées hors espaces : elles ne se rangent nulle part, et c'est très bien. */
 export const HORS_ESPACES: Lien[] = [
-  // `/` était un simple renvoi vers /histoire ; c'est désormais une vraie page
-  // d'accueil, avec les huit classes et par où commencer. Les deux entrées sont
-  // donc distinctes, et « Accueil » mène enfin à l'accueil.
-  { label: "Accueil", href: "/", icon: "home", desc: "Le jeu, les huit classes, et par où commencer.", acces: "public" },
-  { label: "La guilde", href: "/histoire", icon: "book", desc: "La guilde, son histoire et ses règles.", acces: "public" },
-  { label: "Candidature", href: "/candidature", icon: "user-plus", desc: "Rejoindre Vanguard.", acces: "public" },
-  /* LE SOMMAIRE N'ÉTAIT ATTEIGNABLE QU'EN TAPANT SON ADRESSE. Un audit des 48 routes du
-     dépôt l'a montré : il n'était cité nulle part comme LIEN — seulement dans la table
-     des fonds d'écran de Shell, ce qui ne mène à rien. Le panneau « Tout » n'y menait pas
-     davantage, puisqu'il rend les entrées de ce fichier et que celle-ci n'existait pas.
-
-     Il est ici et non dans un espace : c'est la page qui liste TOUS les espaces, la
-     ranger dans l'un d'eux la subordonnerait à son voisin. Elle se génère depuis ce
-     fichier, donc s'y déclarer est un peu circulaire — et sans conséquence : elle
-     s'affichera dans sa propre liste, ce qui est exactement ce qu'on attend d'un index.
-
-     Réservée à la guilde, comme la garde du middleware l'exige déjà pour cette adresse. */
-  { label: "Toutes les pages", href: "/sommaire", icon: "grid", desc: "L'index du site, espace par espace.", acces: "guild" },
+  // L'accueil, PUBLIC et NEUTRE (2026-10-21) : la même vitrine pour tous, et en tête
+  // les personnages de qui en a. Les infos internes sont parties de là.
+  { label: "Accueil", href: "/", icon: "home", desc: "Ce que fait le site, les huit classes, la guilde, et le plan de tout le reste.", acces: "public" },
+  /* « Postuler » et non « Candidature » : le bouton dit le geste, pas le formulaire.
+     « La guilde » et « Toutes les pages » ont quitté cette liste : la première est une
+     ligne de Guilde, la seconde est devenue le plan du site, en bas de l'accueil —
+     /sommaire y redirige. */
+  { label: "Postuler", href: "/candidature", icon: "user-plus", desc: "Rejoindre GENESIS.", acces: "public", appel: true },
+  /* Déclaré pour la première fois. On y entre par le panneau du profil, en haut à
+     droite, et une seconde porte dans la barre aurait fait douter qu'il s'agisse de la
+     même page — d'où `barre: false`. Mais une page que la carte ignore manque au plan
+     du site, et ses onglets la croient réservée au staff (`accesDe`). */
+  { label: "Mon profil", href: "/profil", icon: "user-check", desc: "Ton Discord, tes personnages et leurs stuffs.", acces: "guild", barre: false },
 ];
+
+/**
+ * QUI OUVRE QUOI, lu dans cette carte et nulle part ailleurs.
+ *
+ * Les barres d'onglets recopiaient leurs adresses sans leurs droits : l'onglet
+ * « World Boss » de /donjons s'affichait à un visiteur et l'envoyait sur /login.
+ * Le niveau d'une adresse est donc celui de son entrée ici (`l.acces ?? e.acces`,
+ * la même règle que la barre), et pas une seconde liste à tenir à jour.
+ *
+ * Ce n'est qu'un AFFICHAGE : la page et ses routes gardent leur propre garde.
+ */
+export function accesDe(href: string): Acces | undefined {
+  // Ni `?onglet=` ni `#creneaux` ne font partie de l'adresse d'une page.
+  const chemin = href.split(/[?#]/)[0];
+  for (const e of ESPACES) {
+    const l = e.liens.find((x) => x.href.split(/[?#]/)[0] === chemin);
+    if (l) return l.acces ?? e.acces;
+  }
+  const h = HORS_ESPACES.find((x) => x.href.split(/[?#]/)[0] === chemin);
+  return h ? (h.acces ?? "public") : undefined;
+}
+
+/**
+ * L'espace qui range cette adresse — ou une de ses sous-pages (/objets/123 est dans
+ * Astuces, /compositions/build/… dans Guilde). La plus longue ligne qui la contient
+ * l'emporte ; l'accueil (« / », « /#la-guilde ») ne contient rien d'autre que lui.
+ *
+ * C'est ce que la décision lit pour savoir si le rôle Friend ouvre une page : le
+ * middleware n'a que l'adresse. Une sous-page qui n'est PAS celle de l'espace garde sa
+ * propre garde : /builder/<membre> (le build d'un autre) appelle `requireGuild`, que le
+ * rôle Friend n'ouvre pas.
+ */
+export function espaceDe(href: string): CleEspace | undefined {
+  const chemin = href.split(/[?#]/)[0];
+  let trouve: { cle: CleEspace; long: number } | undefined;
+  for (const e of ESPACES) {
+    for (const l of e.liens) {
+      const base = l.href.split(/[?#]/)[0];
+      if (base === "/" || !(chemin === base || chemin.startsWith(base + "/"))) continue;
+      if (!trouve || base.length > trouve.long) trouve = { cle: e.cle, long: base.length };
+    }
+  }
+  return trouve?.cle;
+}
+
+/**
+ * QUI REGARDE — tout ce que la décision lit, et rien d'autre.
+ *  · `role` : le rang, `User.role` (Discord) ;
+ *  · `devAll` : le « tout ouvert » du dev local (lib/devAccess.ts) ;
+ *  · `amis` : les espaces que le rôle Discord Friend ouvre à ce compte (config/amis.ts) —
+ *    le jeton les porte (lib/auth.ts), les gardes serveur les recalculent sur le compte.
+ */
+export type Qui = { role: Role; devAll?: boolean; amis?: readonly string[] };
+
+/**
+ * CE COMPTE FRANCHIT-IL CE NIVEAU, DANS CET ESPACE ? — LA décision du site.
+ *
+ * Une seule fonction, lue partout où l'on décide : le middleware (edge), la barre, le
+ * panneau « Tout », le plan du site, les onglets, et les gardes `requireEspace` /
+ * `apiEspace` des pages et des routes des espaces ouverts aux amis (lib/access.ts).
+ * Recopier la règle à côté, c'était la voir dériver : le sommaire avait déjà pris du
+ * retard sur la barre une fois.
+ *
+ * Le rôle Friend n'ouvre que le niveau `guild`, et seulement dans un espace qu'il ouvre
+ * ET que le plafond permet (`ESPACES_OUVRABLES`) : un jeton qui porterait « guilde » ou
+ * « bras-droits » n'ouvrirait rien. Le staff (`admin`) reste au rang, sans exception.
+ * Sans `espace`, la ligne n'est d'aucun espace (le profil) : le rang seul décide.
+ */
+export function peutOuvrir(acces: Acces, qui: Qui, espace?: CleEspace): boolean {
+  if (qui.devAll || acces === "public") return true;
+  if (acces === "admin") return canAccessAdmin(qui.role);
+  if (canAccessGuild(qui.role)) return true;
+  return espace !== undefined
+    && (ESPACES_OUVRABLES as readonly string[]).includes(espace)
+    && (qui.amis ?? []).includes(espace);
+}
+
+/** La barre ne porte que ses lignes ; le plan du site et « Tout » portent tout. */
+export type Vue = "barre" | "plan";
+
+/**
+ * CE QUE CE COMPTE VOIT DE LA CARTE — la seule fonction de filtre du site.
+ *
+ * La barre, le panneau « Tout » et le plan du site recopiaient chacun le même
+ * filtre, et le sommaire avait déjà pris du retard sur la barre une fois. Ils
+ * lisent maintenant tous ceci. On ne montre que ce qui s'ouvre : annoncer une page
+ * pour la refuser ensuite est pire que de la taire. Un espace vidé par le filtre
+ * disparaît avec ses lignes.
+ *
+ * Un ami (`qui.amis`) n'est pas de la guilde : il garde donc « Postuler » et la
+ * présentation publique de la guilde, comme un visiteur — seul le RANG les retire.
+ */
+export function espacesPour(qui: Qui, vue: Vue = "plan"): { espaces: Espace[]; hors: Lien[] } {
+  const montre = (l: Lien, defaut: Acces, espace?: CleEspace) =>
+    peutOuvrir(l.acces ?? defaut, qui, espace)
+    && !(vue === "barre" && l.barre === false)
+    && !((l.appel || l.horsGuilde) && canAccessGuild(qui.role));
+  const espaces = ESPACES
+    .filter((e) => peutOuvrir(e.acces, qui, e.cle))
+    .map((e) => ({ ...e, liens: e.liens.filter((l) => montre(l, e.acces, e.cle)) }))
+    .filter((e) => e.liens.length > 0);
+  return { espaces, hors: HORS_ESPACES.filter((l) => montre(l, "public")) };
+}
+
+/**
+ * Pour qui la navigation se dessine. `connecte` : la cloche et le profil plutôt que
+ * « Se connecter ». `amis` : les espaces que le rôle Friend lui ouvre (vide sinon).
+ */
+export type Regard = { role: Role; devAll: boolean; connecte: boolean; amis: string[] };
+
+/**
+ * Le regard que la navigation montre : celui de la session — ou, en local, celui de
+ * DEV_ROLE (voir lib/devAccess.ts), qui coupe alors le « tout ouvert » de DEV_ALL
+ * pour que la barre soit vraiment celle de ce rôle.
+ */
+export function regardDe(session: { user?: unknown } | null | undefined): Regard {
+  if (DEV_ROLE === "VISITEUR") return { role: "RECRUE", devAll: false, connecte: false, amis: [] };
+  /* Un ami simulé ouvre les espaces du réglage PAR DÉFAUT : le navigateur ne lit pas la
+     base, et c'est la barre d'un ami qu'on vient regarder, pas le réglage du jour. */
+  if (DEV_ROLE === "AMI") return { role: "RECRUE", devAll: false, connecte: true, amis: [...REGLAGE_AMIS_DEFAUT.espaces] };
+  if (DEV_ROLE) return { role: DEV_ROLE, devAll: false, connecte: true, amis: [] };
+  const devAll = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1";
+  /* Sous DEV_ALL il n'y a pas de session, et le repli RECRUE faisait du compte de dev
+     (DIRECTION en base, lib/access.ts) un candidat : « Postuler » s'affichait à côté
+     de « Bras droits ». */
+  const u = session?.user as { role?: Role; amis?: string[] } | undefined;
+  const role = u?.role ?? (devAll ? "DIRECTION" : "RECRUE");
+  return { role, devAll, connecte: Boolean(session) || devAll, amis: Array.isArray(u?.amis) ? u.amis : [] };
+}

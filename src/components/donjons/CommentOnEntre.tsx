@@ -87,8 +87,8 @@ export function CommentOnEntre({ portes }: { portes: Porte[] }) {
           align-items:center;gap:9px;text-decoration:none;color:var(--text);
           background:var(--bg-3);border:1px solid var(--border);border-radius:9px;
           padding:7px 10px;font-size:12.5px}
-        .ce-porte:hover{border-color:var(--orange)}
-        .ce-ic{color:var(--orange);flex-shrink:0}
+        .ce-porte:hover{border-color:var(--gn-accent)}
+        .ce-ic{color:var(--gn-accent);flex-shrink:0}
         .ce-par{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .ce-quoi{color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
         .ce-fleche{color:var(--text-muted);flex-shrink:0}

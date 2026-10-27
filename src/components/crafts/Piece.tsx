@@ -148,9 +148,9 @@ export function CarteRecette({ r, surPnj }: { r: Recette; surPnj?: (nom: string)
                 surPnj ? (
                   <button key={nom} onClick={() => surPnj(nom)} style={{
                     background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: 12,
-                    fontWeight: 700, color: "var(--orange)", textDecoration: "underline", textDecorationStyle: "dotted",
+                    fontWeight: 700, color: "var(--gn-accent)", textDecoration: "underline", textDecorationStyle: "dotted",
                   }}>{nom}</button>
-                ) : <b key={nom} style={{ color: "var(--orange)" }}>{nom}</b>
+                ) : <b key={nom} style={{ color: "var(--gn-accent)" }}>{nom}</b>
               ))}
             </span>
           ) : r.st === "on" ? (

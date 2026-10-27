@@ -34,14 +34,14 @@ export default function WorldBossAdminPage() {
   return (
     <div style={{ padding: "28px 32px", maxWidth: 950, margin: "0 auto" }}>
       <PageHeader icon="dragon" title="World Boss — gestion" subtitle="Crée les fiches de boss et programme les événements." />
-      <SectionTabs section="discord" />
+      <SectionTabs rubrique="Outils" />
 
       {/* Deux colonnes quand la place le permet, une seule sinon. En « 1fr 1fr »
           les deux pistes gardaient la largeur de leur contenu et la page
           debordait de 109 px sur telephone. */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,260px),1fr))", gap: 16, marginBottom: 24 }}>
         <div className="glass-card fx-card" style={{ padding: 16 }}>
-          <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Nouveau boss</div>
+          <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--gn-accent)", marginBottom: 12 }}>Nouveau boss</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <input placeholder="Nom" value={bn} onChange={e => setBn(e.target.value)} style={inp} />
             <input placeholder="Zone" value={bz} onChange={e => setBz(e.target.value)} style={inp} />
@@ -52,7 +52,7 @@ export default function WorldBossAdminPage() {
           </div>
         </div>
         <div className="glass-card fx-card" style={{ padding: 16 }}>
-          <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12 }}>Programmer un événement</div>
+          <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--gn-accent)", marginBottom: 12 }}>Programmer un événement</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <VgSelect full value={evBoss} onChange={setEvBoss} options={bosses.length === 0 ? [{ value: "", label: "— crée un boss d'abord —" }] : bosses.map(b => ({ value: b.id, label: b.name }))} />
             <input type="datetime-local" value={evDate} onChange={e => setEvDate(e.target.value)} style={inp} />
@@ -72,7 +72,7 @@ export default function WorldBossAdminPage() {
             return (
               <div key={e.id} className="glass-card fx-card" style={{ padding: 14, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <span className="font-heading" style={{ fontWeight: 700 }}>{e.boss?.name}</span>
-                <span style={{ fontSize: 13, color: "var(--orange)" }}>{new Date(e.startAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                <span style={{ fontSize: 13, color: "var(--gn-accent)" }}>{new Date(e.startAt).toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                 <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{conf} présent(s)</span>
                 <span style={{ fontSize: 12, padding: "2px 9px", borderRadius: 20, border: "1px solid var(--border)", color: "var(--text-muted)" }}>{e.status}</span>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>

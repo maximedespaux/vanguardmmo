@@ -8,8 +8,8 @@ import dungeons from "@/data/dungeons.json";
  * grandeur qui prouve que c'est vivant.
  *
  * Le composant ne servait qu'à l'accueil public, et sa liste de quatre entrées
- * vivait en dur dedans. Il sert maintenant AUSSI à l'accueil de la guilde, qui a
- * une vingtaine de portes et lit leurs comptes sur ses API. D'où trois ajouts, et
+ * vivait en dur dedans. Il sert maintenant AUSSI aux tuiles « Mes outils » d'un
+ * membre et aux rubriques de /staff, qui lisent leurs comptes sur leurs API. D'où trois ajouts, et
  * rien de plus — la liste devient une prop dont le DÉFAUT est la liste publique,
  * donc l'accueil public n'a pas bougé d'un pixel :
  *
@@ -46,38 +46,40 @@ export type Porte = {
 /**
  * LES PORTES DE L'ACCUEIL PUBLIC — ce que le site FAIT, en un écran.
  *
- * Elles étaient quatre et toutes ouvertes. Il y en a maintenant treize, dont quatre sous
- * cadenas, et c'est un changement de propos : la page ne dit plus seulement « par
+ * Elles étaient quatre et toutes ouvertes. Il y en a maintenant onze, dont trois sous
+ * cadenas (la porte de la Boutique est partie avec elle, le 2026-10-21, celle de
+ * l'accueil de la guilde avec l'accueil unique), et c'est un
+ * changement de propos : la page ne dit plus seulement « par
  * où commencer », elle répond à « qu'est-ce que ce site sait faire, et qu'est-ce
  * qui s'ouvre si je me connecte ». Demande de fond de Maxime sur la vitrine —
  * « en public voir les fonctionnalités mises en place ».
  *
  * CES DEUX NOMBRES NE SONT PAS AFFICHÉS D'APRÈS CE COMMENTAIRE : la phrase de l'accueil
- * les COMPTE sur la liste (voir NB_PORTES et NB_VERROU dans PageAccueil). Une porte
+ * les COMPTE sur la liste (voir NB_PORTES et NB_VERROU dans AccueilVisiteur). Une porte
  * ajoutée ici met la phrase à jour toute seule ; seule cette note en prose peut vieillir.
  *
  * CE BLOC A ÉTÉ RAPATRIÉ DE /histoire, il n'a pas été inventé ici. Là-bas, huit
  * cartes « Les fonctionnalités du site » racontaient la même chose, et quatre de
  * ces cartes menaient aux quatre mêmes destinations que ces portes-ci. Deux pages
  * pour un sujet, et l'accueil — la page qu'un visiteur voit en premier — était la
- * moins bien servie des deux. /histoire garde la GUILDE (qui on est, ce qu'on
- * attend, comment postuler), l'accueil prend le SITE.
+ * moins bien servie des deux. Depuis l'accueil unique, /histoire est elle-même une
+ * section de l'accueil (« La guilde », LaGuilde.tsx) : elle dit qui on est et ce qu'on
+ * attend, ces portes disent ce que le SITE fait.
  *
  * L'ACCÈS RÉEL DE CHAQUE DESTINATION A ÉTÉ VÉRIFIÉ DANS LE CODE, groupe de routes
  * par groupe de routes, et pas déduit du menu — la nav annonce /objets comme
  * publique alors que le fichier vit dans (guild) et passe donc par requireGuild :
  *
  *   ouvertes    (public)  /donjons /astuces /prestige /builder /monstres /pnj /wiki
- *   vitrine     (vitrine) /boutique /crafts — visibles sans compte, inertes ou
- *                         amputées de ce qui se garde
- *   cadenas     (guild)   /objets /compositions /worldboss /dashboard
+ *   vitrine     (vitrine) /crafts — visible sans compte, amputée de ce qui se garde
+ *   cadenas     (guild)   /compositions /worldboss
+ *               (espace-astuces) /objets — la guilde, et les amis (rôle Friend)
  *
- * ET LE CADENAS NE VEUT PAS DIRE « connecte-toi ». Trois de ces adresses — /dashboard,
- * /compositions, /worldboss — sont dans GUILD_PREFIXES du middleware, dont la liste de
- * rôles EXCLUT RECRUE : un joueur qui se connecte avec Discord sans être de la guilde est
- * renvoyé sur `/?error=guild`. La quatrième, /objets, n'y est PAS : elle est gardée un
- * cran plus bas, par le requireGuild() du layout de son groupe (voir ci-dessous). Deux
- * mécanismes, une même conséquence pour le visiteur.
+ * ET LE CADENAS NE VEUT PAS DIRE « connecte-toi ». Les trois adresses sont dans
+ * GUILD_PREFIXES du middleware, qui refuse un RECRUE : un joueur qui se connecte avec
+ * Discord sans être de la guilde est renvoyé sur `/?error=guild`. Seule exception depuis
+ * le 2026-10-21 : un ami à qui le rôle Friend ouvre Astuces passe /objets
+ * (SPEC-INFORMATION-GUILDE §9) — pour un visiteur, rien ne change.
  * Le mot du cadenas est donc « membres », et la phrase qui présente ces portes ne
  * doit promettre que ça.
  *
@@ -95,8 +97,10 @@ export type Porte = {
  * chiffre ce qu'aucun adjectif ne prouve.
  *
  * /objets PORTE UN CADENAS, et c'est vérifié dans l'arborescence et non déduit du
- * menu : le fichier vit dans src/app/(guild)/, dont le layout appelle
- * requireGuild(). La nav l'annonce pourtant comme publique. C'est la seule des
+ * menu : le fichier vivait dans src/app/(guild)/, dont le layout appelle
+ * requireGuild() ; il vit depuis le 2026-10-21 dans (espace-astuces), gardé par
+ * requireEspace("astuces") — la guilde, plus les amis. La nav l'annonçait pourtant comme
+ * publique. C'est la seule des
  * douze portes du wiki qui se refuse à un visiteur, et le dire avant le clic vaut
  * mieux que de l'envoyer sur /login.
  *
@@ -166,16 +170,6 @@ export const PORTES_PUBLIQUES: Porte[] = [
     chiffre: "palier par palier",
   },
   {
-    /* La boutique est le seul écran du site en mode VITRINE : le middleware ne la
-       protège pas et son layout n'a pas de garde, donc un visiteur voit le vrai
-       stock et les vrais prix. Elle n'a donc pas de cadenas — ce serait faux — et
-       son chiffre dit exactement ce qu'on peut en faire sans compte. Commander,
-       lui, se heurte à /api/bank-request, gardée par apiGuild. */
-    href: "/boutique", icon: "cart", titre: "La boutique",
-    texte: "Le stock commun de la guilde, et ses prix.",
-    chiffre: "à regarder sans compte",
-  },
-  {
     href: "/compositions", icon: "castle", titre: "Chambres Secrètes",
     texte: "Qui vient, à quel poste, salle par salle.",
     verrou: true,
@@ -197,18 +191,15 @@ export const PORTES_PUBLIQUES: Porte[] = [
     texte: "Recettes, arbre du farm, titres et succès.",
     chiffre: "à regarder sans compte",
   },
-  {
-    href: "/dashboard", icon: "home", titre: "L'accueil de la guilde",
-    texte: "Ce qui t'attend, et tout ce qui est réservé.",
-    verrou: true,
-  },
+  // La porte de « L'accueil de la guilde » (/dashboard) est partie avec la page : il
+  // n'y a plus qu'un accueil, celui-ci, qui montre au membre connecté ce qui l'attend.
 ];
 
 /**
  * Poser les mesures du serveur sur les portes — SEULEMENT LÀ OÙ LA LIGNE EST VIDE.
  *
- * /boutique et /crafts emploient déjà la leur pour dire ce qu'on peut en faire
- * sans compte, et pour un visiteur ce renseignement vaut plus qu'un total.
+ * /crafts emploie déjà la sienne pour dire ce qu'on peut en faire sans compte, et
+ * pour un visiteur ce renseignement vaut plus qu'un total.
  * Écraser leur ligne par un compte serait échanger une réponse contre un chiffre.
  */
 export const avecComptes = (portes: Porte[], comptes: Record<string, string>): Porte[] =>
@@ -236,9 +227,9 @@ export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: 
               )}
             </span>
             {/* La description ne se rend que si elle existe. C'est ce qui permet à
-                l'accueil de guilde de proposer un mode compact : 21 portes, c'est
-                21 lignes de description, et le rang Vanguard doit pouvoir les
-                replier sans qu'on touche au code. */}
+                l'accueil d'un membre de proposer un mode compact (réglage
+                « descriptionsDesPortes ») : le rang Vanguard replie les lignes de
+                description sans qu'on touche au code. */}
             {p.texte && <span className="acc-porte-d">{p.texte}</span>}
             {p.chiffre && <span className="acc-porte-c" style={p.ton ? { color: p.ton } : undefined}>{p.chiffre}</span>}
           </span>
@@ -284,10 +275,10 @@ export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: 
         .acc-porte{display:flex;gap:14px;align-items:flex-start;text-decoration:none;color:var(--text);
           background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:18px;
           transition:border-color .2s,transform .2s,box-shadow .2s,opacity .7s cubic-bezier(.22,.61,.36,1)}
-        .acc-porte:hover{border-color:rgba(255,140,26,.42);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.45)}
+        .acc-porte:hover{border-color:rgba(var(--gn-or-rgb),.42);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.45)}
         .acc-porte-ic{flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;
-          border-radius:12px;color:var(--orange);border:1px solid rgba(255,140,26,.32);
-          background:linear-gradient(180deg,rgba(255,140,26,.22),rgba(255,140,26,.05))}
+          border-radius:12px;color:var(--gn-accent);border:1px solid rgba(var(--gn-or-rgb),.32);
+          background:linear-gradient(180deg,rgba(var(--gn-lueur-rgb),.22),rgba(var(--gn-lueur-rgb),.05))}
         .acc-porte-txt{display:block;flex:1;min-width:0}
         .acc-porte-tl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
         .acc-porte-t{font-weight:600;font-size:15.5px}
@@ -298,7 +289,7 @@ export function PortesSite({ portes = PORTES_PUBLIQUES, min = 400 }: { portes?: 
           letter-spacing:.6px;color:var(--text-muted);font-family:'Alef',sans-serif;font-weight:400}
         .acc-porte-v img{width:10px;height:12px;object-fit:contain;image-rendering:pixelated;opacity:.85}
         .acc-porte-fl{flex-shrink:0;color:var(--text-muted);margin-top:12px;transition:transform .2s,color .2s}
-        .acc-porte:hover .acc-porte-fl{transform:translateX(4px);color:var(--orange)}
+        .acc-porte:hover .acc-porte-fl{transform:translateX(4px);color:var(--gn-accent)}
       `}</style>
     </div>
   );

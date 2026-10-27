@@ -47,8 +47,11 @@ export function useReglages(schema: SchemaPage) {
 
   useEffect(() => {
     let vivant = true;
-    fetch(`/api/reglages?page=${encodeURIComponent(schema.page)}`)
-      .then((r) => (r.ok ? r.json() : null))
+    const lire = (page: string) => fetch(`/api/reglages?page=${encodeURIComponent(page)}`).then((r) => (r.ok ? r.json() : null));
+    lire(schema.page)
+      // Une page jamais réglée (`modifieLe` vide) reprend les valeurs de son ancienne
+      // adresse, s'il y en a une — voir `SchemaPage.repli`.
+      .then((d) => (d && !d.modifieLe && schema.repli ? lire(schema.repli).then((r) => r ?? d) : d))
       .then((d) => {
         if (!vivant || !d) return;
         setValeurs(fusionner(schema, d.valeurs));
@@ -92,8 +95,8 @@ export function useReglages(schema: SchemaPage) {
       title={`Régler cette page — ${schema.titre}`}
       style={{
         display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer",
-        background: "var(--bg-3)", border: "1px dashed var(--orange)", borderRadius: 9,
-        color: "var(--orange)", padding: "6px 11px", fontSize: 12, fontWeight: 600,
+        background: "var(--bg-3)", border: "1px dashed var(--gn-accent)", borderRadius: 9,
+        color: "var(--gn-accent)", padding: "6px 11px", fontSize: 12, fontWeight: 600,
         fontFamily: "inherit",
       }}
     >
@@ -115,7 +118,7 @@ export function useReglages(schema: SchemaPage) {
         style={{ width: "100%", maxWidth: 520, maxHeight: "80vh", overflowY: "auto", padding: 22, borderRadius: 16 }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
-          <span style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)" }}>
+          <span style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--gn-accent)" }}>
             <Icon name="settings" size={18} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -144,7 +147,7 @@ export function useReglages(schema: SchemaPage) {
                 <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: r.type === "interrupteur" ? "pointer" : "default" }}>
                   {r.type === "interrupteur" && (
                     <input type="checkbox" checked={Boolean(v)} onChange={(e) => maj(r.clef, e.target.checked)}
-                      style={{ width: 17, height: 17, accentColor: "var(--orange)", cursor: "pointer", flexShrink: 0 }} />
+                      style={{ width: 17, height: 17, accentColor: "var(--gn-accent)", cursor: "pointer", flexShrink: 0 }} />
                   )}
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className="font-heading" style={{ display: "block", fontSize: 13, fontWeight: 600 }}>{r.label}</span>
@@ -193,7 +196,7 @@ export function useReglages(schema: SchemaPage) {
               Annuler
             </button>
             <button type="button" onClick={enregistrer} disabled={enCours}
-              style={{ padding: "8px 15px", borderRadius: 8, border: "none", background: "var(--orange)", color: "#0a0a0c", fontWeight: 700, cursor: enCours ? "wait" : "pointer", fontFamily: "inherit", fontSize: 12.5, opacity: enCours ? .6 : 1 }}>
+              style={{ padding: "8px 15px", borderRadius: 8, border: "none", background: "var(--gn-action)", color: "var(--gn-sur-action)", fontWeight: 700, cursor: enCours ? "wait" : "pointer", fontFamily: "inherit", fontSize: 12.5, opacity: enCours ? .6 : 1 }}>
               {enCours ? "Enregistrement…" : "Appliquer"}
             </button>
           </span>

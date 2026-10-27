@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiGuild, isOfficer } from "@/lib/access";
+import { prevenirAbsence } from "@/lib/absences";
 
 // GET → mes absences ; ?all=1 → toute la guilde (officiers+)
 export async function GET(req: Request) {
@@ -21,5 +22,7 @@ export async function POST(req: Request) {
   const abs = await prisma.absence.create({ data: {
     userId: a.user.id, startDate: new Date(b.startDate), endDate: new Date(b.endDate), reason: b.reason ?? null,
   }});
+  // La page répond « le staff est prévenu » : c'est ici que ça devient vrai.
+  await prevenirAbsence(prisma, abs, a.user.username);
   return NextResponse.json(abs, { status: 201 });
 }

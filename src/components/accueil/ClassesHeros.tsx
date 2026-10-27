@@ -64,6 +64,15 @@ const HEROS: Heros[] = [
   { cle: "Chanoine",    embleme: "jobforcemasterhero.webp",   arme: "Poing" },
 ];
 
+/**
+ * Les huit cartes du jeu, telles qu'un visiteur les voit.
+ *
+ * Elles portaient aussi, pour un membre, le compte de la guilde par classe (`comptes`,
+ * lu par /api/accueil). Ce compte est parti avec le visage membre de l'accueil, devenu
+ * public et neutre le 2026-10-21 : la répartition de la guilde vit dans Information
+ * Guilde (« Les classes de la guilde », components/guilde/ClassesGuilde), et
+ * /api/accueil a été retirée avec elle.
+ */
 export function ClassesHeros() {
   return (
     <div className="acc-classes">
@@ -116,9 +125,9 @@ export function ClassesHeros() {
           border:1px solid var(--border);border-radius:14px;text-decoration:none;color:var(--text);
           background:linear-gradient(180deg,rgba(28,28,36,.92),rgba(14,14,19,.94));
           transition:border-color .22s,transform .22s,box-shadow .22s,opacity .7s cubic-bezier(.22,.61,.36,1)}
-        .acc-cl:hover{border-color:rgba(255,140,26,.42);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.5)}
+        .acc-cl:hover{border-color:rgba(var(--gn-or-rgb),.42);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.5)}
         .acc-cl-halo{position:absolute;left:-10px;top:50%;width:120px;height:120px;transform:translateY(-50%);
-          pointer-events:none;background:radial-gradient(circle,rgba(255,140,26,.16),transparent 68%);opacity:0;transition:opacity .25s}
+          pointer-events:none;background:radial-gradient(circle,rgba(var(--gn-lueur-rgb),.16),transparent 68%);opacity:0;transition:opacity .25s}
         .acc-cl:hover .acc-cl-halo{opacity:1}
         .acc-cl-em{flex-shrink:0;image-rendering:auto;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
         .acc-cl-nom{font-weight:700;font-size:16px;letter-spacing:.3px}

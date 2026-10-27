@@ -1,5 +1,8 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
 import { prisma } from "../lib/prisma.js";
+// Module partagé avec la page /absences : le staff apprend une absence de la
+// même façon, et avec la même phrase, qu'elle vienne du site ou d'ici.
+import { prevenirAbsence } from "@/lib/absences";
 
 export const data = new SlashCommandBuilder()
   .setName("absence")
@@ -38,13 +41,17 @@ export async function execute(i: ChatInputCommandInteraction) {
     create: { discordId: i.user.id, username: i.user.username, role: "RECRUE" },
   });
 
-  await prisma.absence.create({
+  const abs = await prisma.absence.create({
     data: { userId: user.id, startDate: start, endDate: end, reason: reason ?? null },
   });
+  await prevenirAbsence(prisma, abs, user.username);
 
   const fmt = (d: Date) => d.toLocaleDateString("fr-FR");
+  /* « En attente de validation par un officier » promettait un geste que rien ne
+     permet : aucune page ni commande ne valide une absence. On dit ce qui est
+     vrai — elle est notée, et le staff le sait. */
   await i.reply({
-    content: `✅ Absence enregistrée du **${fmt(start)}** au **${fmt(end)}**${reason ? ` — _${reason}_` : ""}. En attente de validation par un officier.`,
+    content: `✅ Absence enregistrée du **${fmt(start)}** au **${fmt(end)}**${reason ? ` — _${reason}_` : ""}. Le staff est prévenu sur le site.`,
     ephemeral: true,
   });
 }

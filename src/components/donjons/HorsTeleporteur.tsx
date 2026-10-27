@@ -318,7 +318,7 @@ export function HorsTeleporteur() {
     <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 14, padding: 22, marginBottom: 18 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
         <h2 className="font-heading" style={{ fontSize: 18, margin: 0 }}>
-          <Icon name="compass" size={16} style={{ marginRight: 7, color: "var(--orange)" }} />
+          <Icon name="compass" size={16} style={{ marginRight: 7, color: "var(--gn-accent)" }} />
           Hors du téléporteur
         </h2>
         <span style={{ fontSize: 12.5, color: "var(--text-muted)", ...NUM }}>{LIEUX.length} lieux</span>
@@ -411,8 +411,8 @@ export function HorsTeleporteur() {
           .ht-valeur{width:52px !important}
           .ht-jalons{display:none !important}
         }
-        .ht-plan:hover .ht-appel,.ht-plan:focus-visible .ht-appel{color:var(--orange)}
-        .ht-plan:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+        .ht-plan:hover .ht-appel,.ht-plan:focus-visible .ht-appel{color:var(--gn-accent)}
+        .ht-plan:focus-visible{outline:2px solid var(--gn-accent);outline-offset:-2px}
       `}</style>
 
       {/* LE PANNEAU EST RENDU ICI, À LA RACINE DU BLOC, ET PAS DANS LA TUILE. Il se
@@ -469,7 +469,7 @@ function EchelleNiveaux() {
                   <span key={b.nivMin} style={{ position: "absolute", top: 0, bottom: 0,
                     left: `${((b.nivMin - 1) / max) * 100}%`,
                     width: `${Math.max(1.5, ((b.nivMax - b.nivMin) / max) * 100)}%`,
-                    borderRadius: 3, background: "var(--orange)" }} />
+                    borderRadius: 3, background: "var(--gn-jauge)" }} />
                 ))}
               </span>
               {/* UN INTERVALLE PAR BANDE, EMPILÉS. Écrire « 73–210 » au bout d'une
@@ -573,7 +573,7 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
             espèces, ce qu'un lecteur d'écran a besoin d'entendre et qu'un œil lit
             déjà deux lignes plus bas. */}
         <span className="ht-appel" style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 11px 6px", fontSize: 11.5, color: "var(--text-muted)", borderTop: "1px solid var(--border)" }}>
-          <Icon name="eye" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+          <Icon name="eye" size={12} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
           {l.carte ? "Le plan et les créatures" : "Les créatures et leurs dégâts"}
           <Icon name="chevron-right" size={12} style={{ marginLeft: "auto", flexShrink: 0 }} />
         </span>
@@ -611,7 +611,7 @@ function CarteLieu({ l, etalDitEnBas, onOuvrir }: { l: Lieu; etalDitEnBas: boole
         {l.hall && (
           <div title={l.hall.source ?? undefined}
             style={{ display: "flex", alignItems: "flex-start", gap: 7, background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", fontSize: 11.5, lineHeight: 1.5, color: "var(--text-muted)" }}>
-            <Icon name="map" size={12} style={{ flexShrink: 0, marginTop: 3, color: "var(--orange)" }} />
+            <Icon name="map" size={12} style={{ flexShrink: 0, marginTop: 3, color: "var(--gn-accent)" }} />
             <span>
               Le client nomme un monde <b style={{ color: "var(--text)" }}>«&nbsp;{l.hall.nom}&nbsp;»</b>,
               mais aucun fichier ne dit comment on y arrive.
@@ -725,7 +725,7 @@ function DeuxModes({ l }: { l: Lieu }) {
   return (
     <div style={{ background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 9, padding: "7px 10px", marginBottom: 9, fontSize: 11.5, lineHeight: 1.55, color: "var(--text-muted)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-        <Icon name="swords" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+        <Icon name="swords" size={12} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
         <span>Un seul endroit,</span>
         {modes.map((m, i) => (
           <span key={m.nom} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -736,8 +736,8 @@ function DeuxModes({ l }: { l: Lieu }) {
       </div>
       {bouge.map(([quoi, e]) => (
         <div key={quoi} style={{ marginTop: 3, ...NUM }}>
-          {quoi} pèse <b style={{ color: "var(--orange)" }}>{pvCourt(e.haut)}</b> en{" "}
-          <b style={{ color: "var(--text)" }}>{e.ou}</b>, <b style={{ color: "var(--orange)" }}>{pvCourt(e.bas)}</b> dans
+          {quoi} pèse <b style={{ color: "var(--gn-accent)" }}>{pvCourt(e.haut)}</b> en{" "}
+          <b style={{ color: "var(--text)" }}>{e.ou}</b>, <b style={{ color: "var(--gn-accent)" }}>{pvCourt(e.bas)}</b> dans
           l&apos;autre — <b style={{ color: "var(--text)" }}>{e.part}&nbsp;%</b> de moins.
         </div>
       ))}
@@ -746,7 +746,7 @@ function DeuxModes({ l }: { l: Lieu }) {
           mode le plus doux l'est de bout en bout. */}
       {bouge.length > 0 && fige.map(([quoi, e]) => (
         <div key={quoi} style={{ marginTop: 2, ...NUM }}>
-          En revanche {quoi} ne bouge pas : <b style={{ color: "var(--orange)" }}>{pvCourt(e.haut)}</b> des deux côtés.
+          En revanche {quoi} ne bouge pas : <b style={{ color: "var(--gn-accent)" }}>{pvCourt(e.haut)}</b> des deux côtés.
         </div>
       ))}
     </div>
@@ -776,7 +776,7 @@ function DeuxPeuplements({ l }: { l: Lieu }) {
   const tete = l.bandes.find((b) => b.rangPoses === 1);
   return (
     <p style={{ fontSize: 11.5, color: "var(--text-muted)", lineHeight: 1.55, margin: "0 0 8px" }}>
-      <Icon name="layers" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
+      <Icon name="layers" size={12} style={{ marginRight: 5, color: "var(--gn-accent)" }} />
       <b style={{ color: "var(--text)" }}>{l.bandes.length} peuplements</b> sur la même carte,{" "}
       {trous.map((t) => `${t}`).join(" et ")} niveaux de vide entre eux.
       {tete && (
@@ -825,7 +825,7 @@ function RangeeBande({ b, seule }: { b: Bande; seule: boolean }) {
       <div style={{ display: "flex", gap: 5, flexWrap: "wrap", fontSize: 11.5 }}>
         <Puce ic="skull" titre={`Le plus coriace ${seule ? "de la zone" : "de ce peuplement"} : ${b.gros.nom} (${b.gros.rang}), niveau ${b.gros.niv}, ${pvCourt(b.gros.pv)} PV${b.gros.poses === 1 ? " — un seul emplacement sur la carte" : ""}`}>
           <LienMonstre nom={b.gros.nom} niv={b.gros.niv} pv={b.gros.pv} couleur={TON_RANG[b.gros.rang] ?? "var(--text)"} />
-          {" "}<span style={{ color: "var(--orange)" }}>{pvCourt(b.gros.pv)}</span>
+          {" "}<span style={{ color: "var(--gn-accent)" }}>{pvCourt(b.gros.pv)}</span>
           {b.gros.poses === 1 && <> · seul</>}
         </Puce>
         {/* Le mot « espèces » reste écrit, le mot « emplacements » non : le premier

@@ -1,0 +1,1174 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GENESIS · Obsidienne</title>
+<style>
+/* ═══ Polices locales du dépôt ═══ */
+@font-face{font-family:'Cinzel';src:url('../../../../../public/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');font-weight:400 900;font-display:block}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Light.ttf') format('truetype');font-weight:300;font-display:block}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Regular.ttf') format('truetype');font-weight:400;font-display:block}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Medium.ttf') format('truetype');font-weight:500;font-display:block}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-SemiBold.ttf') format('truetype');font-weight:600;font-display:block}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Bold.ttf') format('truetype');font-weight:700;font-display:block}
+@font-face{font-family:'Rubik';src:url('../../../../../public/fonts/Rubik-VariableFont_wght.ttf') format('truetype');font-weight:300 900;font-display:block}
+
+/* ═══ Tokens (copie conforme de tokens.css) ═══ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENESIS — piste « Obsidienne »  ·  tokens.css
+   La retenue : surfaces anthracite mates, filet or d'un pixel pour ce qui est
+   actif, crimson pour l'action principale. Le luxe vient de la précision.
+
+   Trois couches, à lire dans l'ordre :
+     1. PRIMITIVES     — la palette imposée et ses dérivées (rien d'autre ne
+                         doit écrire un code couleur).
+     2. RÔLES          — ce que les composants consomment. Un composant ne lit
+                         JAMAIS une primitive directement.
+     3. COMPATIBILITÉ  — les anciens noms du site (--orange, --bg-2…) renvoyés
+                         vers les rôles : remplacer le :root de globals.css par
+                         ce fichier bascule l'essentiel du site.
+   + LES COULEURS DU JEU, qui sont des données et ne bougent pas.
+
+   Contrastes : calculés (WCAG 2.x, luminance relative), pas estimés. Le tableau
+   complet est dans charte.md. Rapports donnés ici sur la surface la plus
+   claire où la couleur est autorisée.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* ─────────────────────────── 1. PRIMITIVES ─────────────────────────── */
+
+  /* Palette imposée */
+  --g-noir:        #08080C;  /* dominante                                   */
+  --g-anthracite:  #15151D;  /* volumes, surfaces                           */
+  --g-crimson:     #A6192E;  /* accents secondaires — JAMAIS du texte (2,67:1 sur noir) */
+  --g-pourpre:     #60152D;  /* ombres, profondeur                          */
+  --g-or:          #C69A55;  /* contours, arêtes, ornements                 */
+  --g-or-clair:    #E6C48A;  /* reflets                                     */
+  --g-ivoire:      #F2EDE5;  /* typographie                                 */
+
+  /* Noirs → anthracites : six crans de surface. Chaque cran est un pas de
+     luminance à peu près régulier ; c'est ce qui rend la profondeur lisible
+     sans ombre portée. */
+  --g-noir-850:       #0B0B10;  /* barre du haut                            */
+  --g-noir-800:       #0E0E14;  /* creux : champs, en-têtes de table        */
+  --g-noir-700:       #111118;  /* cartes posées sur la page                */
+  --g-anthracite-500: #15151D;  /* = palette : menus, infobulles, modales   */
+  --g-anthracite-400: #1C1C26;  /* survol                                    */
+  --g-anthracite-300: #23232E;  /* pressé, sélection                        */
+
+  /* Lignes (filets neutres). Les trois premières sont décoratives ; la
+     quatrième borde les CONTRÔLES et tient 3:1 sur leur fond (WCAG 1.4.11). */
+  --g-ligne-100: #1D1D27;  /* séparateur de lignes de table                 */
+  --g-ligne-200: #272733;  /* bord de carte                                 */
+  --g-ligne-300: #363644;  /* bord de carte survolée, séparateur fort       */
+  --g-ligne-400: #625E6C;  /* bord de champ / case / bouton secondaire — 3,06:1 sur #0E0E14 */
+  --g-ligne-500: #7A7684;  /* bord de contrôle survolé                      */
+
+  /* Ivoire : quatre crans de texte. Tous ≥ 4,5:1 jusqu'à la surface #23232E. */
+  --g-ivoire-200: #DAD4CA;  /* texte courant      — 10,55:1 sur #23232E      */
+  --g-ivoire-400: #ADA79D;  /* texte secondaire   —  6,51:1 sur #23232E      */
+  --g-ivoire-600: #938E86;  /* texte atténué      —  4,78:1 sur #23232E      */
+  --g-ivoire-800: #66625C;  /* désactivé (exempté du seuil, 3,10:1)          */
+
+  /* Crimson dérivé */
+  --g-crimson-100: #F6C3CA; /* texte du bouton danger — 11,64:1 sur #2A0D15 */
+  --g-crimson-300: #EB7C8B; /* le SEUL crimson qui porte du texte : danger — 6,73:1 sur anthracite */
+  --g-crimson-350: #C0303F; /* arête claire du bouton principal (relief métal) */
+  --g-crimson-400: #BC2238; /* bouton principal survolé — ivoire dessus 5,26:1 */
+  --g-crimson-600: #8A1426; /* bouton principal pressé  — ivoire dessus 8,16:1 */
+  --g-crimson-800: #3A121D; /* bouton danger survolé                          */
+  --g-crimson-900: #2A0D15; /* fond d'alerte / bouton danger                  */
+  --g-crimson-rgb: 166,25,46;
+
+  /* Pourpre dérivé (profondeur uniquement) */
+  --g-pourpre-700: #3A0F1E; /* ombre teintée sous les menus                  */
+  --g-pourpre-900: #1A0A11; /* fond de l'art d'en-tête, bas de page         */
+  --g-pourpre-rgb: 96,21,45;
+
+  /* Or dérivé */
+  --g-or-700: #8E6B38;       /* ombre du dégradé métal (wordmark)            */
+  --g-or-rgb: 198,154,85;
+
+  /* États (hors palette, choisis pour ne heurter aucune couleur du jeu) */
+  --g-vert:  #5CC98A;  /* succès — 8,80:1 sur anthracite                    */
+  --g-ambre: #E0B25A;  /* attention — 9,24:1 (≠ or : plus jaune, jamais en filet) */
+
+  /* Typographie */
+  --g-font-display: 'Cinzel', 'Times New Roman', serif;  /* marque, titres ≥ 14 px */
+  --g-font-text:    'Athiti', system-ui, sans-serif;     /* texte courant          */
+  --g-font-data:    'Rubik', system-ui, sans-serif;      /* chiffres, micro-libellés */
+
+  /* ─────────────────────────── 2. RÔLES ─────────────────────────── */
+
+  /* Surfaces */
+  --bg:               var(--g-noir);
+  --surface-nav:      var(--g-noir-850);
+  --surface-sunken:   var(--g-noir-800);
+  --surface:          var(--g-noir-700);
+  --surface-raised:   var(--g-anthracite-500);
+  --surface-hover:    var(--g-anthracite-400);
+  --surface-pressed:  var(--g-anthracite-300);
+  --surface-row-hover: rgba(var(--g-pourpre-rgb), .24);  /* ligne de table survolée : profondeur, pas état */
+  --scrim:            rgba(8,8,12,.78);
+
+  /* Bordures */
+  --border-subtle:    var(--g-ligne-100);
+  --border:           var(--g-ligne-200);
+  --border-strong:    var(--g-ligne-300);
+  --border-control:   var(--g-ligne-400);
+  --border-control-hover: var(--g-ligne-500);
+
+  /* Texte */
+  --text:             var(--g-ivoire);      /* titres, valeurs, libellés actifs */
+  --text-body:        var(--g-ivoire-200);  /* paragraphes                      */
+  --text-secondary:   var(--g-ivoire-400);  /* descriptions                     */
+  --text-muted:       var(--g-ivoire-600);  /* méta, en-têtes de table          */
+  --text-disabled:    var(--g-ivoire-800);
+  --on-action:        var(--g-ivoire);
+
+  /* Action (crimson) — fond de l'action principale, marque de l'état actif */
+  --accent-action:        var(--g-crimson);
+  --accent-action-hover:  var(--g-crimson-400);
+  --accent-action-press:  var(--g-crimson-600);
+  --accent-action-edge:   var(--g-crimson-350);
+  --accent-active:        var(--g-crimson);  /* barre/losange de l'élément actif */
+
+  /* Ornement (or) — filet de l'élément actif, arête importante, marque */
+  --accent-ornement:       var(--g-or);
+  --accent-ornement-light: var(--g-or-clair);
+  --line-ornement:         rgba(var(--g-or-rgb), .62);
+  --line-ornement-fade:    linear-gradient(90deg, transparent, rgba(var(--g-or-rgb), .7) 50%, transparent);
+  --metal:                 linear-gradient(180deg, var(--g-or-clair) 0%, var(--g-or) 55%, var(--g-or-700) 100%);
+
+  /* Profondeur (pourpre) */
+  /* La profondeur pourpre vit dans les GOUTTIÈRES : les cartes restent neutres et
+     opaques, c'est le vide entre elles qui prend la couleur — la table ne se lit
+     jamais sur du rouge. */
+  --depth-glow:  radial-gradient(ellipse 90% 520px at 50% 0%, rgba(var(--g-pourpre-rgb), .55), transparent 78%);
+  --depth-side:  radial-gradient(ellipse 45% 900px at 0% 45%, rgba(var(--g-pourpre-rgb), .34), transparent 75%),
+                 radial-gradient(ellipse 45% 900px at 100% 70%, rgba(var(--g-pourpre-rgb), .30), transparent 75%);
+  --shadow-menu: 0 24px 48px -12px rgba(0,0,0,.75), 0 8px 24px -8px rgba(var(--g-pourpre-rgb), .45);
+
+  /* Focus */
+  --focus:        var(--g-or-clair);  /* 12,02:1 sur noir ; 4,51:1 sur crimson */
+  --focus-ring:   0 0 0 2px var(--bg), 0 0 0 4px var(--focus);
+
+  /* Sémantique */
+  --danger-text:   var(--g-crimson-300);
+  --danger-bg:     var(--g-crimson-900);
+  --danger-border: rgba(235,124,139,.55);
+  --danger-on:     var(--g-crimson-100);
+  --danger-hover:  var(--g-crimson-800);
+  --success:       var(--g-vert);
+  --warning:       var(--g-ambre);
+  --neutral:       var(--g-ivoire-600);
+
+  /* Géométrie — angles vifs : 2 px suffisent à ne pas couper la main */
+  --r-0: 0; --r-1: 2px; --r-2: 3px; --r-3: 4px; --r-pill: 999px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+
+  /* Mouvement — deux crans de survol seulement */
+  --lift-1: -1px;   /* « touche » : boutons, liens, cases */
+  --lift-2: -3px;   /* « levée »  : cartes cliquables    */
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --t-fast: .14s; --t-mid: .22s; --t-slow: .34s;
+
+  /* Échelle typographique (taille / interlignage) */
+  --fs-display: 34px;  --lh-display: 1.1;   /* Cinzel 600 — titre de page  */
+  --fs-h2:      19px;  --lh-h2: 1.25;       /* Cinzel 600 — section        */
+  --fs-h3:      16px;  --lh-h3: 1.3;        /* Cinzel 600 — carte, modale  */
+  --fs-nav:     14px;                       /* Cinzel 600 — plancher Cinzel */
+  --fs-body:    15px;  --lh-body: 1.55;     /* Athiti 500                  */
+  --fs-small:   13.5px; --lh-small: 1.45;   /* Athiti 500 — descriptions   */
+  --fs-micro:   11px;                       /* Rubik 600 capitales +0,12em */
+  --fs-num:     32px;                       /* Rubik 400 chiffres tabulaires */
+
+  /* ───────────── COULEURS DU JEU — DONNÉES, NE PAS RETOUCHER ───────────── */
+  --tier-eternel:    #FF8C1A;  /* ≠ marque : n'apparaît que sur un objet    */
+  --tier-yggdrasil:  #C77DFF;
+  --tier-ancestral:  #FF5C8A;
+  --tier-lusaka:     #33D6A6;
+  --tier-dryades:    #4EA8FF;
+  --tier-shaitan:    #9CA3AF;
+  --tier-cape:       #FFD24A;
+  --rar-commun:      #9CA3AF;
+  --rar-rare:        #4EA8FF;
+  --rar-epique:      #C77DFF;
+  --rar-legendaire:  #FF8C1A;
+  --rar-premythique: #FF5C8A;
+  --rar-mythique:    #C92A2A;  /* 3,66:1 sur noir : titre ≥ 18,7 px gras ou étiquette pleine */
+  --c-bonus:   #4ADE80;
+  --c-eveil:   #5aa0ff;
+  --c-diamant: #7fd0ff;
+  --c-holo:    #ff6b6b;
+  --c-percage: #e879f9;
+
+  /* ─────────────────────────── 3. COMPATIBILITÉ ───────────────────────────
+     Les noms de globals.css, renvoyés vers les rôles. Ce qu'un échange de
+     :root bascule, et ce qu'il ne bascule PAS (voir charte.md, « traduction ») :
+     · 285 `color: var(--orange)` deviennent de l'or : c'est TROP d'or pour la
+       règle des 10 %. État transitoire — chaque usage se remplace ensuite par
+       son rôle exact (--text, --accent-ornement ou --danger-text).
+     · 221 rgba(255,140,26,…) et 53 hex orange sont écrits EN DUR : l'échange
+       ne les touche pas, il faut une passe de remplacement.
+     · airbuilder.css redéclare son propre :root (--bg2, --bg3, --mut…) : il
+       est couvert ci-dessous, mais sa ligne :root doit être retirée.        */
+  --orange:       var(--accent-ornement);       /* texte d'accent, icône, filet  */
+  --orange-dark:  var(--accent-action-press);   /* fonds pleins sous texte blanc */
+  --orange-rgb:   var(--g-crimson-rgb);          /* teintes & lueurs → crimson    */
+  --gold:         var(--accent-ornement);
+  --gold-rgb:     var(--g-or-rgb);
+  --bg-2:         var(--surface);
+  --bg-3:         var(--surface-hover);
+  --bg-4:         var(--surface-pressed);
+  /* --bg, --border et --text-muted portent déjà le même nom côté rôles. */
+  --green:        var(--success);
+  --red:          var(--danger-text);
+  --blue:         var(--tier-dryades);
+  --purple:       var(--tier-yggdrasil);
+  --glow-1: rgba(var(--g-crimson-rgb), .10);
+  --glow-2: rgba(var(--g-crimson-rgb), .18);
+  --glow-3: rgba(var(--g-crimson-rgb), .28);
+  --el-1: 0 1px 2px rgba(0,0,0,.4);
+  --el-2: 0 4px 12px rgba(0,0,0,.45);
+  --el-3: 0 12px 28px rgba(0,0,0,.55);
+  --el-4: 0 24px 56px rgba(0,0,0,.65);
+  --el-glow: 0 6px 20px var(--glow-2);
+  --r-sm: var(--r-1); --r-md: var(--r-2); --r-lg: var(--r-3); --r-xl: var(--r-3); --r-full: var(--r-pill);
+  /* airbuilder.css */
+  --bg2: var(--surface);
+  --bg3: var(--surface-hover);
+  --mut: var(--text-muted);
+}
+
+
+/* ═══ Base ═══ */
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text-body);font:500 var(--fs-body)/var(--lh-body) var(--g-font-text);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;font-kerning:normal}
+a{color:inherit;text-decoration:none}
+img{display:block}
+p{margin:0}
+button{font:inherit;color:inherit}
+.ic{width:18px;height:18px;flex:none;display:inline-block;vertical-align:middle}
+.ic-14{width:14px;height:14px}.ic-16{width:16px;height:16px}.ic-20{width:20px;height:20px}.ic-22{width:22px;height:22px}
+.micro{font:600 var(--fs-micro)/1.2 var(--g-font-data);letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)}
+.num{font-family:var(--g-font-data);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:where(a,button,[tabindex],input,select,textarea,summary):focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* Le losange crimson et l'étoile à quatre branches — les deux seuls ornements
+   repris des références. Ils ne se posent que sur ce qui est actif ou important. */
+.losange{width:6px;height:6px;background:var(--accent-active);transform:rotate(45deg);display:inline-block;flex:none}
+.etoile{width:13px;height:13px;flex:none;color:var(--accent-ornement)}
+
+/* ═══ 1. Barre du haut ═══ */
+.nav{position:relative;z-index:30;height:64px;display:flex;align-items:center;gap:20px;padding:0 24px;
+  background:var(--surface-nav);border-bottom:1px solid var(--border-subtle)}
+.nav::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--line-ornement-fade);opacity:.38;pointer-events:none}
+.nav-brand{display:flex;align-items:center;gap:12px;flex:none;padding:4px 2px}
+.brand-mark{width:36px;height:36px;object-fit:contain;color:transparent;font-size:0}
+.brand-mark.is-missing{visibility:hidden}
+.nav-word{font:700 19px/1 var(--g-font-display);letter-spacing:.24em;padding-left:.04em;
+  background:var(--metal);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-links{display:flex;align-items:stretch;height:100%;gap:2px;margin-left:8px}
+.nav-item{position:relative;display:flex}
+.nav-link{display:flex;align-items:center;gap:6px;padding:0 13px;height:100%;position:relative;
+  font:600 var(--fs-nav)/1 var(--g-font-display);letter-spacing:.05em;color:var(--text-secondary);white-space:nowrap;
+  transition:color var(--t-fast) var(--ease),background var(--t-fast) var(--ease)}
+.nav-link .ic{width:12px;height:12px;opacity:.7}
+.nav-link:hover,.nav-link.is-hover{color:var(--text);background:var(--surface-hover)}
+.nav-link.is-active{color:var(--text)}
+/* L'actif : un filet or d'un pixel sur l'arête basse, le losange crimson au centre. */
+.nav-link.is-active::after{content:"";position:absolute;left:10px;right:10px;bottom:-1px;height:1px;background:var(--accent-ornement)}
+.nav-link.is-active::before{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;margin-left:-3.5px;
+  background:var(--accent-active);transform:rotate(45deg);box-shadow:0 0 0 2px var(--surface-nav)}
+.nav-user{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.icon-btn{position:relative;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-1);
+  background:transparent;border:1px solid transparent;color:var(--text-secondary);cursor:pointer;
+  transition:color var(--t-fast),background var(--t-fast),border-color var(--t-fast),transform var(--t-fast)}
+.icon-btn:hover{color:var(--text);background:var(--surface-hover);transform:translateY(var(--lift-1))}
+.count{position:absolute;top:4px;right:3px;min-width:16px;height:16px;padding:0 4px;border-radius:var(--r-pill);
+  background:var(--accent-action);color:var(--on-action);font:600 10px/16px var(--g-font-data);text-align:center;box-shadow:0 0 0 2px var(--surface-nav)}
+.me{display:flex;align-items:center;gap:10px;padding:4px 10px 4px 4px;margin-left:6px;border-radius:var(--r-1);border:1px solid var(--border)}
+.avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--g-pourpre);color:var(--text);
+  font:600 12px/1 var(--g-font-data);letter-spacing:.04em;box-shadow:inset 0 0 0 1px rgba(var(--g-or-rgb),.5)}
+.me-txt{display:flex;flex-direction:column;line-height:1.15}
+.me-n{font:600 14px/1.15 var(--g-font-text);color:var(--text)}
+.me-r{font:600 10.5px/1.2 var(--g-font-data);letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ornement)}
+.nav-burger{display:none}
+
+/* Mega : ouvert ici en démonstration sur « Boutique ». */
+.mega{position:absolute;top:100%;left:0;margin-top:1px;width:384px;padding:8px;background:var(--surface-raised);
+  border:1px solid var(--border-strong);border-top-color:var(--border);box-shadow:var(--shadow-menu);display:none;z-index:40}
+.nav-item.is-open .mega{display:block}
+.mega.droite{left:auto;right:0}
+.mega-sec{display:flex;align-items:center;gap:10px;padding:10px 10px 6px}
+.mega-sec::after{content:"";flex:1;height:1px;background:var(--border)}
+.mega-link{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:var(--r-1);transition:background var(--t-fast)}
+.mega-link:hover,.mega-link.is-hover{background:var(--surface-hover)}
+.mega-ic{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:var(--r-1);background:var(--surface-sunken);
+  border:1px solid var(--border-strong);color:var(--text-secondary)}
+.mega-link.is-hover .mega-ic{color:var(--text);border-color:var(--border-control)}
+.mega-l{display:block;font:600 15px/1.25 var(--g-font-text);color:var(--text)}
+.mega-d{display:block;font:500 13.5px/1.4 var(--g-font-text);color:var(--text-muted);margin-top:2px}
+.mega-link.is-hover .mega-d{color:var(--text-secondary)}
+
+/* ═══ Page ═══ */
+.page{position:relative;background:var(--depth-glow) no-repeat,var(--depth-side) no-repeat,var(--bg)}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 32px 16px}
+
+/* ═══ 2. En-tête de page ═══ */
+.ph{position:relative;overflow:hidden;min-height:156px;display:flex;align-items:center;padding:24px 30px;
+  border:1px solid var(--border);border-radius:var(--r-2);background:var(--g-pourpre-900)}
+/* L'image est agrandie à 150 % et décalée : l'arbre et le trône tombent sous l'action, à droite,
+   et la moitié gauche — sous le titre — ne montre que des piliers, que le voile éteint. */
+.ph-art{position:absolute;top:0;left:12%;width:150%;max-width:none;height:100%;object-fit:cover;object-position:50% 44%;
+  filter:saturate(.75) brightness(.68) contrast(1.05);opacity:.92}
+.ph-veil{position:absolute;inset:0;background:
+  linear-gradient(90deg,var(--bg) 0%,rgba(8,8,12,.94) 30%,rgba(8,8,12,.6) 60%,rgba(8,8,12,.32) 100%),
+  linear-gradient(0deg,rgba(var(--g-pourpre-rgb),.5),transparent 70%)}
+.ph::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line-ornement-fade);opacity:.55}
+.ph-row{position:relative;display:flex;align-items:center;gap:22px;flex:1;min-width:0}
+.ph-txt{flex:1;min-width:0}
+.ph-over{display:flex;align-items:center;gap:8px}
+.ph-over .sep{color:var(--text-disabled)}
+.ph h1{margin:8px 0 0;font:600 var(--fs-display)/var(--lh-display) var(--g-font-display);letter-spacing:.03em;color:var(--text)}
+.ph-rule{display:flex;align-items:center;gap:8px;margin:12px 0 10px}
+.ph-rule i{display:block;width:56px;height:1px;background:var(--accent-ornement)}
+.ph-sub{font:500 16px/1.5 var(--g-font-text);color:var(--text-secondary);max-width:430px}
+.ph-actions{display:flex;gap:10px;flex:none;align-self:flex-start}
+
+/* Cadres d'icône (.vgi-frame) */
+.frame{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;border-radius:var(--r-1);
+  background:linear-gradient(180deg,var(--surface-raised),var(--surface-sunken));border:1px solid var(--border-strong);color:var(--text-secondary);
+  box-shadow:inset 0 1px 0 rgba(242,237,229,.04)}
+.frame.lg{width:56px;height:56px}.frame.lg .ic{width:26px;height:26px}
+.frame.sm{width:28px;height:28px}.frame.sm .ic{width:15px;height:15px}
+.frame.or{color:var(--accent-ornement);border-color:var(--line-ornement)}
+.frame.alerte{color:var(--danger-text);border-color:var(--danger-border);background:var(--danger-bg)}
+.frame.item{width:44px;height:44px;--t:var(--rar-commun);border-color:color-mix(in srgb,var(--t) 48%,transparent);
+  background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--t) 16%,transparent),transparent 72%),var(--surface-sunken)}
+.frame.item img{width:32px;height:32px;image-rendering:pixelated;object-fit:contain}
+.frame.cls img{width:24px;height:24px;object-fit:contain}
+
+/* ═══ Boutons ═══ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 18px;border-radius:var(--r-1);
+  font:700 14px/1 var(--g-font-display);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;cursor:pointer;border:1px solid transparent;
+  transition:background var(--t-fast) var(--ease),border-color var(--t-fast),color var(--t-fast),transform var(--t-fast) var(--ease)}
+.btn .ic{width:16px;height:16px}
+.btn:hover{transform:translateY(var(--lift-1))}
+.btn:active{transform:none}
+.btn-primary{background:var(--accent-action);color:var(--on-action);border-color:var(--accent-action-edge);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 1px 0 rgba(0,0,0,.5)}
+.btn-primary:hover,.btn-primary.is-hover{background:var(--accent-action-hover)}
+.btn-primary:active{background:var(--accent-action-press)}
+.btn-secondary{background:var(--surface-raised);color:var(--text);border-color:var(--border-control)}
+.btn-secondary:hover,.btn-secondary.is-hover{background:var(--surface-hover);border-color:var(--border-control-hover)}
+.btn-ghost{background:transparent;color:var(--text-secondary)}
+.btn-ghost:hover,.btn-ghost.is-hover{background:var(--surface-hover);color:var(--text)}
+.btn-danger{background:var(--danger-bg);color:var(--danger-on);border-color:var(--danger-border)}
+.btn-danger:hover{background:var(--danger-hover);color:var(--text)}
+.btn[disabled]{background:var(--surface-hover);color:var(--text-disabled);border-color:var(--border);cursor:not-allowed;box-shadow:none;transform:none}
+.btn-sm{height:32px;padding:0 11px;letter-spacing:.05em}
+.btn.is-focus{outline:2px solid var(--focus);outline-offset:2px}
+.btn.is-hover{transform:translateY(var(--lift-1))}
+
+/* ═══ Sections ═══ */
+.sec{margin-top:24px}
+.sec-h{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+.sec-h h2{margin:0;font:600 var(--fs-h2)/var(--lh-h2) var(--g-font-display);letter-spacing:.06em;color:var(--text);white-space:nowrap}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--border)}
+.sec-h .aside{order:3;flex:none}
+.sec-sub{margin:0 0 12px 23px;font:500 var(--fs-small)/var(--lh-small) var(--g-font-text);color:var(--text-muted)}
+.sec-h + .tiles,.sec-h + .tools{margin-top:14px}
+
+/* ═══ 3a. Tuiles de chiffres (.fx-stat) ═══ */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{display:flex;flex-direction:column;gap:10px;padding:16px 18px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-2);
+  transition:border-color var(--t-mid) var(--ease),transform var(--t-mid) var(--ease),background var(--t-mid)}
+.tile:hover{border-color:var(--border-strong);background:var(--surface-raised);transform:translateY(var(--lift-2))}
+.tile-top{display:flex;align-items:center;gap:8px;color:var(--text-muted)}
+.tile-top .ic{width:15px;height:15px}
+.tile-num{display:flex;align-items:baseline;gap:8px;min-width:0}
+.tile-num b{font:400 var(--fs-num)/1 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text);letter-spacing:-.01em}
+.tile-num span{font:500 14px/1.2 var(--g-font-text);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gauge{height:2px;background:var(--surface-pressed);position:relative}
+.gauge i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--g-pourpre),var(--accent-action))}
+.gauge i::after{content:"";position:absolute;right:-1px;top:-2px;width:2px;height:6px;background:var(--text)}
+.tile-foot{display:flex;justify-content:space-between;gap:10px;font:500 13.5px/1.3 var(--g-font-text);color:var(--text-secondary)}
+.tile-foot .pc{font:500 13px/1.3 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text-muted)}
+
+/* ═══ 3b. Cartes d'outils ═══ */
+.tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.tool{position:relative;display:flex;flex-direction:column;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-2);
+  transition:border-color var(--t-mid) var(--ease),transform var(--t-mid) var(--ease)}
+.tool:hover{border-color:var(--border-strong);transform:translateY(var(--lift-2))}
+/* L'arête importante : la carte qui porte une échéance reçoit le filet or et le losange. */
+.tool.is-featured{border-color:var(--border-strong)}
+.tool.is-featured::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:1px;background:var(--line-ornement-fade)}
+.tool.is-featured::after{content:"";position:absolute;left:50%;top:-4px;width:7px;height:7px;margin-left:-3.5px;background:var(--accent-active);transform:rotate(45deg);box-shadow:0 0 0 2px var(--bg)}
+.tool-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.tool h3{margin:0 0 6px;font:600 var(--fs-h3)/var(--lh-h3) var(--g-font-display);letter-spacing:.05em;color:var(--text)}
+.tool p{font:500 14.5px/1.5 var(--g-font-text);color:var(--text-secondary)}
+.tool-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 14px;padding-top:10px;border-top:1px solid var(--border-subtle);font:500 13.5px/1.35 var(--g-font-text);color:var(--text-muted)}
+.tool-meta b{font:500 13.5px/1.35 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text-body)}
+.tool-foot{margin-top:auto;display:flex;gap:8px}
+
+/* ═══ Étiquettes & statuts ═══ */
+.tag{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:var(--r-1);border:1px solid var(--border-strong);
+  font:600 10.5px/1 var(--g-font-data);letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary);white-space:nowrap}
+.tag.or{border-color:var(--line-ornement);color:var(--accent-ornement)}
+.tag.pourpre{background:var(--g-pourpre);border-color:var(--g-pourpre);color:var(--text)}
+.tag.crimson{background:var(--accent-action);border-color:var(--accent-action);color:var(--on-action)}
+.statut{display:inline-flex;align-items:center;gap:8px;font:500 14px/1.2 var(--g-font-text);color:var(--text-body);white-space:nowrap}
+.statut::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--neutral));flex:none}
+.statut.ok{--c:var(--success)}.statut.att{--c:var(--warning)}.statut.off{--c:var(--neutral);color:var(--text-muted)}.statut.ko{--c:var(--danger-text)}
+.statut.att::before{background:transparent;box-shadow:inset 0 0 0 1.5px var(--warning);width:8px;height:8px}
+.statut.ko::before{border-radius:0}
+.badge-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:var(--r-pill);background:var(--accent-action);color:var(--on-action);font:600 11px/1 var(--g-font-data)}
+.badge-n.muted{background:var(--surface-pressed);color:var(--text-secondary)}
+
+/* ═══ 3c. Sous-onglets ═══ */
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.subtab{position:relative;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;background:none;border:0;cursor:pointer;
+  font:600 var(--fs-nav)/1 var(--g-font-display);letter-spacing:.05em;color:var(--text-muted);white-space:nowrap;transition:color var(--t-fast)}
+.subtab:hover{color:var(--text)}
+.subtab .n{font:500 12px/1 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text-muted);padding:3px 6px;border-radius:var(--r-1);background:var(--surface-hover)}
+.subtab.is-active{color:var(--text)}
+.subtab.is-active::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;background:var(--accent-active)}
+.subtab.is-active .n{background:rgba(var(--g-crimson-rgb),.22);color:var(--text)}
+
+/* ═══ 3d. Table dense ═══ */
+.tabbar{display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--border);margin:14px 0 12px}
+.tabbar .subtabs{border-bottom:0;margin:0;flex:none}
+.toolbar{display:flex;align-items:center;gap:8px;margin-left:auto;padding-bottom:6px}
+.toolbar .field{width:210px}
+.toolbar .field .input{height:34px}
+.toolbar .grow{display:none}
+.sec-note{font:500 var(--fs-small)/1.3 var(--g-font-text);color:var(--text-muted);white-space:nowrap}
+.table-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-2);overflow:hidden}
+table.dense{width:100%;border-collapse:collapse;font:500 14.5px/1.3 var(--g-font-text)}
+.dense thead th{height:36px;padding:0 14px;text-align:left;background:var(--surface-sunken);border-bottom:1px solid var(--border);
+  font:600 var(--fs-micro)/1 var(--g-font-data);letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+.dense thead th.sorted{color:var(--text)}
+.dense thead th.sorted .ic{width:11px;height:11px;margin-left:4px;color:var(--accent-ornement)}
+.dense td{height:42px;padding:0 14px;border-bottom:1px solid var(--border-subtle);color:var(--text-body);white-space:nowrap}
+.dense tbody tr{transition:background var(--t-fast)}
+.dense tbody tr:last-child td{border-bottom:0}
+.dense tbody tr:hover,.dense tbody tr.is-hover{background:var(--surface-row-hover)}
+.dense tbody tr.is-hover td:first-child{box-shadow:inset 2px 0 0 var(--accent-active)}
+.dense .r{text-align:right}
+.who{display:flex;align-items:center;gap:10px}
+.who b{font:600 15px/1.2 var(--g-font-text);color:var(--text)}
+.who small{display:block;font:500 12.5px/1.2 var(--g-font-text);color:var(--text-muted)}
+.cls{display:flex;align-items:center;gap:10px}
+.cls img{width:24px;height:24px;object-fit:contain;flex:none}
+.cls .lv{font:500 12.5px/1 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text-muted);margin-left:2px}
+.act{color:var(--text-muted)}
+.row-act{opacity:0;transition:opacity var(--t-fast)}
+tr:hover .row-act,tr.is-hover .row-act{opacity:1}
+.table-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;border-top:1px solid var(--border);background:var(--surface-sunken);
+  font:500 13px/1.3 var(--g-font-text);color:var(--text-muted)}
+.pager{display:flex;gap:4px}
+.pager button{width:32px;height:32px;border-radius:var(--r-1);background:transparent;border:1px solid var(--border);color:var(--text-secondary);font:500 13px/1 var(--g-font-data);cursor:pointer}
+.pager button.is-active{border-color:var(--line-ornement);color:var(--text)}
+
+/* ═══ Champs ═══ */
+.lbl{display:block;margin-bottom:6px;font:600 13.5px/1.2 var(--g-font-text);color:var(--text-secondary)}
+.lbl em{font-style:normal;color:var(--text-muted);font-weight:500}
+.field{position:relative;display:flex;align-items:center}
+.field .ic{position:absolute;left:12px;width:16px;height:16px;color:var(--text-muted);pointer-events:none}
+.input{width:100%;height:40px;padding:0 12px;border-radius:var(--r-1);background:var(--surface-sunken);border:1px solid var(--border-control);
+  font:500 15px/1 var(--g-font-text);color:var(--text);transition:border-color var(--t-fast),box-shadow var(--t-fast)}
+.field .ic + .input{padding-left:36px}
+.input::placeholder{color:var(--text-muted)}
+.input:hover{border-color:var(--border-control-hover)}
+.input:focus,.input.is-focus{outline:none;border-color:var(--accent-ornement);box-shadow:0 0 0 3px rgba(var(--g-or-rgb),.16)}
+textarea.input{height:60px;padding:10px 12px;line-height:1.45;resize:none}
+.help{margin-top:6px;font:500 13px/1.35 var(--g-font-text);color:var(--text-muted)}
+.help.err{color:var(--danger-text);display:flex;gap:6px;align-items:center}
+.select{position:relative}
+.select .input{display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left}
+.select .input .ic{position:static;color:var(--text-secondary)}
+.listbox{margin-top:4px;padding:4px;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:var(--r-1);box-shadow:var(--shadow-menu)}
+.opt{position:relative;display:flex;align-items:center;justify-content:space-between;height:36px;padding:0 10px 0 14px;border-radius:var(--r-1);font:500 14.5px/1 var(--g-font-text);color:var(--text-body)}
+.opt.is-hover{background:var(--surface-hover);color:var(--text)}
+.opt.is-sel{color:var(--text)}
+.opt.is-sel::before{content:"";position:absolute;left:4px;top:9px;bottom:9px;width:2px;background:var(--accent-active)}
+.opt.is-sel .ic{width:15px;height:15px;color:var(--accent-ornement)}
+.opt small{font:500 12px/1 var(--g-font-data);color:var(--text-muted)}
+
+/* Cases, bascules */
+.check{display:flex;align-items:center;gap:10px;min-height:32px;font:500 14.5px/1.3 var(--g-font-text);color:var(--text-body);cursor:pointer}
+.box{width:18px;height:18px;flex:none;border-radius:var(--r-1);border:1px solid var(--border-control);background:var(--surface-sunken);display:grid;place-items:center;color:var(--on-action)}
+.box .ic{width:13px;height:13px;stroke-width:2.6}
+.check.on .box{background:var(--accent-action);border-color:var(--accent-action-edge)}
+.check.radio .box{border-radius:50%}
+.check.radio.on .box{background:var(--surface-sunken);border-color:var(--accent-ornement)}
+.check.radio.on .box::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent-action)}
+.check.is-focus .box{outline:2px solid var(--focus);outline-offset:2px}
+.check.dis{color:var(--text-disabled);cursor:not-allowed}.check.dis .box{border-color:var(--border-strong);background:var(--surface-hover)}
+.toggle{position:relative;width:38px;height:22px;flex:none;border-radius:var(--r-pill);background:var(--surface-pressed);border:1px solid var(--border-control);transition:background var(--t-fast)}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--text-muted);transition:left var(--t-fast) var(--ease),background var(--t-fast)}
+.check.on .toggle{background:var(--accent-action);border-color:var(--accent-action-edge)}
+.check.on .toggle::after{left:19px;background:var(--text)}
+
+/* ═══ Planche ═══ */
+.comp-cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,4fr) minmax(0,3.2fr);gap:12px;align-items:start}
+.comp-cols .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.board-h{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:26px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.board-h h2{margin:4px 0 0;font:600 22px/1.15 var(--g-font-display);letter-spacing:.05em;color:var(--text)}
+.board-h p{max-width:520px;font:500 14px/1.5 var(--g-font-text);color:var(--text-muted);text-align:right}
+.grid-comp{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-2);padding:16px;min-width:0}
+.panel > .micro{display:block;margin-bottom:12px}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c6{grid-column:span 6}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.cap{font:500 12.5px/1.35 var(--g-font-text);color:var(--text-muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Toast */
+.toast{display:flex;gap:12px;align-items:flex-start;padding:14px 14px 14px 16px;background:var(--surface-raised);border:1px solid var(--border-strong);
+  border-left:2px solid var(--success);border-radius:var(--r-1);box-shadow:var(--el-3);max-width:380px}
+.toast .ic{color:var(--success)}
+.toast b{display:block;font:600 15px/1.3 var(--g-font-text);color:var(--text)}
+.toast span{display:block;font:500 13.5px/1.4 var(--g-font-text);color:var(--text-secondary);margin-top:2px}
+.toast .x{margin-left:auto;color:var(--text-muted)}
+
+/* Modale */
+.stage{position:relative;border-radius:var(--r-2);overflow:hidden;padding:16px 14px;display:grid;place-items:center;
+  background:linear-gradient(var(--scrim),var(--scrim)),repeating-linear-gradient(0deg,#121219 0 48px,#0f0f15 48px 49px)}
+.modal{position:relative;width:100%;max-width:440px;background:var(--surface-raised);border:1px solid var(--border-strong);border-radius:var(--r-2);box-shadow:var(--el-4)}
+.modal::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:1px;background:var(--line-ornement-fade)}
+.modal::after{content:"";position:absolute;left:50%;top:-4px;width:7px;height:7px;margin-left:-3.5px;background:var(--accent-active);transform:rotate(45deg);box-shadow:0 0 0 2px #121219}
+.modal-h{display:flex;align-items:flex-start;gap:14px;padding:18px 20px 0}
+.modal-h h3{margin:0;font:600 18px/1.3 var(--g-font-display);letter-spacing:.04em;color:var(--text)}
+.modal-h p{margin-top:6px;font:500 14.5px/1.5 var(--g-font-text);color:var(--text-secondary)}
+.modal-b{padding:14px 20px}
+.modal-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--border);background:var(--surface-sunken)}
+
+/* Comparaison marque / données */
+.vs{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.vs-cell{display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r-2);background:var(--surface-sunken);min-width:0}
+.vs-cell .sw{display:flex;align-items:center;gap:10px}
+.vs-cell .chip{width:22px;height:22px;border-radius:var(--r-1);flex:none}
+.vs-cell .hex{font:500 12.5px/1.2 var(--g-font-data);color:var(--text-muted)}
+.vs-cell .what{font:600 13.5px/1.25 var(--g-font-text);color:var(--text)}
+.vs-cell .hex{font-size:12px}
+.vs-cell .itip-name{font-size:19px}
+
+/* ═══ 5. AirBuilder ═══ */
+.ab{display:grid;grid-template-columns:minmax(0,1fr) 318px minmax(0,1fr);grid-template-areas:"slots tip side";gap:12px;align-items:start}
+.ab-slots{grid-area:slots}.ab .itip{grid-area:tip}.ab-side{grid-area:side;display:flex;flex-direction:column;gap:12px;min-width:0}
+.ab-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.ab-head .who b{font-size:16px}
+.stuffs{display:flex;gap:4px;margin-left:auto}
+.stuffs .subtab{height:34px;font-size:14px}
+.slots{display:flex;flex-direction:column}
+.slot{position:relative;display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:var(--r-1);border:1px solid transparent;cursor:pointer;transition:background var(--t-fast)}
+.slot + .slot{margin-top:2px}
+.slot:hover{background:var(--surface-hover)}
+.slot.is-sel{background:var(--surface-hover);border-color:var(--border-strong)}
+.slot.is-sel::before{content:"";position:absolute;left:-1px;top:8px;bottom:8px;width:2px;background:var(--accent-active)}
+.slot-txt{flex:1;min-width:0}
+.slot-n{display:block;font:600 15px/1.25 var(--g-font-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot-s{display:flex;gap:8px;align-items:center;margin-top:3px}
+.slot-s .micro{font-size:10px}
+.plus{font:600 13px/1 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text);padding:4px 6px;border-radius:var(--r-1);background:var(--surface-pressed)}
+.picker .slot{padding:7px 8px}
+.picker .frame.item{width:36px;height:36px}.picker .frame.item img{width:28px;height:28px}
+.picker .slot-n{font-size:14.5px}
+
+/* Infobulle d'objet : posée sur NOIR — c'est le fond qui donne leur contraste aux couleurs du jeu. */
+.itip{background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-2);padding:14px 16px;box-shadow:var(--el-3);font:500 13.5px/1.42 var(--g-font-text)}
+.itip-t{display:flex;gap:12px;align-items:center}
+.itip-t .frame.item{width:40px;height:40px}
+.itip-name{font:700 19px/1.2 var(--g-font-text);letter-spacing:.005em}
+.itip-name small{font:600 13px/1 var(--g-font-data);color:var(--text);margin-left:4px}
+.stars{display:flex;gap:1px;margin-top:4px}
+.stars img{width:12px;height:12px;image-rendering:pixelated}
+.itip-tags{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 6px;align-items:center}
+.ttag{display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:var(--r-1);font:600 10.5px/1 var(--g-font-data);letter-spacing:.09em;text-transform:uppercase;
+  color:var(--t);border:1px solid color-mix(in srgb,var(--t) 55%,transparent);background:color-mix(in srgb,var(--t) 10%,transparent)}
+.ttag.plein{background:var(--t);border-color:var(--t);color:var(--g-ivoire)}
+.itip-tags img{height:14px;width:auto;image-rendering:pixelated}
+.cond{color:var(--text-muted);font-size:13px}
+.atk{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 4px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--r-1);background:var(--surface-sunken)}
+.atk b{font:600 15px/1 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text)}
+.isec{display:flex;align-items:center;gap:8px;margin:9px 0 3px;font:600 10.5px/1 var(--g-font-data);letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted)}
+.isec::after{content:"";flex:1;height:1px;background:var(--border)}
+.isec img{width:16px;height:16px;image-rendering:pixelated}
+.bl{display:flex;justify-content:space-between;gap:12px;color:var(--c,var(--c-bonus));line-height:1.4}
+.bl span:last-child{font:600 13px/1.45 var(--g-font-data);font-variant-numeric:tabular-nums;color:var(--text)}
+.bl.ev{--c:var(--c-eveil)}.bl.dia{--c:var(--c-diamant)}.bl.holo{--c:var(--c-holo)}.bl.perc{--c:var(--c-percage)}
+.bl.rar{color:var(--text-body);padding-left:9px;box-shadow:inset 2px 0 0 var(--rar-mythique)}
+.cards{display:flex;gap:3px;flex-wrap:wrap;margin:4px 0 2px}
+.cards img{width:18px;height:18px;image-rendering:pixelated}
+
+/* Palette */
+.palette{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.pal{border:1px solid var(--border);border-radius:var(--r-2);overflow:hidden;background:var(--surface)}
+.pal i{display:block;height:56px}
+.pal div{padding:10px 10px 12px}
+.pal b{display:block;font:600 14px/1.2 var(--g-font-text);color:var(--text)}
+.pal span{display:block;font:500 12px/1.4 var(--g-font-data);color:var(--text-muted);margin-top:2px}
+.ratio{display:flex;height:10px;margin-top:12px;border-radius:var(--r-1);overflow:hidden}
+.ratio i{display:block}
+.ratio-l{display:flex;justify-content:space-between;margin-top:8px}
+
+.who small .rk{display:none}
+
+/* ═══ 6. Mobile ═══ */
+@media (max-width:1400px){
+  .nav-link{padding:0 9px;letter-spacing:.03em}
+  .me-txt{display:none}
+}
+@media (max-width:1279px){
+  .nav-links,.nav .grid-btn{display:none}
+  .nav-burger{display:inline-flex;margin-left:auto}
+  .nav-user{margin-left:0}
+}
+@media (max-width:1200px){
+  .tabbar{flex-direction:column;align-items:stretch;gap:10px;border-bottom:0}
+  .tabbar .subtabs{border-bottom:1px solid var(--border)}
+  .toolbar{margin-left:0;padding-bottom:0}
+  .toolbar .field{flex:1;width:auto}
+}
+@media (max-width:1060px){
+  /* La table se replie en lignes à deux étages : rien ne se perd, rien ne déborde. */
+  table.dense,table.dense tbody{display:block}
+  .dense thead{display:none}
+  .dense tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who st" "cls act";gap:6px 12px;padding:12px 14px;border-bottom:1px solid var(--border-subtle)}
+  .dense td{display:block;height:auto;padding:0;border:0;min-width:0}
+  .dense td.c-who{grid-area:who}.dense td.c-st{grid-area:st;justify-self:end}
+  .dense td.c-cls{grid-area:cls}.dense td.c-act{grid-area:act;justify-self:end;align-self:center;font-size:13px}
+  .dense td.c-rank,.dense td.c-b,.dense td.c-x{display:none}
+  .who small .rk{display:inline}
+  .dense tbody tr.is-hover td:first-child{box-shadow:none}
+  .dense tbody tr.is-hover{box-shadow:inset 2px 0 0 var(--accent-active)}
+  .ab{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"slots tip" "side side"}
+  .comp-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .comp-cols .col:last-child{grid-column:1 / -1}
+}
+@media (max-width:760px){
+  .nav{height:56px;padding:0 12px 0 16px;gap:8px}
+  .nav-word{font-size:17px;letter-spacing:.2em}
+  .brand-mark{width:30px;height:30px}
+  .me{border:0;padding:0;margin-left:2px}
+  .wrap{padding:16px 16px 40px}
+  .ph{padding:22px 18px;min-height:0;align-items:flex-start}
+  .ph-row{flex-direction:column;align-items:flex-start;gap:16px}
+  .ph .frame.lg{display:none}
+  .ph h1{font-size:26px}
+  .ph-sub{font-size:15px}
+  .ph-actions{align-self:stretch}
+  .ph-actions .btn{flex:1}
+  .ph-veil{background:linear-gradient(90deg,rgba(8,8,12,.95),rgba(8,8,12,.7)),linear-gradient(0deg,rgba(var(--g-pourpre-rgb),.35),transparent 60%)}
+  .sec{margin-top:32px}
+  .sec-h h2{font-size:17px;white-space:normal}
+  .sec-sub{margin-left:0}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tile{padding:14px 12px 12px;gap:10px}
+  .tile-num{flex-direction:column;align-items:flex-start;gap:4px}
+  .tile-num b{font-size:28px}
+  .tile-num span{font-size:13px}
+  .tile-foot .pc{display:none}
+  .tools{grid-template-columns:minmax(0,1fr)}
+  .tool{padding:14px 14px 16px;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px}
+  .tool-head{display:contents}
+  .tool-head .frame{grid-column:1;grid-row:1 / span 2;align-self:center}
+  .tool h3{grid-column:2;grid-row:1;margin:0;align-self:end}
+  .tool-head .statut{grid-column:2;grid-row:2;align-self:start;font-size:13px;margin-top:3px}
+  .tool p,.tool-meta,.tool-foot{grid-column:1 / -1}
+  .tool p{margin-top:10px}
+  .tool-meta{margin:10px 0 12px}
+  .toolbar .btn-ghost{display:none}
+  .toolbar .btn-secondary{padding:0 10px;font-size:0;gap:0}
+  .toolbar .btn-secondary .ic{margin:0}
+  .sec-h .sec-note{display:none}
+  .table-foot{flex-direction:column;align-items:flex-start}
+  .board-h{flex-direction:column;align-items:flex-start}
+  .board-h p{text-align:left}
+  .grid-comp{grid-template-columns:minmax(0,1fr)}
+  .c4,.c5,.c6,.c7,.c8,.c12{grid-column:auto}
+  .pair{grid-template-columns:minmax(0,1fr)}
+  .ab{grid-template-columns:minmax(0,1fr);grid-template-areas:"slots" "tip" "side"}
+  .comp-cols{grid-template-columns:minmax(0,1fr)}
+  .comp-cols .col:last-child{grid-column:auto}
+  .stuffs{margin-left:0}
+  .palette{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important}
+  .tile:hover,.tool:hover,.btn:hover,.icon-btn:hover,.btn.is-hover{transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.6 2.5 20h19L12 3.6Z" /><path d="M12 10v4.5" /><path d="M12 17.5h.01" /></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15"/><path d="m6 13 6 6 6-6"/></symbol><symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H5"/><path d="m11 6-6 6 6 6"/></symbol><symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></symbol><symbol id="i-ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="m5.6 5.6 12.8 12.8" /></symbol><symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 1 0-12 0c0 4.5-2 6-2 6h16s-2-1.5-2-6Z" /><path d="M10.2 20a1.9 1.9 0 0 0 3.6 0" /></symbol><symbol id="i-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2 3h2.4l2.3 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L20.5 7H6.2" /></symbol><symbol id="i-castle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l2.5 1.5V5l3 1.5V4h5v2.5L17.5 5v4.5L20 8v13Z"/><path d="M10.5 21v-5h3v5"/></symbol><symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m4 12.5 5 5 11-11" /></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></symbol><symbol id="i-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 15 7-7 7 7"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="4" width="10" height="16" rx="2" /><path d="M9 4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v.5H9Z" fill="currentColor" stroke="none" /><path d="M9.5 10h5" /><path d="M9.5 13.5h5" /><path d="M9.5 17h3" /></symbol><symbol id="i-coins" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="7" rx="5" ry="2.5" /><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7" /><path d="M10 13.4c.4 1.3 2.4 2.3 4.8 2.3 2.8 0 5-1.1 5-2.5v-4c0-1.3-1.8-2.3-4.3-2.5" /></symbol><symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m7.5 11.5 4.5 4.5 4.5-4.5"/><path d="M4 15v3.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V15"/></symbol><symbol id="i-dragon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14c0-3 2.5-5 5.5-5 2 0 3 1 4.5 1 2 0 3-2 5-2 1 0 2 .7 2 2 0 2-2 2.5-2 2.5" /><path d="M4 14c-.5 2 .5 4 3 5l2-1 2 1 2-1 2 1c2.5-1 3.5-3 3-5" /><circle cx="17.5" cy="11" r=".8" fill="currentColor" stroke="none" /><path d="m6 9 1.5-2.5L9 9" /></symbol><symbol id="i-etoile4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 .5 14 10 23.5 12 14 14 12 23.5 10 14 .5 12 10 10Z" fill="currentColor" stroke="none"/></symbol><symbol id="i-grid" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6" /></symbol><symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 9-7.5 9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-6h4v6"/></symbol><symbol id="i-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></symbol><symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14" /><path d="M5 12h14" /></symbol><symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m20 20-4.7-4.7" /></symbol><symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6h0a1.7 1.7 0 0 1 1.7 1.7v.6a1.7 1.7 0 0 0 2.6 1.5l.5-.3a1.7 1.7 0 0 1 2.3.6l.1.1a1.7 1.7 0 0 1-.6 2.3l-.5.3a1.7 1.7 0 0 0 0 3l.5.3a1.7 1.7 0 0 1 .6 2.3l-.1.1a1.7 1.7 0 0 1-2.3.6l-.5-.3a1.7 1.7 0 0 0-2.6 1.5v.6a1.7 1.7 0 0 1-1.7 1.7h-.2a1.7 1.7 0 0 1-1.7-1.7v-.6a1.7 1.7 0 0 0-2.6-1.5l-.5.3a1.7 1.7 0 0 1-2.3-.6l-.1-.1a1.7 1.7 0 0 1 .6-2.3l.5-.3a1.7 1.7 0 0 0 0-3l-.5-.3a1.7 1.7 0 0 1-.6-2.3l.1-.1a1.7 1.7 0 0 1 2.3-.6l.5.3a1.7 1.7 0 0 0 2.6-1.5v-.6A1.7 1.7 0 0 1 11.8 2.6Z"/></symbol><symbol id="i-shirt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 3 7l2.6 3.4L8 8.8V21h8V8.8l2.4 1.6L21 7l-5-4-1.6 1.6a2.6 2.6 0 0 1-4.8 0Z" /></symbol><symbol id="i-sort" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16"/><path d="m3.5 7.5 3.5-3.5 3.5 3.5"/><path d="M17 20V4"/><path d="m13.5 16.5 3.5 3.5 3.5-3.5"/></symbol><symbol id="i-sprout-farm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M7 20v-4M12 20v-6M17 20v-4"/><path d="M7 16c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Zm0 0c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z"/><path d="M12 14c-2 0-3.2-1.4-3.2-3.4 2.2 0 3.2 1.4 3.2 3.4Zm0 0c2 0 3.2-1.4 3.2-3.4-2.2 0-3.2 1.4-3.2 3.4Z"/><path d="M17 16c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Zm0 0c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z"/></symbol><symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /></symbol><symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5" /><path d="M16 5.2A3.2 3.2 0 0 1 16 11.4" /><path d="M17 15c2.3.5 3.5 2.4 3.5 5" /></symbol><symbol id="i-vault" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="15" rx="2" /><circle cx="12" cy="11.5" r="3.5" /><path d="M12 9.5v4" /><path d="M10 11.5h4" /><path d="M6 19v2" /><path d="M18 19v2" /></symbol><symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6 6 18" /></symbol></svg>
+
+<!-- ═══════════════ 1. BARRE DU HAUT ═══════════════ -->
+<header class="nav">
+  <a class="nav-brand" href="#" aria-label="GENESIS — accueil">
+    <img src="../logo-courant.svg" class="brand-mark" alt="GENESIS" onerror="this.classList.add('is-missing')">
+    <span class="nav-word">GENESIS</span>
+  </a>
+  <nav class="nav-links" aria-label="Navigation principale">
+    <div class="nav-item"><a class="nav-link" href="#">Accueil</a></div>
+    <div class="nav-item"><a class="nav-link" href="#">La guilde</a></div>
+    <div class="nav-item"><a class="nav-link" href="#">Toutes les pages</a></div>
+    <div class="nav-item"><a class="nav-link" href="#">AirBuilder<svg class="ic"><use href="#i-chevron-down"/></svg></a></div>
+    <div class="nav-item"><a class="nav-link" href="#">Astuces<svg class="ic"><use href="#i-chevron-down"/></svg></a></div>
+    <div class="nav-item"><a class="nav-link" href="#">Quête Guilde</a></div>
+    <div class="nav-item is-open">
+      <a class="nav-link is-hover" href="#" aria-expanded="true">Boutique<svg class="ic"><use href="#i-chevron-down"/></svg></a>
+      <div class="mega droite" role="menu">
+        <a class="mega-link" href="#" role="menuitem">
+          <span class="mega-ic"><svg class="ic"><use href="#i-cart"/></svg></span>
+          <span><span class="mega-l">Boutique</span><span class="mega-d">Le coffre commun, une pièce sur mesure, et le suivi de ta commande.</span></span>
+        </a>
+        <div class="mega-sec"><span class="micro">Réservé au staff</span></div>
+        <a class="mega-link" href="#" role="menuitem">
+          <span class="mega-ic"><svg class="ic"><use href="#i-coins"/></svg></span>
+          <span><span class="mega-l">Mes ventes</span><span class="mega-d">Ce que tu as fourni, et ce que ça t'a rapporté.</span></span>
+        </a>
+        <a class="mega-link is-hover" href="#" role="menuitem">
+          <span class="mega-ic"><svg class="ic"><use href="#i-vault"/></svg></span>
+          <span><span class="mega-l">Coffre &amp; crafts</span><span class="mega-d">Le stock, les recettes et la base des objets — l'outil AirGuild.</span></span>
+        </a>
+        <a class="mega-link" href="#" role="menuitem">
+          <span class="mega-ic"><svg class="ic"><use href="#i-sprout-farm"/></svg></span>
+          <span><span class="mega-l">Plan de farm</span><span class="mega-d">Ce qui manque au seuil, par catégorie.</span></span>
+        </a>
+      </div>
+    </div>
+    <div class="nav-item"><a class="nav-link is-active" href="#" aria-current="page">Guilde<svg class="ic"><use href="#i-chevron-down"/></svg></a></div>
+  </nav>
+  <button class="icon-btn nav-burger" aria-label="Ouvrir le menu"><svg class="ic ic-20"><use href="#i-menu"/></svg></button>
+  <div class="nav-user">
+    <button class="icon-btn grid-btn" aria-label="Toutes les pages"><svg class="ic"><use href="#i-grid"/></svg></button>
+    <button class="icon-btn" aria-label="Alertes, 3 nouvelles"><svg class="ic"><use href="#i-bell"/></svg><span class="count">3</span></button>
+    <div class="me"><span class="avatar">MX</span><span class="me-txt"><span class="me-n">Maxime</span><span class="me-r">Direction</span></span></div>
+  </div>
+</header>
+
+<main class="page">
+<div class="wrap">
+
+  <!-- ═══════════════ 2. EN-TÊTE DE PAGE ═══════════════ -->
+  <header class="ph">
+    <img class="ph-art" src="../../references/ref-decor-salle-du-trone.jpg" alt="" aria-hidden="true">
+    <span class="ph-veil" aria-hidden="true"></span>
+    <div class="ph-row">
+      <span class="frame lg or"><svg class="ic"><use href="#i-home"/></svg></span>
+      <div class="ph-txt">
+        <div class="ph-over"><span class="micro">Guilde</span><span class="micro sep">/</span><span class="micro" style="color:var(--text-secondary)">Accueil</span></div>
+        <h1>L'accueil de la guilde</h1>
+        <div class="ph-rule" aria-hidden="true"><i></i><span class="losange"></span></div>
+        <p class="ph-sub">Ce qui t'attend, où tu en es, et 23 portes vers les outils de la guilde.</p>
+      </div>
+      <div class="ph-actions">
+        <a class="btn btn-secondary" href="#" aria-label="Régler la page"><svg class="ic"><use href="#i-settings"/></svg>Régler</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ 3. TABLEAU DE BORD ═══════════════ -->
+  <section class="sec" aria-labelledby="s-etat">
+    <div class="sec-h"><svg class="etoile"><use href="#i-etoile4"/></svg><h2 id="s-etat">L'état de la guilde</h2></div>
+    <div class="tiles">
+      <a class="tile" href="#">
+        <span class="tile-top"><svg class="ic"><use href="#i-users"/></svg><span class="micro">Membres actifs</span></span>
+        <span class="tile-num"><b>38</b><span>/ 44 membres</span></span>
+        <span class="gauge"><i style="width:86%"></i></span>
+        <span class="tile-foot"><span>6 inactifs</span><span class="pc">86 %</span></span>
+      </a>
+      <a class="tile" href="#">
+        <span class="tile-top"><svg class="ic"><use href="#i-shirt"/></svg><span class="micro">Personnages avec un build</span></span>
+        <span class="tile-num"><b>71</b><span>/ 86 personnages</span></span>
+        <span class="gauge"><i style="width:83%"></i></span>
+        <span class="tile-foot"><span>15 sans stuff renseigné</span><span class="pc">83 %</span></span>
+      </a>
+      <a class="tile" href="#">
+        <span class="tile-top"><svg class="ic"><use href="#i-vault"/></svg><span class="micro">Coffre au seuil</span></span>
+        <span class="tile-num"><b>112</b><span>/ 127 objets suivis</span></span>
+        <span class="gauge"><i style="width:88%"></i></span>
+        <span class="tile-foot"><span>15 à compléter</span><span class="pc">88 %</span></span>
+      </a>
+      <a class="tile" href="#">
+        <span class="tile-top"><svg class="ic"><use href="#i-clipboard"/></svg><span class="micro">Candidatures traitées</span></span>
+        <span class="tile-num"><b>19</b><span>/ 22 reçues</span></span>
+        <span class="gauge"><i style="width:86%"></i></span>
+        <span class="tile-foot"><span>3 en attente de réponse</span><span class="pc">86 %</span></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="s-jouer">
+    <div class="sec-h"><svg class="etoile"><use href="#i-etoile4"/></svg><h2 id="s-jouer">Jouer ensemble</h2></div>
+    <div class="tools">
+      <article class="tool">
+        <div class="tool-head"><span class="frame"><svg class="ic"><use href="#i-castle"/></svg></span><span class="statut ok">Inscriptions ouvertes</span></div>
+        <h3>Chambres Secrètes</h3>
+        <p>Qui vient, à quel poste, et comment on joue chaque salle.</p>
+        <div class="tool-meta"><span>Prochain créneau <b>jeu. 21:00</b></span><span>Postes <b>6 / 8</b></span></div>
+        <div class="tool-foot"><a class="btn btn-secondary" href="#">Voir les créneaux</a></div>
+      </article>
+      <article class="tool is-featured">
+        <div class="tool-head"><span class="frame or"><svg class="ic"><use href="#i-dragon"/></svg></span><span class="statut att">2 passages à venir</span></div>
+        <h3>World Boss</h3>
+        <p>Les prochains passages, et qui vient.</p>
+        <div class="tool-meta"><span>Prochain <b>ce soir 22:30</b></span><span>Inscrits <b>14</b></span></div>
+        <div class="tool-foot"><a class="btn btn-primary" href="#"><svg class="ic"><use href="#i-check"/></svg>Je viens</a><a class="btn btn-ghost" href="#">Détails</a></div>
+      </article>
+      <article class="tool">
+        <div class="tool-head"><span class="frame"><svg class="ic"><use href="#i-target"/></svg></span><span class="statut off">Aucune en retard</span></div>
+        <h3>Quête Guilde</h3>
+        <p>Ce que la guilde cherche, et qui s'en charge.</p>
+        <div class="tool-meta"><span>Ouvertes <b>5</b></span><span>Prises <b>3</b></span></div>
+        <div class="tool-foot"><a class="btn btn-secondary" href="#">Voir les quêtes</a></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="s-membres">
+    <div class="sec-h"><svg class="etoile"><use href="#i-etoile4"/></svg><h2 id="s-membres">Membres &amp; builds</h2><span class="sec-note">Qui est là, avec quel perso et quel stuff.</span><span class="tag or aside">Staff</span></div>
+    <div class="tabbar">
+    <div class="subtabs" role="tablist">
+      <button class="subtab is-active" role="tab" aria-selected="true">Membres <span class="n">44</span></button>
+      <button class="subtab" role="tab">Personnages <span class="n">86</span></button>
+      <button class="subtab" role="tab">Absences <span class="n">2</span></button>
+      <button class="subtab" role="tab">Candidatures <span class="n">3</span></button>
+    </div>
+    <div class="toolbar">
+      <label class="field"><svg class="ic"><use href="#i-search"/></svg><input class="input" placeholder="Chercher un membre…" aria-label="Chercher"></label>
+      <span class="grow"></span>
+      <button class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-sort"/></svg>Classe</button>
+      <button class="btn btn-secondary btn-sm"><svg class="ic"><use href="#i-download"/></svg>Exporter</button>
+    </div>
+    </div>
+    <div class="table-card">
+      <table class="dense">
+        <thead><tr>
+          <th>Membre</th><th>Rang</th><th>Personnage principal</th><th class="r">Builds</th><th>Statut</th>
+          <th class="r sorted">Dernière activité<svg class="ic"><use href="#i-arrow-down"/></svg></th><th><span class="sr">Actions</span></th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td class="c-who"><div class="who"><div><b>Ashveil</b><small><span class="rk">Direction · </span>ashveil</small></div></div></td>
+            <td class="c-rank"><span class="tag or">Direction</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Templar.png" alt="">Templier<span class="lv">200 · P9</span></div></td>
+            <td class="c-b r num">4</td>
+            <td class="c-st"><span class="statut ok">Actif</span></td>
+            <td class="c-act r num act">il y a 4 min</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+          <tr>
+            <td class="c-who"><div class="who"><div><b>Morwen</b><small><span class="rk">Général · </span>morwen.fx</small></div></div></td>
+            <td class="c-rank"><span class="tag">Général</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Forcemaster.png" alt="">Chanoine<span class="lv">200 · P7</span></div></td>
+            <td class="c-b r num">3</td>
+            <td class="c-st"><span class="statut ok">Actif</span></td>
+            <td class="c-act r num act">il y a 18 min</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+          <tr class="is-hover">
+            <td class="c-who"><div class="who"><div><b>Tsukiyo</b><small><span class="rk">Officier · </span>tsukiyo</small></div></div></td>
+            <td class="c-rank"><span class="tag">Officier</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Crackshooter.png" alt="">Arbalétrier<span class="lv">200 · P8</span></div></td>
+            <td class="c-b r num">5</td>
+            <td class="c-st"><span class="statut ok">Actif</span></td>
+            <td class="c-act r num act">il y a 1 h</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+          <tr>
+            <td class="c-who"><div class="who"><div><b>Brannoc</b><small><span class="rk">Vétéran · </span>brannoc</small></div></div></td>
+            <td class="c-rank"><span class="tag">Vétéran</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Slayer.png" alt="">Spadassin<span class="lv">198 · P5</span></div></td>
+            <td class="c-b r num">2</td>
+            <td class="c-st"><span class="statut att">Absent jusqu'au 24 oct.</span></td>
+            <td class="c-act r num act">il y a 3 j</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+          <tr>
+            <td class="c-who"><div class="who"><div><b>Kaeden</b><small><span class="rk">Garde · </span>kaeden_</small></div></div></td>
+            <td class="c-rank"><span class="tag">Garde</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Arcanist.png" alt="">Arcaniste<span class="lv">176 · P1</span></div></td>
+            <td class="c-b r num" style="color:var(--text-muted)">0</td>
+            <td class="c-st"><span class="statut ko">Sans stuff renseigné</span></td>
+            <td class="c-act r num act">il y a 5 h</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+          <tr>
+            <td class="c-who"><div class="who"><div><b>Varkhan</b><small><span class="rk">Garde · </span>varkhan</small></div></div></td>
+            <td class="c-rank"><span class="tag">Garde</span></td>
+            <td class="c-cls"><div class="cls"><img src="../../../../../public/classes/Seraph.png" alt="">Primat<span class="lv">187 · P2</span></div></td>
+            <td class="c-b r num">1</td>
+            <td class="c-st"><span class="statut off">Inactif</span></td>
+            <td class="c-act r num act">il y a 21 j</td>
+            <td class="c-x r"><a class="btn btn-ghost btn-sm row-act" href="#">Dossier<svg class="ic"><use href="#i-arrow-right"/></svg></a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-foot"><span>6 sur 44 membres · triés par dernière activité</span>
+        <div class="pager"><button aria-label="Page précédente"><svg class="ic ic-14"><use href="#i-arrow-left"/></svg></button><button class="is-active">1</button><button>2</button><button>3</button><button aria-label="Page suivante"><svg class="ic ic-14"><use href="#i-arrow-right"/></svg></button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 4. BOÎTE À COMPOSANTS ═══════════════ -->
+  <div class="board-h">
+    <div><span class="micro">Planche · Obsidienne</span><h2>Boîte à composants</h2></div>
+    <p>Repos, survol, focus clavier, actif. Le crimson n'apparaît que sur l'action principale et l'état actif ; l'or, sur le filet de ce qui compte.</p>
+  </div>
+
+  <div class="comp-cols">
+    <div class="col">
+      <div class="panel">
+        <span class="micro">Boutons</span>
+        <div class="stack" style="gap:10px">
+          <div class="row">
+            <button class="btn btn-primary">Je viens</button>
+            <button class="btn btn-secondary">Ouvrir</button>
+            <button class="btn btn-ghost">Détails</button>
+            <button class="icon-btn" aria-label="Ajouter" style="border-color:var(--border-control)"><svg class="ic"><use href="#i-plus"/></svg></button>
+          </div>
+          <div class="row">
+            <button class="btn btn-danger"><svg class="ic"><use href="#i-ban"/></svg>Exclure</button>
+            <button class="btn" disabled>Complet</button>
+            <button class="btn btn-primary is-focus">Focus</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="padding:0;overflow:hidden">
+        <div class="stage">
+          <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-t">
+            <div class="modal-h">
+              <span class="frame alerte"><svg class="ic"><use href="#i-ban"/></svg></span>
+              <div><h3 id="m-t">Exclure Brannoc du Discord&nbsp;?</h3>
+              <p>Il perd l'accès au serveur et au site, mais reste dans la guilde en jeu.</p></div>
+            </div>
+            <div class="modal-b">
+              <span class="lbl">Motif <em>· obligatoire</em></span>
+              <textarea class="input" aria-label="Motif" aria-invalid="true" placeholder="Pourquoi ? Le membre le lira dans son dossier." style="border-color:var(--danger-border)"></textarea>
+              <div class="help err"><svg class="ic ic-14"><use href="#i-alert"/></svg>Le motif est obligatoire pour exclure.</div>
+            </div>
+            <div class="modal-f"><button class="btn btn-ghost">Annuler</button><button class="btn btn-danger" disabled><svg class="ic"><use href="#i-ban"/></svg>Exclure</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel">
+        <span class="micro">Champs</span>
+        <div class="stack" style="gap:12px">
+          <div><span class="lbl">Pseudo en jeu</span><input class="input" placeholder="Ex. Ashveil"></div>
+          <div><span class="lbl">Motif <em>· obligatoire</em></span><input class="input is-focus" value="Absences non prévenues"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <span class="micro">Étiquettes, statuts &amp; cadres</span>
+        <div class="stack" style="gap:12px">
+          <div class="row"><span class="statut ok">Actif</span><span class="statut att">Absent</span><span class="statut off">Inactif</span><span class="statut ko">Refusée</span></div>
+          <div class="row" style="gap:6px"><span class="tag or">Direction</span><span class="tag">Officier</span><span class="tag pourpre">Nouveau</span><span class="tag crimson">En direct</span><span class="badge-n">3</span><span class="badge-n muted">12</span></div>
+          <div class="row" style="gap:8px">
+            <span class="frame sm"><svg class="ic"><use href="#i-users"/></svg></span>
+            <span class="frame"><svg class="ic"><use href="#i-castle"/></svg></span>
+            <span class="frame or"><svg class="ic"><use href="#i-dragon"/></svg></span>
+            <span class="frame alerte"><svg class="ic"><use href="#i-alert"/></svg></span>
+            <span class="frame cls"><img src="../../../../../public/classes/Templar.png" alt="Templier"></span>
+            <span class="frame item" style="--t:var(--tier-eternel)"><img src="../../../../../public/airbuilder/icons/itm_weaswtdarkskull.png" alt="Glaive éternel"></span>
+          </div>
+        </div>
+      </div>
+      <div class="toast" role="status">
+        <svg class="ic ic-20"><use href="#i-check"/></svg>
+        <div><b>Inscription enregistrée</b><span>World Boss, ce soir 22:30. Rappel 30 min avant.</span></div>
+        <svg class="ic ic-16 x"><use href="#i-x"/></svg>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="panel">
+        <span class="micro">Menu déroulant</span>
+        <div class="select">
+          <span class="lbl">Classe</span>
+          <button class="input is-focus" aria-expanded="true"><span>Templier</span><svg class="ic ic-16"><use href="#i-chevron-up"/></svg></button>
+          <div class="listbox" role="listbox">
+            <div class="opt">Spadassin <small>9</small></div>
+            <div class="opt is-sel" role="option" aria-selected="true">Templier <svg class="ic"><use href="#i-check"/></svg></div>
+            <div class="opt is-hover">Arcaniste <small>11</small></div>
+            <div class="opt">Chanoine <small>12</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <span class="micro">Cases &amp; bascules</span>
+        <div class="stack" style="gap:2px">
+          <label class="check"><span class="box"></span>Prévenir sur Discord</label>
+          <label class="check on"><span class="box"><svg class="ic"><use href="#i-check"/></svg></span>Rappel 30 min avant</label>
+          <label class="check on is-focus"><span class="box"><svg class="ic"><use href="#i-check"/></svg></span>Focus clavier</label>
+                    <label class="check radio on"><span class="box"></span>Poste : tank</label>
+          <label class="check"><span class="toggle"></span>Mode compact</label>
+          <label class="check on"><span class="toggle"></span>Descriptions des portes</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ 5. AIRBUILDER ═══════════════ -->
+  <div class="board-h">
+    <div><span class="micro">Planche · cohabitation</span><h2>AirBuilder</h2></div>
+    <p>Paliers, rareté et lignes de bonus sont des données du jeu : elles ne bougent pas. La charte s'efface autour d'elles — fond noir, filets neutres, aucun or sur un objet.</p>
+  </div>
+
+  <div class="ab">
+    <div class="panel ab-slots">
+      <div class="ab-head">
+        <span class="frame cls"><img src="../../../../../public/classes/Templar.png" alt=""></span>
+        <div class="who"><div><b>Ashveil</b><small>Templier · niveau 200 · prestige 9</small></div></div>
+        <div class="stuffs"><button class="subtab is-active">PvE</button><button class="subtab">PvP</button></div>
+      </div>
+      <div class="slots">
+        <div class="slot is-sel">
+          <span class="frame item" style="--t:var(--tier-eternel)"><img src="../../../../../public/airbuilder/icons/itm_weaswtdarkskull.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-eternel)">Glaive éternel</span><span class="slot-s"><span class="micro">Arme</span><span class="ttag plein" style="--t:var(--rar-mythique)">Mythique</span></span></span>
+          <span class="plus">+20</span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-yggdrasil)"><img src="../../../../../public/airbuilder/icons/itm_weashibaruweapon.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-yggdrasil)">Bouclier en Yggdrasil Purifié</span><span class="slot-s"><span class="micro">Main gauche</span></span></span>
+          <span class="plus">+10</span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-yggdrasil)"><img src="../../../../../public/airbuilder/icons/itm_mkinbarunaset01cap-32.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-yggdrasil)">Casque de Templier en Yggdrasil (G)</span><span class="slot-s"><span class="micro">Casque</span></span></span>
+          <span class="plus">+10</span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-dryades)"><img src="../../../../../public/airbuilder/icons/itm_mkinset06upper.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-dryades)">Haubert des Dryades (G)</span><span class="slot-s"><span class="micro">Armure</span></span></span>
+          <span class="plus">+8</span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-shaitan)"><img src="../../../../../public/airbuilder/icons/itm_mlordkset01foot-32.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-shaitan)">Grèves de Shaitan (G)</span><span class="slot-s"><span class="micro">Bottes</span></span></span>
+          <span class="plus">+6</span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-cape)"><img src="../../../../../public/airbuilder/icons/itm_cloaknew01.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-cape)">Cape Draconique Fulgurante</span><span class="slot-s"><span class="micro">Cape</span></span></span>
+          <span class="plus">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ab-side">
+    <div class="panel picker">
+      <span class="micro">Changer d'arme · Templier</span>
+      <div class="slots">
+        <div class="slot is-sel">
+          <span class="frame item" style="--t:var(--tier-eternel)"><img src="../../../../../public/airbuilder/icons/itm_weaswtdarkskull.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-eternel)">Glaive éternel</span><span class="slot-s"><span class="micro">Éternel · niv. 200</span></span></span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-ancestral)"><img src="../../../../../public/airbuilder/icons/itm_weaswtancient.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-ancestral)">Glaive ancestralle</span><span class="slot-s"><span class="micro">Ancestral · niv. 200</span></span></span>
+        </div>
+        <div class="slot">
+          <span class="frame item" style="--t:var(--tier-lusaka)"><img src="../../../../../public/airbuilder/icons/itm_weaswtlusika.png" alt=""></span>
+          <span class="slot-txt"><span class="slot-n" style="color:var(--tier-lusaka)">Glaive de Luzaka oublié (DPS)</span><span class="slot-s"><span class="micro">Lusaka · niv. 200</span></span></span>
+        </div>
+      </div>
+    </div>
+    <div class="vs">
+      <div class="vs-cell">
+        <div class="sw"><span class="chip" style="background:var(--g-crimson)"></span><div><div class="what">Crimson · marque</div><div class="hex">#A6192E · un fond, jamais un texte</div></div></div>
+        <button class="btn btn-primary btn-sm" style="align-self:flex-start">Je viens</button>
+      </div>
+      <div class="vs-cell">
+        <div class="sw"><span class="chip" style="background:var(--rar-mythique)"></span><div><div class="what">Mythique · jeu</div><div class="hex">#C92A2A · titre 19 px gras, ou nommé</div></div></div>
+        <div class="row" style="gap:8px"><span class="itip-name" style="color:var(--rar-mythique)">Glaive</span><span class="ttag plein" style="--t:var(--rar-mythique)">Mythique</span></div>
+      </div>
+      <div class="vs-cell">
+        <div class="sw"><span class="chip" style="background:var(--metal)"></span><div><div class="what">Or · marque</div><div class="hex">#C69A55 · filet de 1 px, focus</div></div></div>
+        <div style="display:flex;align-items:center;gap:8px;height:26px"><i style="display:block;width:56px;height:1px;background:var(--accent-ornement)"></i><span class="losange"></span></div>
+      </div>
+      <div class="vs-cell">
+        <div class="sw"><span class="chip" style="background:var(--tier-eternel)"></span><div><div class="what">Éternel · jeu</div><div class="hex">#FF8C1A · nom d'objet seulement</div></div></div>
+        <span class="slot-n" style="color:var(--tier-eternel);height:26px;display:flex;align-items:center">Haubert des éternels (G)</span>
+      </div>
+    </div>
+    </div>
+
+    <div class="itip" role="tooltip">
+      <div class="itip-t">
+        <span class="frame item" style="--t:var(--tier-eternel)"><img src="../../../../../public/airbuilder/icons/itm_weaswtdarkskull.png" alt=""></span>
+        <div><div class="itip-name" style="color:var(--rar-mythique)">Glaive éternel<small>+20</small></div>
+          <div class="stars"><img src="../../../../../public/jeu/interface/icon_artefact_starfill.webp" alt=""><img src="../../../../../public/jeu/interface/icon_artefact_starfill.webp" alt=""><img src="../../../../../public/jeu/interface/icon_artefact_starfill.webp" alt=""></div></div>
+      </div>
+      <div class="itip-tags">
+        <span class="ttag" style="--t:var(--tier-eternel)">Éternel</span>
+        <span class="ttag plein" style="--t:var(--rar-mythique)">Mythique</span>
+        <img src="../../../../../public/jeu/interface/icon_artefact.webp" alt="Artefact">
+      </div>
+      <div class="cond">Niveau 200 · Templier</div>
+      <div class="atk"><span class="micro">Attaque</span><b>725 ~ 805</b></div>
+      <div class="isec">Bonus</div>
+      <div class="bl"><span>Taux critique</span><span>+20</span></div>
+      <div class="bl"><span>Attaque %</span><span>+20</span></div>
+      <div class="bl"><span>Vitesse d'attaque (points)</span><span>+400</span></div>
+      <div class="bl"><span>Dégâts critiques</span><span>+80</span></div>
+      <div class="isec">Rareté · Mythique</div>
+      <div class="bl rar"><span>Dégâts critiques</span><span>+50</span></div>
+      <div class="bl rar"><span>Attaque %</span><span>+46</span></div>
+      <div class="isec"><img src="../../../../../public/airbuilder/icons/R1.png" alt=""><img src="../../../../../public/airbuilder/icons/R2.png" alt="" style="margin-left:-6px">Éveil</div>
+      <div class="bl ev"><span>Force</span><span>+15</span></div>
+      <div class="bl ev"><span>Dégâts critiques</span><span>+10</span></div>
+      <div class="isec"><img src="../../../../../public/airbuilder/icons/sertissage/diamant.png" alt="">Diamants ×5</div>
+      <div class="bl dia"><span>Attaque</span><span>+375</span></div>
+      <div class="isec"><img src="../../../../../public/airbuilder/icons/sertissage/diamant-holo.png" alt="">Diamants holo ×3</div>
+      <div class="bl holo"><span>Force</span><span>+66</span></div>
+            <div class="isec">Perçage · 12 / 12</div>
+      <div class="cards">
+        <img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-s.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-a.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-a.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-a.png" alt=""><img src="../../../../../public/airbuilder/icons/percage/feu-a.png" alt="">
+      </div>
+      <div class="bl perc"><span>Cartes de feu · 8 S + 4 A</span><span>+108 %</span></div>
+    </div>
+  </div>
+
+</div>
+</main>
+
+<script>
+/* Contrôle de débordement — ne s'exécute qu'avec ?check dans l'adresse. */
+if (location.search.indexOf('check') > -1) {
+  addEventListener('load', function () {
+    setTimeout(function () {
+      var W = document.documentElement.clientWidth, out = [];
+      out.push('viewport=' + W + ' scrollWidth=' + document.documentElement.scrollWidth + ' height=' + document.documentElement.scrollHeight);
+      ['.mega','.ph-actions','.ph','.comp-cols','.col:nth-child(1)','.col:nth-child(2)','.col:nth-child(3)','.ab','.itip','.ab-slots','.ab-side','.tabbar','.toolbar'].forEach(function (q) { var e = document.querySelector(q); if (e) { var r = e.getBoundingClientRect(); out.push(q + ' x' + Math.round(r.left) + '-' + Math.round(r.right) + ' y' + Math.round(r.top + scrollY) + '-' + Math.round(r.bottom + scrollY)); } });
+      document.querySelectorAll('body *').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.width && (r.right > W + 0.5 || r.left < -0.5)) {
+          var p = el.parentElement, inScroll = false;
+          while (p) { var s = getComputedStyle(p); if (s.overflowX === 'auto' || s.overflowX === 'hidden' || s.overflowX === 'scroll') { inScroll = true; break; } p = p.parentElement; }
+          out.push((inScroll ? '(clip) ' : '') + (el.className && el.className.baseVal === undefined ? el.className : el.tagName) + ' ' + Math.round(r.left) + '→' + Math.round(r.right));
+        }
+      });
+      var txt = out.slice(0, 40).join(' | ');
+      if (window.parent !== window) { window.parent.postMessage(txt, '*'); return; }
+      var pre = document.createElement('pre'); pre.id = 'obs-check'; pre.textContent = txt;
+      document.body.appendChild(pre);
+    }, 600);
+  });
+}
+</script>
+</body>
+</html>

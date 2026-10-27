@@ -1,0 +1,1425 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENESIS — la charte qui remplace l'orange et noir de Vanguard
+   ───────────────────────────────────────────────────────────────────────────
+   Chargée APRÈS globals.css (voir layout.tsx) : elle redéfinit les tokens et
+   re-habille les composants existants sans toucher à leur structure. Tant que
+   la piste n'est pas choisie, c'est ici qu'on bascule ; une fois choisie, ce
+   fichier sera fondu dans globals.css.
+
+   Palette imposée par le brief GENESIS :
+     noir #08080C (dominante) · anthracite #15151D (volumes) · crimson #A6192E
+     (accents) · pourpre #60152D (profondeur) · or #C69A55 (contours, arêtes,
+     ornements) · or clair #E6C48A (reflets) · ivoire #F2EDE5 (typographie).
+   Répartition visée : 70 % noir / 20 % rouge / 10 % or.
+
+   QUI FAIT QUOI — c'est la règle qui remplace « tout est orange » :
+     · l'OR écrit et souligne : texte d'accent, icônes, filets, focus clavier ;
+     · le CRIMSON agit et rayonne : fond des boutons d'action, onglet actif,
+       halos, lueurs, teintes de survol ;
+     · le crimson NE PORTE PAS de texte sur fond noir (#A6192E sur #08080C fait
+       2,7:1). Quand il faut un texte rouge, c'est --gn-crimson-texte (5,8:1).
+   Contrastes mesurés (WCAG) : ivoire/noir 17,2 · texte/noir 15,1 · atténué/noir
+   7,4 · or/noir 7,8 · or clair/noir 12,0 · ivoire sur crimson 6,4.
+
+   Couleurs du JEU — paliers (Éternel #FF8C1A, Yggdrasil, Ancestral…), raretés
+   (Mythique #C92A2A), lignes de bonus — ce sont des DONNÉES : elles restent
+   telles quelles. L'orange Éternel était aussi la couleur de la marque ; il
+   n'est plus désormais qu'une couleur de palier.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@font-face{font-family:'Cinzel';src:url('/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');font-weight:400 900;font-display:swap}
+
+:root{
+  /* ── Primitives ── */
+  --gn-noir:#08080C; --gn-noir-2:#0D0C12; --gn-anthracite:#15151D; --gn-anthracite-2:#1C1A24; --gn-anthracite-3:#25222E;
+  --gn-crimson:#A6192E; --gn-crimson-vif:#C2223A; --gn-crimson-sombre:#7A1224; --gn-pourpre:#60152D; --gn-pourpre-nuit:#2A0B16;
+  --gn-or:#C69A55; --gn-or-clair:#E6C48A; --gn-or-sombre:#8C6A37; --gn-ivoire:#F2EDE5;
+  --gn-crimson-texte:#E35D6F;
+  --gn-or-rgb:198,154,85; --gn-crimson-rgb:194,34,58; --gn-pourpre-rgb:96,21,45;
+
+  /* ── Rôles ── */
+  --gn-surface:var(--gn-anthracite); --gn-surface-2:var(--gn-anthracite-2);
+  --gn-texte:#E6DFD4; --gn-texte-fort:var(--gn-ivoire); --gn-texte-doux:#A39C93;
+  --gn-filet:rgba(var(--gn-or-rgb),.16); --gn-filet-fort:rgba(var(--gn-or-rgb),.42);
+  --gn-action:linear-gradient(180deg,#B71F36 0%,#94172B 55%,#6E1022 100%);
+  --gn-action-survol:linear-gradient(180deg,#CB2640 0%,#A61A30 55%,#7E1326 100%);
+  --gn-sur-action:var(--gn-ivoire);
+  --gn-titre:'Cinzel','Rubik',Georgia,serif;
+  /* Les quatre rôles que le code des pages emploie à la place de l'orange :
+     ACCENT (texte, icône, filet) · LUEUR (halos, ombres, teintes de fond) ·
+     ACTION (remplissage d'un bouton ou d'un onglet actif, + --gn-sur-action
+     pour son texte) · JAUGE (barres de progression). Changer de piste, c'est
+     re-pointer ces quatre noms, pas réécrire les pages. */
+  --gn-accent:var(--gn-or); --gn-accent-clair:var(--gn-or-clair);
+  --gn-lueur-rgb:var(--gn-crimson-rgb);
+  --gn-plein:var(--gn-crimson);
+  --gn-jauge:linear-gradient(90deg,var(--gn-crimson-sombre),var(--gn-crimson-vif) 72%,var(--gn-or));
+  --gn-teinte-or:#1E1814; --gn-teinte-pourpre:#1E1218;
+
+  /* ── COMPATIBILITÉ — les anciens noms du site pointent vers les rôles ──
+     Le site écrit `var(--orange)` à plus de 500 endroits, presque toujours pour
+     un TEXTE ou une ICÔNE d'accent : c'est donc l'or. Les fonds, eux, sont
+     réécrits un par un vers --gn-action. Les lueurs passent par --orange-rgb,
+     qui devient le crimson. */
+  --orange:var(--gn-or); --orange-dark:var(--gn-or-sombre); --orange-rgb:var(--gn-crimson-rgb);
+  --gold:var(--gn-or-clair); --gold-rgb:var(--gn-or-rgb);
+  --bg:var(--gn-noir); --bg-2:#111017; --bg-3:var(--gn-anthracite); --bg-4:var(--gn-anthracite-2);
+  --border:#2A2632; --text:var(--gn-texte); --text-muted:var(--gn-texte-doux);
+  --glow-1:rgba(var(--gn-crimson-rgb),.16); --glow-2:rgba(var(--gn-crimson-rgb),.32); --glow-3:rgba(var(--gn-crimson-rgb),.55);
+  --el-glow:0 6px 22px var(--glow-2);
+}
+
+/* ── Fond général : noir, un souffle pourpre en haut ─────────────────────── */
+body{background:var(--gn-noir);color:var(--gn-texte);
+  background-image:radial-gradient(ellipse 80% 40% at 50% -10%,rgba(var(--gn-pourpre-rgb),.38),transparent 65%)}
+::selection{background:rgba(var(--gn-crimson-rgb),.55);color:var(--gn-ivoire)}
+
+/* Titres : les capitales gravées de Cinzel. Seulement les VRAIS titres — la
+   classe font-heading habille aussi des libellés de 11 px et des chiffres, où
+   Cinzel deviendrait illisible : eux gardent Rubik. */
+h1,h2,h1.font-heading,h2.font-heading,h3.font-heading,.vg-pagehead-title,.vg-top-title,.vg-h2{font-family:var(--gn-titre);letter-spacing:.06em}
+/* Sauf les petits intertitres : plusieurs h2 du site sont des étiquettes de
+   section en 11 à 13 px posées en style en ligne (BlocOasis, TourOubliee…).
+   Cinzel n'y tient pas — on les rend à Rubik, comme les autres libellés. */
+:is(h2,h3)[style*="font-size: 11"],:is(h2,h3)[style*="font-size: 12"],:is(h2,h3)[style*="font-size: 13"]{font-family:'Rubik',sans-serif;letter-spacing:revert}
+h1.font-heading::after{background:linear-gradient(90deg,var(--gn-or),rgba(var(--gn-crimson-rgb),.6),transparent)}
+
+/* ── Fonds de page : la même image, un voile plus profond et pourpré ─────── */
+.vg-main{background:linear-gradient(rgba(8,8,12,.86),rgba(8,8,12,.93)),url('/assets/genesis/bg/salle-du-trone.webp') center top / cover no-repeat}
+/* Les fonds par page (`data-bg`, table PAGE_BG de Shell.tsx) sont les
+   illustrations ORANGE de Vanguard. En attendant les fonds GENESIS par espace —
+   ils viendront avec la nouvelle architecture, qui fusionne des pages — toutes
+   les pages prennent la salle du trône. Même spécificité que les règles de
+   globals.css, chargée après : elle l'emporte sans !important. */
+.vg-main[data-bg]{background-image:linear-gradient(rgba(8,8,12,.86),rgba(8,8,12,.93)),url('/assets/genesis/bg/salle-du-trone.webp');background-size:cover;background-position:center top}
+.vg-main::before{background:radial-gradient(circle,rgba(var(--gn-crimson-rgb),.10),transparent 66%)}
+.vg-main::after{background:radial-gradient(ellipse 78% 62% at 50% 42%,rgba(8,8,12,.74),rgba(8,8,12,.36) 62%,transparent 100%)}
+
+/* ── Barre du haut ───────────────────────────────────────────────────────── */
+.vg-topnav{background:linear-gradient(180deg,#121018,#09080D);border-bottom:1px solid #1E1A24;box-shadow:0 2px 18px rgba(0,0,0,.5)}
+.vg-topnav::after{background:linear-gradient(90deg,transparent,rgba(var(--gn-or-rgb),.55) 30%,rgba(var(--gn-crimson-rgb),.7) 50%,rgba(var(--gn-or-rgb),.55) 70%,transparent)}
+.vg-top-logo{animation:gnlogo 5s ease-in-out infinite}
+@keyframes gnlogo{0%,100%{filter:drop-shadow(0 0 5px rgba(var(--gn-crimson-rgb),.35))}50%{filter:drop-shadow(0 0 13px rgba(var(--gn-crimson-rgb),.75))}}
+.vg-top-title{font-weight:700;font-size:21px;letter-spacing:.22em;color:var(--gn-ivoire);text-shadow:0 1px 12px rgba(0,0,0,.8)}
+.vg-top-title span{color:inherit;text-shadow:none}
+.vg-top-brand:hover .vg-top-title{text-shadow:0 0 18px rgba(var(--gn-or-rgb),.45)}
+.vg-top-brand:hover .vg-top-title span{text-shadow:none}
+.vg-top-link{color:var(--gn-texte-doux)}
+.vg-top-link:hover{background:rgba(var(--gn-or-rgb),.06);color:var(--gn-texte-fort)}
+.vg-top-link.active{color:var(--gn-ivoire);background:linear-gradient(180deg,rgba(var(--gn-crimson-rgb),.22),rgba(var(--gn-crimson-rgb),.06))}
+.vg-top-link.active::after{background:linear-gradient(90deg,transparent,var(--gn-or),transparent);box-shadow:0 0 8px rgba(var(--gn-or-rgb),.6)}
+.vg-top-link.active svg{color:var(--gn-or)}
+.vg-dropdown{background:linear-gradient(180deg,#16141C,#0E0D13);border:1px solid #2A2632;border-top:1px solid var(--gn-or);box-shadow:0 18px 44px rgba(0,0,0,.7),0 0 0 1px rgba(var(--gn-pourpre-rgb),.25)}
+.vg-mega-link:hover{background:rgba(var(--gn-crimson-rgb),.10)}
+.vg-mega-link.active{background:rgba(var(--gn-crimson-rgb),.14)}
+.vg-mega-ic{color:var(--gn-or);border-color:rgba(var(--gn-or-rgb),.22);background:linear-gradient(180deg,#1A1620,#100E14)}
+.vg-mega-link.active .vg-mega-ic{border-color:var(--gn-or)}
+.vg-mega-link.active .vg-mega-l{color:var(--gn-or-clair)}
+.vg-top-burger{color:var(--gn-or)}
+@media(max-width:1200px){.vg-top-nav{background:#111017;border-bottom-color:#2A2632}}
+/* Entre 1200 et 1600 px, la barre ne tenait pas : le bloc profil sortait de
+   l'écran (1565 px de contenu à 1440 px de fenêtre). Le défaut existait avant
+   GENESIS (97 px) ; Cinzel l'a creusé de 28 px. On resserre les entrées, sans
+   en retirer — c'est la nouvelle architecture qui en retirera. */
+@media(min-width:1201px) and (max-width:1600px){
+  .vg-topnav{gap:8px;padding:0 14px}
+  .vg-top-title{font-size:18px;letter-spacing:.16em}
+  .vg-top-link{padding:8px 8px;gap:5px;font-size:13px}
+}
+
+/* ── Cartes ─────────────────────────────────────────────────────────────── */
+.glass-card{background:linear-gradient(180deg,rgba(24,22,30,.86),rgba(12,11,16,.92));border:1px solid var(--gn-filet);box-shadow:0 2px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(var(--gn-or-rgb),.05)}
+.glass-card:hover{border-color:rgba(var(--gn-or-rgb),.34);box-shadow:var(--el-3),0 0 0 1px rgba(var(--gn-crimson-rgb),.14)}
+.fx-card::before{background:radial-gradient(320px circle at var(--mx) var(--my),rgba(var(--gn-crimson-rgb),.16),transparent 62%)}
+.fx-card:hover{border-color:rgba(var(--gn-or-rgb),.38);box-shadow:0 12px 30px rgba(0,0,0,.5),0 0 0 1px rgba(var(--gn-crimson-rgb),.18)}
+.fx-stat{background:linear-gradient(180deg,rgba(26,23,32,.92),rgba(13,12,17,.94));border-color:var(--gn-filet)}
+.fx-stat .n{color:var(--gn-or-clair);text-shadow:0 0 18px rgba(var(--gn-or-rgb),.22)}
+.fx-stat .l{color:var(--gn-texte-doux)}
+
+/* ── Boutons : la plaque crimson sertie d'or ─────────────────────────────── */
+.vg-btn,.dash-hub-cta{color:var(--gn-sur-action);background:var(--gn-action);border:1px solid rgba(var(--gn-or-rgb),.55);
+  box-shadow:0 4px 16px rgba(var(--gn-crimson-rgb),.28),inset 0 1px 0 rgba(255,220,200,.18);text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.vg-btn:hover,.dash-hub-cta:hover{background:var(--gn-action-survol);border-color:var(--gn-or);box-shadow:0 8px 24px rgba(var(--gn-crimson-rgb),.45),inset 0 1px 0 rgba(255,220,200,.22)}
+.vg-btn::after{background:linear-gradient(105deg,transparent 38%,rgba(var(--gn-or-rgb),.30) 50%,transparent 62%)}
+
+/* ── En-tête de page ─────────────────────────────────────────────────────── */
+.vg-pagehead{background:linear-gradient(120deg,rgba(var(--gn-crimson-rgb),.16),rgba(21,21,29,.6) 46%),var(--bg-2);border:1px solid var(--gn-filet);box-shadow:0 6px 26px rgba(0,0,0,.45)}
+.vg-pagehead::before{background:linear-gradient(180deg,var(--gn-or-clair),var(--gn-crimson) 45%,var(--gn-pourpre));box-shadow:0 0 16px rgba(var(--gn-crimson-rgb),.55)}
+.vg-pagehead::after{background:radial-gradient(circle,rgba(var(--gn-crimson-rgb),.18),transparent 70%)}
+.vg-pagehead-ic{background:linear-gradient(180deg,rgba(var(--gn-pourpre-rgb),.55),rgba(21,21,29,.6));border:1px solid rgba(var(--gn-or-rgb),.45);box-shadow:0 0 16px rgba(var(--gn-crimson-rgb),.2),inset 0 1px 0 rgba(var(--gn-or-rgb),.15)}
+.vg-pagehead-title{font-weight:700;letter-spacing:.08em;color:var(--gn-ivoire)}
+.vg-pagehead-artveil{background:linear-gradient(100deg,rgba(10,9,13,.95) 0%,rgba(14,10,15,.82) 44%,rgba(30,10,18,.45) 100%)}
+
+/* ── Sous-onglets ───────────────────────────────────────────────────────── */
+.vg-subtabs{background:linear-gradient(180deg,rgba(22,20,28,.78),rgba(12,11,16,.78));border-color:var(--gn-filet)}
+.vg-subtab:hover{color:var(--gn-texte-fort);background:rgba(var(--gn-or-rgb),.06)}
+.vg-subtab.active{color:var(--gn-sur-action);background:var(--gn-action);box-shadow:0 2px 12px rgba(var(--gn-crimson-rgb),.4),inset 0 0 0 1px rgba(var(--gn-or-rgb),.5)}
+
+/* ── Cadres d'icônes ────────────────────────────────────────────────────── */
+.vgi-frame{color:var(--gn-or);background:linear-gradient(180deg,#1E1218,#110B0F);border-color:rgba(var(--gn-or-rgb),.34);box-shadow:inset 0 1px 0 rgba(var(--gn-or-rgb),.14),0 2px 7px rgba(0,0,0,.5)}
+.vgi-frame.vgi-orange{color:var(--gn-or);border-color:rgba(var(--gn-or-rgb),.44);background:linear-gradient(180deg,#22131A,#120A0E)}
+.vgi-frame.vgi-gold{color:var(--gn-or-clair);border-color:rgba(var(--gn-or-rgb),.5)}
+a:hover>.vgi-frame,button:hover>.vgi-frame,[role="button"]:hover>.vgi-frame,.vgi-frame.is-hoverable:hover{border-color:var(--gn-or);box-shadow:inset 0 1px 0 rgba(var(--gn-or-rgb),.2),0 4px 13px rgba(var(--gn-crimson-rgb),.32)}
+
+/* ── Champs, focus, défilement ──────────────────────────────────────────── */
+input:focus,textarea:focus{border-color:var(--gn-or) !important;box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.16)}
+.vg-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23C69A55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.vg-select:hover{border-color:rgba(var(--gn-or-rgb),.5)}
+.vg-select:focus{border-color:var(--gn-or);box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.16)}
+.vg-select option:checked{background:var(--gn-crimson);color:var(--gn-ivoire)}
+:where(button,a,[role="button"],[tabindex]):focus-visible,
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:var(--gn-or)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gn-crimson),var(--gn-pourpre));background-clip:padding-box}
+.vg-tr:hover{background:rgba(var(--gn-crimson-rgb),.07)}
+.vg-h2::after{background:linear-gradient(90deg,var(--gn-or),rgba(var(--gn-crimson-rgb),.55),transparent)}
+.dash-hub:hover{border-color:rgba(var(--gn-or-rgb),.4)}
+
+/* ── Hero de l'accueil ──────────────────────────────────────────────────── */
+.hf-ch-a{color:var(--gn-ivoire)}
+.hf-ch-b{color:var(--gn-or-clair);text-shadow:0 0 30px rgba(var(--gn-crimson-rgb),.55),0 2px 18px rgba(0,0,0,.85)}
+.hf-ember{background:radial-gradient(circle,rgba(255,206,170,.95),rgba(var(--gn-crimson-rgb),.6) 60%,transparent 72%)}
+.hf-scrim{background:radial-gradient(ellipse 62% 52% at 50% 56%,rgba(8,6,10,.80),transparent 72%),linear-gradient(to bottom,rgba(8,6,10,.55) 0%,transparent 26%,transparent 62%,rgba(8,8,12,.95) 100%)}
+.hf-scroll:focus-visible{outline-color:var(--gn-or)}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EFFETS GENESIS — le métal et le cristal, pas la lumière d'ambiance
+   L'ancien jeu d'effets était un halo orange partout. Ici chaque effet dit une
+   matière : l'or est une ARÊTE qui accroche la lumière, le crimson une ÉNERGIE
+   qui couve, le cristal un POINT. Tout se coupe sous prefers-reduced-motion.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* Métal des titres : ivoire en haut, or au milieu, or sombre en bas — le
+     même biseau que le G, sans filtre. */
+  --gn-metal:linear-gradient(180deg,#FBF3E2 0%,#E6C48A 38%,#C69A55 62%,#8C6A37 100%);
+}
+
+/* ── Cartes : l'arête dorée accroche la lumière sous le curseur ─────────────
+   Le halo crimson (::before) éclaire la surface ; l'arête (::after) n'est que
+   le CONTOUR, découpé par un masque : 1 px d'or qui suit la souris. C'est ce
+   qui donne l'impression d'une plaque de métal plutôt que d'un fond éclairé. */
+.fx-card::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:radial-gradient(260px circle at var(--mx) var(--my),rgba(var(--gn-or-rgb),.95),rgba(var(--gn-or-rgb),.18) 42%,transparent 72%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  opacity:0;transition:opacity .28s var(--ease)}
+.fx-card:hover::after{opacity:1}
+
+/* ── Titres de section : le cristal pose le début du trait ─────────────────
+   Un losange crimson serti d'or au départ du filet : la « pointe centrale » du
+   G, réduite à la ponctuation. */
+.vg-h2{padding-left:0}
+.vg-h2::after{left:14px;background:linear-gradient(90deg,var(--gn-or),rgba(var(--gn-crimson-rgb),.6) 55%,transparent)}
+.vg-h2::before{content:"";position:absolute;left:1px;bottom:-3px;width:8px;height:8px;transform:rotate(45deg);
+  background:linear-gradient(135deg,#E04A60,var(--gn-crimson) 50%,var(--gn-pourpre));border:1px solid var(--gn-or);
+  box-shadow:0 0 8px rgba(var(--gn-crimson-rgb),.7)}
+
+/* ── En-tête de page : la barre est une lame, l'arête basse un filet d'or ── */
+.vg-pagehead{box-shadow:0 6px 26px rgba(0,0,0,.45),inset 0 -1px 0 rgba(var(--gn-or-rgb),.14),inset 0 1px 0 rgba(var(--gn-or-rgb),.06)}
+.vg-pagehead::before{animation:gnlame 6s ease-in-out infinite}
+@keyframes gnlame{0%,100%{box-shadow:0 0 12px rgba(var(--gn-crimson-rgb),.45)}50%{box-shadow:0 0 22px rgba(var(--gn-crimson-rgb),.8)}}
+
+/* ── Bouton d'action : plaque qui s'enfonce, reflet d'or qui passe ───────── */
+.vg-btn:active,.dash-hub-cta:active{box-shadow:inset 0 2px 6px rgba(0,0,0,.45),0 0 0 1px rgba(var(--gn-or-rgb),.5)}
+
+/* ── Onglet actif de la barre : une pointe sous le trait ───────────────── */
+.vg-top-link.active::before{content:"";position:absolute;left:50%;bottom:-2px;width:5px;height:5px;transform:translateX(-50%) rotate(45deg);
+  background:var(--gn-or-clair);box-shadow:0 0 8px rgba(var(--gn-or-rgb),.9)}
+
+/* ── Hero : le titre en métal, les braises en crimson et poussière d'or ────
+   Le dégradé est posé sur CHAQUE lettre (pas sur le h1) : l'animation
+   d'opacité vit sur l'élément clippé lui-même, et c'est ce qui la rend sûre —
+   le piège noté plus haut ne touchait qu'un ENFANT d'élément clippé. */
+.hf-title h1{font-family:var(--gn-titre) !important;font-weight:700 !important;letter-spacing:.14em !important}
+.hf-ch-a,.hf-ch-b{background:var(--gn-metal);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:none;filter:drop-shadow(0 2px 0 rgba(60,30,10,.55)) drop-shadow(0 0 26px rgba(var(--gn-crimson-rgb),.45))}
+.hf-ember:nth-child(3n){background:radial-gradient(circle,rgba(255,236,200,.95),rgba(var(--gn-or-rgb),.55) 60%,transparent 72%)}
+
+@media(prefers-reduced-motion:reduce){
+  .fx-card::after{display:none}
+  .vg-pagehead::before{animation:none}
+}
+
+/* ── Titre d'apparat (PageHeader `banner`) ────────────────────────────────
+   Remplace les anciennes bannières-images (chauve-souris Vanguard, mot dessiné
+   en orange) : le même h1 texte, plus grand, en métal, souligné d'un filet or
+   qui s'éteint dans le crimson. */
+.vg-pagehead.is-apparat .vg-pagehead-title{font-size:31px;letter-spacing:.12em;line-height:1.1;
+  background:var(--gn-metal);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(60,30,10,.5)) drop-shadow(0 0 18px rgba(var(--gn-crimson-rgb),.25))}
+.vg-pagehead.is-apparat .vg-pagehead-title::after{content:"";display:block;width:132px;height:1px;margin-top:9px;
+  background:linear-gradient(90deg,var(--gn-or),rgba(var(--gn-crimson-rgb),.6),transparent)}
+@media(max-width:560px){.vg-pagehead.is-apparat .vg-pagehead-title{font-size:22px}}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LA BARRE COURTE — Bras droits ▾ en rubriques, et le bouton « Postuler »
+   (Shell.tsx, config/nav.ts)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le déroulant des bras droits porte onze pages : en une colonne, il faisait plus
+   de 600 px de haut. Deux colonnes équilibrées par le navigateur, une rubrique ne se
+   coupant jamais en deux. Calé à DROITE de son entrée, la dernière de la barre :
+   calé à gauche, ses 620 px sortaient de l'écran sous 1 210 px de large. */
+@media(min-width:1201px){
+  .gn-mega-rubriques{width:620px;left:auto;right:0;columns:2;column-gap:6px}
+}
+.gn-mega-rubrique{break-inside:avoid}
+/* Le sous-titre de rubrique reprend celui des espaces du panneau « Tout ». */
+.gn-mega-titre{font-family:'Rubik',sans-serif;font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--gn-accent);padding:7px 11px 4px}
+
+/* « Postuler » copie « Se connecter », son voisin : mêmes marges, rayon, police et
+   taille. Le filet d'or est une ombre intérieure et non une bordure, pour que les
+   deux boutons gardent exactement la même hauteur. */
+.gn-postuler{padding:8px 16px;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap;
+  color:var(--gn-sur-action);background:var(--gn-action);box-shadow:inset 0 0 0 1px rgba(var(--gn-or-rgb),.55);
+  transition:background .15s,box-shadow .15s}
+.gn-postuler:hover{background:var(--gn-action-survol);box-shadow:inset 0 0 0 1px var(--gn-or),0 4px 14px rgba(var(--gn-lueur-rgb),.35)}
+.gn-postuler:focus-visible{outline:2px solid var(--gn-or);outline-offset:2px}
+/* Sur téléphone, il ne tient pas à côté de « Se connecter » : il passe en dernière
+   ligne du menu. */
+.gn-appel-menu{display:none}
+@media(max-width:560px){
+  .vg-top-user .gn-postuler{display:none}
+  .vg-top-nav .gn-appel-menu{display:block}
+}
+
+/* Le téléphone : la barre d'un membre connecté sortait de 51 px à 375 px de large —
+   le profil coupé, le burger écrasé à 21 px. Deux causes. Le titre « GENESIS »
+   gardait ses 21 px de bureau : la règle téléphone de globals.css (16 px) est
+   écrasée par celle de ce fichier, chargé après. Et « Tout » gardait son libellé
+   alors que son icône de grille suffit. Mesuré ensuite : rien ne sort de 360 à
+   560 px, et le burger garde ses 36 px. */
+@media(max-width:560px){
+  .vg-top-title{font-size:16px;letter-spacing:.14em}
+  .vg-top-som{display:none}
+  /* Le bouton « Tout » porte ses marges en style en ligne : seul !important les reprend. */
+  .vg-top-tout{padding:7px 8px !important}
+}
+@media(max-width:400px){
+  .vg-topnav{gap:6px;padding:0 9px}
+  .vg-top-title{letter-spacing:.06em}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   L'ESPACE DES BRAS DROITS — /staff (la file « à traiter », les compteurs) et son
+   Suivi (jauges, persos, classement des mesures). Lot 2 ; le Suivi était la page /suivi,
+   c'est une section de /staff depuis le 2026-10-21 (voir « Le tableau de bord
+   tout-en-un », en fin de fichier).
+   Rien n'est inventé : chaque bloc recopie les valeurs de son voisin le plus
+   proche, nommé en tête de règle, pour qu'il ne s'en distingue pas.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* La file : le bandeau « Priorités du jour » de l'accueil de guilde (.dash-prio),
+   dont elle est la version complète. */
+.gn-file{background:linear-gradient(180deg,rgba(var(--gn-lueur-rgb),.06),#121218);
+  border:1px solid rgba(var(--gn-or-rgb),.28);border-radius:15px;padding:18px}
+.gn-file-groupe+.gn-file-groupe{margin-top:18px}
+.gn-file-t{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+.gn-file-ligne{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:9px;
+  text-decoration:none;color:var(--text);background:var(--bg-3);border:1px solid var(--border);
+  transition:background .15s,border-color .15s}
+.gn-file-ligne:hover{background:#23232c;border-color:var(--gn-accent)}
+.gn-file-point{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gn-file-n{font-size:18px;font-weight:700;min-width:28px;font-variant-numeric:tabular-nums}
+.gn-file-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.gn-file-phrase{font-size:14px}
+.gn-file-detail{font-size:12px;color:var(--text-muted);margin-top:2px}
+/* Le bouton du geste copie « Dossier » du GuildViewer. */
+.gn-file-geste{margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+  color:var(--text);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s}
+.gn-file-ligne:hover .gn-file-geste{border-color:var(--gn-accent);color:var(--gn-accent)}
+/* Sur téléphone le bouton passe sous sa phrase, aligné sur elle : point 9 + nombre 28
+   + deux écarts de 12 = 61 px. Sans largeur minimale, la phrase se laissait écraser à
+   un mot par ligne plutôt que de céder la place au bouton. */
+@media(max-width:560px){
+  .gn-file{padding:14px}
+  .gn-file-ligne{flex-wrap:wrap}
+  .gn-file-txt{min-width:calc(100% - 61px)}
+  .gn-file-geste{margin-left:61px}
+}
+
+/* Le relevé, à droite d'un titre de section : la petite ligne d'aide de l'accueil. */
+.gn-titre-droite{margin-left:auto;font-family:'Rubik',sans-serif;font-size:12px;font-weight:400;
+  text-transform:none;letter-spacing:0;color:var(--text-muted)}
+
+/* L'attente et la panne : celles de l'accueil de guilde (.dash-attente, .dash-panne). */
+.gn-attente{height:86px;border-radius:15px;border:1px solid var(--border);
+  background:linear-gradient(90deg,#141419,#1c1c24,#141419);background-size:200% 100%;
+  animation:gnOnde 1.4s ease-in-out infinite}
+@keyframes gnOnde{0%{background-position:0% 0}100%{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.gn-attente{animation:none}}
+.gn-panne{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--gold);
+  background:color-mix(in srgb, var(--gold) 8%, transparent);
+  border:1px solid color-mix(in srgb, var(--gold) 28%, transparent);border-radius:10px;padding:9px 12px}
+
+/* Les compteurs : les cartes chiffrées du GuildViewer (.gv-stat), qui mènent ici à
+   la liste qu'elles comptent. */
+.gn-compteurs{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px}
+.gn-compteur{position:relative;overflow:hidden;display:flex;flex-direction:column;min-width:0;padding:15px 17px;
+  text-decoration:none;color:inherit;transition:transform .18s,box-shadow .18s}
+.gn-compteur-fond{position:absolute;right:-10px;top:-14px;opacity:.07;pointer-events:none}
+.gn-compteur-trait{position:absolute;left:0;top:0;bottom:0;width:3px}
+.gn-compteur-n{font-size:30px;font-weight:700;line-height:1}
+.gn-compteur-l{font-size:12px;color:var(--text-muted);margin-top:6px;text-transform:uppercase;letter-spacing:.6px}
+.gn-compteur-d{font-size:11.5px;color:var(--text-muted);margin-top:4px;font-family:'Alef',sans-serif}
+
+/* Les jauges du suivi : l'état de la guilde de l'accueil (Grandeurs.tsx, .gr-*), une
+   seule teinte, la longueur porte la grandeur, le mot dit ce qui ne va pas. */
+.gn-carte{background:linear-gradient(180deg,#191920,#121218);border:1px solid var(--border);border-radius:15px;padding:12px 10px}
+.gn-j-bloc{display:flex;flex-direction:column;gap:4px}
+.gn-j-ligne{display:grid;grid-template-columns:minmax(140px,190px) 1fr auto 46px;align-items:center;gap:14px;
+  padding:9px 11px;border-radius:10px;color:var(--text)}
+.gn-j-lab{display:flex;align-items:center;gap:8px;min-width:0}
+.gn-j-lab-t{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-j-mid{min-width:0}
+.gn-j-piste{display:block;height:10px;border-radius:5px;background:var(--bg-3);overflow:hidden}
+.gn-j-jauge{display:block;height:100%;border-radius:5px;background:var(--gn-jauge)}
+.gn-j-note{display:block;margin-top:4px;font-size:11.5px;color:var(--text-muted);font-family:'Alef',sans-serif}
+.gn-j-chif{display:flex;align-items:baseline;gap:5px;justify-content:flex-end;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gn-j-chif b{font-family:'Rubik',sans-serif;font-size:14.5px;font-weight:600}
+.gn-j-tot{font-size:11.5px;color:var(--text-muted)}
+.gn-j-pc{text-align:right;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+@media(max-width:620px){
+  .gn-carte{padding:8px 4px}
+  .gn-j-ligne{grid-template-columns:1fr auto 44px;gap:8px 10px}
+  .gn-j-mid{grid-column:1 / -1;order:2}
+  .gn-j-chif,.gn-j-pc{order:1}
+}
+
+/* Un perso et ses stuffs : la ligne de perso du GuildViewer (.gv-char). */
+.gn-suivi-perso{background:var(--bg-3);border:1px solid var(--border);border-radius:11px;padding:9px 13px;min-width:0}
+.gn-suivi-classes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.gn-suivi-classes>*{min-width:0}
+
+/* Le classement des mesures : rang, perso, chiffre qui classe, puis le build. */
+.gn-classement{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center;gap:12px;
+  background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12.5px}
+.gn-classement-rang{font-size:16px;font-weight:700;color:var(--gn-accent);text-align:center;font-variant-numeric:tabular-nums}
+.gn-classement-chiffre{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gn-classement-chiffre b{font-family:'Rubik',sans-serif;font-size:14.5px;font-weight:600}
+@media(max-width:560px){
+  .gn-classement{grid-template-columns:28px minmax(0,1fr) auto}
+  .gn-classement>:last-child{grid-column:2 / -1;justify-content:flex-start}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   L'ACCUEIL — `/` (lot 3, rendu neutre le 2026-10-21 : la même vitrine pour tous) :
+   le conteneur qu'Information Guilde emprunte, les liens des titres, et les deux
+   gestes du hero. (Les comptes de la guilde sur les cartes de classe sont partis avec
+   le visage membre de l'accueil.)
+   Même règle qu'au lot 2 : chaque bloc recopie son voisin, nommé en tête de règle.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le conteneur du membre : celui de l'ancien /dashboard et de /staff (1 100 px,
+   28/32/64), avec la marge de 16 px de l'accueil public sur téléphone (.acc-wrap) :
+   à 32 px, il ne restait que 326 px de contenu sur un écran de 390. */
+.gn-accueil{max-width:1100px;margin:0 auto;padding:28px 32px 64px}
+@media(max-width:640px){.gn-accueil{padding:18px 16px 48px}}
+/* L'avis d'accès (AvisAcces) ouvre la page au lieu de suivre le hero. */
+.gn-accueil .acc-avis{margin:0 0 16px}
+
+/* Le bandeau du membre (.gn-acc-band-compact, .gn-acc-tete, .gn-acc-rdv) et la
+   recherche du wiki de l'accueil (.gn-acc-recherche) sont partis le 2026-10-21 avec
+   AccueilMembre et le bandeau « le jeu » : l'accueil est neutre, sans recherche ni
+   prochain rendez-vous. */
+
+/* Le lien à droite d'un titre de section (« Le recensement → » du Suivi) : le « Espace
+   bras droits → » des priorités de l'ancien /dashboard. */
+.gn-titre-lien{color:inherit;text-decoration:none;transition:color .15s}
+.gn-titre-lien:hover{color:var(--gn-accent)}
+
+/* Les deux gestes du hero : « Se connecter avec Discord » (.hf-login) et « Postuler ».
+   Postuler recopie .hf-login — marges, rayon, police, taille — en contour d'or et non
+   en plaque crimson : deux pleins côte à côte ne disent plus lequel compte. Pour un
+   candidat déjà connecté, Postuler prend la plaque (.hf-login) : c'est son seul geste. */
+/* Pas de marge latérale : « Se connecter avec Discord » demande 358 px sur un écran de
+   390, et une marge de 18 px le cassait sur deux lignes (mesuré). Centré, il garde
+   16 px de chaque côté. */
+.gn-hero-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:30px}
+.gn-hero-actions .hf-login{margin-top:0}
+.gn-hero-postuler{display:inline-flex;align-items:center;gap:10px;padding:16px 40px;border-radius:14px;
+  font-family:Rubik,sans-serif;font-weight:700;font-size:17px;text-transform:uppercase;letter-spacing:1.6px;
+  text-decoration:none;color:var(--gn-ivoire);background:rgba(8,8,12,.55);
+  box-shadow:inset 0 0 0 1px rgba(var(--gn-or-rgb),.55);transition:transform .16s,box-shadow .22s,background .16s}
+.gn-hero-postuler:hover{transform:translateY(-3px);background:rgba(8,8,12,.72);
+  box-shadow:inset 0 0 0 1px var(--gn-or),0 10px 30px rgba(var(--gn-lueur-rgb),.3)}
+.gn-hero-postuler:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:760px){.gn-hero-postuler{font-size:15px;padding:14px 30px}}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LE RECENSEMENT — la section #recensement d'Information Guilde (c'était la page
+   /recensement du lot 1 des Chambres, qui y redirige) : les chiffres déclarés de
+   chacun, groupés par rôle, en tableau sur un bureau et en cartes sur un téléphone.
+   Même règle qu'aux lots du staff : chaque bloc recopie son voisin, nommé en tête.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Les compteurs de tête sont partis avec la page : le récap d'Information Guilde et
+   son suivi des mesures disent ces nombres. Les puces ouvrent la section. */
+/* Les puces de classe : la case à cocher des filtres du GuildViewer (filtreCase —
+   13 px, fond --bg-3, filet, rayon 9, or quand elle est prise), le logo à la place de
+   la case. 8 px de haut et de bas au lieu de 9 : le logo de 18 px est plus haut que la
+   case de 13, et les deux contrôles gardent ainsi la même hauteur (36 px). */
+.gn-rec-puces{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.gn-rec-puce{display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:13px;color:var(--text-muted);
+  cursor:pointer;background:var(--bg-3);border:1px solid var(--border);border-radius:9px;padding:8px 14px;
+  transition:border-color .15s,color .15s}
+.gn-rec-puce:hover{color:var(--text)}
+.gn-rec-puce[aria-pressed="true"]{color:var(--gn-accent);border-color:var(--gn-accent)}
+.gn-rec-puce:focus-visible{outline:2px solid var(--gn-accent);outline-offset:2px}
+
+/* Une ligne : celle du classement des mesures de /suivi (.gn-classement — fond --bg-3,
+   filet, rayon 8, 7 × 11, 12,5 px), étirée aux colonnes du recensement. Chaque cellule
+   descend sous la largeur de son contenu (min-width:0), sinon un pseudo long élargit
+   la colonne et la page part en travers. */
+.gn-rec-liste{display:grid;gap:5px}
+.gn-rec-ligne,.gn-rec-tete{display:grid;align-items:center;gap:12px;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,.9fr) minmax(0,.9fr) minmax(0,1.5fr) minmax(0,1.2fr) minmax(0,.95fr) minmax(0,.95fr) 38px;
+  grid-template-areas:"perso classe joueur chiffre cond date poste build"}
+.gn-rec-ligne{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-size:12.5px}
+/* Son propre perso : le filet d'or des inscrits retenus de la compo, en plus discret. */
+.gn-rec-ligne.moi{border-color:rgba(var(--gn-or-rgb),.45)}
+.gn-rec-ligne>*,.gn-rec-tete>*{min-width:0}
+/* L'en-tête : le petit titre « Annoncés en … » de la compo (11 px, capitales, 0,7). */
+.gn-rec-tete{padding:0 12px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+.gn-rec-tri{all:unset;cursor:pointer;justify-self:start;white-space:nowrap;transition:color .15s}
+.gn-rec-tri:hover,.gn-rec-tri[data-actif]{color:var(--gn-accent)}
+.gn-rec-tri:focus-visible{outline:2px solid var(--gn-accent);outline-offset:2px;border-radius:3px}
+/* Dans l'en-tête, la cellule du chiffre ne s'empile pas : la flèche du tri reste sur sa ligne. */
+.gn-rec-tete .gn-rec-tri{display:block}
+.gn-rec-perso{grid-area:perso;display:flex;align-items:center;gap:8px}
+.gn-rec-perso>span:first-child{flex-shrink:0}
+.gn-rec-nom{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* « toi » : la pastille « sans build » de la compo (9,5 px, rayon 99), en or. */
+.gn-rec-toi{flex-shrink:0;font-size:9.5px;font-weight:700;color:var(--gn-accent);border:1px solid rgba(var(--gn-or-rgb),.55);
+  border-radius:99px;padding:1px 7px;text-transform:uppercase;letter-spacing:.5px}
+.gn-rec-classe{grid-area:classe;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rec-joueur{grid-area:joueur;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Le chiffre : celui du classement (.gn-classement-chiffre b — Rubik 14,5, 600). */
+.gn-rec-chiffre{grid-area:chiffre;display:flex;flex-direction:column;align-items:flex-start;font-variant-numeric:tabular-nums}
+.gn-rec-chiffre b{font-family:'Rubik',sans-serif;font-size:14.5px;font-weight:600;white-space:nowrap}
+.gn-rec-sous{display:block;font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.gn-rec-cond{grid-area:cond;font-size:11.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rec-date{grid-area:date;display:flex;flex-direction:column;align-items:flex-start;gap:3px;font-variant-numeric:tabular-nums}
+.gn-rec-poste{grid-area:poste;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rec-build{grid-area:build;display:flex;justify-content:center}
+/* Le lien du build : le bouton « Build ↗ » du classement de /suivi, réduit à son icône. */
+.gn-rec-build-a{display:inline-flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:6px;
+  color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.1);border:1px solid var(--gn-accent);text-decoration:none}
+.gn-rec-lien{color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;transition:color .15s}
+.gn-rec-lien:hover{color:var(--gn-accent)}
+
+/* Le pied : une ligne de la file de /staff (.gn-file-ligne) qui mène à l'AirBuilder. */
+.gn-rec-pied{display:flex;align-items:center;gap:12px;margin-top:30px;padding:14px 16px;text-decoration:none;color:var(--text);font-size:14px}
+.gn-rec-pied-geste{margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+  color:var(--text);background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;white-space:nowrap;
+  transition:border-color .15s,color .15s}
+.gn-rec-pied:hover .gn-rec-pied-geste{border-color:var(--gn-accent);color:var(--gn-accent)}
+
+/* Sur téléphone (moins de 720 px), le tableau devient une liste de cartes : en haut le
+   perso et son build, au milieu le chiffre en grand, en bas la date, le poste, le
+   joueur et la classe. Les conditions ne tiennent pas : elles restent au survol du
+   bureau et dans l'AirBuilder. */
+@media(max-width:720px){
+  .gn-rec-tete{display:none}
+  .gn-rec-ligne{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:10px 12px;
+    grid-template-areas:"perso build" "chiffre chiffre" "date poste" "joueur classe"}
+  .gn-rec-cond{display:none}
+  .gn-rec-chiffre b{font-size:18px}
+  .gn-rec-poste,.gn-rec-classe{text-align:right;justify-self:end}
+  .gn-rec-puce-t{display:none}
+  .gn-rec-puce{padding:8px 10px}
+  .gn-rec-pied{flex-wrap:wrap}
+  .gn-rec-pied-geste{margin-left:30px}
+}
+
+/* Le résumé du recensement dans /suivi (vue Dégâts & PV) : les lignes du classement
+   (.gn-classement), une par classe, qui mènent au recensement filtré sur elle. */
+.gn-rec-resume{display:grid;gap:5px}
+.gn-rec-resume-l{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,.8fr)) minmax(0,1fr) minmax(0,1.2fr);
+  align-items:center;gap:12px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:7px 11px;
+  font-size:12.5px;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;transition:border-color .15s}
+.gn-rec-resume-l>*{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rec-resume-l b{font-family:'Rubik',sans-serif;font-weight:600}
+a.gn-rec-resume-l:hover{border-color:var(--gn-accent)}
+.gn-rec-resume-tete{background:none;border-color:transparent;padding-top:0;padding-bottom:2px;font-size:11px;text-transform:uppercase;
+  letter-spacing:.7px;color:var(--text-muted)}
+.gn-rec-resume-relance{display:flex;align-items:center;gap:8px;margin-top:4px;padding:9px 12px;border-radius:9px;font-size:12.5px;
+  color:var(--gold);text-decoration:none;background:color-mix(in srgb, var(--gold) 8%, transparent);
+  border:1px solid color-mix(in srgb, var(--gold) 28%, transparent)}
+@media(max-width:720px){
+  .gn-rec-resume-tete{display:none}
+  .gn-rec-resume-l{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 10px}
+  .gn-rec-resume-l>:first-child{grid-column:1 / -1}
+  /* L'en-tête parti, chaque médiane dit sa colonne (attribut data-l de /suivi). */
+  .gn-rec-resume-l>[data-l]::before{content:attr(data-l) " ";color:var(--text-muted);font-size:11px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MES PERSONNAGES — le bloc en tête de l'accueil (MesPersonnages.tsx) et la page
+   /personnages, en LECTURE SEULE depuis le 2026-10-21 : le reflet de l'AirBuilder,
+   chaque perso et chaque stuff rouvrables dans le builder (lib/mesPersos.ts).
+   Même règle qu'aux lots précédents : chaque bloc recopie son voisin, nommé en tête.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le bloc de l'accueil : posé AU-DESSUS du hero, dans .acc-wrap (1 040 px, 16 px de
+   marge sur téléphone). */
+.gn-mp{margin:26px 0 30px}
+/* Le titre de section de la vitrine (TitreVitrine d'AccueilVisiteur : 24 px, capitales,
+   icône encadrée à 12 px), sans `.vg-reveal` et sans la marge de 46 px du haut. */
+.gn-mp-h2{font-size:24px;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px;display:flex;align-items:center;gap:12px}
+/* Le sous-titre de la vitrine (SOUS d'AccueilVisiteur). */
+.gn-mp-sous{font-family:'Alef',sans-serif;color:var(--text-muted);font-size:14px;margin:10px 0 14px;letter-spacing:.2px;max-width:720px}
+.gn-mp-temoin{margin-bottom:12px}
+/* Le cadre : celui de l'ancien « Où j'en suis » (.ojs) — la place de village du
+   générique, un aplat pour le contraste et un halo de la charte. */
+.gn-mp-cadre{position:relative;overflow:hidden;border-radius:15px;border:1px solid var(--border);background:#101016}
+.gn-mp-fond{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 42%}
+.gn-mp-voile{position:absolute;inset:0;pointer-events:none;background:
+  radial-gradient(ellipse 70% 100% at 18% 40%,rgba(var(--gn-lueur-rgb),.13),transparent 70%),
+  linear-gradient(100deg,rgba(16,16,22,.96) 0%,rgba(16,16,22,.93) 46%,rgba(16,16,22,.80) 100%)}
+.gn-mp-in{position:relative;z-index:1;padding:16px}
+.gn-mp-liste{display:grid;gap:6px}
+.gn-mp-liste>*{min-width:0}
+/* Un perso : la ligne de perso de « Où j'en suis » (.ojs-perso), qui porte maintenant
+   ses stuffs en dessous. */
+.gn-mp-perso{padding:9px 11px;border-radius:10px;background:rgba(20,20,26,.72);border:1px solid var(--border);min-width:0}
+.gn-mp-ligne{display:flex;align-items:center;gap:10px;min-width:0}
+.gn-mp-nom{font-family:'Rubik',sans-serif;font-weight:600;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-mp-main{flex-shrink:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--gn-accent);border:1px solid var(--gn-accent);border-radius:6px;padding:1px 6px}
+.gn-mp-niv{margin-left:auto;flex-shrink:0;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+/* « Ouvrir dans l'AirBuilder » : le bouton du geste de la file de /staff (.gn-file-geste). */
+.gn-mp-ouvrir{flex-shrink:0;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--text);
+  background:var(--bg-2);border:1px solid var(--border);border-radius:8px;padding:6px 11px;white-space:nowrap;text-decoration:none;
+  transition:border-color .15s,color .15s}
+.gn-mp-ouvrir:hover,.gn-mp-ouvrir:focus-visible{border-color:var(--gn-accent);color:var(--gn-accent)}
+/* Les stuffs, sous le perso : alignés sur le nom (logo 26 + écart 10). */
+.gn-mp-stuffs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 36px;min-width:0}
+/* Un stuff : la ligne de perso (.gn-mp-perso) en réduction — fond, filet, rayon 8 —
+   avec la pastille d'état du staff (EtatMesures) à droite de son nom. */
+.gn-mp-stuff{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:4px 5px 4px 10px;border-radius:8px;
+  background:var(--bg-3);border:1px solid var(--border);text-decoration:none;color:var(--text);font-size:12px;
+  transition:border-color .15s}
+.gn-mp-stuff:hover,.gn-mp-stuff:focus-visible{border-color:rgba(var(--gn-or-rgb),.55)}
+.gn-mp-stuff-nom{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-mp-aucun{font-size:11.5px;color:var(--text-muted);font-family:'Alef',sans-serif;padding:3px 0}
+.gn-mp-pied{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:11px}
+.gn-mp-reste{font-size:11.5px;color:var(--text-muted);font-style:italic}
+/* « Tous mes personnages » : le lien de pied de « Où j'en suis » (.ojs-lien). */
+.gn-mp-lien{margin-left:auto;font-size:12px;color:var(--gn-accent);text-decoration:none;font-weight:600;border-bottom:1px dotted currentColor}
+.gn-mp-lien:hover{color:var(--text)}
+/* Sur téléphone, le niveau et le bouton passent sous le nom (comme .ojs-perso sous
+   520 px), et les stuffs reprennent toute la largeur. */
+@media(max-width:560px){
+  .gn-mp-h2{font-size:20px}
+  .gn-mp-in{padding:12px}
+  .gn-mp-ligne{flex-wrap:wrap;row-gap:7px}
+  .gn-mp-niv{margin-left:0;order:3}
+  .gn-mp-ouvrir{order:4;margin-left:auto}
+  .gn-mp-stuffs{margin-left:0}
+}
+
+/* La page /personnages : une carte par perso — la carte de l'ancienne page (fond
+   --bg-2, filet, rayon 14, 20 px), son illustration à gauche, ses stuffs en dessous. */
+.gn-pp-carte{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px;min-width:0}
+.gn-pp-tete{display:flex;align-items:center;gap:13px;flex-wrap:wrap;min-width:0}
+.gn-pp-ill{width:68px;height:94px;flex-shrink:0;border-radius:11px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 26%,rgba(var(--gn-lueur-rgb),.15),rgba(10,10,12,.9) 72%);border:1px solid rgba(var(--gn-or-rgb),.28)}
+.gn-pp-ill img{width:100%;height:100%;object-fit:contain;object-position:bottom center}
+.gn-pp-id{flex:1 1 200px;min-width:0}
+.gn-pp-nom{font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;overflow-wrap:anywhere}
+/* « principal » : la pastille d'or de l'ancienne page, l'étoile devant. */
+.gn-pp-main{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gold);border:1px solid var(--gold);
+  border-radius:6px;padding:1px 7px;text-transform:uppercase;letter-spacing:.5px}
+.gn-pp-sous{font-size:12.5px;color:var(--text-muted);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+/* Les stuffs : la ligne de stuff du suivi (LigneStuff de /suivi — 12 px, rôle en
+   pastille, chiffres, état à droite), chacune rouvrable dans le builder. */
+.gn-pp-stuffs{border-top:1px solid var(--border);margin-top:14px;padding-top:12px;display:grid;gap:6px}
+.gn-pp-stuffs-t{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.gn-pp-stuff{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;min-width:0;padding:7px 10px;border-radius:8px;
+  background:var(--bg-3);border:1px solid var(--border);color:var(--text);text-decoration:none;transition:border-color .15s}
+.gn-pp-stuff:hover,.gn-pp-stuff:focus-visible{border-color:var(--gn-accent)}
+.gn-pp-stuff.vide{opacity:.62}
+.gn-pp-role{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;border:1px solid var(--border);color:var(--text-muted);white-space:nowrap}
+.gn-pp-stuff-nom{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.gn-pp-chiffres{font-variant-numeric:tabular-nums;color:var(--text-muted);min-width:0}
+.gn-pp-stuff-fin{margin-left:auto;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gn-pp-date{font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+@media(max-width:560px){
+  .gn-pp-carte{padding:14px}
+  .gn-pp-ill{width:54px;height:76px}
+  .gn-pp-stuff-fin{margin-left:0;width:100%}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INFORMATION GUILDE — /guilde (2026-10-21), la page tout-en-un des membres : le
+   sommaire, « Qui est qui », le suivi des mesures. Le récap reprend .gn-compteurs, les
+   classes .gn-carte et .gn-suivi-classes (ClassesGuilde, la brique du Suivi), le
+   recensement ses .gn-rec-* plus haut. Même règle qu'aux lots précédents : chaque bloc
+   recopie son voisin, nommé en tête de règle.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le sommaire : la barre d'onglets du Suivi (.vg-subtabs, icône devant le libellé comme
+   ses onglets), en ancres. Pas d'onglet allumé : ce sont des sauts, pas des vues. */
+.gn-ig-sommaire{margin:0 0 6px}
+.gn-ig-sommaire .vg-subtab{display:inline-flex;align-items:center;gap:7px}
+/* Les sections arrivent par ancre (le sommaire, /recensement redirigé, les liens du
+   Suivi) : la marge de #la-guilde (LaGuilde), pour que le titre ne colle pas au bord de
+   la zone qui défile (.vg-main). */
+.gn-ig section[id]{scroll-margin-top:16px}
+/* Le récap ouvre la page : la marge d'un titre de section (TitreStaff, 34 px) au-dessus
+   de lui, puisqu'il n'en a pas. */
+.gn-ig-recap{margin-top:26px}
+
+/* Une carte de membre : celle du GuildViewer (.gv-member — glass-card sans padding,
+   13 px dessous, filet gauche à la couleur du rang, posé en ligne). Sa propre carte : le
+   filet d'or de sa ligne du recensement (.gn-rec-ligne.moi) ; le filet gauche, posé en
+   ligne, garde la couleur du rang. */
+.gn-qui{padding:0;margin-bottom:13px;overflow:hidden}
+.gn-qui.moi{border-color:rgba(var(--gn-or-rgb),.45)}
+/* L'en-tête : celui du GuildViewer (14 × 17, écart 13, dégradé de la couleur du rang). */
+.gn-qui-tete{display:flex;align-items:center;gap:13px;padding:14px 17px;flex-wrap:wrap}
+.gn-qui-ident{flex:1;min-width:150px}
+.gn-qui-nom{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+/* Le rang : la pastille de rang du GuildViewer (11,5 px, 700, rayon 20, capitales). */
+.gn-qui-rang{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:11.5px;font-weight:700;
+  border-radius:20px;padding:2px 11px;text-transform:uppercase;letter-spacing:.6px}
+/* Discord : à droite, à la place des mini-compteurs du GuildViewer (écart 8). */
+.gn-qui-discord{display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-width:0}
+.gn-qui-dnom{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--text);min-width:0}
+.gn-qui-dnom-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+/* L'identifiant à copier : le bouton « Dossier » du GuildViewer (12 px, 700, fond
+   --bg-3, filet, rayon 8, 6 × 11), en chiffres tabulaires. Vert une fois copié : la
+   teinte de « Complet ». */
+.gn-qui-copier{font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--text-muted);background:var(--bg-3);
+  border:1px solid var(--border);border-radius:8px;padding:6px 11px;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;
+  font-variant-numeric:tabular-nums;transition:border-color .15s,color .15s}
+.gn-qui-copier:hover{border-color:var(--gn-accent);color:var(--gn-accent)}
+.gn-qui-copier[data-copie]{border-color:var(--green);color:var(--green)}
+.gn-qui-copier:focus-visible{outline:2px solid var(--gn-accent);outline-offset:2px}
+/* Les persos : la ligne de perso du GuildViewer (.gv-char — fond --bg-3, filet, rayon
+   11, 9 × 13, logo de classe dans sa tuile de 34). */
+.gn-qui-persos{display:grid;gap:7px;padding:0 17px 15px}
+.gn-qui-perso{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:9px 13px;min-width:0;transition:border-color .15s,opacity .15s}
+.gn-qui-perso:hover{border-color:var(--gn-accent)}
+.gn-qui-logo{width:34px;height:34px;border-radius:9px;background:var(--bg-2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;border:1px solid var(--border)}
+.gn-qui-droite{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:auto;min-width:0}
+/* Un chiffre déclaré : la pastille de stuff du GuildViewer (11,5 px, 700, rayon 6,
+   filet et teinte du rôle à 13 %, posés en ligne). */
+.gn-qui-chiffre{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap;border:1px solid;
+  font-variant-numeric:tabular-nums}
+/* « Voir le build ↗ » : le lien « AirBuilder ↗ » du GuildViewer. */
+.gn-qui-build{font-size:11.5px;font-weight:700;color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.1);border:1px solid var(--gn-accent);
+  border-radius:6px;padding:3px 10px;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+/* Sans perso : la case vide du dossier d'un membre (Vide — pointillés, --bg-3, rayon 10). */
+.gn-qui-vide{margin:0 17px 15px;font-size:12.5px;color:var(--text-muted);background:var(--bg-3);border:1px dashed var(--border);
+  border-radius:10px;padding:12px 14px}
+/* Sur téléphone, Discord passe sous le nom, aligné sur lui (avatar 46 + écart 13), et
+   les chiffres d'un perso sous son nom : poussés à droite, ils se coinçaient en colonne. */
+@media(max-width:560px){
+  .gn-qui-tete{padding:12px 14px}
+  .gn-qui-discord{margin-left:59px}
+  .gn-qui-persos{padding:0 14px 13px}
+  .gn-qui-vide{margin:0 14px 13px}
+  .gn-qui-droite{margin-left:0;width:100%}
+}
+
+/* Le suivi des mesures : les cartes des persos par classe (ClassesGuilde — glass-card
+   14 × 15) ; une ligne de membre, la ligne de perso de ces cartes (fond --bg-3, filet,
+   rayon 8, 6 × 10, 12,5 px). La sienne : le filet d'or de .gn-rec-ligne.moi. */
+.gn-ig-suivi-l{display:flex;align-items:center;gap:8px;font-size:12.5px;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:8px;padding:6px 10px;min-width:0}
+.gn-ig-suivi-l.moi{border-color:rgba(var(--gn-or-rgb),.45)}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LE TABLEAU DE BORD TOUT-EN-UN — /staff (2026-10-21, SPEC-INFORMATION-GUILDE §3-§4) :
+   les onglets des sections, la catégorie repliée « Hors guilde » de Membres & builds,
+   et la pastille d'état (Caché, Parti) d'une carte de membre et du dossier. Même règle
+   qu'aux lots précédents : chaque bloc recopie son voisin, nommé en tête de règle.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Les sections : le sommaire d'Information Guilde (.gn-ig-sommaire — .vg-subtabs, icône
+   devant le libellé), en onglets qui s'allument (.vg-subtab.active). */
+.gn-staff-onglets{margin:0 0 6px}
+.gn-staff-onglets .vg-subtab{display:inline-flex;align-items:center;gap:7px}
+
+/* « Hors guilde » : repliée. Le titre est une ligne de la file (.gn-file-ligne — fond
+   --bg-3, filet, rayon 9, 9 × 12, survol à l'accent) ; son libellé, le titre d'un groupe
+   de la file (.gn-file-t — 12 px, capitales, 1,5 px d'interlettrage) ; le compte, la
+   droite d'un titre de section (.gn-titre-droite). */
+.gn-hors-guilde{margin-top:26px}
+.gn-hors-guilde>summary{list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;
+  padding:9px 12px;border-radius:9px;background:var(--bg-3);border:1px solid var(--border);color:var(--text);
+  transition:border-color .15s}
+.gn-hors-guilde>summary::-webkit-details-marker{display:none}
+.gn-hors-guilde>summary:hover{border-color:var(--gn-accent)}
+.gn-hors-guilde>summary:focus-visible{outline:2px solid var(--gn-accent);outline-offset:2px}
+.gn-hors-guilde-chevron{color:var(--text-muted);transition:transform .15s}
+.gn-hors-guilde[open] .gn-hors-guilde-chevron{transform:rotate(90deg)}
+.gn-hors-guilde>summary .font-heading{font-size:12px;text-transform:uppercase;letter-spacing:1.5px}
+.gn-hors-guilde-n{font-family:'Rubik',sans-serif;font-size:12px;color:var(--gn-accent)}
+.gn-hors-guilde-sous{flex:1 1 220px;min-width:0;font-size:12px;color:var(--text-muted)}
+.gn-hors-guilde-liste{margin-top:13px;opacity:.86}
+@media(prefers-reduced-motion:reduce){.gn-hors-guilde-chevron{transition:none}}
+
+/* L'état d'un membre (Caché, Parti) : la pastille de rang du GuildViewer (11,5 px, 700,
+   rayon 20, capitales), en gris — c'est un état, pas un rang, et il ne doit pas se lire
+   comme une teinte de rang. */
+.gn-pastille-etat{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:20px;
+  padding:2px 11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);
+  background:color-mix(in srgb,var(--text-muted) 12%,transparent);border:1px solid color-mix(in srgb,var(--text-muted) 40%,transparent)}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 2 (SPEC-CHAMBRES-RECENSEMENT §7.1, §7.5, §9.4 — 2026-10-21) :
+   le paramétrage des événements (/discord/evenements), la clôture « Ils étaient
+   là » et l'onglet Bilans de /compositions, le déroulé de la Stratégie. Même règle
+   qu'aux lots précédents : chaque bloc recopie son voisin, nommé en tête de règle.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Les onglets de la page : le sommaire d'Information Guilde (.gn-ig-sommaire —
+   .vg-subtabs, icône devant le libellé), qui s'allument (.vg-subtab.active). Le lien
+   « Paramétrer » du staff est un onglet de plus, poussé à droite. */
+.gn-cs-onglets .vg-subtab{display:inline-flex;align-items:center;gap:7px}
+.gn-cs-onglets .gn-cs-parametrer{color:var(--gn-accent)}
+
+/* Une ligne du paramétrage : la ligne encadrée d'« Accès des amis » (fond --bg-3,
+   filet, rayon 11, 12 × 14), en grille. Ses enfants peuvent rétrécir (min-width:0,
+   piège de la colonne trop large). */
+.gn-param-ligne{display:grid;gap:8px 10px;align-items:center;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:10px 12px;min-width:0}
+.gn-param-ligne>*{min-width:0}
+/* Un interrupteur dans une ligne garde sa largeur : étiré par la grille, son filet courait
+   jusqu'au bord sur téléphone, sous deux boutons serrés à gauche. */
+.gn-param-ligne>.gn-bascule{justify-self:start}
+.gn-param-ligne.eteint{opacity:.62}
+/* Le champ : `inp` de Bot Discord et d'Accès des amis (fond --bg-3, filet, rayon 9,
+   9 × 12, 14 px), un cran plus sombre dans une ligne déjà sur --bg-3. */
+.gn-param-champ{background:var(--bg-2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);
+  font-size:14px;font-family:inherit;width:100%;min-width:0}
+.gn-param-champ:focus{outline:none;border-color:var(--gn-accent);box-shadow:0 0 0 3px rgba(var(--gn-or-rgb),.16)}
+textarea.gn-param-champ{resize:vertical;line-height:1.55}
+.gn-param-champ.court{text-align:center;font-variant-numeric:tabular-nums}
+/* Les rappels : actif · quand · heure · condition · mention · message · gestes. */
+.gn-param-rappel{grid-template-columns:auto 118px 92px minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1fr) auto}
+/* Les étapes : code · émoji · libellé · phase · gestes ; les monstres dessous. */
+.gn-param-etape{grid-template-columns:78px 62px minmax(0,1.6fr) minmax(0,1fr) auto}
+.gn-param-etape .gn-param-monstres{grid-column:1/-1}
+/* Les postes : poste · titre · classe · chiffre · rôles · optionnel. */
+.gn-param-poste{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 150px minmax(0,1.3fr)}
+.gn-param-poste .gn-param-roles{grid-column:1/-1;display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center}
+@media(max-width:860px){
+  .gn-param-rappel,.gn-param-poste{grid-template-columns:1fr 1fr}
+  .gn-param-etape{grid-template-columns:70px 56px minmax(0,1fr)}
+}
+@media(max-width:520px){
+  .gn-param-rappel,.gn-param-poste{grid-template-columns:minmax(0,1fr)}
+}
+/* Le libellé d'un champ dans une ligne : le `lab` de Bot Discord (12 px, atténué). */
+.gn-param-lab{display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px}
+/* Un monstre d'une étape : la pastille de chiffre d'Information Guilde (.gn-qui-chiffre —
+   11,5 px, 700, rayon 6), en or quand elle mène à une fiche. */
+.gn-param-monstres{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.gn-monstre{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;
+  white-space:nowrap;border:1px solid var(--border);color:var(--text);background:var(--bg-2);text-decoration:none;max-width:100%}
+.gn-monstre>span{overflow:hidden;text-overflow:ellipsis}
+a.gn-monstre{color:var(--gn-accent);border-color:rgba(var(--gn-or-rgb),.45);background:rgba(var(--gn-lueur-rgb),.08)}
+a.gn-monstre:hover{border-color:var(--gn-accent)}
+.gn-monstre button{background:none;border:0;padding:0;color:var(--red);cursor:pointer;display:flex}
+/* L'interrupteur à deux boutons de Bot Discord, en petit pour une ligne de tableau. */
+.gn-bascule{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex-shrink:0}
+.gn-bascule button{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border:0;cursor:pointer;font-size:12px;font-weight:700;
+  background:rgba(0,0,0,.25);color:var(--text-muted);font-family:inherit}
+.gn-bascule button.on{background:var(--gn-action);color:var(--gn-sur-action)}
+.gn-bascule button.off{background:var(--bg-4);color:var(--text)}
+.gn-bascule button:disabled{cursor:default;opacity:.6}
+/* La barre d'enregistrement : collée au bas de la zone qui défile (.vg-main), la carte
+   des pages staff (--bg-2, filet, rayon 14) avec le filet d'or d'une ligne active. */
+.gn-param-barre{position:sticky;bottom:12px;z-index:5;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--bg-2);border:1px solid rgba(var(--gn-or-rgb),.42);border-radius:14px;padding:12px 16px;margin-top:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.gn-param-barre .gn-param-etat{flex:1 1 220px;min-width:0;font-size:12.5px;color:var(--text-muted)}
+/* « Sans effet avant le lot N » : le bandeau de panne (.gn-panne), en or atténué. */
+.gn-param-bientot{font-size:12px;color:var(--text-muted);border-left:2px solid rgba(var(--gn-or-rgb),.45);padding:2px 0 2px 10px;margin:-4px 0 12px;line-height:1.55}
+/* Les erreurs de validation : la liste rouge des formulaires (--gn-crimson-texte). */
+.gn-param-erreurs{margin:0 0 14px;padding:12px 14px 12px 30px;border:1px solid rgba(var(--gn-lueur-rgb),.45);border-radius:11px;
+  background:rgba(var(--gn-lueur-rgb),.08);color:var(--gn-crimson-texte);font-size:13px;line-height:1.6}
+
+/* La clôture : la fenêtre « Je serai là » de /compositions (fond --bg-2, filet, rayon 14,
+   22 px), plus large. Une ligne de participant : la puce d'un annoncé (rayon 20). */
+.gn-cloture{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:620px;width:100%;
+  max-height:calc(100vh - 40px);overflow-y:auto}
+.gn-cloture-liste{display:grid;gap:7px;margin:12px 0}
+.gn-cloture-p{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:9px 12px;cursor:pointer;min-width:0;transition:border-color .15s,opacity .15s}
+.gn-cloture-p.coche{border-color:rgba(74,222,128,.45)}
+.gn-cloture-p:not(.coche){opacity:.6}
+.gn-cloture-p input{accent-color:var(--green);width:16px;height:16px;flex-shrink:0}
+.gn-cloture-nom{font-weight:700;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-cloture-info{font-size:11.5px;color:var(--text-muted);min-width:0}
+.gn-cloture-chiffre{margin-left:auto;font-size:11.5px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Les bilans : la ligne d'une séance, celle de la file des bras droits (.gn-file-ligne —
+   fond --bg-3, filet, rayon 9, 9 × 12, survol à l'accent). */
+.gn-bilan-ligne{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,1fr)) auto;gap:6px 12px;align-items:center;
+  background:var(--bg-3);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;min-width:0;width:100%;
+  text-align:left;color:var(--text);font-family:inherit;cursor:pointer;transition:border-color .15s}
+.gn-bilan-ligne>*{min-width:0}
+.gn-bilan-ligne:hover,.gn-bilan-ligne.ouverte{border-color:var(--gn-accent)}
+.gn-bilan-tete{cursor:default;background:transparent;border-color:transparent;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+.gn-bilan-tete:hover{border-color:transparent}
+.gn-bilan-detail{margin:6px 0 10px;padding:10px 12px;border-left:2px solid rgba(var(--gn-or-rgb),.42);display:grid;gap:6px}
+@media(max-width:720px){
+  /* La date, les présents et le chevron, sur une ligne : à deux colonnes, le chevron
+     tombait seul sur une deuxième ligne. */
+  .gn-bilan-ligne{grid-template-columns:minmax(0,1fr) auto auto}
+  .gn-bilan-ligne .gn-bilan-sec{display:none}
+  .gn-bilan-tete{display:none}
+}
+
+/* Le déroulé de la Stratégie : une phase, le titre d'un groupe de la file (.gn-file-t —
+   12 px, capitales) en or ; une étape, la ligne de perso d'Information Guilde
+   (.gn-ig-suivi-l — fond --bg-3, filet, rayon 8, 6 × 10, 12,5 px). */
+.gn-deroule{display:grid;gap:14px;margin-bottom:18px}
+.gn-deroule-phase{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gn-accent);margin:0 0 6px;font-weight:700}
+.gn-deroule-etape{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;font-size:12.5px;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:8px;padding:7px 10px;min-width:0;margin-bottom:6px}
+.gn-deroule-code{font-weight:700;color:var(--text-muted);font-variant-numeric:tabular-nums;min-width:28px}
+.gn-deroule-label{font-weight:700;color:var(--text);min-width:0}
+.gn-deroule-etape .gn-param-monstres{margin-left:auto}
+@media(max-width:560px){.gn-deroule-etape .gn-param-monstres{margin-left:0;width:100%}}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 3 (SPEC-CHAMBRES-RECENSEMENT §7.2, §9.4 — 2026-10-21) : le
+   panneau Discord vu par le staff sous « Prochaine séance », et l'« Essai » des
+   messages du paramétrage. Chaque bloc recopie son voisin, nommé en tête de règle.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* La ligne du panneau : la ligne des compteurs de la séance juste au-dessus (11,5 px,
+   en ligne, qui passe à la ligne), séparée par le filet des « Annoncés en … » d'un poste. */
+.gn-cs-discord{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted);
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border);min-width:0}
+.gn-cs-discord-etat{min-width:0;flex:1 1 220px}
+.gn-cs-discord-file{color:var(--gold)}
+.gn-cs-discord-echec{color:var(--gn-crimson-texte)}
+.gn-cs-discord-gestes{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+/* Ses gestes : les boutons « Ils étaient là » et « Annuler » de la même carte (11,5 px,
+   gras 600, 7 × 12, rayon 8, filet, fond transparent). */
+.gn-cs-discord-btn{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:7px 12px;border-radius:8px;
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-muted);text-decoration:none;font-family:inherit}
+.gn-cs-discord-btn:hover{border-color:var(--gn-accent);color:var(--gn-accent)}
+.gn-cs-discord-btn:disabled{opacity:.55;cursor:default}
+
+/* « Essai » d'un rappel : le geste voisin dans la même ligne (le crayon du texte, `geste`
+   de l'écran : filet, rayon 8, 5 × 7), avec son mot — un essai part sur Discord, on dit lequel. */
+.gn-param-essai{display:inline-flex;align-items:center;gap:5px;background:none;border:1px solid var(--border);border-radius:8px;
+  color:var(--text-muted);cursor:pointer;padding:5px 8px;font-size:12px;font-family:inherit}
+.gn-param-essai:hover{border-color:var(--gn-accent);color:var(--gn-accent)}
+.gn-param-essai:disabled{opacity:.5;cursor:default}
+/* Le verdict d'un essai : une ligne pleine largeur en tête de la barre d'enregistrement
+   (.gn-param-barre), au filet des lignes de la page. */
+.gn-param-essai-etat{flex:1 0 100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;min-width:0;
+  padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 4 (SPEC-CHAMBRES-RECENSEMENT §7.3 — 2026-10-21) : l'onglet
+   Répartition de /compositions — Mes positions, les salles des Asuras, les équipes
+   des Jumeaux, les golems, l'araignée et l'aperçu du récap. Chaque bloc recopie son
+   voisin, nommé en tête de règle. Aucun orange : Verte et Rouge sont les couleurs
+   d'état du site (--green, --red), comme les pastilles « présent » et « absent ».
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le verdict d'un geste : la ligne du verdict d'un essai (.gn-param-essai-etat), sans filet. */
+.gn-rep-verdict{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:10px;min-width:0}
+.gn-rep-verdict>span{min-width:0}
+
+/* Mes positions : une ligne par perso ; ses positions, les pastilles des monstres d'une
+   étape (.gn-monstre — 11,5 px, 700, rayon 6), en neutre. */
+.gn-rep-pos{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;font-size:12.5px;min-width:0}
+.gn-rep-pastille{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:6px;
+  border:1px solid var(--border);background:var(--bg-3);color:var(--text);max-width:100%;min-width:0}
+.gn-rep-pastille svg{color:var(--gn-accent);flex-shrink:0}
+/* « Je place : » — le choix du perso, la puce d'un annoncé de la page (rayon 20, 11,5 px). */
+.gn-rep-perso{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:20px;cursor:pointer;
+  border:1px solid var(--border);background:var(--bg-2);color:var(--text);font-family:inherit}
+.gn-rep-perso.actif{border-color:var(--gold);color:var(--gold);background:rgba(var(--gold-rgb),.12)}
+
+/* Un nom de joueur : la ligne d'un inscrit sur un poste (11,5 à 12,5 px, gras, coupé). */
+.gn-rep-membre{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12.5px;min-width:0;max-width:100%}
+.gn-rep-membre b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rep-membre.moi b{color:var(--gn-accent)}
+
+/* Phase 1 — une salle : la ligne de participant de la clôture (.gn-cloture-p — fond --bg-3,
+   filet, rayon 11, 9 × 12), verte quand elle est prise, comme une ligne cochée. */
+.gn-rep-salles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.gn-rep-salle{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:9px 12px;text-align:left;font-family:inherit;color:var(--text);transition:border-color .15s}
+.gn-rep-salle.prise{border-color:rgba(74,222,128,.45)}
+.gn-rep-salle.mienne{border-color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.08)}
+button.gn-rep-salle{cursor:pointer}
+button.gn-rep-salle:disabled{cursor:default}
+button.gn-rep-salle:not(:disabled):hover{border-color:var(--gn-accent)}
+.gn-rep-salle-nom{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rep-occupant{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;min-width:0}
+.gn-rep-occupant>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rep-salle.vide .gn-rep-occupant{color:var(--gn-crimson-texte);font-weight:700}
+@media(max-width:560px){.gn-rep-salles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Phase 2 — une équipe : la carte d'un poste (fond --bg-3, filet, rayon 12, 14 px), avec la
+   barre de couleur de son groupe (4 px, comme GROUP_META) posée en haut. Verte et Rouge
+   s'empilent sur téléphone (§7.3). */
+.gn-rep-equipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:720px){.gn-rep-equipes{grid-template-columns:minmax(0,1fr)}}
+.gn-rep-equipe{display:grid;gap:9px;align-content:start;min-width:0;background:var(--bg-3);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.gn-rep-equipe.vert{border-top:4px solid var(--green)}
+.gn-rep-equipe.rouge{border-top:4px solid var(--red)}
+.gn-rep-equipe-titre{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;text-transform:uppercase;letter-spacing:1px}
+.gn-rep-carre{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.gn-rep-equipe.vert .gn-rep-carre{background:var(--green)}
+.gn-rep-equipe.rouge .gn-rep-carre{background:var(--red)}
+/* Un rôle : le titre « Annoncés en … » d'un poste (11 px, capitales, atténué). */
+.gn-rep-role{display:grid;gap:4px;min-width:0}
+.gn-rep-role-nom{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+/* « + Kaelis en DPS magique » : le bouton « + ton perso » des postes (11,5 px, 4 × 9, rayon 6). */
+.gn-rep-rejoindre{justify-self:start;font-size:11.5px;padding:4px 9px;border-radius:6px;border:1px solid var(--gn-accent);background:transparent;
+  color:var(--gn-accent);cursor:pointer;font-family:inherit;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-rep-rejoindre:disabled{opacity:.45;cursor:default}
+/* Les totaux : le pied pointillé d'un poste (filet tireté, 11,5 px). */
+.gn-rep-total{display:grid;gap:3px;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums;border-top:1px dashed var(--border);padding-top:7px}
+.gn-rep-total:empty{display:none}
+.gn-rep-manque{color:var(--gold)}
+/* L'écart entre les équipes : vert, or au-delà de 10 %, crimson au-delà de 20 % (§4.4). */
+/* L'icône et UNE phrase : sans le <span>, chaque bout de texte devenait un élément flexible, et
+   l'icône restait seule sur sa ligne à 390 px. */
+.gn-rep-ecart{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;margin-top:12px}
+.gn-rep-ecart>span{min-width:0}
+.gn-rep-ecart.ok{color:var(--green)}
+.gn-rep-ecart.moyen{color:var(--gold)}
+.gn-rep-ecart.fort{color:var(--gn-crimson-texte)}
+/* « Placer · échanger » : les lignes du paramétrage (.gn-param-ligne), en grille. */
+.gn-rep-staff{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+@media(max-width:420px){.gn-rep-staff{grid-template-columns:minmax(0,1fr)}}
+/* Le joueur, puis sa place : la case du menu prend le plus de place (« Verte — DPS phy. ») ;
+   sur téléphone, le nom passe au-dessus du menu plutôt que de rogner les deux. */
+.gn-rep-staff-ligne{grid-template-columns:minmax(0,.8fr) minmax(0,1.3fr)}
+@media(max-width:420px){.gn-rep-staff-ligne{grid-template-columns:minmax(0,1fr)}}
+
+/* Phase 3 et araignée : deux colonnes, comme Verte et Rouge, empilées sur téléphone. */
+.gn-rep-calcul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media(max-width:720px){.gn-rep-calcul{grid-template-columns:minmax(0,1fr)}}
+/* Les consignes de l'araignée, dans l'encadré de la consigne des golems (.gn-panne) : une
+   puce par phrase, comme le paramétrage les range. */
+.gn-rep-consignes{margin:0;padding-left:16px;list-style:disc;font-size:12.5px;color:var(--gold);line-height:1.6;min-width:0}
+
+/* L'aperçu du récap : un embed Discord — la barre crimson de la Chambre (§8.2), sur le fond
+   d'une ligne (--bg-3), au rayon des lignes (11). Les champs en colonnes, comme Discord. */
+.gn-rep-embed{display:grid;gap:12px;margin-top:12px;font-size:12.5px;line-height:1.55;background:var(--bg-3);border:1px solid var(--border);
+  border-left:4px solid var(--gn-crimson);border-radius:6px 11px 11px 6px;padding:12px 16px;min-width:0}
+.gn-rep-embed-titre{font-weight:700;font-size:14px;color:var(--gn-texte-fort)}
+.gn-rep-champs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
+.gn-rep-champs.deux{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:560px){.gn-rep-champs,.gn-rep-champs.deux{grid-template-columns:minmax(0,1fr)}}
+.gn-rep-champ-nom{font-weight:700;font-size:12.5px;margin-bottom:4px;color:var(--gn-texte-fort)}
+.gn-rep-liste{display:grid;gap:3px;min-width:0}
+.gn-rep-embed-pied{font-size:11.5px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:8px}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 5 (SPEC-CHAMBRES-RECENSEMENT §4.9, §7.4 — 2026-10-21) :
+   l'onglet Chrono de /compositions — le temps qui défile, l'étape en cours et ses
+   monstres, les gestes du staff, les étapes phase par phase, qui joue l'étape.
+   Chaque bloc recopie son voisin, nommé en tête de règle. Aucun orange : en cours,
+   l'or de l'accent (le chrono « or » de Discord, §8.2) ; fait, le vert d'état du
+   site (--green) ; à venir, atténué.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Le sélecteur de séance : la case « Placer… » de la Répartition (VgSelect `full`),
+   poussée à droite de la ligne de titre ; pleine largeur sur téléphone. */
+.gn-chrono-choix{margin-left:auto;width:min(340px,100%);min-width:0}
+@media(max-width:560px){.gn-chrono-choix{margin-left:0;width:100%}}
+
+/* Le tableau : le temps au centre. Le chiffre recopie celui des compteurs (.gn-compteur-n
+   — gras 700, interligne 1), en grand ; l'en-tête et la ligne de l'étape, le texte atténué
+   des cartes (12,5 px). */
+.gn-chrono-tableau{display:grid;justify-items:center;gap:8px;text-align:center;padding:14px 0 6px;min-width:0}
+.gn-chrono-tete{font-size:12.5px;color:var(--text-muted);min-width:0}
+.gn-chrono-temps{font-size:56px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--text)}
+.gn-chrono-temps.en_cours{color:var(--gn-accent)}
+.gn-chrono-temps.termine{color:var(--green)}
+.gn-chrono-temps.attente{color:var(--text-muted)}
+@media(max-width:560px){.gn-chrono-temps{font-size:44px}}
+.gn-chrono-courante{display:flex;align-items:center;justify-content:center;gap:6px 8px;flex-wrap:wrap;font-size:13.5px;color:var(--text-muted);min-width:0;max-width:100%}
+.gn-chrono-courante b{color:var(--text);min-width:0}
+.gn-chrono-dans{font-weight:700;color:var(--gn-accent);font-variant-numeric:tabular-nums}
+/* Les monstres de l'étape en cours : les pastilles du déroulé (.gn-monstre), centrées. */
+.gn-chrono-monstres{justify-content:center;max-width:100%}
+.gn-chrono-contre{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+
+/* Les gestes du staff. Le principal est le bouton d'action du site (.vg-btn), agrandi :
+   toute la largeur sur téléphone, 64 px de haut au moins (§7.4) — on le vise sans regarder.
+   Les autres recopient les gestes voisins de la carte (.gn-cs-discord-btn). */
+.gn-chrono-gestes{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);min-width:0}
+.vg-btn.gn-chrono-principal{min-height:64px;padding:14px 26px;font-size:15px;justify-content:center;max-width:100%;min-width:0;text-align:center}
+.vg-btn.gn-chrono-principal:disabled{cursor:default;opacity:.55;transform:none;box-shadow:none;filter:none}
+.gn-chrono-secondaires{display:inline-flex;gap:6px;flex-wrap:wrap}
+.gn-chrono-effacer:not(:disabled):hover{border-color:var(--gn-crimson-texte);color:var(--gn-crimson-texte)}
+.gn-chrono-clavier{flex:1 0 100%;font-size:11.5px;color:var(--text-muted)}
+@media(max-width:720px){
+  .vg-btn.gn-chrono-principal{width:100%}
+  .gn-chrono-clavier{display:none}
+}
+
+/* Une étape : la ligne du déroulé de la Stratégie (.gn-deroule-etape), avec son statut
+   devant et sa durée à droite. En cours : le filet d'or d'une ligne active (la salle
+   « mienne » de la Répartition) ; faite : la coche verte de la clôture ; à venir : atténuée. */
+.gn-chrono-etape .gn-chrono-statut{display:inline-flex;align-items:center;justify-content:center;width:16px;flex-shrink:0;color:var(--text-muted)}
+.gn-chrono-etape.fait .gn-chrono-statut{color:var(--green)}
+.gn-chrono-etape.en_cours{border-color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.08)}
+.gn-chrono-etape.en_cours .gn-chrono-statut{color:var(--gn-accent)}
+.gn-chrono-etape.a_venir{opacity:.62}
+.gn-chrono-point{width:6px;height:6px;border-radius:50%;background:currentColor}
+.gn-chrono-duree{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text)}
+.gn-chrono-etape.en_cours .gn-chrono-duree{color:var(--gn-accent)}
+.gn-chrono-etape .gn-param-monstres{flex:1 0 100%;margin-left:0}
+
+/* Le pied : la ligne du panneau Discord (.gn-cs-discord — 11,5 px, filet en haut). */
+.gn-chrono-pied{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;font-size:11.5px;color:var(--text-muted);
+  margin-top:4px;padding-top:10px;border-top:1px solid var(--border);min-width:0}
+/* Le texte reste à côté de l'icône sur téléphone, au lieu de passer seul à la ligne. */
+.gn-chrono-pied>span{flex:1 1 0;min-width:0}
+.gn-chrono-pied a{color:var(--gn-accent)}
+
+/* Qui joue l'étape : les noms de la Répartition (.gn-rep-membre), en ligne qui passe à la ligne. */
+.gn-chrono-joueurs{display:flex;flex-wrap:wrap;gap:8px 16px;min-width:0}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 6 (SPEC-CHAMBRES-RECENSEMENT §4.10, §7.5 — 2026-10-21) :
+   le débrief d'une séance dans l'onglet Bilans de /compositions — l'en-tête (résultat,
+   temps, écart), l'analyse, les étapes notées, le parcours du staff, et les joueurs
+   avec leurs chiffres figés à la clôture. Chaque bloc recopie son voisin, nommé en
+   tête de règle. Aucun orange : Bien et « plus rapide » prennent le vert d'état du
+   site (--green, la pastille « présent ») ; Moyen, l'or (--gold, « à remesurer ») ;
+   Mal et « plus lent », le crimson de texte (--gn-crimson-texte, « absent »).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* La ligne d'une séance gagne la colonne « Écart » : la grille de la file du lot 2
+   (.gn-bilan-ligne), une colonne de plus ; sur téléphone, la même réduction (date,
+   présents, chevron) — redite ici, sinon cette règle-ci l'écraserait. */
+.gn-bilan-ligne{grid-template-columns:minmax(0,1.5fr) repeat(5,minmax(0,1fr)) auto}
+@media(max-width:720px){.gn-bilan-ligne{grid-template-columns:minmax(0,1fr) auto auto}}
+
+.gn-deb{display:grid;gap:10px;min-width:0}
+.gn-deb>*{min-width:0}
+
+/* L'en-tête : la ligne de titre d'une carte (titre, puis ce qui le qualifie, qui passe
+   à la ligne). Le titre recopie celui de la séance du Chrono (font-heading, 15 px, 700). */
+.gn-deb-tete{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;min-width:0}
+.gn-deb-titre{margin:0;font-size:15px;font-weight:700;color:var(--text);min-width:0}
+/* Le résultat : la pastille « présent / absent » de la clôture, en plein (capitales, 700). */
+.gn-deb-resultat{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  padding:3px 10px;border-radius:99px;border:1px solid}
+.gn-deb-resultat.gagne{color:var(--green);border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.11)}
+.gn-deb-resultat.perdu{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.45);background:rgba(var(--gn-lueur-rgb),.1)}
+/* Le temps total : le total des étapes du Chrono (12,5 px, gras, chiffres alignés), en grand. */
+.gn-deb-temps{display:inline-flex;align-items:baseline;gap:6px 8px;flex-wrap:wrap;margin-left:auto;min-width:0;font-variant-numeric:tabular-nums}
+.gn-deb-temps b{font-size:22px;line-height:1;color:var(--text)}
+.gn-deb-temps-lab{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+@media(max-width:560px){.gn-deb-temps{margin-left:0}}
+/* Un écart : le texte de l'écart entre les équipes (.gn-rep-ecart — 12,5 px, 600), coloré. */
+.gn-deb-ecart{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.gn-deb-ecart.plus-rapide{color:var(--green)}
+.gn-deb-ecart.plus-lent{color:var(--gn-crimson-texte)}
+.gn-deb-ecart.egal{color:var(--text-muted);font-weight:400}
+/* Le sous-titre : le texte atténué des cartes (12 px), des morceaux séparés par « · ». */
+.gn-deb-sous{display:flex;flex-wrap:wrap;gap:2px 0;font-size:12px;color:var(--text-muted);min-width:0}
+.gn-deb-sous>span{min-width:0}
+.gn-deb-sous>span+span::before{content:"·";margin:0 7px}
+.gn-deb-publie{color:var(--green);display:inline-flex;align-items:center;gap:4px}
+.gn-deb-brouillon{color:var(--gold)}
+/* Le record : l'encadré « à remesurer » (filet or), en ligne. */
+.gn-deb-record{display:inline-flex;align-items:center;gap:6px;justify-self:start;font-size:12.5px;font-weight:700;color:var(--gn-accent);
+  border:1px solid rgba(var(--gn-or-rgb),.45);border-radius:99px;padding:3px 11px;background:rgba(var(--gn-lueur-rgb),.06)}
+
+/* Les gestes du staff : la rangée des gestes du Chrono (.gn-chrono-gestes), sans filet. */
+.gn-deb-gestes{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;min-width:0}
+
+/* Un bloc (analyse, à retenir, joueurs) : la ligne du paramétrage (.gn-param-ligne — fond
+   --bg-3, filet, rayon 11, 10 × 12) ; son titre, celui d'un rôle (.gn-rep-role-nom). */
+.gn-deb-bloc{background:var(--bg-3);border:1px solid var(--border);border-radius:11px;padding:10px 12px;min-width:0}
+.gn-deb-bloc-titre{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--gn-accent);margin-bottom:6px;font-weight:700}
+.gn-deb-analyse{margin:0;padding:0;list-style:none;display:grid;gap:4px;font-size:12.5px;line-height:1.55}
+.gn-deb-analyse li{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;min-width:0}
+.gn-deb-analyse svg{color:var(--gn-accent);flex-shrink:0;align-self:center}
+.gn-deb-texte{margin:0;font-size:13px;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere}
+.gn-deb-aide{font-size:11.5px;color:var(--text-muted);line-height:1.5}
+
+/* Une étape notée : la ligne du Chrono (.gn-chrono-etape), le statut devant, le chrono et
+   l'écart à droite ; la remarque et les monstres dessous, sur toute la largeur. */
+.gn-deb-etapes{margin-bottom:0}
+.gn-deb-etape{row-gap:5px}
+.gn-deb-chrono{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text)}
+.gn-deb-saisi{color:var(--gn-accent);margin-left:1px}
+.gn-deb-etape .gn-deb-ecart{min-width:48px;text-align:right}
+.gn-deb-remarque{flex:1 0 100%;font-size:12.5px;font-style:italic;color:var(--text);line-height:1.5;border-left:2px solid rgba(var(--gn-or-rgb),.42);
+  padding-left:8px;overflow-wrap:anywhere;min-width:0}
+.gn-deb-etape .gn-deb-monstres,.gn-deb-courante .gn-deb-monstres{flex:1 0 100%;margin-left:0}
+/* Le statut : la pastille d'un monstre (.gn-monstre — 11,5 px, 700, rayon 6), colorée. */
+.gn-deb-statut{display:inline-flex;align-items:center;justify-content:center;min-width:56px;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:6px;
+  border:1px solid var(--border);background:var(--bg-2);color:var(--text-muted);flex-shrink:0}
+.gn-deb-statut.bien{color:var(--green);border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.1)}
+.gn-deb-statut.moyen{color:var(--gold);border-color:rgba(var(--gold-rgb),.5);background:rgba(var(--gold-rgb),.1)}
+.gn-deb-statut.mal{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.5);background:rgba(var(--gn-lueur-rgb),.1)}
+
+/* Le parcours du staff : le cadre d'une ligne active (la salle « mienne » de la Répartition
+   — filet d'or, fond teinté), en bloc. */
+.gn-deb-parcours{display:grid;gap:12px;min-width:0;border:1px solid rgba(var(--gn-or-rgb),.42);border-radius:12px;padding:14px;background:rgba(var(--gn-lueur-rgb),.05)}
+.gn-deb-parcours>*{min-width:0}
+.gn-deb-parcours-tete{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.gn-deb-lab{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+.gn-deb-position{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--gn-accent);font-variant-numeric:tabular-nums}
+/* Gagné / Perdu : les gestes de la carte (.gn-cs-discord-btn), allumés à la couleur du résultat. */
+.gn-deb-issues{display:inline-flex;gap:6px;flex-wrap:wrap}
+.gn-deb-issue{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit}
+.gn-deb-issue.gagne:hover,.gn-deb-issue.gagne.actif{color:var(--green);border-color:rgba(74,222,128,.55)}
+.gn-deb-issue.gagne.actif{background:rgba(74,222,128,.12)}
+.gn-deb-issue.perdu:hover,.gn-deb-issue.perdu.actif{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.55)}
+.gn-deb-issue.perdu.actif{background:rgba(var(--gn-lueur-rgb),.12)}
+/* L'étape en cours : la ligne de l'étape du Chrono (.gn-chrono-courante), à gauche. */
+.gn-deb-courante{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;font-size:14px;min-width:0}
+.gn-deb-courante b{color:var(--text);min-width:0}
+.gn-deb-phase{font-size:12px;color:var(--text-muted)}
+/* Les champs : chrono étroit, remarque large ; empilés sur téléphone. */
+.gn-deb-champs{display:grid;grid-template-columns:150px minmax(0,1fr);gap:10px 12px;align-items:start}
+@media(max-width:560px){.gn-deb-champs{grid-template-columns:minmax(0,1fr)}}
+.gn-deb-champ{display:grid;gap:4px;min-width:0}
+.gn-deb-champ .gn-param-lab{display:flex;align-items:baseline;gap:8px;margin-bottom:0}
+.gn-deb-compteur{margin-left:auto;font-variant-numeric:tabular-nums;font-size:11px}
+/* Bien · Moyen · Mal : le bouton principal du Chrono (64 px de haut, on le vise sans
+   regarder), en trois, à la couleur de la note ; pleine largeur sur téléphone. */
+.gn-deb-notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gn-deb-noter{min-height:52px;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;border:1px solid;background:transparent;
+  transition:background .15s,border-color .15s}
+.gn-deb-noter.bien{color:var(--green);border-color:rgba(74,222,128,.45)}
+.gn-deb-noter.moyen{color:var(--gold);border-color:rgba(var(--gold-rgb),.5)}
+.gn-deb-noter.mal{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.5)}
+.gn-deb-noter.bien:hover,.gn-deb-noter.bien.actif{background:rgba(74,222,128,.14)}
+.gn-deb-noter.moyen:hover,.gn-deb-noter.moyen.actif{background:rgba(var(--gold-rgb),.14)}
+.gn-deb-noter.mal:hover,.gn-deb-noter.mal.actif{background:rgba(var(--gn-lueur-rgb),.16)}
+.gn-deb-noter.actif{box-shadow:inset 0 0 0 1px currentColor}
+.gn-deb-nav{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap}
+.gn-deb-nav .gn-deb-aide{flex:1 1 220px;min-width:0}
+/* Toutes les étapes : la puce d'un perso de la Répartition (.gn-rep-perso — rayon 20,
+   11,5 px), à la couleur de sa note ; l'étape affichée, au filet d'or. */
+.gn-deb-puces{display:flex;flex-wrap:wrap;gap:5px}
+.gn-deb-puce{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums;
+  border:1px solid var(--border);background:var(--bg-2);color:var(--text-muted)}
+.gn-deb-puce.bien{color:var(--green);border-color:rgba(74,222,128,.45)}
+.gn-deb-puce.moyen{color:var(--gold);border-color:rgba(var(--gold-rgb),.5)}
+.gn-deb-puce.mal{color:var(--gn-crimson-texte);border-color:rgba(var(--gn-lueur-rgb),.5)}
+.gn-deb-puce.courante{box-shadow:0 0 0 2px var(--gn-accent)}
+.gn-deb-aetape{display:grid;gap:6px;min-width:0}
+/* Le pied : la ligne du panneau Discord (.gn-cs-discord — filet en haut, 11,5 px). */
+.gn-deb-pied{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border);min-width:0}
+.gn-deb-manquants{flex:1 1 220px;min-width:0;font-size:12px;color:var(--gold)}
+
+/* Les joueurs : la ligne de participant de la clôture (.gn-cloture-p — fond --bg-2 ici, sur un
+   bloc déjà en --bg-3), sans case à cocher. */
+.gn-deb-liste{display:grid;gap:6px}
+.gn-deb-joueur{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;background:var(--bg-2);border:1px solid var(--border);border-radius:11px;
+  padding:8px 12px;min-width:0}
+.gn-deb-joueur.absent{opacity:.6}
+.gn-deb-joueur-nom{display:flex;flex-direction:column;min-width:0;flex:1 1 160px}
+.gn-deb-joueur-nom b{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-deb-joueur-nom b.moi{color:var(--gn-accent)}
+.gn-deb-joueur-nom span{font-size:11.5px;color:var(--text-muted);min-width:0}
+.gn-deb-presence{font-size:11.5px;font-weight:700}
+.gn-deb-presence.present{color:var(--green)}
+.gn-deb-presence.absent{color:var(--gn-crimson-texte)}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 7 (SPEC-CHAMBRES-RECENSEMENT §4.11, §8.6 — 2026-10-21) : où en est la
+   publication du débrief en image sur Discord, dans le sous-titre du débrief (staff). Le même
+   morceau que « publié le … » (.gn-deb-publie : 12 px, icône 12, séparé par « · ») ; en file en
+   or, en échec en crimson clair, publié en atténué avec son lien en or. Aucun orange.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+.gn-deb-discord{display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0;overflow-wrap:anywhere}
+.gn-deb-discord.en-file{color:var(--gold)}
+.gn-deb-discord.echec{color:var(--gn-crimson-texte)}
+.gn-deb-discord a{color:var(--gn-accent);text-decoration:underline;text-underline-offset:2px}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 8 (SPEC-CHAMBRES-RECENSEMENT §10.4 — 2026-10-21) : les vidéos de débrief
+   dans l'onglet Bilans — la ligne d'une vidéo sous son étape, le formulaire « Joindre » (le staff
+   seul, décision 3), et la fenêtre de lecture. Chaque bloc recopie son voisin, nommé en tête de
+   règle. Aucun orange : l'icône et le choix actif en or (--gn-accent), la jauge d'envoi est
+   celle de la page Guilde (.gn-j-piste / .gn-j-jauge, --gn-jauge), Supprimer en crimson clair.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* La colonne « Vidéos » des bilans : la grille du lot 6, une colonne de plus ; sur téléphone,
+   la même réduction (date, présents, chevron), redite pour ne pas être écrasée. */
+.gn-bilan-ligne{grid-template-columns:minmax(0,1.5fr) repeat(6,minmax(0,1fr)) auto}
+@media(max-width:720px){.gn-bilan-ligne{grid-template-columns:minmax(0,1fr) auto auto}}
+
+/* Les vidéos d'une étape : sous la remarque et les monstres, sur toute la largeur de la ligne. */
+.gn-vid-liste{flex:1 0 100%;display:grid;gap:5px;min-width:0}
+/* Une vidéo : la ligne d'un joueur du débrief (.gn-deb-joueur — fond --bg-2, filet, 12,5 px),
+   resserrée (rayon 8, 5 × 10) : elle vit dans la ligne d'une étape, déjà sur --bg-3. */
+.gn-vid-ligne{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;font-size:12.5px;min-width:0}
+.gn-vid-titre{color:var(--text);font-weight:700;min-width:0;overflow-wrap:anywhere}
+/* Le qui, quand et d'où : le texte atténué des joueurs (.gn-deb-joueur-nom span — 11,5 px). */
+.gn-vid-meta,.gn-vid-ou{font-size:11.5px;color:var(--text-muted);min-width:0;overflow-wrap:anywhere}
+.gn-vid-ligne .gn-cs-discord-btn{margin-left:auto;padding:5px 10px}
+/* Sur téléphone, le titre reste à côté de son icône (il passe à la ligne en lui-même), et le
+   qui, quand et d'où prennent leur propre ligne, « Lire » dessous à droite. */
+@media(max-width:560px){
+  .gn-vid-titre{flex:1 1 0}
+  .gn-vid-ligne>.gn-vid-meta{flex-basis:100%}
+}
+/* Les vidéos de l'étape, dans le parcours du staff : la liste « À cette étape » (.gn-deb-aetape). */
+.gn-vid-etape{display:grid;gap:6px;min-width:0}
+
+/* Le formulaire « Joindre » : le cadre du parcours (.gn-deb-parcours — filet d'or, rayon 12, 14 px,
+   fond teinté), en bloc. Étape et moment côte à côte, le titre dessous ; une colonne sur téléphone. */
+.gn-vid-form{display:grid;gap:12px;min-width:0;border:1px solid rgba(var(--gn-or-rgb),.42);border-radius:12px;padding:14px;background:rgba(var(--gn-lueur-rgb),.05)}
+.gn-vid-form>*{min-width:0}
+.gn-vid-champs{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px 12px;align-items:start}
+.gn-vid-champs>*{min-width:0}
+.gn-vid-large{grid-column:1/-1}
+@media(max-width:560px){.gn-vid-champs{grid-template-columns:minmax(0,1fr)}}
+/* Lien / Fichier : les boutons Gagné / Perdu du parcours (.gn-deb-issue — 12 px, 700, 7 × 12,
+   rayon 8), allumés à l'or quand ils sont choisis. */
+.gn-vid-modes{display:inline-flex;gap:6px;flex-wrap:wrap}
+.gn-vid-mode{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:7px 12px;border-radius:8px;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:inherit}
+.gn-vid-mode:hover,.gn-vid-mode.actif{color:var(--gn-accent);border-color:rgba(var(--gn-or-rgb),.55)}
+.gn-vid-mode.actif{background:rgba(var(--gn-or-rgb),.12)}
+.gn-vid-mode:disabled{opacity:.55;cursor:default}
+.gn-vid-fichier{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;min-width:0}
+/* L'avancement de l'envoi : la jauge de la page Guilde, et son pourcentage (.gn-j-pc). */
+.gn-vid-progression{display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:center;gap:10px;margin-top:4px}
+.gn-vid-pc{text-align:right;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums}
+/* Le pied : celui du parcours (.gn-deb-pied), boutons à droite. */
+.gn-vid-pied{display:flex;align-items:center;justify-content:flex-end;gap:8px 10px;flex-wrap:wrap;margin-top:12px;min-width:0}
+.gn-vid-form .gn-vid-pied{margin-top:0}
+.gn-vid-suppr:hover{border-color:rgba(var(--gn-lueur-rgb),.6);color:var(--gn-crimson-texte)}
+
+/* La fenêtre de lecture : celle de la clôture (.gn-cloture — fond --bg-2, filet, rayon 14,
+   22 px), plus large pour la vidéo ; plein écran sur téléphone (§10.4). */
+.gn-vid-fond{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.gn-vid-fenetre{background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:960px;width:100%;
+  max-height:calc(100vh - 40px);overflow-y:auto;min-width:0}
+.gn-vid-tete{display:flex;align-items:flex-start;gap:9px;margin-bottom:12px;min-width:0}
+.gn-vid-tete>svg{margin-top:2px}
+.gn-vid-tete-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.gn-vid-tete-t b{font-family:var(--gn-titre);font-size:15px;color:var(--text);overflow-wrap:anywhere}
+.gn-vid-fermer{margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:0;display:flex;flex-shrink:0}
+.gn-vid-fermer:hover{color:var(--gn-accent)}
+/* La vidéo en 16:9, sur fond noir : le lecteur garde ses proportions à toutes les largeurs. */
+.gn-vid-cadre{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.gn-vid-cadre iframe,.gn-vid-cadre video{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+/* Un lien qui ne s'intègre pas (Medal, Discord) : le bloc de la page (.gn-deb-bloc), centré. */
+.gn-vid-externe{display:grid;justify-items:center;gap:12px;text-align:center;background:var(--bg-3);border:1px solid var(--border);border-radius:11px;padding:26px 16px}
+.gn-vid-externe p{margin:0;font-size:13.5px;color:var(--text);line-height:1.55}
+@media(max-width:560px){
+  .gn-vid-fond{padding:0;align-items:stretch}
+  .gn-vid-fenetre{max-width:none;max-height:none;height:100%;border-radius:0;border:0;padding:14px}
+  .gn-vid-cadre{border-radius:6px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   LE GUILD SIEGE, LOT 9 (SPEC-CHAMBRES-RECENSEMENT §11.3, §9.2 — 2026-10-21) : l'onglet Guild
+   Siege de /compositions (« En standby » tant que le staff ne l'allume pas — décision 2), le
+   filtre Guild Siege des bilans, et les créneaux du paramétrage. Chaque bloc recopie son voisin,
+   nommé en tête de règle. Aucun orange : l'accent en or (--gn-accent), « au complet » en vert.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Un créneau du paramétrage : jour · heure · fin d'inscription · retirer — la ligne d'une étape
+   (.gn-param-etape), en trois champs ; deux colonnes, puis une seule sur téléphone. */
+.gn-param-creneau{grid-template-columns:minmax(0,1fr) 100px 130px auto}
+@media(max-width:560px){
+  .gn-param-creneau{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .gn-param-creneau>button{grid-column:1/-1;justify-self:end}
+}
+
+/* « En standby » : la pastille d'état qu'avait l'onglet (12 px, 700, capitales, filet, rayon 20). */
+.gn-gs-standby{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text-muted);border:1px solid var(--border);border-radius:20px;padding:3px 12px;margin-bottom:12px}
+/* La fin d'inscription de la guilde : la même pastille, en or, poussée à droite de l'en-tête. */
+.gn-gs-fin{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font-size:11.5px;font-weight:600;color:var(--gn-accent);
+  border:1px solid rgba(var(--gn-or-rgb),.45);border-radius:20px;padding:3px 11px;white-space:nowrap}
+@media(max-width:560px){.gn-gs-fin{margin-left:0;white-space:normal}}
+
+/* « Je viens avec [perso] » : la ligne du paramétrage (.gn-param-ligne — fond --bg-3, filet,
+   rayon 11), en flex ; le menu prend la place, les boutons gardent la leur. */
+.gn-gs-inscription{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:10px 12px;margin-bottom:12px;min-width:0}
+.gn-gs-choix{flex:1 1 220px;min-width:0}
+.gn-gs-inscription .vg-btn{padding:8px 15px;font-size:12.5px}
+
+/* L'effectif : la ligne des compteurs de « Prochaine séance » (11,5 px, atténuée, icône en tête). */
+.gn-gs-compte{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);margin:2px 0 8px;text-transform:uppercase;letter-spacing:.7px}
+/* Qui vient : les joueurs du débrief (.gn-deb-joueur — fond --bg-2 → --bg-3 dans la carte, filet,
+   rayon 11), en grille ; une colonne sur téléphone. */
+.gn-gs-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
+.gn-gs-liste>*{min-width:0}
+.gn-gs-joueur{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);border-radius:11px;
+  padding:8px 12px;min-width:0}
+.gn-gs-joueur.moi{border-color:rgba(var(--gn-or-rgb),.55)}
+.gn-gs-joueur-nom{display:flex;flex-direction:column;min-width:0;flex:1 1 70px}
+.gn-gs-joueur-nom b{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gn-gs-joueur.moi .gn-gs-joueur-nom b{color:var(--gn-accent)}
+.gn-gs-joueur-nom span{font-size:11.5px;color:var(--text-muted)}
+.gn-gs-sans{margin-left:auto;font-size:11.5px;color:var(--text-muted)}
+@media(max-width:560px){.gn-gs-liste{grid-template-columns:minmax(0,1fr)}}
+
+/* Les gestes du staff : ceux de « Prochaine séance » (.gn-cs-discord-btn), séparés par le filet
+   de la ligne du panneau Discord qui suit. */
+.gn-gs-staff{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* Un siège passé : la ligne d'une séance des bilans (.gn-bilan-ligne — fond --bg-3, filet, rayon 9,
+   9 × 12), sans clic sur la ligne : « Voir le débrief » mène à l'onglet Bilans. */
+.gn-gs-siege{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.4fr) auto;gap:6px 12px;align-items:center;
+  background:var(--bg-3);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;min-width:0}
+.gn-gs-siege>*{min-width:0}
+/* Sur téléphone : la date et « Voir le débrief » en haut, le résultat et les présents dessous. */
+@media(max-width:560px){
+  .gn-gs-siege{grid-template-columns:minmax(0,1fr) auto}
+  .gn-gs-siege>button{order:1;justify-self:end}
+  .gn-gs-siege>:nth-child(2){order:2}
+  .gn-gs-siege>:nth-child(3){order:3;text-align:right}
+}
+
+/* Le filtre des bilans : les onglets de la page (.vg-subtabs), resserrés au-dessus de la carte. */
+.gn-bilans-filtre{margin:-6px 0 14px}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════
+   LES CHAMBRES, LOT 10 (SPEC-CHAMBRES-RECENSEMENT §4.4, §4.5 — 2026-10-21) : le bandeau des
+   demandes d'échange en haut de l'onglet Répartition, et « Demander une place… » sous Mes
+   positions. Chaque bloc recopie son voisin, nommé en tête de règle. Aucun orange : « pour toi »
+   en or (--gn-accent), Accepter au vert du résultat gagné (.gn-deb-issue.gagne).
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Une demande : la ligne d'un joueur du Guild Siege (.gn-gs-joueur — fond --bg-3, filet, rayon
+   11, 8 × 12), le texte à gauche, les gestes à droite ; celle qui attend MA réponse, au filet d'or
+   (.gn-gs-joueur.moi). Sur téléphone, les gestes passent sous le texte. */
+.gn-rep-demande{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:8px 12px;min-width:0}
+.gn-rep-demande.pour-moi{border-color:rgba(var(--gn-or-rgb),.55)}
+.gn-rep-demande-texte{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:0;font-size:13px}
+.gn-rep-demande-texte>span{min-width:0;overflow-wrap:anywhere}
+.gn-rep-demande.pour-moi .gn-rep-demande-texte>span:first-child{color:var(--gn-texte-fort);font-weight:600}
+/* L'état : la ligne atténuée d'un joueur (.gn-gs-joueur-nom span — 11,5 px). */
+.gn-rep-demande-etat{font-size:11.5px;color:var(--text-muted)}
+.gn-rep-demande-gestes{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+@media(max-width:560px){.gn-rep-demande-gestes{margin-left:0}}
+
+/* « Demander une place » : la ligne « Je viens avec [perso] » du Guild Siege (.gn-gs-inscription),
+   le libellé puis le menu, qui prend la place ; empilés sur téléphone. */
+.gn-rep-demander{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:11px;padding:10px 12px;min-width:0}
+.gn-rep-demander>:last-child{flex:1 1 240px;min-width:0}
+.gn-rep-demander-lab{display:inline-flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted)}
+.gn-rep-demander-lab svg{color:var(--gn-accent);flex-shrink:0}

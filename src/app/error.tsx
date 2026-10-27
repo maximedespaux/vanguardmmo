@@ -8,9 +8,9 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
-      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/site/new/guild.webp') center / cover no-repeat" }}>
+      background: "linear-gradient(rgba(8,8,11,.86),rgba(8,8,11,.93)), url('/assets/genesis/bg/salle-du-trone.webp') center / cover no-repeat" }}>
       <div className="glass-card" style={{ maxWidth: 460, width: "100%", padding: "44px 34px", textAlign: "center", borderRadius: 20 }}>
-        <div style={{ display: "flex", justifyContent: "center", color: "var(--orange)" }}><Icon name="wrench" size={52} strokeWidth={1.4} /></div>
+        <div style={{ display: "flex", justifyContent: "center", color: "var(--gn-accent)" }}><Icon name="wrench" size={52} strokeWidth={1.4} /></div>
         <h1 className="font-heading" style={{ fontSize: 22, fontWeight: 400, margin: "14px 0 0", textTransform: "uppercase", letterSpacing: 1, color: "#fff" }}>Oups, un pépin</h1>
         <div style={{ fontFamily: "'Athiti', sans-serif", color: "var(--text-muted)", fontSize: 14, margin: "10px auto 26px", lineHeight: 1.6, maxWidth: 360 }}>
           Une erreur inattendue est survenue de notre côté. Tu peux réessayer — si ça persiste, préviens un officier.
@@ -18,7 +18,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         </div>
         <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
           <button onClick={() => reset()} className="vg-btn" style={{ cursor: "pointer" }}>↻ Réessayer</button>
-          <Link href="/histoire" style={{ display: "inline-flex", alignItems: "center", padding: "11px 22px", borderRadius: 10, border: "1px solid var(--border)", color: "var(--text)", textDecoration: "none", fontFamily: "'Rubik', sans-serif", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, fontSize: 13 }}>Accueil</Link>
+          <Link href="/" style={{ display: "inline-flex", alignItems: "center", padding: "11px 22px", borderRadius: 10, border: "1px solid var(--border)", color: "var(--text)", textDecoration: "none", fontFamily: "'Rubik', sans-serif", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, fontSize: 13 }}>Accueil</Link>
         </div>
       </div>
     </div>

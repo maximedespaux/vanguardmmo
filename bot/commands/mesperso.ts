@@ -13,9 +13,12 @@ export async function execute(i: ChatInputCommandInteraction) {
   });
 
   if (!user || user.characters.length === 0) {
+    /* Depuis le 2026-10-21, la page « Mes personnages » du site ne fait que REFLÉTER
+       l'AirBuilder : un perso se crée dans le builder (bouton « Mes personnages »), qui
+       le publie au compte. Renvoyer vers la page envoyait chercher un bouton parti. */
     await i.reply({
       content:
-        "Tu n'as pas encore de personnage enregistré. Ajoute-les sur le site dans **Mes Personnages** 🧙",
+        "Tu n'as pas encore de personnage enregistré. Crée-les dans l'**AirBuilder** du site (bouton « Mes personnages ») : ils apparaissent ici dès qu'ils sont publiés 🧙",
       ephemeral: true,
     });
     return;

@@ -228,7 +228,7 @@ export const emblemeClasse = (code: string | undefined) =>
  */
 export const COULEUR_GRADE: Record<string, string> = {
   Unique: "var(--green)",
-  Ultime: "var(--gold)",
+  Ultime: "#FFD24A", // donnée du jeu : l'ancien --gold figé en hex, genesis.css redéfinit --gold
 };
 
 /**

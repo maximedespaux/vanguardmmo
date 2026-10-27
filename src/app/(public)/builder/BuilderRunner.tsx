@@ -1,12 +1,19 @@
 "use client";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ensureVgIcons } from "@/lib/vanillaLoader";
 
 // Charge le moteur AirBuilder (vanilla JS d'iBeats). Re-render au re-montage de la page.
 // Recharge proprement si une autre app (AirGuild) tenait les globals (isolation SPA).
 export function BuilderRunner({ embed = false, connecte = true }: { embed?: boolean; connecte?: boolean }) {
   useEffect(() => {
-    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number; __ANON?: boolean; vgOuvrirDepuisURL?: () => void };
+    const w = window as unknown as { __APP?: string; render?: () => void; __VIEW?: boolean; __embed?: number; __ANON?: boolean; vgOuvrirDepuisURL?: () => void; vgPublierMaintenant?: () => unknown };
+    /* EN QUITTANT /builder PAR UN LIEN DU SITE, la publication en attente part tout de
+       suite (vgPublierMaintenant) : le moteur reste chargé, mais il l'aurait envoyée
+       1,5 s plus tard — après que « Mes personnages » ou l'accueil ont déjà lu
+       /api/characters. Ceux-ci attendent la promesse qu'elle laisse (lib/mesPersos,
+       `apresPublication`). */
+    const publier = () => { try { w.vgPublierMaintenant?.(); } catch { /* noop */ } };
     /* Visiteur non connecté : il compose librement, mais rien ne quitte son
        navigateur. Le moteur lit ce drapeau pour couper la sauvegarde cloud et
        renvoyer vers la connexion sur tout ce qui engage un compte. Posé AVANT
@@ -20,12 +27,12 @@ export function BuilderRunner({ embed = false, connecte = true }: { embed?: bool
     if (embed) w.__embed = 1;
     if (w.__APP === "airbuilder" && typeof w.render === "function") {
       if (w.__VIEW) { window.location.reload(); return; } // on revient d'une vue lecture seule → reboot propre sur mon build
-      // Ce rendu efface ce que le moteur avait ouvert au démarrage. En
-      // développement React remonte le composant (StrictMode) et passe donc
-      // toujours par ici : sans ce rappel, un lien ?perso=…&acheter=1 ouvrait
-      // la fenêtre d'achat puis la refermait aussitôt. La fonction ne fait
-      // rien la deuxième fois.
-      try { w.render(); w.vgOuvrirDepuisURL?.(); } catch { /* noop */ } return;
+      // Le moteur est déjà chargé : on revient sur /builder depuis une autre page
+      // du site (ou React remonte le composant, en développement). Le lien
+      // ?perso=…&stuff=… de CETTE visite doit donc être relu ici — le moteur ne
+      // le lit de lui-même qu'à son premier chargement. Le rejouer est sans effet
+      // de bord : il n'écrit rien et rouvre ce qui est déjà ouvert.
+      try { w.render(); w.vgOuvrirDepuisURL?.(); } catch { /* noop */ } return publier;
     }
     if (w.__APP && w.__APP !== "airbuilder") { window.location.reload(); return; }
 
@@ -59,7 +66,18 @@ export function BuilderRunner({ embed = false, connecte = true }: { embed?: bool
         document.body.appendChild(s);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; publier(); };
   }, [embed, connecte]);
+
+  /* UN LIEN PROFOND SUIVI DEPUIS /builder MÊME — le perso principal du panneau profil,
+     dans l'en-tête : même chemin, autre requête, la page ne se remonte pas et l'effet
+     du dessus ne repart pas. L'adresse changeait, le builder restait sur l'ancien
+     perso. On relit donc le lien à chaque changement de la requête ; sans objet tant
+     que le moteur n'est pas chargé, il le lit lui-même à son démarrage. */
+  const requete = useSearchParams()?.toString() ?? "";
+  useEffect(() => {
+    const w = window as unknown as { __APP?: string; vgOuvrirDepuisURL?: () => void };
+    if (w.__APP === "airbuilder") { try { w.vgOuvrirDepuisURL?.(); } catch { /* noop */ } }
+  }, [requete]);
   return null;
 }

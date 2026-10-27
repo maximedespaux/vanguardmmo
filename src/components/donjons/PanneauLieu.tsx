@@ -514,7 +514,7 @@ function DeuxPeuplements({ lieu, zonesDuReleve }: { lieu: Lieu; zonesDuReleve: n
   const tete = lieu.bandes.find((b) => b.rangPoses === 1);
   return (
     <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--text-muted)", margin: "0 0 14px" }}>
-      <Icon name="layers" size={13} style={{ marginRight: 6, color: "var(--orange)" }} />
+      <Icon name="layers" size={13} style={{ marginRight: 6, color: "var(--gn-accent)" }} />
       Une carte, <b style={{ color: "var(--text)" }}>{lieu.bandes.length} peuplements</b> séparés
       de <b style={{ color: "var(--text)", ...NUM }}>{trous.join(" et ")} niveaux</b>.{" "}
       {lieu.bandes.map((b) => (
@@ -558,7 +558,7 @@ function DeuxModes({ lieu, ticket }: { lieu: Lieu; ticket: Lieu["ticket"] }) {
   return (
     <div style={{ background: "var(--bg-3)", border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px", marginBottom: 14, fontSize: 12.5, lineHeight: 1.6, display: "grid", gap: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", color: "var(--text-muted)" }}>
-        <Icon name="swords" size={13} style={{ flexShrink: 0, color: "var(--orange)" }} />
+        <Icon name="swords" size={13} style={{ flexShrink: 0, color: "var(--gn-accent)" }} />
         <span>Un seul endroit,</span>
         {modes.map((m, i) => (
           <span key={m.nom} style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
@@ -720,7 +720,7 @@ function Tableau({ lignes, maxSeconde }: { lignes: Fiche[]; maxSeconde: number }
                     9,0 Md à sortir pour une barre qui en affiche 1,5. L'infobulle
                     écrit donc l'opération, `55,0 M × 2 vies`, pour qu'on reconnaisse
                     le chiffre de l'écran de jeu au lieu de croire à une erreur. */}
-                <td style={{ ...td, fontWeight: 700, color: "var(--orange)" }}
+                <td style={{ ...td, fontWeight: 700, color: "var(--gn-accent)" }}
                   title={m.pv1 ? `${entier(m.pv1)} PV par vie × ${m.vies} vies = ${entier(m.pv)} à sortir. La barre du jeu n'affiche que ${entier(m.pv1)}.` : undefined}>
                   {pvCourt(m.pv)}
                 </td>

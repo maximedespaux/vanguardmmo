@@ -21,7 +21,7 @@ import { chercher, faitsWiki } from "@/lib/wiki";
 const fr = (n: number) => n.toLocaleString("fr-FR");
 
 export const metadata = {
-  title: "Le wiki · Vanguard",
+  title: "Le wiki · GENESIS",
   description:
     "Un seul champ pour tout Airborn : objets, monstres, recettes, PNJ et compétences, par leur nom ou par leurs mots-clés — et quel monstre lâche quoi.",
 };

@@ -202,7 +202,7 @@ function Ligne({ e, ouvert, onClick, fiche, suivre, planche }: {
   const c = couleurPalier(e.palier);
   return (
     <div id={`comp-${e.id}`} className={ouvert ? "cp-ouvert" : undefined}
-      style={{ background: "var(--bg-2)", border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`, borderRadius: 10, overflow: "hidden" }}>
+      style={{ background: "var(--bg-2)", border: `1px solid ${ouvert ? "var(--gn-accent)" : "var(--border)"}`, borderRadius: 10, overflow: "hidden" }}>
       <button onClick={onClick} className="fx-card" style={{ display: "flex", alignItems: "flex-start", gap: 10, width: "100%", textAlign: "left",
         padding: "9px 10px", background: "transparent", border: "none", cursor: "pointer", fontFamily: "inherit", color: "var(--text)" }}>
         {e.icone != null ? <IconeCompetence planche={planche} index={e.icone} titre={e.nom} /> : <CaseVide />}
@@ -232,7 +232,7 @@ function Ligne({ e, ouvert, onClick, fiche, suivre, planche }: {
             )}
           </span>
         </span>
-        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={14} style={{ color: ouvert ? "var(--orange)" : "var(--text-muted)", flexShrink: 0, marginTop: 3 }} />
+        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={14} style={{ color: ouvert ? "var(--gn-accent)" : "var(--text-muted)", flexShrink: 0, marginTop: 3 }} />
       </button>
       {ouvert && (
         <div style={{ borderTop: "1px solid var(--border)", padding: "13px 13px 15px", background: "var(--bg-3)" }}>

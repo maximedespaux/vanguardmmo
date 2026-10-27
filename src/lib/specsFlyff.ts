@@ -4,17 +4,15 @@
  * Les réglages sont ceux du builder (public/airbuilder/airbuilder.js, fonctions
  * defCfg / panelFor) : une arme se perce et se rend rare, un casque non ; un
  * anneau monte à +30 quand une tenue plafonne à +10 ; l'éveil est R1 ou R2, pas
- * R3. Afficher partout les mêmes cases donnerait des quêtes impossibles —
- * « Casque Légendaire percé Fulgur » ne veut rien dire.
+ * R3. Afficher partout les mêmes cases ferait croire à des pièces impossibles —
+ * « Casque Légendaire percé Fulgur » ne veut rien dire. Les Mécaniques lisent
+ * cette table pour dire ce que chaque emplacement accepte.
  *
- * D'où la règle : on part du NOM de l'objet du coffre (« Epee », « Armure »,
- * « Bouclier », « Anneaux »…) et de sa catégorie (« Armes - Yggdrasil »,
- * « Stuff - Dryades », « Bijoux »), et on n'ouvre que les réglages du slot
- * correspondant. Tout le reste — runes, cartes, ressources, pierres d'éveil —
- * n'a aucun réglage : ça se compte, point.
+ * Le nom d'un objet du coffre (reglagesPour) et la pièce commandée sur mesure y
+ * menaient aussi, avec la saisie d'une pièce et son résumé en une ligne : ces
+ * entrées sont parties avec le coffre et la Boutique, le 2026-10-21.
  *
- * Pas de Prisma ni de fs ici : ce module est lu par la page des quêtes, donc
- * côté navigateur.
+ * Pas de Prisma ni de fs ici : le module doit rester lisible côté navigateur.
  */
 
 /** Rareté d'arme, mêmes paliers que MECH.arme.rarete_tiers du builder. */
@@ -74,13 +72,13 @@ export type Reglages = {
 const sansAccent = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /**
- * Les réglages d'un emplacement, à la source : c'est la table de vérité, et
- * tout le reste y mène. Le coffre y arrive par le nom de l'objet, la commande
- * sur mesure par le slot du builder — mais les règles ne sont écrites qu'ici.
+ * Les réglages d'un emplacement, à la source : c'est la table de vérité, et les
+ * règles ne sont écrites qu'ici.
  *
  * `artefact` : une arme Éternelle ou Yggdrasil monte à +20 et ouvre douze
  * perçages (weaponPanelImpl) ; les autres plafonnent à +10 et dix.
- * `rarete` : ne concerne que les armes, et pas toutes (voir reglagesPour).
+ * `rarete` : ne concerne que les armes, et pas toutes (marteaux, boucliers et
+ * grimoires n'ont pas de palier).
  */
 export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?: boolean; label?: string } = {}): Reglages {
   const art = !!o.artefact;
@@ -107,127 +105,4 @@ export function reglagesDeSlot(slot: SlotFlyff, o: { artefact?: boolean; rarete?
     case "fashion":
       return { ...base, label: o.label ?? "Fashion", upMax: 10, gemmes: 4 };
   }
-}
-
-/** Le slot du builder (weapon, ring1, fhead…) ramené à une famille de réglages. */
-export function slotDepuisBuilder(clef: string): SlotFlyff | null {
-  const s = clef.replace(/[0-9]/g, "");
-  if (s === "weapon") return "weapon";
-  if (s === "shield") return "shield";
-  if (s === "suit") return "suit";
-  if (["helmet", "gauntlet", "boots"].includes(s)) return "armor";
-  if (["ring", "earring", "necklace"].includes(s)) return "jewel";
-  if (s === "cape") return "cape";
-  if (["fashion", "fhead", "ftop", "fhand", "ffoot"].includes(s)) return "fashion";
-  // Mantra, masque, fée, familier, ramasseur : le builder n'y règle rien de
-  // ce qu'on sait décrire ici.
-  return null;
-}
-
-/** Les tiers qui passent en artefact, comme dans weaponPanelImpl. */
-export const estTierArtefact = (tier?: string | null) => /yggdrasil|eternel/.test(sansAccent(tier ?? ""));
-
-/** Les armes du coffre, par leur nom court (le coffre ne dit que « Epee »). */
-const ARMES = [
-  "epee", "glaive", "hache", "doloire", "marteau", "arc", "arbalete", "baguette",
-  "baton", "sceptre", "grimoire", "poing", "yo-yo", "yoyo", "dague", "katana",
-  "faux", "lance", "masse", "gantelet",
-];
-
-/**
- * Une arme Yggdrasil ou Éternelle passe en artefact : +20 au lieu de +10, et
- * douze perçages au lieu de dix (weaponPanelImpl du builder).
- */
-const estArtefactable = (cat: string) => /yggdrasil|eternel/.test(sansAccent(cat));
-
-/**
- * Les réglages disponibles pour un objet du coffre, ou `null` s'il n'en a
- * aucun — c'est le cas de tout ce qui se ramasse par lot : runes, cartes,
- * ressources, pierres d'éveil.
- *
- * `rarete` vient du coffre (aDesRaretes dans lib/coffre) : marteaux, boucliers
- * et grimoires n'ont pas de palier de rareté, la liste vit dans le data.json de
- * l'AirGuild et on ne la recopie pas ici.
- */
-export function reglagesPour(o: { item: string; cat: string; rarete?: boolean }): Reglages | null {
-  const cat = sansAccent(o.cat ?? "");
-  const nom = sansAccent(o.item ?? "");
-
-  // Une rune porte le nom de l'arme à laquelle elle se destine — « Rune Épée
-  // Éternelle » — mais reste un consommable : elle se ramasse, elle ne se perce
-  // pas. Sans ce test, elle héritait de tous les réglages d'une épée.
-  if (/\brunes?\b/.test(nom)) return null;
-
-  // Seules ces familles sont des pièces d'équipement. La catégorie « R1 »
-  // contient des objets nommés « Fashion » ou « Bijoux » qui sont des pierres
-  // d'éveil, pas des pièces : sans ce garde-fou, on leur proposerait un +30.
-  const estStuff = cat.startsWith("stuff");
-  const estArme = cat.startsWith("armes");
-  const estBijou = cat.startsWith("bijou");
-  if (!estStuff && !estArme && !estBijou) return null;
-
-  const artefact = estArtefactable(o.cat ?? "");
-
-  if (estArme && nom.includes("bouclier")) return reglagesDeSlot("shield");
-  if (estArme && ARMES.some((a) => nom.includes(a))) return reglagesDeSlot("weapon", { artefact, rarete: o.rarete !== false });
-  if (estStuff && (nom.includes("armure") || nom.includes("tenue") || nom.includes("pectoral") || nom.includes("robe"))) {
-    return reglagesDeSlot("suit");
-  }
-  if (estStuff && (nom.includes("casque") || nom.includes("gants") || nom.includes("bottes"))) {
-    return reglagesDeSlot("armor", { label: nom.includes("casque") ? "Casque" : nom.includes("gants") ? "Gants" : "Bottes" });
-  }
-  if (estBijou && (nom.includes("anneau") || nom.includes("boucle") || nom.includes("collier"))) {
-    return reglagesDeSlot("jewel", { label: nom.includes("anneau") ? "Anneau" : nom.includes("boucle") ? "Boucles" : "Collier" });
-  }
-  if (nom.includes("cape")) return reglagesDeSlot("cape");
-  return null;
-}
-
-/** L'état de saisie : tout est facultatif, une chaîne vide = « non précisé ». */
-export type ChoixPiece = {
-  rarete: string; up: string; etoiles: string;
-  percage: string; carte: string;
-  eveilRang: string; eveilStat: string;
-  scrollStat: string; scrollNiv: string;
-  element: string; elementNiv: string;
-  /** Une entrée par emplacement, vide = « peu importe ». */
-  diamants: string[]; holo: string[]; gemmes: string[];
-};
-
-export const CHOIX_VIDE: ChoixPiece = {
-  rarete: "", up: "", etoiles: "", percage: "", carte: "",
-  eveilRang: "", eveilStat: "", scrollStat: "", scrollNiv: "", element: "", elementNiv: "",
-  diamants: [], holo: [], gemmes: [],
-};
-
-/** Les emplacements renseignés, regroupés : « 2× Force, Attaque ». */
-export function resumerEmplacements(l: string[] | undefined): string {
-  const remplis = (l ?? []).filter(Boolean);
-  if (!remplis.length) return "";
-  const n: Record<string, number> = {};
-  for (const x of remplis) n[x] = (n[x] ?? 0) + 1;
-  return Object.entries(n).map(([k, v]) => (v > 1 ? `${v}× ${k}` : k)).join(", ");
-}
-
-/**
- * La pièce visée en une ligne — c'est ce texte qu'on relit dans la to-do list,
- * et celui qu'on montrera au staff au moment du dépôt.
- */
-export function resumerPiece(c: ChoixPiece): string {
-  const bouts: string[] = [];
-  if (c.rarete) bouts.push(c.rarete);
-  if (Number(c.up) > 0) bouts.push(`+${Number(c.up)}${Number(c.etoiles) > 0 ? ` ${"★".repeat(Number(c.etoiles))}` : ""}`);
-  if (Number(c.percage) > 0 || c.carte) {
-    bouts.push(`${Number(c.percage) > 0 ? `${Number(c.percage)} perçage${Number(c.percage) > 1 ? "s" : ""}` : "percé"}${c.carte ? ` ${c.carte}` : ""}`);
-  }
-  if (c.eveilRang || c.eveilStat) bouts.push(`éveil ${[c.eveilRang, c.eveilStat].filter(Boolean).join(" ")}`);
-  if (c.scrollStat) bouts.push(`scroll ${c.scrollStat}${Number(c.scrollNiv) > 0 ? ` +${Number(c.scrollNiv)}` : ""}`);
-  if (c.element) bouts.push(`élément ${c.element}${Number(c.elementNiv) > 0 ? ` +${Number(c.elementNiv)}` : ""}`);
-  const dia = resumerEmplacements(c.diamants);
-  if (dia) bouts.push(`sertissage ${dia}`);
-  const holo = resumerEmplacements(c.holo);
-  if (holo) bouts.push(`holo ${holo}`);
-  const gem = resumerEmplacements(c.gemmes);
-  if (gem) bouts.push(`gemmes ${gem}`);
-  return bouts.join(" · ");
 }

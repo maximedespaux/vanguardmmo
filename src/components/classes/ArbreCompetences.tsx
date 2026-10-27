@@ -226,7 +226,7 @@ export function ArbreCompetences({ entrees, lignee, planche }: {
         .ac-isolees{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
         .ac-chip{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:9px;background:var(--bg-2);
           border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:12.5px;cursor:pointer;text-align:left;line-height:1.3}
-        .ac-chip:hover{border-color:var(--orange)}
+        .ac-chip:hover{border-color:var(--gn-accent)}
         /* LE RETRAIT. Un cran vaut 15 px, et la profondeur va jusqu'a dix chez
            le Chanoine : 150 px de marge sur un ecran de 375 px pliaient chaque
            ligne en quatre. Le pas tombe donc a 4 px sous 560 px — assez pour que
@@ -243,7 +243,7 @@ export function ArbreCompetences({ entrees, lignee, planche }: {
 /** Le panneau déplié sous une compétence : la fiche, ou l'attente. */
 function PanneauFiche({ fiche, suivre, planche }: { fiche: EtatFiche; suivre: (id: string) => void; planche: Planche | null }) {
   return (
-    <div style={{ marginBottom: 9, border: "1px solid var(--orange)", borderRadius: 10, padding: "13px 13px 15px", background: "var(--bg-3)" }}>
+    <div style={{ marginBottom: 9, border: "1px solid var(--gn-accent)", borderRadius: 10, padding: "13px 13px 15px", background: "var(--bg-3)" }}>
       {fiche === "chargement" || fiche === undefined
         ? <FicheEnAttente />
         : <FicheDetail f={fiche} suivre={suivre} planche={planche} />}
@@ -267,8 +267,8 @@ function NoeudLigne({ n, palierGroupe, planche, ouvert, onClick, fiche, suivre }
       marginLeft: n.profondeur > 0 ? 6 : 0 } as React.CSSProperties}>
       <button onClick={onClick} aria-expanded={ouvert} className="fx-card"
         style={{ display: "flex", alignItems: "flex-start", gap: 9, width: "100%", textAlign: "left", marginBottom: 4,
-          padding: "7px 9px", borderRadius: 9, background: ouvert ? "rgba(255,140,26,.07)" : "var(--bg-2)",
-          border: `1px solid ${ouvert ? "var(--orange)" : "var(--border)"}`, cursor: "pointer", fontFamily: "inherit", color: "var(--text)" }}>
+          padding: "7px 9px", borderRadius: 9, background: ouvert ? "rgba(var(--gn-lueur-rgb),.07)" : "var(--bg-2)",
+          border: `1px solid ${ouvert ? "var(--gn-accent)" : "var(--border)"}`, cursor: "pointer", fontFamily: "inherit", color: "var(--text)" }}>
         {e.icone != null ? <IconeCompetence planche={planche} index={e.icone} taille={24} titre={e.nom} /> : <CaseVide taille={24} />}
         <span style={{ minWidth: 0, flex: 1 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -287,7 +287,7 @@ function NoeudLigne({ n, palierGroupe, planche, ouvert, onClick, fiche, suivre }
             {e.nbRangsMuets > 0 && <span style={{ color: "var(--gold)" }}> · {e.nbRangsMuets} rangs muets</span>}
           </span>
         </span>
-        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={13} style={{ color: ouvert ? "var(--orange)" : "var(--text-muted)", flexShrink: 0, marginTop: 3 }} />
+        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={13} style={{ color: ouvert ? "var(--gn-accent)" : "var(--text-muted)", flexShrink: 0, marginTop: 3 }} />
       </button>
       {ouvert && <PanneauFiche fiche={fiche} suivre={suivre} planche={planche} />}
     </div>

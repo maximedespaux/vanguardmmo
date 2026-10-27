@@ -144,7 +144,7 @@ export function Resultat({ e, compact = false }: { e: Entree; compact?: boolean 
           }}>{e.nom}</span>
           {/* Le repère Airborn est une étincelle et pas un mot : il apparaît sur
               chaque ligne concernée, et un mot répété mille fois cesse d'être lu. */}
-          {e.maison && <Icon name="sparkles" size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />}
+          {e.maison && <Icon name="sparkles" size={11} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />}
           <span style={{ marginLeft: "auto" }}><Nature e={e} /></span>
         </span>
 

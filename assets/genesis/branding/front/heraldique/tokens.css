@@ -1,0 +1,142 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENESIS · piste « Héraldique » — tokens
+   Trois couches : 1. primitives (la palette et ses dérivées)
+                   2. rôles sémantiques (ce que le site manipule)
+                   3. compatibilité (les anciens noms du site → les rôles)
+   Contrastes : calculés (formule WCAG 2.1), voir charte.md. « sur surf » =
+   sur --g-anthracite-800 #15151D, le fond des cartes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@font-face{font-family:'Cinzel';src:url('../../../../../public/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');font-weight:400 900;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Light.ttf') format('truetype');font-weight:300;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Medium.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Rubik';src:url('../../../../../public/fonts/Rubik-VariableFont_wght.ttf') format('truetype');font-weight:300 900;font-display:swap}
+
+:root{
+  /* ── 1. PRIMITIVES ──────────────────────────────────────────────────────── */
+  /* Noirs et anthracites — 70 % de la surface */
+  --g-noir-950:#08080C;        /* charte : le fond */
+  --g-noir-900:#0D0D12;        /* dérivé : barre du haut, bandeaux (un cran au-dessus du fond) */
+  --g-noir-850:#101017;        /* dérivé : intérieur des champs (plus creux que la carte) */
+  --g-anthracite-800:#15151D;  /* charte : volumes, cartes */
+  --g-anthracite-750:#1A1A23;  /* dérivé : surface élevée (menu, modale, infobulle) */
+  --g-anthracite-700:#20202A;  /* dérivé : survol d'une surface */
+  --g-anthracite-600:#2A2A36;  /* dérivé : bordure par défaut (1,3:1 — décor, pas information) */
+  --g-anthracite-500:#3A3A48;  /* dérivé : bordure forte, piste des barres */
+  /* Ivoires — la typographie */
+  --g-ivoire-100:#F2EDE5;      /* charte : texte · 15,6:1 sur surf */
+  --g-ivoire-300:#D6D0C6;      /* dérivé : texte secondaire fort · 11,8:1 */
+  --g-ivoire-500:#ABA59B;      /* dérivé : texte atténué · 7,4:1 */
+  --g-ivoire-700:#8E887F;      /* dérivé : indication, placeholder · 5,2:1 (jamais sous 4,5 sur une surface du site) */
+  /* Crimson et pourpre — 20 % */
+  --g-crimson-300:#E8697B;     /* dérivé : le SEUL crimson qui porte du texte sur fond sombre · 5,8:1 */
+  --g-crimson-400:#C42A40;     /* dérivé : survol d'un fond crimson ; puces losange */
+  --g-crimson-450:#C8334A;     /* dérivé : remplissage des barres de part (3,5:1, ≥ 3:1 graphique) */
+  --g-crimson-500:#A6192E;     /* charte : FOND d'action et d'étoffe. Jamais du texte : 2,4:1 sur surf */
+  --g-crimson-600:#8E1527;     /* dérivé : enfoncé ; ivoire dessus = 7,9:1 */
+  --g-pourpre-500:#60152D;     /* charte : ombres, profondeur ; ivoire dessus = 11:1 */
+  --g-pourpre-700:#3A0D1C;     /* dérivé : fond teinté (ligne choisie, bandeau d'alerte) */
+  --g-pourpre-800:#22121A;     /* dérivé : survol de ligne de table (pourpre à ~12 % sur l'anthracite) */
+  --g-pourpre-bord:#5A3442;    /* dérivé : bordure de carte survolée (pourpre éclairci) */
+  /* Ors — 10 %, jamais plus */
+  --g-or-200:#E6C48A;          /* charte : reflet, anneau de focus · 10,9:1 */
+  --g-or-400:#C69A55;          /* charte : contours, arêtes, étoiles · 7,1:1 */
+  --g-or-600:#8F6C38;          /* dérivé : filet discret (tringle d'oriflammes, séparateurs) */
+  --g-or-800:#4A3820;          /* dérivé : filet très discret, ombre dorée */
+  /* États — teintes dérivées, toujours accompagnées d'un mot ou d'une icône */
+  --g-vert-400:#5FCB8A;        /* succès, actif · 9,0:1 */
+  --g-ambre-400:#F0B43C;       /* attention, en attente · 9,8:1 — plus saturé que l'or : ne se confond pas */
+  --g-lavande-400:#A99BE0;     /* absent · 7,3:1 */
+  --g-bleu-400:#7FA8E0;        /* information · 7,4:1 */
+
+  /* ── 2. RÔLES SÉMANTIQUES ───────────────────────────────────────────────── */
+  --surface-page:var(--g-noir-950);
+  --surface-barre:var(--g-noir-900);
+  --surface:var(--g-anthracite-800);
+  --surface-elevee:var(--g-anthracite-750);
+  --surface-survol:var(--g-anthracite-700);
+  --surface-champ:var(--g-noir-850);
+  --surface-choisie:var(--g-pourpre-700);
+  --surface-ligne-survol:var(--g-pourpre-800);
+
+  --bordure:var(--g-anthracite-600);
+  --bordure-forte:var(--g-anthracite-500);
+  --bordure-survol:var(--g-pourpre-bord);
+
+  --texte:var(--g-ivoire-100);
+  --texte-secondaire:var(--g-ivoire-300);
+  --texte-attenue:var(--g-ivoire-500);
+  --texte-faible:var(--g-ivoire-700);
+  --texte-sur-accent:var(--g-ivoire-100);
+
+  --accent-action:var(--g-crimson-500);          /* fond du bouton principal, oriflamme active */
+  --accent-action-survol:var(--g-crimson-400);
+  --accent-action-presse:var(--g-crimson-600);
+  --accent-texte:var(--g-crimson-300);           /* lien, mot d'accent sur fond sombre */
+  --accent-profondeur:var(--g-pourpre-500);      /* ombre colorée, dégradé d'étoffe */
+  --accent-jauge:var(--g-crimson-450);
+
+  --ornement:var(--g-or-400);                    /* filets, arêtes, étoiles */
+  --ornement-clair:var(--g-or-200);              /* reflet, pointe d'étoile */
+  --ornement-eteint:var(--g-or-600);             /* tringle, séparateur */
+  --focus:var(--g-or-200);                       /* anneau de focus clavier, 2 px, décalé de 2 px */
+
+  --succes:var(--g-vert-400);
+  --attention:var(--g-ambre-400);
+  --absent:var(--g-lavande-400);
+  --info:var(--g-bleu-400);
+  --danger:var(--g-crimson-300);                 /* texte/bord ; toujours avec l'icône « alert » */
+  --danger-fond:var(--g-pourpre-700);
+
+  /* Typographie */
+  --f-titre:'Cinzel','Times New Roman',serif;    /* marque, h1-h3, oriflammes — jamais sous 14 px */
+  --f-texte:'Athiti',system-ui,sans-serif;       /* texte courant, cellules, descriptions */
+  --f-chiffre:'Rubik','Athiti',sans-serif;       /* chiffres tabulaires, en-têtes de colonnes, badges */
+  --t-marque:22px; --t-h1:34px; --t-h2:19px; --t-h3:16px;
+  --t-corps:15px; --t-petit:13.5px; --t-micro:11.5px; --t-chiffre:30px;
+
+  /* Géométrie : angles francs, pas d'arrondi mou */
+  --r-1:2px; --r-2:4px; --r-3:6px; --r-full:999px;
+  --pointe:18px;                                 /* profondeur de la pointe des bannières */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+
+  /* Mouvement — deux crans, pas un de plus */
+  --lift-1:-1px;   /* TOUCHE : bouton, onglet, lien */
+  --lift-2:-3px;   /* LEVÉE  : carte qui mène quelque part */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --t-fast:.14s; --t-mid:.22s;
+
+  --el-1:0 2px 8px rgba(0,0,0,.40);
+  --el-2:0 8px 22px rgba(0,0,0,.50);
+  --el-3:0 18px 44px rgba(0,0,0,.62);
+
+  /* ── 3. COMPATIBILITÉ — les noms du site actuel, redirigés ──────────────── */
+  /* --orange servait à 4 choses : texte d'accent, fond de bouton, bordure, lueur.
+     On le redirige vers le crimson LISIBLE : aucun texte ne devient illisible
+     après l'échange de :root. Les fonds de bouton orange sont, eux, à réécrire
+     (voir charte.md) — ils sont codés en dur dans .vg-btn et .vg-subtab.active. */
+  --orange:var(--g-crimson-300);
+  --orange-dark:var(--g-crimson-500);
+  --orange-rgb:166,25,46;                         /* lueurs rgba(var(--orange-rgb),a) → voile crimson */
+  --gold:var(--attention);                       /* 306 usages, presque tous « en attente » */
+  --gold-rgb:240,180,60;
+  --red:var(--danger);
+  --green:var(--succes);
+  --blue:#4EA8FF;                                /* inchangé : c'est aussi la couleur Dryades / Rare */
+  --purple:#C77DFF;                              /* inchangé : c'est aussi Yggdrasil / Épique */
+  --bg:var(--surface-page);
+  --bg-2:var(--surface);
+  --bg-3:var(--surface-elevee);
+  --bg-4:var(--surface-survol);
+  --border:var(--bordure);
+  --text:var(--texte);
+  --text-muted:var(--texte-attenue);
+  --glow-1:rgba(166,25,46,.14);
+  --glow-2:rgba(166,25,46,.28);
+  --glow-3:rgba(198,154,85,.34);                 /* la lueur forte devient dorée : c'est une arête */
+  --el-glow:0 6px 22px rgba(96,21,45,.55);
+  --r-sm:var(--r-2); --r-md:var(--r-2); --r-lg:var(--r-3); --r-xl:var(--r-3);
+}

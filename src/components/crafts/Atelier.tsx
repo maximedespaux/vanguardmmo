@@ -13,7 +13,7 @@ import { ArbreDuFarm, type ArbreCraft } from "./Arbre";
 
 /**
  * LES SIX VOLETS DE LA FAMILLE « Les crafts ». Interactifs, donc client — mais
- * la donnée reste derrière /api/crafts (apiGuild) : elle n'est pas embarquée
+ * la donnée reste derrière /api/crafts (apiEspace("astuces")) : elle n'est pas embarquée
  * dans le paquet JS de la page.
  *
  * Deux sources, complémentaires et qui ne disent pas la même chose :
@@ -167,14 +167,14 @@ function VoletFerme({ etat, clef, geste }: { etat: EtatVisiteur; clef: string; g
       <p style={{ fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", margin: 0 }}>{PROMESSE[clef]}</p>
 
       {geste ? (
-        <GesteReserve etat={etat} pourquoi="Réservé aux membres de Vanguard">{geste}</GesteReserve>
+        <GesteReserve etat={etat} pourquoi="Réservé aux membres de GENESIS">{geste}</GesteReserve>
       ) : (
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 7, justifySelf: "start",
-          fontSize: 12.5, fontWeight: 600, background: "var(--bg-2)", border: "1px solid var(--orange)",
+          fontSize: 12.5, fontWeight: 600, background: "var(--bg-2)", border: "1px solid var(--gn-accent)",
           borderRadius: 20, padding: "7px 14px", color: "var(--text)",
         }}>
-          <Icon name="lock" size={13} style={{ color: "var(--orange)" }} />Réservé aux membres de Vanguard
+          <Icon name="lock" size={13} style={{ color: "var(--gn-accent)" }} />Réservé aux membres de GENESIS
         </span>
       )}
 
@@ -188,7 +188,7 @@ function VoletFerme({ etat, clef, geste }: { etat: EtatVisiteur; clef: string; g
             fontSize: 12.5, fontWeight: 600, color: "var(--text)", background: "var(--bg-3)",
             border: "1px solid var(--border)", borderRadius: 9, padding: "6px 11px",
           }}>
-            <Icon name={a.icon} size={13} style={{ color: "var(--orange)" }} />{a.quoi}
+            <Icon name={a.icon} size={13} style={{ color: "var(--gn-accent)" }} />{a.quoi}
           </a>
         ))}
       </div>
@@ -219,7 +219,7 @@ function Bloc({ icon, titre, compte, note, children }: {
   return (
     <section style={{ marginBottom: 22 }}>
       <h3 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, fontWeight: 700, margin: "0 0 6px" }}>
-        <Icon name={icon} size={15} style={{ color: "var(--orange)" }} />
+        <Icon name={icon} size={15} style={{ color: "var(--gn-accent)" }} />
         {titre}
         {compte != null && <span style={{ fontSize: 11.5, fontWeight: 400, color: "var(--text-muted)" }}>{compte}</span>}
       </h3>
@@ -269,7 +269,7 @@ const MANQUES: [string, React.ReactNode][] = [
      contredire. Le relevé source n'est pas dans le dépôt : 856 ne se recalcule pas,
      donc il ne peut pas rester écrit à la main. Le fait utile est le RECOUVREMENT
      minuscule, pas son dénominateur — c'est lui qui est gardé. */
-  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu vit côté serveur. Ces recettes-là sont dans <a href="/wiki" style={{ color: "var(--orange)" }}>le wiki</a> — les deux relevés ne se recouvrent qu’à <b>22 recettes</b>.</>],
+  ["Les vingt-quatre menus les plus récents", <>Anniversaire, runes Yggdrasil, nucléus, artefacts, prestige du World Boss, sets Tank, Noël et Halloween 2024 : <b>déclarés</b> et <b>câblés à un PNJ</b>, mais leur contenu vit côté serveur. Ces recettes-là sont dans <a href="/wiki" style={{ color: "var(--gn-accent)" }}>le wiki</a> — les deux relevés ne se recouvrent qu’à <b>22 recettes</b>.</>],
   ["Les recettes de métier ou de cuisine", <>Il n’y en a pas dans ce jeu. Rien à chercher.</>],
   ["Le butin ordinaire des monstres", <>Le serveur le calcule, le client ne le porte pas. Quand une page du site ne trouve pas d’où vient un objet, ça ne veut <b>jamais</b> dire qu’il ne tombe pas.</>],
 ];
@@ -305,7 +305,7 @@ function Reserve() {
  *       et c'est la première chose qu'un joueur curieux ouvre ;
  *     · l'attente « Lecture du relevé du client… » n'aboutirait jamais ;
  *     · le serveur n'a pas à traiter des demandes dont on connaît déjà la réponse.
- *   Ce n'est PAS le verrou. Le verrou est `apiGuild()` dans /api/crafts, inchangé :
+ *   Ce n'est PAS le verrou. Le verrou est `apiEspace("astuces")` dans /api/crafts :
  *   quelqu'un qui appelle la route à la main se fait refuser par le serveur, pas par
  *   cet écran. Ici on évite un bruit, là-bas on refuse.
  */
@@ -424,8 +424,8 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
                 : c === "comptoirs" ? (
                   <span style={{
                     display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: 700,
-                    padding: "10px 14px", borderRadius: 10, background: "rgba(255,140,26,.1)",
-                    border: "1px solid color-mix(in srgb, var(--orange) 45%, transparent)", color: "var(--orange)",
+                    padding: "10px 14px", borderRadius: 10, background: "rgba(var(--gn-lueur-rgb),.1)",
+                    border: "1px solid color-mix(in srgb, var(--gn-accent) 45%, transparent)", color: "var(--gn-accent)",
                   }}>
                     <Icon name="download" size={14} /> Charger les barèmes
                   </span>
@@ -577,8 +577,8 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
           {comptoirs === null ? (
             <button onClick={chargerComptoirs} style={{
               display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
-              padding: "10px 14px", borderRadius: 10, background: "rgba(255,140,26,.1)",
-              border: "1px solid color-mix(in srgb, var(--orange) 45%, transparent)", color: "var(--orange)", fontWeight: 700,
+              padding: "10px 14px", borderRadius: 10, background: "rgba(var(--gn-lueur-rgb),.1)",
+              border: "1px solid color-mix(in srgb, var(--gn-accent) 45%, transparent)", color: "var(--gn-accent)", fontWeight: 700,
             }}>
               <Icon name="download" size={14} /> Charger les barèmes
             </button>
@@ -686,7 +686,7 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
 
           <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--border)" }}>
             <h3 className="font-heading" style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14.5, fontWeight: 700, margin: "0 0 4px" }}>
-              <Icon name="users" size={15} style={{ color: "var(--orange)" }} /> Les métiers, tels que le jeu les étiquette
+              <Icon name="users" size={15} style={{ color: "var(--gn-accent)" }} /> Les métiers, tels que le jeu les étiquette
             </h3>
             {/* L'exemple qui suivait — « le PNJ étiqueté joaillerie est bien celui qui
                 échange les gemmes » — démontrait la validation croisée. La grille de
@@ -698,7 +698,7 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
             <div className="cr-metiers">
               {d.metiers.map((m) => (
                 <div key={m.metier} className="fx-card" style={{ padding: "9px 11px", borderRadius: 10, background: "var(--bg-2)", border: "1px solid var(--border)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--orange)", marginBottom: 3 }}>{m.metier}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".5px", color: "var(--gn-accent)", marginBottom: 3 }}>{m.metier}</div>
                   <div style={{ fontSize: 12.5, display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {m.pnj.map((p) => (
                       <button key={p} onClick={() => surPnj(p)} style={{
@@ -728,15 +728,15 @@ export function useSectionsCrafts(etat: EtatVisiteur): EcranCrafts {
           </p>
           {/* UN SUJET, UNE PAGE — et le lien qui va avec.
               La maîtrise d'arme, les anges et la poudre féerique ont quitté cette page
-              pour /builder/mecaniques : ce sont des mécaniques de build, pas des
+              pour /mecaniques : ce sont des mécaniques de build, pas des
               collections. Elles n'y sont plus, vérifié — Collections.tsx ne rend que
               quatre volets, et `chiffres()` de la page ne lit plus ni `anges` ni
               `maitrise`. Ce qui manquait, c'est la PORTE : quelqu'un qui les cherchait
               ici trouvait le silence. Une phrase et un lien, pas un développement. */}
           <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "0 0 14px" }}>
-            <Icon name="arrow-right" size={12} style={{ marginRight: 5, color: "var(--orange)" }} />
+            <Icon name="arrow-right" size={12} style={{ marginRight: 5, color: "var(--gn-accent)" }} />
             Sertissage, perçage, runes, éveil, maîtrise d’arme, anges et poudre féerique :
-            sur <a href="/builder/mecaniques" style={{ color: "var(--orange)" }}>les mécaniques</a>.
+            sur <a href="/mecaniques" style={{ color: "var(--gn-accent)" }}>les mécaniques</a>.
           </p>
           <div className="cr-ateliers">
             {d.ateliers.map((a) => (

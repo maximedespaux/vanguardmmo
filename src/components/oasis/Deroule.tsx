@@ -53,14 +53,14 @@ export function Deroule({ b }: { b: Bilan }) {
             {/* Une précision longue passe DERRIÈRE la valeur au lieu d'allonger la
                 ligne ; les courtes restent à côté, où elles se lisent d'un coup. */}
             {c.enBulle && c.precision ? (
-              <span className="font-heading" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>
+              <span className="font-heading" style={{ fontSize: 13, fontWeight: 700, color: "var(--gn-accent)" }}>
                 <Bulle largeur={280} quoi={<span style={{ color: "var(--text-muted)" }}>{c.precision}</span>}>
-                  <span style={{ color: "var(--orange)" }}>{c.valeur}</span>
+                  <span style={{ color: "var(--gn-accent)" }}>{c.valeur}</span>
                 </Bulle>
               </span>
             ) : (
               <>
-                <span className="font-heading" style={{ fontSize: 13, fontWeight: 700, color: "var(--orange)" }}>{c.valeur}</span>
+                <span className="font-heading" style={{ fontSize: 13, fontWeight: 700, color: "var(--gn-accent)" }}>{c.valeur}</span>
                 <span style={{ fontSize: 11.5, color: "var(--text-muted)", flex: "1 1 240px", minWidth: 0 }}>{c.precision}</span>
               </>
             )}
@@ -167,15 +167,15 @@ function FilDuTour({ vagues }: { vagues: number }) {
           display:grid;place-items:center;font-size:10.5px;font-variant-numeric:tabular-nums;
           color:var(--text-muted);background:var(--bg-3);border:1px solid var(--border)}
         .fil-nom{min-width:0;font-size:12.5px}
-        .fil-dans .fil-puce{border-color:var(--orange);color:var(--orange)}
-        .fil-dans{background:color-mix(in srgb, var(--orange) 5%, transparent);
-          border-left:2px solid var(--orange);border-right:1px solid transparent;
+        .fil-dans .fil-puce{border-color:var(--gn-accent);color:var(--gn-accent)}
+        .fil-dans{background:rgba(var(--gn-lueur-rgb),.05);
+          border-left:2px solid var(--gn-accent);border-right:1px solid transparent;
           padding-left:0;margin-left:-2px}
-        .fil-ouvre{border-top:1px dashed var(--orange);border-top-left-radius:8px}
-        .fil-ferme{border-bottom:1px dashed var(--orange);border-bottom-left-radius:8px}
+        .fil-ouvre{border-top:1px dashed var(--gn-accent);border-top-left-radius:8px}
+        .fil-ferme{border-bottom:1px dashed var(--gn-accent);border-bottom-left-radius:8px}
         .fil-boucle{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;
-          text-transform:uppercase;letter-spacing:.5px;color:var(--orange);
-          background:color-mix(in srgb, var(--orange) 12%, transparent);
+          text-transform:uppercase;letter-spacing:.5px;color:var(--gn-accent);
+          background:rgba(var(--gn-lueur-rgb),.12);
           border-radius:20px;padding:1px 8px;white-space:nowrap}
       `}</style>
     </div>
@@ -185,7 +185,7 @@ function FilDuTour({ vagues }: { vagues: number }) {
 /** Le sous-titre des fiches de donjon, repris tel quel pour ne pas inventer une seconde forme. */
 function SousTitre({ icon, children, apres }: { icon: IconName; children: React.ReactNode; apres?: string }) {
   return (
-    <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--orange)", margin: "0 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+    <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.1, color: "var(--gn-accent)", margin: "0 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
       <Icon name={icon} size={13} />{children}
       {apres && <span style={{ fontSize: 11.5, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>{apres}</span>}
     </div>

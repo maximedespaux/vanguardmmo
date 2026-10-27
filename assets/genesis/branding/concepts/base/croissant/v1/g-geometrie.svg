@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v1 — premier jet : cercle extérieur, contrepoinçon elliptique.
+-->
+<g id="genesis-g" fill="#F2EDE5" fill-rule="nonzero">
+  <g id="g-corps">
+    <path d="M 631 222.5 A 322 322 0 1 0 716 741.5 L 716 619 A 196 262 -10 1 1 640 313 L 695 403 Q 697.5 336.5 752.5 282 Z"/>
+  </g>
+  <g id="g-barre">
+    <path d="M 540 528 L 672 500 L 760 500 L 852 528 L 760 556 L 672 556 Z"/>
+  </g>
+  <g id="g-eperon">
+    <path d="M 672 500 L 760 500 L 760 770 L 716 892 L 672 770 Z"/>
+  </g>
+  <g id="g-cristal">
+    <path d="M 500 470 L 534 528 L 500 586 L 466 528 Z"/>
+  </g>
+</g>
+</svg>

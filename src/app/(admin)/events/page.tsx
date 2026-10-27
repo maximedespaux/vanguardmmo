@@ -46,12 +46,12 @@ export default function EventsPage() {
   return (
     <div style={{ maxWidth: 920, margin: "0 auto", padding: "24px 18px 80px" }}>
       <PageHeader icon="calendar" title="Événements du jeu" subtitle="Le bot les annonce et envoie les rappels. Modifie-les ici, sans toucher au code." />
-      <SectionTabs section="discord" />
+      <SectionTabs rubrique="Outils" />
       {toast && <div style={{ marginBottom: 14, fontSize: 13, color: "var(--green)" }}>{toast}</div>}
 
       {/* Ajouter */}
       <div className="glass-card fx-card" style={{ padding: 16, marginBottom: 24 }}>
-        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--orange)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><Icon name="plus" size={15} />Nouvel événement</div>
+        <div className="font-heading" style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, color: "var(--gn-accent)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}><Icon name="plus" size={15} />Nouvel événement</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10, alignItems: "end" }}>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Nom</label><input style={{ ...inp, width: "100%" }} placeholder="Ex : Chambres Secrètes" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
           <div><label style={lab}>Jour</label><VgSelect full value={f.day} onChange={v => setF({ ...f, day: v })} options={DAYS.map((d) => ({ value: d, label: d === "tous" ? "Tous les jours" : cap(d) }))} /></div>
@@ -66,7 +66,7 @@ export default function EventsPage() {
                 ...salons.map((c) => ({ value: c.id, label: `#${c.name}` })),
               ]} />
           </div>
-          <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed var(--border)", paddingTop: 4, marginTop: 2 }}><span style={{ fontSize: 11.5, color: "var(--orange)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
+          <div style={{ gridColumn: "1 / -1", borderTop: "1px dashed var(--border)", paddingTop: 4, marginTop: 2 }}><span style={{ fontSize: 11.5, color: "var(--gn-accent)", textTransform: "uppercase", letterSpacing: 1, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="palette" size={13} />Embed (optionnel)</span></div>
           <div style={{ gridColumn: "span 2" }}><label style={lab}>Titre de l&apos;embed</label><input style={{ ...inp, width: "100%" }} placeholder={`vide = ${f.name || "Nom de l'événement"}`} value={f.embedTitle} onChange={(e) => setF({ ...f, embedTitle: e.target.value })} /></div>
           <div><label style={lab}>Couleur</label><input type="color" style={{ ...inp, width: "100%", height: 38, padding: 3, cursor: "pointer" }} value={f.embedColor || "#ff8c1a"} onChange={(e) => setF({ ...f, embedColor: e.target.value })} /></div>
           <div style={{ gridColumn: "1 / -1" }}><label style={lab}>Description</label><textarea style={{ ...inp, width: "100%", resize: "vertical", minHeight: 52, fontFamily: "inherit", boxSizing: "border-box" }} placeholder="Texte de l'embed. Le « commence dans X min » est ajouté automatiquement." value={f.embedDesc} onChange={(e) => setF({ ...f, embedDesc: e.target.value })} /></div>

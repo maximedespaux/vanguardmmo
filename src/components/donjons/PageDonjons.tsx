@@ -343,7 +343,7 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
       {groupes.map((g) => (
       <div key={g.titre || "tout"} style={{ marginBottom: g.titre ? 20 : 0 }}>
       {g.titre && (
-        <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8 }}>
+        <div className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8 }}>
           {g.titre}
           <span style={{ fontSize: 12, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>
             {g.items.length} donjon{g.items.length > 1 ? "s" : ""}
@@ -480,7 +480,7 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                      grille alors que c'est lui qui coûte un run. */}
               {cl && <PastilleElement d={cl} />}
               {d.armor && (
-                <span title={`Armure conseillée : ${d.armor}`} style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 3, color: "var(--orange)" }}>
+                <span title={`Armure conseillée : ${d.armor}`} style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", gap: 3, color: "var(--gn-accent)" }}>
                   <Icon name="shield" size={11} />{memeArmure ? null : d.armor}
                 </span>
               )}
@@ -491,7 +491,7 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                   rien du tout, ce qui est le troisième état. */}
               {d.video !== undefined && (
                 <span title={d.video ? "Une vidéo de l'instance est disponible dans la fiche" : "Pas encore de vidéo pour cette instance"}
-                  style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", color: d.video ? "var(--orange)" : "var(--text-muted)", opacity: d.video ? 1 : .5 }}>
+                  style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", display: "inline-flex", alignItems: "center", color: d.video ? "var(--gn-accent)" : "var(--text-muted)", opacity: d.video ? 1 : .5 }}>
                   <Icon name="video" size={11} />
                 </span>
               )}
@@ -598,9 +598,9 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                    Il ne s'affiche pas quand le client ne connaît pas l'instance :
                    mieux vaut rien qu'un cadre vide.
                    └───────────────────────────────────────────────────────────┘ */}
-            <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0, marginBottom: 10 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--orange)" }}>{hpLabel(sel.hp)}</div></div>
+            <div style={{ background: "var(--bg-3)", borderRadius: 8, padding: 12, minWidth: 0, marginBottom: 10 }}><div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase" }}>PV recommandés</div><div className="font-heading" style={{ fontWeight: 700, color: "var(--gn-accent)" }}>{hpLabel(sel.hp)}</div></div>
             {clSel && <ConseilInstance d={clSel} />}
-            {sel.armor && <div style={{ background: "rgba(255,140,26,0.06)", border: "1px solid var(--orange-dark)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
+            {sel.armor && <div style={{ background: "rgba(var(--gn-lueur-rgb),.06)", border: "1px solid var(--gn-or-sombre)", borderRadius: 8, padding: 12, marginBottom: 14, fontSize: 13 }}><Icon name="shield" size={13} style={{ marginRight: 5 }} />Armure conseillée : <b>{sel.armor}</b></div>}
 
             {/* Tout ce qui vient de la fouille du client : où est la carte, à quoi
                 elle ressemble, qui y est posé. Les fiches d'avant la fouille
@@ -634,7 +634,7 @@ export function PageDonjons({ vagues, idsMonstres = {} }: {
                   <div style={{ fontSize: 12.5, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
                     Pas encore de vidéo pour cette instance.
                     <a href={`https://www.youtube.com/playlist?list=${PLAYLIST}`} target="_blank" rel="noreferrer"
-                      style={{ color: "var(--orange)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      style={{ color: "var(--gn-accent)", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 5 }}>
                       <Icon name="video" size={12} />Voir la playlist
                     </a>
                   </div>

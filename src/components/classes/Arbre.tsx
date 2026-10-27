@@ -144,7 +144,7 @@ export function Arbre({ choisi, onChoix, nbDe }: {
                 <CaseMetier2 x={COL.metier2.x} y={y} w={COL.metier2.w} etape={m2}
                   promotions={[l.etapes[3], l.etapes[4]]} nb={nbDe(m2.nom)} actif={actif} />
                 <Case x={COL.legendaire.x} y={y} w={COL.legendaire.w} embleme={leg.embleme} nom={leg.nom}
-                  nb={nbDe(leg.nom)} teinte={actif ? "var(--orange)" : PALIERS.legendaire.couleur} epais={actif} />
+                  nb={nbDe(leg.nom)} teinte={actif ? "var(--gn-accent)" : PALIERS.legendaire.couleur} epais={actif} />
               </g>
             );
           })}
@@ -195,11 +195,11 @@ function CaseMetier2({ x, y, w, etape, promotions, nb, actif }: {
   return (
     <g>
       <rect x={x} y={y - h / 2} width={w} height={h} rx={8}
-        fill={actif ? "rgba(255,140,26,.10)" : "var(--bg-3)"}
-        stroke={actif ? "var(--orange)" : PALIERS.metier2.couleur} strokeWidth={actif ? 1.8 : 1} />
+        fill={actif ? "rgba(var(--gn-lueur-rgb),.10)" : "var(--bg-3)"}
+        stroke={actif ? "var(--gn-accent)" : PALIERS.metier2.couleur} strokeWidth={actif ? 1.8 : 1} />
       <image href={etape.embleme} x={x + 6} y={y - 11} width={22} height={22} preserveAspectRatio="xMidYMid meet" />
       <text x={x + 33} y={nb != null ? y - 1 : y + 4} fontSize={11.5} fontWeight={700}
-        fill={actif ? "var(--orange)" : "var(--text)"}>{classeAffichee(etape.nom)}</text>
+        fill={actif ? "var(--gn-accent)" : "var(--text)"}>{classeAffichee(etape.nom)}</text>
       {nb != null && <text x={x + 33} y={y + 10} fontSize={9} fill="var(--text-muted)">{nb} comp.</text>}
 
       <line x1={filet} y1={y - 12} x2={filet} y2={y + 12} stroke="var(--border)" strokeWidth={1} strokeDasharray="2 2" />

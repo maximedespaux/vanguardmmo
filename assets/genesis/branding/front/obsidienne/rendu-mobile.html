@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Obsidienne · gabarit 390</title>
+<!-- Gabarit de rendu mobile. Chrome sans interface refuse une fenêtre de moins
+     de 500 px : à « 390 », la page se met en page à 500 et la capture la coupe.
+     L'iframe de 390 px donne à la maquette une vraie fenêtre de 390 — ses
+     requêtes média s'évaluent sur 390, comme sur un téléphone. -->
+<style>html,body{margin:0;background:#08080C}iframe{display:block;width:390px;height:1600px;border:0}</style>
+</head>
+<body>
+<iframe title="Maquette Obsidienne à 390 px" src="maquette.html"></iframe>
+<script>
+  var f = document.querySelector('iframe');
+  if (location.search) f.src = 'maquette.html' + location.search;
+  addEventListener('message', function (e) {
+    var pre = document.createElement('pre'); pre.id = 'obs-check'; pre.textContent = String(e.data);
+    document.body.appendChild(pre);
+  });
+</script>
+</body>
+</html>

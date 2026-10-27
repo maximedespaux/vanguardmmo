@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v2 — croissant angulaire (essai)
+-->
+<g id="genesis-g" fill="#F2EDE5" fill-rule="nonzero">
+  <g id="g-corps">
+    <path d="M 808 214 Q 770.5 229 712 209 A 416.5 416.5 0 0 0 166 530 A 372.5 372.5 0 0 0 768 754.5 L 688 707.5 A 202 268 -8 1 1 664 316 L 724 396 Q 744 292 808 214 Z"/>
+  </g>
+  <g id="g-barre">
+    <path d="M 520 512 L 600 498 L 690 498 L 674 526 L 690 554 L 640 554 Z"/>
+    <path d="M 766 498 L 772 498 L 872 526 L 772 554 L 766 554 L 782 526 Z"/>
+  </g>
+  <g id="g-eperon">
+    <path d="M 728 620 L 766 554 L 772 554 L 772 792 L 728 896 L 684 792 L 684 554 L 690 554 Z"/>
+  </g>
+  <g id="g-cristal">
+    <path d="M 728 456 L 768 526 L 728 596 L 688 526 Z"/>
+  </g>
+</g>
+</svg>

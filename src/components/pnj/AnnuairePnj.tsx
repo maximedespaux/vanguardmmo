@@ -150,7 +150,7 @@ function CartePnj({ p, onOuvrir }: { p: Vignette; onOuvrir: () => void }) {
       <Portrait img={p.img} nom={p.nom} taille={62} />
       <span style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
         <span className="font-heading" style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.25 }}>{p.nom}</span>
-        {p.metier && <span style={{ fontSize: 11.5, color: "var(--orange)", fontWeight: 700 }}>{p.metier}</span>}
+        {p.metier && <span style={{ fontSize: 11.5, color: "var(--gn-accent)", fontWeight: 700 }}>{p.metier}</span>}
         <span style={{ fontSize: 11, color: "var(--text-muted)", ...NUM }}>{resume(p)}</span>
         {p.monnaies.length > 0 && (
           <span style={{ fontSize: 10.5, color: "var(--gold)", fontWeight: 700 }}>
@@ -191,7 +191,7 @@ function Vente({ vend }: { vend: Objet[] }) {
       <Articles liste={montres} />
       {vend.length > 30 && (
         <button onClick={() => setTout(!tout)} style={{ marginTop: 9, fontFamily: "inherit", cursor: "pointer", fontSize: 12,
-          padding: "6px 12px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700 }}>
+          padding: "6px 12px", borderRadius: 9, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--gn-accent)", fontWeight: 700 }}>
           {tout ? "Replier" : `+ ${vend.length - 30}`}
         </button>
       )}
@@ -265,7 +265,7 @@ function Craft({ craft, eteints }: { craft: Recette[]; eteints: number }) {
       <Articles liste={craft.map((r) => ({ n: r.s || r.l || "Résultat non nommé", i: r.i }))} couleur="var(--green)" />
 
       <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center", fontSize: 12 }}>
-        <Link href="/crafts" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--orange)", fontWeight: 700, textDecoration: "none" }}>
+        <Link href="/crafts" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--gn-accent)", fontWeight: 700, textDecoration: "none" }}>
           <Icon name="hammer" size={13} /> Les recettes, ingrédient par ingrédient
         </Link>
         {collisions > 0 && (
@@ -309,7 +309,7 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
         <div style={{ flex: "1 1 240px", minWidth: 0 }}>
           <div className="font-heading" style={{ fontSize: 21, fontWeight: 700, marginBottom: 6 }}>{v.nom}</div>
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 9 }}>
-            {v.metier && <Pastille texte={v.metier} couleur="var(--orange)" />}
+            {v.metier && <Pastille texte={v.metier} couleur="var(--gn-accent)" />}
             {v.ville && <Pastille texte={v.ville} couleur="var(--blue)" titre="La carte sur laquelle le jeu le place" />}
             {v.quetes > 0 && <Pastille texte={`${v.quetes} quête${v.quetes > 1 ? "s" : ""}`} couleur="var(--gold)" />}
           </div>
@@ -360,7 +360,7 @@ function FichePnj({ v, fiche, onFermer }: { v: Vignette; fiche: Fiche | null; on
 function SousTitre({ icon, texte, compte }: { icon: IconName; texte: string; compte?: number }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "18px 0 10px" }}>
-      <Icon name={icon} size={15} style={{ color: "var(--orange)" }} />
+      <Icon name={icon} size={15} style={{ color: "var(--gn-accent)" }} />
       <span className="font-heading" style={{ fontSize: 13.5, fontWeight: 700 }}>{texte}</span>
       {compte != null && <span style={{ fontSize: 11, fontWeight: 700, color: "var(--gold)", ...NUM }}>{compte}</span>}
     </div>
@@ -385,7 +385,7 @@ function LigneTrouve({ t, onOuvrir }: { t: Trouve; onOuvrir: () => void }) {
       <div style={{ minWidth: 0, flex: 1 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
           <button onClick={onOuvrir} className="font-heading" style={{ background: "none", border: "none", padding: 0, cursor: "pointer",
-            fontFamily: "inherit", fontSize: 13.5, fontWeight: 700, color: "var(--orange)" }}>{t.nom}</button>
+            fontFamily: "inherit", fontSize: 13.5, fontWeight: 700, color: "var(--gn-accent)" }}>{t.nom}</button>
           <span style={{ fontSize: 11.5, color: "var(--text-muted)" }}>
             {t.comment}{t.metier ? ` · ${t.metier}` : ""}{t.ville ? ` · ${t.ville}` : ""}
           </span>
@@ -617,7 +617,7 @@ export function AnnuairePnj({ depart = "", cleDepart = "" }: {
                   <button onClick={() => setTousLesVisages(!tousLesVisages)}
                     style={{ marginTop: 10, fontFamily: "inherit", cursor: "pointer", fontSize: 12,
                       padding: "6px 12px", borderRadius: 9, background: "var(--bg-3)",
-                      border: "1px solid var(--border)", color: "var(--orange)", fontWeight: 700, ...NUM }}>
+                      border: "1px solid var(--border)", color: "var(--gn-accent)", fontWeight: 700, ...NUM }}>
                     {tousLesVisages ? "Replier" : `+ ${avecPortrait.length - VISAGES_DEPART} PNJ`}
                   </button>
                 )}
@@ -667,7 +667,7 @@ export function AnnuairePnj({ depart = "", cleDepart = "" }: {
         entete={
           <EnteteVolet icon="users"
             titre={portraits ? `${portraits} visages qui n'avaient jamais servi` : "Les visages qui n'avaient jamais servi"}
-            marque={annuaire ? { texte: `${annuaire.length} PNJ utiles`, couleur: "var(--orange)" } : undefined}
+            marque={annuaire ? { texte: `${annuaire.length} PNJ utiles`, couleur: "var(--gn-accent)" } : undefined}
             sous={
               /* QUARANTE MOTS DE MÉTHODE SONT PASSÉS DANS DEUX BULLES. Le paragraphe
                  expliquait comment les visages sont appariés et que la fiche montre
@@ -691,7 +691,7 @@ export function AnnuairePnj({ depart = "", cleDepart = "" }: {
       <style>{`
         .pnj-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
         .pnj-vignette{transition:border-color .15s,background .15s}
-        .pnj-vignette:hover{border-color:var(--orange);background:rgba(255,140,26,.06)}
+        .pnj-vignette:hover{border-color:var(--gn-accent);background:rgba(var(--gn-lueur-rgb),.06)}
         @media(max-width:520px){.pnj-grille{grid-template-columns:1fr}}
       `}</style>
     </>

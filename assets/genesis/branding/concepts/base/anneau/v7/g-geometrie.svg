@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+v7 — essai
+-->
+  <g fill="#F2EDE5">
+    <g id="g-corps">
+      <path d="M 835 335.5 A 368 368 0 1 0 880 521 L 766 521 A 254 254 0 1 1 577.5 266.5 Z"/>
+    </g>
+    <g id="g-eperon">
+      <path d="M 700 548 L 821 548 A 311 311 0 0 1 700 759.5 Z"/>
+    </g>
+    <g id="g-barre">
+      <path d="M 548 524 L 631 476 L 867 476 L 950 524 L 867 572 L 631 572 Z"/>
+    </g>
+    <g id="g-etoile-sud">
+      <path d="M 512 826 L 526 876 L 570 890 L 526 904 L 512 954 L 498 904 L 454 890 L 498 876 Z"/>
+    </g>
+    <g id="g-etoile-nord">
+      <path d="M 512 64 L 532 114 L 592 134 L 532 154 L 512 234 L 492 154 L 432 134 L 492 114 Z"/>
+    </g>
+    <g id="g-cristal">
+      <path d="M 512 88 L 527 134 L 512 196 L 497 134 Z"/>
+    </g>
+  </g>
+</svg>

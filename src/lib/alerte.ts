@@ -70,7 +70,7 @@ export async function demanderPermission(): Promise<EtatPermission> {
 export function notifierNavigateur(titre: string, corps: string, lien?: string | null) {
   if (permissionNotif() !== "granted") return;
   try {
-    const n = new Notification(titre, { body: corps, icon: "/assets/site/logo-bat.webp", tag: "vanguard" });
+    const n = new Notification(titre, { body: corps, icon: "/assets/genesis/logo-mark-192.png", tag: "vanguard" });
     n.onclick = () => {
       window.focus();
       if (lien) window.location.href = lien;

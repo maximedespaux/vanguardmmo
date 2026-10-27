@@ -204,8 +204,8 @@ export function FicheDetail({ f, suivre, planche, desc = true }: {
                 const dernier = n.niveau === f.nivMax;
                 const muet = muets.has(n.niveau);
                 return (
-                  <tr key={n.niveau} style={dernier ? { background: "rgba(255,140,26,.06)" } : undefined}>
-                    <td style={{ ...TD, fontWeight: dernier ? 700 : 400, color: dernier ? "var(--orange)" : muet ? "var(--text-muted)" : "var(--text)" }}>
+                  <tr key={n.niveau} style={dernier ? { background: "rgba(var(--gn-lueur-rgb),.06)" } : undefined}>
+                    <td style={{ ...TD, fontWeight: dernier ? 700 : 400, color: dernier ? "var(--gn-accent)" : muet ? "var(--text-muted)" : "var(--text)" }}>
                       {n.niveau}
                       {/* Le rang qui recopie le précédent est marqué DANS le tableau,
                           là où on lit deux lignes identiques et où on se demande si
@@ -300,7 +300,7 @@ function LienComp({ l, suivre }: { l: { id: string; nom: string; niveau: number 
     <button onClick={() => suivre(l.id)} style={{ display: "flex", alignItems: "center", gap: 7, width: "100%", textAlign: "left",
       background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 8, padding: "6px 10px", marginBottom: 6,
       color: "var(--text)", fontFamily: "inherit", fontSize: 12.5, cursor: "pointer", fontVariantNumeric: "tabular-nums" }}>
-      <Icon name="chevron-right" size={12} style={{ color: "var(--orange)", flexShrink: 0 }} />
+      <Icon name="chevron-right" size={12} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />
       <span style={{ minWidth: 0 }}>{l.nom} <span style={{ color: "var(--text-muted)" }}>au niveau {l.niveau}</span></span>
     </button>
   );

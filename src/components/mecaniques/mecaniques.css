@@ -1,5 +1,5 @@
 /*
- * LA PLANCHE DES MÉCANIQUES — styles propres à /builder/mecaniques.
+ * LA PLANCHE DES MÉCANIQUES — styles propres à /mecaniques.
  *
  * Ce fichier ne sert qu'à cette page ; il est importé par `Blocs.tsx` plutôt que
  * versé dans `globals.css`, qui n'a pas à grossir d'un préfixe par page.
@@ -42,15 +42,15 @@
 .mc-case.ton { border-color:color-mix(in srgb, var(--ton) 34%, var(--border)); }
 .mc-case.ton > span { color:var(--ton); font-weight:700; }
 a.mc-case { text-decoration:none; color:inherit; }
-a.mc-case:hover, a.mc-chip:hover { border-color:var(--orange); }
+a.mc-case:hover, a.mc-chip:hover { border-color:var(--gn-accent); }
 .mc-chip { display:inline-flex; align-items:center; padding:5px 10px; border-radius:8px;
   background:var(--bg-2); border:1px dashed var(--border); color:var(--text-muted);
   font-size:11.5px; white-space:nowrap; text-decoration:none; }
 .mc-groupe { display:grid; gap:8px; }
 .mc-groupe-t { font-size:11.5px; text-transform:uppercase; letter-spacing:.8px; color:var(--text-muted); }
 .mc-point { background:var(--bg-3); border-radius:10px; padding:14px 16px; margin-bottom:11px;
-  border-left:2px solid var(--orange-dark); }
-.mc-point h4 { font-family:'Rubik',sans-serif; font-weight:700; font-size:14.5px; color:var(--orange);
+  border-left:2px solid var(--gn-or-sombre); }
+.mc-point h4 { font-family:'Rubik',sans-serif; font-weight:700; font-size:14.5px; color:var(--gn-accent);
   margin:0 0 8px; display:flex; align-items:center; gap:9px; flex-wrap:wrap; line-height:1.4; }
 .mc-corps { display:grid; gap:9px; font-size:13.5px; line-height:1.62; color:var(--text); }
 .mc-corps p { margin:0; }
@@ -148,9 +148,9 @@ a.mc-case:hover, a.mc-chip:hover { border-color:var(--orange); }
   gap:9px; margin-top:18px; }
 .mc-porte { display:flex; align-items:flex-start; gap:10px; padding:11px 13px; border-radius:11px;
   background:var(--bg-2); border:1px solid var(--border); text-decoration:none; color:var(--text); }
-.mc-porte:hover { border-color:var(--orange); }
+.mc-porte:hover { border-color:var(--gn-accent); }
 .mc-porte > span { display:grid; gap:2px; min-width:0; }
-.mc-porte b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--orange); }
+.mc-porte b { font-family:'Rubik',sans-serif; font-size:13px; color:var(--gn-accent); }
 .mc-porte i { font-style:normal; font-size:11.5px; color:var(--text-muted); line-height:1.45; }
 .mc-noms { display:flex; flex-wrap:wrap; gap:7px 15px; align-items:center; margin:0;
   font-size:12.5px; line-height:1.5; }

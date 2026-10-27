@@ -41,7 +41,7 @@ export function TourOubliee() {
       {/* Un h2, comme le bloc Protection de l'Oasis juste en dessous : les deux
           sont les grandes parties de la page, sous le h1 du wiki. `fontWeight: 400`
           est explicite parce qu'un h2 arrive gras par defaut. */}
-      <h2 className="font-heading" style={{ fontSize: 12.5, fontWeight: 400, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+      <h2 className="font-heading" style={{ fontSize: 12.5, fontWeight: 400, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)", margin: "4px 0 10px", display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
         La Tour Oubliée
         <span style={{ fontSize: 12, letterSpacing: 0, textTransform: "none", color: "var(--text-muted)", fontWeight: 400 }}>
           {TOUR_OUBLIEE.length} étages, {TOUR_OUBLIEE.length} cartes séparées
@@ -77,7 +77,7 @@ export function TourOubliee() {
           ] as { ic: IconName; texte: React.ReactNode }[]
         ).map(({ ic, texte }, k) => (
           <span key={k} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--text-muted)", background: "var(--bg-2)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 10px" }}>
-            <Icon name={ic} size={11} style={{ color: "var(--orange)", flexShrink: 0 }} />{texte}
+            <Icon name={ic} size={11} style={{ color: "var(--gn-accent)", flexShrink: 0 }} />{texte}
           </span>
         ))}
       </div>
@@ -118,7 +118,7 @@ export function TourOubliee() {
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", fontSize: 12, fontVariantNumeric: "tabular-nums" }}>
               <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px" }}>niv. {e.niv}</span>
-              <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--orange)" }}>
+              <span style={{ background: "var(--bg-3)", borderRadius: 5, padding: "2px 7px", color: "var(--gn-accent)" }}>
                 <Icon name="heart" size={11} style={{ marginRight: 3 }} />{pvCourt(e.pv)} PV
               </span>
               {/* LE PICTOGRAMME MAISON A CÉDÉ LA PLACE AU DESSIN DU JEU. Les cinq
@@ -211,7 +211,7 @@ function EchelleEtages() {
             <span className="to-etage">B{e.etage}</span>
             <span className="to-piste"
               role="img" aria-label={`Étage ${e.etage} : ${pvCourt(e.pv)} points de vie, niveau ${e.niv}`}>
-              <span style={{ display: "block", height: "100%", width: `${Math.max(2, (e.pv / max) * 100)}%`, borderRadius: 3, background: "var(--orange)" }} />
+              <span style={{ display: "block", height: "100%", width: `${Math.max(2, (e.pv / max) * 100)}%`, borderRadius: 3, background: "var(--gn-jauge)" }} />
             </span>
             <span className="to-valeur">{pvCourt(e.pv)} PV · niv. {e.niv}</span>
           </div>

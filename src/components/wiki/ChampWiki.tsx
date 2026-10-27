@@ -99,7 +99,7 @@ export function ChampWiki({ largeur = 300, placeholder = "Chercher dans le wiki"
               <Link href={`/wiki?q=${encodeURIComponent(q.trim())}`} style={{
                 display: "flex", alignItems: "center", gap: 6, padding: "7px 9px", marginTop: 2,
                 borderTop: "1px solid var(--border)", textDecoration: "none",
-                color: "var(--orange)", fontSize: 12, fontWeight: 600,
+                color: "var(--gn-accent)", fontSize: 12, fontWeight: 600,
               }}>
                 <Icon name="arrow-right" size={12} />
                 {r.total > r.montres

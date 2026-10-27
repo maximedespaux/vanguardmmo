@@ -3,46 +3,69 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { canAccessGuild, canAccessAdmin } from "@/config/roles";
-import { ESPACES, HORS_ESPACES, type Acces } from "@/config/nav";
+import { accesDe, espacesPour, peutOuvrir, regardDe, type Espace, type Lien } from "@/config/nav";
+import { canAccessGuild } from "@/config/roles";
 import { Icon } from "@/components/Icon";
 import { ProfilePanel } from "@/components/ProfilePanel";
 import { PanneauTout } from "@/components/PanneauTout";
 import { Alertes } from "@/components/Alertes";
 import { AccueilPersonnages } from "@/components/AccueilPersonnages";
 
-// ── Navigation v3 — trois espaces nommés par la TÂCHE, définis dans config/nav ──
-// Le regroupement seul ne suffisait pas : chaque entrée porte une ligne qui dit
-// ce qu'on y trouve, parce que « AirGuild » ou « GuildViewer » ne le disent pas.
+// ── Navigation — les espaces et leurs droits viennent de config/nav ──
+// Chaque entrée porte une ligne qui dit ce qu'on y trouve, parce que « AirGuild »
+// ou « GuildViewer » ne le disent pas.
 
 // Fond de page (assets fournis par iBeats) — clé → /assets/site/bg/<clé>.webp
-// (les .webp sont générés depuis les PNG par `npm run assets` ; règles CSS dans globals.css)
+// (seuls les .webp sont versionnés : déposer le PNG puis `npm run assets` — voir
+//  scripts/optimize-assets.mjs ; règles CSS dans globals.css)
+/* /guildviewer, /suivi et /candidatures sont devenues des sections de /staff (2026-10-21) :
+   leur fond part avec elles, la page tout-en-un garde le sien. */
 const PAGE_BG: Record<string, string> = {
-  "/coffre": "airguild", "/guildviewer": "guildviewer",
-  "/dashboard": "sup1", "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
-  "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7", "/candidatures": "sup8",
-  "/discord": "sup9", "/events": "sup10", "/annonce": "sup11", "/personnages": "sup1",
-  "/parametres": "sup3", "/plan-farm": "airguild", "/messages": "banque", "/quetes": "airguild",
-  "/boutique": "banque", "/demandes": "banque", "/sommaire": "guildviewer", "/journal": "guildviewer", "/statistiques": "guildviewer",
+  "/staff": "sup11",
+  "/builder": "sup2", "/astuces": "sup3", "/prestige": "sup3", "/donjons": "sup4",
+  "/worldboss": "sup5", "/compositions": "sup6", "/candidature": "sup7",
+  "/discord": "sup9", "/events": "sup10", "/personnages": "sup1",
+  /* Le fond « airguild » a survécu au coffre puis à Quête Guilde, partie le 2026-10-21 :
+     c'est le campement de la guilde — des membres penchés sur la carte, les coffres,
+     l'étendard —, et il passe à Information Guilde plutôt que de dormir dans public/. */
+  "/guilde": "airguild",
 };
+
+/** Les rubriques d'un déroulant, dans l'ordre où la carte les nomme. */
+function parGroupe(liens: Lien[]): { titre: string; liens: Lien[] }[] {
+  const groupes: { titre: string; liens: Lien[] }[] = [];
+  for (const l of liens) {
+    const titre = l.groupe ?? "";
+    const g = groupes.find((x) => x.titre === titre);
+    if (g) g.liens.push(l); else groupes.push({ titre, liens: [l] });
+  }
+  return groupes;
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
-  const DEV_ALL = process.env.NEXT_PUBLIC_DEV_ALL_ACCESS === "1"; // dev local uniquement (jamais en prod)
-  const userRole = (session?.user as any)?.role ?? "RECRUE";
+  const regard = regardDe(session);
+  const { role, devAll } = regard;
   const bgKey = PAGE_BG[pathname] ?? "";
-  const has = (a: Acces) => (DEV_ALL ? true : a === "public" ? true : a === "guild" ? canAccessGuild(userRole) : canAccessAdmin(userRole));
-  // Le `?tab=` des liens (« Mes dettes ») ne fait pas partie de l'adresse d'une page.
+  // Le `?vue=` d'un lien ne fait pas partie de l'adresse d'une page. Le `#` n'est pas
+  // coupé, et c'est voulu : « /#la-guilde » ne doit pas s'allumer sur tout l'accueil.
   const chemin = (href: string) => href.split("?")[0];
   const isActive = (href: string) => pathname === chemin(href) || pathname.startsWith(chemin(href) + "/");
 
-  const horsEspaces = HORS_ESPACES.filter(
-    (l) => has(l.acces ?? "public") && !(l.href === "/candidature" && canAccessGuild(userRole))
-  );
-  // Un espace dont toutes les entrées sont hors de portée n'a rien à montrer.
-  const espaces = ESPACES.map((e) => ({ ...e, liens: e.liens.filter((l) => has(l.acces ?? e.acces)) }))
-    .filter((e) => has(e.acces) && e.liens.length > 0);
+  /* Le regard entier, et pas le seul rang : un ami (rôle Discord Friend) voit les espaces
+     que son réglage lui ouvre — la décision est `peutOuvrir`, dans config/nav.ts. */
+  const barre = espacesPour(regard, "barre");
+  /* Un espace s'allume aussi sur ses pages sans ligne de barre (`barre: false`) : la
+     carte sait où l'on est même quand la barre ne nomme pas la page. (Quête Guilde, qui en
+     était l'exemple, a quitté le site le 2026-10-21.) */
+  const toutes = espacesPour(regard, "plan").espaces;
+  const allume = (e: Espace) => (toutes.find((x) => x.label === e.label)?.liens ?? e.liens).some((l) => isActive(l.href));
+  const cible = (e: Espace) =>
+    e.hrefVisiteur && !peutOuvrir(accesDe(e.href) ?? e.acces, regard, e.cle) ? e.hrefVisiteur : e.href;
+  const liensHors = barre.hors.filter((l) => !l.appel);
+  const appel = barre.hors.find((l) => l.appel);
 
   return (
     <div className="vg-shell">
@@ -51,16 +74,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
             renvoi. Maintenant qu'elle existe, il mène là où tout le monde
             s'attend qu'un logo mène. */}
         <Link href="/" className="vg-top-brand">
-          <img src="/assets/site/logo-bat.webp" alt="Vanguard" className="vg-top-logo" />
-          {/* Traitement bicolore, comme « AirBuilder » : la première syllabe en
-              orange, la suite en blanc. Charte orange et noir. */}
-          <span className="vg-top-title">Van<span>guard</span></span>
+          {/* Le monogramme G arrive d'UN seul fichier : le jour où Maxime choisit
+              sa proposition (A-F), on remplace logo-mark.svg et rien d'autre. */}
+          <img src="/assets/genesis/logo-mark.svg" alt="" aria-hidden="true" className="vg-top-logo" />
+          {/* Plus de traitement bicolore : GENESIS s'écrit d'un seul tenant, en
+              capitales gravées ivoire — l'or et le crimson vivent dans le G. */}
+          <span className="vg-top-title">Genesis</span>
         </Link>
 
         <button className="vg-top-burger" onClick={() => setNavOpen((o) => !o)} aria-label="Menu"><Icon name="menu" size={19} /></button>
 
         <nav className={`vg-top-nav ${navOpen ? "open" : ""}`}>
-          {horsEspaces.map((l) => (
+          {liensHors.map((l) => (
             <div key={l.href} className="vg-top-item">
               <Link href={l.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${isActive(l.href) ? "active" : ""}`}>
                 <Icon name={l.icon} size={16} />{l.label}
@@ -68,50 +93,83 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </div>
           ))}
 
-          {espaces.map((e) => {
-            const active = e.liens.some((l) => isActive(l.href));
-            // Une entrée « directe » n'a pas de menu : elle mène à sa page.
-            if (e.direct) {
+          {barre.espaces.map((e) => {
+            const href = cible(e);
+            const active = allume(e);
+            /* Un déroulant d'une seule ligne qui mène là où mène déjà le libellé ajoute
+               un clic pour rien : c'est la Guilde d'un visiteur, qui n'y garde que la
+               page de la guilde elle-même. */
+            if (e.liens.length === 1 && e.liens[0].href === href) {
               return (
                 <div key={e.label} className="vg-top-item">
-                  <Link href={e.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
+                  <Link href={href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
                     <Icon name={e.icon} size={16} />{e.label}
                   </Link>
                 </div>
               );
             }
+            const groupes = parGroupe(e.liens);
+            const rubriques = groupes.some((g) => g.titre);
+            /* Une ligne qui vise une VUE (`/staff?section=absences`) ne s'allume pas :
+               la barre ne lit pas la requête, et elle s'allumait avec la page entière, à
+               côté de « Membres & builds ». C'est la barre d'onglets de la page qui
+               dit la vue ouverte. */
+            const ligne = (l: Lien) => (
+              <Link key={l.href} href={l.href} onClick={() => setNavOpen(false)} className={`vg-mega-link ${!l.href.includes("?") && isActive(l.href) ? "active" : ""}`}>
+                <span className="vg-mega-ic"><Icon name={l.icon} size={15} /></span>
+                <span className="vg-mega-txt">
+                  <span className="vg-mega-l">{l.label}</span>
+                  <span className="vg-mega-d">{l.desc}</span>
+                </span>
+              </Link>
+            );
             return (
               <div key={e.label} className="vg-top-item">
-                <Link href={e.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
+                <Link href={href} onClick={() => setNavOpen(false)} className={`vg-top-link ${active ? "active" : ""}`}>
                   <Icon name={e.icon} size={16} />{e.label}<Icon name="chevron-down" size={13} style={{ opacity: .7 }} />
                 </Link>
                 {/* Chaque entrée dit ce qu'on y trouve. C'est ce qui manquait :
                     un menu de noms d'outils oblige à ouvrir pour comprendre. */}
-                <div className="vg-dropdown vg-mega">
-                  {e.liens.map((l) => (
-                    <Link key={l.href} href={l.href} onClick={() => setNavOpen(false)} className={`vg-mega-link ${isActive(l.href) ? "active" : ""}`}>
-                      <span className="vg-mega-ic"><Icon name={l.icon} size={15} /></span>
-                      <span className="vg-mega-txt">
-                        <span className="vg-mega-l">{l.label}</span>
-                        <span className="vg-mega-d">{l.desc}</span>
-                      </span>
-                    </Link>
-                  ))}
+                <div className={`vg-dropdown vg-mega${rubriques ? " gn-mega-rubriques" : ""}`}>
+                  {rubriques
+                    ? groupes.map((g) => (
+                        <div key={g.titre} className="gn-mega-rubrique">
+                          <div className="gn-mega-titre">{g.titre}</div>
+                          {g.liens.map(ligne)}
+                        </div>
+                      ))
+                    : e.liens.map(ligne)}
                 </div>
               </div>
             );
           })}
 
+          {/* Le bouton « Postuler » ne tient pas dans la barre d'un téléphone, à
+              côté de « Se connecter » : il redescend ici, à la fin du menu. */}
+          {appel && (
+            <div className="vg-top-item gn-appel-menu">
+              <Link href={appel.href} onClick={() => setNavOpen(false)} className={`vg-top-link ${isActive(appel.href) ? "active" : ""}`}>
+                <Icon name={appel.icon} size={16} />{appel.label}
+              </Link>
+            </div>
+          )}
         </nav>
 
         <div className="vg-top-user">
-          {(session || DEV_ALL) ? (
+          {/* À droite et en bouton, comme dans la maquette : c'est un appel, pas une
+              destination parmi les autres. Inutile sur sa propre page. */}
+          {appel && pathname !== appel.href && (
+            <Link href={appel.href} className="font-heading gn-postuler">{appel.label}</Link>
+          )}
+          {regard.connecte ? (
             <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <PanneauTout espaces={espaces} hors={horsEspaces} />
+              <PanneauTout qui={regard} />
               <Alertes />
-              <ProfilePanel devAll={DEV_ALL} />
+              <ProfilePanel devAll={devAll} role={role} ami={regard.amis.length > 0 && !canAccessGuild(role)} />
             </div>
-          ) : (pathname !== "/histoire" && pathname !== "/candidature") ? (
+          ) : (pathname !== "/" && pathname !== "/candidature") ? (
+            /* Pas sur l'accueil : son hero porte déjà « Se connecter avec Discord », et
+               un visiteur y voyait deux boutons pour le même geste. */
             <Link href="/login" style={{ padding: "8px 16px", background: "#5865F2", color: "#fff", borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 13 }} className="font-heading">Se connecter</Link>
           ) : null}
         </div>

@@ -15,7 +15,7 @@ import { type Collections as TCollections } from "./donnees";
  * reste à décrocher ? ».
  *
  * ILS ÉTAIENT SIX. La maîtrise d'arme et les anges (avec leur poudre féerique)
- * sont partis sur /builder/mecaniques, sur demande de Maxime : « j'aimerais
+ * sont partis sur /mecaniques, sur demande de Maxime : « j'aimerais
  * concentrer sur une page pour comprendre en réalisant le build ». Ce sont des
  * MÉCANIQUES DE BUILD et pas des collections — on ne DÉCROCHE pas une maîtrise
  * d'arme, on la MONTE sur la pièce qu'on compose. Un sujet, une page : les
@@ -93,7 +93,7 @@ const VOLETS: Volet[] = [
     contenu: (d) => (
       <div style={{ fontSize: 13, lineHeight: 1.65 }}>
         Les {d.decks.length} carnets et leurs {d.nbCartesDefinies} cartes vivent dans l&apos;
-        <a href="/builder" style={{ color: "var(--orange)" }}>AirBuilder</a> : leur bonus
+        <a href="/builder" style={{ color: "var(--gn-accent)" }}>AirBuilder</a> : leur bonus
         compte dans ton build, donc il se lit au moment où tu équipes.
         <div style={{ color: "var(--text-muted)", marginTop: 8, fontSize: 12 }}>
           On y trouve les noms français des carnets et les illustrations du client, réunis —

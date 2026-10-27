@@ -78,7 +78,7 @@ export type Reponse = {
  *  fabrique, chez qui, et ce qu'on lance. Il sert aussi à départager deux
  *  réponses de même pertinence. */
 export const TYPES: { clef: TypeEntree; label: string; unite: string; icon: IconName; couleur: string }[] = [
-  { clef: "objet", label: "Objets", unite: "Objet", icon: "package", couleur: "var(--orange)" },
+  { clef: "objet", label: "Objets", unite: "Objet", icon: "package", couleur: "var(--gn-accent)" },
   { clef: "monstre", label: "Monstres", unite: "Monstre", icon: "skull", couleur: "var(--red)" },
   { clef: "recette", label: "Recettes", unite: "Recette", icon: "hammer", couleur: "var(--gold)" },
   { clef: "pnj", label: "PNJ", unite: "PNJ", icon: "users", couleur: "var(--blue)" },

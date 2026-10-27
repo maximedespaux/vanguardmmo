@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+Aperçu métal : mêmes chemins que g-geometrie.svg, copiés à l'identique.
+Rendu d'essai pour juger la forme, pas une finition.
+-->
+  <defs>
+
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E6C48A"/>
+      <stop offset="0.28" stop-color="#C69A55"/>
+      <stop offset="0.55" stop-color="#7E5E33"/>
+      <stop offset="0.78" stop-color="#C69A55"/>
+      <stop offset="1" stop-color="#E6C48A"/>
+    </linearGradient>
+    <linearGradient id="or-lance" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8A6A3C"/>
+      <stop offset="0.5" stop-color="#E6C48A"/>
+      <stop offset="0.5" stop-color="#B4894A"/>
+      <stop offset="1" stop-color="#6E5230"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="512" cy="520" r="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#60152D" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#3A1020" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#08080C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="biseau" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="flou"/>
+      <feSpecularLighting in="flou" surfaceScale="5" specularConstant="1.1" specularExponent="22" lighting-color="#F2EDE5" result="spec">
+        <feDistantLight azimuth="235" elevation="38"/>
+      </feSpecularLighting>
+      <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
+      <feDiffuseLighting in="flou" surfaceScale="5" diffuseConstant="1" lighting-color="#ffffff" result="diff">
+        <feDistantLight azimuth="235" elevation="50"/>
+      </feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.15" k2="0" k3="0" k4="0" result="ombre"/>
+      <feComposite in="specIn" in2="ombre" operator="arithmetic" k1="0" k2="0.75" k3="1" k4="0" result="metal"/>
+      <feComposite in="metal" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <filter id="lueur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <mask id="m-lance" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <use href="#p-cristal" fill="#000" stroke="#000" stroke-width="18" stroke-linejoin="miter" stroke-miterlimit="8"/>
+      <g clip-path="url(#zone-lance-2)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-lance-2"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-pointe" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-pointe-1)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-pointe-1"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-corps" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-corps-1)"><use href="#p-lance" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+      <use href="#p-etoile" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/>
+    </mask>
+    <clipPath id="zone-corps-1"><rect x="0" y="0" width="1024" height="512"/></clipPath>
+  </defs>
+  <rect id="fond" width="1024" height="1024" fill="#08080C"/>
+  <rect id="halo-fond" width="1024" height="1024" fill="url(#halo)"/>
+  <g id="g-lance" fill="url(#or-lance)" filter="url(#biseau)">
+   <g mask="url(#m-lance)">
+    <path id="p-lance" d="M 500 160 L 524 160 L 524 880 L 500 880 Z"/>
+   </g>
+  </g>
+  <g id="g-pointe" fill="url(#or-lance)" filter="url(#biseau)">
+   <g mask="url(#m-pointe)">
+    <path id="p-pointe" d="M 512 836 Q 522 886 550 896 Q 522 906 512 980 Q 502 906 474 896 Q 502 886 512 836 Z"/>
+   </g>
+  </g>
+  <g id="g-corps" fill="url(#or)" filter="url(#biseau)">
+   <g mask="url(#m-corps)">
+    <path id="p-corps" d="M 818 258 L 715 252 A 330 330 0 0 0 291 267 A 500 500 0 0 0 151 482 Q 141 512 90 512 Q 141 512 151 542 A 500 500 0 0 0 291 757 A 330 330 0 0 0 841 540 L 770 540 L 770 641 A 258 258 0 0 1 386 718.5 A 400 400 0 0 1 248.5 515 A 400 400 0 0 1 386 311.5 A 258 258 0 0 1 730.5 336 Q 764 352 782 400 Q 786 316 818 258 Z"/>
+   </g>
+  </g>
+  <g id="g-barre" fill="url(#or)" filter="url(#biseau)">
+   <g>
+    <path id="p-barre" d="M 546 490 L 900 492 L 840 548 L 770 548 L 550.5 538 L 561.5 518 Z"/>
+   </g>
+  </g>
+  <g id="g-etoile" fill="url(#or-lance)" filter="url(#biseau)">
+   <g>
+    <path id="p-etoile" d="M 512 40 Q 525 119 580 132 Q 525 145 512 216 Q 499 145 444 132 Q 499 119 512 40 Z"/>
+   </g>
+  </g>
+  <g id="lueur-cristal" filter="url(#lueur)" opacity="0.9">
+    <path d="M 512 450 L 550 518 L 512 586 L 474 518 Z" fill="#A6192E"/>
+  </g>
+  <g id="g-cristal" fill="#A6192E" stroke="#C69A55" stroke-width="3" stroke-linejoin="miter">
+    <path id="p-cristal" d="M 512 450 L 550 518 L 512 586 L 474 518 Z"/>
+    <path d="M 512 450 L 512 510 L 474 518 Z" fill="#C8505F"/>
+    <path d="M 512 450 L 550 518 L 512 510 Z" fill="#A6192E"/>
+    <path d="M 474 518 L 512 510 L 512 586 Z" fill="#7A1530"/>
+    <path d="M 550 518 L 512 586 L 512 510 Z" fill="#60152D"/>
+  </g>
+</svg>

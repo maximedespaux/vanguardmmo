@@ -159,11 +159,11 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
               <button key={a.cle} onClick={() => setChemin([a.cle])} style={{
                 display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", cursor: "pointer",
                 fontFamily: "inherit", padding: "7px 9px", borderRadius: 9,
-                background: on ? "rgba(255,140,26,.1)" : "var(--bg-2)",
-                border: `1px solid ${on ? "var(--orange)" : "var(--border)"}`,
+                background: on ? "rgba(var(--gn-lueur-rgb),.1)" : "var(--bg-2)",
+                border: `1px solid ${on ? "var(--gn-accent)" : "var(--border)"}`,
               }} onClickCapture={() => setChiffree(false)}>
                 <PileIngredients ing={a.ing} taille={22} />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: on ? 700 : 500, color: on ? "var(--orange)" : "var(--text)" }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: on ? 700 : 500, color: on ? "var(--gn-accent)" : "var(--text)" }}>
                   {titre(a.nom)}
                 </span>
                 <span style={{ flexShrink: 0, fontSize: 11, fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>{a.ing.length}</span>
@@ -185,7 +185,7 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
                   background: "none", border: "none", padding: 0, fontFamily: "inherit", fontSize: 12,
                   cursor: i === chemin.length - 1 ? "default" : "pointer",
                   fontWeight: i === chemin.length - 1 ? 700 : 500,
-                  color: i === chemin.length - 1 ? "var(--text)" : "var(--orange)",
+                  color: i === chemin.length - 1 ? "var(--text)" : "var(--gn-accent)",
                   textDecoration: i === chemin.length - 1 ? "none" : "underline",
                   textDecorationStyle: "dotted",
                 }}>{titre(parCle.get(c)?.nom ?? c)}</button>
@@ -209,7 +209,7 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
           </div>
           {actif.pnj && (
             <span style={{ flexShrink: 0, fontSize: 11.5, textAlign: "right", color: "var(--text-muted)" }}>
-              chez<br /><b style={{ color: "var(--orange)" }}>{actif.pnj}</b>
+              chez<br /><b style={{ color: "var(--gn-accent)" }}>{actif.pnj}</b>
             </span>
           )}
         </div>
@@ -235,7 +235,7 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
         <Branche noeud={actif} parCle={parCle} niveau={0} />
         <p style={{ margin: "9px 0 0", fontSize: 11, color: "var(--text-muted)", display: "flex", gap: 12, flexWrap: "wrap" }}>
           <span><Icon name="pickaxe" size={11} style={{ marginRight: 4 }} />se ramasse</span>
-          <span><Icon name="hammer" size={11} style={{ marginRight: 4, color: "var(--orange)" }} />se fabrique — clique pour ouvrir l&apos;étage</span>
+          <span><Icon name="hammer" size={11} style={{ marginRight: 4, color: "var(--gn-accent)" }} />se fabrique — clique pour ouvrir l&apos;étage</span>
         </p>
 
         {actif.utilisePar.length > 0 && (
@@ -249,7 +249,7 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
                   display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: "inherit", fontSize: 12,
                   padding: "6px 10px", borderRadius: 8, background: "var(--bg-3)", border: "1px solid var(--border)", color: "var(--text)",
                 }}>
-                  <Icon name="arrow-up" size={12} style={{ color: "var(--orange)" }} />
+                  <Icon name="arrow-up" size={12} style={{ color: "var(--gn-accent)" }} />
                   {titre(parCle.get(c)?.nom ?? c)}
                 </button>
               ))}
@@ -301,8 +301,8 @@ export function ArbreDuFarm({ arbres, carteRecette }: {
           background:var(--bg-2);border:1px solid var(--border)}
         /* Un ingredient qui se fabrique est une porte : on le montre. */
         .cr-porte{cursor:pointer;width:100%;text-align:left;font-family:inherit;color:var(--text);
-          border-color:color-mix(in srgb, var(--orange) 38%, var(--border));transition:border-color .15s}
-        .cr-porte:hover{border-color:var(--orange)}
+          border-color:color-mix(in srgb, var(--gn-accent) 38%, var(--border));transition:border-color .15s}
+        .cr-porte:hover{border-color:var(--gn-accent)}
       `}</style>
     </div>
   );
@@ -366,7 +366,7 @@ function Feuille({ g, parCle, niveau }: {
           <NomObjet nom={g.n} icone={null} />
         </span>
         <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
-          <Icon name={sous ? "hammer" : "pickaxe"} size={10} style={{ flexShrink: 0, color: sous ? "var(--orange)" : undefined }} />
+          <Icon name={sous ? "hammer" : "pickaxe"} size={10} style={{ flexShrink: 0, color: sous ? "var(--gn-accent)" : undefined }} />
           {g.ou}
         </span>
       </span>
@@ -374,7 +374,7 @@ function Feuille({ g, parCle, niveau }: {
         <b style={{ flexShrink: 0, fontSize: 12.5, fontVariantNumeric: "tabular-nums", color: "var(--gold)" }}>×{g.q.toLocaleString("fr-FR")}</b>
       )}
       {ouvrable && (
-        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={13} style={{ flexShrink: 0, color: "var(--orange)" }} />
+        <Icon name={ouvert ? "chevron-up" : "chevron-down"} size={13} style={{ flexShrink: 0, color: "var(--gn-accent)" }} />
       )}
     </>
   );

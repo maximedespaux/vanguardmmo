@@ -35,6 +35,13 @@ export type Valeurs = Record<string, ValeurReglage>;
  *  sert le panneau — sans elle, on ouvre un panneau d'interrupteurs anonymes. */
 export type SchemaPage = {
   page: string;
+  /**
+   * L'ancienne adresse de la page, quand elle en a changé : tant que la nouvelle n'a
+   * jamais été réglée, on relit les valeurs rangées sous l'ancienne. Sans ce repli, le
+   * déménagement d'une page remettait ses réglages à zéro sans que personne n'y touche.
+   * Le premier enregistrement écrit sous `page`, et le repli cesse de servir.
+   */
+  repli?: string;
   titre: string;
   quoi: string;
   reglages: Reglage[];

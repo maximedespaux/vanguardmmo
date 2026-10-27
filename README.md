@@ -31,7 +31,7 @@ flowchart LR
     V["🌍 Visiteur / Candidat"] --> UI
 
     subgraph SITE["🌐 Site — Next.js 15"]
-        UI["33 pages<br/>(App Router)"] --> API["51 routes API"]
+        UI["35 pages<br/>(App Router)"] --> API["47 routes API"]
         AUTH["NextAuth<br/>OAuth Discord"]
     end
 
@@ -55,58 +55,71 @@ l'un sans casser l'autre.
 
 ---
 
-## 🗺️ Les cinq espaces
+## 🗺️ Les quatre espaces
 
 La navigation est rangée **par tâche**, pas par table. Chaque espace ouvre sur
-ce qu'on vient y faire (`src/config/nav.ts`).
+ce qu'on vient y faire (`src/config/nav.ts`). La barre, le panneau « Tout » et le
+plan du site (en bas de l'accueil, ex-`/sommaire`) se génèrent tous de ce fichier,
+par `espacesPour(role)`.
 
 | Espace | Accès | Pages |
 |---|---|---|
-| ⚔️ **Jouer** | membre | Mes personnages · AirBuilder · Compositions · World Boss · Mes absences |
-| 🧭 **Le jeu** | public | Donjons · Guide de progression · Prestige |
-| 🎯 **Quête Guilde** | membre | Quêtes principales, secondaires, mes requêtes |
-| 🪙 **Économie** | public → staff | Boutique · Mes demandes & messages · Coffre · Crafts · Base des objets · Plan de farm |
-| 🛡️ **Guilde** | staff | Membres & builds · Candidatures · Statistiques · Journal · World Boss · Bot Discord · Annonce · Events |
+| 👕 **AirBuilder** | public | Mes personnages · AirBuilder · Les mécaniques |
+| 🧭 **Astuces** | public | Le wiki · Donjons · Guide · Prestige · Objets *(membres)* · Classes · Monstres · PNJ · Crafts |
+| 🛡️ **Guilde** | public → membre | Information Guilde (`/guilde`) · Chambres Secrètes · World Boss · Mes absences — un visiteur n'y voit que « La guilde » (`/#la-guilde`, section de l'accueil) |
+| 👑 **Bras droits** | staff | Tableau de bord tout-en-un (`/staff`) : la file « à traiter » · Membres & builds · Absences · Suivi · Candidatures (`?section=`) — Outils : Bot Discord · World Boss (gestion) · Events |
 
-Hors espaces : **Accueil** (histoire), **Candidature**, **Connexion**.
+**Retirés le 2026-10-21** (décision de Maxime) : la Boutique et tout ce qui la servait
+(commandes, conversations, dettes, ventes, requêtes d'objet sur mesure), le Coffre
+AirGuild, le plan de farm, les statistiques et le journal — puis Quête Guilde tout
+entière (page, routes, catalogue, fiche d'un pseudo, onglet du dossier). Les **données restent en
+base** (aucun modèle ni colonne retiré) ; les anciennes adresses redirigent
+(`next.config.js`) : pages staff → `/staff`, Boutique et ses adresses → `/`, et
+`/annonce` → `/discord` (son onglet Embed envoyait la même commande).
 
----
+**L'espace des bras droits** (les quatre rangs staff, `ADMIN_ROLES`) tient sur UNE page,
+`/staff`, en sections (`?section=membres|absences|suivi|candidatures`, onglets lus dans la
+rubrique « Tableau de bord » de `nav.ts`) : la file « à traiter » triée par urgence, quatre
+compteurs et les outils ; Membres & builds (l'ancien GuildViewer) ; les absences ; le Suivi
+(les mesures que l'AirBuilder exige par stuff, `GearProfile.mesures`, `src/lib/mesures.ts`) ;
+les candidatures. `/guildviewer`, `/suivi` et `/candidatures` y redirigent avec leur requête.
+Le calcul de la file vit dans `src/lib/recap.ts` (`GET /api/admin/a-traiter`), sans import
+de Next : le bot pourra le reprendre pour son récap. Le dossier d'un membre s'ouvre de
+n'importe quelle section par l'adresse (`?dossier=<id>&onglet=membre|absences|decisions|notes`).
 
-## 🔁 Le cycle d'une demande
+**Le dossier d'un membre** porte les gestes et les notes internes (`src/lib/gestes.ts`, la
+règle en un seul endroit) : promouvoir, rétrograder, cacher / montrer, retirer de la guilde
+— ouverts aux quatre rangs bras droits, sur un rang strictement inférieur au sien, sans
+promouvoir au-delà du rang juste sous le sien ; retirer un rôle, exclure, bannir — Vanguard
+et plus. Motif obligatoire, confirmation, trace `ActionMembre`. Le rang se change SUR
+DISCORD (file `BotCommand` « moderation », action `rang`, `bot/lib/moderation.ts`) : le bot
+recalcule les rangs toutes les 10 minutes. Les notes (`NoteMembre`, ton problème / effort /
+neutre) ne se lisent que sur un rang strictement inférieur au sien.
 
-C'est le cœur du site. Une demande **est** une conversation : son état, son prix
-et la discussion vivent au même endroit (`/messages`).
+**L'accès des amis** (rôle Discord « Friend », `1550844483095232712` par défaut) : un compte
+HORS de la guilde qui porte ce rôle voit les espaces Astuces et AirBuilder comme un membre —
+`/objets`, la recherche d'objets, les recettes de `/crafts`, la provenance — et rien d'autre.
+Son rang reste RECRUE : il ne figure dans aucune liste de la guilde, sauf la catégorie
+repliée « Amis (hors guilde) » de Membres & builds (`/api/admin/users` renvoie `amis` à
+part). Le réglage (rôles, espaces) est dans Bras droits → Outils → **Accès des amis**
+(`/acces-amis`, `Setting` `acces_amis`, écriture Vanguard et plus). Une seule décision,
+`peutOuvrir` (`src/config/nav.ts`), lue par le middleware (espaces du jeton, `token.amis`,
+calculés dans le callback `jwt`), la barre et les gardes `requireEspace` / `apiEspace`
+(`src/lib/access.ts`) ; la règle de l'ami est dans `src/config/amis.ts`. Le bot relit les
+rôles Discord de chaque compte toutes les 10 minutes.
 
-Deux natures, deux façons d'y répondre — et l'écran le dit avant qu'on ouvre :
+**L'accueil unique** (`/`) a trois visages, choisis côté serveur avec le rang en base
+(`etatVisiteur()`) : **visiteur** (hero, le jeu, ce que le site fait, les huit classes,
+la guilde, rejoindre), **membre** (bandeau, À faire, Mes outils, La guilde cherche, Mes
+personnages, Les classes de la guilde, la guilde) et **bras droit** (le même, avec « À
+traiter » en tête). La section « La guilde » (`#la-guilde`, ex-`/histoire`) est affichée
+en entier pour tout le monde ; seul le plan du site est replié. Le HTML ne porte aucune
+donnée de membre : les blocs du membre lisent `GET /api/accueil` (`src/lib/accueil.ts`,
+garde `apiGuild`) et `GET /api/admin/a-traiter`. `/histoire` redirige vers `/#la-guilde`
+(308) et `/dashboard` vers `/` (307).
 
-```mermaid
-flowchart TD
-    A["🛒 Boutique — panier"] -->|"origine: achat"| D
-    B["📦 Objet sur mesure"] -->|"origine: requête"| D
-    D["Demande + conversation"] --> E{"Quelqu'un l'a<br/>au coffre ?"}
-
-    E -->|"oui"| F["Les détenteurs se coordonnent<br/>onglet « Entre nous »"]
-    E -->|"non"| G["🎯 Quête de guilde<br/>plusieurs membres contribuent"]
-
-    F --> H["Un détenteur prend la commande"]
-    H --> I["🔒 L'objet SORT du coffre<br/>et lui est réservé"]
-    I --> J["Négociation du prix<br/>puis rendez-vous"]
-    J --> K["✅ Échange fait"]
-    I -.->|"se désiste / demande abandonnée"| L["↩️ Retour au coffre<br/>dans sa rangée exacte"]
-
-    G --> M["Contributions annoncées<br/>puis confirmées"]
-    M --> K
-```
-
-**Pourquoi l'objet sort du coffre dès la prise** : c'est le détenteur qui conclut.
-Tant que l'objet y restait, la boutique le montrait disponible et un second
-acheteur pouvait se le faire promettre. Chaque mouvement laisse une ligne en
-français dans la conversation.
-
-Le prix suit le même principe : **le vendeur annonce son tarif en premier**, une
-seule offre est active à la fois, un refus est explicite, et il y a un délai de
-5 min entre deux propositions. Le paiement se fait en **périns**, en **Airpoints**
-ou dans les deux — l'acheteur annonce ce qu'il peut sortir dès la demande.
+Hors espaces : **Accueil**, **Postuler** (bouton à droite, masqué aux membres),
+**Mon profil** (par le panneau du profil), **Connexion**.
 
 ---
 
@@ -134,68 +147,33 @@ flowchart LR
 
 ---
 
-## 🏦 Coffre, crafts et base des objets
+## 🏛️ Information Guilde
 
-Le stock réel vit dans l'**AirGuild** (`public/airguild/`), coffre par membre.
-Trois onglets, trois rôles :
+La page des **membres**, tout-en-un (`/guilde`, la première ligne du menu Guilde, et
+celle où un membre arrive après la connexion) : le récap (membres, classes
+représentées, prochaine Chambre Secrète, absents du jour — les noms seulement —,
+stuffs mesurés), **qui est qui** (rang, nom Discord et identifiant à copier, persos
+et chiffres déclarés, le build seulement s'il a été partagé), les classes de la
+guilde, le **recensement** (ex-`/recensement`, qui y redirige), le suivi des
+mesures, et « La guilde » en entier. Une seule route, `GET /api/guilde`
+(`src/lib/guilde.ts`), qui ne rend que ce qui s'affiche : rien d'interne, aucun
+membre caché (`User.cacheLe`).
 
-```mermaid
-flowchart LR
-    S["⚙️ Base des objets<br/>(la source)"] --> C["🔨 Crafts<br/>(recettes)"]
-    S --> B["🏦 Coffre<br/>(stock par membre)"]
-    B --> C
-    C --> F["🌱 Plan de farm<br/>(ce qui manque au seuil)"]
-    B --> BQ["🛒 Boutique"]
-    S --> BQ
-```
-
-Un ingrédient de recette **désigne** un objet de la base par son identifiant : il
-ne le décrit pas. Son nom, son icône et son unité se lisent sur la base et la
-suivent. Un objet qui manque s'ajoute **à la base**, jamais dans la recette.
-
----
-
-## 🎯 Quête Guilde
-
-Ce qu'un membre demande dans « Mes requêtes » devient une **quête principale**
-que toute la guilde voit et peut prendre à plusieurs. Chacun annonce ce qu'il
-apporte (personne ne farme deux fois la même chose), le demandeur confirme à la
-réception.
-
-Une requête d'objet que personne n'a au coffre peut basculer en quête d'un clic —
-et les deux restent reliées : **« Suivre dans les quêtes → »** depuis la
-conversation, **« Requête objet → »** depuis la quête.
-
----
-
-## 👤 La fiche d'un membre
-
-Partout où un pseudo s'affiche, il se clique. La fiche dit depuis quand il est
-là, son rang, ses personnages (cliquables → build en **lecture seule**), et
-surtout son bilan :
-
-| Ce qu'il a acheté | Ce qu'il a demandé | Ce qu'il a rendu |
-|---|---|---|
-| boutique, avec les statuts | requêtes objet + quêtes ouvertes | quêtes aidées, objets fournis |
-
-Le volet marchand (ventes conclues, périns et Airpoints encaissés, engagements en
-cours, achats à crédit) est **réservé au staff** — le serveur ne l'envoie même
-pas aux autres.
+Quête Guilde a quitté le site le 2026-10-21 : `/quetes` mène ici, ses lignes
+(`Quete`, `QueteContribution`) restent en base.
 
 ---
 
 ## 🤖 Le bot
 
-**14 commandes slash** et surtout des **automatismes** :
+**9 commandes slash** et surtout des **automatismes** :
 
-- **Salon décisions** : chaque candidature ou demande arrive en embed avec des
+- **Salon décisions** : chaque candidature arrive en embed avec des
   boutons — le staff décide **en 1 clic**, le membre est prévenu **en message
   privé**, tout est journalisé.
 - **Rappels** : Chambres Secrètes de la veille avec l'effectif manquant,
   candidatures en attente, événements du jeu (configurés depuis le site, sans
   redémarrage).
-- **Salon des ventes** : chaque demande d'objet est annoncée aux détenteurs, et
-  l'annonce se met à jour quand quelqu'un la prend.
 - **Rôles en self-service** : panneau de classes à boutons, bouton-rôles,
   rôle-réactions. **Giveaways** avec tirage et clôture automatiques.
 
@@ -236,10 +214,10 @@ flowchart LR
 
 | Niveau | Rôles Discord | Ce qu'il ouvre |
 |---|---|---|
-| **Public** | tout le monde | Accueil, Le jeu, Boutique (parcourir), candidature |
-| **Vérifié** | membre du serveur Discord | Builder, partage de build |
-| **Membre** | 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard | Jouer, Quête Guilde, demandes |
-| **Staff** | 👑 Vanguard · 🧭 Général · 🔥 Officier | Coffre, Guilde, décisions |
+| **Public** | tout le monde | Accueil, Le jeu, AirBuilder, Crafts (parcourir), candidature |
+| **Vérifié** | membre du serveur Discord | Builder d'un autre, partage de build |
+| **Membre** | 👑 Vanguard · 🧭 Général · 🔥 Officier · 📋 Vétéran · ⚔️ Guard | Jouer, Information Guilde, absences |
+| **Staff** | 👑 Vanguard · 🧭 Général · 🔥 Officier | Bras droits, décisions |
 
 Le gating est fait **côté serveur** (middleware → layouts → API). Masquer un
 bouton ne suffit jamais : l'API revérifie.
@@ -251,22 +229,17 @@ bouton ne suffit jamais : l'API revérifie.
 ```mermaid
 erDiagram
     User ||--o{ Character : "possède"
-    User ||--o{ BankRequest : "demande"
-    User ||--o{ OffreVente : "propose"
-    User ||--o{ Quete : "ouvre"
-    User ||--o{ QueteContribution : "apporte"
-    BankRequest ||--o{ RequestMessage : "conversation"
-    BankRequest ||--o{ OffreVente : "reçoit"
-    BankRequest }o--o| Quete : "peut devenir"
-    Quete ||--o{ QueteContribution : "reçoit"
-    AirGuildState ||--|| Coffre : "blob JSON"
+    User ||--o{ Absence : "déclare"
     CompositionState ||--|| Compositions : "blob JSON"
 ```
 
-Deux états vivent en **blob JSON** partagé plutôt qu'en tables : le coffre
-(`AirGuildState`) et les compositions (`CompositionState`). C'est ce qui permet
-aux applications embarquées de les manipuler telles quelles — au prix d'une
-règle stricte : on ne PUT jamais un état partiel, l'écriture remplace tout.
+Les compositions vivent en **blob JSON** partagé (`CompositionState`) plutôt
+qu'en tables. C'est ce qui permet à l'application embarquée de les manipuler
+telles quelles — au prix d'une règle stricte : on ne PUT jamais un état partiel,
+l'écriture remplace tout. Les modèles de la Boutique (`BankRequest`, `OffreVente`,
+`RequestMessage`, `BankTransaction`, `Debt`…), de l'ancien coffre (`AirGuildState`) et
+de Quête Guilde (`Quete`, `QueteContribution`) restent dans le schéma, sans plus aucune
+page ni route.
 
 ---
 
@@ -279,8 +252,8 @@ règle stricte : on ne PUT jamais un état partiel, l'écriture remplace tout.
 **Design** — thème sombre, charte orange/noir. Polices auto-hébergées **Rubik**
 (titres) · **Athiti** (corps) · **Alef** (accents).
 
-Les deux gros éditeurs (**AirBuilder** et **AirGuild**) sont des applications
-JavaScript embarquées dans `public/`, branchées à la base via les routes API.
+Le gros éditeur (**AirBuilder**) est une application JavaScript embarquée dans
+`public/`, branchée à la base via les routes API.
 
 ---
 
@@ -308,7 +281,7 @@ sinon le client Prisma en mémoire ignore les nouveaux champs et répond 500.
 
 ### Écrire dans un état partagé
 
-`AirGuildState` et `CompositionState` sont remplacés **en bloc**. Lire d'abord,
+`CompositionState` est remplacé **en bloc**. Lire d'abord,
 écrire ensuite, et ne jamais envoyer un état qu'on n'a pas fini de charger : une
 composition entière s'est déjà perdue comme ça (protections en place depuis).
 
@@ -326,7 +299,7 @@ cp .env.example .env        # puis remplis les valeurs
 # 3) Base de données (PostgreSQL via Docker, port hôte 5434)
 docker compose up -d
 npm run db:push
-npm run db:seed             # (optionnel) données du coffre
+npm run db:seed             # (optionnel) données de départ
 
 # 4) Le site
 npm run dev                 # → http://localhost:3000
@@ -338,6 +311,9 @@ npm run bot
 
 > 💡 **Mode dev** : `DEV_ALL_ACCESS=1` + `NEXT_PUBLIC_DEV_ALL_ACCESS=1` simulent un
 > compte Direction sans connexion Discord. **Jamais en production.**
+> `DEV_ROLE=GUARD` (ou `VISITEUR`, `AMI`, `RECRUE`, `OFFICIER`…) montre la barre de ce rôle,
+> après redémarrage ; les pages restent ouvertes par DEV_ALL. `AMI` : un compte hors guilde
+> avec le rôle Friend (réglage par défaut).
 
 ---
 
@@ -349,9 +325,9 @@ npm run bot
 | Site | `NEXTAUTH_URL` · `NEXTAUTH_SECRET` | URL publique + secret de session |
 | OAuth | `DISCORD_CLIENT_ID` · `DISCORD_CLIENT_SECRET` | Application Discord |
 | Bot | `DISCORD_BOT_TOKEN` · `DISCORD_GUILD_ID` | Token + id du serveur |
-| Salons | `CHANNEL_DECISION` · `CHANNEL_CANDIDATURES` · `CHANNEL_STAFF` · `CHANNEL_EVENTS` · `CHANNEL_VENTES` · `CHANNEL_EXCHANGE_CATEGORY` | Où le bot poste |
+| Salons | `CHANNEL_DECISION` · `CHANNEL_CANDIDATURES` · `CHANNEL_STAFF` · `CHANNEL_EVENTS` | Où le bot poste |
 | Rôles | `ROLE_DIRECTION` … `ROLE_GUARD` · `ROLE_CLASSE_*` | Ids des rangs et des 8 classes |
-| Dev | `DEV_ALL_ACCESS` · `NEXT_PUBLIC_DEV_ALL_ACCESS` | Bypass local uniquement |
+| Dev | `DEV_ALL_ACCESS` · `NEXT_PUBLIC_DEV_ALL_ACCESS` · `DEV_ROLE` | Bypass local uniquement · barre d'un autre rôle |
 
 Le détail commenté est dans **`.env.example`** et **`.env.prod.example`**.
 
@@ -361,23 +337,26 @@ Le détail commenté est dans **`.env.example`** et **`.env.prod.example`**.
 
 ```
 src/app/
-  (public)/   histoire · candidature · donjons · astuces · prestige
+  page.tsx    l'accueil, public et neutre (en tête : « Mes personnages » de qui en a)
+  (public)/   candidature · donjons · astuces · prestige · mecaniques
+              builder · personnages (lecture seule, reflet de l'AirBuilder)
+              wiki · classes · monstres · pnj
   (auth)/     login
-  (verified)/ builder (+ /builder/<membre> lecture seule) · build/<lien>
-  (guild)/    personnages · compositions (+ build de référence par poste)
-              quetes · worldboss · absences · dashboard
-  (shop)/     boutique · messages · demandes · dettes · sommaire
-  (admin)/    guildviewer · coffre (AirGuild) · plan-farm · candidatures
-              statistiques · journal · gestion-worldboss · discord
-              annonce · events
-  api/        51 routes (auth, characters, builder-state, compositions,
-              coffre, ventes, bank-request, messages, membres, quetes…)
+  (verified)/ builder/<membre> (lecture seule) · build/<lien>
+  (guild)/    guilde (Information Guilde) · compositions (+ build de référence par
+              poste) · objets · worldboss · absences
+  (shop)/     profil
+  (vitrine)/  crafts · collections (redirige)
+  (admin)/    staff (tout-en-un : file, membres, absences, suivi, candidatures)
+              gestion-worldboss · discord · events
+  api/        43 routes (auth, characters, builder-state, compositions,
+              guilde, recensement…)
 
-src/lib/      ventes · messagerie · compositions · strategie · quetes
-              specsFlyff · monnaies · coffre · xp · discord…
+src/lib/      compositions · strategie · guilde · recensement · recap
+              specsFlyff · discord…
 bot/          commandes, planificateur, salon décisions → bot/README.md
-prisma/       schéma (39 modèles) + seed du coffre
-public/       moteurs AirBuilder & AirGuild (données + icônes)
+prisma/       schéma (42 modèles, Boutique comprise : données conservées)
+public/       moteur AirBuilder (données + icônes)
 ```
 
 Pour l'authentification, les niveaux d'accès et le modèle de données :
@@ -403,8 +382,7 @@ Le guide pas-à-pas (VPS, SSL, redirect OAuth, sauvegardes) : **[`DEPLOY.md`](DE
 - **`.env` n'est jamais versionné** — seuls `.env.example` / `.env.prod.example` le sont.
 - **Régénérer** `DISCORD_CLIENT_SECRET`, `DISCORD_BOT_TOKEN` et `NEXTAUTH_SECRET`
   s'ils ont circulé en clair.
-- Tous les contrôles d'accès sont **serveur**, y compris les quantités du coffre
-  et les messages privés entre détenteurs : ce qui ne doit pas être vu n'est pas
+- Tous les contrôles d'accès sont **serveur** : ce qui ne doit pas être vu n'est pas
   envoyé, pas seulement caché.
 
 ---

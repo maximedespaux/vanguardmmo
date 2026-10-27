@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verif mobile</title>
+<!-- Contrôle de débordement à 390 px, identique pour les trois pistes.
+     La maquette est chargée dans une iframe de 390 px (Chrome sans interface
+     refuse une fenêtre de moins de 500 px) ; le parent inspecte son document.
+     Lancement : outils/verif-mobile.sh (Chrome avec --allow-file-access-from-files).
+     Sortie : le bloc pre#out, lu par --dump-dom. -->
+<style>html,body{margin:0;background:#08080C}iframe{display:block;width:390px;height:1600px;border:0}</style>
+</head><body>
+<iframe id="f" title="maquette"></iframe>
+<pre id="out">pending</pre>
+<script>
+var q = new URLSearchParams(location.search), src = q.get('src'), W = +(q.get('w') || 390);
+var f = document.getElementById('f'); f.style.width = W + 'px'; f.src = src;
+f.addEventListener('load', function () {
+  setTimeout(function () {
+    var out = [], d, win;
+    try { d = f.contentDocument; win = f.contentWindow; } catch (e) { document.getElementById('out').textContent = 'ERR ' + e; return; }
+    var de = d.documentElement, vw = de.clientWidth;
+    out.push('viewport=' + vw + ' scrollWidth=' + de.scrollWidth + ' bodyScrollWidth=' + d.body.scrollWidth + ' height=' + de.scrollHeight);
+    var flagged = 0, clipped = 0;
+    d.querySelectorAll('body *').forEach(function (el) {
+      var cs = win.getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return;
+      var r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      if (r.right > vw + 0.5 || r.left < -0.5) {
+        // l'élément est-il dans un conteneur qui défile ou rogne horizontalement ?
+        // remonte jusqu'au premier ancêtre qui rogne/défile ET tient lui-même dans la page
+        var p = el.parentElement, box = null;
+        while (p && p !== d.body) { var s = win.getComputedStyle(p), pr = p.getBoundingClientRect(); if (s.overflowX !== 'visible' && pr.right <= vw + 0.5 && pr.left >= -0.5) { box = p; break; } p = p.parentElement; }
+        var name = (typeof el.className === 'string' && el.className) ? el.tagName.toLowerCase() + '.' + el.className.trim().split(/\s+/).join('.') : el.tagName.toLowerCase();
+        var txt = (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 40);
+        if (box) {
+          var bs = win.getComputedStyle(box), br = box.getBoundingClientRect();
+          // l'élément déborde de la page mais son conteneur, lui, tient dans la page
+          if (br.right <= vw + 0.5 && br.left >= -0.5) { clipped++; if (clipped <= 12) out.push('[dans conteneur ' + bs.overflowX + ' ' + (box.className || box.tagName) + '] ' + name + ' ' + Math.round(r.left) + '→' + Math.round(r.right) + ' "' + txt + '"'); return; }
+        }
+        flagged++; if (flagged <= 30) out.push('[DEBORDE] ' + name + ' ' + Math.round(r.left) + '→' + Math.round(r.right) + ' "' + txt + '"');
+      }
+    });
+    // textes tronqués par ellipsis (scrollWidth > clientWidth sur un élément à overflow hidden)
+    var ell = 0;
+    d.querySelectorAll('body *').forEach(function (el) {
+      var cs = win.getComputedStyle(el);
+      if (cs.display === 'none') return;
+      if (cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) { ell++; if (ell <= 10) out.push('[ellipsis] ' + (el.className || el.tagName) + ' "' + (el.textContent || '').trim().slice(0, 50) + '"'); }
+    });
+    out.unshift('DEBORDE=' + flagged + ' CONTENU_DANS_DEFILEMENT=' + clipped + ' ELLIPSIS=' + ell);
+    document.getElementById('out').textContent = out.join('\n');
+  }, 1200);
+});
+</script>
+</body></html>

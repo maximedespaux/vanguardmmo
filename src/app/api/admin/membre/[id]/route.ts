@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiRole } from "@/lib/access";
-import { ADMIN_ROLES, rankValue, canAccessAdmin, canAccessGuild } from "@/config/roles";
-import { partager } from "@/lib/quetes";
+import { ADMIN_ROLES, canAccessGuild } from "@/config/roles";
+import { etatStuff, lireMesures, roleDuStuff } from "@/lib/mesures";
+import { droitsSur } from "@/lib/gestes";
 
 /**
  * LE DOSSIER D'UN MEMBRE — tout ce qu'on sait de lui, sur une page.
@@ -10,12 +11,19 @@ import { partager } from "@/lib/quetes";
  * Le GuildViewer listait des personnages et des builds. C'est ce qu'on regarde
  * quand on prépare une soirée. Ce n'est pas ce qu'on regarde quand on se
  * demande s'il faut sortir quelqu'un de la guilde : là, il faut ses absences,
- * ce qu'il a fourni, depuis quand il ne s'est plus connecté, et ce qui a déjà
- * été décidé à son sujet. Ces réponses étaient éparpillées sur cinq pages, ou
- * nulle part.
+ * depuis quand il ne s'est plus connecté, et ce qui a déjà été décidé à son
+ * sujet. (Ses ventes, ses commandes et son coffre y figuraient aussi ; ils sont
+ * partis avec la Boutique et l'AirGuild, le 2026-10-21 — et ce qu'il avait apporté
+ * aux quêtes, avec Quête Guilde, le même jour. Leurs lignes restent en base.) Ces
+ * réponses étaient éparpillées sur cinq pages, ou nulle part.
  *
  * Tout est en LECTURE ici : c'est un dossier, pas un formulaire. Agir passe par
- * /api/admin/moderation, qui exige un motif.
+ * /api/admin/moderation, qui exige un motif ; écrire une note, par ./notes.
+ *
+ * LES NOTES INTERNES (onglet « Notes », SPEC-INFORMATION-GUILDE §4) ne partent que si le
+ * demandeur a le droit de les lire — la règle des gestes, un rang strictement inférieur
+ * au sien (lib/gestes.ts) : sinon la liste n'est pas même lue en base. Un bras droit qui
+ * ouvre son propre dossier, ou celui d'un égal, n'en reçoit donc aucune.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const a = await apiRole(ADMIN_ROLES);
@@ -27,74 +35,38 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     include: {
       characters: { include: { gearProfiles: true, specializations: true }, orderBy: [{ isMain: "desc" }, { createdAt: "asc" }] },
       absences: { orderBy: { startDate: "desc" }, take: 40 },
-      _count: { select: { absences: true, snapshots: true, contributions: true } },
+      _count: { select: { absences: true, snapshots: true } },
     },
   });
   if (!u) return NextResponse.json({ error: "Membre introuvable." }, { status: 404 });
 
-  const [roles, decisions, ventes, demandes, contributions, coffreRow] = await Promise.all([
+  const droits = droitsSur(a.user, u);
+  const [roles, decisions, notes] = await Promise.all([
     // Ses rôles Discord, PAR LEUR NOM. Sans ce cache le site n'a que des
     // identifiants bruts, et « retirer 1498321781721661571 » ne se propose pas.
     u.discordRoles.length
       ? prisma.guildRole.findMany({ where: { id: { in: u.discordRoles } }, orderBy: { position: "desc" } })
       : Promise.resolve([]),
     prisma.actionMembre.findMany({ where: { discordId: u.discordId }, orderBy: { createdAt: "desc" }, take: 30 }),
-    prisma.offreVente.findMany({
-      where: { userId: u.id, statut: "retenue" },
-      select: { id: true, prix: true, prixAp: true, createdAt: true, request: { select: { item: true, quantity: true, status: true, username: true } } },
-      orderBy: { createdAt: "desc" }, take: 30,
-    }),
-    prisma.bankRequest.findMany({
-      where: { userId: u.id },
-      select: { id: true, item: true, quantity: true, status: true, kind: true, createdAt: true },
-      orderBy: { createdAt: "desc" }, take: 30,
-    }),
-    prisma.queteContribution.findMany({
-      where: { userId: u.id },
-      select: { id: true, quantite: true, statut: true, createdAt: true, quete: { select: { id: true, titre: true, quantite: true, contributions: { select: { id: true, quantite: true, statut: true } } } } },
-      orderBy: { createdAt: "desc" }, take: 30,
-    }),
-    prisma.airGuildState.findUnique({ where: { id: "main" } }),
+    droits.notes
+      ? prisma.noteMembre.findMany({ where: { discordId: u.discordId }, orderBy: { createdAt: "desc" }, take: 100 })
+      : Promise.resolve(null),
   ]);
-
-  /* Le coffre qui lui est attribué. L'AirGuild garde ça dans son blob, sous
-     `owners` : nom du coffre → identifiant Discord. On le lit à l'envers. */
-  const blob = (coffreRow?.data ?? {}) as { owners?: Record<string, string>; inv?: Record<string, Record<string, number>>; members?: string[] };
-  const monCoffre = Object.entries(blob.owners ?? {}).find(([, did]) => did === u.discordId)?.[0] ?? null;
-  const objetsAuCoffre = monCoffre ? Object.values(blob.inv?.[monCoffre] ?? {}).reduce((s, n) => s + (Number(n) || 0), 0) : 0;
-  // Les coffres existants, avec qui les tient : on ne propose d'en ouvrir un
-  // que parmi ceux qui existent, et on montre lesquels sont déjà pris.
-  const coffres = (blob.members ?? []).map((nom) => ({ nom, tenuPar: (blob.owners ?? {})[nom] ?? null }));
-
-  /* Ce que la guilde lui doit sur les commandes farmées à plusieurs — même
-     calcul que « Mes ventes », pour que les deux pages ne se contredisent pas. */
-  const idsQuetes = [...new Set(contributions.map((c) => c.quete?.id).filter(Boolean) as string[])];
-  const tarifs = idsQuetes.length
-    ? await prisma.bankRequest.findMany({ where: { queteId: { in: idsQuetes } }, select: { queteId: true, priceEach: true, prixFinal: true, quantity: true } })
-    : [];
-  const cagnotteDe = (queteId: string) => {
-    const d = tarifs.find((t) => t.queteId === queteId);
-    if (!d) return 0;
-    if (d.prixFinal != null) return Number(d.prixFinal);
-    return d.priceEach ? d.priceEach * Math.max(1, d.quantity || 1) : 0;
-  };
-  let partsAcquises = 0;
-  for (const qid of idsQuetes) {
-    const q = contributions.find((c) => c.quete?.id === qid)?.quete;
-    const cagnotte = cagnotteDe(qid);
-    if (!q || !cagnotte) continue;
-    const confirmes = q.contributions.filter((c) => c.statut === "confirme");
-    const repartition = partager(cagnotte, confirmes.map((c) => ({ id: c.id, quantite: c.quantite })));
-    for (const c of contributions.filter((x) => x.quete?.id === qid && x.statut === "confirme")) partsAcquises += repartition[c.id] ?? 0;
-  }
 
   const jours = (d: Date | null) => (d ? Math.floor((Date.now() - d.getTime()) / 86_400_000) : null);
   const now = new Date();
+  /* Une absence est un JOUR stocké à minuit UTC, bornes comprises — la règle de /staff
+     (lib/recap.ts). Comparée à l'instant, elle n'était plus « en cours » dès 1 h du
+     matin de son dernier jour, alors que la file la comptait encore. */
+  const auj = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const jourDe = (d: Date) => d.toISOString().slice(0, 10);
 
   return NextResponse.json({
     identite: {
       id: u.id, discordId: u.discordId, username: u.username, avatar: u.avatar,
       role: u.role, isActive: u.isActive,
+      // Caché par un bras droit (geste « Cacher ») : depuis quand. Null s'il est visible.
+      cacheLe: u.cacheLe?.toISOString() ?? null,
       pseudoJeu: u.characters.find((c) => c.isMain)?.name ?? u.characters[0]?.name ?? null,
       verifiedAt: u.verifiedAt?.toISOString() ?? null,
       lastSeenAt: u.lastSeenAt?.toISOString() ?? null,
@@ -102,34 +74,36 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       inscritDepuis: jours(u.createdAt),
       createdAt: u.createdAt.toISOString(),
     },
-    // On dit ce que le demandeur a le droit de faire : masquer les gestes
-    // interdits vaut mieux que les afficher pour les refuser au clic.
-    peutModerer: rankValue(a.user.role) >= rankValue("VANGUARD") && a.user.id !== u.id && rankValue(a.user.role) > rankValue(u.role),
+    // On dit ce que le demandeur a le droit de faire, geste par geste, et POURQUOI pas :
+    // le dossier grise le bouton avec la raison, la route refait le même calcul.
+    droits,
+    // Le geste « retirer de la guilde » se grise sur quelqu'un qui n'en est déjà pas.
+    deLaGuilde: canAccessGuild(u.role),
     rolesDiscord: roles.map((r) => ({ id: r.id, name: r.name, color: r.color, managed: r.managed, position: r.position })),
     personnages: u.characters.map((c) => ({
       id: c.id, name: c.name, class: c.class, level: c.level, prestige: c.prestige, isMain: c.isMain, sex: c.sex,
-      stuffs: c.gearProfiles.map((g) => ({ id: g.id, name: g.name, mode: g.mode, weaponRarity: g.weaponRarity, hp: g.hp, attack: g.attack, defense: g.defense })),
+      // Les mesures de l'AirBuilder, avec leur état : c'est ce que le staff compare
+      // pour composer, et le dossier doit dire aussi ce qui MANQUE.
+      stuffs: c.gearProfiles.map((g) => {
+        const m = lireMesures(g.mesures);
+        return {
+          id: g.id, name: g.name, mode: g.mode, weaponRarity: g.weaponRarity, hp: g.hp, attack: g.attack, defense: g.defense,
+          etat: etatStuff(g, now.getTime()), role: roleDuStuff(g.name, c.class, m), mesures: m,
+        };
+      }),
       specialisations: c.specializations.map((s) => ({ type: s.type, score: s.score })),
     })),
     absences: u.absences.map((x) => ({
       id: x.id, debut: x.startDate.toISOString(), fin: x.endDate.toISOString(), motif: x.reason,
-      statut: x.status, enCours: x.startDate <= now && x.endDate >= now,
+      statut: x.status, enCours: jourDe(x.startDate) <= auj && jourDe(x.endDate) >= auj,
       jours: Math.max(1, Math.round((x.endDate.getTime() - x.startDate.getTime()) / 86_400_000) + 1),
     })),
-    economie: {
-      ventes: ventes.map((v) => ({ id: v.id, item: v.request?.item ?? "objet", quantite: v.request?.quantity ?? 1, pour: v.request?.username ?? "", perins: Number(v.prix ?? 0), airpoints: Number(v.prixAp ?? 0), remis: v.request?.status === "REMIS", date: v.createdAt.toISOString() })),
-      demandes: demandes.map((d) => ({ id: d.id, item: d.item, quantite: d.quantity, statut: d.status, genre: d.kind, date: d.createdAt.toISOString() })),
-      contributions: contributions.map((c) => ({ id: c.id, quete: c.quete?.titre ?? "", quantite: c.quantite, statut: c.statut, date: c.createdAt.toISOString() })),
-      partsAcquises,
-    },
-    // `peutOuvrir` : le coffre est une page du staff. Sur un membre qui n'y a
-    // pas accès, le geste s'affiche grisé avec sa raison — plutôt que d'ouvrir
-    // un coffre dont il ne verra jamais la porte.
-    coffre: { nom: monCoffre, objets: objetsAuCoffre, tous: coffres, peutOuvrir: canAccessAdmin(u.role), deLaGuilde: canAccessGuild(u.role) },
     decisions: decisions.map((d) => ({
       id: d.id, action: d.action, detail: d.detail, motif: d.motif, auteur: d.auteur,
       statut: d.statut, resultat: d.resultat, date: d.createdAt.toISOString(),
     })),
-    compteurs: { absences: u._count.absences, versions: u._count.snapshots, contributions: u._count.contributions },
+    // `null` : pas le droit de les lire (et non « aucune note »).
+    notes: notes?.map((n) => ({ id: n.id, ton: n.ton, texte: n.texte, auteur: n.auteur, date: n.createdAt.toISOString() })) ?? null,
+    compteurs: { absences: u._count.absences, versions: u._count.snapshots },
   });
 }

@@ -88,27 +88,40 @@ enum CoffreCategory {
 
 // ─── UTILISATEUR (1 compte Discord = 1 User) ────────────────
 model User {
-  id           String     @id @default(cuid())
-  discordId    String     @unique // identité partagée avec le bot
-  username     String // pseudo Discord
-  avatar       String? // hash avatar Discord
-  role         Role       @default(RECRUE) // plus haut rôle, synchronisé depuis Discord à la connexion
+  id             String     @id @default(cuid())
+  discordId      String     @unique // identité partagée avec le bot
+  username       String // pseudo Discord
+  avatar         String? // hash avatar Discord
+  role           Role       @default(RECRUE) // plus haut rôle, synchronisé depuis Discord à la connexion
   /// Date de la 1re connexion constatée en tant que membre du serveur Discord.
   /// Sert de niveau d'accès intermédiaire (candidat) : voir canAccessVerified.
-  verifiedAt   DateTime?
+  verifiedAt     DateTime?
   /// Dernier signe de vie sur le site, rafraîchi au plus une fois par tranche de
   /// quelques minutes. Sert à dire « en ligne » dans la messagerie : sans Discord,
   /// on ne sait plus si l'autre partie est devant son écran, et on attend une
   /// réponse qui ne viendra pas avant demain.
-  lastSeenAt   DateTime?
-  prefs        UserPref[]
-  discordRoles String[]   @default([]) // IDs bruts des rôles Discord (gating fin)
-  isActive     Boolean    @default(true)
-  builderBlob  Json? // état complet du Stuff Builder (sync cross-device)
-  shareId      String? // lien de partage du build (comme DofusBook) — unique généré côté code
-  sharePublic  Boolean    @default(false) // le build est-il visible publiquement via shareId ?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  lastSeenAt     DateTime?
+  prefs          UserPref[]
+  discordRoles   String[]   @default([]) // IDs bruts des rôles Discord (gating fin)
+  isActive       Boolean    @default(true)
+  builderBlob    Json? // état complet du Stuff Builder (sync cross-device)
+  shareId        String? // lien de partage du build (comme DofusBook) — unique généré côté code
+  sharePublic    Boolean    @default(false) // le build est-il visible publiquement via shareId ?
+  /// Les persos que le membre montre lui-même dans Information Guilde (« Visible dans
+  /// Information Guilde », une case par perso de la fenêtre « Partager » de l'AirBuilder —
+  /// SPEC-INFORMATION-GUILDE §5). Par leur NOM, coupé à 40 signes comme la synchro le
+  /// range : les persos sont effacés et recréés à chaque publication (/api/characters/sync),
+  /// leurs identifiants ne survivent pas. Un perso renommé n'est plus partagé — on ferme
+  /// plutôt que de deviner. Indépendant de `sharePublic` (le lien qu'on donne à la main).
+  persosPartages String[]   @default([])
+  /// CACHÉ par un bras droit (geste « Cacher » du dossier, SPEC-INFORMATION-GUILDE §4) :
+  /// le membre disparaît d'Information Guilde et des listes de la guilde que lisent les
+  /// membres, sans que rien change sur Discord. Null = visible ; le remettre à null,
+  /// c'est « Montrer de nouveau ». Une date plutôt qu'un booléen : « caché depuis quand »
+  /// se lit sans fouiller le journal. Le motif et l'auteur vont dans `ActionMembre`.
+  cacheLe        DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   characters    Character[]
   absences      Absence[]
@@ -168,6 +181,11 @@ model GearProfile {
   pets            Json? // { familier, ramasseur }
   cards           Json? // cartes additionnelles
   stats           Json? // stats brutes calculées par le builder (totals)
+  // Mesures déclarées dans l'AirBuilder, OBLIGATOIRES par stuff : rôle (dps /
+  // offtank / tank), dégâts sur le totem de l'Oasis ou PV, poudres, buffs Ipuli /
+  // World Boss, conditions (perles, consommables, meubles), et `complet`.
+  // Nullable : les stuffs synchronisés avant n'en ont pas (cf. renderMesures).
+  mesures         Json?
   hp              Int       @default(0)
   attack          Int       @default(0)
   defense         Int       @default(0)
@@ -640,7 +658,7 @@ model ActionMembre {
   id        String    @id @default(cuid())
   discordId String // cible
   pseudo    String // son pseudo au moment des faits
-  action    String // "role" | "guilde" | "kick" | "ban" | "coffre"
+  action    String // "role" | "guilde" | "kick" | "ban" | "coffre" | "promouvoir" | "retrograder" | "cacher" | "montrer"
   detail    String? // ce qui a été touché (nom du rôle, nom du coffre…)
   motif     String // OBLIGATOIRE
   auteur    String // pseudo de qui l'a décidé
@@ -652,6 +670,29 @@ model ActionMembre {
 
   @@index([discordId, createdAt])
   @@index([createdAt])
+}
+
+/// LES NOTES INTERNES d'un dossier — l'onglet « Notes » (SPEC-INFORMATION-GUILDE §4 ;
+/// Maxime : « un espace notation pour savoir s'il y a eu des problèmes ou autre
+/// (interne) »). Datées, signées, avec un ton. Lues et écrites par les quatre rangs bras
+/// droits, et seulement sur un rang STRICTEMENT inférieur au sien (lib/gestes.ts,
+/// `peutAgirSur`) : personne ne lit donc jamais les notes qui le concernent. Aucune route
+/// ne les montre ailleurs que dans le dossier.
+///
+/// Rattachées au discordId comme `ActionMembre`, pas à User : un compte effacé (un banni,
+/// un départ) garde son dossier. Ni modification ni suppression : c'est un journal, on
+/// le complète d'une note de plus.
+model NoteMembre {
+  id        String   @id @default(cuid())
+  discordId String // le membre noté
+  pseudo    String // son pseudo au moment de la note
+  ton       String   @default("neutre") // "probleme" | "effort" | "neutre"
+  texte     String
+  auteur    String // pseudo de qui l'a écrite
+  auteurId  String
+  createdAt DateTime @default(now())
+
+  @@index([discordId, createdAt])
 }
 
 // ─── BANQUE — requête d'objet (Phase 3) ─────────────────────
@@ -1043,6 +1084,122 @@ model RequestRead {
 model PageReglages {
   page      String   @id
   data      Json
+  parQui    String?
+  updatedAt DateTime @updatedAt
+}
+
+// ─── LES SÉANCES DES ÉVÉNEMENTS DE GUILDE (SPEC-CHAMBRES-RECENSEMENT §5.1, lot 2) ─────
+// Quatre modèles NEUFS, posés d'un coup pour n'avoir qu'un `db push` : aucune colonne
+// existante n'est touchée et `User` n'a ni champ ni relation de plus. `userId` et
+// `auteurId` sont de simples chaînes, comme `ActionMembre.discordId` : le nom d'un joueur
+// parti reste lisible dans l'historique.
+
+/// Une séance d'un événement de guilde : Chambre Secrète ("cs") ou Guild Siege ("gs").
+/// Créée au premier geste (clôture, annulation, et aux lots suivants panneau, rappel,
+/// répartition, chrono, débrief) — jamais à la lecture.
+model SeanceGuilde {
+  id              String    @id @default(cuid())
+  /// "cs_2026-10-21_mer" | "gs_2026-10-24_sam2100" — clé lisible, utilisée dans les URL et par le bot.
+  cle             String    @unique
+  evenement       String // "cs" | "gs"
+  date            String // "2026-10-21", jour de Paris
+  creneau         String // "mer" | "dim" | id de créneau GS ("sam2100")
+  /// Instant du début (21 h à Paris pour une Chambre) : tri, rappels, « commencée depuis moins de 6 h ».
+  debut           DateTime
+  /// Séance annulée (jeu indisponible ce soir-là) : plus aucun rappel, panneau fermé.
+  annulee         Boolean   @default(false)
+  annuleePar      String?
+  /// Le motif dit aux membres (M8), 200 signes au plus. Ajouté à la spec : le §6 (route 10)
+  /// le reçoit, et le §5.1 n'avait nulle part où le ranger.
+  motifAnnulation String?
+  /// Verrou optimiste : chaque écriture fait version = version + 1 (§5.4).
+  version         Int       @default(0)
+  /// CS : { salles: { s1: "kaelis" }, jumeaux: { kaelis: "rouge_mag" }, demandes: [] }
+  repartition     Json?
+  /// Instantané figé au 1er chrono ou à la 1re note : { etapes: Etape[], phases: { "1": "…" } }
+  etapes          Json?
+  /// { debut: ms|null, fins: ms[], par: string, fini: boolean }
+  chrono          Json?
+  /// { "1.1": { statut, chrono, remarque }, … } ; GS sans étapes : {}
+  debrief         Json?
+  resultat        String? // "gagne" | "perdu"
+  aRetenir        String?
+  debriefPar      String?
+  debriefPublieAt DateTime?
+  /// Lien du message Discord du débrief (jump URL), écrit par le bot.
+  debriefLien     String?
+  /// Messages Discord vivants de la séance : { panneau: {canal, id}, places: {…}, jour: {…}, recap: {…}, chrono: {…} }
+  messages        Json?
+  /// Marqueurs d'envoi des rappels, par id de rappel : { "veille": ms, "places_1": ms, … }
+  rappels         Json?
+  clotureAt       DateTime?
+  cloturePar      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  participants SeanceParticipant[]
+  videos       SeanceVideo[]
+
+  @@index([evenement, date])
+}
+
+/// Qui jouait. CS : une ligne par personnage, écrite à la CLÔTURE (les annonces vivent dans
+/// CompositionState). GS : une ligne par annonce « Je viens », complétée à la clôture.
+model SeanceParticipant {
+  id        String       @id @default(cuid())
+  seanceId  String
+  seance    SeanceGuilde @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+  pseudo    String // personnage joué, tel qu'affiché
+  classe    String // clé de slots.ts
+  player    String // Presence.player de l'annonce : le User.username du jour de la connexion
+  userId    String? // User.id résolu par le nom du personnage (null si introuvable)
+  slotId    String?
+  /// GS : moment de l'annonce. CS : null.
+  annonceAt DateTime?
+  /// null = annoncé, séance pas encore clôturée (GS) ; true / false = constaté à la clôture.
+  present   Boolean?
+  /// { poste, role: "tank" | "mag" | "phy", chiffres: [...] (DÉCLARÉS, datés), salles, jumeau }
+  details   Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([seanceId, pseudo])
+  @@index([userId])
+}
+
+/// Une vidéo jointe au débrief : un lien externe, ou un fichier court (lot 8). Envoyée par le
+/// staff seulement (décision de Maxime du 2026-10-21), regardée par les membres.
+model SeanceVideo {
+  id        String       @id @default(cuid())
+  seanceId  String
+  seance    SeanceGuilde @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+  etape     String? // code de l'étape ("2.2") ; null = toute la séance
+  moment    Int? // secondes dans la vidéo, où sauter
+  titre     String // ≤ 120 : « Aggro ratée sur Kraavos »
+  type      String // "lien" | "fichier"
+  source    String? // "youtube" | "twitch" | "medal" | "discord" | "autre" (pour un lien)
+  url       String? // le lien d'origine, normalisé (pour un lien)
+  fichier   String? // "<id>.mp4" | "<id>.webm", sur le volume (pour un fichier)
+  mime      String? // "video/mp4" | "video/webm"
+  taille    Int? // octets
+  statut    String       @default("pret") // "envoi" (fichier en cours d'envoi) | "pret"
+  auteurId  String // User.id
+  auteur    String // pseudo affiché
+  createdAt DateTime     @default(now())
+
+  @@index([seanceId])
+  @@index([statut, createdAt])
+}
+
+/// LE PARAMÉTRAGE D'UN ÉVÉNEMENT (§9) : un document par événement ("cs", "gs"), lu par le site
+/// ET par le bot. Versionné et signé : un rappel @everyone mal réglé part chez toute la guilde.
+/// `data` ne garde que les clés qui DIFFÈRENT du défaut écrit dans le code (lib/evenements.ts) :
+/// écrire le document entier figerait les défauts, et une phrase corrigée plus tard dans le
+/// code ne s'appliquerait jamais.
+model ParametresEvenement {
+  id        String   @id // "cs" | "gs"
+  data      Json
+  version   Int      @default(0)
   parQui    String?
   updatedAt DateTime @updatedAt
 }

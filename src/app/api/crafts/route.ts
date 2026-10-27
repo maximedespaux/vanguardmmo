@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import { apiGuild } from "@/lib/access";
+import { apiEspace } from "@/lib/access";
 
 /**
  * LES CRAFTS ET LES PNJ D'ÉCHANGE — la donnée derrière /crafts.
@@ -10,7 +10,7 @@ import { apiGuild } from "@/lib/access";
  * partirait dans le paquet JS de la page) et trop pour un fetch direct (le
  * navigateur téléchargerait tout pour afficher une recette). On le lit donc ici,
  * une seule fois, et on garde l'index en mémoire — même approche que
- * /api/ou-trouver et src/lib/ouFarmer.ts.
+ * /api/ou-trouver.
  *
  * Le fichier est dans `public/`, donc lisible sans passer par ce garde si on
  * connaît l'adresse. Ce n'est pas grave : ce sont les données du client du jeu,
@@ -75,7 +75,10 @@ const MAISON = new Set(["masques", "mantras", "buffs", "couturier", "materiaux"]
 const COMPTOIRS = new Set(["gvg", "jetons-guilde", "colisee", "flyshop", "fragments", "coupang", "yggdrasil"]);
 
 export async function GET(req: Request) {
-  const a = await apiGuild();
+  /* /crafts est une page d'Astuces : la guilde, ou un ami à qui le rôle Friend ouvre cet
+     espace (SPEC-INFORMATION-GUILDE §9, lib/access.ts `apiEspace`). Un visiteur ou un
+     candidat reste refusé, comme sous apiGuild. */
+  const a = await apiEspace("astuces");
   if ("error" in a) return a.error;
 
   const d = charger();

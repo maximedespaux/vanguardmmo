@@ -155,8 +155,8 @@ export const ELEMENT_FR: Record<string, string> = {
 };
 
 export const TON_ELEMENT: Record<string, string> = {
-  feu: "var(--red)", eau: "var(--blue)", electricite: "var(--gold)",
-  vent: "var(--green)", terre: "var(--orange)", aucun: "var(--text-muted)",
+  feu: "var(--red)", eau: "var(--blue)", electricite: "#FFD24A", // donnée du jeu figée en hex, comme terre : genesis.css redéfinit --gold
+  vent: "var(--green)", terre: "#FF8C1A", aucun: "var(--text-muted)",
 };
 
 export const iconeElement = (e: string | null) =>

@@ -27,7 +27,7 @@ const COMBATS = COMBATS_BRUT as { lieux: Record<string, { especes: FicheCombat[]
  * redirige : elle a pu circuler.
  *
  * Le fichier fait 12 Ko. On le lit ici, côté serveur, une seule fois, et on garde
- * le résultat en mémoire — même approche que src/lib/ouFarmer.ts et
+ * le résultat en mémoire — même approche que
  * src/app/api/ou-trouver. Un `import` statique aurait compilé les 12 Ko dans un
  * module JS, donc dans un paquet téléchargé et mis en cache à part ; ici ils
  * voyagent une seule fois, dans la charge de la page elle-même.

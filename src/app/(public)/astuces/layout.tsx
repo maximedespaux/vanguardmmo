@@ -7,7 +7,7 @@ import type { Metadata } from "next";
  */
 export const metadata: Metadata = {
   title: "Guide de progression — Airborn : Winds of Rhisis",
-  description: "Par où commencer sur Airborn, serveur privé Flyff, et quoi viser ensuite : niveaux, stuff, prestige. Le guide que la guilde Vanguard donne à ses recrues.",
+  description: "Par où commencer sur Airborn, serveur privé Flyff, et quoi viser ensuite : niveaux, stuff, prestige. Le guide que la guilde GENESIS donne à ses recrues.",
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

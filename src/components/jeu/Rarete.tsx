@@ -89,9 +89,9 @@ export const GRADE_FR: Record<Grade, string> = { unique: "Unique", ultimate: "Ul
  * part. C'est justement le moment de l'accorder, avant qu'un écran s'en serve.
  */
 export const RARETE_TON: Record<Rarete, string> = {
-  common: "#D8D8E0", rare: "var(--blue)", epic: "#FF4FA3", legendary: "var(--gold)",
+  common: "#D8D8E0", rare: "var(--blue)", epic: "#FF4FA3", legendary: "#FFD24A", // données du jeu : l'ancien --gold figé en hex, genesis.css redéfinit --gold
 };
-export const GRADE_TON: Record<Grade, string> = { unique: "var(--green)", ultimate: "var(--gold)" };
+export const GRADE_TON: Record<Grade, string> = { unique: "var(--green)", ultimate: "#FFD24A" };
 
 const RATIO_CARTE = 110 / 250;
 const RATIO_CADENAS = 32 / 51;

@@ -1,5 +1,7 @@
 import { getCurrentUser } from "@/lib/access";
-import { canAccessGuild } from "@/config/roles";
+import { canAccessAdmin, canAccessGuild } from "@/config/roles";
+import { peutOuvrir, type CleEspace } from "@/config/nav";
+import { espacesAmisDuCompte } from "@/lib/amis";
 
 /**
  * LE MODE VITRINE — voir sans pouvoir se servir.
@@ -29,16 +31,13 @@ import { canAccessGuild } from "@/config/roles";
  * Conséquence : un visiteur voit l'écran, et toute action qu'il tenterait se heurte
  * au serveur. La porte s'ouvre, le tiroir reste verrouillé.
  *
- * UNE SEULE ROUTE DE LECTURE A ÉTÉ OUVERTE, et son contenu a été relu ligne par
- * ligne avant : `/api/shop` renvoie le nom, la catégorie, la classe, le prix, le
- * stock, la rareté et l'icône de chaque article. Aucun nom de membre, aucune dette,
- * aucune commande, aucune conversation. C'est un étalage, pas un registre.
+ * La Boutique, première page de vitrine, a quitté le site le 2026-10-21, et avec
+ * elle `/api/shop`, la seule route de lecture que ce mode avait ouverte. Reste
+ * /crafts, qui lit cet état pour griser ce qu'un visiteur ne peut pas faire.
  *
- * CE QUI N'EST PAS OUVERT, et ne doit pas l'être : les messages, le profil, les
- * dettes, les requêtes, le suivi de commande, et tout l'espace du staff. Le groupe
- * (shop) les portait avec la boutique — c'est pourquoi la boutique a déménagé dans
- * son propre groupe plutôt que d'ouvrir le groupe entier. Ouvrir (shop) aurait
- * exposé les conversations privées de la guilde.
+ * CE QUI N'EST PAS OUVERT, et ne doit pas l'être : le profil et tout l'espace du
+ * staff. Le groupe (shop) garde son garde ; c'est pour cela que les pages de vitrine
+ * vivent dans leur propre groupe plutôt que de l'ouvrir.
  */
 
 export type EtatVisiteur = {
@@ -49,9 +48,16 @@ export type EtatVisiteur = {
   /**
    * Le droit d'AGIR : commander, enregistrer, publier. C'est ce booléen que les
    * écrans consultent, jamais le rôle : le jour où le prérequis change, il change
-   * ici et nulle part ailleurs.
+   * ici et nulle part ailleurs. Dans un espace que le rôle Friend ouvre (`espace` de
+   * `etatVisiteur`), un ami y a droit aussi — sans être `membre` pour autant.
    */
   peutAgir: boolean;
+  /**
+   * Un des quatre rangs du staff (les bras droits). Un repère d'affichage, pas un droit :
+   * toute donnée du staff passe par une route qui revérifie le rang. (L'accueil s'en
+   * servait pour poser « À traiter » en tête ; il est neutre depuis le 2026-10-21.)
+   */
+  staff: boolean;
   pseudo: string | null;
 };
 
@@ -65,9 +71,16 @@ export type EtatVisiteur = {
  * distinguer les deux cas ici : les deux donnent le même écran de vitrine, et le
  * même message — « connecte-toi, et sois sur le serveur ».
  */
-export async function etatVisiteur(): Promise<EtatVisiteur> {
+/**
+ * `espace` : celui de la page qui demande (config/nav.ts). Le droit d'agir y passe alors par
+ * `peutOuvrir`, la décision de la barre et des routes : un ami à qui le rôle Friend ouvre
+ * cet espace (SPEC-INFORMATION-GUILDE §9) agit comme un membre — /crafts, dans Astuces,
+ * lui montre les recettes que /api/crafts lui sert. Sans espace, la guilde seule.
+ */
+export async function etatVisiteur(espace?: CleEspace): Promise<EtatVisiteur> {
   const u = await getCurrentUser();
-  if (!u) return { connecte: false, membre: false, peutAgir: false, pseudo: null };
+  if (!u) return { connecte: false, membre: false, peutAgir: false, staff: false, pseudo: null };
   const membre = canAccessGuild(u.role);
-  return { connecte: true, membre, peutAgir: membre, pseudo: u.username ?? null };
+  const peutAgir = espace ? peutOuvrir("guild", { role: u.role, amis: await espacesAmisDuCompte(u) }, espace) : membre;
+  return { connecte: true, membre, peutAgir, staff: canAccessAdmin(u.role), pseudo: u.username ?? null };
 }

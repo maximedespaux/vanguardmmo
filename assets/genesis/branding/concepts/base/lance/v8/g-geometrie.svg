@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<!--
+
+GENESIS - monogramme G, géométrie de base « héraldique à la lance »
+Fichier maître : aplat ivoire #F2EDE5 sur fond transparent, viewBox 1024 x 1024.
+Toutes les cotes sont en px du viewBox ; points calculés puis arrondis au demi-pixel.
+
+AXES
+  Axe de la lance : x = 512 (axe vertical du disque). Le G est décalé de 14 px à droite
+  (centre du G en x = 526) : la lance passe un peu à gauche du milieu du G, ce qui
+  recentre la masse (flanc gauche lourd, ouverture à droite) et allonge la barre.
+
+g-corps - le G (un seul chemin fermé : croissant + épine + fût vertical sous la barre)
+  Cercle extérieur  O = (526, 512), R = 330.
+  Contre-forme      I = (552, 515), r = 252  (centre décalé de +26 / +3 : flanc gauche
+                    épais ~104 px, haut ~84 px au droit de la lance, bas ~78 px).
+  Ogive extérieure  à ±132 deg sur O, le contour quitte le cercle tangentiellement pour deux
+                    grands arcs r = 500 (centres (640, 638.5) et (640, 385.5)) qui se
+                    coupent en pointe en (156, 512) sur l'axe horizontal du G (y = 512).
+  Épine gauche      départ sur les grands arcs à y = 512 -/+ 30 ((165, 482)), deux
+                    Bézier quadratiques concaves (tangentes aux grands arcs) jusqu'à la pointe
+                    (106, 512), où elles arrivent à ±7 deg : pointe franche.
+  Ogive intérieure  à ±128 deg sur I, deux arcs r = 400 (centres (643, 631.5) et
+                    (643, 398.5)) : la contre-forme est pointue à gauche en (260.5, 515).
+                    Le flanc gauche devient un chevron « < » d'épaisseur presque constante.
+  Corne (terminal)  l'arc de O s'arrête à -46 deg ((755, 274.5)) et se prolonge par sa
+                    tangente sur 58 px jusqu'à la pointe (797, 315) ; le bord intérieur
+                    est la tangente menée de cette pointe au cercle I (contact (611, 270)).
+                    Aucun coude : la corne s'effile comme un croissant.
+  Fût (éperon)      pas d'éperon distinct : sous la barre, le bord intérieur du fût est la
+                    verticale x = 776, de la barre jusqu'au cercle I ((776, 630.5)) ; le bord
+                    extérieur est le cercle O lui-même. Le haut du fût est caché sous la barre.
+
+g-barre - la lame
+  Dos horizontal y = 500, dessous y = 552 (épaisseur 52) : le dessus de la barre est
+  12 px sous l'axe horizontal du G, le cristal est centré sur elle.
+  Pointe droite (916, 500) sur le dos ; le fil redescend en droite jusqu'au cercle O (853.5, 552).
+  Côté gauche, la barre bute sur la lance par une fourche : deux bords parallèles aux
+  faces droites du cristal, décalés de 10 px, sommet (561.5, 526).
+
+g-cristal - losange crimson au coeur
+  Centre (512, 526), demi-largeur 38, demi-hauteur 68 (sommets (512, 458) / (512, 594)).
+
+g-lance - fût
+  Rectangle x = 499 -> 525 (26 px), y = 148 -> 878 ; ses bouts sont noyés dans les étoiles.
+g-etoile - étoile à 4 branches (haut)
+  Centre (512, 140) : pointe haute y = 64, basse y = 224, bras à ±66 ; chaque branche est une
+  Bézier quadratique de contrôle (512 ± 13, 140 ± 13).
+g-pointe - pointe effilée (bas), même construction, plus petite
+  Centre (512, 884) : haute y = 828, basse y = 958, bras à ±36, contrôle ± 10.
+  Rayon max depuis le centre du disque : 448 px (88 % du rayon) ; rien dans les coins.
+
+ENTRELACS ET JEUX (masques m-*)
+  La lance passe DEVANT le G en haut (le corps est évidé autour du fût et de l'étoile,
+  jeu 6 px, zone y < 512) et DERRIÈRE le G en bas (le fût et la pointe sont évidés autour
+  du corps, jeu 6 px, zone y > 512). Le fût est évidé de 9 px autour du cristal.
+  Les masques reprennent les chemins par <use> : pour animer une pièce sans casser les
+  jeux, appliquer la transformation au <path> lui-même (elle suit dans les <use>), pas au <g>.
+-->
+  <defs>
+    <mask id="m-lance" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <use href="#p-cristal" fill="#000" stroke="#000" stroke-width="18" stroke-linejoin="miter" stroke-miterlimit="8"/>
+      <g clip-path="url(#zone-lance-2)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-lance-2"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-pointe" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-pointe-1)"><use href="#p-corps" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+    </mask>
+    <clipPath id="zone-pointe-1"><rect x="0" y="512" width="1024" height="512"/></clipPath>
+    <mask id="m-corps" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <g clip-path="url(#zone-corps-1)"><use href="#p-lance" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/></g>
+      <use href="#p-etoile" fill="#000" stroke="#000" stroke-width="12" stroke-linejoin="miter" stroke-miterlimit="8"/>
+    </mask>
+    <clipPath id="zone-corps-1"><rect x="0" y="0" width="1024" height="512"/></clipPath>
+  </defs>
+  <g id="g-lance" fill="#F2EDE5" mask="url(#m-lance)">
+    <path id="p-lance" d="M 499 148 L 525 148 L 525 878 L 499 878 Z"/>
+  </g>
+  <g id="g-pointe" fill="#F2EDE5" mask="url(#m-pointe)">
+    <path id="p-pointe" d="M 512 828 Q 522 874 548 884 Q 522 894 512 958 Q 502 894 476 884 Q 502 874 512 828 Z"/>
+  </g>
+  <g id="g-corps" fill="#F2EDE5" mask="url(#m-corps)">
+    <path id="p-corps" d="M 797 315 L 755 274.5 A 330 330 0 0 0 305 267 A 500 500 0 0 0 165 482 Q 157 505.5 106 512 Q 157 518.5 165 542 A 500 500 0 0 0 305 757 A 330 330 0 0 0 854.5 544 L 776 544 L 776 630.5 A 252 252 0 0 1 397 713.5 A 400 400 0 0 1 260.5 515 A 400 400 0 0 1 397 316.5 A 252 252 0 0 1 611 270 Z"/>
+  </g>
+  <g id="g-barre" fill="#F2EDE5">
+    <path id="p-barre" d="M 547 500 L 916 500 L 853.5 552 L 547 552 L 561.5 526 Z"/>
+  </g>
+  <g id="g-etoile" fill="#F2EDE5">
+    <path id="p-etoile" d="M 512 64 Q 525 127 578 140 Q 525 153 512 224 Q 499 153 446 140 Q 499 127 512 64 Z"/>
+  </g>
+  <g id="g-cristal" fill="#F2EDE5">
+    <path id="p-cristal" d="M 512 458 L 550 526 L 512 594 L 474 526 Z"/>
+  </g>
+</svg>

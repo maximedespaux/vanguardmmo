@@ -1,0 +1,141 @@
+"use client";
+import { useEffect, useState } from "react";
+import { ClassLogo } from "@/components/ClassLogo";
+import { vgPrompt, vgToast } from "@/components/Dialogs";
+import { Icon, type IconName } from "@/components/Icon";
+
+type App = {
+  id: string; discordId: string; username: string; avatar: string | null;
+  chars: { name: string; cls: string; prestige: number }[] | null;
+  specs: string[]; csChars: number | null; favClasses: string[];
+  interests: string | null; motivation: string | null; experience: string | null;
+  quizScore: number | null; quizTotal: number | null;
+  status: string; adminNote: string | null; decidedBy: string | null; createdAt: string;
+};
+
+const STATUS_META: Record<string, { label: string; color: string }> = {
+  PENDING:   { label: "En attente",  color: "var(--gold)" },
+  ACCEPTED:  { label: "Acceptée",    color: "var(--green)" },
+  REJECTED:  { label: "Refusée",     color: "var(--red)" },
+  WAITING:   { label: "Mise en attente", color: "var(--blue)" },
+  INTERVIEW: { label: "Entretien",   color: "var(--purple)" },
+};
+const SPEC_META: Record<string, { icon: IconName; label: string }> = { PVE: { icon: "sprout", label: "PvE" }, PVP: { icon: "trophy", label: "PvP & Boss" }, CS: { icon: "key", label: "CS" } };
+const FILTERS = [["", "Toutes"], ["PENDING", "En attente"], ["ACCEPTED", "Acceptées"], ["REJECTED", "Refusées"], ["WAITING", "En attente (mise)"], ["INTERVIEW", "Entretien"]] as const;
+
+/**
+ * LES CANDIDATURES — la section « Candidatures » du tableau de bord des bras droits.
+ *
+ * C'était la page /candidatures ; elle est devenue une section de /staff le 2026-10-21
+ * (SPEC-INFORMATION-GUILDE §3 : « une page, plus de pages éclatées »), et l'ancienne
+ * adresse y redirige avec sa requête (?statut=). Les candidatures se lisent à côté des
+ * membres : c'est le même geste — qui entre, qui reste.
+ */
+export function Candidatures({ statut: statutVise }: { statut: string | null }) {
+  const [apps, setApps] = useState<App[]>([]);
+  /* L'onglet d'arrivée peut venir de l'adresse (?statut=WAITING) : la file des bras
+     droits mène ici aux candidatures en suivi, qu'« En attente » ne montre pas. */
+  const statutValide = FILTERS.some(([k]) => k === statutVise) ? String(statutVise) : null;
+  const [filter, setFilter] = useState(statutValide ?? "PENDING");
+  useEffect(() => { if (statutValide !== null) setFilter(statutValide); }, [statutValide]);
+  const [loading, setLoading] = useState(true);
+  /**
+   * Toutes les candidatures, sans filtre de statut : les chiffres en tete n'ont
+   * de sens que sur l'ensemble. Calcules sur l'onglet affiche, « 3 en attente »
+   * aurait voulu dire « 3 en attente parmi les acceptees ».
+   */
+  const [toutes, setToutes] = useState<App[]>([]);
+
+  const load = async () => {
+    setLoading(true);
+    try { const r = await fetch(`/api/admin/candidatures${filter ? `?status=${filter}` : ""}`); if (r.ok) setApps(await r.json()); } catch {}
+    try { const a = await fetch("/api/admin/candidatures"); if (a.ok) setToutes(await a.json()); } catch {}
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const decide = async (id: string, status: string) => {
+    const note = (await vgPrompt("Note admin (optionnelle) ?")) ?? undefined;
+    const r = await fetch("/api/admin/candidatures", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status, note }) });
+    if (r.ok) load(); else vgToast("Erreur", false);
+  };
+
+  return (
+    <>
+
+      {/* Chiffres en tete, comme au tableau de bord et au suivi des dettes : on
+          doit voir s'il y a des dossiers en attente sans parcourir la liste. */}
+      {(() => {
+        const n = (st: string) => toutes.filter((a) => a.status === st).length;
+        const enAttente = n("PENDING") + n("WAITING") + n("INTERVIEW");
+        const Tuile = ({ v, l, c, alerte }: { v: React.ReactNode; l: string; c: string; alerte?: boolean }) => (
+          <div className="glass-card fx-card" style={{ padding: 14, textAlign: "center", ...(alerte ? { borderColor: c } : null) }}>
+            <div className="font-heading" style={{ fontSize: 24, fontWeight: 700, color: c }}>{v}</div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 3, textTransform: "uppercase", letterSpacing: .5 }}>{l}</div>
+          </div>
+        );
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, margin: "8px 0 18px" }}>
+            <Tuile v={enAttente} l="à traiter" c={enAttente ? "var(--gold)" : "var(--green)"} alerte={enAttente > 0} />
+            <Tuile v={n("ACCEPTED")} l="acceptées" c="var(--green)" />
+            <Tuile v={n("REJECTED")} l="refusées" c="var(--text-muted)" />
+            <Tuile v={toutes.length} l="au total" c="var(--gn-accent)" />
+          </div>
+        );
+      })()}
+
+      <div className="vg-subtabs">
+        {FILTERS.map(([k, l]) => (
+          <button key={k} onClick={() => setFilter(k)} className={`vg-subtab ${filter === k ? "active" : ""}`}>{l}</button>
+        ))}
+      </div>
+
+      {loading ? <div style={{ color: "var(--text-muted)" }}>Chargement…</div>
+        : apps.length === 0 ? <div className="glass-card fx-card" style={{ padding: 24, textAlign: "center", color: "var(--text-muted)" }}>Aucune candidature ici.</div>
+        : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {apps.map((a) => {
+            const sm = STATUS_META[a.status] ?? STATUS_META.PENDING;
+            return (
+              <div key={a.id} className="glass-card fx-card" style={{ padding: 18 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div className="font-heading" style={{ fontSize: 17, fontWeight: 700 }}>{a.username}</div>
+                  <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 20, background: "var(--bg-3)", border: `1px solid ${sm.color}`, color: sm.color }}>{sm.label}</span>
+                  <span style={{ marginLeft: "auto", fontSize: 12, color: "var(--text-muted)" }}>{new Date(a.createdAt).toLocaleDateString("fr-FR")}</span>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                  {(a.chars ?? []).map((c, i) => (
+                    <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, padding: "4px 10px", background: "var(--bg-3)", borderRadius: 8 }}>
+                      <ClassLogo name={c.cls} size={18} /> {c.name} <span style={{ color: "var(--text-muted)" }}>P{c.prestige}</span>
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: 13, color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div><b style={{ color: "var(--text)" }}>Spés :</b> {(a.specs ?? []).length === 0 ? "—" : (a.specs ?? []).map((s, i) => { const m = SPEC_META[s]; return <span key={s}>{i > 0 ? " · " : ""}{m ? <><Icon name={m.icon} size={14} style={{ display: "inline-block", marginRight: 3 }} />{m.label}</> : s}</span>; })}{a.specs?.includes("CS") && a.favClasses?.length ? ` · CS: ${a.csChars ?? "?"} perso(s), ${a.favClasses.join(", ")}` : ""}</div>
+                  <div><b style={{ color: "var(--text)" }}>Quiz :</b> {a.quizScore ?? "?"}/{a.quizTotal ?? "?"}</div>
+                  {a.interests && <div><b style={{ color: "var(--text)" }}>Intérêts :</b> {a.interests}</div>}
+                  {a.motivation && <div><b style={{ color: "var(--text)" }}>Motivation :</b> {a.motivation}</div>}
+                  {a.experience && <div><b style={{ color: "var(--text)" }}>Expérience :</b> {a.experience}</div>}
+                  {a.adminNote && <div style={{ color: "var(--gold)" }}><b>Note admin :</b> {a.adminNote}{a.decidedBy ? ` — ${a.decidedBy}` : ""}</div>}
+                </div>
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+                  <button onClick={() => decide(a.id, "ACCEPTED")} style={{ ...btn("var(--green)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="check" size={15} /> Accepter</button>
+                  <button onClick={() => decide(a.id, "REJECTED")} style={{ ...btn("var(--red)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="x" size={15} /> Refuser</button>
+                  <button onClick={() => decide(a.id, "WAITING")} style={{ ...btn("var(--blue)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="clock" size={15} /> En attente</button>
+                  <button onClick={() => decide(a.id, "INTERVIEW")} style={{ ...btn("var(--purple)"), display: "inline-flex", alignItems: "center", gap: 7 }}><Icon name="message" size={15} /> Entretien</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function btn(color: string): React.CSSProperties {
+  return { padding: "8px 14px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 600, border: `1px solid ${color}`, background: "transparent", color };
+}

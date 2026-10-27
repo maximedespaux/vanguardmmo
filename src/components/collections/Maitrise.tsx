@@ -70,7 +70,7 @@ export function Maitrise({ m, source }: { m: TMaitrise; source: string }) {
     <div>
       <Chiffres>
         <Chiffre valeur={nb(total)} quoi={`XP du niveau ${Math.min(Math.max(1, de), m.niveauMax)} au ${m.niveauMax}`} icon="trending-up" />
-        <Chiffre valeur={nb(monstres)} quoi="monstres normaux, si tu ne fais que ça" icon="skull" couleur="var(--orange)" />
+        <Chiffre valeur={nb(monstres)} quoi="monstres normaux, si tu ne fais que ça" icon="skull" couleur="var(--gn-accent)" />
         <Chiffre valeur={nb(boss)} quoi="coups sur un boss d'instance" icon="dragon" couleur="var(--red)" />
         <Chiffre valeur={nb(geants)} quoi="géants, la voie la plus courte" icon="crown" couleur="var(--blue)" />
       </Chiffres>

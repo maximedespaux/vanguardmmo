@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import { apiAuth } from "@/lib/access";
-import { canAccessGuild } from "@/config/roles";
+import { apiEspace } from "@/lib/access";
 
 /**
  * « D'où vient cet objet ? » — craft, butin de quête, coffre, clé, Tour.
@@ -10,7 +9,7 @@ import { canAccessGuild } from "@/config/roles";
  * Le fichier fait 1,8 Mo : trop pour un import statique (il partirait dans le paquet
  * JS de chaque page) et trop pour un fetch depuis le navigateur (le client
  * téléchargerait 1,8 Mo pour lire trois lignes). On le lit donc ici, une seule fois,
- * et on garde l'index en mémoire — même approche que src/lib/ouFarmer.ts.
+ * et on garde l'index en mémoire.
  *
  * La recherche normalise les accents : le jeu écrit « Ame de démon » sans
  * circonflexe, et un joueur tape « Âme ». Sans ça, la moitié des recherches échoue.
@@ -69,8 +68,9 @@ function enClair(s: Source): { quoi: string; ou: string | null; chance: number |
 }
 
 export async function GET(req: Request) {
-  const a = await apiAuth(); if ("error" in a) return a.error;
-  if (!canAccessGuild(a.user.role)) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  /* La provenance d'un objet : Astuces, comme /objets — la guilde, ou un ami à qui le rôle
+     Friend ouvre cet espace (lib/access.ts `apiEspace`). */
+  const a = await apiEspace("astuces"); if ("error" in a) return a.error;
 
   const nom = new URL(req.url).searchParams.get("nom");
   if (!nom) return NextResponse.json({ error: "nom requis" }, { status: 400 });

@@ -67,7 +67,7 @@ export function ProvenanceMonstres({ total, maison, vies, viesMaison, surMaison,
   const part = (n: number) => (total > 0 ? n / total : 0);
   return (
     <div className="glass-card" style={{ padding: "14px 16px", display: "grid", gap: 12 }}>
-      <Bande part={1} valeur={total} teinte="var(--orange)" libelle="monstres dans le client" />
+      <Bande part={1} valeur={total} teinte="var(--gn-accent)" libelle="monstres dans le client" />
       <Bande part={part(maison)} valeur={maison} teinte="var(--purple)"
         libelle="ajoutés par Airborn" action={surMaison} />
       <Bande part={part(vies)} valeur={vies} teinte="var(--red)" decale action={surVies}
@@ -101,7 +101,7 @@ function Bande({ part, valeur, libelle, teinte, action, decale, suite, detail }:
         {entier(valeur)}
       </span>
       <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{libelle}</span>
-      {action && <Icon name="search" size={12} style={{ color: "var(--orange)", opacity: .8, alignSelf: "center" }} />}
+      {action && <Icon name="search" size={12} style={{ color: "var(--gn-accent)", opacity: .8, alignSelf: "center" }} />}
     </span>
   );
   return (
@@ -109,7 +109,7 @@ function Bande({ part, valeur, libelle, teinte, action, decale, suite, detail }:
       <div style={{ display: "flex", alignItems: "baseline", gap: 9, marginBottom: 4, flexWrap: "wrap" }}>
         {action ? (
           <button onClick={action} aria-label={`Chercher : ${libelle}`}
-            style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "inherit", cursor: "pointer", borderBottom: "1px dotted var(--orange)" }}>
+            style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "inherit", cursor: "pointer", borderBottom: "1px dotted var(--gn-accent)" }}>
             {tete}
           </button>
         ) : tete}
@@ -167,7 +167,7 @@ export function ContenusBoss({ lignes }: { lignes: { groupe?: string }[] }) {
           <span style={{ fontSize: 12, color: nom === HORS ? "var(--text-muted)" : "var(--text)", minWidth: 0 }}>{nom}</span>
           {/* `aria-hidden` : le nombre est écrit dans la colonne suivante. */}
           <span aria-hidden="true" style={{ display: "block", height: 8, borderRadius: 2, background: "color-mix(in srgb, var(--border) 55%, transparent)" }}>
-            <span style={{ display: "block", height: "100%", borderRadius: 2, background: "var(--orange)", width: `${Math.max(1.5, (n / max) * 100)}%` }} />
+            <span style={{ display: "block", height: "100%", borderRadius: 2, background: "var(--gn-jauge)", width: `${Math.max(1.5, (n / max) * 100)}%` }} />
           </span>
           <b className="font-heading" style={{ fontSize: 12.5, textAlign: "right", color: "var(--gold)", fontVariantNumeric: "tabular-nums" }}>{n}</b>
         </div>
@@ -208,7 +208,7 @@ export function SchemaVies({ pv, vies, pvEff, taille = "normale" }: {
           <span className="font-heading" style={{ ...valeur, color: "var(--text-muted)" }}>{court(pv)}</span>
         </div>
         <div style={{ display: "flex", gap: 2, height: h }}>
-          <span style={{ width: `${100 / vies}%`, background: "color-mix(in srgb, var(--orange) 32%, transparent)", border: "1px solid color-mix(in srgb, var(--orange) 55%, transparent)", borderRadius: 3 }} />
+          <span style={{ width: `${100 / vies}%`, background: "rgba(var(--gn-lueur-rgb),.32)", border: "1px solid rgba(var(--gn-or-rgb),.55)", borderRadius: 3 }} />
         </div>
       </div>
       <div>
@@ -565,7 +565,7 @@ export function QuelElementEmporter({ regle }: {
   return (
     <div className="glass-card" style={{ padding: "14px 16px", display: "grid", gap: 11 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
-        <span className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--orange)" }}>
+        <span className="font-heading" style={{ fontSize: 12.5, textTransform: "uppercase", letterSpacing: 1.2, color: "var(--gn-accent)" }}>
           Quel élément emporter
         </span>
         {dominant?.emporter && (
@@ -630,7 +630,7 @@ export function QuelElementEmporter({ regle }: {
                         1,5 % pour qu'une part minuscule reste visible au lieu de
                         disparaître et de se lire comme « rien ». */}
                     <span aria-hidden="true" style={{ flex: "0 1 200px", minWidth: 60, maxWidth: 240, height: 7, background: "var(--bg-2)", borderRadius: 4, overflow: "hidden", display: "block" }}>
-                      <span style={{ display: "block", width: `${Math.max(1.5, part)}%`, height: "100%", background: "var(--orange)", borderRadius: 4 }} />
+                      <span style={{ display: "block", width: `${Math.max(1.5, part)}%`, height: "100%", background: "var(--gn-jauge)", borderRadius: 4 }} />
                     </span>
                     <span style={{ color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 52, textAlign: "right" }}>{ditPourCent(part)}</span>
                   </div>

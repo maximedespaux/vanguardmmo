@@ -1,0 +1,1048 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GENESIS · Héraldique</title>
+<style>
+/* ════════ TOKENS (copie exacte de tokens.css) ════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENESIS · piste « Héraldique » — tokens
+   Trois couches : 1. primitives (la palette et ses dérivées)
+                   2. rôles sémantiques (ce que le site manipule)
+                   3. compatibilité (les anciens noms du site → les rôles)
+   Contrastes : calculés (formule WCAG 2.1), voir charte.md. « sur surf » =
+   sur --g-anthracite-800 #15151D, le fond des cartes.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@font-face{font-family:'Cinzel';src:url('../../../../../public/fonts/Cinzel-VariableFont_wght.ttf') format('truetype');font-weight:400 900;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Light.ttf') format('truetype');font-weight:300;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Regular.ttf') format('truetype');font-weight:400;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Medium.ttf') format('truetype');font-weight:500;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-SemiBold.ttf') format('truetype');font-weight:600;font-display:swap}
+@font-face{font-family:'Athiti';src:url('../../../../../public/fonts/Athiti-Bold.ttf') format('truetype');font-weight:700;font-display:swap}
+@font-face{font-family:'Rubik';src:url('../../../../../public/fonts/Rubik-VariableFont_wght.ttf') format('truetype');font-weight:300 900;font-display:swap}
+
+:root{
+  /* ── 1. PRIMITIVES ──────────────────────────────────────────────────────── */
+  /* Noirs et anthracites — 70 % de la surface */
+  --g-noir-950:#08080C;        /* charte : le fond */
+  --g-noir-900:#0D0D12;        /* dérivé : barre du haut, bandeaux (un cran au-dessus du fond) */
+  --g-noir-850:#101017;        /* dérivé : intérieur des champs (plus creux que la carte) */
+  --g-anthracite-800:#15151D;  /* charte : volumes, cartes */
+  --g-anthracite-750:#1A1A23;  /* dérivé : surface élevée (menu, modale, infobulle) */
+  --g-anthracite-700:#20202A;  /* dérivé : survol d'une surface */
+  --g-anthracite-600:#2A2A36;  /* dérivé : bordure par défaut (1,3:1 — décor, pas information) */
+  --g-anthracite-500:#3A3A48;  /* dérivé : bordure forte, piste des barres */
+  /* Ivoires — la typographie */
+  --g-ivoire-100:#F2EDE5;      /* charte : texte · 15,6:1 sur surf */
+  --g-ivoire-300:#D6D0C6;      /* dérivé : texte secondaire fort · 11,8:1 */
+  --g-ivoire-500:#ABA59B;      /* dérivé : texte atténué · 7,4:1 */
+  --g-ivoire-700:#8E887F;      /* dérivé : indication, placeholder · 5,2:1 (jamais sous 4,5 sur une surface du site) */
+  /* Crimson et pourpre — 20 % */
+  --g-crimson-300:#E8697B;     /* dérivé : le SEUL crimson qui porte du texte sur fond sombre · 5,8:1 */
+  --g-crimson-400:#C42A40;     /* dérivé : survol d'un fond crimson ; puces losange */
+  --g-crimson-450:#C8334A;     /* dérivé : remplissage des barres de part (3,5:1, ≥ 3:1 graphique) */
+  --g-crimson-500:#A6192E;     /* charte : FOND d'action et d'étoffe. Jamais du texte : 2,4:1 sur surf */
+  --g-crimson-600:#8E1527;     /* dérivé : enfoncé ; ivoire dessus = 7,9:1 */
+  --g-pourpre-500:#60152D;     /* charte : ombres, profondeur ; ivoire dessus = 11:1 */
+  --g-pourpre-700:#3A0D1C;     /* dérivé : fond teinté (ligne choisie, bandeau d'alerte) */
+  --g-pourpre-800:#22121A;     /* dérivé : survol de ligne de table (pourpre à ~12 % sur l'anthracite) */
+  --g-pourpre-bord:#5A3442;    /* dérivé : bordure de carte survolée (pourpre éclairci) */
+  /* Ors — 10 %, jamais plus */
+  --g-or-200:#E6C48A;          /* charte : reflet, anneau de focus · 10,9:1 */
+  --g-or-400:#C69A55;          /* charte : contours, arêtes, étoiles · 7,1:1 */
+  --g-or-600:#8F6C38;          /* dérivé : filet discret (tringle d'oriflammes, séparateurs) */
+  --g-or-800:#4A3820;          /* dérivé : filet très discret, ombre dorée */
+  /* États — teintes dérivées, toujours accompagnées d'un mot ou d'une icône */
+  --g-vert-400:#5FCB8A;        /* succès, actif · 9,0:1 */
+  --g-ambre-400:#F0B43C;       /* attention, en attente · 9,8:1 — plus saturé que l'or : ne se confond pas */
+  --g-lavande-400:#A99BE0;     /* absent · 7,3:1 */
+  --g-bleu-400:#7FA8E0;        /* information · 7,4:1 */
+
+  /* ── 2. RÔLES SÉMANTIQUES ───────────────────────────────────────────────── */
+  --surface-page:var(--g-noir-950);
+  --surface-barre:var(--g-noir-900);
+  --surface:var(--g-anthracite-800);
+  --surface-elevee:var(--g-anthracite-750);
+  --surface-survol:var(--g-anthracite-700);
+  --surface-champ:var(--g-noir-850);
+  --surface-choisie:var(--g-pourpre-700);
+  --surface-ligne-survol:var(--g-pourpre-800);
+
+  --bordure:var(--g-anthracite-600);
+  --bordure-forte:var(--g-anthracite-500);
+  --bordure-survol:var(--g-pourpre-bord);
+
+  --texte:var(--g-ivoire-100);
+  --texte-secondaire:var(--g-ivoire-300);
+  --texte-attenue:var(--g-ivoire-500);
+  --texte-faible:var(--g-ivoire-700);
+  --texte-sur-accent:var(--g-ivoire-100);
+
+  --accent-action:var(--g-crimson-500);          /* fond du bouton principal, oriflamme active */
+  --accent-action-survol:var(--g-crimson-400);
+  --accent-action-presse:var(--g-crimson-600);
+  --accent-texte:var(--g-crimson-300);           /* lien, mot d'accent sur fond sombre */
+  --accent-profondeur:var(--g-pourpre-500);      /* ombre colorée, dégradé d'étoffe */
+  --accent-jauge:var(--g-crimson-450);
+
+  --ornement:var(--g-or-400);                    /* filets, arêtes, étoiles */
+  --ornement-clair:var(--g-or-200);              /* reflet, pointe d'étoile */
+  --ornement-eteint:var(--g-or-600);             /* tringle, séparateur */
+  --focus:var(--g-or-200);                       /* anneau de focus clavier, 2 px, décalé de 2 px */
+
+  --succes:var(--g-vert-400);
+  --attention:var(--g-ambre-400);
+  --absent:var(--g-lavande-400);
+  --info:var(--g-bleu-400);
+  --danger:var(--g-crimson-300);                 /* texte/bord ; toujours avec l'icône « alert » */
+  --danger-fond:var(--g-pourpre-700);
+
+  /* Typographie */
+  --f-titre:'Cinzel','Times New Roman',serif;    /* marque, h1-h3, oriflammes — jamais sous 14 px */
+  --f-texte:'Athiti',system-ui,sans-serif;       /* texte courant, cellules, descriptions */
+  --f-chiffre:'Rubik','Athiti',sans-serif;       /* chiffres tabulaires, en-têtes de colonnes, badges */
+  --t-marque:22px; --t-h1:34px; --t-h2:19px; --t-h3:16px;
+  --t-corps:15px; --t-petit:13.5px; --t-micro:11.5px; --t-chiffre:30px;
+
+  /* Géométrie : angles francs, pas d'arrondi mou */
+  --r-1:2px; --r-2:4px; --r-3:6px; --r-full:999px;
+  --pointe:18px;                                 /* profondeur de la pointe des bannières */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+
+  /* Mouvement — deux crans, pas un de plus */
+  --lift-1:-1px;   /* TOUCHE : bouton, onglet, lien */
+  --lift-2:-3px;   /* LEVÉE  : carte qui mène quelque part */
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --t-fast:.14s; --t-mid:.22s;
+
+  --el-1:0 2px 8px rgba(0,0,0,.40);
+  --el-2:0 8px 22px rgba(0,0,0,.50);
+  --el-3:0 18px 44px rgba(0,0,0,.62);
+
+  /* ── 3. COMPATIBILITÉ — les noms du site actuel, redirigés ──────────────── */
+  /* --orange servait à 4 choses : texte d'accent, fond de bouton, bordure, lueur.
+     On le redirige vers le crimson LISIBLE : aucun texte ne devient illisible
+     après l'échange de :root. Les fonds de bouton orange sont, eux, à réécrire
+     (voir charte.md) — ils sont codés en dur dans .vg-btn et .vg-subtab.active. */
+  --orange:var(--g-crimson-300);
+  --orange-dark:var(--g-crimson-500);
+  --orange-rgb:166,25,46;                         /* lueurs rgba(var(--orange-rgb),a) → voile crimson */
+  --gold:var(--attention);                       /* 306 usages, presque tous « en attente » */
+  --gold-rgb:240,180,60;
+  --red:var(--danger);
+  --green:var(--succes);
+  --blue:#4EA8FF;                                /* inchangé : c'est aussi la couleur Dryades / Rare */
+  --purple:#C77DFF;                              /* inchangé : c'est aussi Yggdrasil / Épique */
+  --bg:var(--surface-page);
+  --bg-2:var(--surface);
+  --bg-3:var(--surface-elevee);
+  --bg-4:var(--surface-survol);
+  --border:var(--bordure);
+  --text:var(--texte);
+  --text-muted:var(--texte-attenue);
+  --glow-1:rgba(166,25,46,.14);
+  --glow-2:rgba(166,25,46,.28);
+  --glow-3:rgba(198,154,85,.34);                 /* la lueur forte devient dorée : c'est une arête */
+  --el-glow:0 6px 22px rgba(96,21,45,.55);
+  --r-sm:var(--r-2); --r-md:var(--r-2); --r-lg:var(--r-3); --r-xl:var(--r-3);
+}
+
+
+/* ════════ BASE ════════ */
+*{box-sizing:border-box}
+html{background:var(--surface-page)}
+body{margin:0;background:var(--surface-page);color:var(--texte);font-family:var(--f-texte);font-size:var(--t-corps);line-height:1.55;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+img{max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.orn{fill:currentColor;flex-shrink:0}
+:focus-visible,.is-focus{outline:2px solid var(--focus);outline-offset:2px}
+.num{font-family:var(--f-chiffre);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* Le grand fond : la salle du trône, très voilée — elle donne la lumière, pas le décor */
+.g-backdrop{position:absolute;inset:0 0 auto 0;height:1040px;z-index:0;pointer-events:none;overflow:hidden}
+.g-backdrop img{width:100%;height:100%;object-fit:cover;object-position:center 22%;filter:saturate(.85)}
+.g-backdrop::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 20%,rgba(8,8,12,.16),rgba(8,8,12,.62) 75%),
+             linear-gradient(180deg,rgba(8,8,12,.10) 0%,rgba(8,8,12,.45) 26%,rgba(8,8,12,.80) 52%,rgba(8,8,12,.94) 72%,#08080C 92%)}
+
+.g-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 55% 420px at 0% 1350px,rgba(96,21,45,.30),transparent 70%),
+             radial-gradient(ellipse 50% 460px at 100% 2050px,rgba(96,21,45,.28),transparent 70%),
+             radial-gradient(ellipse 70% 380px at 50% 2600px,rgba(96,21,45,.22),transparent 70%)}
+
+/* ════════ 1 · BARRE DU HAUT ════════ */
+.g-nav{position:relative;z-index:30;height:72px;display:flex;align-items:center;gap:14px;padding:0 22px;
+  background:linear-gradient(180deg,rgba(17,12,17,.97),rgba(11,10,15,.97));}
+/* La tringle : un filet d'or éteint, plus vif au centre — c'est d'elle que pendent les oriflammes */
+.g-nav::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--g-or-800) 6%,var(--g-or-600) 30%,var(--g-or-600) 70%,var(--g-or-800) 94%,transparent)}
+.g-nav-star{position:absolute;left:50%;bottom:-5px;width:11px;height:11px;margin-left:-5.5px;color:var(--ornement);z-index:2}
+.g-brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-mark{width:44px;height:44px;object-fit:contain;display:block}
+.brand-mark.is-absent{visibility:hidden}
+.g-brand-name{font-family:var(--f-titre);font-weight:700;font-size:var(--t-marque);letter-spacing:.2em;color:var(--texte);line-height:1;
+  padding-left:.2em}
+.g-links{display:flex;align-items:stretch;height:100%;gap:2px;margin-left:8px}
+.g-item{position:relative;display:flex}
+.g-link{position:relative;z-index:0;display:flex;align-items:center;gap:7px;padding:0 11px;height:100%;
+  font-family:var(--f-texte);font-weight:600;font-size:14.5px;letter-spacing:.01em;color:var(--texte-attenue);white-space:nowrap;
+  transition:color var(--t-fast) var(--ease),transform var(--t-fast) var(--ease)}
+.g-link .ic{width:16px;height:16px;opacity:.85}
+.g-link .chev{width:12px;height:12px;opacity:.6;margin-left:-2px}
+.g-link:hover,.g-link.is-hover{color:var(--texte);transform:translateY(var(--lift-1))}
+.g-links .g-div{width:5px;height:5px;transform:rotate(45deg);background:var(--g-anthracite-500);align-self:center;margin:0 5px}
+/* L'espace actif : une oriflamme crimson qui pend de la tringle et la dépasse */
+.g-link.is-active{color:var(--texte);transform:none}
+.g-link.is-active .ic{opacity:1}
+.g-link.is-active>.pen{position:absolute;z-index:-1;left:2px;right:2px;top:0;height:calc(100% + 16px);width:calc(100% - 4px)}
+.g-link.is-active>.pen-star{position:absolute;left:50%;bottom:-23px;width:12px;height:12px;margin-left:-6px;color:var(--ornement-clair);z-index:3}
+.g-user{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.g-iconbtn{position:relative;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:var(--r-2);
+  background:transparent;border:1px solid var(--bordure);color:var(--texte-secondaire);cursor:pointer;transition:border-color var(--t-fast),transform var(--t-fast)}
+.g-iconbtn:hover{border-color:var(--bordure-forte);transform:translateY(var(--lift-1))}
+.g-iconbtn .ic{width:18px;height:18px}
+.g-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent-action);
+  color:var(--texte-sur-accent);font:600 11px/18px var(--f-chiffre);text-align:center;box-shadow:0 0 0 2px var(--surface-barre)}
+.g-profile{display:flex;align-items:center;gap:9px;padding:3px 10px 3px 3px;border:1px solid var(--bordure);border-radius:var(--r-2)}
+.g-profile b{display:block;font-weight:600;font-size:14px;line-height:1.15}
+.g-profile small{display:block;font-size:12.5px;color:var(--texte-attenue);line-height:1.2}
+.g-burger{display:none}
+
+/* Le menu « mega » */
+.g-mega{position:absolute;top:calc(100% + 9px);left:50%;transform:translateX(-50%);width:min(1116px,calc(100vw - 48px));z-index:20;
+  background:linear-gradient(180deg,#1C1620 0%,var(--surface-elevee) 70px);border:1px solid var(--bordure-forte);border-top-color:var(--g-or-600);
+  border-radius:0 0 var(--r-2) var(--r-2);box-shadow:var(--el-3);padding:20px 18px 14px}
+.g-mega-h{display:flex;align-items:center;gap:12px;margin:2px 4px 14px}
+.g-mega-h .t{font-family:var(--f-titre);font-weight:600;font-size:16px;letter-spacing:.14em;text-transform:uppercase}
+.g-mega-h .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--g-or-600),transparent)}
+.g-mega-h small{font-size:13px;color:var(--texte-attenue)}
+.g-mega-h a{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--texte)}
+.g-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px 8px}
+.g-mega-link{display:flex;align-items:flex-start;gap:12px;padding:9px 10px;border-radius:var(--r-2);transition:background var(--t-fast),transform var(--t-fast)}
+.g-mega-link:hover,.g-mega-link.is-hover{background:var(--surface-survol);transform:translateY(var(--lift-1))}
+.g-mega-link .l{display:block;font-weight:600;font-size:15px;line-height:1.25;color:var(--texte)}
+.g-mega-link .d{display:block;font-size:13.5px;line-height:1.38;color:var(--texte-attenue);margin-top:2px}
+.g-mega-link .staff{font:600 10.5px/1 var(--f-chiffre);letter-spacing:.1em;text-transform:uppercase;color:var(--texte-faible);
+  border:1px solid var(--bordure-forte);padding:2px 5px;border-radius:var(--r-1);margin-left:7px;vertical-align:2px}
+.g-mega-link.is-active{background:var(--surface-choisie)}
+.g-mega-link.is-active .lz{background:var(--accent-action);border-color:var(--g-or-600);color:var(--texte)}
+.g-mega-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:12px 10px 4px;border-top:1px solid var(--bordure);font-size:13.5px;color:var(--texte-attenue)}
+.g-mega-foot a{color:var(--texte);font-weight:600;display:inline-flex;gap:6px;align-items:center}
+
+/* Cadre losange : la forme des icônes de navigation et des titres */
+.lz{position:relative;flex-shrink:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--texte-attenue);margin-top:1px}
+.lz::before{content:"";position:absolute;inset:4px;transform:rotate(45deg);border:1px solid var(--bordure-forte);background:var(--surface);border-radius:1px}
+.lz .ic{position:relative;width:15px;height:15px}
+.g-mega-link:hover .lz,.g-mega-link.is-hover .lz{color:var(--ornement-clair)}
+.g-mega-link:hover .lz::before,.g-mega-link.is-hover .lz::before{border-color:var(--g-or-600)}
+.g-mega-link.is-active .lz::before{background:var(--accent-action);border-color:var(--g-or-400)}
+.g-mega-link.is-active .lz{color:var(--texte)}
+
+/* ════════ PLANCHES ════════ */
+.g-wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 32px}
+.g-stage{height:352px;position:relative}
+.g-stage-note{position:absolute;left:0;bottom:14px;right:0}
+.g-stage-note .cap{margin:0}
+.cap{display:flex;align-items:center;gap:10px;font:600 11.5px/1 var(--f-chiffre);letter-spacing:.18em;text-transform:uppercase;color:var(--texte-attenue);margin:0 0 12px}
+.cap b{color:var(--ornement);font-weight:600}
+.cap::after{content:"";flex:0 0 42px;height:1px;background:var(--bordure-forte)}
+.note{font-size:14px;line-height:1.55;color:var(--texte-attenue);margin:0}
+.note strong{color:var(--texte-secondaire);font-weight:600}
+.plate{margin-top:30px}
+
+/* ════════ 2 · EN-TÊTE DE PAGE : une bannière ════════ */
+.g-headwrap{position:relative;margin-bottom:32px}
+.g-head{position:relative;--d:var(--pointe);background:var(--g-or-600);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--d)),50% 100%,0 calc(100% - var(--d)))}
+.g-head-in{position:relative;min-height:160px;display:flex;align-items:center;gap:26px;padding:28px 34px 44px 124px;overflow:hidden;
+  background:var(--surface);
+  clip-path:polygon(1px 0,calc(100% - 1px) 0,calc(100% - 1px) calc(100% - var(--d) - .5px),50% calc(100% - 1.2px),1px calc(100% - var(--d) - .5px))}
+.g-head-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 20%;opacity:.62;filter:saturate(.9)}
+.g-head-veil{position:absolute;inset:0;background:linear-gradient(95deg,rgba(16,9,14,.97) 0%,rgba(20,9,15,.88) 36%,rgba(34,10,20,.58) 70%,rgba(40,10,22,.42) 100%),
+  linear-gradient(0deg,rgba(96,21,45,.50),transparent 60%)}
+.g-head-txt{position:relative;flex:1;min-width:0}
+.g-over{display:flex;align-items:center;gap:9px;font:600 11.5px/1 var(--f-chiffre);letter-spacing:.2em;text-transform:uppercase;color:var(--texte-attenue);margin-bottom:12px}
+.g-over .orn{width:8px;height:8px;color:var(--ornement)}
+.g-h1{margin:0;font-family:var(--f-titre);font-weight:700;font-size:var(--t-h1);line-height:1.1;letter-spacing:.045em;color:var(--texte);
+  text-shadow:0 2px 18px rgba(0,0,0,.6)}
+.g-sub{margin:10px 0 0;font-size:16px;line-height:1.5;color:var(--texte-secondaire);max-width:560px}
+.g-head-right{position:relative;flex-shrink:0}
+/* L'oriflamme de la page : elle pend du bord haut, porte l'icône, finit en pointe */
+.g-pennant{position:absolute;left:34px;top:0;width:62px;height:132px;z-index:2;display:flex;flex-direction:column;align-items:center;padding-top:30px;color:var(--texte)}
+.g-pennant>.pen{position:absolute;inset:0;width:100%;height:100%;z-index:-1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+.g-pennant .ic{width:24px;height:24px;stroke-width:1.6}
+.g-pennant .orn{width:13px;height:22px;margin-top:14px;color:var(--ornement)}
+.g-head-star{position:absolute;left:50%;bottom:-11px;width:22px;height:22px;margin-left:-11px;color:var(--ornement);z-index:3;
+  filter:drop-shadow(0 0 6px rgba(230,196,138,.35))}
+
+/* ════════ Titres de section ════════ */
+.g-h2{display:flex;align-items:center;gap:12px;margin:0 0 13px}
+.g-h2 .orn{width:12px;height:12px;color:var(--ornement)}
+.g-h2 h2{margin:0;font-family:var(--f-titre);font-weight:600;font-size:var(--t-h2);letter-spacing:.09em;text-transform:uppercase;line-height:1.2}
+.g-h2 .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--g-or-800),transparent 80%)}
+.g-h2 .aside{font-size:13.5px;color:var(--texte-attenue)}
+.sec{margin-top:24px}
+
+/* Séparateur : filet, losange, étoile, losange, filet */
+.g-sep{display:flex;align-items:center;gap:10px;margin:64px auto 0;max-width:520px;color:var(--ornement)}
+.g-sep::before,.g-sep::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--g-or-600))}
+.g-sep::after{transform:scaleX(-1)}
+.g-sep i{width:6px;height:6px;transform:rotate(45deg);background:var(--g-crimson-400)}
+.g-sep .orn{width:16px;height:16px}
+
+/* ════════ Cartes : sobres ════════ */
+.card{background:linear-gradient(180deg,var(--surface),#121219);border:1px solid var(--bordure);border-radius:var(--r-2)}
+
+/* Tuiles de chiffres */
+.g-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.g-stat{padding:16px 18px 15px;display:flex;flex-direction:column;gap:8px;transition:border-color var(--t-mid),transform var(--t-mid) var(--ease)}
+.g-stat:hover{border-color:var(--bordure-survol);transform:translateY(var(--lift-2))}
+.g-stat .lab{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;color:var(--texte-secondaire)}
+.g-stat .lab .ic{color:var(--texte-attenue)}
+.g-stat .val{display:flex;align-items:baseline;gap:8px}
+.g-stat .val b{font-family:var(--f-titre);font-weight:700;font-size:var(--t-chiffre);line-height:1;letter-spacing:.02em}
+.g-stat .val span{font-size:14px;color:var(--texte-attenue)}
+.g-stat .val em{margin-left:auto;font-style:normal;font:600 13px var(--f-chiffre);color:var(--texte-secondaire)}
+.bar{height:4px;background:var(--g-anthracite-500);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--g-crimson-600),var(--accent-jauge))}
+.bar i::after{content:"";position:absolute;right:-1px;top:-2px;bottom:-2px;width:2px;background:var(--ornement-clair)}
+.g-stat .note2{font-size:13px;color:var(--texte-attenue);display:flex;align-items:center;gap:6px}
+.g-stat .note2.warn{color:var(--attention)}
+.g-stat .note2 .ic{width:13px;height:13px}
+
+/* Priorités : la liste à puces losange */
+.g-prio{padding:6px 20px}
+.g-prio ul{list-style:none;margin:0;padding:0}
+.g-prio li{display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid var(--bordure)}
+.g-prio li:last-child{border-bottom:0}
+.g-prio li::before{content:"";width:7px;height:7px;transform:rotate(45deg);background:var(--g-crimson-400);flex-shrink:0;margin:0 2px}
+.g-prio li b{font:600 17px var(--f-chiffre);min-width:22px}
+.g-prio li .go{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--texte-attenue)}
+
+/* Cartes d'outils */
+.g-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.g-tool{padding:18px 20px 16px;display:flex;flex-direction:column;gap:10px;transition:border-color var(--t-mid),transform var(--t-mid) var(--ease),box-shadow var(--t-mid)}
+.g-tool:hover,.g-tool.is-hover{border-color:var(--bordure-survol);transform:translateY(var(--lift-2));box-shadow:var(--el-2)}
+.g-tool .top{display:flex;gap:14px;align-items:flex-start}
+.g-tool h3{margin:2px 0 4px;font-family:var(--f-titre);font-weight:600;font-size:var(--t-h3);letter-spacing:.05em;line-height:1.25}
+.g-tool p{margin:0;font-size:14.5px;line-height:1.45;color:var(--texte-attenue)}
+.g-tool .meta{font-size:13.5px;color:var(--texte-secondaire);display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:4px}
+.g-tool .meta .dot{width:7px;height:7px;border-radius:50%}
+.g-tool .act{display:flex;gap:8px;padding-top:4px}
+
+/* Cadre d'icône (équivalent .vgi-frame) : carré chanfreiné, trois tons */
+.fr{--c:var(--bordure-forte);--bg:var(--surface);position:relative;flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--texte-secondaire);
+  background:var(--c);clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+.fr::before{content:"";position:absolute;inset:1px;background:var(--bg);
+  clip-path:polygon(6.6px 0,calc(100% - 6.6px) 0,100% 6.6px,100% calc(100% - 6.6px),calc(100% - 6.6px) 100%,6.6px 100%,0 calc(100% - 6.6px),0 6.6px)}
+.fr>*{position:relative}
+.fr .ic{width:19px;height:19px}
+.fr.or{--c:var(--g-or-400);--bg:linear-gradient(180deg,#1E1912,#121014);color:var(--ornement-clair)}
+.fr.cr{--c:var(--g-or-600);--bg:linear-gradient(180deg,var(--g-crimson-500),var(--g-crimson-600));color:var(--texte)}
+.fr.sm{width:32px;height:32px}.fr.sm .ic{width:16px;height:16px}
+.fr.lg{width:52px;height:52px}.fr.lg .ic{width:24px;height:24px}
+.fr img{width:30px;height:30px;object-fit:contain}
+
+/* ════════ Boutons ════════ */
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:var(--r-2);cursor:pointer;
+  font-family:var(--f-titre);font-weight:700;font-size:14px;letter-spacing:.05em;white-space:nowrap;border:1px solid transparent;
+  transition:transform var(--t-fast) var(--ease),background var(--t-fast),border-color var(--t-fast),box-shadow var(--t-fast)}
+.btn .ic{width:16px;height:16px}
+.btn:hover,.btn.is-hover{transform:translateY(var(--lift-1))}
+.btn:active{transform:none}
+.btn-p{background:linear-gradient(180deg,var(--g-crimson-500),var(--g-crimson-600));color:var(--texte-sur-accent);border-color:var(--g-or-600);
+  box-shadow:inset 0 1px 0 rgba(230,196,138,.28),0 4px 14px rgba(96,21,45,.55)}
+.btn-p:hover,.btn-p.is-hover{background:linear-gradient(180deg,var(--g-crimson-400),var(--g-crimson-500));border-color:var(--g-or-400)}
+.btn-s{background:var(--surface-survol);color:var(--texte);border-color:var(--bordure-forte)}
+.btn-s:hover,.btn-s.is-hover{border-color:var(--g-or-600)}
+.btn-g{background:transparent;color:var(--texte-secondaire)}
+.btn-g:hover,.btn-g.is-hover{background:var(--surface-survol);color:var(--texte)}
+.btn-d{background:var(--danger-fond);color:var(--danger);border-color:rgba(232,105,123,.55)}
+.btn-d:hover,.btn-d.is-hover{border-color:var(--danger)}
+.btn[disabled],.btn.is-off{background:var(--g-anthracite-700);color:var(--texte-faible);border-color:transparent;box-shadow:none;cursor:not-allowed;transform:none}
+.btn-sm{height:36px;padding:0 15px;font-size:14px}
+
+/* ════════ Sous-onglets : des oriflammes pendues à une tringle ════════ */
+.g-tabs{position:relative;display:flex;gap:6px;padding:0 18px;margin-bottom:10px;height:62px;align-items:flex-start}
+.g-tabs .flt{margin-left:auto;display:flex;gap:10px;padding-top:10px}
+.g-tabs .flt .field.grow{min-width:290px;white-space:nowrap}
+.field{white-space:nowrap;overflow:hidden}
+.g-tabs::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,var(--g-or-800),var(--g-or-600) 20%,var(--g-or-600) 80%,var(--g-or-800))}
+.g-tabs .fin{position:absolute;top:-3px;width:7px;height:7px;transform:rotate(45deg);background:var(--ornement)}
+.g-tabs .fin.l{left:-3px}.g-tabs .fin.r{right:-3px}
+.g-tab{position:relative;z-index:0;display:flex;align-items:center;gap:8px;height:44px;padding:0 18px 7px;cursor:pointer;
+  font-family:var(--f-titre);font-weight:600;font-size:14px;letter-spacing:.07em;color:var(--texte-attenue);white-space:nowrap;
+  transition:transform var(--t-fast) var(--ease),color var(--t-fast)}
+.g-tab>.pen{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.g-tab .n{font:600 12px var(--f-chiffre);color:var(--texte-faible);letter-spacing:0}
+.g-tab:hover,.g-tab.is-hover{color:var(--texte);transform:translateY(var(--lift-1))}
+.g-tab.is-active{height:56px;padding-bottom:14px;color:var(--texte);transform:none}
+.g-tab.is-active .n{color:var(--texte)}
+.g-tab.is-active .pen-star{position:absolute;left:50%;bottom:-6px;width:11px;height:11px;margin-left:-5.5px;color:var(--ornement-clair)}
+
+/* ════════ Table dense ════════ */
+.g-tools-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.field{display:flex;align-items:center;gap:9px;height:40px;padding:0 12px;background:var(--surface-champ);border:1px solid var(--bordure-forte);border-radius:var(--r-2);color:var(--texte-faible);font-size:14.5px}
+.field .ic{color:var(--texte-attenue)}
+.field.grow{flex:1;min-width:220px}
+.field.sel{min-width:170px;justify-content:space-between;color:var(--texte)}
+.g-table-card{overflow:hidden}
+.g-table{width:100%;border-collapse:collapse;font-size:14.5px}
+.g-table th{font:600 11.5px/1 var(--f-chiffre);letter-spacing:.12em;text-transform:uppercase;color:var(--texte-attenue);text-align:left;padding:14px 14px 12px;
+  border-bottom:1px solid var(--bordure-forte);background:linear-gradient(180deg,rgba(34,14,22,.75),rgba(18,12,17,.75));white-space:nowrap}
+.g-table td{padding:0 14px;height:43px;border-bottom:1px solid rgba(42,42,54,.75);white-space:nowrap}
+.g-table tr:last-child td{border-bottom:0}
+.g-table tbody tr{transition:background var(--t-fast)}
+.g-table tbody tr:hover,.g-table tbody tr.is-hover{background:var(--surface-ligne-survol);box-shadow:inset 2px 0 0 var(--accent-action)}
+.g-table tbody tr.is-hover .go,.g-table tbody tr:hover .go{color:var(--ornement-clair)}
+.g-table .who b{font-weight:600}
+.g-table .who small{display:block;font-size:12.5px;color:var(--texte-attenue);line-height:1.2;margin-top:-1px}
+.g-table .rank{display:inline-flex;align-items:center;gap:7px;color:var(--texte-secondaire)}
+.g-table .rank .orn{width:9px;height:9px;color:var(--ornement)}
+.g-table .rank .orn.x{color:transparent}
+.g-table .cls{display:inline-flex;align-items:center;gap:9px}
+.g-table .cls img{width:26px;height:26px;object-fit:contain}
+.g-table .lvl{font:500 13.5px var(--f-chiffre);color:var(--texte-secondaire)}
+.g-table .when{font:400 13.5px var(--f-chiffre);color:var(--texte-attenue)}
+.g-table .go{color:var(--texte-faible);text-align:right;width:36px}
+.g-table .go .ic{width:15px;height:15px}
+
+/* Étiquettes de statut : un point ou une icône + un mot, jamais la couleur seule */
+.tag{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:var(--r-1);font-size:13px;font-weight:600;line-height:1;border:1px solid}
+.tag .ic{width:12px;height:12px}
+.tag i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.tag.ok{color:var(--succes);border-color:rgba(95,203,138,.35);background:rgba(95,203,138,.07)}
+.tag.abs{color:var(--absent);border-color:rgba(169,155,224,.35);background:rgba(169,155,224,.07)}
+.tag.off{color:var(--texte-attenue);border-color:var(--bordure-forte);background:transparent}
+.tag.warn{color:var(--attention);border-color:rgba(240,180,60,.38);background:rgba(240,180,60,.07)}
+.tag.bad{color:var(--danger);border-color:rgba(232,105,123,.42);background:rgba(232,105,123,.07)}
+.tag.info{color:var(--info);border-color:rgba(127,168,224,.38);background:rgba(127,168,224,.07)}
+/* Badges : compteur crimson, rang (filet d'or), nouveau */
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 7px;border-radius:11px;font:600 12px var(--f-chiffre);
+  background:var(--accent-action);color:var(--texte-sur-accent)}
+.badge.rk{border-radius:var(--r-1);background:transparent;border:1px solid var(--g-or-600);color:var(--ornement-clair);font:600 11px var(--f-chiffre);letter-spacing:.12em;text-transform:uppercase;height:24px;padding:0 9px;gap:6px}
+.badge.rk .orn{width:8px;height:8px}
+.badge.neu{background:var(--surface-survol);color:var(--texte-secondaire);border:1px solid var(--bordure-forte)}
+
+/* ════════ Boîte à composants ════════ */
+.kit{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.kit-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.kit-col>.card{padding:18px 20px}
+.kit>.card{padding:20px}
+.card h4{margin:0 0 14px;font:600 11.5px/1 var(--f-chiffre);letter-spacing:.16em;text-transform:uppercase;color:var(--texte-attenue);display:flex;align-items:center;gap:8px}
+.card h4::before{content:"";width:5px;height:5px;transform:rotate(45deg);background:var(--g-crimson-400)}
+.span12{grid-column:span 12}.span8{grid-column:span 8}.span7{grid-column:span 7}.span6{grid-column:span 6}.span5{grid-column:span 5}.span4{grid-column:span 4}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lbl{display:block;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--texte-secondaire)}
+.help{display:block;font-size:13px;color:var(--texte-attenue);margin-top:6px}
+.inp{display:flex;align-items:center;height:42px;padding:0 13px;background:var(--surface-champ);border:1px solid var(--bordure-forte);border-radius:var(--r-2);font-size:15px;color:var(--texte)}
+.inp.ph{color:var(--texte-faible)}
+.inp.is-focus{border-color:var(--g-or-400);outline:2px solid var(--focus);outline-offset:2px}
+.inp .caret{width:1px;height:18px;background:var(--texte);margin-left:1px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.dd{position:relative}
+.dd-list{margin-top:6px;background:var(--surface-elevee);border:1px solid var(--bordure-forte);border-radius:var(--r-2);box-shadow:var(--el-2);padding:5px}
+.dd-list div{display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:var(--r-1);font-size:14.5px;color:var(--texte-secondaire)}
+.dd-list div.on{color:var(--texte);background:var(--surface-choisie)}
+.dd-list div.on::before{content:"";width:6px;height:6px;transform:rotate(45deg);background:var(--g-crimson-400)}
+.dd-list div.hv{background:var(--surface-survol);color:var(--texte)}
+.dd-list div:not(.on)::before{content:"";width:6px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
+.ck{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--texte-secondaire)}
+.box{width:20px;height:20px;border-radius:var(--r-1);border:1px solid var(--bordure-forte);background:var(--surface-champ);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.box.on{background:var(--accent-action);border-color:var(--g-or-400);color:var(--texte)}
+.box.on .ic{width:13px;height:13px;stroke-width:2.6}
+.sw{width:40px;height:22px;border-radius:11px;background:var(--g-anthracite-500);position:relative;flex-shrink:0;border:1px solid var(--bordure-forte)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--texte-attenue);transition:transform var(--t-fast)}
+.sw.on{background:var(--accent-action);border-color:var(--g-or-600)}
+.sw.on::after{transform:translateX(18px);background:var(--texte)}
+.frames{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.frames figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+.frames figcaption{font-size:12px;color:var(--texte-attenue)}
+
+.toast{display:flex;gap:13px;align-items:flex-start;padding:14px 16px;background:var(--surface-elevee);border:1px solid var(--bordure-forte);border-left:0;border-radius:var(--r-2);
+  box-shadow:var(--el-3);position:relative;max-width:420px;overflow:hidden}
+.toast::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--g-or-400),var(--g-crimson-500))}
+.toast b{display:block;font-weight:600;font-size:15px}
+.toast p{margin:2px 0 0;font-size:13.5px;color:var(--texte-attenue);line-height:1.45}
+.toast .x{margin-left:auto;color:var(--texte-attenue)}
+
+.modal-scene{position:relative;padding:34px 24px;background:linear-gradient(180deg,rgba(34,18,26,.9),rgba(8,8,12,.92));border:1px dashed var(--bordure);border-radius:var(--r-2)}
+.modal{max-width:500px;margin:0 auto;background:var(--surface-elevee);border:1px solid var(--bordure-forte);border-radius:var(--r-2);box-shadow:var(--el-3),0 0 0 1px rgba(0,0,0,.6);position:relative}
+.modal-h{position:relative;padding:18px 22px 14px 88px;border-bottom:1px solid var(--bordure);min-height:80px}
+.modal-h .g-pennant{left:22px;width:48px;height:92px;padding-top:20px}
+.modal-h .g-pennant .ic{width:20px;height:20px}
+.modal-h .g-pennant .orn{width:10px;height:16px;margin-top:9px}
+.modal-h h3{margin:0;font-family:var(--f-titre);font-weight:700;font-size:20px;letter-spacing:.04em;line-height:1.25}
+.modal-h p{margin:5px 0 0;font-size:14px;color:var(--texte-attenue)}
+.modal-b{padding:14px 22px 4px}
+.modal-b ul{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:7px}
+.modal-b li{display:flex;gap:11px;align-items:baseline;font-size:14.5px;color:var(--texte-secondaire)}
+.modal-b li::before{content:"";width:6px;height:6px;transform:rotate(45deg) translateY(-2px);background:var(--g-crimson-400);flex-shrink:0}
+.modal-f{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px 18px}
+.ta{height:58px;align-items:flex-start;padding-top:9px}
+
+
+.lzl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.lzl li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--texte-secondaire)}
+.lzl li::before{content:"";width:6px;height:6px;transform:rotate(45deg);background:var(--g-crimson-400);flex-shrink:0;margin-left:1px}
+.lzl b{font-family:var(--f-chiffre);font-weight:600;color:var(--texte)}
+.modal-scene{padding:18px 14px}
+.kit-col .toast{max-width:none}
+
+/* ════════ 5 · AirBuilder ════════ */
+.ab{display:grid;grid-template-columns:250px minmax(0,1fr) 440px;gap:14px;align-items:start}
+.itip .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.ab-doll{padding:18px 18px 18px}
+.ab-slots{display:grid;grid-template-columns:repeat(3,62px);justify-content:space-between;row-gap:34px;margin-top:6px;padding:0 4px}
+.slot{--r:var(--bordure-forte);position:relative;width:62px;height:62px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#1E1E28,#14141B);border:1px solid var(--r);border-radius:var(--r-2);box-shadow:inset 0 0 14px color-mix(in srgb,var(--r) 22%,transparent)}
+.slot img{width:46px;height:46px;object-fit:contain}
+.slot .pl{position:absolute;top:-7px;right:-7px;font:700 11px/16px var(--f-chiffre);padding:0 5px;border-radius:var(--r-1);background:var(--g-noir-900);color:var(--texte);border:1px solid var(--bordure-forte)}
+.slot .sl{position:absolute;bottom:-21px;left:50%;transform:translateX(-50%);font:600 11px var(--f-chiffre);letter-spacing:.08em;text-transform:uppercase;color:var(--texte-attenue);white-space:nowrap}
+.slot.is-hover{box-shadow:0 0 0 1px var(--r),inset 0 0 18px color-mix(in srgb,var(--r) 30%,transparent);transform:translateY(var(--lift-1))}
+.ab-list{padding:6px 0}
+.ab-it{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center;padding:7px 16px;border-bottom:1px solid rgba(42,42,54,.75)}
+.ab-it:last-child{border-bottom:0}
+.ab-it img{width:32px;height:32px;object-fit:contain}
+.ab-it .n{font-weight:700;font-size:14.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-it>div{min-width:0}
+.ab-it .s{font-size:12.5px;color:var(--texte-attenue);display:flex;gap:8px;align-items:center;margin-top:2px}
+.ab-it .s .tier{font:600 11px var(--f-chiffre);letter-spacing:.06em;text-transform:uppercase}
+.rar{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:11px;font:700 11px var(--f-chiffre);letter-spacing:.06em;text-transform:uppercase}
+.rar img{width:14px;height:14px}
+.itip{background:linear-gradient(180deg,#191920,#0F0F14);border:1px solid var(--bordure-forte);border-top:2px solid #C92A2A;border-radius:var(--r-2);padding:14px 16px;box-shadow:var(--el-3);font-size:12.5px}
+.itip .t{display:flex;gap:10px;align-items:center}
+.itip .t img{width:34px;height:34px}
+.itip .t .cond{margin-top:2px}
+.itip .t b{font-size:16px;font-weight:700;line-height:1.2}
+.itip .tags{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 8px}
+.itip .tg{font:700 10.5px/20px var(--f-chiffre);letter-spacing:.07em;text-transform:uppercase;padding:0 8px;border-radius:10px;border:1px solid}
+.itip .cond{color:var(--texte-attenue);font-size:12.5px}
+.itip .atk{display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 2px;padding:7px 0;border-top:1px solid var(--bordure);border-bottom:1px solid var(--bordure)}
+.itip .atk span{font:600 10.5px var(--f-chiffre);letter-spacing:.12em;text-transform:uppercase;color:var(--texte-attenue)}
+.itip .atk b{font:700 15px var(--f-chiffre);color:var(--texte)}
+.itip .sec2{display:flex;align-items:center;gap:7px;font:600 10.5px var(--f-chiffre);letter-spacing:.12em;text-transform:uppercase;color:var(--texte-attenue);margin:10px 0 4px}
+.itip .sec2::after{content:"";flex:1;height:1px;background:var(--bordure)}
+.itip .bl{display:flex;justify-content:space-between;gap:12px;line-height:1.62}
+.itip .bl span:last-child{font-family:var(--f-chiffre);font-weight:600;white-space:nowrap}
+.itip .bl img{width:14px;height:14px;vertical-align:-2px;margin-right:5px}
+.c-base{color:var(--succes)}.c-eveil{color:#5aa0ff}.c-diam{color:#7fd0ff}.c-holo{color:#ff6b6b}.c-perc{color:#e879f9}
+.itip .pips{display:flex;gap:3px;margin:3px 0 2px}
+.itip .pips i{width:9px;height:12px;border-radius:1px;background:#e879f9}
+.itip .pips i.e{background:transparent;border:1px solid #ffffff2e}
+
+.cohab{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+.cohab .card{padding:16px 18px;display:flex;gap:14px;align-items:flex-start}
+.cohab .sw2{flex-shrink:0;width:46px;height:46px;border-radius:var(--r-2)}
+.cohab b{display:block;font-size:14.5px;font-weight:600}
+.cohab p{margin:3px 0 0;font-size:13.5px;color:var(--texte-attenue);line-height:1.45}
+
+.g-foot{margin:34px 0 0;padding:0 0 26px;text-align:center;font-size:13px;color:var(--texte-faible)}
+.g-foot .g-brand-name{font-size:16px;color:var(--texte-secondaire)}
+
+
+.kit-top{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-bottom:14px}
+.kit-top>.card{padding:18px 20px}
+.kit-vr{width:1px;height:28px;background:var(--bordure-forte);margin:0 6px}
+.g-flt-m{display:none}
+.ab-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+.ab-legend>span{display:flex;gap:11px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--texte-attenue)}
+.ab-legend i{flex-shrink:0;width:14px;height:14px;margin-top:2px;border-radius:2px}
+.ab-legend b{color:var(--texte-secondaire);font-weight:600}
+
+/* ════════ MOBILE ════════ */
+@media (max-width:1240px){
+  .g-links .g-link .ic:not(.chev){display:none}
+}
+@media (max-width:1080px){
+  .g-links,.g-profile,.g-mega{display:none}
+  .g-burger{display:flex}
+  .g-links.open{display:flex;position:absolute;top:100%;left:0;right:0;height:auto;flex-direction:column;align-items:stretch;gap:2px;margin:0;padding:10px 14px 16px;
+    background:var(--surface-barre);border-bottom:1px solid var(--g-or-600);box-shadow:var(--el-3);z-index:40}
+  .g-links.open .g-link{height:46px;padding:0 12px}
+  .g-links.open .g-link .ic:not(.chev){display:block}
+  .g-links.open .g-div{display:none}
+  .g-links.open .g-link.is-active>.pen{height:100%;left:0;width:100%}
+  .g-links.open .g-link.is-active>.pen-star{display:none}
+  .g-stage{height:28px}
+  .g-stage-note{display:none}
+}
+@media (max-width:900px){
+  .g-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g-tools{grid-template-columns:minmax(0,1fr)}
+  .ab{grid-template-columns:minmax(0,1fr)}
+  .kit{grid-template-columns:minmax(0,1fr)}
+  .cohab{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  body{font-size:15px}
+  .g-stage{height:14px}
+  .cap-02{display:none}
+  .g-head-right{position:absolute;top:14px;right:14px}
+  .g-head-right .btn{width:38px;height:38px;padding:0}
+  .g-head-right .bl-t{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .g-head-in{padding-right:60px}
+  .g-tabs .flt{display:none}
+  .g-tabs{margin-bottom:10px}
+  .g-flt-m{display:flex;gap:8px;margin-bottom:12px}
+  .g-flt-m .field.grow{flex:1 1 auto;min-width:0}
+  .g-flt-m .field.sel{flex:0 0 auto;min-width:0}
+  .g-tool{padding:16px 16px 15px}
+  .ab-legend{grid-template-columns:minmax(0,1fr)}
+  .itip .cols{grid-template-columns:minmax(0,1fr)}
+  .g-nav{height:60px;padding:0 12px;gap:10px}
+  .brand-mark{width:36px;height:36px}
+  .g-brand-name{font-size:18px;letter-spacing:.16em}
+  .g-user .g-iconbtn.tout{display:none}
+  .g-wrap{padding:0 16px}
+  .plate{margin-top:48px}
+  .g-head-in{flex-direction:column;align-items:flex-start;gap:16px;padding:22px 18px 40px 88px;min-height:0}
+  .g-pennant{left:18px;width:50px;height:104px;padding-top:22px}
+  .g-pennant .ic{width:20px;height:20px}
+  .g-pennant .orn{width:10px;height:17px;margin-top:10px}
+  .g-h1{font-size:25px}
+  .g-sub{font-size:14.5px}
+  .g-over{letter-spacing:.14em}
+  .g-stats{gap:10px}
+  .g-stat{padding:13px 13px 12px}
+  .g-stat .val b{font-size:25px}
+  .g-stat .val span{font-size:13px}
+  .g-stat .val em{display:none}
+  .g-h2 h2{font-size:17px}
+  .g-h2 .aside{display:none}
+  .g-tabs{overflow-x:auto;overflow-y:hidden;padding:0 10px;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding-left:16px}
+  .g-tabs .fin{display:none}
+  .g-tab{padding:0 14px 7px}
+  .field.grow{min-width:0;flex-basis:100%}
+  .field.sel{flex:1}
+  /* La table devient une liste de fiches : rien ne défile de côté */
+  .g-table thead{display:none}
+  .g-table,.g-table tbody{display:block}
+  .g-table tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"cls who st" "cls rk when";column-gap:12px;row-gap:3px;padding:12px 14px;border-bottom:1px solid rgba(42,42,54,.75)}
+  .g-table td{display:block;height:auto;padding:0;border:0}
+  .g-table td.c-who{grid-area:who;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .g-table td.c-rk{grid-area:rk;font-size:13.5px}
+  .g-table td.c-cls{grid-area:cls;align-self:center}
+  .g-table td.c-cls .cn,.g-table td.c-lvl{display:none}
+  .g-table td.c-cls img{width:34px;height:34px}
+  .g-table td.c-st{grid-area:st;justify-self:end}
+  .g-table td.c-when{grid-area:when;justify-self:end;font-size:12.5px}
+  .g-table td.go{display:none}
+  .checks{grid-template-columns:1fr}
+  .ab-slots{grid-template-columns:repeat(3,64px)}
+  .modal-scene{padding:18px 10px}
+  .modal-h{padding:18px 16px 14px 80px}
+  .modal-h .g-pennant{left:16px}
+  .modal-f{flex-direction:column-reverse}
+  .modal-f .btn{width:100%}
+  .btn{padding:0 16px}
+  .g-sep{margin-top:44px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  .btn:hover,.g-link:hover,.g-tab:hover,.g-tool:hover,.g-stat:hover,.g-mega-link:hover,.g-iconbtn:hover{transform:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Sprite : ornements GENESIS + icônes du site (tracés de src/lib/vg-icon-paths.ts) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5E0F1D"/><stop offset=".45" stop-color="#A6192E"/><stop offset="1" stop-color="#7E1324"/>
+    </linearGradient>
+    <linearGradient id="cloth-side" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#000" stop-opacity=".28"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/>
+    </linearGradient>
+    <linearGradient id="slate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1D1D26"/><stop offset="1" stop-color="#15151C"/>
+    </linearGradient>
+  </defs>
+  <!-- Étoile à quatre branches, branches concaves (la ponctuation) -->
+  <symbol id="o-star" viewBox="0 0 24 24"><path d="M12 0C12.9 7.4 16.6 11.1 24 12 16.6 12.9 12.9 16.6 12 24 11.1 16.6 7.4 12.9 0 12 7.4 11.1 11.1 7.4 12 0Z"/></symbol>
+  <!-- Étoile de bannière : la branche basse s'allonge, comme sur les étendards de la salle du trône -->
+  <symbol id="o-star-long" viewBox="0 0 20 34"><path d="M10 0C10.7 6 13.6 8.6 20 9.5 13.6 10.4 10.8 13 10 34 9.2 13 6.4 10.4 0 9.5 6.4 8.6 9.3 6 10 0Z"/></symbol>
+  <!-- Oriflamme crimson : étoffe, ombre latérale, filet d'or intérieur, pointe en bas -->
+  <symbol id="o-pen" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <path d="M0 0H100V84L50 100L0 84Z" fill="url(#cloth)"/>
+    <path d="M0 0H100V84L50 100L0 84Z" fill="url(#cloth-side)"/>
+    <path d="M6 0V80.5L50 94.5L94 80.5V0" fill="none" stroke="#C69A55" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  </symbol>
+  <!-- Oriflamme au repos : ardoise, sans or -->
+  <symbol id="o-pen-off" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <path d="M0 0H100V86L50 100L0 86Z" fill="url(#slate)"/>
+    <path d="M.5 0V85.6L50 99.4L99.5 85.6V0" fill="none" stroke="#3A3A48" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  </symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-7.5 9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-6h4v6"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5Z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19" /></symbol>
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6" /></symbol>
+<symbol id="i-shirt" viewBox="0 0 24 24"><path d="M8 3 3 7l2.6 3.4L8 8.8V21h8V8.8l2.4 1.6L21 7l-5-4-1.6 1.6a2.6 2.6 0 0 1-4.8 0Z" /></symbol>
+<symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2.2 5.3-5.3 2.2 2.2-5.3Z" /></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /></symbol>
+<symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2 3h2.4l2.3 12.3a1.5 1.5 0 0 0 1.5 1.2h8.9a1.5 1.5 0 0 0 1.5-1.2L20.5 7H6.2" /></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.2 3 7.5 7 9 4-1.5 7-4.8 7-9V6Z" /><path d="m9 11.5 2 2 4-4" /></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16" /><path d="M4 12h16" /><path d="M4 18h16" /></symbol>
+<symbol id="i-castle" viewBox="0 0 24 24"><path d="M4 21V8l2.5 1.5V5l3 1.5V4h5v2.5L17.5 5v4.5L20 8v13Z"/><path d="M10.5 21v-5h3v5"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z" /></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" /><path d="M3.5 20c0-3 2.5-5 5.5-5s5.5 2 5.5 5" /><path d="M16 5.2A3.2 3.2 0 0 1 16 11.4" /><path d="M17 15c2.3.5 3.5 2.4 3.5 5" /></symbol>
+<symbol id="i-user-plus" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0" /><path d="M19 8.5v5" /><path d="M16.5 11h5" /></symbol>
+<symbol id="i-bar-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="5.5" y="11" width="3.5" height="6" rx=".8"/><rect x="10.5" y="7" width="3.5" height="10" rx=".8"/><rect x="15.5" y="13" width="3.5" height="4" rx=".8"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6.5h12M8 12h12M8 17.5h12"/><circle cx="4.2" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.2" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.2" cy="17.5" r="1.1" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-dragon" viewBox="0 0 24 24"><path d="M4 14c0-3 2.5-5 5.5-5 2 0 3 1 4.5 1 2 0 3-2 5-2 1 0 2 .7 2 2 0 2-2 2.5-2 2.5" /><path d="M4 14c-.5 2 .5 4 3 5l2-1 2 1 2-1 2 1c2.5-1 3.5-3 3-5" /><circle cx="17.5" cy="11" r=".8" fill="currentColor" stroke="none" /><path d="m6 9 1.5-2.5L9 9" /></symbol>
+<symbol id="i-discord" viewBox="0 0 24 24"><path d="M8 6.5A13 13 0 0 1 16 6.5c1.7 2 2.7 4.5 3 8.2-1.4 1.1-2.8 1.8-4 2.3l-1-1.7M8 6.5C6.3 8.5 5.3 11 5 14.7c1.4 1.1 2.8 1.8 4 2.3l1-1.7M8 6.5 7.3 5M16 6.5 16.7 5" /><ellipse cx="9.5" cy="12.5" rx="1.1" ry="1.4" fill="currentColor" stroke="none" /><ellipse cx="14.5" cy="12.5" rx="1.1" ry="1.4" fill="currentColor" stroke="none" /></symbol>
+<symbol id="i-megaphone" viewBox="0 0 24 24"><path d="m3.5 9 13-5v16l-13-5Z" /><path d="M3.5 9H3a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h.5" /><path d="M7 15.3V19h3v-2.6" /></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2" /><path d="M3 9.5h18" /><path d="M8 2.5v4" /><path d="M16 2.5v4" /></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 17a9 9 0 1 1 16 0"/><path d="m12 12 4-3"/><circle cx="12" cy="12.5" r="1.4" fill="currentColor" stroke="none"/></symbol>
+<symbol id="i-vault" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="15" rx="2" /><circle cx="12" cy="11.5" r="3.5" /><path d="M12 9.5v4" /><path d="M10 11.5h4" /><path d="M6 19v2" /><path d="M18 19v2" /></symbol>
+<symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="2" /><path d="M9 4a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 4v.5H9Z" fill="currentColor" stroke="none" /><path d="M9.5 10h5" /><path d="M9.5 13.5h5" /><path d="M9.5 17h3" /></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4" /><path d="M5.5 20c0-3.3 2.9-5.6 6.5-5.6s6.5 2.3 6.5 5.6" /></symbol>
+<symbol id="i-swords" viewBox="0 0 24 24"><path d="M6 3 15 12" /><path d="m3 6 3-3" /><path d="M4.5 19.5 8 16" /><path d="M18 3 9 12" /><path d="m21 6-3-3" /><path d="M19.5 19.5 16 16" /><path d="m13 14 3 3" /><path d="m8 14-3 3" /></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m20 20-4.7-4.7" /></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 4.5-2 6-2 6h16s-2-1.5-2-6Z" /><path d="M10.2 20a1.9 1.9 0 0 0 3.6 0" /></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5 11-11" /></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.6 2.5 20h19L12 3.6Z" /><path d="M12 10v4.5" /><path d="M12 17.5h.01" /></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h15" /><path d="m13 6 6 6-6 6" /></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5 14.6 9l6 .8-4.3 4.2 1 6-5.3-2.9L6.7 20l1-6L3.4 9.8l6-.8Z" /></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6h0a1.7 1.7 0 0 1 1.7 1.7v.6a1.7 1.7 0 0 0 2.6 1.5l.5-.3a1.7 1.7 0 0 1 2.3.6l.1.1a1.7 1.7 0 0 1-.6 2.3l-.5.3a1.7 1.7 0 0 0 0 3l.5.3a1.7 1.7 0 0 1 .6 2.3l-.1.1a1.7 1.7 0 0 1-2.3.6l-.5-.3a1.7 1.7 0 0 0-2.6 1.5v.6a1.7 1.7 0 0 1-1.7 1.7h-.2a1.7 1.7 0 0 1-1.7-1.7v-.6a1.7 1.7 0 0 0-2.6-1.5l-.5.3a1.7 1.7 0 0 1-2.3-.6l-.1-.1a1.7 1.7 0 0 1 .6-2.3l.5-.3a1.7 1.7 0 0 0 0-3l-.5-.3a1.7 1.7 0 0 1-.6-2.3l.1-.1a1.7 1.7 0 0 1 2.3-.6l.5.3a1.7 1.7 0 0 0 2.6-1.5v-.6A1.7 1.7 0 0 1 11.8 2.6Z"/></symbol>
+<symbol id="i-sword-cross" viewBox="0 0 24 24"><path d="M6 3 15 12" /><path d="m3 6 3-3" /><path d="M4.5 19.5 8 16" /><path d="M18 3 9 12" /><path d="m21 6-3-3" /><path d="M19.5 19.5 16 16" /><path d="m13 14 3 3" /><path d="m8 14-3 3" /></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 4 13.5h6.5L10 22l9-12h-6.5L13 2Z" /></symbol>
+<symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="5" ry="2.5" /><path d="M4 7v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5V7" /><path d="M10 13.4c.4 1.3 2.4 2.3 4.8 2.3 2.8 0 5-1.1 5-2.5v-4c0-1.3-1.8-2.3-4.3-2.5" /></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5Z" /><path d="M3 8l9 5 9-5" /><path d="M12 13v8" /></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="10.5" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v5" /><path d="M12 8h.01" /></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L11 15l-4 1 1-4Z" /></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14" /><path d="M5 12h14" /></symbol>
+<symbol id="i-user-check" viewBox="0 0 24 24"><circle cx="9.5" cy="8" r="3.4"/><path d="M4 20a5.5 5.5 0 0 1 11 0"/><path d="m16 12.5 2 2 3.5-3.5"/></symbol>
+<symbol id="i-sprout-farm" viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M7 20v-4M12 20v-6M17 20v-4"/><path d="M7 16c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Zm0 0c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z"/><path d="M12 14c-2 0-3.2-1.4-3.2-3.4 2.2 0 3.2 1.4 3.2 3.4Zm0 0c2 0 3.2-1.4 3.2-3.4-2.2 0-3.2 1.4-3.2 3.4Z"/><path d="M17 16c-2 0-3-1.2-3-3 2 0 3 1.2 3 3Zm0 0c2 0 3-1.2 3-3-2 0-3 1.2-3 3Z"/></symbol>
+<symbol id="i-skull" viewBox="0 0 24 24"><path d="M5 11a7 7 0 1 1 14 0c0 2-1 3.6-2.3 4.6a1.4 1.4 0 0 0-.5 1.1V18a1 1 0 0 1-1 1h-.6v-2h-2v2h-1.2v-2h-2v2H9a1 1 0 0 1-1-1v-1.3a1.4 1.4 0 0 0-.5-1.1C6.1 14.6 5 13 5 11Z" /><circle cx="9.2" cy="11.5" r="1.2" fill="currentColor" stroke="none" /><circle cx="14.8" cy="11.5" r="1.2" fill="currentColor" stroke="none" /></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M6.5 7l.9 12.1a1 1 0 0 0 1 .9h7.2a1 1 0 0 0 1-.9L17.5 7" /><path d="M10 11v6M14 11v6" /></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.8Z" /><path d="M17 21v-7H7v7" /><path d="M7 3v4h8" /></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7.5V12l3.5 2" /></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24"><path d="M3 8l3.5 3L12 4l5.5 7L21 8l-1.5 11h-15Z"/><path d="M6 19h12"/></symbol>
+
+</svg>
+
+<div class="g-ambient" aria-hidden="true"></div>
+<div class="g-backdrop" aria-hidden="true"><img src="../../references/ref-decor-salle-du-trone.jpg" alt=""></div>
+
+<!-- ═════════════ 1 · BARRE DU HAUT ═════════════ -->
+<header class="g-nav">
+  <a href="#" class="g-brand" aria-label="GENESIS — accueil">
+    <img src="../logo-courant.svg" class="brand-mark" alt="GENESIS" onerror="this.classList.add('is-absent')">
+    <span class="g-brand-name" aria-hidden="true">GENESIS</span>
+  </a>
+
+  <nav class="g-links" id="nav-principale" aria-label="Navigation principale">
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-home"/></svg>Accueil</a></div>
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-book"/></svg>La guilde</a></div>
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-grid"/></svg>Toutes les pages</a></div>
+    <span class="g-div" aria-hidden="true"></span>
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-shirt"/></svg>AirBuilder<svg class="ic chev"><use href="#i-chevron-down"/></svg></a></div>
+    <div class="g-item"><a class="g-link is-hover" href="#"><svg class="ic"><use href="#i-compass"/></svg>Astuces<svg class="ic chev"><use href="#i-chevron-down"/></svg></a></div>
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-target"/></svg>Quête Guilde</a></div>
+    <div class="g-item"><a class="g-link" href="#"><svg class="ic"><use href="#i-cart"/></svg>Boutique<svg class="ic chev"><use href="#i-chevron-down"/></svg></a></div>
+    <div class="g-item" style="position:static">
+      <a class="g-link is-active" href="#" aria-current="page" aria-expanded="true">
+        <svg class="pen" aria-hidden="true"><use href="#o-pen"/></svg>
+        <svg class="ic"><use href="#i-shield"/></svg>Guilde<svg class="ic chev"><use href="#i-chevron-down"/></svg>
+        <svg class="orn pen-star" aria-hidden="true"><use href="#o-star"/></svg>
+      </a>
+      <div class="g-mega" role="menu">
+        <div class="g-mega-h"><span class="t">Guilde</span><span class="rule"></span><small>11 pages, dont 8 pour le staff</small><a href="#">Toutes les pages <svg class="ic"><use href="#i-arrow-right"/></svg></a></div>
+        <div class="g-mega-grid">
+          <a class="g-mega-link is-active" href="#"><span class="lz"><svg class="ic"><use href="#i-home"/></svg></span><span><span class="l">Accueil de la guilde</span><span class="d">Où j'en suis, et tout ce qui est réservé aux membres.</span></span></a>
+          <a class="g-mega-link is-hover" href="#"><span class="lz"><svg class="ic"><use href="#i-castle"/></svg></span><span><span class="l">Chambres Secrètes</span><span class="d">Qui vient, à quel poste, et comment on joue chaque salle.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-moon"/></svg></span><span><span class="l">Mes absences</span><span class="d">Préviens quand tu ne seras pas là.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-users"/></svg></span><span><span class="l">Membres &amp; builds<span class="staff">staff</span></span><span class="d">Qui est là, avec quel perso et quel stuff.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-user-plus"/></svg></span><span><span class="l">Candidatures<span class="staff">staff</span></span><span class="d">Les demandes d'entrée, à accepter ou refuser.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-bar-chart"/></svg></span><span><span class="l">Statistiques<span class="staff">staff</span></span><span class="d">Qui livre, qui demande, et si l'activité tient.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-list"/></svg></span><span><span class="l">Journal<span class="staff">staff</span></span><span class="d">Le détail, événement par événement.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-dragon"/></svg></span><span><span class="l">World Boss — gestion<span class="staff">staff</span></span><span class="d">Programmer les passages, suivre les venues.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-discord"/></svg></span><span><span class="l">Bot Discord<span class="staff">staff</span></span><span class="d">Créneaux, rappels et interrupteurs du bot.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-megaphone"/></svg></span><span><span class="l">Annonce<span class="staff">staff</span></span><span class="d">Un message à toute la guilde, sur Discord.</span></span></a>
+          <a class="g-mega-link" href="#"><span class="lz"><svg class="ic"><use href="#i-calendar"/></svg></span><span><span class="l">Events du jeu<span class="staff">staff</span></span><span class="d">Les événements Airborn annoncés par le bot.</span></span></a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="g-user">
+    <button class="g-iconbtn tout" aria-label="Tout le site"><svg class="ic"><use href="#i-grid"/></svg></button>
+    <button class="g-iconbtn" aria-label="Alertes, 3 nouvelles"><svg class="ic"><use href="#i-bell"/></svg><span class="g-count">3</span></button>
+    <a href="#" class="g-profile"><span class="fr sm"><img src="../../../../../public/classes/Templar.png" alt="" style="width:22px;height:22px"></span><span><b>Aelryn</b><small>Officier</small></span></a>
+    <button class="g-iconbtn g-burger" aria-label="Menu" aria-expanded="false" aria-controls="nav-principale"><svg class="ic"><use href="#i-menu"/></svg></button>
+  </div>
+</header>
+
+<div class="g-wrap">
+  <div class="g-stage">
+    <div class="g-stage-note">
+      <p class="cap"><b>01</b> Barre du haut — l'espace actif pend de la tringle · menu « Guilde » ouvert, « Chambres Secrètes » survolée</p>
+    </div>
+  </div>
+
+  <!-- ═════════════ 2 · EN-TÊTE DE PAGE ═════════════ -->
+  <p class="cap cap-02"><b>02</b> En-tête de page</p>
+  <div class="g-headwrap">
+    <div class="g-head">
+      <div class="g-head-in">
+        <img class="g-head-art" src="../../../../../public/jeu/chargement/maploading_ominous_1.webp" alt="" aria-hidden="true">
+        <span class="g-head-veil" aria-hidden="true"></span>
+        <div class="g-head-txt">
+          <div class="g-over">Guilde <svg class="orn"><use href="#o-star"/></svg> Accueil</div>
+          <h1 class="g-h1">L'accueil de la guilde</h1>
+          <p class="g-sub">Ce qui t'attend, où tu en es, et 24 portes vers les outils de la guilde.</p>
+        </div>
+        <div class="g-head-right"><a href="#" class="btn btn-s" aria-label="Régler la page"><svg class="ic"><use href="#i-settings"/></svg><span class="bl-t">Régler la page</span></a></div>
+      </div>
+    </div>
+    <div class="g-pennant" aria-hidden="true">
+      <svg class="pen"><use href="#o-pen"/></svg>
+      <svg class="ic"><use href="#i-home"/></svg>
+      <svg class="orn"><use href="#o-star-long"/></svg>
+    </div>
+    <svg class="orn g-head-star" aria-hidden="true"><use href="#o-star"/></svg>
+  </div>
+
+  <!-- ═════════════ 3 · TABLEAU DE BORD ═════════════ -->
+  <div class="g-h2"><svg class="orn"><use href="#o-star"/></svg><h2>L'état de la guilde</h2><span class="rule"></span></div>
+  <div class="g-stats">
+    <a href="#" class="card g-stat">
+      <span class="lab"><svg class="ic"><use href="#i-users"/></svg>Membres actifs</span>
+      <span class="val"><b>12</b><span>/ 14 membres</span><em>86 %</em></span>
+      <span class="bar"><i style="width:86%"></i></span>
+      <span class="note2">2 inactifs</span>
+    </a>
+    <a href="#" class="card g-stat">
+      <span class="lab"><svg class="ic"><use href="#i-shirt"/></svg>Personnages avec un build</span>
+      <span class="val"><b>14</b><span>/ 31 personnages</span><em>45 %</em></span>
+      <span class="bar"><i style="width:45%"></i></span>
+      <span class="note2 warn"><svg class="ic"><use href="#i-alert"/></svg>17 sans stuff renseigné</span>
+    </a>
+    <a href="#" class="card g-stat">
+      <span class="lab"><svg class="ic"><use href="#i-vault"/></svg>Coffre au seuil</span>
+      <span class="val"><b>38</b><span>/ 46 objets suivis</span><em>83 %</em></span>
+      <span class="bar"><i style="width:83%"></i></span>
+      <span class="note2 warn"><svg class="ic"><use href="#i-alert"/></svg>8 à compléter</span>
+    </a>
+    <a href="#" class="card g-stat">
+      <span class="lab"><svg class="ic"><use href="#i-clipboard"/></svg>Candidatures traitées</span>
+      <span class="val"><b>8</b><span>/ 11 reçues</span><em>73 %</em></span>
+      <span class="bar"><i style="width:73%"></i></span>
+      <span class="note2 warn"><svg class="ic"><use href="#i-alert"/></svg>3 en attente de réponse</span>
+    </a>
+  </div>
+
+  <div class="sec g-h2"><svg class="orn"><use href="#o-star"/></svg><h2>Jouer ensemble</h2><span class="rule"></span></div>
+  <div class="g-tools">
+    <a href="#" class="card g-tool">
+      <div class="top"><span class="fr"><svg class="ic"><use href="#i-castle"/></svg></span><div><h3>Chambres Secrètes</h3><p>Qui vient, à quel poste, et comment on joue chaque salle.</p></div></div>
+      <ul class="lzl"><li><span>Samedi 21 h · <b>9 / 12</b> inscrits</span></li><li><span>Il manque un soigneur en salle 3</span></li></ul>
+      <div class="act"><span class="btn btn-p btn-sm">S'inscrire</span><span class="btn btn-g btn-sm">Voir la composition</span></div>
+    </a>
+    <a href="#" class="card g-tool is-hover">
+      <div class="top"><span class="fr"><svg class="ic"><use href="#i-dragon"/></svg></span><div><h3>World Boss</h3><p>Les prochains passages, et qui vient.</p></div></div>
+      <ul class="lzl"><li><span><b>2</b> passages à venir</span></li><li><span>Prochain : jeudi 19 h 30 · 6 présents</span></li></ul>
+      <div class="act"><span class="btn btn-s btn-sm">Voir les passages</span></div>
+    </a>
+    <a href="#" class="card g-tool">
+      <div class="top"><span class="fr"><svg class="ic"><use href="#i-cart"/></svg></span><div><h3>Boutique</h3><p>Le coffre commun, une pièce sur mesure, et le suivi de ta commande.</p></div></div>
+      <ul class="lzl"><li><span><b>1</b> commande en cours</span></li><li><span>Ta dette : <b>12</b> périns</span></li></ul>
+      <div class="act"><span class="btn btn-s btn-sm">Suivre ma commande</span></div>
+    </a>
+  </div>
+
+  <div class="sec g-h2"><svg class="orn"><use href="#o-star"/></svg><h2>Membres &amp; builds</h2><span class="rule"></span><span class="aside">Qui est là, avec quel perso et quel stuff.</span></div>
+  <div class="g-tabs">
+    <span class="fin l"></span><span class="fin r"></span>
+    <a class="g-tab is-active" role="tab" aria-selected="true" href="#"><svg class="pen" aria-hidden="true"><use href="#o-pen"/></svg>Membres <span class="n">14</span><svg class="orn pen-star" aria-hidden="true"><use href="#o-star"/></svg></a>
+    <a class="g-tab" role="tab" href="#"><svg class="pen" aria-hidden="true"><use href="#o-pen-off"/></svg>Personnages <span class="n">31</span></a>
+    <a class="g-tab is-hover" role="tab" href="#"><svg class="pen" aria-hidden="true"><use href="#o-pen-off"/></svg>Absences <span class="n">2</span></a>
+    <a class="g-tab" role="tab" href="#"><svg class="pen" aria-hidden="true"><use href="#o-pen-off"/></svg>Candidatures <span class="n">3</span></a>
+    <div class="flt">
+      <span class="field grow"><svg class="ic"><use href="#i-search"/></svg>Rechercher un membre, un perso…</span>
+      <span class="field sel">Tous les rangs<svg class="ic"><use href="#i-chevron-down"/></svg></span>
+    </div>
+  </div>
+  <div class="g-flt-m"><span class="field grow"><svg class="ic"><use href="#i-search"/></svg>Rechercher un membre, un perso…</span><span class="field sel">Tous les rangs<svg class="ic"><use href="#i-chevron-down"/></svg></span></div>
+  <div class="card g-table-card">
+    <table class="g-table">
+      <thead><tr><th>Membre</th><th>Rang</th><th>Classe</th><th>Niveau</th><th>Statut</th><th>Dernière activité</th><th></th></tr></thead>
+      <tbody>
+        <tr><td class="c-who who"><b>Morvaine</b><small>3 persos · 3 builds</small></td><td class="c-rk"><span class="rank"><svg class="orn"><use href="#o-star"/></svg>Direction</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Templar.png" alt=""><span class="cn">Templier</span></span></td><td class="c-lvl lvl">165</td><td class="c-st"><span class="tag ok"><i></i>Actif</span></td><td class="c-when when">il y a 12 min</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+        <tr><td class="c-who who"><b>Aelryn</b><small>2 persos · 2 builds</small></td><td class="c-rk"><span class="rank"><svg class="orn"><use href="#o-star"/></svg>Officier</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Seraph.png" alt=""><span class="cn">Primat</span></span></td><td class="c-lvl lvl">160</td><td class="c-st"><span class="tag ok"><i></i>Actif</span></td><td class="c-when when">il y a 40 min</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+        <tr class="is-hover"><td class="c-who who"><b>Thalor</b><small>1 perso · aucun build</small></td><td class="c-rk"><span class="rank"><svg class="orn x"><use href="#o-star"/></svg>Vétéran</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Slayer.png" alt=""><span class="cn">Spadassin</span></span></td><td class="c-lvl lvl">158</td><td class="c-st"><span class="tag warn"><svg class="ic"><use href="#i-alert"/></svg>Sans build</span></td><td class="c-when when">il y a 3 h</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+        <tr><td class="c-who who"><b>Seyra</b><small>2 persos · 1 build</small></td><td class="c-rk"><span class="rank"><svg class="orn x"><use href="#o-star"/></svg>Guard</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Harlequin.png" alt=""><span class="cn">Sylphide</span></span></td><td class="c-lvl lvl">152</td><td class="c-st"><span class="tag abs"><svg class="ic"><use href="#i-moon"/></svg>Absente → 24/10</span></td><td class="c-when when">hier</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+        <tr><td class="c-who who"><b>Orphée</b><small>1 perso · 1 build</small></td><td class="c-rk"><span class="rank"><svg class="orn x"><use href="#o-star"/></svg>Guard</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Mentalist.png" alt=""><span class="cn">Envoûteur</span></span></td><td class="c-lvl lvl">141</td><td class="c-st"><span class="tag off"><i></i>Inactif</span></td><td class="c-when when">il y a 23 j</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+        <tr><td class="c-who who"><b>Vexil</b><small>1 perso · aucun build</small></td><td class="c-rk"><span class="rank"><svg class="orn x"><use href="#o-star"/></svg>Recrue</span></td><td class="c-cls"><span class="cls"><img src="../../../../../public/classes/Forcemaster.png" alt=""><span class="cn">Chanoine</span></span></td><td class="c-lvl lvl">96</td><td class="c-st"><span class="tag info"><i></i>À l'essai</span></td><td class="c-when when">il y a 1 j</td><td class="go"><svg class="ic"><use href="#i-arrow-right"/></svg></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═════════════ 4 · BOÎTE À COMPOSANTS ═════════════ -->
+  <section class="plate">
+    <p class="cap"><b>04</b> Boîte à composants</p>
+    <div class="kit-top">
+      <div class="card kit-btns">
+      <h4>Boutons</h4>
+      <div class="row">
+        <span class="btn btn-p"><svg class="ic"><use href="#i-check"/></svg>Valider le build</span>
+        <span class="btn btn-s">Secondaire</span>
+        <span class="btn btn-g">Fantôme</span>
+        <span class="btn btn-d"><svg class="ic"><use href="#i-alert"/></svg>Retirer</span>
+        <span class="btn is-off">Désactivé</span>
+        <span class="btn btn-p is-hover">Survol · −1 px</span>
+        <span class="btn btn-s is-focus">Focus clavier</span>
+      </div>
+    </div>
+      </div>
+    <div class="kit">
+      <div class="kit-col">
+        <div class="card">
+          <h4>Statuts et badges</h4>
+          <div class="row">
+            <span class="tag ok"><i></i>Actif</span>
+            <span class="tag abs"><svg class="ic"><use href="#i-moon"/></svg>Absent</span>
+            <span class="tag off"><i></i>Inactif</span>
+            <span class="tag warn"><svg class="ic"><use href="#i-clock"/></svg>En attente</span>
+            <span class="tag bad"><svg class="ic"><use href="#i-x"/></svg>Refusée</span>
+            <span class="tag info"><i></i>À l'essai</span>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="badge">3</span>
+            <span class="badge neu">31</span>
+            <span class="badge rk"><svg class="orn"><use href="#o-star"/></svg>Officier</span>
+            <span class="badge rk" style="border-color:var(--bordure-forte);color:var(--texte-secondaire)">Vétéran</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4>Cases et bascules</h4>
+          <div class="checks">
+            <span class="ck"><span class="box on"><svg class="ic"><use href="#i-check"/></svg></span>Afficher les PV</span>
+            <span class="ck"><span class="box"></span>Masquer les inactifs</span>
+            <span class="ck"><span class="sw on"></span>Rappel Discord</span>
+            <span class="ck"><span class="sw"></span>Mode compact</span>
+          </div>
+        </div>
+        <div class="card">
+          <h4>Cadres d'icônes</h4>
+          <div class="frames">
+            <figure><span class="fr"><svg class="ic"><use href="#i-castle"/></svg></span><figcaption>neutre</figcaption></figure>
+            <figure><span class="fr or"><svg class="ic"><use href="#i-crown"/></svg></span><figcaption>or</figcaption></figure>
+            <figure><span class="fr cr"><svg class="ic"><use href="#i-shield"/></svg></span><figcaption>actif</figcaption></figure>
+            <figure><span class="fr"><img src="../../../../../public/classes/Templar.png" alt=""></span><figcaption>classe</figcaption></figure>
+            <figure><span class="lz" style="width:40px;height:40px"><svg class="ic"><use href="#i-users"/></svg></span><figcaption>losange</figcaption></figure>
+          </div>
+        </div>
+      </div>
+
+      <div class="kit-col">
+        <div class="card">
+          <h4>Champs et menu déroulant</h4>
+          <div class="stack">
+            <label><span class="lbl">Pseudo en jeu</span><span class="inp ph">Ex. Aelryn</span></label>
+            <label><span class="lbl">Motif de l'absence</span><span class="inp is-focus">Déplacement pro, retour le 24<span class="caret"></span></span></label>
+            <div class="dd"><span class="lbl">Classe</span>
+              <span class="inp" style="justify-content:space-between;border-color:var(--g-or-600)">Templier<svg class="ic" style="transform:rotate(180deg);color:var(--texte-attenue)"><use href="#i-chevron-down"/></svg></span>
+              <div class="dd-list"><div>Spadassin</div><div class="on">Templier</div><div class="hv">Arcaniste</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="kit-col">
+        <div class="toast" role="status">
+          <span class="fr sm cr"><svg class="ic"><use href="#i-check"/></svg></span>
+          <div><b>Absence enregistrée</b><p>Du 21 au 24 octobre. Le staff est prévenu sur Discord.</p></div>
+          <svg class="ic x"><use href="#i-x"/></svg>
+        </div>
+        <div class="modal-scene">
+          <div class="modal" role="dialog" aria-labelledby="mt">
+            <div class="modal-h">
+              <div class="g-pennant" aria-hidden="true"><svg class="pen"><use href="#o-pen"/></svg><svg class="ic"><use href="#i-alert"/></svg><svg class="orn"><use href="#o-star-long"/></svg></div>
+              <h3 id="mt">Retirer Morvaine de la guilde ?</h3>
+              <p>Le rôle Discord tombe aussi. Ses persos et sa dette restent.</p>
+            </div>
+            <div class="modal-b">
+              <span class="lbl">Motif (obligatoire)</span>
+              <span class="inp ta ph">Ce que le membre lira dans le message du bot…</span>
+            </div>
+            <div class="modal-f"><span class="btn btn-g btn-sm">Annuler</span><span class="btn btn-d btn-sm"><svg class="ic"><use href="#i-alert"/></svg>Retirer</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════ 5 · AIRBUILDER ═════════════ -->
+  <section class="plate">
+    <p class="cap"><b>05</b> AirBuilder — la charte s'efface devant les couleurs du jeu</p>
+    <div class="ab">
+      <div class="card ab-doll">
+        <div class="g-h2" style="margin-bottom:16px"><svg class="orn"><use href="#o-star"/></svg><h2 style="font-size:15px">Templier · niv. 200</h2></div>
+        <div class="ab-slots">
+          <span class="slot is-hover" style="--r:#C92A2A"><img src="../../../../../public/airbuilder/icons/itm_weaswtancient.png" alt="Glaive ancestralle"><span class="pl">+20</span><span class="sl">Arme</span></span>
+          <span class="slot" style="--r:#FF8C1A"><img src="../../../../../public/airbuilder/icons/itm_weashibaruweapon.png" alt="Bouclier en Yggdrasil Purifié"><span class="pl">+10</span><span class="sl">Bouclier</span></span>
+          <span class="slot" style="--r:#C77DFF"><img src="../../../../../public/airbuilder/icons/itm_mkinbarunaset01cap-32.png" alt="Casque de Templier en Yggdrasil"><span class="pl">+10</span><span class="sl">Casque</span></span>
+          <span class="slot" style="--r:#4EA8FF"><img src="../../../../../public/airbuilder/icons/itm_mcloblackkinsuit.png" alt="Haubert des éternels"><span class="pl">+8</span><span class="sl">Tenue</span></span>
+          <span class="slot"><img src="../../../../../public/airbuilder/icons/itm_cloaknew01.png" alt="Cape Draconique Fulgurante"><span class="sl">Cape</span></span>
+          <span class="slot" style="--r:#9CA3AF"><img src="../../../../../public/airbuilder/icons/itm_ring_angelg01.png" alt="Anneau Ailé"><span class="pl">+20</span><span class="sl">Anneau</span></span>
+        </div>
+      </div>
+      <div class="card ab-list">
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_weaswtancient.png" alt=""><div><div class="n" style="color:#FF5C8A">Glaive ancestralle</div><div class="s"><span class="tier" style="color:#FF5C8A">Ancestral</span>Arme · +20</div></div><span class="rar" style="background:#C92A2A;color:#F2EDE5">Mythique</span></div>
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_weashibaruweapon.png" alt=""><div><div class="n" style="color:#C77DFF">Bouclier en Yggdrasil Purifié</div><div class="s"><span class="tier" style="color:#C77DFF">Yggdrasil</span>Bouclier · +10</div></div><span class="rar" style="background:#FF8C1A;color:#08080C"><img src="../../../../../public/jeu/mecaniques/rarete-legendaire.webp" alt="">Légendaire</span></div>
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_mkinbarunaset01cap-32.png" alt=""><div><div class="n" style="color:#C77DFF">Casque de Templier en Yggdrasil (G)</div><div class="s"><span class="tier" style="color:#C77DFF">Yggdrasil</span>Casque · +10</div></div><span class="rar" style="background:#C77DFF;color:#08080C"><img src="../../../../../public/jeu/mecaniques/rarete-epique.webp" alt="">Épique</span></div>
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_mcloblackkinsuit.png" alt=""><div><div class="n" style="color:#FF8C1A">Haubert des éternels (G)</div><div class="s"><span class="tier" style="color:#FF8C1A">Éternel</span>Tenue · +8</div></div><span class="rar" style="background:#4EA8FF;color:#08080C"><img src="../../../../../public/jeu/mecaniques/rarete-rare.webp" alt="">Rare</span></div>
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_cloaknew01.png" alt=""><div><div class="n" style="color:#FFD24A">Cape Draconique Fulgurante</div><div class="s"><span class="tier" style="color:#FFD24A">Cape</span>Endurance +10 % · PV max +10 %</div></div><span></span></div>
+        <div class="ab-it"><img src="../../../../../public/airbuilder/icons/itm_ring_angelg01.png" alt=""><div><div class="n" style="color:#cfd2dc">Anneau Ailé</div><div class="s">Bijou · +20</div></div><span class="rar" style="background:#9CA3AF;color:#08080C">Commun</span></div>
+      </div>
+      <div class="itip" role="tooltip">
+        <div class="t"><img src="../../../../../public/airbuilder/icons/itm_weaswtancient.png" alt=""><div><b style="color:#FF5C8A">Glaive ancestralle</b><div class="cond">Templier · niveau 200 · deux mains</div></div></div>
+        <div class="tags">
+          <span class="tg" style="color:#FF5C8A;border-color:#FF5C8A66">Ancestral</span>
+          <span class="tg" style="background:#C92A2A;border-color:#C92A2A;color:#F2EDE5">Mythique</span>
+          <span class="tg" style="color:var(--texte-secondaire);border-color:var(--bordure-forte)">Artefact +20</span>
+        </div>
+        <div class="atk"><span>Attaque</span><b>725 – 805</b></div>
+        <div class="cols"><div><div class="sec2">Bonus de l'arme</div>
+        <div class="bl c-base"><span>Vitesse d'attaque</span><span>+900</span></div>
+        <div class="bl c-base"><span>Taux critique</span><span>+45 %</span></div>
+        <div class="bl c-base"><span>Dégâts critiques</span><span>+101 %</span></div>
+        <div class="sec2">Éveil</div>
+        <div class="bl c-eveil"><span><img src="../../../../../public/airbuilder/icons/R1.png" alt="">R1 · Force</span><span>+18</span></div>
+        <div class="bl c-eveil"><span><img src="../../../../../public/airbuilder/icons/R2.png" alt="">R2 · Dégâts critiques</span><span>+12 %</span></div>
+        </div><div><div class="sec2">Sertissage</div>
+        <div class="bl c-diam"><span><img src="../../../../../public/airbuilder/icons/sertissage/diamant.png" alt="">Diamants ×5 · Attaque</span><span>+375</span></div>
+        <div class="bl c-holo"><span><img src="../../../../../public/airbuilder/icons/sertissage/diamant-holo.png" alt="">Holo ×3 · Force</span><span>+99</span></div>
+        <div class="sec2">Perçage 12 / 12</div>
+        <div class="bl c-perc"><span><img src="../../../../../public/airbuilder/icons/percage/fulgur-12.png" alt="">Fulgur ×12</span><span>+12 %</span></div>
+      </div></div>
+      </div>
+    </div>
+    <div class="ab-legend">
+      <span><i style="background:linear-gradient(180deg,#A6192E,#8E1527);box-shadow:inset 0 0 0 1px #C69A55"></i><span><b>Crimson GENESIS #A6192E</b> — une étoffe : toujours un fond, toujours bordé d'or, jamais du texte.</span></span>
+      <span><i style="background:#C92A2A;border-radius:50%"></i><span><b>Rouge Mythique #C92A2A</b> — une donnée : toujours nommée, en pastille pleine, jamais d'or autour.</span></span>
+      <span><i style="background:#FF8C1A;border-radius:50%"></i><span><b>Orange Éternel #FF8C1A</b> — l'ancienne marque n'est plus qu'un palier et une rareté.</span></span>
+    </div>
+  </section>
+  <div style="height:16px"></div>
+</div>
+<script>
+/* Le burger du téléphone : il déplie la même liste d'espaces que la barre du bureau. */
+(function(){var b=document.querySelector('.g-burger'),n=document.getElementById('nav-principale');
+  if(!b||!n)return;b.addEventListener('click',function(){var o=n.classList.toggle('open');b.setAttribute('aria-expanded',o?'true':'false');});})();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <g fill="#F2EDE5">
+    <g id="g-corps"><path d="M 889 300 L 698 190 A 372 372 0 0 0 190 326 L 82.5 512 L 190 698 A 372 372 0 0 0 884 524 L 704 524 L 704 666 A 246 246 0 1 1 637 300 Z"/></g>
+    <g id="g-barre"><path d="M 580 524 L 628 476 L 944 476 L 777.5 572 L 628 572 Z"/></g>
+    <g id="g-cristal"><path d="M 512 392 L 546 524 L 512 656 L 478 524 Z"/></g>
+    <g id="g-pointe-nord"><path d="M 512 80 L 532 150 L 512 220 L 492 150 Z"/></g>
+    <g id="g-pointe-sud"><path d="M 512 944 L 532 874 L 512 804 L 492 874 Z"/></g>
+  </g>
+</svg>

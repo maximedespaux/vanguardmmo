@@ -2,6 +2,9 @@
 //  PLANIFICATEUR (rappels automatiques)
 //  - Candidatures en attente → relance dans #candidatures
 //  - Événements du jeu → annonce selon EVENTS (config.ts)
+//  - Chambres Secrètes et Guild Siege → tick à la minute + panneau
+//    vivant (bot/lib/seances.ts)
+//  - Vidéos de débrief → purge du volume chaque nuit à 4 h 30
 // ════════════════════════════════════════════════════════════
 import cron from "node-cron";
 import { Client, EmbedBuilder, TextChannel } from "discord.js";
@@ -9,14 +12,13 @@ import type { Role } from "@prisma/client";
 import { prisma } from "./lib/prisma.js";
 import { CHANNELS, ROLE_OFFICIER, CANDIDATURE_REMIND_AFTER_HOURS, GUILD_ID, RANK_ROLES, highestRankFromRoles } from "./config.js";
 import { ORANGE, CRON_TZ } from "./lib/helpers.js";
-// Module partage avec le site : c'est lui qui garantit la forme du blob des
-// Chambres Secretes, donc la fiabilite de l'effectif annonce ici.
-import { normaliserCompo, presencesDu, resumeManques, type Creneau } from "@/lib/compositions";
-import { postApplicationDecision, postBankRequestDecision, postBankBatchDecision, syncDecidedBankRequests } from "./lib/decisions.js";
-import { openDiscussion } from "./lib/exchange.js";
+import { rangRelu } from "@/lib/gestes";
+import { memesRoles } from "@/config/amis";
+import { postApplicationDecision } from "./lib/decisions.js";
 import { endDueGiveaways } from "./lib/giveaways.js";
 import { syncGuildChannels, processBotCommands } from "./lib/botcommands.js";
 import { syncGuildRoles } from "./lib/moderation.js";
+import { purgerLesVideos, synchroniserChrono, synchroniserMessages, tickSeances } from "./lib/seances.js";
 
 async function sendTo(client: Client, channelId: string, payload: any) {
   if (!channelId) return;
@@ -27,68 +29,12 @@ async function sendTo(client: Client, channelId: string, payload: any) {
     console.error("Envoi impossible vers le salon", channelId, e);
   }
 }
-// ── Rappels Chambres Secretes (mercredi et dimanche, 21h) ────────────────────
-// Deux rappels : la veille a 20h pour se preparer (stuff, presences), puis a 20h
-// le jour meme pour se connecter. Mention @everyone, mais UNIQUEMENT dans le salon
-// de la guilde — et seulement si l'interrupteur du site est actif : le jeu peut
-// etre indisponible, et un @everyone deux fois par semaine dans le vide apprend
-// surtout aux membres a ignorer le salon.
-const SALON_CS = "1498696982229811352";
-
-async function rappelsActifs(cle: string): Promise<boolean> {
-  try {
-    const r = await prisma.setting.findUnique({ where: { key: cle } });
-    return r?.value === "1"; // coupes par defaut : on n'annonce jamais sans decision explicite
-  } catch {
-    return false; // base injoignable : on se tait plutot que de risquer un envoi non voulu
-  }
-}
-
-/**
- * Rappel d'un creneau recurrent. `cle` est le reglage qui l'autorise ; il est
- * COUPE par defaut et se pilote depuis la page « Bot Discord » du site.
- */
-async function rappelCreneau(
-  client: Client,
-  opts: { cle: string; titre: string; heure: string; quand: "veille" | "jour"; creneau?: Creneau }
-) {
-  if (!(await rappelsActifs(opts.cle))) return;
-  const { titre, heure, quand, creneau } = opts;
-  const veille = quand === "veille";
-
-  // Effectif manquant. La forme des donnees est desormais garantie par
-  // normaliserCompo (module partage avec le site), ce qui rend ce compte fiable
-  // — c'etait le seul blocage a l'annoncer ici.
-  let effectif = "";
-  if (creneau) {
-    try {
-      const row = await prisma.compositionState.findUnique({ where: { id: "main" } });
-      const etat = normaliserCompo(row?.data);
-      const presents = presencesDu(etat, creneau).length;
-      const manque = resumeManques(etat, creneau);
-      effectif = manque
-        ? `\n\n**Effectif : ${presents} annonce${presents > 1 ? "s" : ""}.** Il manque ${manque}.`
-        : `\n\n**Effectif au complet** (${presents} annonces). Merci a tout le monde.`;
-    } catch {
-      /* Blob illisible ou base indisponible : on envoie le rappel sans effectif
-         plutot que d'annoncer un chiffre faux. */
-    }
-  }
-  await sendTo(client, SALON_CS, {
-    content: "@everyone",
-    allowedMentions: { parse: ["everyone"] },
-    embeds: [{
-      title: veille ? `${titre} demain a ${heure}` : `${titre} ce soir a ${heure}`,
-      color: ORANGE,
-      description: (veille
-        ? "Prepare ton stuff et annonce ta presence des maintenant, pour qu'on puisse composer les equipes a l'avance."
-        : `Rendez-vous a **${heure}** en vocal. Verifie ton stuff et ta composition avant de te connecter.`) + effectif,
-      footer: { text: `Vanguard · ${titre}` },
-      timestamp: new Date().toISOString(),
-    }],
-  });
-}
-
+// ── Chambres Secrètes et Guild Siege ──────────────────────────────────────────
+// Les quatre cron fixes des Chambres (la veille et le jour à 20 h) et les deux du Guild Siege
+// sont partis au lot 3 (SPEC-CHAMBRES §8.5) : un tick par minute (bot/lib/seances.ts) lit les
+// horaires, les textes et les interrupteurs dans le paramétrage des bras droits, en base. Il
+// compte l'effectif sur les annonces DE LA SÉANCE (bornées à sa fenêtre de préparation) — le
+// rappel d'avant comptait toutes les annonces du créneau depuis toujours (piège n° 3).
 
 // ─── Rappel des candidatures en attente ─────────────────────
 async function remindApplications(client: Client) {
@@ -180,92 +126,49 @@ async function relayNewApplications(client: Client) {
   }
 }
 
-// ─── Relais des requêtes BANQUE créées sur le site ──────────
-async function relayBankRequests(client: Client) {
-  if (!CHANNELS.decision) return;
-  const fresh = await prisma.bankRequest.findMany({
-    where: { status: "PENDING", messageId: null },
-    orderBy: { createdAt: "asc" },
-    take: 60,
-  });
-  // Regroupe par panier (batchId) → 1 seul message Discord par transaction (anti-spam)
-  const batches = new Map<string, typeof fresh>();
-  for (const r of fresh) {
-    const key = r.batchId || `single:${r.id}`;
-    if (!batches.has(key)) batches.set(key, []);
-    batches.get(key)!.push(r);
-  }
-  for (const reqs of batches.values()) {
-    if (reqs[0].batchId) await postBankBatchDecision(client, reqs).catch((e) => console.error("relay banque batch:", e));
-    else await postBankRequestDecision(client, reqs[0]).catch((e) => console.error("relay banque:", e));
-  }
-}
-
-// ─── Ouverture du salon de discussion DÈS la requête (statut PENDING) ────
-//  Désactivé tant que CHANNEL_EXCHANGE_CATEGORY n'est pas configuré (openDiscussion no-op).
-async function openDiscussions(client: Client) {
-  if (!CHANNELS.exchangeCategory) return;
-  const fresh = await prisma.bankRequest.findMany({
-    where: { status: "PENDING", exchangeChannelId: null },
-    orderBy: { createdAt: "asc" }, take: 30,
-  });
-  if (!fresh.length) return;
-  const batches = new Map<string, typeof fresh>();
-  for (const r of fresh) {
-    const key = r.batchId || `single:${r.id}`;
-    if (!batches.has(key)) batches.set(key, []);
-    batches.get(key)!.push(r);
-  }
-  for (const reqs of batches.values()) await openDiscussion(client, reqs).catch((e) => console.error("openDiscussion:", e));
-}
-
-// ─── Suppression des salons d'échange terminés (Remis / Refusé) ─
-//  Robuste aux redémarrages du bot (pas de setTimeout perdu). ~90 s de battement
-//  pour laisser lire le message final, puis le salon est supprimé.
-async function closeFinishedExchanges(client: Client) {
-  if (!CHANNELS.exchangeCategory) return;
-  const grace = new Date(Date.now() - 90_000);
-  const done = await prisma.bankRequest.findMany({
-    where: { status: { in: ["REMIS", "REFUSE"] }, exchangeChannelId: { not: null }, updatedAt: { lt: grace } },
-    take: 40,
-  });
-  if (!done.length) return;
-  const channelIds = [...new Set(done.map((r) => r.exchangeChannelId!).filter(Boolean))];
-  for (const cid of channelIds) {
-    // Ne supprime QUE si toute la transaction de ce salon est conclue (aucun objet encore en attente ou en cours).
-    const open = await prisma.bankRequest.count({ where: { exchangeChannelId: cid, status: { in: ["PENDING", "ACCEPTE_ACHAT", "ACCEPTE_DETTE", "EN_ECHANGE"] } } });
-    if (open > 0) continue;
-    try {
-      const ch: any = await client.channels.fetch(cid).catch(() => null);
-      if (ch?.delete) await ch.delete("Échange terminé").catch(() => {});
-    } catch { /* déjà supprimé : on ignore */ }
-    await prisma.bankRequest.updateMany({ where: { exchangeChannelId: cid }, data: { exchangeChannelId: null } });
-  }
-}
-
 // ─── Synchro périodique des RANGS (GuildViewer à jour) ──────
 //  Lit les rôles Discord en live et met à jour User.role en base, sans
 //  attendre que le membre se reconnecte. Prudent : n'écrase JAMAIS tout
 //  le monde en RECRUE si le fetch échoue ou si le mapping n'est pas configuré.
+//  Les rôles bruts (User.discordRoles) suivent aussi quand ils bougent seuls :
+//  c'est par eux que le site reconnaît un ami (rôle Friend).
 async function syncMemberRanks(client: Client) {
   if (!GUILD_ID || !Object.values(RANK_ROLES).some(Boolean)) return;
   const guild = await client.guilds.fetch(GUILD_ID).catch(() => null);
   if (!guild) return;
   const members = await guild.members.fetch().catch(() => null);
   if (!members || members.size === 0) return; // fetch KO → on ne rétrograde personne
-  const users = await prisma.user.findMany({ select: { id: true, discordId: true, role: true } });
+  const users = await prisma.user.findMany({ select: { id: true, discordId: true, role: true, discordRoles: true } });
   let changed = 0;
+  let relus = 0;
   for (const u of users) {
     const m = members.get(u.discordId);
     if (!m) continue; // parti du serveur / introuvable → inchangé
-    const roleIds = [...m.roles.cache.keys()];
+    /* Sans @everyone (l'identifiant du serveur), que discord.js glisse dans tout
+       `roles.cache` : la connexion (src/lib/auth.ts) écrit la liste de l'API Discord, qui ne
+       le porte pas. Gardé, il faisait différer les deux listes à chaque passage après une
+       connexion — une écriture pour rien par compte —, et un réglage des amis qui
+       nommerait l'identifiant du serveur reconnaîtrait les comptes vus par le bot, pas les
+       autres. */
+    const roleIds = [...m.roles.cache.keys()].filter((id) => id !== guild.id);
     const newRole = highestRankFromRoles(roleIds);
     if (newRole !== u.role) {
-      await prisma.user.update({ where: { id: u.id }, data: { role: newRole as Role, discordRoles: roleIds } }).catch(() => {});
+      /* Un rang de guilde retrouvé sur Discord, c'est un RETOUR : la sortie de la guilde,
+         l'exclusion et le bannissement l'avaient marqué inactif (lib/gestes, `rangRelu`). */
+      await prisma.user.update({ where: { id: u.id }, data: { ...rangRelu(newRole as Role), discordRoles: roleIds } }).catch(() => {});
       changed++;
+    } else if (!memesRoles(u.discordRoles, roleIds)) {
+      /* LES RÔLES SEULS, rang inchangé. Ils n'étaient réécrits qu'avec un changement de
+         rang : le rôle Discord « Friend », posé ou retiré à un ami (hors guilde, donc
+         toujours RECRUE), n'atteignait le site qu'à sa prochaine connexion — or le site ne
+         lit pas Discord, il lit cette colonne (src/lib/auth.ts, src/config/amis.ts,
+         SPEC-INFORMATION-GUILDE §9). Seuls les comptes dont un rôle a bougé sont écrits. */
+      await prisma.user.update({ where: { id: u.id }, data: { discordRoles: roleIds } }).catch(() => {});
+      relus++;
     }
   }
   if (changed) console.log(`🔄 Rangs resynchronisés : ${changed} membre(s).`);
+  if (relus) console.log(`🔄 Rôles Discord relus : ${relus} compte(s).`);
 }
 
 export function startScheduler(client: Client) {
@@ -273,17 +176,8 @@ export function startScheduler(client: Client) {
   cron.schedule("0 */2 * * *", () => remindApplications(client).catch(console.error), CRON_TZ);
   // Relais des nouvelles candidatures (site → salon Décision) toutes les 2 minutes.
   cron.schedule("*/2 * * * *", () => relayNewApplications(client).catch(console.error), CRON_TZ);
-  // ─── Boutique & dettes : Discord est COUPE ────────────────────────────
-  // Decision de Maxime : tout se passe sur le site, pour ne plus jongler entre
-  // deux outils. Les crons qui relayaient les demandes, ouvraient un salon
-  // relayBankRequests, syncDecidedBankRequests, openDiscussions,
-  // closeFinishedExchanges). Leur remplacant est le fil de discussion du site
-  // (RequestMessage + /api/*/[id]/fil), qui porte la conversation ET le journal.
-  //
-  // remindDebts est CONSERVE mais n'envoie plus de message prive : il pose une
-  // notification sur le site. Une echeance qui approche doit encore alerter —
-  // la supprimer avec le reste aurait fait disparaitre le seul rappel
-  // automatique du suivi des dettes.
+  // La Boutique, les dettes et leurs salons d'échange ont quitté le site le
+  // 2026-10-21 : leurs relais (requêtes, salons, clôtures) sont partis avec eux.
   // Clôture des giveaways arrivés à échéance, chaque minute.
   cron.schedule("* * * * *", () => endDueGiveaways(client).catch(console.error), CRON_TZ);
   // Pilotage depuis le site : cache des salons et des rôles + consommation de la file de commandes.
@@ -297,19 +191,19 @@ export function startScheduler(client: Client) {
   setInterval(() => syncMemberRanks(client).catch(console.error), 10 * 60_000);
   // Événements du jeu : tick chaque minute (lus en base, éditables sur le site).
   cron.schedule("* * * * *", () => tickEvents(client).catch(console.error), CRON_TZ);
-  // Chambres Secretes : mercredi (3) et dimanche (0) a 21h.
-  // Veille a 20h -> mardi (2) et samedi (6) ; jour meme a 20h -> mercredi et dimanche.
-  const CS = { cle: "cs_rappels_actifs", titre: "Chambres Secretes", heure: "21h" };
-  // Mardi -> mercredi, samedi -> dimanche : chaque rappel parle du creneau qu'il annonce.
-  cron.schedule("0 20 * * 2", () => rappelCreneau(client, { ...CS, quand: "veille", creneau: "mer" }).catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 6", () => rappelCreneau(client, { ...CS, quand: "veille", creneau: "dim" }).catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 3", () => rappelCreneau(client, { ...CS, quand: "jour", creneau: "mer" }).catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 0", () => rappelCreneau(client, { ...CS, quand: "jour", creneau: "dim" }).catch(console.error), CRON_TZ);
-  // Guild Siege : meme mecanique, mais l'HORAIRE RESTE A CONFIRMER. En attendant il
-  // est cale sur samedi 21h ; l'interrupteur est coupe par defaut, donc rien ne part
-  // tant que le creneau n'a pas ete valide.
-  const GS = { cle: "gs_rappels_actifs", titre: "Guild Siege", heure: "21h" };
-  cron.schedule("0 20 * * 5", () => rappelCreneau(client, { ...GS, quand: "veille" }).catch(console.error), CRON_TZ);
-  cron.schedule("0 20 * * 6", () => rappelCreneau(client, { ...GS, quand: "jour" }).catch(console.error), CRON_TZ);
+  // Chambres Secrètes et Guild Siege : un tick par minute à la place des tâches fixes — les
+  // horaires se règlent sur /discord/evenements, sans redémarrer le bot. Coupés par défaut
+  // (interrupteurs de /discord), et le Guild Siege reste inactif tant que le staff ne l'active
+  // pas (décision du 2026-10-21).
+  cron.schedule("* * * * *", () => tickSeances(client).catch(console.error), CRON_TZ);
+  // Le panneau d'inscription vivant : recalculé toutes les 15 s, modifié s'il a changé.
+  setInterval(() => synchroniserMessages(client).catch(console.error), 15_000);
+  // Le chrono en direct (lot 5) : toutes les 10 s, et seulement pendant qu'il tourne — un clic
+  // fait sur le site se voit dans Discord en 10 s au plus.
+  setInterval(() => synchroniserChrono(client).catch(console.error), 10_000);
+  // Les vidéos de débrief (lot 8) : chaque nuit à 4 h 30, les fichiers des séances plus anciennes
+  // que la conservation du paramétrage, les envois abandonnés et les fichiers oubliés quittent le
+  // volume `vanguard_videos` (monté aussi dans ce service). Les liens restent.
+  cron.schedule("30 4 * * *", () => { purgerLesVideos().catch(console.error); }, CRON_TZ);
   console.log("🕒 Planificateur démarré.");
 }
